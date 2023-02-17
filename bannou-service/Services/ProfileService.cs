@@ -1,59 +1,47 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Application;
 
 namespace BeyondImmersion.BannouService.Services
 {
     /// <summary>
-    /// 
+    /// Service component responsible for player profile handling.
     /// </summary>
+    [DaprService("Profile Service", "profile")]
     public class ProfileService : IDaprService
     {
         /// <summary>
-        /// Unique service id for this instance.
-        /// </summary>
-        public string ServiceID { get; } = $"PROFILE_{Program.ServiceGUID}";
-
-        void IDaprService.AddEndpointsToWebApp(WebApplication? webApp)
-        {
-            if (webApp == null)
-                return;
-
-            webApp.MapGet("/profile/create", CreateProfile);
-            webApp.MapGet("/profile/update", UpdateProfile);
-            webApp.MapGet("/profile/destroy", DestroyProfile);
-        }
-
-        /// <summary>
         /// 
         /// </summary>
-        private async Task CreateProfile(HttpContext requestContext)
+        [ServiceRoute("/create")]
+        public async Task CreateProfile(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private async Task UpdateProfile(HttpContext requestContext)
+        [ServiceRoute("/update")]
+        public async Task UpdateProfile(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private async Task DestroyProfile(HttpContext requestContext)
+        [ServiceRoute("/destroy")]
+        public async Task DestroyProfile(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
     }

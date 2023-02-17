@@ -1,71 +1,58 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Application;
 
 namespace BeyondImmersion.BannouService.Services
 {
     /// <summary>
-    /// 
+    /// Service component responsible for asset handling.
     /// </summary>
+    [DaprService("Asset Service", "asset")]
     public class AssetService : IDaprService
     {
         /// <summary>
-        /// Unique service id for this instance.
-        /// </summary>
-        public string ServiceID { get; } = $"ASSET_{Program.ServiceGUID}";
-
-        void IDaprService.AddEndpointsToWebApp(WebApplication? webApp)
-        {
-            if (webApp == null)
-                return;
-
-            webApp.MapGet("/asset/list", ListAssets);
-            webApp.MapGet("/asset/create", CreateAsset);
-            webApp.MapGet("/asset/update", UpdateAsset);
-            webApp.MapGet("/asset/destroy", DestroyAsset);
-        }
-
-        /// <summary>
         /// 
         /// </summary>
-        private async Task ListAssets(HttpContext requestContext)
+        [ServiceRoute("/list")]
+        public async Task ListAssets(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private async Task CreateAsset(HttpContext requestContext)
+        [ServiceRoute("/create")]
+        public async Task CreateAsset(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private async Task UpdateAsset(HttpContext requestContext)
+        [ServiceRoute("/update")]
+        public async Task UpdateAsset(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private async Task DestroyAsset(HttpContext requestContext)
+        [ServiceRoute("/destroy")]
+        public async Task DestroyAsset(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
     }

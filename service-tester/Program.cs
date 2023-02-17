@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService;
 
 namespace BeyondImmersion.ServiceTester
 {
+    using BannouService.Application;
     using Tests;
 
     public class Program
@@ -17,7 +18,7 @@ namespace BeyondImmersion.ServiceTester
         /// <summary>
         /// Lookup for all service tests.
         /// </summary>
-        private static readonly Dictionary<string, Action<string[]>> sTestRegistry = new Dictionary<string, Action<string[]>>();
+        private static readonly Dictionary<string, Action<string[]>> sTestRegistry = new();
 
         internal static void Main(string[] args)
         {

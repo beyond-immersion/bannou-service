@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Application;
 
 namespace BeyondImmersion.BannouService.Services
 {
     /// <summary>
-    /// 
+    /// Service component responsible for login queue handling.
     /// 
     /// Can have the login service make an additional endpoint for `/login_{service_guid}` which would be unique to this service instance.
     /// This would allow communication with a specific instance, in order to count down a queue position. This means the bulk of the work
@@ -15,28 +17,24 @@ namespace BeyondImmersion.BannouService.Services
     /// This would mean that a bad actor could spam a specific login server instance, but if that doesn't actually increase the internal
     /// network traffic on each request, I'm not sure it matters.
     /// </summary>
-    public class LoginService : IDaprService
+    [DaprService("Login Service", "login")]
+    public sealed class LoginService : IDaprService
     {
-        /// <summary>
-        /// Unique service id for this instance.
-        /// </summary>
-        public string ServiceID { get; } = $"LOGIN_{Program.ServiceGUID}";
-
         /// <summary>
         /// Unique service ID for instance that's being forwarded to, if applicable.
         /// </summary>
-        private string sForwardServiceID { get; }
+        internal string ForwardServiceID { get; }
 
         /// <summary>
         /// Number of login requests to handle (per second).
         /// -1 indicates to let everything through.
         /// </summary>
-        private int sQueueProcessingRate { get; } = -1;
+        internal int QueueProcessingRate { get; } = -1;
 
         /// <summary>
         /// List of clients in the queue to login.
         /// </summary>
-        private ConcurrentQueue<string> sLoginQueue = new ConcurrentQueue<string>();
+        internal ConcurrentQueue<string> LoginQueue = new();
 
         public LoginService()
         {
@@ -52,7 +50,7 @@ namespace BeyondImmersion.BannouService.Services
                         {
                             // use configured processing rate for login queue, if set (per second)
                             if (int.TryParse(configKvp.Value.Value, out var configuredProcessingRate))
-                                sQueueProcessingRate = configuredProcessingRate;
+                                QueueProcessingRate = configuredProcessingRate;
                         }
                     }
                 }
@@ -60,23 +58,16 @@ namespace BeyondImmersion.BannouService.Services
             }
         }
 
-        void IDaprService.AddEndpointsToWebApp(WebApplication? webApp)
-        {
-            if (webApp == null)
-                return;
-
-            webApp.MapGet("/login", Login);
-            webApp.MapGet($"/login/{ServiceID}", LoginDirect);
-            webApp.MapGet($"/login/service_id", GetServiceID);
-        }
 
         /// <summary>
         /// Return ID of login service instance.
         /// </summary>
-        private async Task GetServiceID(HttpContext requestContext)
+        [ServiceRoute("/get_service_id")]
+        public async Task GetServiceID(HttpContext requestContext)
         {
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
             requestContext.Response.StatusCode = 200;
-            await requestContext.Response.WriteAsync(sForwardServiceID ?? ServiceID);
+            await requestContext.Response.WriteAsync(ForwardServiceID ?? this.GenerateDaprServiceID());
             await requestContext.Response.StartAsync();
         }
 
@@ -85,7 +76,8 @@ namespace BeyondImmersion.BannouService.Services
         /// Generate the queue_id, and feed the queue_url back to the client
         /// for any follow-up requests (if there's a queue).
         /// </summary>
-        private async Task Login(HttpContext requestContext)
+        [ServiceRoute("/")]
+        public async Task Login(HttpContext requestContext)
         {
             var response = requestContext.Response;
             response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
@@ -93,7 +85,7 @@ namespace BeyondImmersion.BannouService.Services
 
             var refreshRate = 15;
             var nextTickTime = refreshRate + DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000d;
-            string queueURL = $"{requestContext.Request.Path}/{sForwardServiceID ?? ServiceID}";
+            string queueURL = $"{requestContext.Request.Path}/{ForwardServiceID ?? this.GenerateDaprServiceID()}";
             var queuePosition = 0;
 
             // if the queue id is found in headers, use it
@@ -118,17 +110,17 @@ namespace BeyondImmersion.BannouService.Services
         /// Unique login endpoint- track client's position in queue, ensuring that requests to the
         /// datastore happen at fixed intervals and no more frequently, even if a client is impatient.
         /// </summary>
-        private async Task LoginDirect(HttpContext requestContext)
+        [ServiceRoute($"/{ServiceConstants.SERVICE_UUID_PLACEHOLDER}")]
+        public async Task LoginDirect(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
 
             if (!requestContext.Request.Headers.TryGetValue("queue_id", out var queueID))
             {
-                response.StatusCode = 400;
+                requestContext.Response.StatusCode = 400;
                 return;
             }
-            response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
     }

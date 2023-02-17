@@ -4,70 +4,160 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
 
-namespace BeyondImmersion.BannouService
+namespace BeyondImmersion.BannouService.Application
 {
+    [ServiceConfiguration]
     public class ServiceConfiguration
     {
         /// <summary>
+        /// Set to override GUID for administrative service endpoints.
+        /// If not set, will generate a new GUID automatically on service startup.
+        /// </summary>
+        public string? Force_Service_ID { get; set; } = null;
+
+        /// <summary>
         /// Enable to have this service handle asset management APIs.
         /// </summary>
-        public bool Asset_Endpoints_Enabled { get; set; } = false;
+        [RunServiceIfEnabled<AssetService>]
+        public bool Asset_Endpoints_Enabled { get; set; }
+            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
         /// Enable to have this service handle login queue APIs.
         /// </summary>
-        public bool Login_Endpoints_Enabled { get; set; } = false;
+        [RunServiceIfEnabled<LoginService>]
+        public bool Login_Endpoints_Enabled { get; set; }
+            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
         /// Enable to have this service handle login authorization APIs.
         /// </summary>
-        public bool Authorization_Endpoints_Enabled { get; set; } = false;
+        [RunServiceIfEnabled<AuthorizationService>]
+        public bool Authorization_Endpoints_Enabled { get; set; }
+            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
         /// Enable to have this service handle player profile APIs.
         /// </summary>
-        public bool Profile_Endpoints_Enabled { get; set; } = false;
+        [RunServiceIfEnabled<ProfileService>]
+        public bool Profile_Endpoints_Enabled { get; set; }
+            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
         /// Enable to have this service handle inventory APIs.
         /// </summary>
-        public bool Inventory_Endpoints_Enabled { get; set; } = false;
+        [RunServiceIfEnabled<InventoryService>]
+        public bool Inventory_Endpoints_Enabled { get; set; }
+            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
         /// Enable to have this service handle leaderboard APIs.
         /// </summary>
-        public bool Leaderboard_Endpoints_Enabled { get; set; } = false;
+        [RunServiceIfEnabled<LeaderboardService>]
+        public bool Leaderboard_Endpoints_Enabled { get; set; }
+            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
 
-        public static T? BuildConfiguration<T>(string[]? args, string? envPrefix)
+        /// <summary>
+        /// Returns whether the configuration indicates ANY services should be enabled.
+        /// </summary>
+        public static bool IsAnyServiceEnabled<T>(T configuration)
             where T : ServiceConfiguration
         {
-            ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+            return BaseServiceAttribute.GetPropertiesWithAttribute(configuration.GetType(), typeof(RunServiceIfEnabledAttribute))
+                .Any(t => (bool?)t.Item1.GetValue(configuration) ?? false);
+        }
+
+        /// <summary>
+        /// Returns whether the configuration indicates the service should be enabled.
+        /// </summary>
+        public static bool IsServiceEnabled<T>(T configuration)
+            where T : ServiceConfiguration
+        {
+            return BaseServiceAttribute.GetPropertiesWithAttribute(configuration.GetType(), typeof(RunServiceIfEnabledAttribute))
+                .Any(t =>
+                {
+                    if (!t.Item2.GetType().IsGenericType)
+                        return false;
+
+                    if (t.Item2.GetType().GenericTypeArguments.FirstOrDefault() != typeof(T))
+                        return false;
+
+                    if (!((bool?)t.Item1.GetValue(configuration) ?? false))
+                        return false;
+
+                    return true;
+                });
+        }
+
+
+        /// <summary>
+        /// Builds the service configuration from available Config.json, ENVs, and command line switches.
+        /// Uses the best available configuration type discovered in loaded assemblies, rather than
+        /// specifying the type explicitly.
+        /// </summary>
+        public static ServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
+        {
+            // use reflection to find configuration with attributes
+
+
+            return BuildConfiguration<ServiceConfiguration>(args, envPrefix) ?? new ServiceConfiguration();
+        }
+
+        /// <summary>
+        /// Builds the service configuration from available Config.json, ENVs, and command line switches.
+        /// </summary>
+        public static T? BuildConfiguration<T>(string[]? args = null, string? envPrefix = null)
+            where T : ServiceConfiguration
+        {
+            return BuildConfiguration(typeof(T), args, envPrefix) as T;
+        }
+
+        /// <summary>
+        /// Builds the service configuration from available Config.json, ENVs, and command line switches.
+        /// </summary>
+        public static ServiceConfiguration? BuildConfiguration(Type configurationType, string[]? args = null, string? envPrefix = null)
+        {
+            ConfigurationBuilder configurationBuilder = new();
             configurationBuilder
                 .AddJsonFile("Config.json", true)
                 .AddEnvironmentVariables(envPrefix)
-                .AddCommandLine(args ?? Array.Empty<string>(), CreateSwitchMappings<T>());
+                .AddCommandLine(args ?? Array.Empty<string>(), CreateSwitchMappings(configurationType));
 
-            return configurationBuilder.Build().Get<T>();
+            return configurationBuilder.Build().Get(configurationType) as ServiceConfiguration;
         }
 
+        /// <summary>
+        /// Create and return the full lookup of switch mappings for the configuration class.
+        /// </summary>
+        public static IDictionary<string, string> CreateSwitchMappings<T>()
+            where T : ServiceConfiguration
+            => CreateSwitchMappings(typeof(T));
+
+        /// <summary>
+        /// Create and return the full lookup of switch mappings for the configuration class.
+        /// </summary>
+        public static IDictionary<string, string> CreateSwitchMappings(Type configurationType)
+        {
+            Dictionary<string, string> keyMappings = new();
+            foreach (var propertyInfo in configurationType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                keyMappings[CreateSwitchFromName(propertyInfo.Name)] = propertyInfo.Name;
+
+            return keyMappings;
+        }
+
+        /// <summary>
+        /// Create a deterministic command switch (ie: --some-switch ) from the given property name.
+        /// </summary>
         public static string CreateSwitchFromName(string propertyName)
         {
             propertyName = propertyName.ToLower();
             propertyName = propertyName.Replace('_', '-');
             propertyName = "--" + propertyName;
             return propertyName;
-        }
-
-        public static IDictionary<string, string> CreateSwitchMappings<T>()
-            where T : ServiceConfiguration
-        {
-            Dictionary<string, string> keyMappings = new Dictionary<string, string>();
-            foreach (var propertyInfo in typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                keyMappings[CreateSwitchFromName(propertyInfo.Name)] = propertyInfo.Name;
-
-            return keyMappings;
         }
     }
 }

@@ -1,71 +1,58 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Application;
 
 namespace BeyondImmersion.BannouService.Services
 {
     /// <summary>
-    /// 
+    /// Service component responsible for leaderboard handling.
     /// </summary>
+    [DaprService("Leaderboard Service", "leaderboard")]
     public class LeaderboardService : IDaprService
     {
         /// <summary>
-        /// Unique service id for this instance.
-        /// </summary>
-        public string ServiceID { get; } = $"LEADERBOARD_{Program.ServiceGUID}";
-
-        void IDaprService.AddEndpointsToWebApp(WebApplication? webApp)
-        {
-            if (webApp == null)
-                return;
-
-            webApp.MapGet("/leaderboard/list", ListLeaderboards);
-            webApp.MapGet("/leaderboard/create", CreateLeaderboard);
-            webApp.MapGet("/leaderboard/update", UpdateLeaderboard);
-            webApp.MapGet("/leaderboard/destroy", DestroyLeaderboard);
-        }
-
-        /// <summary>
         /// 
         /// </summary>
-        private async Task ListLeaderboards(HttpContext requestContext)
+        [ServiceRoute("/list")]
+        public async Task ListLeaderboards(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private async Task CreateLeaderboard(HttpContext requestContext)
+        [ServiceRoute("/create")]
+        public async Task CreateLeaderboard(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private async Task UpdateLeaderboard(HttpContext requestContext)
+        [ServiceRoute("/update")]
+        public async Task UpdateLeaderboard(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private async Task DestroyLeaderboard(HttpContext requestContext)
+        [ServiceRoute("/destroy")]
+        public async Task DestroyLeaderboard(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
     }

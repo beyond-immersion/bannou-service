@@ -1,47 +1,36 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Application;
 
 namespace BeyondImmersion.BannouService.Services
 {
     /// <summary>
-    /// 
+    /// Service component responsible for login authorization handling.
     /// </summary>
+    [DaprService("Authorization Service", "authorization")]
     public class AuthorizationService : IDaprService
     {
         /// <summary>
-        /// Unique service id for this instance.
-        /// </summary>
-        public string ServiceID { get; } = $"AUTHORIZATION_{Program.ServiceGUID}";
-
-        void IDaprService.AddEndpointsToWebApp(WebApplication? webApp)
-        {
-            if (webApp == null)
-                return;
-
-            webApp.MapGet("/authorization", Authorize);
-            webApp.MapGet($"/authorization/{ServiceID}", AuthorizeDirect);
-        }
-
-        /// <summary>
         /// 
         /// </summary>
-        private async Task Authorize(HttpContext requestContext)
+        [ServiceRoute("/")]
+        public async Task Authorize(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private async Task AuthorizeDirect(HttpContext requestContext)
+        [ServiceRoute($"/{ServiceConstants.SERVICE_UUID_PLACEHOLDER}")]
+        public async Task AuthorizeDirect(HttpContext requestContext)
         {
-            var response = requestContext.Response;
-            response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            response.StatusCode = 200;
+            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
+            requestContext.Response.StatusCode = 200;
             await requestContext.Response.StartAsync();
         }
     }

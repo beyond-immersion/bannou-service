@@ -7,6 +7,8 @@ using BeyondImmersion.BannouService;
 
 namespace BeyondImmersion.ServiceTester
 {
+    using BeyondImmersion.BannouService.Application;
+
     public sealed class TestConfiguration : ServiceConfiguration
     {
 
