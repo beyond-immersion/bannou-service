@@ -101,7 +101,7 @@ namespace BeyondImmersion.BannouService
             }
 
             SetAdminEndpoints(webApp);
-            AddDaprServices(webApp);
+            AddDaprServiceEndpoints(webApp);
 
             Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
 
@@ -115,11 +115,17 @@ namespace BeyondImmersion.BannouService
             Logger.Log(LogLevel.Debug, null, "Service shutdown completed- exiting application.");
         }
 
-        private static void InitiateShutdown()
+        /// <summary>
+        /// Will stop the webhost and initiate a service shutdown.
+        /// </summary>
+        public static void InitiateShutdown()
         {
             ShutdownCancellationTokenSource.Cancel();
         }
 
+        /// <summary>
+        /// Verifies that the service configuration contains required values (from ENVs/switches/etc).
+        /// </summary>
         private static bool ValidateConfiguration()
         {
             if (Configuration == null)
@@ -134,18 +140,29 @@ namespace BeyondImmersion.BannouService
                 return false;
             }
 
+            // verify each service has required configuration?
+            // We haven't loaded the services yet though
+
             return true;
         }
 
 
+        /// <summary>
+        /// Binds the HTTP endpoints for root administrative commands against this service against.
+        /// </summary>
         private static void SetAdminEndpoints(WebApplication webApp)
         {
             webApp.MapGet($"/admin_{ServiceGUID}/shutdown", InitiateShutdown);
         }
 
+        /// <summary>
+        /// Finds all dapr service classes in loaded assemblies, determines which need to be enabled
+        /// based on the current configuration, and instantiates new instances of the services.
+        /// 
+        /// Places service instances (along with their service attribute) in the local registry.
+        /// </summary>
         private static bool BuildDaprServiceRegistry()
         {
-            // get all dapr services in all loaded assemblies
             var serviceClasses = BaseServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
             if (!serviceClasses.Any())
             {
@@ -153,18 +170,21 @@ namespace BeyondImmersion.BannouService
                 return false;
             }
 
-            // prefixes need to be unique, so build a registry
+            // prefixes need to be unique, so assign to a tmp hash/dictionary lookup
             var serviceLookup = new Dictionary<string, (Type, DaprServiceAttribute)>();
             foreach (var serviceClass in serviceClasses)
             {
-                if (!typeof(IDaprService).IsAssignableFrom(serviceClass.Item1))
+                var serviceType = serviceClass.Item1;
+                var serviceAttr = serviceClass.Item2;
+
+                if (!typeof(IDaprService).IsAssignableFrom(serviceType))
                 {
                     Logger.Log(LogLevel.Error, null, $"Dapr service attribute attached to a non-service class.",
-                        logParams: new JObject() { ["service_type"] = serviceClass.Item1.Name });
+                        logParams: new JObject() { ["service_type"] = serviceType.Name });
                     continue;
                 }
 
-                var servicePrefix = serviceClass.Item2.ServicePrefix.ToUpper();
+                var servicePrefix = serviceAttr.ServicePrefix.ToUpper();
                 if (serviceLookup.ContainsKey(servicePrefix) && serviceClass.GetType().Assembly != Assembly.GetExecutingAssembly())
                     serviceLookup[servicePrefix] = serviceClass;
                 else
@@ -172,7 +192,7 @@ namespace BeyondImmersion.BannouService
             }
 
             // now we only have 1 per prefix, & with highest priority
-            // instantiate them
+            // instantiate each service, and add to dapr service registry
             foreach (var serviceClass in serviceLookup.Values)
             {
                 var serviceType = serviceClass.Item1;
@@ -191,91 +211,129 @@ namespace BeyondImmersion.BannouService
                     if (serviceInstance == null)
                         throw new NullReferenceException();
 
-                    ServiceRegistry[serviceClass.Item2.ServicePrefix] = (serviceAttr, serviceInstance);
+                    ServiceRegistry[serviceAttr.ServicePrefix] = (serviceAttr, serviceInstance);
 
                     Logger.Log(LogLevel.Debug, null, $"Instantiation of dapr service successful.",
-                        logParams: new JObject() { ["service_type"] = serviceClass.Item1.Name });
+                        logParams: new JObject() { ["service_type"] = serviceType.Name });
                 }
                 catch (Exception e)
                 {
                     Logger.Log(LogLevel.Error, e, $"Instantiation of dapr service failed.",
-                        logParams: new JObject() { ["service_type"] = serviceClass.Item1.Name });
+                        logParams: new JObject() { ["service_type"] = serviceType.Name });
                 }
             }
             return ServiceRegistry.Any();
         }
 
+        /// <summary>
+        /// Stops all dapr services instances in the registry, before clearing out the registry itself.
+        /// </summary>
         private static void StopRegisteredDaprServices()
         {
             foreach (var serviceData in ServiceRegistry.Values)
                 serviceData.Item2.Shutdown();
+
+            ServiceRegistry.Clear();
         }
 
-        private static WebApplication AddDaprServices(WebApplication webApp)
+        /// <summary>
+        /// Binds HTTP endpoints for all registered dapr services.
+        /// </summary>
+        private static bool AddDaprServiceEndpoints(WebApplication webApp)
         {
-            // now we only have 1 per prefix, & with highest priority
-            // instantiate them
+            bool endpointAdded = false;
             foreach (var serviceClass in ServiceRegistry.Values)
             {
+                var serviceAttr = serviceClass.Item1;
+                var serviceInstance = serviceClass.Item2;
+
                 // iterate route methods for service, add to webapp
                 foreach (var routeMethod in BaseServiceAttribute.GetMethodsWithAttribute<ServiceRoute>(serviceClass.Item2.GetType()))
                 {
-                    if (!routeMethod.Item1.GetParameters().Any() || routeMethod.Item1.GetParameters().Length > 1)
-                        continue;
+                    var routeMethodInfo = routeMethod.Item1;
+                    var routeAttr = routeMethod.Item2;
 
-                    if (routeMethod.Item1.GetParameters()[0].ParameterType != typeof(HttpContext))
-                        continue;
-
-                    string routeSuffix = routeMethod.Item2.RouteUrl ?? "";
-                    if (!routeSuffix.StartsWith('/'))
-                        routeSuffix = $"/{routeSuffix}";
-
-                    string routePrefix = serviceClass.Item1.ServicePrefix;
-                    if (!routePrefix.StartsWith('/'))
-                        routePrefix = $"/{routePrefix}";
-
-                    if (routePrefix.EndsWith('/'))
-                        routePrefix = routePrefix.Remove(routePrefix.Length - 1, 1);
-
-                    Delegate methodDelegate;
-                    if (routeMethod.Item1.IsStatic)
-                        methodDelegate = Delegate.CreateDelegate(typeof(Action<HttpContext>), target: serviceClass.GetType(), method: routeMethod.Item1.Name);
-                    else
-                        methodDelegate = Delegate.CreateDelegate(typeof(Action<HttpContext>), target: serviceClass, method: routeMethod.Item1.Name, ignoreCase: true);
-
-                    switch (routeMethod.Item2.HttpMethod)
+                    try
                     {
-                        case HttpMethodTypes.GET:
-                            webApp.MapGet(routePrefix + routeSuffix, methodDelegate);
-                            break;
-                        case HttpMethodTypes.POST:
-                            webApp.MapPost(routePrefix + routeSuffix, methodDelegate);
-                            break;
-                        case HttpMethodTypes.PUT:
-                            webApp.MapPut(routePrefix + routeSuffix, methodDelegate);
-                            break;
-                        case HttpMethodTypes.DELETE:
-                            webApp.MapDelete(routePrefix + routeSuffix, methodDelegate);
-                            break;
-                        default:
-                            Logger.Log(LogLevel.Error, null, $"Could not add unknown dapr service route type.",
-                                logParams: new JObject()
-                                {
-                                    ["service_type"] = serviceClass.Item2.GetType().Name,
-                                    ["route_type"] = routeMethod.Item2.HttpMethod.ToString()
-                                });
+                        if (!routeMethodInfo.GetParameters().Any() || routeMethodInfo.GetParameters().Length > 1)
                             continue;
-                    }
 
-                    Logger.Log(LogLevel.Debug, null, $"Dapr service route added successfully.",
-                        logParams: new JObject()
+                        if (routeMethodInfo.GetParameters()[0].ParameterType != typeof(HttpContext))
+                            continue;
+
+                        string routePrefix = serviceAttr.ServicePrefix ?? "";
+                        if (string.IsNullOrWhiteSpace(routePrefix))
                         {
-                            ["service_type"] = serviceClass.Item2.GetType().Name,
-                            ["route_type"] = routeMethod.Item2.HttpMethod.ToString()
-                        });
+                            if (!routePrefix.StartsWith('/'))
+                                routePrefix = $"/{routePrefix}";
+
+                            if (routePrefix.EndsWith('/'))
+                                routePrefix = routePrefix.Remove(routePrefix.Length - 1, 1);
+                        }
+
+                        string routeSuffix = routeAttr.RouteUrl ?? "";
+                        if (!string.IsNullOrWhiteSpace(routeSuffix))
+                        {
+                            if (routeSuffix.StartsWith('/'))
+                                routeSuffix = routeSuffix.Remove(0, 1);
+
+                            if (routeSuffix.EndsWith('/'))
+                                routeSuffix = routeSuffix.Remove(routeSuffix.Length - 1, 1);
+                        }
+
+                        Delegate methodDelegate;
+                        if (routeMethodInfo.IsStatic)
+                            methodDelegate = Delegate.CreateDelegate(typeof(Action<HttpContext>), target: serviceInstance.GetType(), method: routeMethodInfo.Name);
+                        else
+                            methodDelegate = Delegate.CreateDelegate(typeof(Action<HttpContext>), target: serviceInstance, method: routeMethodInfo.Name, ignoreCase: true);
+
+                        switch (routeAttr.HttpMethod)
+                        {
+                            case HttpMethodTypes.GET:
+                                webApp.MapGet($"{routePrefix}/{routeSuffix}", methodDelegate);
+                                endpointAdded = true;
+                                break;
+                            case HttpMethodTypes.POST:
+                                webApp.MapPost($"{routePrefix}/{routeSuffix}", methodDelegate);
+                                endpointAdded = true;
+                                break;
+                            case HttpMethodTypes.PUT:
+                                webApp.MapPut($"{routePrefix}/{routeSuffix}", methodDelegate);
+                                endpointAdded = true;
+                                break;
+                            case HttpMethodTypes.DELETE:
+                                webApp.MapDelete($"{routePrefix}/{routeSuffix}", methodDelegate);
+                                endpointAdded = true;
+                                break;
+                            default:
+                                Logger.Log(LogLevel.Error, null, $"Unsupported dapr service endpoint type.",
+                                    logParams: new JObject()
+                                    {
+                                        ["service_type"] = serviceInstance.GetType().Name,
+                                        ["endpoint_type"] = routeAttr.HttpMethod.ToString()
+                                    });
+                                continue;
+                        }
+
+                        Logger.Log(LogLevel.Debug, null, $"Dapr service endpoint added successfully.",
+                            logParams: new JObject()
+                            {
+                                ["service_type"] = serviceInstance.GetType().Name,
+                                ["endpoint_type"] = routeAttr.HttpMethod.ToString()
+                            });
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Log(LogLevel.Error, e, $"Failed to add dapr service endpoint.",
+                            logParams: new JObject()
+                            {
+                                ["service_type"] = serviceInstance.GetType().Name,
+                                ["endpoint_type"] = routeAttr.HttpMethod.ToString()
+                            });
+                    }
                 }
             }
-            return webApp;
+            return endpointAdded;
         }
     }
 }
