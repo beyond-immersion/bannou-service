@@ -64,20 +64,18 @@ namespace BeyondImmersion.BannouService.Application
         /// <summary>
         /// Returns whether the configuration indicates ANY services should be enabled.
         /// </summary>
-        public static bool IsAnyServiceEnabled<T>(T configuration)
-            where T : ServiceConfiguration
+        public static bool IsAnyServiceEnabled()
         {
-            return BaseServiceAttribute.GetPropertiesWithAttribute(configuration.GetType(), typeof(RunServiceIfEnabledAttribute))
-                .Any(t => (bool?)t.Item1.GetValue(configuration) ?? false);
+            return BaseServiceAttribute.GetPropertiesWithAttribute(Program.Configuration.GetType(), typeof(RunServiceIfEnabledAttribute))
+                .Any(t => (bool?)t.Item1.GetValue(Program.Configuration) ?? false);
         }
 
         /// <summary>
         /// Returns whether the configuration indicates the service should be enabled.
         /// </summary>
-        public static bool IsServiceEnabled<T>(T configuration)
-            where T : ServiceConfiguration
+        public static bool IsServiceEnabled<T>(T _)
         {
-            return BaseServiceAttribute.GetPropertiesWithAttribute(configuration.GetType(), typeof(RunServiceIfEnabledAttribute))
+            return BaseServiceAttribute.GetPropertiesWithAttribute(Program.Configuration.GetType(), typeof(RunServiceIfEnabledAttribute))
                 .Any(t =>
                 {
                     if (!t.Item2.GetType().IsGenericType)
@@ -86,7 +84,28 @@ namespace BeyondImmersion.BannouService.Application
                     if (t.Item2.GetType().GenericTypeArguments.FirstOrDefault() != typeof(T))
                         return false;
 
-                    if (!((bool?)t.Item1.GetValue(configuration) ?? false))
+                    if (!((bool?)t.Item1.GetValue(Program.Configuration) ?? false))
+                        return false;
+
+                    return true;
+                });
+        }
+
+        /// <summary>
+        /// Returns whether the configuration indicates the service should be enabled.
+        /// </summary>
+        public static bool IsServiceEnabled(Type serviceType)
+        {
+            return BaseServiceAttribute.GetPropertiesWithAttribute(Program.Configuration.GetType(), typeof(RunServiceIfEnabledAttribute))
+                .Any(t =>
+                {
+                    if (!t.Item2.GetType().IsGenericType)
+                        return false;
+
+                    if (t.Item2.GetType().GenericTypeArguments.FirstOrDefault() != serviceType)
+                        return false;
+
+                    if (!((bool?)t.Item1.GetValue(Program.Configuration) ?? false))
                         return false;
 
                     return true;

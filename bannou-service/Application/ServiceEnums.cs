@@ -9,11 +9,14 @@ namespace BeyondImmersion.BannouService.Application
 {
     public enum HttpMethodTypes
     {
-        GET,
+        GET = 0,
         POST,
         PUT,
         DELETE,
+
+        // unsupported yet
         HEAD,
+        PATCH,
         OPTIONS
     }
 }

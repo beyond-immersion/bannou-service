@@ -24,51 +24,6 @@ namespace BeyondImmersion.BannouService
             return $"{serviceName}_{Program.ServiceGUID}";
         }
 
-        public static WebApplication AddDaprServices(this WebApplication webApp)
-        {
-            // get all dapr services in all loaded assemblies
-            var serviceClasses = BaseServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
-            if (!serviceClasses.Any())
-            {
-                Program.Logger.Log(LogLevel.Error, null, $"No dapr services found to intantiate.");
-                return webApp;
-            }
-
-            // prefixes need to be unique, so build a registry
-            var serviceLookup = new Dictionary<string, (Type, DaprServiceAttribute)>();
-            foreach (var serviceClass in serviceClasses)
-            {
-                var servicePrefix = serviceClass.Item2.ServicePrefix.ToUpper();
-                if (serviceLookup.ContainsKey(servicePrefix) && serviceClass.GetType().Assembly != Assembly.GetExecutingAssembly())
-                    serviceLookup[servicePrefix] = serviceClass;
-                else
-                    serviceLookup[servicePrefix] = serviceClass;
-            }
-
-            // now we only have 1 per prefix, & with highest priority
-            // instantiate them
-            foreach (var serviceClass in serviceLookup.Values)
-            {
-                try
-                {
-                    var serviceInstObj = Activator.CreateInstance(serviceClass.Item1, true, null);
-                    if (serviceInstObj == null)
-                    {
-                        Program.Logger.Log(LogLevel.Error, null, $"Instantiation of dapr service failed.",
-                            logParams: new JObject() { ["service_type"] = serviceClass.Item1.Name });
-                    }
-                }
-                catch (Exception e)
-                {
-                    Program.Logger.Log(LogLevel.Error, e, $"Instantiation of dapr service failed.",
-                        logParams: new JObject() { ["service_type"] = serviceClass.Item1.Name });
-                }
-            }
-
-            return webApp;
-        }
-
-
         /// <summary>
         /// Logging extension/helper methods, for including additional context as JSON.
         /// </summary>
