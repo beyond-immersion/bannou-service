@@ -137,9 +137,12 @@ namespace BeyondImmersion.BannouService.Application
         public static ServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
         {
             // use reflection to find configuration with attributes
+            Type bestConfigurationType = null;
+            foreach (var configurationType in BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
+                if (bestConfigurationType == null || configurationType.Item1.Assembly != Assembly.GetExecutingAssembly())
+                    bestConfigurationType = configurationType.Item1;
 
-
-            return BuildConfiguration<ServiceConfiguration>(args, envPrefix) ?? new ServiceConfiguration();
+            return BuildConfiguration(bestConfigurationType ?? typeof(ServiceConfiguration), args, envPrefix) ?? new ServiceConfiguration();
         }
 
         /// <summary>
