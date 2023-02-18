@@ -67,24 +67,24 @@ namespace BeyondImmersion.BannouService.Application
         /// <summary>
         /// Returns whether the configuration indicates ANY services should be enabled.
         /// </summary>
-        public static bool IsAnyServiceEnabled()
+        public bool IsAnyServiceEnabled()
         {
-            return BaseServiceAttribute.GetPropertiesWithAttribute(Program.Configuration.GetType(), typeof(RunServiceIfEnabledAttribute))
-                .Any(t => (bool?)t.Item1.GetValue(Program.Configuration) ?? false);
+            return BaseServiceAttribute.GetPropertiesWithAttribute(this.GetType(), typeof(RunServiceIfEnabledAttribute))
+                .Any(t => (bool?)t.Item1.GetValue(this) ?? false);
         }
 
         /// <summary>
         /// Returns whether the configuration indicates the service should be enabled.
         /// </summary>
-        public static bool IsServiceEnabled<T>(T _)
+        public bool IsServiceEnabled<T>(T _)
             => IsServiceEnabled(typeof(T));
 
         /// <summary>
         /// Returns whether the configuration indicates the service should be enabled.
         /// </summary>
-        public static bool IsServiceEnabled(Type serviceType)
+        public bool IsServiceEnabled(Type serviceType)
         {
-            return BaseServiceAttribute.GetPropertiesWithAttribute(Program.Configuration.GetType(), typeof(RunServiceIfEnabledAttribute))
+            return BaseServiceAttribute.GetPropertiesWithAttribute(this.GetType(), typeof(RunServiceIfEnabledAttribute))
                 .Any(t =>
                 {
                     if (!t.Item2.GetType().IsGenericType)
@@ -93,7 +93,7 @@ namespace BeyondImmersion.BannouService.Application
                     if (t.Item2.GetType().GenericTypeArguments.FirstOrDefault() != serviceType)
                         return false;
 
-                    if (!((bool?)t.Item1.GetValue(Program.Configuration) ?? false))
+                    if (!((bool?)t.Item1.GetValue(this) ?? false))
                         return false;
 
                     return true;
@@ -103,16 +103,16 @@ namespace BeyondImmersion.BannouService.Application
         /// <summary>
         /// Returns whether the configuration is provided for a service to run properly.
         /// </summary>
-        public static bool HasRequiredConfiguration<T>()
+        public bool HasRequiredConfiguration<T>()
             where T : IDaprService
             => HasRequiredConfiguration(typeof(T));
 
         /// <summary>
         /// Returns whether the configuration is provided for a service to run properly.
         /// </summary>
-        public static bool HasRequiredConfiguration(Type serviceType)
+        public bool HasRequiredConfiguration(Type serviceType)
         {
-            return BaseServiceAttribute.GetPropertiesWithAttribute(Program.Configuration.GetType(), typeof(RequiredForServiceAttribute))
+            return BaseServiceAttribute.GetPropertiesWithAttribute(this.GetType(), typeof(RequiredForServiceAttribute))
                 .All(t =>
                 {
                     if (!t.Item2.GetType().IsGenericType)
@@ -120,7 +120,7 @@ namespace BeyondImmersion.BannouService.Application
 
                     if (t.Item2.GetType().GenericTypeArguments.FirstOrDefault() == serviceType)
                     {
-                        var propValue = t.Item1.GetValue(Program.Configuration);
+                        var propValue = t.Item1.GetValue(this);
                         if (propValue == null)
                             return false;
                     }

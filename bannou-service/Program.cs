@@ -62,36 +62,45 @@ namespace BeyondImmersion.BannouService
             else
                 ServiceGUID = Guid.NewGuid().ToString().ToLower();
 
-            DaprClient = new DaprClientBuilder()
-                .UseJsonSerializationOptions(ServiceConstants.DAPR_SERIALIZER_OPTIONS)
-                .Build();
-
-            if (!BuildDaprServiceRegistry())
-            {
-                Logger.Log(LogLevel.Error, null, "Building dapr service registry failed- exiting application.");
-                return;
-            }
-
-            var builder = WebApplication.CreateBuilder(args);
-            var webApp = builder.Build();
+            var webApp = WebApplication.CreateBuilder(args)?.Build();
             if (webApp == null)
             {
                 Logger.Log(LogLevel.Error, null, "Building web application failed- exiting application.");
                 return;
             }
 
-            SetAdminEndpoints(webApp);
-            AddDaprServiceEndpoints(webApp);
+            DaprClient = new DaprClientBuilder()
+                .UseJsonSerializationOptions(ServiceConstants.DAPR_SERIALIZER_OPTIONS)
+                .Build();
 
-            Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
+            try
             {
-                await Task.Run(async () => await webApp.RunAsync(ShutdownCancellationTokenSource.Token));
+                if (!BuildDaprServiceRegistry())
+                {
+                    Logger.Log(LogLevel.Error, null, "Building dapr service registry failed- exiting application.");
+                    return;
+                }
+
+                SetAdminEndpoints(webApp);
+                AddDaprServiceEndpoints(webApp);
+
+                Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
+
+                // blocks until webserver dies / server shutdown command received
+                await Task.Run(async () => await webApp.RunAsync(ShutdownCancellationTokenSource.Token), ShutdownCancellationTokenSource.Token);
+
+                Logger.Log(LogLevel.Debug, null, "Starting service shutdown.");
             }
-            Logger.Log(LogLevel.Debug, null, "Starting service shutdown.");
-
-            StopRegisteredDaprServices();
-            DaprClient.Dispose();
-
+            catch (Exception e)
+            {
+                Logger.Log(LogLevel.Error, e, "Starting emergency service shutdown.");
+            }
+            finally
+            {
+                StopRegisteredDaprServices();
+                DaprClient.Dispose();
+                await webApp.DisposeAsync();
+            }
             Logger.Log(LogLevel.Debug, null, "Service shutdown completed- exiting application.");
         }
 
@@ -114,14 +123,26 @@ namespace BeyondImmersion.BannouService
                 return false;
             }
 
-            if (!ServiceConfiguration.IsAnyServiceEnabled())
+            if (!Configuration.IsAnyServiceEnabled())
             {
                 Logger.Log(LogLevel.Error, null, "Dapr services not configured to handle any roles / APIs.");
                 return false;
             }
 
-            if (!ValidateDaprServiceConfig())
-                return false;
+            foreach (var serviceClassData in GetDaprServiceTypes())
+            {
+                var serviceType = serviceClassData.Item1;
+
+                if (!Configuration.IsServiceEnabled(serviceType))
+                    continue;
+
+                if (!Configuration.HasRequiredConfiguration(serviceType))
+                {
+                    Logger.Log(LogLevel.Debug, null, $"Required configuration is missing to start an enabled dapr service.",
+                        logParams: new JObject() { ["service_type"] = serviceType.Name });
+                    return false;
+                }
+            }
 
             return true;
         }
@@ -133,25 +154,6 @@ namespace BeyondImmersion.BannouService
         private static void SetAdminEndpoints(WebApplication webApp)
         {
             webApp.MapGet($"/admin_{ServiceGUID}/shutdown", InitiateShutdown);
-        }
-
-        private static bool ValidateDaprServiceConfig()
-        {
-            foreach (var serviceClassData in GetDaprServiceTypes())
-            {
-                var serviceType = serviceClassData.Item1;
-
-                if (!ServiceConfiguration.IsServiceEnabled(serviceType))
-                    continue;
-
-                if (!ServiceConfiguration.HasRequiredConfiguration(serviceType))
-                {
-                    Logger.Log(LogLevel.Debug, null, $"Required configuration is missing to start an enabled dapr service.",
-                        logParams: new JObject() { ["service_type"] = serviceType.Name });
-                    return false;
-                }
-            }
-            return true;
         }
 
         /// <summary>
@@ -167,7 +169,7 @@ namespace BeyondImmersion.BannouService
                 var serviceType = serviceClassData.Item1;
                 var serviceAttr = serviceClassData.Item2;
 
-                if (!ServiceConfiguration.IsServiceEnabled(serviceType))
+                if (!Configuration.IsServiceEnabled(serviceType))
                     continue;
 
                 try
