@@ -293,7 +293,7 @@ namespace BeyondImmersion.BannouService.Attributes
 
             foreach (PropertyInfo propInfo in retrievedProps)
             {
-                var attrs = propInfo.GetCustomAttributes(attributeType);
+                var attrs = propInfo.GetCustomAttributes(attributeType, true);
                 if (attrs == null || !attrs.Any())
                     continue;
 
@@ -316,7 +316,7 @@ namespace BeyondImmersion.BannouService.Attributes
 
             foreach (PropertyInfo propInfo in retrievedProps)
             {
-                var attrs = propInfo.GetCustomAttributes<T>();
+                var attrs = propInfo.GetCustomAttributes<T>(true);
                 if (attrs == null || !attrs.Any())
                     continue;
 
@@ -339,7 +339,7 @@ namespace BeyondImmersion.BannouService.Attributes
 
             foreach (FieldInfo fieldInfo in retrievedFields)
             {
-                var attrs = fieldInfo.GetCustomAttributes<T>();
+                var attrs = fieldInfo.GetCustomAttributes<T>(true);
                 if (attrs == null || !attrs.Any())
                     continue;
 
@@ -361,7 +361,7 @@ namespace BeyondImmersion.BannouService.Attributes
 
             foreach (FieldInfo fieldInfo in retrievedFields)
             {
-                var attrs = fieldInfo.GetCustomAttributes(attributeType);
+                var attrs = fieldInfo.GetCustomAttributes(attributeType, true);
                 if (attrs == null || !attrs.Any())
                     continue;
 
@@ -386,7 +386,7 @@ namespace BeyondImmersion.BannouService.Attributes
 
             foreach (MethodInfo methodInfo in retrievedMethods)
             {
-                var attrs = methodInfo.GetCustomAttributes(attributeType);
+                var attrs = methodInfo.GetCustomAttributes(attributeType, true);
                 if (attrs == null || !attrs.Any())
                     continue;
 
@@ -409,7 +409,7 @@ namespace BeyondImmersion.BannouService.Attributes
 
             foreach (MethodInfo methodInfo in retrievedMethods)
             {
-                var attrs = methodInfo.GetCustomAttributes<T>();
+                var attrs = methodInfo.GetCustomAttributes<T>(true);
                 if (attrs == null || !attrs.Any())
                     continue;
 

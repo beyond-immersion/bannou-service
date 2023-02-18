@@ -33,7 +33,7 @@ namespace BeyondImmersion.BannouService.Application
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         [RequiredForService<LoginService>]
-        public string? Login_Secret { get; set; } = null;
+        public string? Login_Secret { get; set; } = "something";
 
         /// <summary>
         /// Enable to have this service handle login authorization APIs.
