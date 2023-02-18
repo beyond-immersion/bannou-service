@@ -1,13 +1,13 @@
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Application;
+using BeyondImmersion.ServiceTester.Application;
+using BeyondImmersion.ServiceTester.Tests;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using BeyondImmersion.BannouService;
 
 namespace BeyondImmersion.ServiceTester
 {
-    using BannouService.Application;
-    using Tests;
-
     public class Program
     {
         /// <summary>
@@ -32,7 +32,7 @@ namespace BeyondImmersion.ServiceTester
             if (sTestRegistry.Count == 0)
             {
                 Console.WriteLine("No tests to run- press any key to exit.");
-                Console.ReadKey();
+                _ = Console.ReadKey();
                 return;
             }
 
@@ -41,8 +41,8 @@ namespace BeyondImmersion.ServiceTester
             do
             {
                 Console.WriteLine("Select a test to run from the following list (press CTRL+C to exit):");
-                int i = 0;
-                foreach (var kvp in sTestRegistry)
+                var i = 0;
+                foreach (KeyValuePair<string, Action<string[]>> kvp in sTestRegistry)
                     Console.WriteLine($"{++i}. {kvp.Key}");
 
                 Console.WriteLine();
@@ -53,20 +53,22 @@ namespace BeyondImmersion.ServiceTester
                     command = commandArgs[0];
                     commandArgs.RemoveAt(0);
 
-                    if (int.TryParse(command, out int commandIndex) && commandIndex >= 1 && commandIndex <= sTestRegistry.Count)
-                        command = sTestRegistry.Keys.ElementAt(commandIndex-1);
+                    if (int.TryParse(command, out var commandIndex) && commandIndex >= 1 && commandIndex <= sTestRegistry.Count)
+                        command = sTestRegistry.Keys.ElementAt(commandIndex - 1);
 
-                    if (sTestRegistry.TryGetValue(command, out var testTarget))
+                    if (sTestRegistry.TryGetValue(command, out Action<string[]>? testTarget))
                     {
                         Console.Clear();
                         testTarget?.Invoke(commandArgs.ToArray());
                     }
                     else
+                    {
                         Console.WriteLine($"Command '{command}' not found.");
+                    }
 
                     Console.WriteLine();
                     Console.WriteLine($"Press any key to continue...");
-                    Console.ReadKey();
+                    _ = Console.ReadKey();
                     Console.Clear();
                 }
 
@@ -76,10 +78,7 @@ namespace BeyondImmersion.ServiceTester
             } while (true);
         }
 
-        private static bool ValidateConfiguration()
-        {
-            return true;
-        }
+        private static bool ValidateConfiguration() => true;
 
         private static void LoadServiceTests()
         {
@@ -87,14 +86,14 @@ namespace BeyondImmersion.ServiceTester
 
             // load login tests
             var loginTestHandler = new LoginTestHandler();
-            foreach (var serviceTest in loginTestHandler.GetServiceTests())
+            foreach (ServiceTest serviceTest in loginTestHandler.GetServiceTests())
                 sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
         }
 
         private static void RunEntireTestSuite(string[] args)
         {
-            foreach (var kvp in sTestRegistry)
+            foreach (KeyValuePair<string, Action<string[]>> kvp in sTestRegistry)
             {
                 if (kvp.Key == "All")
                     continue;

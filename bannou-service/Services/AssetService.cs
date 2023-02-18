@@ -1,8 +1,8 @@
-﻿using System;
+﻿using BeyondImmersion.BannouService.Application;
+using BeyondImmersion.BannouService.Attributes;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Application;
 
 namespace BeyondImmersion.BannouService.Services
 {
@@ -15,7 +15,8 @@ namespace BeyondImmersion.BannouService.Services
         /// <summary>
         /// 
         /// </summary>
-        [ServiceRoute("/list")]
+        [ServiceRoute(HttpMethodTypes.POST, "/list")]
+        [ServiceRoute(HttpMethodTypes.GET, "/list")]
         public async Task ListAssets(HttpContext requestContext)
         {
             requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;

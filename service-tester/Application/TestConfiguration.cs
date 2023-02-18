@@ -1,14 +1,13 @@
-﻿using System;
+﻿using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Application;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BeyondImmersion.BannouService;
 
-namespace BeyondImmersion.ServiceTester
+namespace BeyondImmersion.ServiceTester.Application
 {
-    using BeyondImmersion.BannouService.Application;
-
     public sealed class TestConfiguration : ServiceConfiguration
     {
 

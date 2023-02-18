@@ -1,12 +1,12 @@
-﻿using System;
+﻿using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Application
 {
@@ -31,12 +31,17 @@ namespace BeyondImmersion.BannouService.Application
             WriteIndented = false
         };
 
-
         /// <summary>
         /// Set to override GUID for administrative service endpoints.
         /// If not set, will generate a new GUID automatically on service startup.
         /// </summary>
-        public string? Force_Service_ID { get; set; } = null;
+        public string? Force_Service_ID { get; set; }
+
+        /// <summary>
+        /// Try to load any enabled dapr services/endpoints,
+        /// even if the dapr sidecar isn't loaded.
+        /// </summary>
+        public bool Skip_Dapr_Healthcheck { get; set; }
 
         /// <summary>
         /// Enable to have this service handle asset management APIs.
@@ -83,7 +88,6 @@ namespace BeyondImmersion.BannouService.Application
         public bool Leaderboard_Endpoints_Enabled { get; set; }
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
-
         /// <summary>
         /// Returns whether the configuration indicates ANY services should be enabled.
         /// </summary>
@@ -107,16 +111,9 @@ namespace BeyondImmersion.BannouService.Application
             return BaseServiceAttribute.GetPropertiesWithAttribute(this.GetType(), typeof(RunServiceIfEnabledAttribute))
                 .Any(t =>
                 {
-                    if (!t.Item2.GetType().IsGenericType)
-                        return false;
-
-                    if (t.Item2.GetType().GenericTypeArguments.FirstOrDefault() != serviceType)
-                        return false;
-
-                    if (!((bool?)t.Item1.GetValue(this) ?? false))
-                        return false;
-
-                    return true;
+                    return t.Item2.GetType().IsGenericType
+                        && t.Item2.GetType().GenericTypeArguments.FirstOrDefault() == serviceType
+                        && ((bool?)t.Item1.GetValue(this) ?? false);
                 });
         }
 
@@ -144,10 +141,10 @@ namespace BeyondImmersion.BannouService.Application
                         if (propValue == null)
                             return false;
                     }
+
                     return true;
                 });
         }
-
 
         /// <summary>
         /// Builds the service configuration from available Config.json, ENVs, and command line switches.
@@ -157,10 +154,12 @@ namespace BeyondImmersion.BannouService.Application
         public static ServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
         {
             // use reflection to find configuration with attributes
-            Type bestConfigurationType = null;
-            foreach (var configurationType in BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
+            Type? bestConfigurationType = null;
+            foreach ((Type, ServiceConfigurationAttribute) configurationType in BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
+            {
                 if (bestConfigurationType == null || configurationType.Item1.Assembly != Assembly.GetExecutingAssembly())
                     bestConfigurationType = configurationType.Item1;
+            }
 
             return BuildConfiguration(bestConfigurationType ?? typeof(ServiceConfiguration), args, envPrefix) ?? new ServiceConfiguration();
         }
@@ -169,18 +168,14 @@ namespace BeyondImmersion.BannouService.Application
         /// Builds the service configuration from available Config.json, ENVs, and command line switches.
         /// </summary>
         public static T? BuildConfiguration<T>(string[]? args = null, string? envPrefix = null)
-            where T : ServiceConfiguration
-        {
-            return BuildConfiguration(typeof(T), args, envPrefix) as T;
-        }
+            where T : ServiceConfiguration => BuildConfiguration(typeof(T), args, envPrefix) as T;
 
         /// <summary>
         /// Builds the service configuration from available Config.json, ENVs, and command line switches.
         /// </summary>
         public static ServiceConfiguration? BuildConfiguration(Type configurationType, string[]? args = null, string? envPrefix = null)
         {
-            ConfigurationBuilder configurationBuilder = new();
-            configurationBuilder
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
                 .AddJsonFile("Config.json", true)
                 .AddEnvironmentVariables(envPrefix)
                 .AddCommandLine(args ?? Array.Empty<string>(), CreateSwitchMappings(configurationType));
@@ -201,7 +196,7 @@ namespace BeyondImmersion.BannouService.Application
         public static IDictionary<string, string> CreateSwitchMappings(Type configurationType)
         {
             Dictionary<string, string> keyMappings = new();
-            foreach (var propertyInfo in configurationType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            foreach (PropertyInfo propertyInfo in configurationType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 keyMappings[CreateSwitchFromName(propertyInfo.Name)] = propertyInfo.Name;
 
             return keyMappings;

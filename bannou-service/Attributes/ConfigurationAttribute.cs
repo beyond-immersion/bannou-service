@@ -1,5 +1,5 @@
-﻿using System.Reflection;
-using BeyondImmersion.BannouService.Application;
+﻿using BeyondImmersion.BannouService.Application;
+using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Attributes
 {

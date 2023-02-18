@@ -1,5 +1,5 @@
-﻿using System.Reflection;
-using BeyondImmersion.BannouService.Application;
+﻿using BeyondImmersion.BannouService.Application;
+using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Attributes
 {
@@ -41,7 +41,6 @@ namespace BeyondImmersion.BannouService.Attributes
         /// The HTTP Method to use for endpoint- default POST.
         /// </summary>
         public HttpMethodTypes HttpMethod { get; } = HttpMethodTypes.POST;
-
 
         private ServiceRoute() { }
         public ServiceRoute(string routeUrl)

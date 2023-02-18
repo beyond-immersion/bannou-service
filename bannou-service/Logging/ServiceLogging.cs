@@ -1,7 +1,7 @@
-﻿using System.Runtime.CompilerServices;
-using Newtonsoft.Json.Linq;
+﻿using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Application;
+using Newtonsoft.Json.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Logging
@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.Logging
     {
         public static ILoggerFactory LogFactory { get; } = LoggerFactory.Create((options) =>
             {
-                options.AddJsonConsole((options) =>
+                ILoggingBuilder unused1 = options.AddJsonConsole((options) =>
                 {
                     options.JsonWriterOptions = new JsonWriterOptions()
                     {
@@ -20,18 +20,12 @@ namespace BeyondImmersion.BannouService.Logging
                         SkipValidation = false
                     };
                 });
-                options.SetMinimumLevel(LogLevel.Trace);
+                ILoggingBuilder unused = options.SetMinimumLevel(LogLevel.Trace);
             });
 
-        public static ILogger CreateLogger()
-        {
-            return LogFactory.CreateLogger("service");
-        }
+        public static ILogger CreateLogger() => LogFactory.CreateLogger("service");
 
-        public static ILogger CreateLogger<T>()
-        {
-            return LogFactory.CreateLogger<T>();
-        }
+        public static ILogger CreateLogger<T>() => LogFactory.CreateLogger<T>();
 
         public static void Log(ILogger logger, LogLevel level, Exception? exception, string message, JObject? logParams,
             [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
@@ -40,9 +34,11 @@ namespace BeyondImmersion.BannouService.Logging
             JObject logParamsObj = new();
             if (logParams != null)
             {
-                foreach (var kvp in logParams)
+                foreach (KeyValuePair<string, JToken?> kvp in logParams)
+                {
                     if (!string.IsNullOrWhiteSpace(kvp.Key) && kvp.Value != null && kvp.Value.Type != JTokenType.Null)
                         logParamsObj[kvp.Key] = kvp.Value;
+                }
             }
 
             logParamsObj["calling-file"] = Path.GetFileName(callerFile);
@@ -55,14 +51,9 @@ namespace BeyondImmersion.BannouService.Logging
 
         public static string DefaultLogStateFormatter(JObject state, Exception? exc)
         {
-            if (state != null && state.TryGetValue("message", out JToken msg) && msg.Type == JTokenType.String)
-            {
-                if (exc != null)
-                    return msg.ToString() + "\n" + exc.ToString();
-
-                return msg.ToString();
-            }
-            return exc?.ToString() ?? string.Empty;
+            return state != null && state.TryGetValue("message", out JToken? msg) && msg.Type == JTokenType.String
+                ? exc != null ? msg.ToString() + "\n" + exc.ToString() : msg.ToString()
+                : exc?.ToString() ?? string.Empty;
         }
     }
 }

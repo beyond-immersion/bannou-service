@@ -5,8 +5,8 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "BANNOU_LOGIN_ENDPOINTS_ENABLED": "True",
-        "BANNOU_LOGIN_SECRET": "testing"
+        "BANNOU_ASSET_ENDPOINTS_ENABLED": "True",
+        "BANNOU_SKIP_DAPR_HEALTHCHECK": "True"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5012"

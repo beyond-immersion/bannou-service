@@ -1,8 +1,8 @@
-﻿using System;
+﻿using BeyondImmersion.BannouService.Application;
+using BeyondImmersion.BannouService.Attributes;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Application;
 
 namespace BeyondImmersion.BannouService.Services
 {
@@ -41,10 +41,10 @@ namespace BeyondImmersion.BannouService.Services
             if (Program.DaprClient != null)
             {
 #pragma warning disable CS0618 // alpha feature - not obsolete
-                var configurationResponse = Program.DaprClient.GetConfiguration("service config", new[] { "login_queue_processing_rate" }).Result;
+                Dapr.Client.GetConfigurationResponse configurationResponse = Program.DaprClient.GetConfiguration("service config", new[] { "login_queue_processing_rate" }).Result;
                 if (configurationResponse != null)
                 {
-                    foreach (var configKvp in configurationResponse.Items)
+                    foreach (KeyValuePair<string, Dapr.Client.ConfigurationItem> configKvp in configurationResponse.Items)
                     {
                         if (configKvp.Key == "login_queue_processing_rate")
                         {
@@ -57,7 +57,6 @@ namespace BeyondImmersion.BannouService.Services
 #pragma warning restore CS0618
             }
         }
-
 
         /// <summary>
         /// Return ID of login service instance.
@@ -79,18 +78,18 @@ namespace BeyondImmersion.BannouService.Services
         [ServiceRoute("/")]
         public async Task Login(HttpContext requestContext)
         {
-            var response = requestContext.Response;
+            HttpResponse response = requestContext.Response;
             response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
             response.StatusCode = 200;
 
             var refreshRate = 15;
-            var nextTickTime = refreshRate + DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000d;
-            string queueURL = $"{requestContext.Request.Path}/{ForwardServiceID ?? this.GenerateDaprServiceID()}";
+            var nextTickTime = refreshRate + (DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000d);
+            var queueURL = $"{requestContext.Request.Path}/{ForwardServiceID ?? this.GenerateDaprServiceID()}";
             var queuePosition = 0;
 
             // if the queue id is found in headers, use it
-            string queueID = null;
-            if (requestContext.Request.Headers.TryGetValue("queue_id", out var queueIDHeader))
+            string? queueID = null;
+            if (requestContext.Request.Headers.TryGetValue("queue_id", out Microsoft.Extensions.Primitives.StringValues queueIDHeader))
                 queueID = queueIDHeader.ToString();
 
             // - otherwise generate a new one
@@ -115,12 +114,12 @@ namespace BeyondImmersion.BannouService.Services
         {
             requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
             requestContext.Response.StatusCode = 200;
-
-            if (!requestContext.Request.Headers.TryGetValue("queue_id", out var queueID))
+            if (!requestContext.Request.Headers.TryGetValue("queue_id", out _))
             {
                 requestContext.Response.StatusCode = 400;
                 return;
             }
+
             await requestContext.Response.StartAsync();
         }
     }

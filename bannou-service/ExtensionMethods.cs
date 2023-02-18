@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
+﻿using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Logging;
 using BeyondImmersion.BannouService.Services;
+using Newtonsoft.Json.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace BeyondImmersion.BannouService
 {
@@ -34,7 +34,8 @@ namespace BeyondImmersion.BannouService
         /// <summary>
         /// Logging extension/helper methods, for including additional context as JSON.
         /// </summary>
-        public static void Log(this ILogger logger, LogLevel level, Exception? exc, string message, [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        public static void Log(this ILogger logger, LogLevel level, Exception? exc, string message,
+            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
             => logger.Log(level, exc, message, null, callerName, callerFile, lineNumber);
 
         /// <summary>
@@ -48,30 +49,15 @@ namespace BeyondImmersion.BannouService
         /// </summary>
         public static bool IsObsolete(this MemberInfo memberInfo, out string? message)
         {
-            var obsAttr = memberInfo.GetCustomAttribute<ObsoleteAttribute>();
+            ObsoleteAttribute? obsAttr = memberInfo.GetCustomAttribute<ObsoleteAttribute>();
             if (obsAttr != null)
             {
                 message = obsAttr.Message;
                 return true;
             }
+
             message = null;
             return false;
-        }
-
-        public static Type? GetFieldOrPropertyType(this MemberInfo memberInfo)
-        {
-            switch (memberInfo.MemberType)
-            {
-                case MemberTypes.Field:
-                    if (memberInfo is FieldInfo fieldTypeData)
-                        return fieldTypeData.FieldType;
-                    break;
-                case MemberTypes.Property:
-                    if (memberInfo is PropertyInfo propTypeData)
-                        return propTypeData.PropertyType;
-                    break;
-            }
-            return null;
         }
     }
 }

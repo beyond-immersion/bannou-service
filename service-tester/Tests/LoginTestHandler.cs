@@ -17,9 +17,6 @@ namespace BeyondImmersion.ServiceTester.Tests
             };
         }
 
-        public void LoginTest_NoQueue(string[] args)
-        {
-            Console.WriteLine("!!!");
-        }
+        public void LoginTest_NoQueue(string[] args) => Console.WriteLine("!!!");
     }
 }

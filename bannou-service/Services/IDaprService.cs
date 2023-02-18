@@ -1,5 +1,5 @@
-﻿using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Application;
+﻿using BeyondImmersion.BannouService.Application;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Services
 {

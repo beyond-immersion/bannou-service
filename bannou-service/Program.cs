@@ -1,14 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Text.Json;
-using Dapr;
-using Dapr.Client;
-using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Application;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Logging;
 using BeyondImmersion.BannouService.Services;
+using Dapr;
+using Dapr.Client;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Text.Json;
 
 namespace BeyondImmersion.BannouService
 {
@@ -29,7 +29,6 @@ namespace BeyondImmersion.BannouService
         /// Randomly generated on service startup.
         /// </summary>
         public static string ServiceGUID { get; private set; }
-
 
         /// <summary>
         /// Shared dapr client interface, used by all enabled internal services.
@@ -57,12 +56,9 @@ namespace BeyondImmersion.BannouService
             if (!ValidateConfiguration())
                 return;
 
-            if (Configuration.Force_Service_ID != null)
-                ServiceGUID = Configuration.Force_Service_ID;
-            else
-                ServiceGUID = Guid.NewGuid().ToString().ToLower();
+            ServiceGUID = Configuration.Force_Service_ID ?? Guid.NewGuid().ToString().ToLower();
 
-            using var webApp = WebApplication.CreateBuilder(args)?.Build();
+            using WebApplication? webApp = WebApplication.CreateBuilder(args)?.Build();
             if (webApp == null)
             {
                 Logger.Log(LogLevel.Error, null, "Building web application failed- exiting application.");
@@ -73,7 +69,7 @@ namespace BeyondImmersion.BannouService
                 .UseJsonSerializationOptions(ServiceConfiguration.DaprSerializerConfig)
                 .Build();
 
-            if (!await DaprClient.CheckHealthAsync(ShutdownCancellationTokenSource.Token))
+            if (!Configuration.Skip_Dapr_Healthcheck && !await DaprClient.CheckHealthAsync(ShutdownCancellationTokenSource.Token))
             {
                 Logger.Log(LogLevel.Error, null, "Dapr sidecar unhealthy/not found- exiting application.");
                 return;
@@ -84,13 +80,14 @@ namespace BeyondImmersion.BannouService
                 BuildDaprServiceRegistry();
 
                 SetAdminEndpoints(webApp);
-                AddDaprServiceEndpoints(webApp);
+                var unused = AddDaprServiceEndpoints(webApp);
 
                 Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
                 {
                     // blocks until webhost dies / server shutdown command received
                     await Task.Run(async () => await webApp.RunAsync(ShutdownCancellationTokenSource.Token), ShutdownCancellationTokenSource.Token);
                 }
+
                 Logger.Log(LogLevel.Debug, null, "Webhost stopped- starting controlled service shutdown.");
 
                 StopRegisteredDaprServices();
@@ -103,16 +100,14 @@ namespace BeyondImmersion.BannouService
             {
                 DaprClient.Dispose();
             }
+
             Logger.Log(LogLevel.Debug, null, "Service shutdown complete.");
         }
 
         /// <summary>
         /// Will stop the webhost and initiate a service shutdown.
         /// </summary>
-        public static void InitiateShutdown()
-        {
-            ShutdownCancellationTokenSource.Cancel();
-        }
+        public static void InitiateShutdown() => ShutdownCancellationTokenSource.Cancel();
 
         /// <summary>
         /// Verifies that the service configuration contains required values (from ENVs/switches/etc).
@@ -131,9 +126,9 @@ namespace BeyondImmersion.BannouService
                 return false;
             }
 
-            foreach (var serviceClassData in GetDaprServiceTypes())
+            foreach ((Type, DaprServiceAttribute) serviceClassData in GetDaprServiceTypes())
             {
-                var serviceType = serviceClassData.Item1;
+                Type serviceType = serviceClassData.Item1;
 
                 if (!Configuration.IsServiceEnabled(serviceType))
                     continue;
@@ -145,17 +140,14 @@ namespace BeyondImmersion.BannouService
                     return false;
                 }
             }
+
             return true;
         }
-
 
         /// <summary>
         /// Binds the HTTP endpoints for root administrative commands against this service against.
         /// </summary>
-        private static void SetAdminEndpoints(WebApplication webApp)
-        {
-            webApp.MapGet($"/admin_{ServiceGUID}/shutdown", InitiateShutdown);
-        }
+        private static void SetAdminEndpoints(WebApplication webApp) => webApp.MapGet($"/admin_{ServiceGUID}/shutdown", InitiateShutdown);
 
         /// <summary>
         /// Finds all dapr service classes in loaded assemblies, determines which need to be enabled
@@ -165,17 +157,17 @@ namespace BeyondImmersion.BannouService
         /// </summary>
         private static void BuildDaprServiceRegistry()
         {
-            foreach (var serviceClassData in GetDaprServiceTypes())
+            foreach ((Type, DaprServiceAttribute) serviceClassData in GetDaprServiceTypes())
             {
-                var serviceType = serviceClassData.Item1;
-                var serviceAttr = serviceClassData.Item2;
+                Type serviceType = serviceClassData.Item1;
+                DaprServiceAttribute serviceAttr = serviceClassData.Item2;
 
                 if (!Configuration.IsServiceEnabled(serviceType))
                     continue;
 
                 try
                 {
-                    var serviceInstance = (IDaprService)Activator.CreateInstance(type: serviceType, nonPublic: true);
+                    var serviceInstance = (IDaprService?)Activator.CreateInstance(type: serviceType, nonPublic: true);
                     if (serviceInstance == null)
                         throw new NullReferenceException();
 
@@ -197,7 +189,7 @@ namespace BeyondImmersion.BannouService
         /// </summary>
         private static (Type, DaprServiceAttribute)[] GetDaprServiceTypes()
         {
-            var serviceClasses = BaseServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
+            List<(Type, DaprServiceAttribute)> serviceClasses = BaseServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
             if (!serviceClasses.Any())
             {
                 Logger.Log(LogLevel.Error, null, $"No dapr services found to instantiate.");
@@ -206,10 +198,10 @@ namespace BeyondImmersion.BannouService
 
             // prefixes need to be unique, so assign to a tmp hash/dictionary lookup
             var serviceLookup = new Dictionary<string, (Type, DaprServiceAttribute)>();
-            foreach (var serviceClass in serviceClasses)
+            foreach ((Type, DaprServiceAttribute) serviceClass in serviceClasses)
             {
-                var serviceType = serviceClass.Item1;
-                var serviceAttr = serviceClass.Item2;
+                Type serviceType = serviceClass.Item1;
+                DaprServiceAttribute serviceAttr = serviceClass.Item2;
 
                 if (!typeof(IDaprService).IsAssignableFrom(serviceType))
                 {
@@ -219,11 +211,10 @@ namespace BeyondImmersion.BannouService
                 }
 
                 var servicePrefix = serviceAttr.ServicePrefix.ToUpper();
-                if (serviceLookup.ContainsKey(servicePrefix) && serviceClass.GetType().Assembly != Assembly.GetExecutingAssembly())
-                    serviceLookup[servicePrefix] = serviceClass;
-                else
+                if (!serviceLookup.ContainsKey(servicePrefix) || serviceClass.GetType().Assembly != Assembly.GetExecutingAssembly())
                     serviceLookup[servicePrefix] = serviceClass;
             }
+
             return serviceLookup.Values.ToArray();
         }
 
@@ -232,7 +223,7 @@ namespace BeyondImmersion.BannouService
         /// </summary>
         private static void StopRegisteredDaprServices()
         {
-            foreach (var serviceData in ServiceRegistry.Values)
+            foreach ((DaprServiceAttribute, IDaprService) serviceData in ServiceRegistry.Values)
                 serviceData.Item2.Shutdown();
 
             ServiceRegistry.Clear();
@@ -243,17 +234,17 @@ namespace BeyondImmersion.BannouService
         /// </summary>
         private static bool AddDaprServiceEndpoints(WebApplication webApp)
         {
-            bool endpointAdded = false;
-            foreach (var serviceClass in ServiceRegistry.Values)
+            var endpointAdded = false;
+            foreach ((DaprServiceAttribute, IDaprService) serviceClass in ServiceRegistry.Values)
             {
-                var serviceAttr = serviceClass.Item1;
-                var serviceInstance = serviceClass.Item2;
+                DaprServiceAttribute serviceAttr = serviceClass.Item1;
+                IDaprService serviceInstance = serviceClass.Item2;
 
                 // iterate route methods for service, add to webapp
-                foreach (var routeMethod in BaseServiceAttribute.GetMethodsWithAttribute<ServiceRoute>(serviceClass.Item2.GetType()))
+                foreach ((MethodInfo, ServiceRoute) routeMethod in BaseServiceAttribute.GetMethodsWithAttribute<ServiceRoute>(serviceClass.Item2.GetType()))
                 {
-                    var routeMethodInfo = routeMethod.Item1;
-                    var routeAttr = routeMethod.Item2;
+                    MethodInfo routeMethodInfo = routeMethod.Item1;
+                    ServiceRoute routeAttr = routeMethod.Item2;
 
                     try
                     {
@@ -279,7 +270,7 @@ namespace BeyondImmersion.BannouService
                             continue;
                         }
 
-                        string routePrefix = serviceAttr.ServicePrefix ?? "";
+                        var routePrefix = serviceAttr.ServicePrefix ?? "";
                         if (string.IsNullOrWhiteSpace(routePrefix))
                         {
                             if (!routePrefix.StartsWith('/'))
@@ -289,9 +280,11 @@ namespace BeyondImmersion.BannouService
                                 routePrefix = routePrefix.Remove(routePrefix.Length - 1, 1);
                         }
 
-                        string routeSuffix = routeAttr.RouteUrl ?? "";
+                        var routeSuffix = routeAttr.RouteUrl ?? "";
                         if (!string.IsNullOrWhiteSpace(routeSuffix))
                         {
+                            routeSuffix = routeSuffix.Replace(ServiceConstants.SERVICE_UUID_PLACEHOLDER, ServiceGUID);
+
                             if (routeSuffix.StartsWith('/'))
                                 routeSuffix = routeSuffix.Remove(0, 1);
 
@@ -299,38 +292,30 @@ namespace BeyondImmersion.BannouService
                                 routeSuffix = routeSuffix.Remove(routeSuffix.Length - 1, 1);
                         }
 
-                        Delegate methodDelegate;
-                        if (routeMethodInfo.IsStatic)
-                        {
-                            if (routeMethodInfo.ReturnType == typeof(Task))
-                                methodDelegate = Delegate.CreateDelegate(typeof(Func<HttpContext, Task>), target: serviceInstance.GetType(), method: routeMethodInfo.Name);
-                            else
-                                methodDelegate = Delegate.CreateDelegate(typeof(Action<HttpContext>), target: serviceInstance.GetType(), method: routeMethodInfo.Name);
-                        }
-                        else
-                        {
-                            if (routeMethodInfo.ReturnType == typeof(Task))
-                                methodDelegate = Delegate.CreateDelegate(typeof(Func<HttpContext, Task>), target: serviceInstance, method: routeMethodInfo.Name, ignoreCase: true);
-                            else
-                                methodDelegate = Delegate.CreateDelegate(typeof(Action<HttpContext>), target: serviceInstance, method: routeMethodInfo.Name, ignoreCase: true);
-                        }
+                        Delegate methodDelegate = routeMethodInfo.IsStatic
+                            ? routeMethodInfo.ReturnType == typeof(Task)
+                                ? Delegate.CreateDelegate(typeof(Func<HttpContext, Task>), target: serviceInstance.GetType(), method: routeMethodInfo.Name)
+                                : Delegate.CreateDelegate(typeof(Action<HttpContext>), target: serviceInstance.GetType(), method: routeMethodInfo.Name)
+                            : routeMethodInfo.ReturnType == typeof(Task)
+                                ? Delegate.CreateDelegate(typeof(Func<HttpContext, Task>), target: serviceInstance, method: routeMethodInfo.Name, ignoreCase: true)
+                                : Delegate.CreateDelegate(typeof(Action<HttpContext>), target: serviceInstance, method: routeMethodInfo.Name, ignoreCase: true);
 
                         switch (routeAttr.HttpMethod)
                         {
                             case HttpMethodTypes.GET:
-                                webApp.MapGet($"{routePrefix}/{routeSuffix}", methodDelegate);
+                                _ = webApp.MapGet($"{routePrefix}/{routeSuffix}", methodDelegate);
                                 endpointAdded = true;
                                 break;
                             case HttpMethodTypes.POST:
-                                webApp.MapPost($"{routePrefix}/{routeSuffix}", methodDelegate);
+                                _ = webApp.MapPost($"{routePrefix}/{routeSuffix}", methodDelegate);
                                 endpointAdded = true;
                                 break;
                             case HttpMethodTypes.PUT:
-                                webApp.MapPut($"{routePrefix}/{routeSuffix}", methodDelegate);
+                                _ = webApp.MapPut($"{routePrefix}/{routeSuffix}", methodDelegate);
                                 endpointAdded = true;
                                 break;
                             case HttpMethodTypes.DELETE:
-                                webApp.MapDelete($"{routePrefix}/{routeSuffix}", methodDelegate);
+                                _ = webApp.MapDelete($"{routePrefix}/{routeSuffix}", methodDelegate);
                                 endpointAdded = true;
                                 break;
                             default:
@@ -361,6 +346,7 @@ namespace BeyondImmersion.BannouService
                     }
                 }
             }
+
             return endpointAdded;
         }
     }
