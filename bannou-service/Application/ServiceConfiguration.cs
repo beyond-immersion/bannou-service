@@ -32,6 +32,9 @@ namespace BeyondImmersion.BannouService.Application
         public bool Login_Endpoints_Enabled { get; set; }
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
+        [RequiredForService<LoginService>]
+        public string? Login_Secret { get; set; } = null;
+
         /// <summary>
         /// Enable to have this service handle login authorization APIs.
         /// </summary>
@@ -74,22 +77,7 @@ namespace BeyondImmersion.BannouService.Application
         /// Returns whether the configuration indicates the service should be enabled.
         /// </summary>
         public static bool IsServiceEnabled<T>(T _)
-        {
-            return BaseServiceAttribute.GetPropertiesWithAttribute(Program.Configuration.GetType(), typeof(RunServiceIfEnabledAttribute))
-                .Any(t =>
-                {
-                    if (!t.Item2.GetType().IsGenericType)
-                        return false;
-
-                    if (t.Item2.GetType().GenericTypeArguments.FirstOrDefault() != typeof(T))
-                        return false;
-
-                    if (!((bool?)t.Item1.GetValue(Program.Configuration) ?? false))
-                        return false;
-
-                    return true;
-                });
-        }
+            => IsServiceEnabled(typeof(T));
 
         /// <summary>
         /// Returns whether the configuration indicates the service should be enabled.
@@ -108,6 +96,34 @@ namespace BeyondImmersion.BannouService.Application
                     if (!((bool?)t.Item1.GetValue(Program.Configuration) ?? false))
                         return false;
 
+                    return true;
+                });
+        }
+
+        /// <summary>
+        /// Returns whether the configuration is provided for a service to run properly.
+        /// </summary>
+        public static bool HasRequiredConfiguration<T>()
+            where T : IDaprService
+            => HasRequiredConfiguration(typeof(T));
+
+        /// <summary>
+        /// Returns whether the configuration is provided for a service to run properly.
+        /// </summary>
+        public static bool HasRequiredConfiguration(Type serviceType)
+        {
+            return BaseServiceAttribute.GetPropertiesWithAttribute(Program.Configuration.GetType(), typeof(RequiredForServiceAttribute))
+                .All(t =>
+                {
+                    if (!t.Item2.GetType().IsGenericType)
+                        return true;
+
+                    if (t.Item2.GetType().GenericTypeArguments.FirstOrDefault() == serviceType)
+                    {
+                        var propValue = t.Item1.GetValue(Program.Configuration);
+                        if (propValue == null)
+                            return false;
+                    }
                     return true;
                 });
         }

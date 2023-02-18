@@ -2,15 +2,35 @@
 using Newtonsoft.Json.Linq;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Application;
+using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Logging
 {
     public static class ServiceLogging
     {
-        public static ILoggerFactory LoggerFactory { get; } = new LoggerFactory();
+        public static ILoggerFactory LogFactory { get; } = LoggerFactory.Create((options) =>
+            {
+                options.AddJsonConsole((options) =>
+                {
+                    options.JsonWriterOptions = new JsonWriterOptions()
+                    {
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Default,
+                        Indented = true,
+                        MaxDepth = 32,
+                        SkipValidation = false
+                    };
+                });
+                options.SetMinimumLevel(LogLevel.Trace);
+            });
+
+        public static ILogger CreateLogger()
+        {
+            return LogFactory.CreateLogger("service");
+        }
+
         public static ILogger CreateLogger<T>()
         {
-            return LoggerFactory.CreateLogger<T>();
+            return LogFactory.CreateLogger<T>();
         }
 
         public static void Log(ILogger logger, LogLevel level, Exception? exception, string message, JObject? logParams,
