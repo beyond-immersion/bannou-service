@@ -62,7 +62,7 @@ namespace BeyondImmersion.BannouService
             else
                 ServiceGUID = Guid.NewGuid().ToString().ToLower();
 
-            var webApp = WebApplication.CreateBuilder(args)?.Build();
+            using var webApp = WebApplication.CreateBuilder(args)?.Build();
             if (webApp == null)
             {
                 Logger.Log(LogLevel.Error, null, "Building web application failed- exiting application.");
@@ -70,26 +70,30 @@ namespace BeyondImmersion.BannouService
             }
 
             DaprClient = new DaprClientBuilder()
-                .UseJsonSerializationOptions(ServiceConstants.DAPR_SERIALIZER_OPTIONS)
+                .UseJsonSerializationOptions(ServiceConfiguration.DaprSerializerConfig)
                 .Build();
+
+            if (!await DaprClient.CheckHealthAsync(ShutdownCancellationTokenSource.Token))
+            {
+                Logger.Log(LogLevel.Error, null, "Dapr sidecar unhealthy/not found- exiting application.");
+                return;
+            }
 
             try
             {
-                if (!BuildDaprServiceRegistry())
-                {
-                    Logger.Log(LogLevel.Error, null, "Building dapr service registry failed- exiting application.");
-                    return;
-                }
+                BuildDaprServiceRegistry();
 
                 SetAdminEndpoints(webApp);
                 AddDaprServiceEndpoints(webApp);
 
                 Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
+                {
+                    // blocks until webhost dies / server shutdown command received
+                    await Task.Run(async () => await webApp.RunAsync(ShutdownCancellationTokenSource.Token), ShutdownCancellationTokenSource.Token);
+                }
+                Logger.Log(LogLevel.Debug, null, "Webhost stopped- starting controlled service shutdown.");
 
-                // blocks until webserver dies / server shutdown command received
-                await Task.Run(async () => await webApp.RunAsync(ShutdownCancellationTokenSource.Token), ShutdownCancellationTokenSource.Token);
-
-                Logger.Log(LogLevel.Debug, null, "Starting service shutdown.");
+                StopRegisteredDaprServices();
             }
             catch (Exception e)
             {
@@ -97,11 +101,9 @@ namespace BeyondImmersion.BannouService
             }
             finally
             {
-                StopRegisteredDaprServices();
                 DaprClient.Dispose();
-                await webApp.DisposeAsync();
             }
-            Logger.Log(LogLevel.Debug, null, "Service shutdown completed- exiting application.");
+            Logger.Log(LogLevel.Debug, null, "Service shutdown complete.");
         }
 
         /// <summary>
@@ -143,7 +145,6 @@ namespace BeyondImmersion.BannouService
                     return false;
                 }
             }
-
             return true;
         }
 
@@ -162,7 +163,7 @@ namespace BeyondImmersion.BannouService
         /// 
         /// Places service instances (along with their service attribute) in the local registry.
         /// </summary>
-        private static bool BuildDaprServiceRegistry()
+        private static void BuildDaprServiceRegistry()
         {
             foreach (var serviceClassData in GetDaprServiceTypes())
             {
@@ -189,11 +190,10 @@ namespace BeyondImmersion.BannouService
                         logParams: new JObject() { ["service_type"] = serviceType.Name });
                 }
             }
-            return ServiceRegistry.Any();
         }
 
         /// <summary>
-        /// 
+        /// Gets the full list of all dapr service classes (with associated attribute) in loaded assemblies.
         /// </summary>
         private static (Type, DaprServiceAttribute)[] GetDaprServiceTypes()
         {

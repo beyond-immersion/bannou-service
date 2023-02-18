@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
@@ -12,6 +13,25 @@ namespace BeyondImmersion.BannouService.Application
     [ServiceConfiguration]
     public class ServiceConfiguration
     {
+        /// <summary>
+        /// Shared serializer options, between all dapr services/consumers.
+        /// </summary>
+        public static readonly JsonSerializerOptions DaprSerializerConfig = new()
+        {
+            AllowTrailingCommas = true,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never,
+            IgnoreReadOnlyFields = false,
+            IgnoreReadOnlyProperties = false,
+            IncludeFields = false,
+            MaxDepth = 32,
+            NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.Strict,
+            PropertyNameCaseInsensitive = false,
+            ReadCommentHandling = JsonCommentHandling.Disallow,
+            UnknownTypeHandling = System.Text.Json.Serialization.JsonUnknownTypeHandling.JsonElement,
+            WriteIndented = false
+        };
+
+
         /// <summary>
         /// Set to override GUID for administrative service endpoints.
         /// If not set, will generate a new GUID automatically on service startup.
@@ -33,7 +53,7 @@ namespace BeyondImmersion.BannouService.Application
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         [RequiredForService<LoginService>]
-        public string? Login_Secret { get; set; } = "something";
+        public string? Login_Secret { get; set; }
 
         /// <summary>
         /// Enable to have this service handle login authorization APIs.

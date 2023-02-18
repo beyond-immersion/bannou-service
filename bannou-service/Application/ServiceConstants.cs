@@ -22,23 +22,5 @@ namespace BeyondImmersion.BannouService.Application
         /// The placeholder to put into routes, to indicate that it should be replaced with the unique dapr service UUID.
         /// </summary>
         public const string SERVICE_UUID_PLACEHOLDER = "{service_uuid}";
-
-        /// <summary>
-        /// Shared serializer options, between all dapr services/consumers.
-        /// </summary>
-        public static readonly JsonSerializerOptions DAPR_SERIALIZER_OPTIONS = new()
-        {
-            AllowTrailingCommas = true,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never,
-            IgnoreReadOnlyFields = false,
-            IgnoreReadOnlyProperties = false,
-            IncludeFields = false,
-            MaxDepth = 32,
-            NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.Strict,
-            PropertyNameCaseInsensitive = false,
-            ReadCommentHandling = JsonCommentHandling.Disallow,
-            UnknownTypeHandling = System.Text.Json.Serialization.JsonUnknownTypeHandling.JsonElement,
-            WriteIndented = false
-        };
     }
 }
