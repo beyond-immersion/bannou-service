@@ -5,24 +5,20 @@ using BeyondImmersion.BannouService.Services;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace BeyondImmersion.BannouService
 {
     public static partial class ExtensionMethods
     {
-        public static string GenerateDaprServiceID<T>(this T _)
-            where T : IDaprService
-        {
-            var serviceAttr = typeof(T).GetCustomAttributes(typeof(DaprServiceAttribute), true).FirstOrDefault();
-            if (serviceAttr != null)
-                return $"{((DaprServiceAttribute)serviceAttr).ServicePrefix}_{Program.ServiceGUID}";
+        [GeneratedRegex("[^a-z0-9\\s-]")]
+        private static partial Regex Regex_InvalidChars();
 
-            var serviceName = typeof(T).Name.ToUpperInvariant();
-            if (serviceName.EndsWith("service", StringComparison.CurrentCultureIgnoreCase))
-                serviceName = serviceName.Remove(serviceName.Length - "service".Length, "service".Length);
+        [GeneratedRegex("\\s")]
+        private static partial Regex Regex_Spaces();
 
-            return $"{serviceName}_{Program.ServiceGUID}";
-        }
+        [GeneratedRegex("\\s+")]
+        private static partial Regex Regex_MultipleSpaces();
 
         /// <summary>
         /// Logging extension/helper methods, for including additional context as JSON.
@@ -58,6 +54,29 @@ namespace BeyondImmersion.BannouService
 
             message = null;
             return false;
+        }
+
+        /// <summary>
+        /// Generate a URL-safe slug from any string.
+        /// </summary>
+        public static string GenerateSlug(this string phrase)
+        {
+            var str = phrase.RemoveAccent().ToLower();
+            str = Regex_InvalidChars().Replace(str, "");
+            str = Regex_MultipleSpaces().Replace(str, " ").Trim();
+            str = str[..(str.Length <= 45 ? str.Length : 45)].Trim();
+            str = Regex_Spaces().Replace(str, "-");
+            return str;
+        }
+
+        /// <summary>
+        /// Remove accent characters from a string.
+        /// Returns new string.
+        /// </summary>
+        public static string RemoveAccent(this string txt)
+        {
+            var bytes = System.Text.Encoding.GetEncoding("Cyrillic").GetBytes(txt);
+            return System.Text.Encoding.ASCII.GetString(bytes);
         }
     }
 }

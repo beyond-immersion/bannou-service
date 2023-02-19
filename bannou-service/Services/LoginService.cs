@@ -59,18 +59,6 @@ namespace BeyondImmersion.BannouService.Services
         }
 
         /// <summary>
-        /// Return ID of login service instance.
-        /// </summary>
-        [ServiceRoute("/get_service_id")]
-        public async Task GetServiceID(HttpContext requestContext)
-        {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.WriteAsync(ForwardServiceID ?? this.GenerateDaprServiceID());
-            await requestContext.Response.StartAsync();
-        }
-
-        /// <summary>
         /// Shared login endpoint / first point of contact for clients.
         /// Generate the queue_id, and feed the queue_url back to the client
         /// for any follow-up requests (if there's a queue).
@@ -84,7 +72,7 @@ namespace BeyondImmersion.BannouService.Services
 
             var refreshRate = 15;
             var nextTickTime = refreshRate + (DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000d);
-            var queueURL = $"{requestContext.Request.Path}/{ForwardServiceID ?? this.GenerateDaprServiceID()}";
+            var queueURL = $"{requestContext.Request.Path}/{ForwardServiceID ?? Program.ServiceGUID}";
             var queuePosition = 0;
 
             // if the queue id is found in headers, use it
