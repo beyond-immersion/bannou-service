@@ -61,7 +61,7 @@ namespace BeyondImmersion.BannouService
 
             ServiceGUID = Configuration.Force_Service_ID ?? Guid.NewGuid().ToString().ToLower();
 
-            using WebApplication? webApp = WebApplication.CreateBuilder(args)?.Build();
+            WebApplication? webApp = WebApplication.CreateBuilder(args)?.Build();
             if (webApp == null)
             {
                 Logger.Log(LogLevel.Error, null, "Building web application failed- exiting application.");
@@ -97,10 +97,11 @@ namespace BeyondImmersion.BannouService
             }
             catch (Exception e)
             {
-                Logger.Log(LogLevel.Error, e, "Starting emergency service shutdown.");
+                Logger.Log(LogLevel.Error, e, "A critical error has occurred- starting service shutdown.");
             }
             finally
             {
+                await webApp.DisposeAsync();
                 DaprClient.Dispose();
             }
 

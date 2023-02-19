@@ -39,8 +39,7 @@ namespace BeyondImmersion.BannouService.Services
             // if wanting to include any data
 
             var msgResponse = new TemplateCreateResponse() { Data = new JObject() { ["content"] = "something" } };
-            await context.Response.WriteAsJsonAsync(msgResponse);
-            await context.Response.StartAsync();
+            await context.SendResponseAsync(msgResponse);
         }
 
         /// <summary>
@@ -53,8 +52,7 @@ namespace BeyondImmersion.BannouService.Services
             // you could also write and send the response yourself (if it's needed)
 
             var msgResponse = new TemplateUpdateResponse() { };
-            await context.HttpContext.Response.WriteAsJsonAsync(msgResponse);
-            await context.HttpContext.Response.StartAsync();
+            await context.SendResponseAsync(msgResponse);
         }
 
         /// <summary>

@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace BeyondImmersion.BannouService.Services.Messages
 {
@@ -13,7 +14,30 @@ namespace BeyondImmersion.BannouService.Services.Messages
     /// 
     /// Utilized exclusively for easier searching of derived types.
     /// </summary>
-    public abstract class RequestContextBase { }
+    public abstract class RequestContextBase
+    {
+        /// <summary>
+        /// HttpContext of client request to endpoint.
+        /// </summary>
+        public HttpContext HttpContext { get; }
+
+        private RequestContextBase() { }
+        public RequestContextBase(HttpContext httpContext) => HttpContext = httpContext;
+
+        /// <summary>
+        /// Async helper method for generating and sending a JSON response to the client.
+        /// </summary>
+        public async Task SendResponseAsync<T>(T data, CancellationToken cancellationToken = default)
+            where T : class
+            => await HttpContext.SendResponseAsync(data, cancellationToken);
+
+        /// <summary>
+        /// Helper method for generating and sending a JSON response to the client.
+        /// </summary>
+        public void SendResponse<T>(T data)
+            where T : class
+            => HttpContext.SendResponse(data);
+    }
 
     /// <summary>
     /// A wrapper around the HTTPContext of service requests.
@@ -24,11 +48,6 @@ namespace BeyondImmersion.BannouService.Services.Messages
         where T : IServiceRequest
         where S : IServiceResponse
     {
-        /// <summary>
-        /// HttpContext of client request to endpoint.
-        /// </summary>
-        public HttpContext HttpContext { get; }
-
         /// <summary>
         /// Data model for service request params.
         /// Will be null if no request content.
@@ -41,10 +60,9 @@ namespace BeyondImmersion.BannouService.Services.Messages
         /// </summary>
         public S Response { get; }
 
-        public ServiceRequestContext() { }
         public ServiceRequestContext(HttpContext httpContext, T? request, S response)
+            : base(httpContext)
         {
-            HttpContext = httpContext;
             Request = request;
             Response = response;
         }

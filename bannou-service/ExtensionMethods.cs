@@ -78,5 +78,28 @@ namespace BeyondImmersion.BannouService
             var bytes = System.Text.Encoding.GetEncoding("Cyrillic").GetBytes(txt);
             return System.Text.Encoding.ASCII.GetString(bytes);
         }
+
+        /// <summary>
+        /// Async extension method for generating and sending a JSON response to client.
+        /// </summary>
+        public static async Task SendResponseAsync<T>(this HttpContext context, T data, CancellationToken cancellationToken = default)
+            where T : class
+        {
+            if (cancellationToken == default)
+                cancellationToken = Program.ShutdownCancellationTokenSource.Token;
+
+            await context.Response.WriteAsJsonAsync(data, cancellationToken);
+            await context.Response.StartAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Extension method for generating and sending a JSON response to client.
+        /// </summary>
+        public static void SendResponse<T>(this HttpContext context, T data)
+            where T : class
+        {
+            context.Response.WriteAsJsonAsync(data, Program.ShutdownCancellationTokenSource.Token).Wait(Program.ShutdownCancellationTokenSource.Token);
+            context.Response.StartAsync(Program.ShutdownCancellationTokenSource.Token).Wait(Program.ShutdownCancellationTokenSource.Token);
+        }
     }
 }
