@@ -465,6 +465,18 @@ namespace BeyondImmersion.BannouService
         private static Delegate CreateContextDelegateWrapper(MethodInfo methodInfo, IDaprService service)
         {
             Type contextType = methodInfo.GetParameters()[0].ParameterType;
+            if (!contextType.IsGenericType || contextType.GenericTypeArguments.Length < 2)
+                throw new ArgumentException($"Service contexts must be generic, and contain at least 2 generic type arguments.");
+
+            if (!typeof(IServiceRequest).IsAssignableFrom(contextType.GenericTypeArguments[0]))
+                throw new ArgumentException($"The first generic type argument for service context must implement {nameof(IServiceRequest)}.");
+
+            if (!typeof(IServiceResponse).IsAssignableFrom(contextType.GenericTypeArguments[1]))
+                throw new ArgumentException($"The second generic type argument for service context must implement {nameof(IServiceResponse)}.");
+
+            if (contextType.GenericTypeArguments[0].IsAbstract || !contextType.GenericTypeArguments[0].IsClass
+                || contextType.GenericTypeArguments[1].IsAbstract || !contextType.GenericTypeArguments[1].IsClass)
+                throw new ArgumentException($"The generic type arguments for a service context (request and response models) must be instantiable classes.");
 
             Delegate methodDelegate;
             if (methodInfo.ReturnType == typeof(Task))
@@ -495,7 +507,7 @@ namespace BeyondImmersion.BannouService
                         if (!context.Request.HasJsonContentType())
                             throw new Exception("The request content is not valid JSON.");
 
-                        requestObj = await context.Request.ReadFromJsonAsync(contextType.GenericTypeArguments[0]);
+                        requestObj = await context.Request.ReadFromJsonAsync(contextType.GenericTypeArguments[0], ShutdownCancellationTokenSource.Token);
                         if (requestObj == null)
                             throw new Exception("Required fields for the service request are missing.");
                     }
