@@ -399,7 +399,7 @@ namespace BeyondImmersion.BannouService
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,
-                            ["endpoint_type"] = "Parameterless"
+                            ["endpoint_type"] = "parameterless"
                         });
                 }
             };
@@ -451,7 +451,7 @@ namespace BeyondImmersion.BannouService
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,
-                            ["endpoint_type"] = "HttpContext"
+                            ["endpoint_type"] = "HTTP context"
                         });
                 }
             };
@@ -464,43 +464,83 @@ namespace BeyondImmersion.BannouService
         /// </summary>
         private static Delegate CreateContextDelegateWrapper(MethodInfo methodInfo, IDaprService service)
         {
-            Type paramType = methodInfo.GetParameters()[0].ParameterType;
+            Type contextType = methodInfo.GetParameters()[0].ParameterType;
 
             Delegate methodDelegate;
             if (methodInfo.ReturnType == typeof(Task))
             {
                 if (methodInfo.IsStatic)
-                    methodDelegate = Delegate.CreateDelegate(Expression.GetFuncType(paramType, typeof(Task)), target: service.GetType(), method: methodInfo.Name);
+                    methodDelegate = Delegate.CreateDelegate(Expression.GetFuncType(contextType, typeof(Task)), target: service.GetType(), method: methodInfo.Name);
                 else
-                    methodDelegate = Delegate.CreateDelegate(Expression.GetFuncType(paramType, typeof(Task)), target: service, method: methodInfo.Name);
+                    methodDelegate = Delegate.CreateDelegate(Expression.GetFuncType(contextType, typeof(Task)), target: service, method: methodInfo.Name);
             }
             else
             {
                 if (methodInfo.IsStatic)
-                    methodDelegate = Delegate.CreateDelegate(Expression.GetActionType(paramType), target: service.GetType(), method: methodInfo.Name);
+                    methodDelegate = Delegate.CreateDelegate(Expression.GetActionType(contextType), target: service.GetType(), method: methodInfo.Name);
                 else
-                    methodDelegate = Delegate.CreateDelegate(Expression.GetActionType(paramType), target: service, method: methodInfo.Name);
+                    methodDelegate = Delegate.CreateDelegate(Expression.GetActionType(contextType), target: service, method: methodInfo.Name);
             }
 
             return async (HttpContext context) =>
             {
+                object? requestObj = null;
                 try
                 {
+                    if (!string.Equals(System.Net.Mime.MediaTypeNames.Application.Json, context.Request.ContentType, StringComparison.InvariantCultureIgnoreCase))
+                        throw new Exception("The request content type is not application/json.");
+
                     if (!context.Request.HasJsonContentType())
-                        throw new Exception("The message content type is not application/JSON.");
+                        throw new Exception("The request content is not valid JSON.");
 
-                    var requestObj = await context.Request.ReadFromJsonAsync(paramType.GenericTypeArguments[0]);
+                    requestObj = await context.Request.ReadFromJsonAsync(contextType.GenericTypeArguments[0]);
                     if (requestObj == null)
-                        throw new Exception("Failed to parse the request payload into the given JSON data model.");
+                        throw new Exception("Required fields for the service request are missing.");
+                }
+                catch (Exception e)
+                {
+                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "400", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
+                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
 
-                    var responseObj = (IServiceResponse?)Activator.CreateInstance(type: paramType.GenericTypeArguments[1], nonPublic: true);
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
+                        logParams: new JObject()
+                        {
+                            ["service_type"] = service.GetType().Name,
+                            ["endpoint_type"] = "service context",
+                            ["failure_point"] = "request"
+                        });
+                    return;
+                }
+
+                IServiceResponse? responseObj = null;
+                object? contextInstance = null;
+                try
+                {
+                    responseObj = (IServiceResponse?)Activator.CreateInstance(type: contextType.GenericTypeArguments[1], nonPublic: true);
                     if (responseObj == null)
                         throw new Exception("Failed to instantiate the response data model.");
 
-                    var contextInstance = Activator.CreateInstance(type: paramType, context, requestObj, responseObj);
+                    contextInstance = Activator.CreateInstance(type: contextType, context, requestObj, responseObj);
                     if (contextInstance == null)
                         throw new Exception("Failed to instantiate the message context container.");
+                }
+                catch (Exception e)
+                {
+                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "500", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
+                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
 
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
+                        logParams: new JObject()
+                        {
+                            ["service_type"] = service.GetType().Name,
+                            ["endpoint_type"] = "service context",
+                            ["failure_point"] = "response"
+                        });
+                    return;
+                }
+
+                try
+                {
                     _ = methodDelegate.DynamicInvoke(contextInstance);
 
                     // automatically send back response, if that wasn't handled by the method
@@ -508,7 +548,7 @@ namespace BeyondImmersion.BannouService
                     if (!context.Response.HasStarted && responseObj.HasRequiredProperties())
                     {
                         if (context.Response.Body.Length == 0)
-                            await context.Response.WriteAsJsonAsync(responseObj, paramType.GenericTypeArguments[1], ShutdownCancellationTokenSource.Token);
+                            await context.Response.WriteAsJsonAsync(responseObj, contextType.GenericTypeArguments[1], ShutdownCancellationTokenSource.Token);
 
                         await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
                     }
@@ -522,7 +562,8 @@ namespace BeyondImmersion.BannouService
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,
-                            ["endpoint_type"] = "ServiceContext"
+                            ["endpoint_type"] = "service context",
+                            ["failure_point"] = "method"
                         });
                 }
             };
