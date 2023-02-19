@@ -1,5 +1,6 @@
 ﻿using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -13,5 +14,10 @@ namespace BeyondImmersion.BannouService.Services.Messages
     {
         string Code { get; }
         string Message { get; }
+
+        bool HasRequiredProperties()
+        {
+            return !string.IsNullOrWhiteSpace(Code) && !string.IsNullOrWhiteSpace(Message);
+        }
     }
 }

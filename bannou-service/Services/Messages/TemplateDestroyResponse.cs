@@ -12,7 +12,7 @@ namespace BeyondImmersion.BannouService.Services.Messages
     /// The response model for service API calls to `/template/destroy`.
     /// </summary>
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-    public class TemplateDestroyResponse : ServiceResponseBase
+    public class TemplateDestroyResponse : ServiceResponse
     {
     }
 }

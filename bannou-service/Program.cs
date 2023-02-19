@@ -9,6 +9,7 @@ using Google.Api;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 
@@ -297,7 +298,8 @@ namespace BeyondImmersion.BannouService
                                     logParams: new JObject()
                                     {
                                         ["service_type"] = serviceInstance.GetType().Name,
-                                        ["endpoint_type"] = routeAttr.HttpMethod.ToString()
+                                        ["http_type"] = routeAttr.HttpMethod.ToString(),
+                                        ["method"] = routeMethodInfo.Name
                                     });
                                 continue;
                         }
@@ -306,7 +308,8 @@ namespace BeyondImmersion.BannouService
                             logParams: new JObject()
                             {
                                 ["service_type"] = serviceInstance.GetType().Name,
-                                ["endpoint_type"] = routeAttr.HttpMethod.ToString()
+                                ["http_type"] = routeAttr.HttpMethod.ToString(),
+                                ["method"] = routeMethodInfo.Name
                             });
                     }
                     catch (Exception e)
@@ -315,7 +318,8 @@ namespace BeyondImmersion.BannouService
                             logParams: new JObject()
                             {
                                 ["service_type"] = serviceInstance.GetType().Name,
-                                ["endpoint_type"] = routeAttr.HttpMethod.ToString()
+                                ["http_type"] = routeAttr.HttpMethod.ToString(),
+                                ["method"] = routeMethodInfo.Name
                             });
                     }
                 }
@@ -336,7 +340,7 @@ namespace BeyondImmersion.BannouService
             if (methodParameters.Length > 1)
                 throw new Exception($"Dapr service endpoints can only contain one parameter, or none.");
 
-            if (methodParameters.Length > 0 && !new Type[] { typeof(HttpContext), typeof(RequestContextBase) }
+            if (methodParameters.Length == 1 && !new Type[] { typeof(HttpContext), typeof(RequestContextBase) }
                 .Any(t => t.IsAssignableFrom(methodParameters.First().ParameterType)))
                 throw new Exception($"Dapr service endpoints can only contain one parameter, of type HttpContext or derived from ServiceRequestContext.");
 
@@ -378,19 +382,24 @@ namespace BeyondImmersion.BannouService
                     methodDelegate = Delegate.CreateDelegate(typeof(Action), target: service, method: methodInfo.Name);
             }
 
-            return (HttpContext context) =>
+            return async (HttpContext context) =>
             {
                 try
                 {
-                    methodDelegate.DynamicInvoke(context);
+                    _ = methodDelegate.DynamicInvoke();
+                    await context.Response.WriteAsJsonAsync(new ServiceResponse(), ShutdownCancellationTokenSource.Token);
+                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
                 }
                 catch (Exception e)
                 {
-                    Logger.Log(LogLevel.Error, e, $"Error handling request to dapr service endpoint.",
+                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "500", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
+                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,
-                            ["endpoint_type"] = "HttpContext"
+                            ["endpoint_type"] = "Parameterless"
                         });
                 }
             };
@@ -417,15 +426,28 @@ namespace BeyondImmersion.BannouService
                     methodDelegate = Delegate.CreateDelegate(typeof(Action<HttpContext>), target: service, method: methodInfo.Name);
             }
 
-            return (HttpContext context) =>
+            return async (HttpContext context) =>
             {
                 try
                 {
-                    methodDelegate.DynamicInvoke(context);
+                    _ = methodDelegate.DynamicInvoke(context);
+
+                    // automatically send back response, if that wasn't handled by the method
+                    await Task.CompletedTask;
+                    if (!context.Response.HasStarted)
+                    {
+                        if (context.Response.Body.Length == 0)
+                            await context.Response.WriteAsJsonAsync(new ServiceResponse(), ShutdownCancellationTokenSource.Token);
+
+                        await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+                    }
                 }
                 catch (Exception e)
                 {
-                    Logger.Log(LogLevel.Error, e, $"Error handling request to dapr service endpoint.",
+                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "500", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
+                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,
@@ -448,16 +470,16 @@ namespace BeyondImmersion.BannouService
             if (methodInfo.ReturnType == typeof(Task))
             {
                 if (methodInfo.IsStatic)
-                    methodDelegate = Delegate.CreateDelegate(typeof(Func<Task>).MakeGenericType(paramType), target: service.GetType(), method: methodInfo.Name);
+                    methodDelegate = Delegate.CreateDelegate(Expression.GetFuncType(paramType, typeof(Task)), target: service.GetType(), method: methodInfo.Name);
                 else
-                    methodDelegate = Delegate.CreateDelegate(typeof(Func<Task>).MakeGenericType(paramType), target: service, method: methodInfo.Name);
+                    methodDelegate = Delegate.CreateDelegate(Expression.GetFuncType(paramType, typeof(Task)), target: service, method: methodInfo.Name);
             }
             else
             {
                 if (methodInfo.IsStatic)
-                    methodDelegate = Delegate.CreateDelegate(typeof(Action<>).MakeGenericType(paramType), target: service.GetType(), method: methodInfo.Name);
+                    methodDelegate = Delegate.CreateDelegate(Expression.GetActionType(paramType), target: service.GetType(), method: methodInfo.Name);
                 else
-                    methodDelegate = Delegate.CreateDelegate(typeof(Action<>).MakeGenericType(paramType), target: service, method: methodInfo.Name);
+                    methodDelegate = Delegate.CreateDelegate(Expression.GetActionType(paramType), target: service, method: methodInfo.Name);
             }
 
             return async (HttpContext context) =>
@@ -465,25 +487,38 @@ namespace BeyondImmersion.BannouService
                 try
                 {
                     if (!context.Request.HasJsonContentType())
-                        throw new Exception();
+                        throw new Exception("The message content type is not application/JSON.");
 
                     var requestObj = await context.Request.ReadFromJsonAsync(paramType.GenericTypeArguments[0]);
                     if (requestObj == null)
-                        throw new Exception();
+                        throw new Exception("Failed to parse the request payload into the given JSON data model.");
 
-                    var responseObj = Activator.CreateInstance(type: paramType.GenericTypeArguments[1], nonPublic: true);
+                    var responseObj = (IServiceResponse?)Activator.CreateInstance(type: paramType.GenericTypeArguments[1], nonPublic: true);
                     if (responseObj == null)
-                        throw new Exception();
+                        throw new Exception("Failed to instantiate the response data model.");
 
                     var contextInstance = Activator.CreateInstance(type: paramType, context, requestObj, responseObj);
                     if (contextInstance == null)
-                        throw new Exception();
+                        throw new Exception("Failed to instantiate the message context container.");
 
-                    methodDelegate.DynamicInvoke(contextInstance);
+                    _ = methodDelegate.DynamicInvoke(contextInstance);
+
+                    // automatically send back response, if that wasn't handled by the method
+                    await Task.CompletedTask;
+                    if (!context.Response.HasStarted && responseObj.HasRequiredProperties())
+                    {
+                        if (context.Response.Body.Length == 0)
+                            await context.Response.WriteAsJsonAsync(responseObj, paramType.GenericTypeArguments[1], ShutdownCancellationTokenSource.Token);
+
+                        await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+                    }
                 }
                 catch (Exception e)
                 {
-                    Logger.Log(LogLevel.Error, e, $"Error handling request to dapr service endpoint.",
+                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "500", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
+                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,

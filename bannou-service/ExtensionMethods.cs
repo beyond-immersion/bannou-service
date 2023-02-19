@@ -11,14 +11,14 @@ namespace BeyondImmersion.BannouService
 {
     public static partial class ExtensionMethods
     {
-        [GeneratedRegex("[^a-z0-9\\s-]")]
-        private static partial Regex Regex_InvalidChars();
+        [GeneratedRegex("[^a-zA-Z0-9\\s-]")]
+        public static partial Regex Regex_InvalidChars();
 
         [GeneratedRegex("\\s")]
-        private static partial Regex Regex_Spaces();
+        public static partial Regex Regex_Spaces();
 
         [GeneratedRegex("\\s+")]
-        private static partial Regex Regex_MultipleSpaces();
+        public static partial Regex Regex_MultipleSpaces();
 
         /// <summary>
         /// Logging extension/helper methods, for including additional context as JSON.

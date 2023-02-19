@@ -20,7 +20,7 @@ namespace BeyondImmersion.BannouService.Services.Messages
     /// 
     /// Helps automate parsing requests to the appropriate data models.
     /// </summary>
-    public sealed class ServiceRequestContext<T, S> : ServiceRequestBase
+    public sealed class ServiceRequestContext<T, S> : RequestContextBase
         where T : IServiceRequest
         where S : IServiceResponse
     {

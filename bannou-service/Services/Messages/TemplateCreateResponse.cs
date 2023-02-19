@@ -2,6 +2,7 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services.Data;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -12,7 +13,9 @@ namespace BeyondImmersion.BannouService.Services.Messages
     /// The response model for service API calls to `/template/create`.
     /// </summary>
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-    public class TemplateCreateResponse : ServiceResponseBase
+    public class TemplateCreateResponse : ServiceResponse
     {
+        [JsonProperty("data")]
+        public JObject Data { get; set; }
     }
 }
