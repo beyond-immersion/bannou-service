@@ -487,15 +487,18 @@ namespace BeyondImmersion.BannouService
                 object? requestObj = null;
                 try
                 {
-                    if (!string.Equals(System.Net.Mime.MediaTypeNames.Application.Json, context.Request.ContentType, StringComparison.InvariantCultureIgnoreCase))
-                        throw new Exception("The request content type is not application/json.");
+                    if (contextType.GenericTypeArguments[0] != typeof(EmptyServiceRequest) && context.Request.ContentLength > 0)
+                    {
+                        if (!string.Equals(System.Net.Mime.MediaTypeNames.Application.Json, context.Request.ContentType, StringComparison.InvariantCultureIgnoreCase))
+                            throw new Exception("The request content type is not application/json.");
 
-                    if (!context.Request.HasJsonContentType())
-                        throw new Exception("The request content is not valid JSON.");
+                        if (!context.Request.HasJsonContentType())
+                            throw new Exception("The request content is not valid JSON.");
 
-                    requestObj = await context.Request.ReadFromJsonAsync(contextType.GenericTypeArguments[0]);
-                    if (requestObj == null)
-                        throw new Exception("Required fields for the service request are missing.");
+                        requestObj = await context.Request.ReadFromJsonAsync(contextType.GenericTypeArguments[0]);
+                        if (requestObj == null)
+                            throw new Exception("Required fields for the service request are missing.");
+                    }
                 }
                 catch (Exception e)
                 {
@@ -513,16 +516,11 @@ namespace BeyondImmersion.BannouService
                 }
 
                 IServiceResponse? responseObj = null;
-                object? contextInstance = null;
                 try
                 {
                     responseObj = (IServiceResponse?)Activator.CreateInstance(type: contextType.GenericTypeArguments[1], nonPublic: true);
                     if (responseObj == null)
                         throw new Exception("Failed to instantiate the response data model.");
-
-                    contextInstance = Activator.CreateInstance(type: contextType, context, requestObj, responseObj);
-                    if (contextInstance == null)
-                        throw new Exception("Failed to instantiate the message context container.");
                 }
                 catch (Exception e)
                 {
@@ -541,6 +539,10 @@ namespace BeyondImmersion.BannouService
 
                 try
                 {
+                    var contextInstance = Activator.CreateInstance(type: contextType, context, requestObj, responseObj);
+                    if (contextInstance == null)
+                        throw new Exception("Failed to instantiate the message context container.");
+
                     _ = methodDelegate.DynamicInvoke(contextInstance);
 
                     // automatically send back response, if that wasn't handled by the method

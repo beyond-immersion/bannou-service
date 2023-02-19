@@ -31,8 +31,9 @@ namespace BeyondImmersion.BannouService.Services.Messages
 
         /// <summary>
         /// Data model for service request params.
+        /// Will be null if no request content.
         /// </summary>
-        public T Request { get; }
+        public T? Request { get; }
 
         /// <summary>
         /// Instantiated service response object-
@@ -41,7 +42,7 @@ namespace BeyondImmersion.BannouService.Services.Messages
         public S Response { get; }
 
         public ServiceRequestContext() { }
-        public ServiceRequestContext(HttpContext httpContext, T request, S response)
+        public ServiceRequestContext(HttpContext httpContext, T? request, S response)
         {
             HttpContext = httpContext;
             Request = request;
