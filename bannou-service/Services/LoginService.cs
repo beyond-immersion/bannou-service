@@ -64,20 +64,20 @@ namespace BeyondImmersion.BannouService.Services
         /// for any follow-up requests (if there's a queue).
         /// </summary>
         [ServiceRoute("/")]
-        public async Task Login(HttpContext requestContext)
+        public async Task Login(HttpContext context)
         {
-            HttpResponse response = requestContext.Response;
+            HttpResponse response = context.Response;
             response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
             response.StatusCode = 200;
 
             var refreshRate = 15;
             var nextTickTime = refreshRate + (DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000d);
-            var queueURL = $"{requestContext.Request.Path}/{ForwardServiceID ?? Program.ServiceGUID}";
+            var queueURL = $"{context.Request.Path}/{ForwardServiceID ?? Program.ServiceGUID}";
             var queuePosition = 0;
 
             // if the queue id is found in headers, use it
             string? queueID = null;
-            if (requestContext.Request.Headers.TryGetValue("queue_id", out Microsoft.Extensions.Primitives.StringValues queueIDHeader))
+            if (context.Request.Headers.TryGetValue("queue_id", out Microsoft.Extensions.Primitives.StringValues queueIDHeader))
                 queueID = queueIDHeader.ToString();
 
             // - otherwise generate a new one
@@ -90,7 +90,7 @@ namespace BeyondImmersion.BannouService.Services
             response.Headers.Add("queue_position", queuePosition.ToString());
             response.Headers.Add("next_tick", nextTickTime.ToString());
 
-            await requestContext.Response.StartAsync();
+            await context.Response.StartAsync();
         }
 
         /// <summary>
@@ -98,17 +98,9 @@ namespace BeyondImmersion.BannouService.Services
         /// datastore happen at fixed intervals and no more frequently, even if a client is impatient.
         /// </summary>
         [ServiceRoute($"/{ServiceConstants.SERVICE_UUID_PLACEHOLDER}")]
-        public async Task LoginDirect(HttpContext requestContext)
+        public async Task LoginDirect(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            if (!requestContext.Request.Headers.TryGetValue("queue_id", out _))
-            {
-                requestContext.Response.StatusCode = 400;
-                return;
-            }
-
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
     }
 }

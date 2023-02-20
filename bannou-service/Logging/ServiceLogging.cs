@@ -6,8 +6,16 @@ using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Logging
 {
+    /// <summary>
+    /// A collection of helpers for generating service logs.
+    /// Extends log method to able to include arbitrary JSON
+    /// metadata, along with the message.
+    /// </summary>
     public static class ServiceLogging
     {
+        /// <summary>
+        /// Return a JSON-enabled logger factory.
+        /// </summary>
         public static ILoggerFactory LogFactory { get; } = LoggerFactory.Create((options) =>
             {
                 ILoggingBuilder unused1 = options.AddJsonConsole((options) =>
@@ -23,10 +31,20 @@ namespace BeyondImmersion.BannouService.Logging
                 ILoggingBuilder unused = options.SetMinimumLevel(LogLevel.Trace);
             });
 
+        /// <summary>
+        /// Create a JSON-enabled service logger.
+        /// </summary>
         public static ILogger CreateLogger() => LogFactory.CreateLogger("service");
 
+        /// <summary>
+        /// Create a JSON-enabled logger for the given class.
+        /// </summary>
         public static ILogger CreateLogger<T>() => LogFactory.CreateLogger<T>();
 
+        /// <summary>
+        /// Additional log method that allows for arbitrary JSON metadata to be included.
+        /// Has accompanying extension methods to logger, for seamless use in service.
+        /// </summary>
         public static void Log(ILogger logger, LogLevel level, Exception? exception, string message, JObject? logParams,
             [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
         {
@@ -49,6 +67,9 @@ namespace BeyondImmersion.BannouService.Logging
             logger.Log(level, new EventId(), logParamsObj, exception, DefaultLogStateFormatter);
         }
 
+        /// <summary>
+        /// Log state formatter that packs the JSON log message (if given) in with the exception message (if exists).
+        /// </summary>
         public static string DefaultLogStateFormatter(JObject state, Exception? exc)
         {
             return state != null && state.TryGetValue("message", out JToken? msg) && msg.Type == JTokenType.String

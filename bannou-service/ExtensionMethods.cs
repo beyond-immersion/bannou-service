@@ -11,14 +11,23 @@ namespace BeyondImmersion.BannouService
 {
     public static partial class ExtensionMethods
     {
+        /// <summary>
+        /// Regex for stripping out characters that would be invalid in URLs.
+        /// </summary>
         [GeneratedRegex("[^a-zA-Z0-9\\s-]")]
-        public static partial Regex Regex_InvalidChars();
+        public static partial Regex REGEX_InvalidChars();
 
+        /// <summary>
+        /// Regex for replacing single spaces.
+        /// </summary>
         [GeneratedRegex("\\s")]
-        public static partial Regex Regex_Spaces();
+        public static partial Regex REGEX_Spaces();
 
+        /// <summary>
+        /// Regex for replacing double spaces.
+        /// </summary>
         [GeneratedRegex("\\s+")]
-        public static partial Regex Regex_MultipleSpaces();
+        public static partial Regex REGEX_MultipleSpaces();
 
         /// <summary>
         /// Logging extension/helper methods, for including additional context as JSON.
@@ -62,10 +71,10 @@ namespace BeyondImmersion.BannouService
         public static string GenerateSlug(this string phrase)
         {
             var str = phrase.RemoveAccent().ToLower();
-            str = Regex_InvalidChars().Replace(str, "");
-            str = Regex_MultipleSpaces().Replace(str, " ").Trim();
+            str = REGEX_InvalidChars().Replace(str, "");
+            str = REGEX_MultipleSpaces().Replace(str, " ").Trim();
             str = str[..(str.Length <= 45 ? str.Length : 45)].Trim();
-            str = Regex_Spaces().Replace(str, "-");
+            str = REGEX_Spaces().Replace(str, "-");
             return str;
         }
 

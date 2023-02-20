@@ -13,47 +13,39 @@ namespace BeyondImmersion.BannouService.Services
     public class LeaderboardService : IDaprService
     {
         /// <summary>
-        /// 
+        /// List available leaderboards.
         /// </summary>
         [ServiceRoute("/list")]
-        public async Task ListLeaderboards(HttpContext requestContext)
+        public async Task ListLeaderboards(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
+        /// Create new leaderboard.
         /// </summary>
         [ServiceRoute("/create")]
-        public async Task CreateLeaderboard(HttpContext requestContext)
+        public async Task CreateLeaderboard(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
+        /// Update existing leaderboard.
         /// </summary>
         [ServiceRoute("/update")]
-        public async Task UpdateLeaderboard(HttpContext requestContext)
+        public async Task UpdateLeaderboard(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
+        /// Destroy existing leaderboard.
         /// </summary>
         [ServiceRoute("/destroy")]
-        public async Task DestroyLeaderboard(HttpContext requestContext)
+        public async Task DestroyLeaderboard(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
     }
 }

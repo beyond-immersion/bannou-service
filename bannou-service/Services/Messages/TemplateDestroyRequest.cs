@@ -9,7 +9,7 @@ using System.Collections.Generic;
 namespace BeyondImmersion.BannouService.Services.Messages
 {
     /// <summary>
-    /// The model for service API calls to `/template/destroy`.
+    /// The request model for service API calls to `/template/destroy`.
     /// </summary>
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
     public class TemplateDestroyRequest : ServiceRequestBase

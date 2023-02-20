@@ -13,36 +13,30 @@ namespace BeyondImmersion.BannouService.Services
     public class ProfileService : IDaprService
     {
         /// <summary>
-        /// 
+        /// Create new player profile.
         /// </summary>
         [ServiceRoute("/create")]
-        public async Task CreateProfile(HttpContext requestContext)
+        public async Task CreateProfile(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
+        /// Update existing player profile.
         /// </summary>
         [ServiceRoute("/update")]
-        public async Task UpdateProfile(HttpContext requestContext)
+        public async Task UpdateProfile(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
+        /// Destroy existing player profile.
         /// </summary>
         [ServiceRoute("/destroy")]
-        public async Task DestroyProfile(HttpContext requestContext)
+        public async Task DestroyProfile(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
     }
 }

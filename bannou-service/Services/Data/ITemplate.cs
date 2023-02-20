@@ -9,6 +9,8 @@ namespace BeyondImmersion.BannouService.Services.Data
     /// as the starting points / definitions for in-game
     /// object types. This can include items, skills, 
     /// spells, etc...
+    /// 
+    /// See: <see cref="Template"/> and <see cref="TemplateService"/>
     /// </summary>
     public interface ITemplate
     {

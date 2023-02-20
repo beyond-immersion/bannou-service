@@ -13,25 +13,24 @@ namespace BeyondImmersion.BannouService.Services
     public class AuthorizationService : IDaprService
     {
         /// <summary>
-        /// 
+        /// Shared endpoint to try authorizing a client connection.
+        /// Will hand back a specific instance endpoint to use, for
+        /// follow-up requests / exchanges.
         /// </summary>
         [ServiceRoute("/")]
-        public async Task Authorize(HttpContext requestContext)
+        public async Task Authorize(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
+        /// Instance endpoint, for any follow-up exchanges beyond the
+        /// initial handshake, for authorizing a client connection.
         /// </summary>
         [ServiceRoute($"/{ServiceConstants.SERVICE_UUID_PLACEHOLDER}")]
-        public async Task AuthorizeDirect(HttpContext requestContext)
+        public async Task AuthorizeDirect(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
     }
 }
