@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Logging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Services.Messages;
 using Newtonsoft.Json.Linq;
+using System.Net;
 using System.Net.Mime;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -99,7 +100,7 @@ namespace BeyondImmersion.BannouService
             if (cancellationToken == default)
                 cancellationToken = Program.ShutdownCancellationTokenSource.Token;
 
-            if (data != null && (typeof(T) != typeof(ServiceResponse) || data.Code != 200))
+            if (data != null && data.HasData())
             {
                 context.Response.StatusCode = data.Code;
                 context.Response.ContentType = MediaTypeNames.Application.Json;
@@ -112,13 +113,26 @@ namespace BeyondImmersion.BannouService
         /// <summary>
         /// Async extension method for generating and sending a JSON response to client.
         /// </summary>
-        public static async Task SendResponseAsync(this HttpContext context, CancellationToken cancellationToken = default)
-        {
-            if (cancellationToken == default)
-                cancellationToken = Program.ShutdownCancellationTokenSource.Token;
+        public static async Task SendResponseAsync(this HttpContext context)
+            => await context.Response.StartAsync(Program.ShutdownCancellationTokenSource.Token);
 
-            await context.Response.StartAsync(cancellationToken);
-        }
+        /// <summary>
+        /// Async extension method for generating and sending a JSON response to client.
+        /// </summary>
+        public static async Task SendResponseAsync(this HttpContext context, CancellationToken cancellationToken)
+            => await context.Response.StartAsync(cancellationToken);
+
+        /// <summary>
+        /// Async extension method for generating and sending a JSON response to client.
+        /// </summary>
+        public static async Task SendResponseAsync(this HttpContext context, ResponseCodes responseCode, params string[] additionalMessages)
+            => await SendResponseAsync(context, new ServiceResponse().SetResponse(responseCode, additionalMessages), Program.ShutdownCancellationTokenSource.Token);
+
+        /// <summary>
+        /// Async extension method for generating and sending a JSON response to client.
+        /// </summary>
+        public static async Task SendResponseAsync(this HttpContext context, ResponseCodes responseCode, string[] additionalMessages, CancellationToken cancellationToken)
+            => await SendResponseAsync(context, new ServiceResponse().SetResponse(responseCode, additionalMessages), cancellationToken);
 
         /// <summary>
         /// Extension method for generating and sending a JSON response to client.
@@ -126,7 +140,7 @@ namespace BeyondImmersion.BannouService
         public static void SendResponse<T>(this HttpContext context, T? data)
             where T : IServiceResponse
         {
-            if (data != null && (typeof(T) != typeof(ServiceResponse) || data.Code != 200))
+            if (data != null && data.HasData())
             {
                 context.Response.StatusCode = data.Code;
                 context.Response.ContentType = MediaTypeNames.Application.Json;
@@ -141,5 +155,11 @@ namespace BeyondImmersion.BannouService
         /// </summary>
         public static void SendResponse(this HttpContext context)
             => context.Response.StartAsync(Program.ShutdownCancellationTokenSource.Token).Wait(Program.ShutdownCancellationTokenSource.Token);
+
+        /// <summary>
+        /// Extension method for generating and sending a JSON response to client.
+        /// </summary>
+        public static void SendResponse(this HttpContext context, ResponseCodes responseCode, params string?[]? additionalMessages)
+            => SendResponse(context, new ServiceResponse().SetResponse(responseCode, additionalMessages));
     }
 }

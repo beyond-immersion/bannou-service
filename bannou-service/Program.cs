@@ -393,7 +393,7 @@ namespace BeyondImmersion.BannouService
                 }
                 catch (Exception e)
                 {
-                    await context.SendResponseAsync(new ServiceResponse(500, e.ToString()));
+                    await context.SendResponseAsync(new ServiceResponse(ResponseCodes.ServerError, e.ToString()));
 
                     Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
@@ -438,7 +438,7 @@ namespace BeyondImmersion.BannouService
                 }
                 catch (Exception e)
                 {
-                    context.SendResponse(new ServiceResponse(500, e.ToString()) { });
+                    await context.SendResponseAsync(new ServiceResponse(ResponseCodes.ServerError, e.ToString()));
 
                     Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
@@ -508,7 +508,7 @@ namespace BeyondImmersion.BannouService
                 }
                 catch (Exception e)
                 {
-                    await context.SendResponseAsync(new ServiceResponse(400, e.ToString()) { });
+                    await context.SendResponseAsync(new ServiceResponse(ResponseCodes.BadRequest, e.ToString()));
 
                     Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
@@ -530,7 +530,7 @@ namespace BeyondImmersion.BannouService
                 }
                 catch (Exception e)
                 {
-                    await context.SendResponseAsync(new ServiceResponse(500, e.ToString()) { });
+                    await context.SendResponseAsync(new ServiceResponse(ResponseCodes.ServerError, e.ToString()));
 
                     Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
@@ -553,7 +553,7 @@ namespace BeyondImmersion.BannouService
                 }
                 catch (Exception e)
                 {
-                    await context.SendResponseAsync(new ServiceResponse(500, e.ToString()) { });
+                    await context.SendResponseAsync(new ServiceResponse(ResponseCodes.ServerError, e.ToString()));
 
                     Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
@@ -573,7 +573,7 @@ namespace BeyondImmersion.BannouService
                         // copy inner response code to outer response code
                         context.Response.StatusCode = responseObj.Code;
 
-                        if (responseObj.GetType() != typeof(ServiceResponse) || responseObj.Code != 200)
+                        if (responseObj.HasData())
                         {
                             context.Response.ContentType = MediaTypeNames.Application.Json;
                             await context.Response.WriteAsJsonAsync(responseObj, contextType.GenericTypeArguments[1], ShutdownCancellationTokenSource.Token);

@@ -22,7 +22,7 @@ namespace BeyondImmersion.BannouService.Services
         {
             var templateID = (string?)context.GetRouteValue("templateID");
             if (string.IsNullOrWhiteSpace(templateID))
-                await context.SendResponseAsync(new ServiceResponse(404, $"{nameof(templateID)} cannot be null or empty"));
+                await context.SendResponseAsync(new ServiceResponse(ResponseCodes.BadRequest, $"{nameof(templateID)} cannot be null or empty"));
 
             Program.Logger.Log(LogLevel.Debug, $"TemplateID is {templateID}");
         }

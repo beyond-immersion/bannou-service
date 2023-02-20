@@ -31,11 +31,12 @@ namespace BeyondImmersion.BannouService.Application
     /// </summary>
     public enum ResponseCodes
     {
-        Ok = 0,
-        Accepted,
-        BadRequest,
-        Unauthorized,
-        ServerBusy,
-        ServerError
+        Ok = 200,
+        Accepted = 202,
+        BadRequest = 400,
+        Unauthorized = 403,
+        NotFound = 404,
+        ServerError = 500,
+        ServerBusy = 503
     }
 }

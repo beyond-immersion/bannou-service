@@ -20,6 +20,16 @@ namespace BeyondImmersion.BannouService.Services.Messages
         /// <summary>
         /// List of messages to return to the client.
         /// </summary>
-        List<string>? Messages { get; }
+        List<string> Messages { get; }
+
+        /// <summary>
+        /// Whether the response has data, or can be discarded.
+        /// </summary>
+        bool HasData();
+
+        /// <summary>
+        /// Set fixed service response, based on a given response code.
+        /// </summary>
+        IServiceResponse SetResponse(ResponseCodes responseCode, params string?[]? additionalMessages);
     }
 }
