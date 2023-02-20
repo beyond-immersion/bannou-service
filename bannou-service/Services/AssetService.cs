@@ -13,48 +13,45 @@ namespace BeyondImmersion.BannouService.Services
     public class AssetService : IDaprService
     {
         /// <summary>
+        /// List the assets in a given asset category.
         /// 
+        /// List only includes metadata about the assets,
+        /// not the content of the assets themselves.
         /// </summary>
-        [ServiceRoute(HttpMethodTypes.POST, "/list")]
-        [ServiceRoute(HttpMethodTypes.GET, "/list")]
-        public async Task ListAssets(HttpContext requestContext)
+        [ServiceRoute("/list")]
+        public async Task ListAssets(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
+        /// Create a new asset. Depending on the asset,
+        /// and the manner of providing the data, this
+        /// could take awhile.
         /// </summary>
         [ServiceRoute("/create")]
-        public async Task CreateAsset(HttpContext requestContext)
+        public async Task CreateAsset(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
+        /// Update the metadata or content or an existing
+        /// asset.
         /// </summary>
         [ServiceRoute("/update")]
-        public async Task UpdateAsset(HttpContext requestContext)
+        public async Task UpdateAsset(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
+        /// Destroy an existing asset.
         /// </summary>
         [ServiceRoute("/destroy")]
-        public async Task DestroyAsset(HttpContext requestContext)
+        public async Task DestroyAsset(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
     }
 }

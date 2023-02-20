@@ -5,7 +5,7 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "BANNOU_ASSET_ENDPOINTS_ENABLED": "True",
+        "BANNOU_TEMPLATE_ENDPOINTS_ENABLED": "True",
         "BANNOU_SKIP_DAPR_HEALTHCHECK": "True"
       },
       "dotnetRunMessages": true,

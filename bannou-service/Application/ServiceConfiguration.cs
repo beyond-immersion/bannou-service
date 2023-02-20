@@ -82,6 +82,13 @@ namespace BeyondImmersion.BannouService.Application
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
+        /// Enable to have this service handle template APIs.
+        /// </summary>
+        [RunServiceIfEnabled<TemplateService>]
+        public bool Template_Endpoints_Enabled { get; set; }
+            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
+
+        /// <summary>
         /// Enable to have this service handle leaderboard APIs.
         /// </summary>
         [RunServiceIfEnabled<LeaderboardService>]

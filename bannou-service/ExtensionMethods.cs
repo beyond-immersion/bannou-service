@@ -5,24 +5,29 @@ using BeyondImmersion.BannouService.Services;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace BeyondImmersion.BannouService
 {
     public static partial class ExtensionMethods
     {
-        public static string GenerateDaprServiceID<T>(this T _)
-            where T : IDaprService
-        {
-            var serviceAttr = typeof(T).GetCustomAttributes(typeof(DaprServiceAttribute), true).FirstOrDefault();
-            if (serviceAttr != null)
-                return $"{((DaprServiceAttribute)serviceAttr).ServicePrefix}_{Program.ServiceGUID}";
+        /// <summary>
+        /// Regex for stripping out characters that would be invalid in URLs.
+        /// </summary>
+        [GeneratedRegex("[^a-zA-Z0-9\\s-]")]
+        public static partial Regex REGEX_InvalidChars();
 
-            var serviceName = typeof(T).Name.ToUpperInvariant();
-            if (serviceName.EndsWith("service", StringComparison.CurrentCultureIgnoreCase))
-                serviceName = serviceName.Remove(serviceName.Length - "service".Length, "service".Length);
+        /// <summary>
+        /// Regex for replacing single spaces.
+        /// </summary>
+        [GeneratedRegex("\\s")]
+        public static partial Regex REGEX_Spaces();
 
-            return $"{serviceName}_{Program.ServiceGUID}";
-        }
+        /// <summary>
+        /// Regex for replacing double spaces.
+        /// </summary>
+        [GeneratedRegex("\\s+")]
+        public static partial Regex REGEX_MultipleSpaces();
 
         /// <summary>
         /// Logging extension/helper methods, for including additional context as JSON.
@@ -58,6 +63,52 @@ namespace BeyondImmersion.BannouService
 
             message = null;
             return false;
+        }
+
+        /// <summary>
+        /// Generate a URL-safe slug from any string.
+        /// </summary>
+        public static string GenerateSlug(this string phrase)
+        {
+            var str = phrase.RemoveAccent().ToLower();
+            str = REGEX_InvalidChars().Replace(str, "");
+            str = REGEX_MultipleSpaces().Replace(str, " ").Trim();
+            str = str[..(str.Length <= 45 ? str.Length : 45)].Trim();
+            str = REGEX_Spaces().Replace(str, "-");
+            return str;
+        }
+
+        /// <summary>
+        /// Remove accent characters from a string.
+        /// Returns new string.
+        /// </summary>
+        public static string RemoveAccent(this string txt)
+        {
+            var bytes = System.Text.Encoding.GetEncoding("Cyrillic").GetBytes(txt);
+            return System.Text.Encoding.ASCII.GetString(bytes);
+        }
+
+        /// <summary>
+        /// Async extension method for generating and sending a JSON response to client.
+        /// </summary>
+        public static async Task SendResponseAsync<T>(this HttpContext context, T data, CancellationToken cancellationToken = default)
+            where T : class
+        {
+            if (cancellationToken == default)
+                cancellationToken = Program.ShutdownCancellationTokenSource.Token;
+
+            await context.Response.WriteAsJsonAsync(data, cancellationToken);
+            await context.Response.StartAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Extension method for generating and sending a JSON response to client.
+        /// </summary>
+        public static void SendResponse<T>(this HttpContext context, T data)
+            where T : class
+        {
+            context.Response.WriteAsJsonAsync(data, Program.ShutdownCancellationTokenSource.Token).Wait(Program.ShutdownCancellationTokenSource.Token);
+            context.Response.StartAsync(Program.ShutdownCancellationTokenSource.Token).Wait(Program.ShutdownCancellationTokenSource.Token);
         }
     }
 }

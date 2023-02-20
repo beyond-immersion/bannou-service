@@ -2,11 +2,14 @@ using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Logging;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Services.Messages;
 using Dapr;
 using Dapr.Client;
+using Google.Api;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 
@@ -58,7 +61,7 @@ namespace BeyondImmersion.BannouService
 
             ServiceGUID = Configuration.Force_Service_ID ?? Guid.NewGuid().ToString().ToLower();
 
-            using WebApplication? webApp = WebApplication.CreateBuilder(args)?.Build();
+            WebApplication? webApp = WebApplication.CreateBuilder(args)?.Build();
             if (webApp == null)
             {
                 Logger.Log(LogLevel.Error, null, "Building web application failed- exiting application.");
@@ -94,10 +97,11 @@ namespace BeyondImmersion.BannouService
             }
             catch (Exception e)
             {
-                Logger.Log(LogLevel.Error, e, "Starting emergency service shutdown.");
+                Logger.Log(LogLevel.Error, e, "A critical error has occurred- starting service shutdown.");
             }
             finally
             {
+                await webApp.DisposeAsync();
                 DaprClient.Dispose();
             }
 
@@ -248,27 +252,7 @@ namespace BeyondImmersion.BannouService
 
                     try
                     {
-                        if (routeMethodInfo.GetParameters().Length > 1 || !new Type?[] { null, typeof(HttpContext) }.Contains(routeMethodInfo.GetParameters()?.FirstOrDefault()?.ParameterType))
-                        {
-                            Logger.Log(LogLevel.Error, null, $"Dapr route methods can only contain one parameter, of type HttpContext.",
-                                logParams: new JObject()
-                                {
-                                    ["service_type"] = serviceInstance.GetType().Name,
-                                    ["endpoint_type"] = routeAttr.HttpMethod.ToString()
-                                });
-                            continue;
-                        }
-
-                        if (!new[] { typeof(void), typeof(Task) }.Contains(routeMethodInfo.ReturnType))
-                        {
-                            Logger.Log(LogLevel.Error, null, $"Dapr route methods must have void or task return type.",
-                                logParams: new JObject()
-                                {
-                                    ["service_type"] = serviceInstance.GetType().Name,
-                                    ["endpoint_type"] = routeAttr.HttpMethod.ToString()
-                                });
-                            continue;
-                        }
+                        Delegate methodDelegate = CreateServiceEndpointDelegate(routeMethodInfo, serviceInstance);
 
                         var routePrefix = serviceAttr.ServicePrefix ?? "";
                         if (string.IsNullOrWhiteSpace(routePrefix))
@@ -291,14 +275,6 @@ namespace BeyondImmersion.BannouService
                             if (routeSuffix.EndsWith('/'))
                                 routeSuffix = routeSuffix.Remove(routeSuffix.Length - 1, 1);
                         }
-
-                        Delegate methodDelegate = routeMethodInfo.IsStatic
-                            ? routeMethodInfo.ReturnType == typeof(Task)
-                                ? Delegate.CreateDelegate(typeof(Func<HttpContext, Task>), target: serviceInstance.GetType(), method: routeMethodInfo.Name)
-                                : Delegate.CreateDelegate(typeof(Action<HttpContext>), target: serviceInstance.GetType(), method: routeMethodInfo.Name)
-                            : routeMethodInfo.ReturnType == typeof(Task)
-                                ? Delegate.CreateDelegate(typeof(Func<HttpContext, Task>), target: serviceInstance, method: routeMethodInfo.Name, ignoreCase: true)
-                                : Delegate.CreateDelegate(typeof(Action<HttpContext>), target: serviceInstance, method: routeMethodInfo.Name, ignoreCase: true);
 
                         switch (routeAttr.HttpMethod)
                         {
@@ -323,7 +299,8 @@ namespace BeyondImmersion.BannouService
                                     logParams: new JObject()
                                     {
                                         ["service_type"] = serviceInstance.GetType().Name,
-                                        ["endpoint_type"] = routeAttr.HttpMethod.ToString()
+                                        ["http_type"] = routeAttr.HttpMethod.ToString(),
+                                        ["method"] = routeMethodInfo.Name
                                     });
                                 continue;
                         }
@@ -332,7 +309,8 @@ namespace BeyondImmersion.BannouService
                             logParams: new JObject()
                             {
                                 ["service_type"] = serviceInstance.GetType().Name,
-                                ["endpoint_type"] = routeAttr.HttpMethod.ToString()
+                                ["http_type"] = routeAttr.HttpMethod.ToString(),
+                                ["method"] = routeMethodInfo.Name
                             });
                     }
                     catch (Exception e)
@@ -341,13 +319,269 @@ namespace BeyondImmersion.BannouService
                             logParams: new JObject()
                             {
                                 ["service_type"] = serviceInstance.GetType().Name,
-                                ["endpoint_type"] = routeAttr.HttpMethod.ToString()
+                                ["http_type"] = routeAttr.HttpMethod.ToString(),
+                                ["method"] = routeMethodInfo.Name
                             });
                     }
                 }
             }
 
             return endpointAdded;
+        }
+
+        /// <summary>
+        /// Create delegate to HTTP service endpoint. Method can be static or instance.
+        /// 
+        /// Method must return void or async Task.
+        /// Method must be parameterless, or accept a single parameter of type <see cref="HttpContext"/> or <see cref="ServiceRequestContext{T, S}"/>.
+        /// </summary>
+        private static Delegate CreateServiceEndpointDelegate(MethodInfo methodInfo, IDaprService service)
+        {
+            var methodParameters = methodInfo.GetParameters();
+            if (methodParameters.Length > 1)
+                throw new Exception($"Dapr service endpoints can only contain one parameter, or none.");
+
+            if (methodParameters.Length == 1 && !new Type[] { typeof(HttpContext), typeof(RequestContextBase) }
+                .Any(t => t.IsAssignableFrom(methodParameters.First().ParameterType)))
+                throw new Exception($"Dapr service endpoints can only contain one parameter, of type HttpContext or derived from ServiceRequestContext.");
+
+            if (!new[] { typeof(void), typeof(Task) }.Contains(methodInfo.ReturnType))
+                throw new Exception($"Dapr service endpoints must have void or async/task return type.");
+
+            Delegate? methodDelegate = null;
+            if (!methodParameters.Any())
+                methodDelegate = CreateParameterlessDelegateWrapper(methodInfo, service);
+            else if (typeof(HttpContext).IsAssignableFrom(methodParameters.First().ParameterType))
+                methodDelegate = CreateHTTPDelegateWrapper(methodInfo, service);
+            else if (typeof(RequestContextBase).IsAssignableFrom(methodParameters.First().ParameterType))
+                methodDelegate = CreateContextDelegateWrapper(methodInfo, service);
+
+            if (methodDelegate == null)
+                throw new InvalidOperationException("Could not create static service endpoint delegate.");
+
+            return methodDelegate;
+        }
+
+        /// <summary>
+        /// Create wrapper delegate for making requests into service endpoints.
+        /// </summary>
+        private static Delegate? CreateParameterlessDelegateWrapper(MethodInfo methodInfo, IDaprService service)
+        {
+            Delegate methodDelegate;
+            if (methodInfo.ReturnType == typeof(Task))
+            {
+                if (methodInfo.IsStatic)
+                    methodDelegate = Delegate.CreateDelegate(typeof(Func<Task>), target: service.GetType(), method: methodInfo.Name);
+                else
+                    methodDelegate = Delegate.CreateDelegate(typeof(Func<Task>), target: service, method: methodInfo.Name);
+            }
+            else
+            {
+                if (methodInfo.IsStatic)
+                    methodDelegate = Delegate.CreateDelegate(typeof(Action), target: service.GetType(), method: methodInfo.Name);
+                else
+                    methodDelegate = Delegate.CreateDelegate(typeof(Action), target: service, method: methodInfo.Name);
+            }
+
+            return async (HttpContext context) =>
+            {
+                try
+                {
+                    _ = methodDelegate.DynamicInvoke();
+                    await context.Response.WriteAsJsonAsync(new ServiceResponse(), ShutdownCancellationTokenSource.Token);
+                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+                }
+                catch (Exception e)
+                {
+                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "500", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
+                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
+                        logParams: new JObject()
+                        {
+                            ["service_type"] = service.GetType().Name,
+                            ["endpoint_type"] = "parameterless"
+                        });
+                }
+            };
+        }
+
+        /// <summary>
+        /// Create wrapper delegate for making requests into service endpoints.
+        /// </summary>
+        private static Delegate? CreateHTTPDelegateWrapper(MethodInfo methodInfo, IDaprService service)
+        {
+            Delegate methodDelegate;
+            if (methodInfo.ReturnType == typeof(Task))
+            {
+                if (methodInfo.IsStatic)
+                    methodDelegate = Delegate.CreateDelegate(typeof(Func<HttpContext, Task>), target: service.GetType(), method: methodInfo.Name);
+                else
+                    methodDelegate = Delegate.CreateDelegate(typeof(Func<HttpContext, Task>), target: service, method: methodInfo.Name);
+            }
+            else
+            {
+                if (methodInfo.IsStatic)
+                    methodDelegate = Delegate.CreateDelegate(typeof(Action<HttpContext>), target: service.GetType(), method: methodInfo.Name);
+                else
+                    methodDelegate = Delegate.CreateDelegate(typeof(Action<HttpContext>), target: service, method: methodInfo.Name);
+            }
+
+            return async (HttpContext context) =>
+            {
+                try
+                {
+                    _ = methodDelegate.DynamicInvoke(context);
+
+                    // automatically send back response, if that wasn't handled by the method
+                    await Task.CompletedTask;
+                    if (!context.Response.HasStarted)
+                    {
+                        if (context.Response.Body.Length == 0)
+                            await context.Response.WriteAsJsonAsync(new ServiceResponse(), ShutdownCancellationTokenSource.Token);
+
+                        await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+                    }
+                }
+                catch (Exception e)
+                {
+                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "500", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
+                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
+                        logParams: new JObject()
+                        {
+                            ["service_type"] = service.GetType().Name,
+                            ["endpoint_type"] = "HTTP context"
+                        });
+                }
+            };
+        }
+
+        /// <summary>
+        /// Create wrapper delegate for making requests into service endpoints.
+        /// Automatically handles parsing the request fields into an object model,
+        /// as well as instantiating a usable response object for the method.
+        /// </summary>
+        private static Delegate CreateContextDelegateWrapper(MethodInfo methodInfo, IDaprService service)
+        {
+            Type contextType = methodInfo.GetParameters()[0].ParameterType;
+            if (!contextType.IsGenericType || contextType.GenericTypeArguments.Length < 2)
+                throw new ArgumentException($"Service contexts must be generic, and contain at least 2 generic type arguments.");
+
+            if (!typeof(IServiceRequest).IsAssignableFrom(contextType.GenericTypeArguments[0]))
+                throw new ArgumentException($"The first generic type argument for service context must implement {nameof(IServiceRequest)}.");
+
+            if (!typeof(IServiceResponse).IsAssignableFrom(contextType.GenericTypeArguments[1]))
+                throw new ArgumentException($"The second generic type argument for service context must implement {nameof(IServiceResponse)}.");
+
+            if (contextType.GenericTypeArguments[0].IsAbstract || !contextType.GenericTypeArguments[0].IsClass
+                || contextType.GenericTypeArguments[1].IsAbstract || !contextType.GenericTypeArguments[1].IsClass)
+                throw new ArgumentException($"The generic type arguments for a service context (request and response models) must be instantiable classes.");
+
+            Delegate methodDelegate;
+            if (methodInfo.ReturnType == typeof(Task))
+            {
+                if (methodInfo.IsStatic)
+                    methodDelegate = Delegate.CreateDelegate(Expression.GetFuncType(contextType, typeof(Task)), target: service.GetType(), method: methodInfo.Name);
+                else
+                    methodDelegate = Delegate.CreateDelegate(Expression.GetFuncType(contextType, typeof(Task)), target: service, method: methodInfo.Name);
+            }
+            else
+            {
+                if (methodInfo.IsStatic)
+                    methodDelegate = Delegate.CreateDelegate(Expression.GetActionType(contextType), target: service.GetType(), method: methodInfo.Name);
+                else
+                    methodDelegate = Delegate.CreateDelegate(Expression.GetActionType(contextType), target: service, method: methodInfo.Name);
+            }
+
+            return async (HttpContext context) =>
+            {
+                object? requestObj = null;
+                try
+                {
+                    if (contextType.GenericTypeArguments[0] != typeof(EmptyServiceRequest) && context.Request.ContentLength > 0)
+                    {
+                        if (!string.Equals(System.Net.Mime.MediaTypeNames.Application.Json, context.Request.ContentType, StringComparison.InvariantCultureIgnoreCase))
+                            throw new Exception("The request content type is not application/json.");
+
+                        if (!context.Request.HasJsonContentType())
+                            throw new Exception("The request content is not valid JSON.");
+
+                        requestObj = await context.Request.ReadFromJsonAsync(contextType.GenericTypeArguments[0], ShutdownCancellationTokenSource.Token);
+                        if (requestObj == null)
+                            throw new Exception("Required fields for the service request are missing.");
+                    }
+                }
+                catch (Exception e)
+                {
+                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "400", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
+                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
+                        logParams: new JObject()
+                        {
+                            ["service_type"] = service.GetType().Name,
+                            ["endpoint_type"] = "service context",
+                            ["failure_point"] = "request"
+                        });
+                    return;
+                }
+
+                IServiceResponse? responseObj = null;
+                try
+                {
+                    responseObj = (IServiceResponse?)Activator.CreateInstance(type: contextType.GenericTypeArguments[1], nonPublic: true);
+                    if (responseObj == null)
+                        throw new Exception("Failed to instantiate the response data model.");
+                }
+                catch (Exception e)
+                {
+                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "500", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
+                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
+                        logParams: new JObject()
+                        {
+                            ["service_type"] = service.GetType().Name,
+                            ["endpoint_type"] = "service context",
+                            ["failure_point"] = "response"
+                        });
+                    return;
+                }
+
+                try
+                {
+                    var contextInstance = Activator.CreateInstance(type: contextType, context, requestObj, responseObj);
+                    if (contextInstance == null)
+                        throw new Exception("Failed to instantiate the message context container.");
+
+                    _ = methodDelegate.DynamicInvoke(contextInstance);
+
+                    // automatically send back response, if that wasn't handled by the method
+                    await Task.CompletedTask;
+                    if (!context.Response.HasStarted && responseObj.HasRequiredProperties())
+                    {
+                        if (context.Response.Body.Length == 0)
+                            await context.Response.WriteAsJsonAsync(responseObj, contextType.GenericTypeArguments[1], ShutdownCancellationTokenSource.Token);
+
+                        await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+                    }
+                }
+                catch (Exception e)
+                {
+                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "500", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
+                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
+                        logParams: new JObject()
+                        {
+                            ["service_type"] = service.GetType().Name,
+                            ["endpoint_type"] = "service context",
+                            ["failure_point"] = "method"
+                        });
+                }
+            };
         }
     }
 }

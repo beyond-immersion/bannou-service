@@ -13,69 +13,57 @@ namespace BeyondImmersion.BannouService.Services
     public class InventoryService : IDaprService
     {
         /// <summary>
-        /// 
+        /// Create new inventory (player, world, chest, etc).
         /// </summary>
         [ServiceRoute("/create")]
-        public async Task CreateInventory(HttpContext requestContext)
+        public async Task CreateInventory(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
+        /// Add items to inventory.
         /// </summary>
         [ServiceRoute("/add")]
-        public async Task AddItems(HttpContext requestContext)
+        public async Task AddItems(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        [ServiceRoute("/remove")]
-        public async Task RemoveItems(HttpContext requestContext)
-        {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
-        }
-
-        /// <summary>
-        /// 
+        /// Update items in inventory.
         /// </summary>
         [ServiceRoute("/update")]
-        public async Task UpdateItem(HttpContext requestContext)
+        public async Task UpdateItem(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
+        /// Remove items from inventory.
+        /// </summary>
+        [ServiceRoute("/remove")]
+        public async Task RemoveItems(HttpContext context)
+        {
+            await Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Transfer items from one inventory to another.
         /// </summary>
         [ServiceRoute("/transfer")]
-        public async Task TransferItems(HttpContext requestContext)
+        public async Task TransferItems(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// 
+        /// Destroy inventory.
         /// </summary>
         [ServiceRoute("/destroy")]
-        public async Task DestroyInventory(HttpContext requestContext)
+        public async Task DestroyInventory(HttpContext context)
         {
-            requestContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Text.Plain;
-            requestContext.Response.StatusCode = 200;
-            await requestContext.Response.StartAsync();
+            await Task.CompletedTask;
         }
     }
 }
