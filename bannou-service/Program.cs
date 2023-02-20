@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Net.Mime;
 using System.Reflection;
 using System.Text.Json;
 
@@ -341,7 +342,7 @@ namespace BeyondImmersion.BannouService
             if (methodParameters.Length > 1)
                 throw new Exception($"Dapr service endpoints can only contain one parameter, or none.");
 
-            if (methodParameters.Length == 1 && !new Type[] { typeof(HttpContext), typeof(RequestContextBase) }
+            if (methodParameters.Length == 1 && !new Type[] { typeof(HttpContext), typeof(ServiceRequestContext) }
                 .Any(t => t.IsAssignableFrom(methodParameters.First().ParameterType)))
                 throw new Exception($"Dapr service endpoints can only contain one parameter, of type HttpContext or derived from ServiceRequestContext.");
 
@@ -353,7 +354,7 @@ namespace BeyondImmersion.BannouService
                 methodDelegate = CreateParameterlessDelegateWrapper(methodInfo, service);
             else if (typeof(HttpContext).IsAssignableFrom(methodParameters.First().ParameterType))
                 methodDelegate = CreateHTTPDelegateWrapper(methodInfo, service);
-            else if (typeof(RequestContextBase).IsAssignableFrom(methodParameters.First().ParameterType))
+            else if (typeof(ServiceRequestContext).IsAssignableFrom(methodParameters.First().ParameterType))
                 methodDelegate = CreateContextDelegateWrapper(methodInfo, service);
 
             if (methodDelegate == null)
@@ -388,13 +389,11 @@ namespace BeyondImmersion.BannouService
                 try
                 {
                     _ = methodDelegate.DynamicInvoke();
-                    await context.Response.WriteAsJsonAsync(new ServiceResponse(), ShutdownCancellationTokenSource.Token);
-                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+                    await context.SendResponseAsync();
                 }
                 catch (Exception e)
                 {
-                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "500", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
-                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+                    await context.SendResponseAsync(new ServiceResponse(500, e.ToString()));
 
                     Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
@@ -434,19 +433,12 @@ namespace BeyondImmersion.BannouService
                     _ = methodDelegate.DynamicInvoke(context);
 
                     // automatically send back response, if that wasn't handled by the method
-                    await Task.CompletedTask;
                     if (!context.Response.HasStarted)
-                    {
-                        if (context.Response.Body.Length == 0)
-                            await context.Response.WriteAsJsonAsync(new ServiceResponse(), ShutdownCancellationTokenSource.Token);
-
-                        await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
-                    }
+                        await context.SendResponseAsync();
                 }
                 catch (Exception e)
                 {
-                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "500", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
-                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+                    context.SendResponse(new ServiceResponse(500, e.ToString()) { });
 
                     Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
@@ -497,12 +489,13 @@ namespace BeyondImmersion.BannouService
 
             return async (HttpContext context) =>
             {
+                // handle request parsing
                 object? requestObj = null;
                 try
                 {
-                    if (contextType.GenericTypeArguments[0] != typeof(EmptyServiceRequest) && context.Request.ContentLength > 0)
+                    if (contextType.GenericTypeArguments[0] != typeof(ServiceRequest) && context.Request.ContentLength > 0)
                     {
-                        if (!string.Equals(System.Net.Mime.MediaTypeNames.Application.Json, context.Request.ContentType, StringComparison.InvariantCultureIgnoreCase))
+                        if (!string.Equals(MediaTypeNames.Application.Json, context.Request.ContentType, StringComparison.InvariantCultureIgnoreCase))
                             throw new Exception("The request content type is not application/json.");
 
                         if (!context.Request.HasJsonContentType())
@@ -515,19 +508,19 @@ namespace BeyondImmersion.BannouService
                 }
                 catch (Exception e)
                 {
-                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "400", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
-                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+                    await context.SendResponseAsync(new ServiceResponse(400, e.ToString()) { });
 
                     Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,
                             ["endpoint_type"] = "service context",
-                            ["failure_point"] = "request"
+                            ["failure_point"] = "parse request"
                         });
                     return;
                 }
 
+                // handle response instantiation
                 IServiceResponse? responseObj = null;
                 try
                 {
@@ -537,48 +530,66 @@ namespace BeyondImmersion.BannouService
                 }
                 catch (Exception e)
                 {
-                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "500", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
-                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
+                    await context.SendResponseAsync(new ServiceResponse(500, e.ToString()) { });
 
                     Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,
                             ["endpoint_type"] = "service context",
-                            ["failure_point"] = "response"
+                            ["failure_point"] = "instantiate response"
                         });
                     return;
                 }
 
+                // handle API method delegate invocation
                 try
                 {
-                    var contextInstance = Activator.CreateInstance(type: contextType, context, requestObj, responseObj);
-                    if (contextInstance == null)
+                    var requestContext = Activator.CreateInstance(type: contextType, context, requestObj, responseObj);
+                    if (requestContext == null)
                         throw new Exception("Failed to instantiate the message context container.");
 
-                    _ = methodDelegate.DynamicInvoke(contextInstance);
+                    _ = methodDelegate.DynamicInvoke(requestContext);
+                }
+                catch (Exception e)
+                {
+                    await context.SendResponseAsync(new ServiceResponse(500, e.ToString()) { });
 
-                    // automatically send back response, if that wasn't handled by the method
-                    await Task.CompletedTask;
-                    if (!context.Response.HasStarted && responseObj.HasRequiredProperties())
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
+                        logParams: new JObject()
+                        {
+                            ["service_type"] = service.GetType().Name,
+                            ["endpoint_type"] = "service context",
+                            ["failure_point"] = "invoke method"
+                        });
+                    return;
+                }
+
+                // automatically send back response, if it wasn't handled in the method
+                try
+                {
+                    if (!context.Response.HasStarted)
                     {
-                        if (context.Response.Body.Length == 0)
+                        // copy inner response code to outer response code
+                        context.Response.StatusCode = responseObj.Code;
+
+                        if (responseObj.GetType() != typeof(ServiceResponse) || responseObj.Code != 200)
+                        {
+                            context.Response.ContentType = MediaTypeNames.Application.Json;
                             await context.Response.WriteAsJsonAsync(responseObj, contextType.GenericTypeArguments[1], ShutdownCancellationTokenSource.Token);
+                        }
 
                         await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
                     }
                 }
                 catch (Exception e)
                 {
-                    await context.Response.WriteAsJsonAsync(new ServiceResponse() { Code = "500", Message = e.ToString() }, ShutdownCancellationTokenSource.Token);
-                    await context.Response.StartAsync(ShutdownCancellationTokenSource.Token);
-
                     Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,
                             ["endpoint_type"] = "service context",
-                            ["failure_point"] = "method"
+                            ["failure_point"] = "auto response"
                         });
                 }
             };

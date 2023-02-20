@@ -14,28 +14,28 @@ namespace BeyondImmersion.BannouService.Services.Messages
     /// 
     /// Utilized exclusively for easier searching of derived types.
     /// </summary>
-    public abstract class RequestContextBase
+    public abstract class ServiceRequestContext
     {
         /// <summary>
         /// HttpContext of client request to endpoint.
         /// </summary>
         public HttpContext HttpContext { get; }
 
-        private RequestContextBase() { }
-        public RequestContextBase(HttpContext httpContext) => HttpContext = httpContext;
+        private ServiceRequestContext() { }
+        public ServiceRequestContext(HttpContext httpContext) => HttpContext = httpContext;
 
         /// <summary>
         /// Async helper method for generating and sending a JSON response to the client.
         /// </summary>
-        public async Task SendResponseAsync<T>(T data, CancellationToken cancellationToken = default)
-            where T : class
+        public async Task SendResponseAsync<T>(T? data, CancellationToken cancellationToken = default)
+            where T : IServiceResponse
             => await HttpContext.SendResponseAsync(data, cancellationToken);
 
         /// <summary>
         /// Helper method for generating and sending a JSON response to the client.
         /// </summary>
-        public void SendResponse<T>(T data)
-            where T : class
+        public void SendResponse<T>(T? data)
+            where T : IServiceResponse
             => HttpContext.SendResponse(data);
     }
 
@@ -44,7 +44,7 @@ namespace BeyondImmersion.BannouService.Services.Messages
     /// 
     /// Helps automate parsing requests to the appropriate data models.
     /// </summary>
-    public sealed class ServiceRequestContext<T, S> : RequestContextBase
+    public sealed class ServiceRequestContext<T, S> : ServiceRequestContext
         where T : IServiceRequest
         where S : IServiceResponse
     {

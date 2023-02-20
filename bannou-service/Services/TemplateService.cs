@@ -15,6 +15,28 @@ namespace BeyondImmersion.BannouService.Services
     public class TemplateService : IDaprService
     {
         /// <summary>
+        /// Dapr endpoint to get a specific template definition.
+        /// </summary>
+        [ServiceRoute(HttpMethodTypes.GET, "/get/{templateID}")]
+        public async Task Get(HttpContext context)
+        {
+            var templateID = (string?)context.GetRouteValue("templateID");
+            if (string.IsNullOrWhiteSpace(templateID))
+                await context.SendResponseAsync(new ServiceResponse(404, $"{nameof(templateID)} cannot be null or empty"));
+
+            Program.Logger.Log(LogLevel.Debug, $"TemplateID is {templateID}");
+        }
+
+        /// <summary>
+        /// Dapr endpoint to list template definitions.
+        /// </summary>
+        [ServiceRoute(HttpMethodTypes.GET, "/list")]
+        public async Task List(ServiceRequestContext<TemplateListRequest, TemplateListResponse> context)
+        {
+            await Task.CompletedTask;
+        }
+
+        /// <summary>
         /// Dapr endpoint to create a new template definition.
         /// </summary>
         [ServiceRoute("/create")]

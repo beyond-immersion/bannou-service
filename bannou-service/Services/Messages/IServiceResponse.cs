@@ -15,21 +15,11 @@ namespace BeyondImmersion.BannouService.Services.Messages
         /// <summary>
         /// Response code (200|400|403|500).
         /// </summary>
-        string Code { get; }
+        int Code { get; }
 
         /// <summary>
-        /// Response message.
+        /// List of messages to return to the client.
         /// </summary>
-        string Message { get; }
-
-        /// <summary>
-        /// Whether the response is valid.
-        /// By default, only checks if the code and message
-        /// are not null/empty, but this can be overridden.
-        /// </summary>
-        bool HasRequiredProperties()
-        {
-            return !string.IsNullOrWhiteSpace(Code) && !string.IsNullOrWhiteSpace(Message);
-        }
+        List<string>? Messages { get; }
     }
 }
