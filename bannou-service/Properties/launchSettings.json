@@ -5,8 +5,8 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "BANNOU_TEMPLATE_ENDPOINTS_ENABLED": "True",
-        "BANNOU_SKIP_DAPR_HEALTHCHECK": "True"
+        "BANNOU_EnableTemplateService": "True",
+        "BANNOU_EmulateDapr": "True"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5012"

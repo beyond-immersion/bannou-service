@@ -4,10 +4,10 @@ using BeyondImmersion.BannouService.Logging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Services.Messages;
 using Newtonsoft.Json.Linq;
-using System.Net;
 using System.Net.Mime;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace BeyondImmersion.BannouService
@@ -87,8 +87,8 @@ namespace BeyondImmersion.BannouService
         /// </summary>
         public static string RemoveAccent(this string txt)
         {
-            var bytes = System.Text.Encoding.GetEncoding("Cyrillic").GetBytes(txt);
-            return System.Text.Encoding.ASCII.GetString(bytes);
+            var bytes = Encoding.GetEncoding("Cyrillic").GetBytes(txt);
+            return Encoding.ASCII.GetString(bytes);
         }
 
         /// <summary>
@@ -104,7 +104,8 @@ namespace BeyondImmersion.BannouService
             {
                 context.Response.StatusCode = data.Code;
                 context.Response.ContentType = MediaTypeNames.Application.Json;
-                await context.Response.WriteAsJsonAsync(data, cancellationToken);
+                context.Response.WriteAsync(JObject.FromObject(data).ToString(Newtonsoft.Json.Formatting.None), cancellationToken)
+                    .Wait(cancellationToken);
             }
 
             await context.Response.StartAsync(cancellationToken);
@@ -144,7 +145,8 @@ namespace BeyondImmersion.BannouService
             {
                 context.Response.StatusCode = data.Code;
                 context.Response.ContentType = MediaTypeNames.Application.Json;
-                context.Response.WriteAsJsonAsync(data, Program.ShutdownCancellationTokenSource.Token).Wait(Program.ShutdownCancellationTokenSource.Token);
+                context.Response.WriteAsync(JObject.FromObject(data).ToString(Newtonsoft.Json.Formatting.None), Program.ShutdownCancellationTokenSource.Token)
+                    .Wait(Program.ShutdownCancellationTokenSource.Token);
             }
 
             context.Response.StartAsync(Program.ShutdownCancellationTokenSource.Token).Wait(Program.ShutdownCancellationTokenSource.Token);

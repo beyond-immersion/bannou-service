@@ -5,6 +5,46 @@ using System.Text.RegularExpressions;
 namespace BeyondImmersion.BannouService.Services.Data
 {
     /// <summary>
+    /// A reference to a given "item context".
+    /// Item contexts contain the bulk of the data
+    /// describing the abilities / usage of a given
+    /// item in a way that game services can act on.
+    /// </summary>
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+    public sealed class TemplateContext
+    {
+        /// <summary>
+        /// The context type- examples might be:
+        ///     "CONSUMABLE"
+        ///     "ARMOR"
+        ///     "WEAPON"
+        ///
+        /// ... or they may be more specific.
+        /// </summary>
+        [JsonProperty("type", Required = Required.Always)]
+        public string Type { get; }
+
+        /// <summary>
+        /// The GUID of the related context entry.
+        /// </summary>
+        [JsonProperty("id", Required = Required.Always)]
+        public string ID { get; }
+
+        private TemplateContext() { }
+        public TemplateContext(string type, string id)
+        {
+            if (string.IsNullOrWhiteSpace(type))
+                throw new ArgumentNullException(nameof(type));
+
+            if (string.IsNullOrWhiteSpace(id))
+                throw new ArgumentNullException(nameof(id));
+
+            Type = type;
+            ID = id;
+        }
+    }
+
+    /// <summary>
     /// Implementation of template data model.
     /// See also: <seealso cref="ITemplate"/> and <seealso cref="TemplateService"/>
     /// 
@@ -13,46 +53,6 @@ namespace BeyondImmersion.BannouService.Services.Data
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
     public sealed class Template : ITemplate
     {
-        /// <summary>
-        /// A reference to a given "item context".
-        /// Item contexts contain the bulk of the data
-        /// describing the abilities / usage of a given
-        /// item in a way that game services can act on.
-        /// </summary>
-        [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-        public sealed class ContextRef : ITemplate.IContextRef
-        {
-            /// <summary>
-            /// The context type- examples might be:
-            ///     "CONSUMABLE"
-            ///     "ARMOR"
-            ///     "WEAPON"
-            ///
-            /// ... or they may be more specific.
-            /// </summary>
-            [JsonProperty("type", Required = Required.Always)]
-            public string Type { get; }
-
-            /// <summary>
-            /// The GUID of the related context entry.
-            /// </summary>
-            [JsonProperty("id", Required = Required.Always)]
-            public string ID { get; }
-
-            private ContextRef() { }
-            public ContextRef(string type, string id)
-            {
-                if (string.IsNullOrWhiteSpace(type))
-                    throw new ArgumentNullException(nameof(type));
-
-                if (string.IsNullOrWhiteSpace(id))
-                    throw new ArgumentNullException(nameof(id));
-
-                this.Type = type;
-                this.ID = id;
-            }
-        }
-
         /// <summary>
         /// The GUID of this template.
         /// </summary>
@@ -92,17 +92,10 @@ namespace BeyondImmersion.BannouService.Services.Data
         /// together with the metadata here.
         /// </summary>
         [JsonProperty("contexts")]
-        public List<ContextRef>? Contexts { get; }
-
-        IEnumerable<string>? ITemplate.Tags => Tags;
-        IEnumerable<ITemplate.IContextRef>? ITemplate.Contexts => Contexts;
+        public List<TemplateContext>? Contexts { get; }
 
         private Template() { }
-
-        public Template(string name, string? action = null, string? description = null, List<string>? tags = null, List<ContextRef>? contexts = null)
-            : this(Guid.NewGuid().ToString().ToLower(), name, action, description, tags, contexts) { }
-
-        public Template(string id, string name, string? action = null, string? description = null, List<string>? tags = null, List<ContextRef>? contexts = null)
+        public Template(string id, string name, string? action = null, string? description = null, List<string>? tags = null, List<TemplateContext>? contexts = null)
         {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentNullException(nameof(id));

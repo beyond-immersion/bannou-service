@@ -66,5 +66,17 @@ namespace BeyondImmersion.BannouService.Services.Messages
             Request = request;
             Response = response;
         }
+
+        /// <summary>
+        /// Async helper method for generating and sending a JSON response to the client.
+        /// </summary>
+        public async Task SendResponseAsync(CancellationToken cancellationToken = default)
+            => await HttpContext.SendResponseAsync(Response, cancellationToken);
+
+        /// <summary>
+        /// Helper method for generating and sending a JSON response to the client.
+        /// </summary>
+        public void SendResponse()
+            => HttpContext.SendResponse(Response);
     }
 }

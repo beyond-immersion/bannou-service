@@ -19,7 +19,7 @@ namespace BeyondImmersion.BannouService.Services.Messages
         /// Response status code.
         /// </summary>
         [JsonProperty("code", Required = Required.Always)]
-        public int Code { get; private set; } = 200;
+        public int Code { get; set; } = 200;
 
         /// <summary>
         /// List of messages to return to the client.
@@ -50,7 +50,17 @@ namespace BeyondImmersion.BannouService.Services.Messages
             if (Code != 200)
                 return true;
 
-            return JObject.FromObject(this).Count > 2;
+            var thisObj = JObject.FromObject(this);
+            if (thisObj.Count > 2)
+            {
+                Program.Logger.Log(LogLevel.Debug, null, $"Object model {GetType().Name} has data.");
+                return true;
+            }
+            else
+            {
+                Program.Logger.Log(LogLevel.Debug, null, $"Object model {GetType().Name} does not have data.");
+                return false;
+            }
         }
 
         /// <summary>
@@ -75,7 +85,7 @@ namespace BeyondImmersion.BannouService.Services.Messages
                     Messages.Add("Unauthorized request");
                     break;
                 case ResponseCodes.NotFound:
-                    Code = 403;
+                    Code = 404;
                     Messages.Add("Resource not found");
                     break;
                 case ResponseCodes.ServerBusy:

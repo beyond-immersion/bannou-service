@@ -35,64 +35,63 @@ namespace BeyondImmersion.BannouService.Application
         /// Set to override GUID for administrative service endpoints.
         /// If not set, will generate a new GUID automatically on service startup.
         /// </summary>
-        public string? Force_Service_ID { get; set; }
+        public string? ForceServiceID { get; set; }
 
         /// <summary>
-        /// Try to load any enabled dapr services/endpoints,
-        /// even if the dapr sidecar isn't loaded.
+        /// Emulate dapr / unit testing mode.
         /// </summary>
-        public bool Skip_Dapr_Healthcheck { get; set; }
+        public bool EmulateDapr { get; set; } = false;
 
         /// <summary>
         /// Enable to have this service handle asset management APIs.
         /// </summary>
         [RunServiceIfEnabled<AssetService>]
-        public bool Asset_Endpoints_Enabled { get; set; }
+        public bool EnableAssetService { get; set; }
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
         /// Enable to have this service handle login queue APIs.
         /// </summary>
         [RunServiceIfEnabled<LoginService>]
-        public bool Login_Endpoints_Enabled { get; set; }
+        public bool EnableLoginService { get; set; }
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         [RequiredForService<LoginService>]
-        public string? Login_Secret { get; set; }
+        public string? LoginSecret { get; set; }
 
         /// <summary>
         /// Enable to have this service handle login authorization APIs.
         /// </summary>
         [RunServiceIfEnabled<AuthorizationService>]
-        public bool Authorization_Endpoints_Enabled { get; set; }
+        public bool EnableAuthorizationService { get; set; }
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
         /// Enable to have this service handle player profile APIs.
         /// </summary>
         [RunServiceIfEnabled<ProfileService>]
-        public bool Profile_Endpoints_Enabled { get; set; }
+        public bool EnableProfileService { get; set; }
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
         /// Enable to have this service handle inventory APIs.
         /// </summary>
         [RunServiceIfEnabled<InventoryService>]
-        public bool Inventory_Endpoints_Enabled { get; set; }
+        public bool EnableInventoryService { get; set; }
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
         /// Enable to have this service handle template APIs.
         /// </summary>
         [RunServiceIfEnabled<TemplateService>]
-        public bool Template_Endpoints_Enabled { get; set; }
+        public bool EnableTemplateService { get; set; }
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
         /// Enable to have this service handle leaderboard APIs.
         /// </summary>
         [RunServiceIfEnabled<LeaderboardService>]
-        public bool Leaderboard_Endpoints_Enabled { get; set; }
+        public bool EnableLeaderboardService { get; set; }
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
@@ -100,7 +99,7 @@ namespace BeyondImmersion.BannouService.Application
         /// </summary>
         public bool IsAnyServiceEnabled()
         {
-            return BaseServiceAttribute.GetPropertiesWithAttribute(this.GetType(), typeof(RunServiceIfEnabledAttribute))
+            return BaseServiceAttribute.GetPropertiesWithAttribute(GetType(), typeof(RunServiceIfEnabledAttribute))
                 .Any(t => (bool?)t.Item1.GetValue(this) ?? false);
         }
 
@@ -115,7 +114,7 @@ namespace BeyondImmersion.BannouService.Application
         /// </summary>
         public bool IsServiceEnabled(Type serviceType)
         {
-            return BaseServiceAttribute.GetPropertiesWithAttribute(this.GetType(), typeof(RunServiceIfEnabledAttribute))
+            return BaseServiceAttribute.GetPropertiesWithAttribute(GetType(), typeof(RunServiceIfEnabledAttribute))
                 .Any(t =>
                 {
                     return t.Item2.GetType().IsGenericType
@@ -136,7 +135,7 @@ namespace BeyondImmersion.BannouService.Application
         /// </summary>
         public bool HasRequiredConfiguration(Type serviceType)
         {
-            return BaseServiceAttribute.GetPropertiesWithAttribute(this.GetType(), typeof(RequiredForServiceAttribute))
+            return BaseServiceAttribute.GetPropertiesWithAttribute(GetType(), typeof(RequiredForServiceAttribute))
                 .All(t =>
                 {
                     if (!t.Item2.GetType().IsGenericType)
