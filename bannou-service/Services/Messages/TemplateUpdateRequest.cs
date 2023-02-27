@@ -17,11 +17,11 @@ namespace BeyondImmersion.BannouService.Services.Messages
         /// <summary>
         /// Template data to be updated.
         /// </summary>
-        [JsonProperty("template", Required = Required.Always)]
-        public Template Template { get; }
+        [JsonProperty("templates", Required = Required.Always)]
+        public Template[] Templates { get; }
 
         private TemplateUpdateRequest() { }
-        public TemplateUpdateRequest(Template template)
-            => Template = template ?? throw new ArgumentNullException(nameof(template));
+        public TemplateUpdateRequest(Template[] templates)
+            => Templates = templates ?? throw new ArgumentNullException(nameof(templates));
     }
 }

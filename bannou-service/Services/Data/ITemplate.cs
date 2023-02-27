@@ -17,10 +17,10 @@ namespace BeyondImmersion.BannouService.Services.Data
     {
         string ID { get; }
         string Name { get; }
-        string? Type { get; }
+        string Type { get; }
         string? Description { get; }
         List<string>? Tags { get; }
-        List<TemplateContext>? Contexts { get; }
+        List<TemplateContextRef>? Contexts { get; }
 
         [JsonIgnore]
         string Slug

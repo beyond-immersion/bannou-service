@@ -92,48 +92,28 @@ namespace BeyondImmersion.BannouService
         }
 
         /// <summary>
-        /// Async extension method for generating and sending a JSON response to client.
+        /// Extension method for generating and sending a JSON response to client.
         /// </summary>
-        public static async Task SendResponseAsync<T>(this HttpContext context, T? data, CancellationToken cancellationToken = default)
-            where T : IServiceResponse
-        {
-            if (cancellationToken == default)
-                cancellationToken = Program.ShutdownCancellationTokenSource.Token;
+        public static void SendResponse(this HttpContext context)
+            => new ServiceResponseContext<ServiceResponse>(context, new ServiceResponse()).SendResponse();
 
-            if (data != null && data.HasData())
-            {
-                context.Response.StatusCode = data.Code;
-                context.Response.ContentType = MediaTypeNames.Application.Json;
-                context.Response.WriteAsync(JObject.FromObject(data).ToString(Newtonsoft.Json.Formatting.None), cancellationToken)
-                    .Wait(cancellationToken);
-            }
-
-            await context.Response.StartAsync(cancellationToken);
-        }
+        /// <summary>
+        /// Extension method for generating and sending a JSON response to client.
+        /// </summary>
+        public static void SendResponse(this HttpContext context, ResponseCodes responseCode, string? message = null)
+            => new ServiceResponseContext<ServiceResponse>(context, new ServiceResponse()).SetAndSendResponse(responseCode, message);
 
         /// <summary>
         /// Async extension method for generating and sending a JSON response to client.
         /// </summary>
         public static async Task SendResponseAsync(this HttpContext context)
-            => await context.Response.StartAsync(Program.ShutdownCancellationTokenSource.Token);
+            => await new ServiceResponseContext<ServiceResponse>(context, new ServiceResponse()).SendResponseAsync();
 
         /// <summary>
         /// Async extension method for generating and sending a JSON response to client.
         /// </summary>
-        public static async Task SendResponseAsync(this HttpContext context, CancellationToken cancellationToken)
-            => await context.Response.StartAsync(cancellationToken);
-
-        /// <summary>
-        /// Async extension method for generating and sending a JSON response to client.
-        /// </summary>
-        public static async Task SendResponseAsync(this HttpContext context, ResponseCodes responseCode, params string[] additionalMessages)
-            => await SendResponseAsync(context, new ServiceResponse().SetResponse(responseCode, additionalMessages), Program.ShutdownCancellationTokenSource.Token);
-
-        /// <summary>
-        /// Async extension method for generating and sending a JSON response to client.
-        /// </summary>
-        public static async Task SendResponseAsync(this HttpContext context, ResponseCodes responseCode, string[] additionalMessages, CancellationToken cancellationToken)
-            => await SendResponseAsync(context, new ServiceResponse().SetResponse(responseCode, additionalMessages), cancellationToken);
+        public static async Task SendResponseAsync(this HttpContext context, ResponseCodes responseCode, string? message = null)
+            => await new ServiceResponseContext<ServiceResponse>(context, new ServiceResponse()).SetAndSendResponseAsync(responseCode, message);
 
         /// <summary>
         /// Extension method for generating and sending a JSON response to client.
@@ -153,15 +133,23 @@ namespace BeyondImmersion.BannouService
         }
 
         /// <summary>
-        /// Extension method for generating and sending a JSON response to client.
+        /// Async extension method for generating and sending a JSON response to client.
         /// </summary>
-        public static void SendResponse(this HttpContext context)
-            => context.Response.StartAsync(Program.ShutdownCancellationTokenSource.Token).Wait(Program.ShutdownCancellationTokenSource.Token);
+        public static async Task SendResponseAsync<T>(this HttpContext context, T? data, CancellationToken cancellationToken = default)
+            where T : IServiceResponse
+        {
+            if (cancellationToken == default)
+                cancellationToken = Program.ShutdownCancellationTokenSource.Token;
 
-        /// <summary>
-        /// Extension method for generating and sending a JSON response to client.
-        /// </summary>
-        public static void SendResponse(this HttpContext context, ResponseCodes responseCode, params string?[]? additionalMessages)
-            => SendResponse(context, new ServiceResponse().SetResponse(responseCode, additionalMessages));
+            if (data != null && data.HasData())
+            {
+                context.Response.StatusCode = data.Code;
+                context.Response.ContentType = MediaTypeNames.Application.Json;
+                context.Response.WriteAsync(JObject.FromObject(data).ToString(Newtonsoft.Json.Formatting.None), cancellationToken)
+                    .Wait(cancellationToken);
+            }
+
+            await context.Response.StartAsync(cancellationToken);
+        }
     }
 }

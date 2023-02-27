@@ -88,6 +88,13 @@ namespace BeyondImmersion.BannouService.Application
             = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
 
         /// <summary>
+        /// The datastore to use for templates.
+        /// </summary>
+        [RequiredForService<TemplateService>]
+        public string TemplateDatastore { get; set; }
+            = "template-datastore";
+
+        /// <summary>
         /// Enable to have this service handle leaderboard APIs.
         /// </summary>
         [RunServiceIfEnabled<LeaderboardService>]

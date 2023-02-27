@@ -15,13 +15,13 @@ namespace BeyondImmersion.BannouService.Services.Messages
     public class TemplateDestroyRequest : ServiceRequest
     {
         /// <summary>
-        /// ID of template to destroy.
+        /// Templates to destroy.
         /// </summary>
-        [JsonProperty("id", Required = Required.Always)]
-        public string ID { get; }
+        [JsonProperty("templates", Required = Required.Always)]
+        public Template[] Templates { get; }
 
         private TemplateDestroyRequest() { }
-        public TemplateDestroyRequest(string templateID)
-            => ID = templateID ?? throw new ArgumentNullException(nameof(templateID));
+        public TemplateDestroyRequest(Template[] templates)
+            => templates = templates ?? throw new ArgumentNullException(nameof(templates));
     }
 }

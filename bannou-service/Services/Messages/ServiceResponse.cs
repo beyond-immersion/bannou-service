@@ -24,23 +24,18 @@ namespace BeyondImmersion.BannouService.Services.Messages
         /// <summary>
         /// List of messages to return to the client.
         /// </summary>
-        [JsonProperty("messages", Required = Required.Default)]
-        public List<string> Messages { get; private set; } = new List<string>();
+        [JsonProperty("message", Required = Required.Default)]
+        public string? Message { get; set; }
 
         public ServiceResponse() { }
-
-        public ServiceResponse(int code, params string?[]? additionalMessages)
+        public ServiceResponse(int code, string? message)
         {
             Code = code;
-
-            if (additionalMessages != null && additionalMessages.Length > 0)
-                foreach (var message in additionalMessages)
-                    if (!string.IsNullOrWhiteSpace(message))
-                        Messages.Add(message);
+            Message = message;
         }
 
-        public ServiceResponse(ResponseCodes responseCode, params string?[]? additionalMessages)
-            => SetResponse(responseCode, additionalMessages);
+        public ServiceResponse(ResponseCodes responseCode, string? message)
+            => SetResponse(responseCode, message);
 
         /// <summary>
         /// Whether this response has data, or can be discarded.
@@ -66,7 +61,7 @@ namespace BeyondImmersion.BannouService.Services.Messages
         /// <summary>
         /// Set fixed service response, based on a given response code.
         /// </summary>
-        public IServiceResponse SetResponse(ResponseCodes responseCode, params string?[]? additionalMessages)
+        public void SetResponse(ResponseCodes responseCode, string? message = null)
         {
             switch (responseCode)
             {
@@ -78,33 +73,29 @@ namespace BeyondImmersion.BannouService.Services.Messages
                     break;
                 case ResponseCodes.BadRequest:
                     Code = 400;
-                    Messages.Add("Bad request");
+                    Message = "Bad request";
                     break;
                 case ResponseCodes.Unauthorized:
                     Code = 403;
-                    Messages.Add("Unauthorized request");
+                    Message = "Unauthorized request";
                     break;
                 case ResponseCodes.NotFound:
                     Code = 404;
-                    Messages.Add("Resource not found");
+                    Message = "Resource not found";
                     break;
                 case ResponseCodes.ServerBusy:
                     Code = 503;
-                    Messages.Add("Server busy");
+                    Message = "Server busy";
                     break;
                 case ResponseCodes.ServerError:
                 default:
                     Code = 500;
-                    Messages.Add("Server error");
+                    Message = "Server error";
                     break;
             }
 
-            if (additionalMessages != null && additionalMessages.Length > 0)
-                foreach (var message in additionalMessages)
-                    if (!string.IsNullOrWhiteSpace(message))
-                        Messages.Add(message);
-
-            return this;
+            if (!string.IsNullOrWhiteSpace(message))
+                Message = message;
         }
     }
 }

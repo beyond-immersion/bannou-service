@@ -68,7 +68,7 @@ namespace BeyondImmersion.BannouService
                 .UseJsonSerializationOptions(ServiceConfiguration.DaprSerializerConfig)
                 .Build();
 
-            if (!Configuration.EmulateDapr && !await DaprClient.CheckHealthAsync(ShutdownCancellationTokenSource.Token))
+            if (!await DaprClient.CheckHealthAsync(ShutdownCancellationTokenSource.Token))
             {
                 Logger.Log(LogLevel.Error, null, "Dapr sidecar unhealthy/not found- exiting application.");
                 return;
@@ -329,7 +329,7 @@ namespace BeyondImmersion.BannouService
         /// Create delegate to HTTP service endpoint. Method can be static or instance.
         /// 
         /// Method must return void or async Task.
-        /// Method must be parameterless, or accept a single parameter of type <see cref="HttpContext"/> or <see cref="ServiceRequestContext{T, S}"/>.
+        /// Method must be parameterless, or accept a single parameter of type <see cref="HttpContext"/> or <see cref="ServiceMessageContext{T, S}"/>.
         /// </summary>
         private static Delegate CreateServiceEndpointDelegate(MethodInfo methodInfo, IDaprService service)
         {
@@ -337,7 +337,7 @@ namespace BeyondImmersion.BannouService
             if (methodParameters.Length > 1)
                 throw new Exception($"Dapr service endpoints can only contain one parameter, or none.");
 
-            if (methodParameters.Length == 1 && !new Type[] { typeof(HttpContext), typeof(ServiceRequestContext) }
+            if (methodParameters.Length == 1 && !new Type[] { typeof(HttpContext), typeof(ServiceMessageContext) }
                 .Any(t => t.IsAssignableFrom(methodParameters.First().ParameterType)))
                 throw new Exception($"Dapr service endpoints can only contain one parameter, of type HttpContext or derived from ServiceRequestContext.");
 
@@ -349,7 +349,7 @@ namespace BeyondImmersion.BannouService
                 methodDelegate = CreateParameterlessDelegateWrapper(methodInfo, service);
             else if (typeof(HttpContext).IsAssignableFrom(methodParameters.First().ParameterType))
                 methodDelegate = CreateHTTPDelegateWrapper(methodInfo, service);
-            else if (typeof(ServiceRequestContext).IsAssignableFrom(methodParameters.First().ParameterType))
+            else if (typeof(ServiceMessageContext).IsAssignableFrom(methodParameters.First().ParameterType))
                 methodDelegate = CreateContextDelegateWrapper(methodInfo, service);
 
             if (methodDelegate == null)
@@ -453,18 +453,36 @@ namespace BeyondImmersion.BannouService
         private static Delegate CreateContextDelegateWrapper(MethodInfo methodInfo, IDaprService service)
         {
             Type contextType = methodInfo.GetParameters()[0].ParameterType;
-            if (!contextType.IsGenericType || contextType.GenericTypeArguments.Length < 2)
-                throw new ArgumentException($"Service contexts must be generic, and contain at least 2 generic type arguments.");
+            if (!contextType.IsGenericType)
+                throw new ArgumentException($"Service contexts must be generic.");
 
-            if (!typeof(IServiceRequest).IsAssignableFrom(contextType.GenericTypeArguments[0]))
-                throw new ArgumentException($"The first generic type argument for service context must implement {nameof(IServiceRequest)}.");
+            var includeRequest = false;
+            switch (contextType.GenericTypeArguments.Length)
+            {
+                case 1:
+                    if (!typeof(IServiceResponse).IsAssignableFrom(contextType.GenericTypeArguments[0]))
+                        throw new ArgumentException($"The generic type argument for a response context must implement {nameof(IServiceResponse)}.");
 
-            if (!typeof(IServiceResponse).IsAssignableFrom(contextType.GenericTypeArguments[1]))
-                throw new ArgumentException($"The second generic type argument for service context must implement {nameof(IServiceResponse)}.");
+                    if (contextType.GenericTypeArguments[0].IsAbstract || !contextType.GenericTypeArguments[0].IsClass)
+                        throw new ArgumentException($"The generic type arguments for a response context must be instantiable classes.");
 
-            if (contextType.GenericTypeArguments[0].IsAbstract || !contextType.GenericTypeArguments[0].IsClass
-                || contextType.GenericTypeArguments[1].IsAbstract || !contextType.GenericTypeArguments[1].IsClass)
-                throw new ArgumentException($"The generic type arguments for a service context (request and response models) must be instantiable classes.");
+                    break;
+                case >= 2:
+                    if (!typeof(IServiceRequest).IsAssignableFrom(contextType.GenericTypeArguments[0]))
+                        throw new ArgumentException($"The first generic type argument for a request/response context must implement {nameof(IServiceRequest)}.");
+
+                    if (!typeof(IServiceResponse).IsAssignableFrom(contextType.GenericTypeArguments[1]))
+                        throw new ArgumentException($"The second generic type argument for a request/response context must implement {nameof(IServiceResponse)}.");
+
+                    if (contextType.GenericTypeArguments[0].IsAbstract || !contextType.GenericTypeArguments[0].IsClass
+                        || contextType.GenericTypeArguments[1].IsAbstract || !contextType.GenericTypeArguments[1].IsClass)
+                        throw new ArgumentException($"The generic type arguments for a request/response context must be instantiable classes.");
+
+                    includeRequest = true;
+                    break;
+                default:
+                    throw new ArgumentException($"Service contexts must contain 1 or more generic type arguments.");
+            }
 
             Delegate methodDelegate;
             if (methodInfo.ReturnType == typeof(Task))
@@ -482,13 +500,91 @@ namespace BeyondImmersion.BannouService
                     methodDelegate = Delegate.CreateDelegate(Expression.GetActionType(contextType), target: service, method: methodInfo.Name);
             }
 
+            if (includeRequest)
+                return CreateMessageDelegate(methodDelegate, service, contextType);
+            else
+                return CreateResponseDelegate(methodDelegate, service, contextType);
+
+            throw new ArgumentException($"Service context structure is not supported- please read documentation on extending the context type.");
+        }
+
+        private static Delegate CreateResponseDelegate(Delegate methodDelegate, IDaprService service, Type contextType)
+        {
             return async (HttpContext context) =>
             {
-                // handle request parsing
-                object? requestObj = null;
+                IServiceResponse? responseObj = null;
                 try
                 {
-                    if (contextType.GenericTypeArguments[0] != typeof(ServiceRequest) && context.Request.ContentLength > 0)
+                    responseObj = (IServiceResponse?)Activator.CreateInstance(type: contextType.GenericTypeArguments[0], nonPublic: true);
+                    if (responseObj == null)
+                        throw new Exception("Failed to instantiate the response data model.");
+                }
+                catch (Exception e)
+                {
+                    await context.SendResponseAsync(ResponseCodes.ServerError, e.ToString());
+
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
+                        logParams: new JObject()
+                        {
+                            ["service_type"] = service.GetType().Name,
+                            ["endpoint_type"] = "response context",
+                            ["failure_point"] = "instantiate response"
+                        });
+                    return;
+                }
+
+                try
+                {
+                    ///
+                    /// See constructor: <see cref="ServiceResponseContext{S}"/>
+                    ///
+
+                    var requestContext = Activator.CreateInstance(type: contextType, context, responseObj);
+                    if (requestContext == null)
+                        throw new Exception("Failed to instantiate the message context container.");
+
+                    _ = methodDelegate.DynamicInvoke(requestContext);
+                }
+                catch (Exception e)
+                {
+                    await context.SendResponseAsync(ResponseCodes.ServerError, e.ToString());
+
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
+                        logParams: new JObject()
+                        {
+                            ["service_type"] = service.GetType().Name,
+                            ["endpoint_type"] = "response context",
+                            ["failure_point"] = "invoke method"
+                        });
+                    return;
+                }
+
+                try
+                {
+                    if (!context.Response.HasStarted)
+                        await context.SendResponseAsync(responseObj);
+                }
+                catch (Exception e)
+                {
+                    Logger.Log(LogLevel.Error, e, $"Error processing incoming request to dapr service endpoint.",
+                        logParams: new JObject()
+                        {
+                            ["service_type"] = service.GetType().Name,
+                            ["endpoint_type"] = "response context",
+                            ["failure_point"] = "auto response"
+                        });
+                }
+            };
+        }
+
+        private static Delegate CreateMessageDelegate(Delegate methodDelegate, IDaprService service, Type contextType)
+        {
+            return async (HttpContext context) =>
+            {
+                IServiceRequest? requestObj = null;
+                try
+                {
+                    if (context.Request.ContentLength > 0)
                     {
                         if (!string.Equals(System.Net.Mime.MediaTypeNames.Application.Json, context.Request.ContentType, StringComparison.InvariantCultureIgnoreCase))
                             throw new Exception("The request content type is not application/json.");
@@ -496,9 +592,15 @@ namespace BeyondImmersion.BannouService
                         if (!context.Request.HasJsonContentType())
                             throw new Exception("The request content is not valid JSON.");
 
-                        requestObj = await context.Request.ReadFromJsonAsync(contextType.GenericTypeArguments[0], ShutdownCancellationTokenSource.Token);
+                        requestObj = (IServiceRequest?)await context.Request.ReadFromJsonAsync(contextType.GenericTypeArguments[0], ShutdownCancellationTokenSource.Token);
                         if (requestObj == null)
                             throw new Exception("Required fields for the service request are missing.");
+                    }
+                    else
+                    {
+                        // handle headers - create JObject, then convert to model type once headers are added
+                        // - the Json converter itself will determine if the requirements are met
+                        throw new Exception("Header-only request models are not supported yet.");
                     }
                 }
                 catch (Exception e)
@@ -509,13 +611,12 @@ namespace BeyondImmersion.BannouService
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,
-                            ["endpoint_type"] = "service context",
+                            ["endpoint_type"] = "request/response context",
                             ["failure_point"] = "parse request"
                         });
                     return;
                 }
 
-                // handle response instantiation
                 IServiceResponse? responseObj = null;
                 try
                 {
@@ -531,15 +632,18 @@ namespace BeyondImmersion.BannouService
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,
-                            ["endpoint_type"] = "service context",
+                            ["endpoint_type"] = "request/response context",
                             ["failure_point"] = "instantiate response"
                         });
                     return;
                 }
 
-                // handle API method delegate invocation
                 try
                 {
+                    ///
+                    /// See constructor: <see cref="ServiceMessageContext{T, S}"/>
+                    ///
+
                     var requestContext = Activator.CreateInstance(type: contextType, context, requestObj, responseObj);
                     if (requestContext == null)
                         throw new Exception("Failed to instantiate the message context container.");
@@ -554,13 +658,12 @@ namespace BeyondImmersion.BannouService
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,
-                            ["endpoint_type"] = "service context",
+                            ["endpoint_type"] = "request/response context",
                             ["failure_point"] = "invoke method"
                         });
                     return;
                 }
 
-                // automatically send back response, if it wasn't handled in the method
                 try
                 {
                     if (!context.Response.HasStarted)
@@ -572,7 +675,7 @@ namespace BeyondImmersion.BannouService
                         logParams: new JObject()
                         {
                             ["service_type"] = service.GetType().Name,
-                            ["endpoint_type"] = "service context",
+                            ["endpoint_type"] = "request/response context",
                             ["failure_point"] = "auto response"
                         });
                 }
