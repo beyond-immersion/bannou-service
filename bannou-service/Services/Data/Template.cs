@@ -5,6 +5,46 @@ using System.Text.RegularExpressions;
 namespace BeyondImmersion.BannouService.Services.Data
 {
     /// <summary>
+    /// A reference to a given "template context".
+    /// Template contexts contain the bulk of the data
+    /// describing the abilities / usage of a given
+    /// object in a way that game services can act on.
+    /// </summary>
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+    public sealed class TemplateContextRef
+    {
+        /// <summary>
+        /// The context type- examples might be:
+        ///     "consumable_effect"
+        ///     "armor_effect"
+        ///     "weapon_effect"
+        ///
+        /// ... or they may be more specific.
+        /// </summary>
+        [JsonProperty("type", Required = Required.Always)]
+        public string Type { get; }
+
+        /// <summary>
+        /// The GUID of the related context entry.
+        /// </summary>
+        [JsonProperty("id", Required = Required.Always)]
+        public string ID { get; }
+
+        private TemplateContextRef() { }
+        public TemplateContextRef(string type, string id)
+        {
+            if (string.IsNullOrWhiteSpace(type))
+                throw new ArgumentNullException(nameof(type));
+
+            if (string.IsNullOrWhiteSpace(id))
+                throw new ArgumentNullException(nameof(id));
+
+            Type = type;
+            ID = id;
+        }
+    }
+
+    /// <summary>
     /// Implementation of template data model.
     /// See also: <seealso cref="ITemplate"/> and <seealso cref="TemplateService"/>
     /// 
@@ -14,47 +54,7 @@ namespace BeyondImmersion.BannouService.Services.Data
     public sealed class Template : ITemplate
     {
         /// <summary>
-        /// A reference to a given "item context".
-        /// Item contexts contain the bulk of the data
-        /// describing the abilities / usage of a given
-        /// item in a way that game services can act on.
-        /// </summary>
-        [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-        public sealed class ContextRef : ITemplate.IContextRef
-        {
-            /// <summary>
-            /// The context type- examples might be:
-            ///     "CONSUMABLE"
-            ///     "ARMOR"
-            ///     "WEAPON"
-            ///
-            /// ... or they may be more specific.
-            /// </summary>
-            [JsonProperty("type", Required = Required.Always)]
-            public string Type { get; }
-
-            /// <summary>
-            /// The GUID of the related context entry.
-            /// </summary>
-            [JsonProperty("id", Required = Required.Always)]
-            public string ID { get; }
-
-            private ContextRef() { }
-            public ContextRef(string type, string id)
-            {
-                if (string.IsNullOrWhiteSpace(type))
-                    throw new ArgumentNullException(nameof(type));
-
-                if (string.IsNullOrWhiteSpace(id))
-                    throw new ArgumentNullException(nameof(id));
-
-                this.Type = type;
-                this.ID = id;
-            }
-        }
-
-        /// <summary>
-        /// The GUID of this template.
+        /// The unique identifier of this template (GUID, slug, etc).
         /// </summary>
         [JsonProperty("id", Required = Required.Always)]
         public string ID { get; }
@@ -66,11 +66,14 @@ namespace BeyondImmersion.BannouService.Services.Data
         public string Name { get; }
 
         /// <summary>
-        /// The type of template- optional, and used
-        /// purely for generating datasets.
+        /// The type of template. Can simply be the name
+        /// of the service handling these template objects.
+        ///
+        /// Examples: item, magic, skill,
+        ///     item_svc, combat_svc, etc...
         /// </summary>
-        [JsonProperty("type")]
-        public string? Type { get; }
+        [JsonProperty("type", Required = Required.Always)]
+        public string Type { get; }
 
         /// <summary>
         /// An optional description of what this item
@@ -80,8 +83,13 @@ namespace BeyondImmersion.BannouService.Services.Data
         public string? Description { get; }
 
         /// <summary>
-        /// Optional tags to include.
-        /// Used in lookups/lists to create datasets.
+        /// Optional tags describing this template object.
+        /// Used in /list to generate sets from shared tags.
+        /// 
+        /// Examples:
+        ///     (for gear type) armor, weapon, accessory
+        ///     (for item type) consumable, material
+        ///     (for skill type) active, passive
         /// </summary>
         [JsonProperty("tags")]
         public List<string>? Tags { get; }
@@ -92,23 +100,19 @@ namespace BeyondImmersion.BannouService.Services.Data
         /// together with the metadata here.
         /// </summary>
         [JsonProperty("contexts")]
-        public List<ContextRef>? Contexts { get; }
-
-        IEnumerable<string>? ITemplate.Tags => Tags;
-        IEnumerable<ITemplate.IContextRef>? ITemplate.Contexts => Contexts;
+        public List<TemplateContextRef>? Contexts { get; }
 
         private Template() { }
-
-        public Template(string name, string? action = null, string? description = null, List<string>? tags = null, List<ContextRef>? contexts = null)
-            : this(Guid.NewGuid().ToString().ToLower(), name, action, description, tags, contexts) { }
-
-        public Template(string id, string name, string? action = null, string? description = null, List<string>? tags = null, List<ContextRef>? contexts = null)
+        public Template(string id, string name, string type, string? description = null, List<string>? tags = null, List<TemplateContextRef>? contexts = null)
         {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentNullException(nameof(id));
 
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentNullException(nameof(name));
+
+            if (string.IsNullOrWhiteSpace(type))
+                throw new ArgumentNullException(nameof(type));
 
             if (tags != null && tags.Count == 0)
                 tags = null;
@@ -118,7 +122,7 @@ namespace BeyondImmersion.BannouService.Services.Data
 
             ID = id;
             Name = name;
-            Type = action;
+            Type = type;
             Description = description;
             Tags = tags;
             Contexts = contexts;

@@ -12,16 +12,16 @@ namespace BeyondImmersion.BannouService.Services.Messages
     /// The request model for service API calls to `/template/create`.
     /// </summary>
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-    public class TemplateCreateRequest : ServiceRequestBase
+    public class TemplateCreateRequest : ServiceRequest
     {
         /// <summary>
-        /// New template to create.
+        /// New templates to create.
         /// </summary>
-        [JsonProperty("template", Required = Required.Always)]
-        public Template Template { get; }
+        [JsonProperty("templates", Required = Required.Always)]
+        public Template[] Templates { get; }
 
         private TemplateCreateRequest() { }
-        public TemplateCreateRequest(Template template)
-            => Template = template ?? throw new ArgumentNullException(nameof(template));
+        public TemplateCreateRequest(params Template[] templates)
+            => Templates = templates ?? throw new ArgumentNullException(nameof(templates));
     }
 }

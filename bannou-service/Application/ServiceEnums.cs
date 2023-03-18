@@ -24,4 +24,19 @@ namespace BeyondImmersion.BannouService.Application
         PATCH,
         OPTIONS
     }
+
+    /// <summary>
+    /// An enumeration of possible API response codes
+    /// returned by this service.
+    /// </summary>
+    public enum ResponseCodes
+    {
+        Ok = 200,
+        Accepted = 202,
+        BadRequest = 400,
+        Unauthorized = 403,
+        NotFound = 404,
+        ServerError = 500,
+        ServerBusy = 503
+    }
 }

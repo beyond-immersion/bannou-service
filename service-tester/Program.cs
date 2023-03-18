@@ -89,6 +89,11 @@ namespace BeyondImmersion.ServiceTester
             foreach (ServiceTest serviceTest in loginTestHandler.GetServiceTests())
                 sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
+            // load template tests
+            var templateTestHandler = new TemplateTestHandler();
+            foreach (ServiceTest serviceTest in templateTestHandler.GetServiceTests())
+                sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
         }
 
         private static void RunEntireTestSuite(string[] args)

@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace BeyondImmersion.BannouService.Services.Data
 {
@@ -14,17 +15,14 @@ namespace BeyondImmersion.BannouService.Services.Data
     /// </summary>
     public interface ITemplate
     {
-        public interface IContextRef
-        {
-            string Type { get; }
-            string ID { get; }
-        }
         string ID { get; }
         string Name { get; }
-        string? Type { get; }
+        string Type { get; }
         string? Description { get; }
-        IEnumerable<string>? Tags { get; }
-        IEnumerable<IContextRef>? Contexts { get; }
+        List<string>? Tags { get; }
+        List<TemplateContextRef>? Contexts { get; }
+
+        [JsonIgnore]
         string Slug
         {
             get

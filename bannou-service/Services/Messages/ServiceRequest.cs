@@ -1,6 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Services.Data;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
@@ -9,10 +8,15 @@ using System.Collections.Generic;
 namespace BeyondImmersion.BannouService.Services.Messages
 {
     /// <summary>
-    /// The response model for service API calls to `/template/update`.
+    /// The basic service message payload model.
     /// </summary>
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-    public class TemplateUpdateResponse : ServiceResponse
+    public class ServiceRequest : IServiceRequest
     {
+        /// <summary>
+        /// Message ID, for logging/tracing through the system.
+        /// </summary>
+        [JsonProperty("request_id", Required = Required.Default)]
+        public virtual string RequestID { get; } = Guid.NewGuid().ToString().ToLower();
     }
 }

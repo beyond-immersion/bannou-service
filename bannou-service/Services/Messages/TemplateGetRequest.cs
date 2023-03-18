@@ -9,19 +9,19 @@ using System.Collections.Generic;
 namespace BeyondImmersion.BannouService.Services.Messages
 {
     /// <summary>
-    /// The request model for service API calls to `/template/update`.
+    /// The request model for service API calls to `/template/create`.
     /// </summary>
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-    public class TemplateUpdateRequest : ServiceRequest
+    public class TemplateGetRequest : ServiceRequest
     {
         /// <summary>
-        /// Template data to be updated.
+        /// ID of template to retrieve.
         /// </summary>
-        [JsonProperty("templates", Required = Required.Always)]
-        public Template[] Templates { get; }
+        [JsonProperty("id", Required = Required.Always)]
+        public string ID { get; }
 
-        private TemplateUpdateRequest() { }
-        public TemplateUpdateRequest(Template[] templates)
-            => Templates = templates ?? throw new ArgumentNullException(nameof(templates));
+        private TemplateGetRequest() { }
+        public TemplateGetRequest(string templateID)
+            => ID = templateID ?? throw new ArgumentNullException(nameof(templateID));
     }
 }

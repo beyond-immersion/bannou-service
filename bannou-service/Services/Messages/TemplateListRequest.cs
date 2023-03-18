@@ -9,10 +9,10 @@ using System.Collections.Generic;
 namespace BeyondImmersion.BannouService.Services.Messages
 {
     /// <summary>
-    /// The response model for service API calls to `/template/destroy`.
+    /// The request model for service API calls to `/template/list`.
     /// </summary>
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-    public class TemplateDestroyResponse : ServiceResponse
+    public class TemplateListRequest : ServiceRequest
     {
     }
 }
