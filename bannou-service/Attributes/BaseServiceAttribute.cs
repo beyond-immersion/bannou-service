@@ -4,15 +4,23 @@ using System.Reflection;
 namespace BeyondImmersion.BannouService.Attributes
 {
     /// <summary>
-    /// Base type for all custom attributes.
+    /// Shared interface for service attributes.
     /// </summary>
-    public abstract class BaseServiceAttribute : Attribute
+    public interface IServiceAttribute
+    {
+
+    }
+
+    /// <summary>
+    /// Base type for custom attributes.
+    /// </summary>
+    public abstract class BaseServiceAttribute : Attribute, IServiceAttribute
     {
         /// <summary>
         /// Will retrieve all types across all loaded assemblies with the given attribute.
         /// </summary>
         internal static List<(Type, T)> GetClassesWithAttribute<T>()
-            where T : BaseServiceAttribute
+            where T : Attribute, IServiceAttribute
         {
             List<(Type, T)> results = new();
             Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -41,9 +49,9 @@ namespace BeyondImmersion.BannouService.Attributes
         /// <summary>
         /// Will retrieve all types across all loaded assemblies with the given attribute.
         /// </summary>
-        internal static List<(Type, BaseServiceAttribute)> GetClassesWithAttribute(Type attributeType)
+        internal static List<(Type, IServiceAttribute)> GetClassesWithAttribute(Type attributeType)
         {
-            List<(Type, BaseServiceAttribute)> results = new();
+            List<(Type, IServiceAttribute)> results = new();
             Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
             if (loadedAssemblies == null || loadedAssemblies.Length == 0)
                 return results;
@@ -60,7 +68,7 @@ namespace BeyondImmersion.BannouService.Attributes
                     if (attr == null)
                         continue;
 
-                    results.Add((classType, (BaseServiceAttribute)attr));
+                    results.Add((classType, (IServiceAttribute)attr));
                 }
             }
 
@@ -74,7 +82,7 @@ namespace BeyondImmersion.BannouService.Attributes
         /// Return the type, propertyInfo, and the attribute instance.
         /// </summary>
         internal static List<(Type, PropertyInfo, T)> GetPropertiesWithAttribute<T>()
-            where T : BaseServiceAttribute
+            where T : Attribute, IServiceAttribute
         {
             List<(Type, PropertyInfo, T)> results = new();
             Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -107,9 +115,9 @@ namespace BeyondImmersion.BannouService.Attributes
         ///
         /// Return the type, propertyInfo, and the attribute instance.
         /// </summary>
-        internal static List<(Type, PropertyInfo, BaseServiceAttribute)> GetPropertiesWithAttribute(Type attributeType)
+        internal static List<(Type, PropertyInfo, IServiceAttribute)> GetPropertiesWithAttribute(Type attributeType)
         {
-            List<(Type, PropertyInfo, BaseServiceAttribute)> results = new();
+            List<(Type, PropertyInfo, IServiceAttribute)> results = new();
             Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
             if (loadedAssemblies == null || loadedAssemblies.Length == 0)
                 return results;
@@ -122,11 +130,11 @@ namespace BeyondImmersion.BannouService.Attributes
 
                 foreach (Type classType in classTypes)
                 {
-                    List<(PropertyInfo, BaseServiceAttribute)> propsInfo = GetPropertiesWithAttribute(classType, attributeType);
+                    List<(PropertyInfo, IServiceAttribute)> propsInfo = GetPropertiesWithAttribute(classType, attributeType);
                     if (propsInfo == null)
                         continue;
 
-                    foreach ((PropertyInfo, BaseServiceAttribute) propInfo in propsInfo)
+                    foreach ((PropertyInfo, IServiceAttribute) propInfo in propsInfo)
                         results.Add((classType, propInfo.Item1, propInfo.Item2));
                 }
             }
@@ -141,7 +149,7 @@ namespace BeyondImmersion.BannouService.Attributes
         /// Return the type, fieldInfo, and the attribute instance.
         /// </summary>
         internal static List<(Type, FieldInfo, T)> GetFieldsWithAttribute<T>()
-            where T : BaseServiceAttribute
+            where T : Attribute, IServiceAttribute
         {
             List<(Type, FieldInfo, T)> results = new();
             Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -174,9 +182,9 @@ namespace BeyondImmersion.BannouService.Attributes
         ///
         /// Return the type, fieldInfo, and the attribute instance.
         /// </summary>
-        internal static List<(Type, FieldInfo, BaseServiceAttribute)> GetFieldsWithAttribute(Type attributeType)
+        internal static List<(Type, FieldInfo, IServiceAttribute)> GetFieldsWithAttribute(Type attributeType)
         {
-            List<(Type, FieldInfo, BaseServiceAttribute)> results = new();
+            List<(Type, FieldInfo, IServiceAttribute)> results = new();
             Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
             if (loadedAssemblies == null || loadedAssemblies.Length == 0)
                 return results;
@@ -189,11 +197,11 @@ namespace BeyondImmersion.BannouService.Attributes
 
                 foreach (Type classType in classTypes)
                 {
-                    List<(FieldInfo, BaseServiceAttribute)> fieldsInfo = GetFieldsWithAttribute(classType, attributeType);
+                    List<(FieldInfo, IServiceAttribute)> fieldsInfo = GetFieldsWithAttribute(classType, attributeType);
                     if (fieldsInfo == null)
                         continue;
 
-                    foreach ((FieldInfo, BaseServiceAttribute) fieldInfo in fieldsInfo)
+                    foreach ((FieldInfo, IServiceAttribute) fieldInfo in fieldsInfo)
                         results.Add((classType, fieldInfo.Item1, fieldInfo.Item2));
                 }
             }
@@ -208,7 +216,7 @@ namespace BeyondImmersion.BannouService.Attributes
         /// Return the type, methodInfo, and the attribute instance.
         /// </summary>
         internal static List<(Type, MethodInfo, T)> GetMethodsWithAttribute<T>()
-            where T : BaseServiceAttribute
+            where T : Attribute, IServiceAttribute
         {
             List<(Type, MethodInfo, T)> results = new();
             Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -241,9 +249,9 @@ namespace BeyondImmersion.BannouService.Attributes
         ///
         /// Return the type, methodInfo, and the attribute instance.
         /// </summary>
-        internal static List<(Type, MethodInfo, BaseServiceAttribute)> GetMethodsWithAttribute(Type attributeType)
+        internal static List<(Type, MethodInfo, IServiceAttribute)> GetMethodsWithAttribute(Type attributeType)
         {
-            List<(Type, MethodInfo, BaseServiceAttribute)> results = new();
+            List<(Type, MethodInfo, IServiceAttribute)> results = new();
             Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
             if (loadedAssemblies == null || loadedAssemblies.Length == 0)
                 return results;
@@ -256,11 +264,11 @@ namespace BeyondImmersion.BannouService.Attributes
 
                 foreach (Type classType in classTypes)
                 {
-                    List<(MethodInfo, BaseServiceAttribute)> methodsInfo = GetMethodsWithAttribute(classType, attributeType);
+                    List<(MethodInfo, IServiceAttribute)> methodsInfo = GetMethodsWithAttribute(classType, attributeType);
                     if (methodsInfo == null)
                         continue;
 
-                    foreach ((MethodInfo, BaseServiceAttribute) methodInfo in methodsInfo)
+                    foreach ((MethodInfo, IServiceAttribute) methodInfo in methodsInfo)
                         results.Add((classType, methodInfo.Item1, methodInfo.Item2));
                 }
             }
@@ -272,29 +280,29 @@ namespace BeyondImmersion.BannouService.Attributes
         /// Will retrieve PropertyInfo for all properties with the given attribute in the given class type.
         /// </summary>
         internal static List<(PropertyInfo, T)> GetPropertiesWithAttribute<T, S>(S _)
-            where T : BaseServiceAttribute
+            where T : Attribute, IServiceAttribute
             => GetPropertiesWithAttribute<T>(typeof(S));
 
         /// <summary>
         /// Will retrieve FieldInfo for all fields with the given attribute in the given class type.
         /// </summary>
         internal static List<(FieldInfo, T)> GetFieldsWithAttribute<T, S>(S _)
-            where T : BaseServiceAttribute
+            where T : Attribute, IServiceAttribute
             => GetFieldsWithAttribute<T>(typeof(S));
 
         /// <summary>
         /// Will retrieve MethodInfo for all methods with the given attribute in the given class type.
         /// </summary>
         internal static List<(MethodInfo, T)> GetMethodsWithAttribute<T, S>(S _)
-            where T : BaseServiceAttribute
+            where T : Attribute, IServiceAttribute
             => GetMethodsWithAttribute<T>(typeof(S));
 
         /// <summary>
         /// Will retrieve PropertyInfo for all properties with the given attribute in the given class type.
         /// </summary>
-        internal static List<(PropertyInfo, BaseServiceAttribute)> GetPropertiesWithAttribute(Type classType, Type attributeType)
+        internal static List<(PropertyInfo, IServiceAttribute)> GetPropertiesWithAttribute(Type classType, Type attributeType)
         {
-            List<(PropertyInfo, BaseServiceAttribute)> results = new();
+            List<(PropertyInfo, IServiceAttribute)> results = new();
             PropertyInfo[] retrievedProps = classType.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (retrievedProps == null || retrievedProps.Length == 0)
                 return results;
@@ -306,7 +314,7 @@ namespace BeyondImmersion.BannouService.Attributes
                     continue;
 
                 foreach (var attr in attrs)
-                    results.Add((propInfo, (BaseServiceAttribute)attr));
+                    results.Add((propInfo, (IServiceAttribute)attr));
             }
 
             return results;
@@ -316,7 +324,7 @@ namespace BeyondImmersion.BannouService.Attributes
         /// Will retrieve PropertyInfo for all properties with the given attribute in the given class type.
         /// </summary>
         internal static List<(PropertyInfo, T)> GetPropertiesWithAttribute<T>(Type classType)
-            where T : BaseServiceAttribute
+            where T : Attribute, IServiceAttribute
         {
             List<(PropertyInfo, T)> results = new();
             PropertyInfo[] retrievedProps = classType.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
@@ -340,7 +348,7 @@ namespace BeyondImmersion.BannouService.Attributes
         /// Will retrieve FieldInfo for all fields with the given attribute in the given class type.
         /// </summary>
         internal static List<(FieldInfo, T)> GetFieldsWithAttribute<T>(Type classType)
-            where T : BaseServiceAttribute
+            where T : Attribute, IServiceAttribute
         {
             List<(FieldInfo, T)> results = new();
             FieldInfo[] retrievedFields = classType.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
@@ -363,9 +371,9 @@ namespace BeyondImmersion.BannouService.Attributes
         /// <summary>
         /// Will retrieve FieldInfo for all fields with the given attribute in the given class type.
         /// </summary>
-        internal static List<(FieldInfo, BaseServiceAttribute)> GetFieldsWithAttribute(Type classType, Type attributeType)
+        internal static List<(FieldInfo, IServiceAttribute)> GetFieldsWithAttribute(Type classType, Type attributeType)
         {
-            List<(FieldInfo, BaseServiceAttribute)> results = new();
+            List<(FieldInfo, IServiceAttribute)> results = new();
             FieldInfo[] retrievedFields = classType.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (retrievedFields == null || retrievedFields.Length == 0)
                 return results;
@@ -377,7 +385,7 @@ namespace BeyondImmersion.BannouService.Attributes
                     continue;
 
                 foreach (var attr in attrs)
-                    results.Add((fieldInfo, (BaseServiceAttribute)attr));
+                    results.Add((fieldInfo, (IServiceAttribute)attr));
             }
 
             return results;
@@ -386,10 +394,10 @@ namespace BeyondImmersion.BannouService.Attributes
         /// <summary>
         /// Will retrieve MethodInfo for all methods with the given attribute in the given class type.
         /// </summary>
-        internal static List<(MethodInfo, BaseServiceAttribute)> GetMethodsWithAttribute(Type classType, Type attributeType)
+        internal static List<(MethodInfo, IServiceAttribute)> GetMethodsWithAttribute(Type classType, Type attributeType)
         {
-            List<(MethodInfo, BaseServiceAttribute)> results = new();
-            if (!typeof(BaseServiceAttribute).IsAssignableFrom(attributeType))
+            List<(MethodInfo, IServiceAttribute)> results = new();
+            if (!typeof(IServiceAttribute).IsAssignableFrom(attributeType))
                 return results;
 
             MethodInfo[] retrievedMethods = classType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
@@ -403,7 +411,7 @@ namespace BeyondImmersion.BannouService.Attributes
                     continue;
 
                 foreach (var attr in attrs)
-                    results.Add((methodInfo, (BaseServiceAttribute)attr));
+                    results.Add((methodInfo, (IServiceAttribute)attr));
             }
 
             return results;
@@ -413,7 +421,7 @@ namespace BeyondImmersion.BannouService.Attributes
         /// Will retrieve MethodInfo for all methods with the given attribute in the given class type.
         /// </summary>
         internal static List<(MethodInfo, T)> GetMethodsWithAttribute<T>(Type classType)
-            where T : BaseServiceAttribute
+            where T : Attribute, IServiceAttribute
         {
             List<(MethodInfo, T)> results = new();
             MethodInfo[] retrievedMethods = classType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);

@@ -1,5 +1,6 @@
 ﻿using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -17,8 +18,8 @@ namespace BeyondImmersion.BannouService.Services
     /// This would mean that a bad actor could spam a specific login server instance, but if that doesn't actually increase the internal
     /// network traffic on each request, I'm not sure it matters.
     /// </summary>
-    [DaprService("Login Service", "login")]
-    public sealed class LoginService : IDaprService
+    [DaprService("login")]
+    public sealed class LoginService : Controller, IDaprService
     {
         /// <summary>
         /// Unique service ID for instance that's being forwarded to, if applicable.

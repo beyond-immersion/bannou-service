@@ -1,5 +1,6 @@
 ﻿using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -9,8 +10,8 @@ namespace BeyondImmersion.BannouService.Services
     /// <summary>
     /// Service component responsible for player profile handling.
     /// </summary>
-    [DaprService("Profile Service", "profile")]
-    public class ProfileService : IDaprService
+    [DaprService("profile")]
+    public class ProfileService : Controller, IDaprService
     {
         /// <summary>
         /// Create new player profile.
