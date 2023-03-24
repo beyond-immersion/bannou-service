@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Services.Messages
     /// The response model for service API calls to `/template/create`.
     /// </summary>
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-    public class TemplateGetResponse : ServiceResponse
+    public class TemplateGetResponse : ServiceResponse<TemplateGetRequest>
     {
         [JsonProperty("template")]
         public Template Template { get; set; }

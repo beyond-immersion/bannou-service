@@ -1,15 +1,19 @@
 ﻿using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net.Mime;
 
 namespace BeyondImmersion.BannouService.Services
 {
     /// <summary>
     /// Service component responsible for leaderboard handling.
     /// </summary>
-    [DaprService("Leaderboard Service", "leaderboard")]
+    [DaprService("leaderboard")]
+    [Consumes(MediaTypeNames.Application.Json)]
+    [Produces(MediaTypeNames.Application.Json)]
     public class LeaderboardService : IDaprService
     {
         /// <summary>

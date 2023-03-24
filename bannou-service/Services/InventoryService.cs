@@ -1,15 +1,19 @@
 ﻿using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net.Mime;
 
 namespace BeyondImmersion.BannouService.Services
 {
     /// <summary>
     /// Service component responsible for inventory handling.
     /// </summary>
-    [DaprService("Inventory Service", "inventory")]
+    [DaprService("inventory")]
+    [Consumes(MediaTypeNames.Application.Json)]
+    [Produces(MediaTypeNames.Application.Json)]
     public class InventoryService : IDaprService
     {
         /// <summary>

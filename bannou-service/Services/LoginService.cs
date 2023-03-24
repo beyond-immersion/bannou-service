@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net.Mime;
 
 namespace BeyondImmersion.BannouService.Services
 {
@@ -19,6 +20,8 @@ namespace BeyondImmersion.BannouService.Services
     /// network traffic on each request, I'm not sure it matters.
     /// </summary>
     [DaprService("login")]
+    [Consumes(MediaTypeNames.Application.Json)]
+    [Produces(MediaTypeNames.Application.Json)]
     public sealed class LoginService : Controller, IDaprService
     {
         /// <summary>

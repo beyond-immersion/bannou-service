@@ -12,7 +12,7 @@ namespace BeyondImmersion.BannouService.Services.Messages
     /// The request model for service API calls to `/template/list`.
     /// </summary>
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-    public class TemplateListRequest : ServiceRequest
+    public class TemplateListRequest : ServiceRequest<TemplateListResponse>
     {
     }
 }

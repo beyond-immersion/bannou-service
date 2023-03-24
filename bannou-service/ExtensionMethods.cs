@@ -94,30 +94,6 @@ namespace BeyondImmersion.BannouService
         /// <summary>
         /// Extension method for generating and sending a JSON response to client.
         /// </summary>
-        public static void SendResponse(this HttpContext context)
-            => new ServiceResponseContext<ServiceResponse>(context, new ServiceResponse()).SendResponse();
-
-        /// <summary>
-        /// Extension method for generating and sending a JSON response to client.
-        /// </summary>
-        public static void SendResponse(this HttpContext context, ResponseCodes responseCode, string? message = null)
-            => new ServiceResponseContext<ServiceResponse>(context, new ServiceResponse()).SetAndSendResponse(responseCode, message);
-
-        /// <summary>
-        /// Async extension method for generating and sending a JSON response to client.
-        /// </summary>
-        public static async Task SendResponseAsync(this HttpContext context)
-            => await new ServiceResponseContext<ServiceResponse>(context, new ServiceResponse()).SendResponseAsync();
-
-        /// <summary>
-        /// Async extension method for generating and sending a JSON response to client.
-        /// </summary>
-        public static async Task SendResponseAsync(this HttpContext context, ResponseCodes responseCode, string? message = null)
-            => await new ServiceResponseContext<ServiceResponse>(context, new ServiceResponse()).SetAndSendResponseAsync(responseCode, message);
-
-        /// <summary>
-        /// Extension method for generating and sending a JSON response to client.
-        /// </summary>
         public static void SendResponse<T>(this HttpContext context, T? data)
             where T : IServiceResponse
         {

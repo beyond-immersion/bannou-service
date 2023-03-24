@@ -26,9 +26,11 @@ namespace BeyondImmersion.BannouService.Services
         /// </summary>
         [HttpGet]
         [ServiceRoute("/{id}")]
-        public async Task Get([FromRoute]TemplateGetRequest request)
+        public async Task<ActionResult> Get([FromRoute]TemplateGetRequest request)
         {
-
+            var response = request.CreateResponse();
+            response.Code = 200;
+            return Ok(response);
         }
 
         /// <summary>

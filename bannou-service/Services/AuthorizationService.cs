@@ -1,15 +1,19 @@
 ﻿using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net.Mime;
 
 namespace BeyondImmersion.BannouService.Services
 {
     /// <summary>
     /// Service component responsible for login authorization handling.
     /// </summary>
-    [DaprService("Authorization Service", "authorization")]
+    [DaprService("authorization")]
+    [Consumes(MediaTypeNames.Application.Json)]
+    [Produces(MediaTypeNames.Application.Json)]
     public class AuthorizationService : IDaprService
     {
         /// <summary>

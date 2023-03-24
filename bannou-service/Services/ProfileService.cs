@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net.Mime;
 
 namespace BeyondImmersion.BannouService.Services
 {
@@ -11,6 +12,8 @@ namespace BeyondImmersion.BannouService.Services
     /// Service component responsible for player profile handling.
     /// </summary>
     [DaprService("profile")]
+    [Consumes(MediaTypeNames.Application.Json)]
+    [Produces(MediaTypeNames.Application.Json)]
     public class ProfileService : Controller, IDaprService
     {
         /// <summary>

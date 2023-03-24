@@ -7,6 +7,17 @@ using System.Collections.Generic;
 
 namespace BeyondImmersion.BannouService.Services.Messages
 {
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+    public class ServiceRequest<T> : ServiceRequest
+    where T : class, IServiceResponse, new()
+    {
+        public Type GetResponseType()
+            => typeof(T);
+
+        public T CreateResponse()
+            => new();
+    }
+
     /// <summary>
     /// The basic service message payload model.
     /// </summary>
