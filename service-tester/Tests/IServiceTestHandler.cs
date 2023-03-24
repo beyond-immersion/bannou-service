@@ -1,7 +1,6 @@
-﻿namespace BeyondImmersion.ServiceTester.Tests
+﻿namespace BeyondImmersion.ServiceTester.Tests;
+
+public interface IServiceTestHandler
 {
-    public interface IServiceTestHandler
-    {
-        public ServiceTest[] GetServiceTests();
-    }
+    public ServiceTest[] GetServiceTests();
 }

@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bannou-service", "bannou-se
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "service-tester", "service-tester\service-tester.csproj", "{3E450249-3580-4178-BB5E-7F36D254D38E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "unit-tests", "UnitTests\unit-tests.csproj", "{F33DE2EC-6A19-401A-894F-7E23BB429562}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "unit-tests", "unit-tests\unit-tests.csproj", "{F33DE2EC-6A19-401A-894F-7E23BB429562}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
