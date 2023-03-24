@@ -1,155 +1,141 @@
-﻿using BeyondImmersion.BannouService.Application;
-using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Logging;
-using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.Services.Messages;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System.Net.Mime;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace BeyondImmersion.BannouService
+namespace BeyondImmersion.BannouService;
+
+public static partial class ExtensionMethods
 {
-    public static partial class ExtensionMethods
+    /// <summary>
+    /// Regex for stripping out characters that would be invalid in URLs.
+    /// </summary>
+    [GeneratedRegex("[^a-zA-Z0-9\\s-]")]
+    public static partial Regex REGEX_InvalidChars();
+
+    /// <summary>
+    /// Regex for replacing single spaces.
+    /// </summary>
+    [GeneratedRegex("\\s")]
+    public static partial Regex REGEX_Spaces();
+
+    /// <summary>
+    /// Regex for replacing double spaces.
+    /// </summary>
+    [GeneratedRegex("\\s+")]
+    public static partial Regex REGEX_MultipleSpaces();
+
+    /// <summary>
+    /// Logging extension/helper methods, for including additional context as JSON.
+    /// </summary>
+    public static void Log(this ILogger logger, LogLevel level, Exception? exception, string message, JObject? logParams,
+        [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        => ServiceLogging.Log(logger, level, exception, message, logParams, callerName, callerFile, lineNumber);
+
+    /// <summary>
+    /// Logging extension/helper methods, for including additional context as JSON.
+    /// </summary>
+    public static void Log(this ILogger logger, LogLevel level, Exception? exc, string message,
+        [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+        => logger.Log(level, exc, message, null, callerName, callerFile, lineNumber);
+
+    /// <summary>
+    /// Check if field or property has the "Obsolete" attribute attached.
+    /// </summary>
+    public static bool IsObsolete(this MemberInfo memberInfo)
+        => memberInfo.GetCustomAttribute<ObsoleteAttribute>() != null;
+
+    /// <summary>
+    /// Check if field or property has the "Obsolete" attribute attached, and return message if so.
+    /// </summary>
+    public static bool IsObsolete(this MemberInfo memberInfo, out string? message)
     {
-        /// <summary>
-        /// Regex for stripping out characters that would be invalid in URLs.
-        /// </summary>
-        [GeneratedRegex("[^a-zA-Z0-9\\s-]")]
-        public static partial Regex REGEX_InvalidChars();
-
-        /// <summary>
-        /// Regex for replacing single spaces.
-        /// </summary>
-        [GeneratedRegex("\\s")]
-        public static partial Regex REGEX_Spaces();
-
-        /// <summary>
-        /// Regex for replacing double spaces.
-        /// </summary>
-        [GeneratedRegex("\\s+")]
-        public static partial Regex REGEX_MultipleSpaces();
-
-        /// <summary>
-        /// Logging extension/helper methods, for including additional context as JSON.
-        /// </summary>
-        public static void Log(this ILogger logger, LogLevel level, Exception? exception, string message, JObject? logParams,
-            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
-            => ServiceLogging.Log(logger, level, exception, message, logParams, callerName, callerFile, lineNumber);
-
-        /// <summary>
-        /// Logging extension/helper methods, for including additional context as JSON.
-        /// </summary>
-        public static void Log(this ILogger logger, LogLevel level, Exception? exc, string message,
-            [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
-            => logger.Log(level, exc, message, null, callerName, callerFile, lineNumber);
-
-        /// <summary>
-        /// Check if field or property has the "Obsolete" attribute attached.
-        /// </summary>
-        public static bool IsObsolete(this MemberInfo memberInfo)
-            => memberInfo.GetCustomAttribute<ObsoleteAttribute>() != null;
-
-        /// <summary>
-        /// Check if field or property has the "Obsolete" attribute attached, and return message if so.
-        /// </summary>
-        public static bool IsObsolete(this MemberInfo memberInfo, out string? message)
+        ObsoleteAttribute? obsAttr = memberInfo.GetCustomAttribute<ObsoleteAttribute>();
+        if (obsAttr != null)
         {
-            ObsoleteAttribute? obsAttr = memberInfo.GetCustomAttribute<ObsoleteAttribute>();
-            if (obsAttr != null)
-            {
-                message = obsAttr.Message;
-                return true;
-            }
-
-            message = null;
-            return false;
+            message = obsAttr.Message;
+            return true;
         }
 
-        /// <summary>
-        /// Generate a URL-safe slug from any string.
-        /// </summary>
-        public static string GenerateSlug(this string phrase)
+        message = null;
+        return false;
+    }
+
+    /// <summary>
+    /// Generate a URL-safe slug from any string.
+    /// </summary>
+    public static string GenerateSlug(this string phrase)
+    {
+        var str = phrase.RemoveAccent().ToLower();
+        str = REGEX_InvalidChars().Replace(str, "");
+        str = REGEX_MultipleSpaces().Replace(str, " ").Trim();
+        str = str[..(str.Length <= 45 ? str.Length : 45)].Trim();
+        str = REGEX_Spaces().Replace(str, "-");
+        return str;
+    }
+
+    public static string GetServiceName(this Type serviceType)
+    {
+        var serviceName = serviceType.Name;
+
+        if (serviceName.EndsWith("Service", comparisonType: StringComparison.InvariantCultureIgnoreCase))
+            serviceName = serviceName.Remove(serviceName.Length - "Service".Length, "Service".Length);
+
+        if (serviceName.EndsWith("Controller", comparisonType: StringComparison.CurrentCultureIgnoreCase))
+            serviceName = serviceName.Remove(serviceName.Length - "Controller".Length, "Controller".Length);
+
+        if (serviceName.EndsWith("Dapr", comparisonType: StringComparison.CurrentCultureIgnoreCase))
+            serviceName = serviceName.Remove(serviceName.Length - "Dapr".Length, "Dapr".Length);
+
+        return serviceName;
+    }
+
+    /// <summary>
+    /// Remove accent characters from a string.
+    /// Returns new string.
+    /// </summary>
+    public static string RemoveAccent(this string txt)
+    {
+        var bytes = Encoding.GetEncoding("Cyrillic").GetBytes(txt);
+        return Encoding.ASCII.GetString(bytes);
+    }
+
+    /// <summary>
+    /// Extension method for generating and sending a JSON response to client.
+    /// </summary>
+    public static void SendResponse<T>(this HttpContext context, T? data)
+        where T : IServiceResponse
+    {
+        if (data != null && data.HasData())
         {
-            var str = phrase.RemoveAccent().ToLower();
-            str = REGEX_InvalidChars().Replace(str, "");
-            str = REGEX_MultipleSpaces().Replace(str, " ").Trim();
-            str = str[..(str.Length <= 45 ? str.Length : 45)].Trim();
-            str = REGEX_Spaces().Replace(str, "-");
-            return str;
+            context.Response.StatusCode = data.Code;
+            context.Response.ContentType = MediaTypeNames.Application.Json;
+            context.Response.WriteAsync(JObject.FromObject(data).ToString(Newtonsoft.Json.Formatting.None), Program.ShutdownCancellationTokenSource.Token)
+                .Wait(Program.ShutdownCancellationTokenSource.Token);
         }
 
-        /// <summary>
-        /// Remove accent characters from a string.
-        /// Returns new string.
-        /// </summary>
-        public static string RemoveAccent(this string txt)
+        context.Response.StartAsync(Program.ShutdownCancellationTokenSource.Token).Wait(Program.ShutdownCancellationTokenSource.Token);
+    }
+
+    /// <summary>
+    /// Async extension method for generating and sending a JSON response to client.
+    /// </summary>
+    public static async Task SendResponseAsync<T>(this HttpContext context, T? data, CancellationToken cancellationToken = default)
+        where T : IServiceResponse
+    {
+        if (cancellationToken == default)
+            cancellationToken = Program.ShutdownCancellationTokenSource.Token;
+
+        if (data != null && data.HasData())
         {
-            var bytes = Encoding.GetEncoding("Cyrillic").GetBytes(txt);
-            return Encoding.ASCII.GetString(bytes);
+            context.Response.StatusCode = data.Code;
+            context.Response.ContentType = MediaTypeNames.Application.Json;
+            context.Response.WriteAsync(JObject.FromObject(data).ToString(Newtonsoft.Json.Formatting.None), cancellationToken)
+                .Wait(cancellationToken);
         }
 
-        /// <summary>
-        /// Extension method for generating and sending a JSON response to client.
-        /// </summary>
-        public static void SendResponse(this HttpContext context)
-            => new ServiceResponseContext<ServiceResponse>(context, new ServiceResponse()).SendResponse();
-
-        /// <summary>
-        /// Extension method for generating and sending a JSON response to client.
-        /// </summary>
-        public static void SendResponse(this HttpContext context, ResponseCodes responseCode, string? message = null)
-            => new ServiceResponseContext<ServiceResponse>(context, new ServiceResponse()).SetAndSendResponse(responseCode, message);
-
-        /// <summary>
-        /// Async extension method for generating and sending a JSON response to client.
-        /// </summary>
-        public static async Task SendResponseAsync(this HttpContext context)
-            => await new ServiceResponseContext<ServiceResponse>(context, new ServiceResponse()).SendResponseAsync();
-
-        /// <summary>
-        /// Async extension method for generating and sending a JSON response to client.
-        /// </summary>
-        public static async Task SendResponseAsync(this HttpContext context, ResponseCodes responseCode, string? message = null)
-            => await new ServiceResponseContext<ServiceResponse>(context, new ServiceResponse()).SetAndSendResponseAsync(responseCode, message);
-
-        /// <summary>
-        /// Extension method for generating and sending a JSON response to client.
-        /// </summary>
-        public static void SendResponse<T>(this HttpContext context, T? data)
-            where T : IServiceResponse
-        {
-            if (data != null && data.HasData())
-            {
-                context.Response.StatusCode = data.Code;
-                context.Response.ContentType = MediaTypeNames.Application.Json;
-                context.Response.WriteAsync(JObject.FromObject(data).ToString(Newtonsoft.Json.Formatting.None), Program.ShutdownCancellationTokenSource.Token)
-                    .Wait(Program.ShutdownCancellationTokenSource.Token);
-            }
-
-            context.Response.StartAsync(Program.ShutdownCancellationTokenSource.Token).Wait(Program.ShutdownCancellationTokenSource.Token);
-        }
-
-        /// <summary>
-        /// Async extension method for generating and sending a JSON response to client.
-        /// </summary>
-        public static async Task SendResponseAsync<T>(this HttpContext context, T? data, CancellationToken cancellationToken = default)
-            where T : IServiceResponse
-        {
-            if (cancellationToken == default)
-                cancellationToken = Program.ShutdownCancellationTokenSource.Token;
-
-            if (data != null && data.HasData())
-            {
-                context.Response.StatusCode = data.Code;
-                context.Response.ContentType = MediaTypeNames.Application.Json;
-                context.Response.WriteAsync(JObject.FromObject(data).ToString(Newtonsoft.Json.Formatting.None), cancellationToken)
-                    .Wait(cancellationToken);
-            }
-
-            await context.Response.StartAsync(cancellationToken);
-        }
+        await context.Response.StartAsync(cancellationToken);
     }
 }
