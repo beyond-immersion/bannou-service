@@ -1,33 +1,27 @@
-﻿using BeyondImmersion.BannouService.Application;
-using BeyondImmersion.BannouService.Attributes;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using Newtonsoft.Json;
 
-namespace BeyondImmersion.BannouService.Services
+namespace BeyondImmersion.BannouService.Services;
+
+[JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+public class ServiceRequest<T> : ServiceRequest
+where T : class, IServiceResponse, new()
 {
-    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-    public class ServiceRequest<T> : ServiceRequest
-    where T : class, IServiceResponse, new()
-    {
-        public Type GetResponseType()
-            => typeof(T);
+    public Type GetResponseType()
+        => typeof(T);
 
-        public T CreateResponse()
-            => new();
-    }
+    public T CreateResponse()
+        => new();
+}
 
+/// <summary>
+/// The basic service message payload model.
+/// </summary>
+[JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+public class ServiceRequest : IServiceRequest
+{
     /// <summary>
-    /// The basic service message payload model.
+    /// Message ID, for logging/tracing through the system.
     /// </summary>
-    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-    public class ServiceRequest : IServiceRequest
-    {
-        /// <summary>
-        /// Message ID, for logging/tracing through the system.
-        /// </summary>
-        [JsonProperty("request_id", Required = Required.Default)]
-        public virtual string RequestID { get; } = Guid.NewGuid().ToString().ToLower();
-    }
+    [JsonProperty("request_id", Required = Required.Default)]
+    public virtual string RequestID { get; } = Guid.NewGuid().ToString().ToLower();
 }

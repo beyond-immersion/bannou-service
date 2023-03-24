@@ -1,55 +1,49 @@
-﻿using BeyondImmersion.BannouService.Application;
-using BeyondImmersion.BannouService.Attributes;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
 
-namespace BeyondImmersion.BannouService.Services
+namespace BeyondImmersion.BannouService.Services;
+
+/// <summary>
+/// Service component responsible for leaderboard handling.
+/// </summary>
+[DaprService("leaderboard")]
+[Consumes(MediaTypeNames.Application.Json)]
+[Produces(MediaTypeNames.Application.Json)]
+public class LeaderboardService : IDaprService
 {
     /// <summary>
-    /// Service component responsible for leaderboard handling.
+    /// List available leaderboards.
     /// </summary>
-    [DaprService("leaderboard")]
-    [Consumes(MediaTypeNames.Application.Json)]
-    [Produces(MediaTypeNames.Application.Json)]
-    public class LeaderboardService : IDaprService
+    [ServiceRoute("/list")]
+    public async Task ListLeaderboards(HttpContext context)
     {
-        /// <summary>
-        /// List available leaderboards.
-        /// </summary>
-        [ServiceRoute("/list")]
-        public async Task ListLeaderboards(HttpContext context)
-        {
-            await Task.CompletedTask;
-        }
+        await Task.CompletedTask;
+    }
 
-        /// <summary>
-        /// Create new leaderboard.
-        /// </summary>
-        [ServiceRoute("/create")]
-        public async Task CreateLeaderboard(HttpContext context)
-        {
-            await Task.CompletedTask;
-        }
+    /// <summary>
+    /// Create new leaderboard.
+    /// </summary>
+    [ServiceRoute("/create")]
+    public async Task CreateLeaderboard(HttpContext context)
+    {
+        await Task.CompletedTask;
+    }
 
-        /// <summary>
-        /// Update existing leaderboard.
-        /// </summary>
-        [ServiceRoute("/update")]
-        public async Task UpdateLeaderboard(HttpContext context)
-        {
-            await Task.CompletedTask;
-        }
+    /// <summary>
+    /// Update existing leaderboard.
+    /// </summary>
+    [ServiceRoute("/update")]
+    public async Task UpdateLeaderboard(HttpContext context)
+    {
+        await Task.CompletedTask;
+    }
 
-        /// <summary>
-        /// Destroy existing leaderboard.
-        /// </summary>
-        [ServiceRoute("/destroy")]
-        public async Task DestroyLeaderboard(HttpContext context)
-        {
-            await Task.CompletedTask;
-        }
+    /// <summary>
+    /// Destroy existing leaderboard.
+    /// </summary>
+    [ServiceRoute("/destroy")]
+    public async Task DestroyLeaderboard(HttpContext context)
+    {
+        await Task.CompletedTask;
     }
 }

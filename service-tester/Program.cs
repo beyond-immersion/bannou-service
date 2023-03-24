@@ -1,11 +1,3 @@
-using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Application;
-using BeyondImmersion.ServiceTester.Application;
-using BeyondImmersion.ServiceTester.Tests;
-using System;
-using System.Collections.Generic;
-using System.Text.Json;
-
 namespace BeyondImmersion.ServiceTester
 {
     public class Program
