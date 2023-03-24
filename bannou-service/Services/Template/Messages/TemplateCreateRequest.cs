@@ -1,12 +1,12 @@
 ﻿using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Services.Data;
+using BeyondImmersion.BannouService.Services.Template.Data;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace BeyondImmersion.BannouService.Services.Messages
+namespace BeyondImmersion.BannouService.Services.Template.Messages
 {
     /// <summary>
     /// The request model for service API calls to `/template/create`.
@@ -18,10 +18,10 @@ namespace BeyondImmersion.BannouService.Services.Messages
         /// New templates to create.
         /// </summary>
         [JsonProperty("templates", Required = Required.Always)]
-        public Template[] Templates { get; }
+        public TemplateModel[] Templates { get; }
 
         private TemplateCreateRequest() { }
-        public TemplateCreateRequest(params Template[] templates)
+        public TemplateCreateRequest(params TemplateModel[] templates)
             => Templates = templates ?? throw new ArgumentNullException(nameof(templates));
     }
 }

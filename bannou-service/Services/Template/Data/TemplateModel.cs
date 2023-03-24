@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 
-namespace BeyondImmersion.BannouService.Services.Data
+namespace BeyondImmersion.BannouService.Services.Template.Data
 {
     /// <summary>
     /// A reference to a given "template context".
@@ -46,12 +46,12 @@ namespace BeyondImmersion.BannouService.Services.Data
 
     /// <summary>
     /// Implementation of template data model.
-    /// See also: <seealso cref="ITemplate"/> and <seealso cref="TemplateService"/>
+    /// See also: <seealso cref="ITemplateModel"/> and <seealso cref="TemplateService"/>
     /// 
     /// Only "ID" and "Name" are actually required fields to create a template.
     /// </summary>
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-    public sealed class Template : ITemplate
+    public sealed class TemplateModel : ITemplateModel
     {
         /// <summary>
         /// The unique identifier of this template (GUID, slug, etc).
@@ -102,8 +102,8 @@ namespace BeyondImmersion.BannouService.Services.Data
         [JsonProperty("contexts")]
         public List<TemplateContextRef>? Contexts { get; }
 
-        private Template() { }
-        public Template(string id, string name, string type, string? description = null, List<string>? tags = null, List<TemplateContextRef>? contexts = null)
+        private TemplateModel() { }
+        public TemplateModel(string id, string name, string type, string? description = null, List<string>? tags = null, List<TemplateContextRef>? contexts = null)
         {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentNullException(nameof(id));

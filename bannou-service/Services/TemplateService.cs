@@ -1,7 +1,7 @@
 ﻿using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Services.Data;
-using BeyondImmersion.BannouService.Services.Messages;
+using BeyondImmersion.BannouService.Services.Template.Data;
+using BeyondImmersion.BannouService.Services.Template.Messages;
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -28,6 +28,8 @@ namespace BeyondImmersion.BannouService.Services
         [ServiceRoute("/{id}")]
         public async Task<ActionResult> Get([FromRoute]TemplateGetRequest request)
         {
+            await Task.CompletedTask;
+
             var response = request.CreateResponse();
             response.Code = 200;
             return Ok(response);
@@ -40,6 +42,7 @@ namespace BeyondImmersion.BannouService.Services
         [ServiceRoute("/list")]
         public async Task List([FromBody]TemplateListRequest request)
         {
+            await Task.CompletedTask;
 
         }
 
@@ -50,6 +53,8 @@ namespace BeyondImmersion.BannouService.Services
         [ServiceRoute("/create")]
         public async Task Create([FromBody]TemplateCreateRequest request)
         {
+            await Task.CompletedTask;
+
         }
 
         /// <summary>
@@ -59,6 +64,7 @@ namespace BeyondImmersion.BannouService.Services
         [ServiceRoute("/update")]
         public async Task Update([FromBody]TemplateUpdateRequest request)
         {
+            await Task.CompletedTask;
 
         }
 
@@ -69,6 +75,7 @@ namespace BeyondImmersion.BannouService.Services
         [ServiceRoute("/destroy")]
         public async Task Destroy([FromBody]TemplateDestroyRequest request)
         {
+            await Task.CompletedTask;
 
         }
 
@@ -79,6 +86,7 @@ namespace BeyondImmersion.BannouService.Services
         [ServiceRoute("/destroy-by-key")]
         public async Task DestroyByKey([FromBody]TemplateDestroyByKeyRequest request)
         {
+            await Task.CompletedTask;
 
         }
     }

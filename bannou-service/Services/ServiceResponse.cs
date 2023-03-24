@@ -7,13 +7,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 
-namespace BeyondImmersion.BannouService.Services.Messages
+namespace BeyondImmersion.BannouService.Services
 {
     [JsonObject(MemberSerialization = MemberSerialization.OptIn, ItemNullValueHandling = NullValueHandling.Ignore)]
     public class ServiceResponse<T> : ServiceResponse
     where T : class, IServiceRequest
     {
-        Type GetRequestType()
+        public Type GetRequestType()
             => typeof(T);
     }
 

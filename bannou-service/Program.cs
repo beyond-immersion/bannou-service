@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.Application;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Logging;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.Services.Messages;
 using Dapr.Client;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
@@ -16,18 +15,18 @@ namespace BeyondImmersion.BannouService
         /// <summary>
         /// Service configuration- pulled from Config.json, ENVs, and command switches.
         /// </summary>
-        public static ServiceConfiguration Configuration { get; private set; }
+        internal static ServiceConfiguration Configuration { get; private set; }
 
         /// <summary>
         /// Service logger.
         /// </summary>
-        public static ILogger Logger { get; private set; }
+        internal static ILogger Logger { get; private set; }
 
         /// <summary>
         /// Internal service GUID- largely used for administrative network commands.
         /// Randomly generated on service startup.
         /// </summary>
-        public static string ServiceGUID { get; private set; }
+        internal static string ServiceGUID { get; private set; }
 
         /// <summary>
         /// Shared dapr client interface, used by all enabled internal services.
@@ -110,7 +109,7 @@ namespace BeyondImmersion.BannouService
                 return false;
             }
 
-            if (!Configuration.IsAnyServiceEnabled())
+            if (!ServiceConfiguration.IsAnyServiceEnabled())
             {
                 Logger.Log(LogLevel.Error, null, "Dapr services not configured to handle any roles / APIs.");
                 return false;
@@ -120,7 +119,7 @@ namespace BeyondImmersion.BannouService
             {
                 Type serviceType = serviceClassData.Item1;
 
-                if (!Configuration.HasRequiredConfiguration(serviceType))
+                if (!ServiceConfiguration.HasRequiredConfiguration(serviceType))
                 {
                     Logger.Log(LogLevel.Debug, null, $"Required configuration is missing to start an enabled dapr service.",
                         logParams: new JObject() { ["service_type"] = serviceType.Name });
@@ -162,7 +161,7 @@ namespace BeyondImmersion.BannouService
                     continue;
                 }
 
-                if (enabledOnly && !Configuration.IsServiceEnabled(serviceType))
+                if (enabledOnly && !ServiceConfiguration.IsServiceEnabled(serviceType))
                     continue;
 
                 string servicePrefix = ((IDaprService)serviceType).GetServiceName().ToLower();
@@ -181,8 +180,9 @@ namespace BeyondImmersion.BannouService
             var routeAdded = false;
             foreach (var serviceClass in GetDaprServiceTypes(enabledOnly: true))
             {
-                string controllerTemplate = serviceClass.Item2.Template ?? ((IDaprService)serviceClass.Item1).GetServiceName();
-                if (Configuration.IsServiceEnabled(serviceClass.Item1))
+                string serviceName = ((IDaprService)serviceClass.Item1).GetServiceName();
+                string controllerTemplate = serviceClass.Item2.Template ?? serviceName;
+                if (ServiceConfiguration.IsServiceEnabled(serviceClass.Item1))
                 {
                     webApp.MapControllerRoute(controllerTemplate, controllerTemplate + "/{action=Index}/{id?}");
                     routeAdded = true;

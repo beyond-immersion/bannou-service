@@ -4,7 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace BeyondImmersion.BannouService.Services.Messages
+namespace BeyondImmersion.BannouService.Services
 {
     /// <summary>
     /// The interface all message payload models to service endpoints should implement.

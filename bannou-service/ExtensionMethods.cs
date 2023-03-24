@@ -2,7 +2,6 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Logging;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.Services.Messages;
 using Newtonsoft.Json.Linq;
 using System.Net.Mime;
 using System.Reflection;
@@ -79,6 +78,22 @@ namespace BeyondImmersion.BannouService
             str = str[..(str.Length <= 45 ? str.Length : 45)].Trim();
             str = REGEX_Spaces().Replace(str, "-");
             return str;
+        }
+
+        public static string GetServiceName(this Type serviceType)
+        {
+            string serviceName = serviceType.Name;
+
+            if (serviceName.EndsWith("Service", comparisonType: StringComparison.InvariantCultureIgnoreCase))
+                serviceName = serviceName.Remove(serviceName.Length - "Service".Length, "Service".Length);
+
+            if (serviceName.EndsWith("Controller", comparisonType: StringComparison.CurrentCultureIgnoreCase))
+                serviceName = serviceName.Remove(serviceName.Length - "Controller".Length, "Controller".Length);
+
+            if (serviceName.EndsWith("Dapr", comparisonType: StringComparison.CurrentCultureIgnoreCase))
+                serviceName = serviceName.Remove(serviceName.Length - "Dapr".Length, "Dapr".Length);
+
+            return serviceName;
         }
 
         /// <summary>

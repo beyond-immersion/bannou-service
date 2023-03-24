@@ -1,5 +1,7 @@
 ﻿using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,150 +40,113 @@ namespace BeyondImmersion.BannouService.Application
         public string? ForceServiceID { get; set; }
 
         /// <summary>
-        /// Emulate dapr / unit testing mode.
-        /// </summary>
-        public bool EmulateDapr { get; set; } = false;
-
-        /// <summary>
-        /// Enable to have this service handle asset management APIs.
-        /// </summary>
-        [RunServiceIfEnabled<AssetService>]
-        public bool EnableAssetService { get; set; }
-            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
-
-        /// <summary>
-        /// Enable to have this service handle login queue APIs.
-        /// </summary>
-        [RunServiceIfEnabled<LoginService>]
-        public bool EnableLoginService { get; set; }
-            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
-
-        [RequiredForService<LoginService>]
-        public string? LoginSecret { get; set; }
-
-        /// <summary>
-        /// Enable to have this service handle login authorization APIs.
-        /// </summary>
-        [RunServiceIfEnabled<AuthorizationService>]
-        public bool EnableAuthorizationService { get; set; }
-            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
-
-        /// <summary>
-        /// Enable to have this service handle player profile APIs.
-        /// </summary>
-        [RunServiceIfEnabled<ProfileService>]
-        public bool EnableProfileService { get; set; }
-            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
-
-        /// <summary>
-        /// Enable to have this service handle inventory APIs.
-        /// </summary>
-        [RunServiceIfEnabled<InventoryService>]
-        public bool EnableInventoryService { get; set; }
-            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
-
-        /// <summary>
-        /// Enable to have this service handle template APIs.
-        /// </summary>
-        [RunServiceIfEnabled<TemplateService>]
-        public bool EnableTemplateService { get; set; }
-            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
-
-        /// <summary>
-        /// The datastore to use for templates.
-        /// </summary>
-        [RequiredForService<TemplateService>]
-        public string TemplateDatastore { get; set; }
-            = "template-datastore";
-
-        /// <summary>
-        /// Enable to have this service handle leaderboard APIs.
-        /// </summary>
-        [RunServiceIfEnabled<LeaderboardService>]
-        public bool EnableLeaderboardService { get; set; }
-            = ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
-
-        /// <summary>
         /// Returns whether the configuration indicates ANY services should be enabled.
         /// </summary>
-        public bool IsAnyServiceEnabled()
+        public static bool IsAnyServiceEnabled()
         {
-            return BaseServiceAttribute.GetPropertiesWithAttribute(GetType(), typeof(RunServiceIfEnabledAttribute))
-                .Any(t => (bool?)t.Item1.GetValue(this) ?? false);
+            return BaseServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>()
+                .Any(t => IsServiceEnabled(t.Item1));
         }
 
         /// <summary>
         /// Returns whether the configuration indicates the service should be enabled.
         /// </summary>
-        public bool IsServiceEnabled<T>(T _)
+        public static bool IsServiceEnabled<T>(T _)
             => IsServiceEnabled(typeof(T));
 
         /// <summary>
         /// Returns whether the configuration indicates the service should be enabled.
         /// </summary>
-        public bool IsServiceEnabled(Type serviceType)
+        public static bool IsServiceEnabled(Type serviceType)
         {
-            return BaseServiceAttribute.GetPropertiesWithAttribute(GetType(), typeof(RunServiceIfEnabledAttribute))
-                .Any(t =>
-                {
-                    return t.Item2.GetType().IsGenericType
-                        && t.Item2.GetType().GenericTypeArguments.FirstOrDefault() == serviceType
-                        && ((bool?)t.Item1.GetValue(this) ?? false);
-                });
+            IConfigurationRoot configRoot = BuildConfigurationRoot();
+            var serviceEnabledFlag = configRoot.GetValue<bool?>($"{serviceType.GetServiceName().ToUpper()}_SERVICE_ENABLED");
+            if (serviceEnabledFlag.HasValue)
+                return serviceEnabledFlag.Value;
+
+            return ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
         }
 
         /// <summary>
         /// Returns whether the configuration is provided for a service to run properly.
         /// </summary>
-        public bool HasRequiredConfiguration<T>()
-            where T : IDaprService
-            => HasRequiredConfiguration(typeof(T));
+        public static bool HasRequiredConfiguration<T>()
+            where T : class, IDaprService
+        {
+            return BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
+                .Any(t => t.Item2.ServiceType == typeof(T) && HasRequiredConfiguration(t.Item1));
+        }
 
         /// <summary>
         /// Returns whether the configuration is provided for a service to run properly.
         /// </summary>
-        public bool HasRequiredConfiguration(Type serviceType)
+        public static bool HasRequiredConfiguration(Type configurationType)
         {
-            return BaseServiceAttribute.GetPropertiesWithAttribute(GetType(), typeof(RequiredForServiceAttribute))
+            ServiceConfiguration? serviceConfig = BuildConfiguration(configurationType);
+            if (serviceConfig == null)
+                return true;
+
+            return BaseServiceAttribute.GetPropertiesWithAttribute(configurationType, typeof(Required))
                 .All(t =>
                 {
-                    if (!t.Item2.GetType().IsGenericType)
-                        return true;
-
-                    if (t.Item2.GetType().GenericTypeArguments.FirstOrDefault() == serviceType)
-                    {
-                        var propValue = t.Item1.GetValue(this);
-                        if (propValue == null)
-                            return false;
-                    }
+                    var propValue = t.Item1.GetValue(serviceConfig);
+                    if (propValue == null)
+                        return false;
 
                     return true;
                 });
         }
 
         /// <summary>
-        /// Builds the service configuration from available Config.json, ENVs, and command line switches.
-        /// Uses the best available configuration type discovered in loaded assemblies, rather than
-        /// specifying the type explicitly.
+        /// Builds the service configuration root from available Config.json, ENVs, and command line switches.
         /// </summary>
-        public static ServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
+        public static IConfigurationRoot BuildConfigurationRoot(string[]? args = null, string? envPrefix = null)
         {
-            // use reflection to find configuration with attributes
-            Type? bestConfigurationType = null;
-            foreach ((Type, ServiceConfigurationAttribute) configurationType in BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
-            {
-                if (bestConfigurationType == null || configurationType.Item1.Assembly != Assembly.GetExecutingAssembly())
-                    bestConfigurationType = configurationType.Item1;
-            }
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
+                .AddJsonFile("Config.json", true)
+                .AddEnvironmentVariables(envPrefix)
+                .AddCommandLine(args ?? Array.Empty<string>(), CreateAllSwitchMappings());
 
-            return BuildConfiguration(bestConfigurationType ?? typeof(ServiceConfiguration), args, envPrefix) ?? new ServiceConfiguration();
+            return configurationBuilder.Build();
         }
 
         /// <summary>
         /// Builds the service configuration from available Config.json, ENVs, and command line switches.
         /// </summary>
-        public static T? BuildConfiguration<T>(string[]? args = null, string? envPrefix = null)
-            where T : ServiceConfiguration => BuildConfiguration(typeof(T), args, envPrefix) as T;
+        public static ServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
+            => BuildConfigurationRoot(args, envPrefix).Get<ServiceConfiguration>() ?? new ServiceConfiguration();
+
+        /// <summary>
+        /// Builds the given service configuration from available Config.json, ENVs, and command line switches.
+        /// </summary>
+        public static T BuildConfiguration<T>(string[]? args = null)
+            where T : ServiceConfiguration, new()
+        {
+            string? envPrefix = null;
+            ServiceConfigurationAttribute? configAttr = typeof(T).GetCustomAttribute<ServiceConfigurationAttribute>();
+            if (configAttr != null)
+                envPrefix = configAttr.EnvPrefix;
+
+            return BuildConfiguration(typeof(T), args, envPrefix) as T ?? new();
+        }
+
+        /// <summary>
+        /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
+        /// </summary>
+        public static ServiceConfiguration? BuildServiceConfiguration<T>(string[]? args = null)
+            where T : class, IDaprService
+        {
+            foreach((Type, ServiceConfigurationAttribute) classWithAttr in BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
+                if (classWithAttr.Item2.ServiceType == typeof(T))
+                    return BuildConfiguration(classWithAttr.Item1, args, classWithAttr.Item2.EnvPrefix);
+
+            string? envPrefix = null;
+            ServiceConfigurationAttribute? configAttr = typeof(ServiceConfiguration).GetCustomAttribute<ServiceConfigurationAttribute>();
+            if (configAttr != null)
+                envPrefix = configAttr.EnvPrefix;
+
+            return BuildConfiguration(typeof(ServiceConfiguration), args, envPrefix);
+        }
 
         /// <summary>
         /// Builds the service configuration from available Config.json, ENVs, and command line switches.
@@ -194,6 +159,18 @@ namespace BeyondImmersion.BannouService.Application
                 .AddCommandLine(args ?? Array.Empty<string>(), CreateSwitchMappings(configurationType));
 
             return configurationBuilder.Build().Get(configurationType) as ServiceConfiguration;
+        }
+
+        /// <summary>
+        /// Create and return the full lookup of switch mappings for all configuration classes.
+        /// </summary>
+        public static IDictionary<string, string>? CreateAllSwitchMappings()
+        {
+            IEnumerable<KeyValuePair<string, string>> keyMappings = new Dictionary<string, string>();
+            foreach ((Type, ServiceConfigurationAttribute) classWithAttr in BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
+                keyMappings = keyMappings.Concat(CreateSwitchMappings(classWithAttr.Item1));
+
+            return keyMappings as IDictionary<string, string>;
         }
 
         /// <summary>

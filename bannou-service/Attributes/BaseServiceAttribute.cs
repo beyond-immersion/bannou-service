@@ -6,10 +6,7 @@ namespace BeyondImmersion.BannouService.Attributes
     /// <summary>
     /// Shared interface for service attributes.
     /// </summary>
-    public interface IServiceAttribute
-    {
-
-    }
+    public interface IServiceAttribute { }
 
     /// <summary>
     /// Base type for custom attributes.

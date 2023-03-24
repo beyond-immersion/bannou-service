@@ -44,7 +44,6 @@ namespace BeyondImmersion.BannouService.Services
         {
             if (Program.DaprClient != null)
             {
-#pragma warning disable CS0618 // alpha feature - not obsolete
                 Dapr.Client.GetConfigurationResponse configurationResponse = Program.DaprClient.GetConfiguration("service config", new[] { "login_queue_processing_rate" }).Result;
                 if (configurationResponse != null)
                 {
@@ -58,7 +57,6 @@ namespace BeyondImmersion.BannouService.Services
                         }
                     }
                 }
-#pragma warning restore CS0618
             }
         }
 

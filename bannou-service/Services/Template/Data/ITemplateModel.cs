@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 
-namespace BeyondImmersion.BannouService.Services.Data
+namespace BeyondImmersion.BannouService.Services.Template.Data
 {
     /// <summary>
     /// The interface for a template definition data model.
@@ -11,9 +11,9 @@ namespace BeyondImmersion.BannouService.Services.Data
     /// object types. This can include items, skills, 
     /// spells, etc...
     /// 
-    /// See: <see cref="Template"/> and <see cref="TemplateService"/>
+    /// See: <see cref="TemplateModel"/> and <see cref="TemplateService"/>
     /// </summary>
-    public interface ITemplate
+    public interface ITemplateModel
     {
         string ID { get; }
         string Name { get; }

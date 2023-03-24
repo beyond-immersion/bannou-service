@@ -14,34 +14,18 @@ namespace BeyondImmersion.BannouService.Services
     public interface IDaprService
     {
         public string GetServiceName()
-            => GetServiceName(GetType());
-
-        public static string GetServiceName(Type serviceType)
-        {
-            string serviceName = serviceType.Name;
-
-            if (serviceName.EndsWith("Service", comparisonType: StringComparison.InvariantCultureIgnoreCase))
-                serviceName = serviceName.Remove(serviceName.Length - "Service".Length, "Service".Length);
-
-            if (serviceName.EndsWith("Controller", comparisonType: StringComparison.CurrentCultureIgnoreCase))
-                serviceName = serviceName.Remove(serviceName.Length - "Controller".Length, "Controller".Length);
-
-            if (serviceName.EndsWith("Dapr", comparisonType: StringComparison.CurrentCultureIgnoreCase))
-                serviceName = serviceName.Remove(serviceName.Length - "Dapr".Length, "Dapr".Length);
-
-            return serviceName;
-        }
+            => GetType().GetServiceName();
 
         /// <summary>
         /// Returns whether the configuration indicates the service should be enabled.
         /// </summary>
         public bool IsEnabled()
-            => Program.Configuration.IsServiceEnabled(GetType());
+            => ServiceConfiguration.IsServiceEnabled(GetType());
 
         /// <summary>
         /// Returns whether the configuration is provided for a service to run properly.
         /// </summary>
         public bool HasRequiredConfiguration()
-            => Program.Configuration.HasRequiredConfiguration(GetType());
+            => ServiceConfiguration.HasRequiredConfiguration(GetType());
     }
 }

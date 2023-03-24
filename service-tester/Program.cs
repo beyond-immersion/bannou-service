@@ -22,7 +22,7 @@ namespace BeyondImmersion.ServiceTester
 
         internal static void Main(string[] args)
         {
-            Configuration = ServiceConfiguration.BuildConfiguration<TestConfiguration>(args, null) ?? new TestConfiguration();
+            Configuration = ServiceConfiguration.BuildConfiguration<TestConfiguration>(args);
             if (!ValidateConfiguration())
                 return;
 
