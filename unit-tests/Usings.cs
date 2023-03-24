@@ -1,4 +1,5 @@
 global using Xunit;
+global using BeyondImmersion.UnitTests;
 global using BeyondImmersion.BannouService;
 global using BeyondImmersion.BannouService.Application;
 global using BeyondImmersion.BannouService.Attributes;

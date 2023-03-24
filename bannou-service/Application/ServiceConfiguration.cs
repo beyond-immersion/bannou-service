@@ -1,206 +1,197 @@
-﻿using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Services;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Newtonsoft.Json;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
-namespace BeyondImmersion.BannouService.Application
+namespace BeyondImmersion.BannouService.Application;
+
+[ServiceConfiguration]
+public class ServiceConfiguration
 {
-    [ServiceConfiguration]
-    public class ServiceConfiguration
+    /// <summary>
+    /// Shared serializer options, between all dapr services/consumers.
+    /// </summary>
+    public static readonly JsonSerializerOptions DaprSerializerConfig = new()
     {
-        /// <summary>
-        /// Shared serializer options, between all dapr services/consumers.
-        /// </summary>
-        public static readonly JsonSerializerOptions DaprSerializerConfig = new()
-        {
-            AllowTrailingCommas = true,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never,
-            IgnoreReadOnlyFields = false,
-            IgnoreReadOnlyProperties = false,
-            IncludeFields = false,
-            MaxDepth = 32,
-            NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.Strict,
-            PropertyNameCaseInsensitive = false,
-            ReadCommentHandling = JsonCommentHandling.Disallow,
-            UnknownTypeHandling = System.Text.Json.Serialization.JsonUnknownTypeHandling.JsonElement,
-            WriteIndented = false
-        };
+        AllowTrailingCommas = true,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never,
+        IgnoreReadOnlyFields = false,
+        IgnoreReadOnlyProperties = false,
+        IncludeFields = false,
+        MaxDepth = 32,
+        NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.Strict,
+        PropertyNameCaseInsensitive = false,
+        ReadCommentHandling = JsonCommentHandling.Disallow,
+        UnknownTypeHandling = System.Text.Json.Serialization.JsonUnknownTypeHandling.JsonElement,
+        WriteIndented = false
+    };
 
-        /// <summary>
-        /// Set to override GUID for administrative service endpoints.
-        /// If not set, will generate a new GUID automatically on service startup.
-        /// </summary>
-        public string? ForceServiceID { get; set; }
+    /// <summary>
+    /// Set to override GUID for administrative service endpoints.
+    /// If not set, will generate a new GUID automatically on service startup.
+    /// </summary>
+    public string? ForceServiceID { get; set; }
 
-        /// <summary>
-        /// Returns whether the configuration indicates ANY services should be enabled.
-        /// </summary>
-        public static bool IsAnyServiceEnabled()
-        {
-            return BaseServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>()
-                .Any(t => IsServiceEnabled(t.Item1));
-        }
+    /// <summary>
+    /// Returns whether the configuration indicates ANY services should be enabled.
+    /// </summary>
+    public static bool IsAnyServiceEnabled()
+    {
+        return BaseServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>()
+            .Any(t => IsServiceEnabled(t.Item1));
+    }
 
-        /// <summary>
-        /// Returns whether the configuration indicates the service should be enabled.
-        /// </summary>
-        public static bool IsServiceEnabled<T>(T _)
-            => IsServiceEnabled(typeof(T));
+    /// <summary>
+    /// Returns whether the configuration indicates the service should be enabled.
+    /// </summary>
+    public static bool IsServiceEnabled<T>(T _)
+        => IsServiceEnabled(typeof(T));
 
-        /// <summary>
-        /// Returns whether the configuration indicates the service should be enabled.
-        /// </summary>
-        public static bool IsServiceEnabled(Type serviceType)
-        {
-            IConfigurationRoot configRoot = BuildConfigurationRoot();
-            var serviceEnabledFlag = configRoot.GetValue<bool?>($"{serviceType.GetServiceName().ToUpper()}_SERVICE_ENABLED");
-            if (serviceEnabledFlag.HasValue)
-                return serviceEnabledFlag.Value;
+    /// <summary>
+    /// Returns whether the configuration indicates the service should be enabled.
+    /// </summary>
+    public static bool IsServiceEnabled(Type serviceType)
+    {
+        IConfigurationRoot configRoot = BuildConfigurationRoot();
+        var serviceEnabledFlag = configRoot.GetValue<bool?>($"{serviceType.GetServiceName().ToUpper()}_SERVICE_ENABLED");
+        if (serviceEnabledFlag.HasValue)
+            return serviceEnabledFlag.Value;
 
-            return ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
-        }
+        return ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
+    }
 
-        /// <summary>
-        /// Returns whether the configuration is provided for a service to run properly.
-        /// </summary>
-        public static bool HasRequiredConfiguration<T>()
-            where T : class, IDaprService
-        {
-            return BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
-                .Any(t => t.Item2.ServiceType == typeof(T) && HasRequiredConfiguration(t.Item1));
-        }
+    /// <summary>
+    /// Returns whether the configuration is provided for a service to run properly.
+    /// </summary>
+    public static bool HasRequiredConfiguration<T>()
+        where T : class, IDaprService
+    {
+        return BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
+            .Any(t => t.Item2.ServiceType == typeof(T) && HasRequiredConfiguration(t.Item1));
+    }
 
-        /// <summary>
-        /// Returns whether the configuration is provided for a service to run properly.
-        /// </summary>
-        public static bool HasRequiredConfiguration(Type configurationType)
-        {
-            ServiceConfiguration? serviceConfig = BuildConfiguration(configurationType);
-            if (serviceConfig == null)
+    /// <summary>
+    /// Returns whether the configuration is provided for a service to run properly.
+    /// </summary>
+    public static bool HasRequiredConfiguration(Type configurationType)
+    {
+        ServiceConfiguration? serviceConfig = BuildConfiguration(configurationType);
+        if (serviceConfig == null)
+            return true;
+
+        return BaseServiceAttribute.GetPropertiesWithAttribute(configurationType, typeof(Required))
+            .All(t =>
+            {
+                var propValue = t.Item1.GetValue(serviceConfig);
+                if (propValue == null)
+                    return false;
+
                 return true;
+            });
+    }
 
-            return BaseServiceAttribute.GetPropertiesWithAttribute(configurationType, typeof(Required))
-                .All(t =>
-                {
-                    var propValue = t.Item1.GetValue(serviceConfig);
-                    if (propValue == null)
-                        return false;
+    /// <summary>
+    /// Builds the service configuration root from available Config.json, ENVs, and command line switches.
+    /// </summary>
+    public static IConfigurationRoot BuildConfigurationRoot(string[]? args = null, string? envPrefix = null)
+    {
+        IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
+            .AddJsonFile("Config.json", true)
+            .AddEnvironmentVariables(envPrefix)
+            .AddCommandLine(args ?? Array.Empty<string>(), CreateAllSwitchMappings());
 
-                    return true;
-                });
-        }
+        return configurationBuilder.Build();
+    }
 
-        /// <summary>
-        /// Builds the service configuration root from available Config.json, ENVs, and command line switches.
-        /// </summary>
-        public static IConfigurationRoot BuildConfigurationRoot(string[]? args = null, string? envPrefix = null)
-        {
-            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
-                .AddJsonFile("Config.json", true)
-                .AddEnvironmentVariables(envPrefix)
-                .AddCommandLine(args ?? Array.Empty<string>(), CreateAllSwitchMappings());
+    /// <summary>
+    /// Builds the service configuration from available Config.json, ENVs, and command line switches.
+    /// </summary>
+    public static ServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
+        => BuildConfigurationRoot(args, envPrefix).Get<ServiceConfiguration>() ?? new ServiceConfiguration();
 
-            return configurationBuilder.Build();
-        }
+    /// <summary>
+    /// Builds the given service configuration from available Config.json, ENVs, and command line switches.
+    /// </summary>
+    public static T BuildConfiguration<T>(string[]? args = null)
+        where T : ServiceConfiguration, new()
+    {
+        string? envPrefix = null;
+        ServiceConfigurationAttribute? configAttr = typeof(T).GetCustomAttribute<ServiceConfigurationAttribute>();
+        if (configAttr != null)
+            envPrefix = configAttr.EnvPrefix;
 
-        /// <summary>
-        /// Builds the service configuration from available Config.json, ENVs, and command line switches.
-        /// </summary>
-        public static ServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
-            => BuildConfigurationRoot(args, envPrefix).Get<ServiceConfiguration>() ?? new ServiceConfiguration();
+        return BuildConfiguration(typeof(T), args, envPrefix) as T ?? new();
+    }
 
-        /// <summary>
-        /// Builds the given service configuration from available Config.json, ENVs, and command line switches.
-        /// </summary>
-        public static T BuildConfiguration<T>(string[]? args = null)
-            where T : ServiceConfiguration, new()
-        {
-            string? envPrefix = null;
-            ServiceConfigurationAttribute? configAttr = typeof(T).GetCustomAttribute<ServiceConfigurationAttribute>();
-            if (configAttr != null)
-                envPrefix = configAttr.EnvPrefix;
+    /// <summary>
+    /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
+    /// </summary>
+    public static ServiceConfiguration? BuildServiceConfiguration<T>(string[]? args = null)
+        where T : class, IDaprService
+    {
+        foreach((Type, ServiceConfigurationAttribute) classWithAttr in BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
+            if (classWithAttr.Item2.ServiceType == typeof(T))
+                return BuildConfiguration(classWithAttr.Item1, args, classWithAttr.Item2.EnvPrefix);
 
-            return BuildConfiguration(typeof(T), args, envPrefix) as T ?? new();
-        }
+        string? envPrefix = null;
+        ServiceConfigurationAttribute? configAttr = typeof(ServiceConfiguration).GetCustomAttribute<ServiceConfigurationAttribute>();
+        if (configAttr != null)
+            envPrefix = configAttr.EnvPrefix;
 
-        /// <summary>
-        /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
-        /// </summary>
-        public static ServiceConfiguration? BuildServiceConfiguration<T>(string[]? args = null)
-            where T : class, IDaprService
-        {
-            foreach((Type, ServiceConfigurationAttribute) classWithAttr in BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
-                if (classWithAttr.Item2.ServiceType == typeof(T))
-                    return BuildConfiguration(classWithAttr.Item1, args, classWithAttr.Item2.EnvPrefix);
+        return BuildConfiguration(typeof(ServiceConfiguration), args, envPrefix);
+    }
 
-            string? envPrefix = null;
-            ServiceConfigurationAttribute? configAttr = typeof(ServiceConfiguration).GetCustomAttribute<ServiceConfigurationAttribute>();
-            if (configAttr != null)
-                envPrefix = configAttr.EnvPrefix;
+    /// <summary>
+    /// Builds the service configuration from available Config.json, ENVs, and command line switches.
+    /// </summary>
+    public static ServiceConfiguration? BuildConfiguration(Type configurationType, string[]? args = null, string? envPrefix = null)
+    {
+        IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
+            .AddJsonFile("Config.json", true)
+            .AddEnvironmentVariables(envPrefix)
+            .AddCommandLine(args ?? Array.Empty<string>(), CreateSwitchMappings(configurationType));
 
-            return BuildConfiguration(typeof(ServiceConfiguration), args, envPrefix);
-        }
+        return configurationBuilder.Build().Get(configurationType) as ServiceConfiguration;
+    }
 
-        /// <summary>
-        /// Builds the service configuration from available Config.json, ENVs, and command line switches.
-        /// </summary>
-        public static ServiceConfiguration? BuildConfiguration(Type configurationType, string[]? args = null, string? envPrefix = null)
-        {
-            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
-                .AddJsonFile("Config.json", true)
-                .AddEnvironmentVariables(envPrefix)
-                .AddCommandLine(args ?? Array.Empty<string>(), CreateSwitchMappings(configurationType));
+    /// <summary>
+    /// Create and return the full lookup of switch mappings for all configuration classes.
+    /// </summary>
+    public static IDictionary<string, string>? CreateAllSwitchMappings()
+    {
+        IEnumerable<KeyValuePair<string, string>> keyMappings = new Dictionary<string, string>();
+        foreach ((Type, ServiceConfigurationAttribute) classWithAttr in BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
+            keyMappings = keyMappings.Concat(CreateSwitchMappings(classWithAttr.Item1));
 
-            return configurationBuilder.Build().Get(configurationType) as ServiceConfiguration;
-        }
+        return keyMappings as IDictionary<string, string>;
+    }
 
-        /// <summary>
-        /// Create and return the full lookup of switch mappings for all configuration classes.
-        /// </summary>
-        public static IDictionary<string, string>? CreateAllSwitchMappings()
-        {
-            IEnumerable<KeyValuePair<string, string>> keyMappings = new Dictionary<string, string>();
-            foreach ((Type, ServiceConfigurationAttribute) classWithAttr in BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
-                keyMappings = keyMappings.Concat(CreateSwitchMappings(classWithAttr.Item1));
+    /// <summary>
+    /// Create and return the full lookup of switch mappings for the configuration class.
+    /// </summary>
+    public static IDictionary<string, string> CreateSwitchMappings<T>()
+        where T : ServiceConfiguration
+        => CreateSwitchMappings(typeof(T));
 
-            return keyMappings as IDictionary<string, string>;
-        }
+    /// <summary>
+    /// Create and return the full lookup of switch mappings for the configuration class.
+    /// </summary>
+    public static IDictionary<string, string> CreateSwitchMappings(Type configurationType)
+    {
+        Dictionary<string, string> keyMappings = new();
+        foreach (PropertyInfo propertyInfo in configurationType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            keyMappings[CreateSwitchFromName(propertyInfo.Name)] = propertyInfo.Name;
 
-        /// <summary>
-        /// Create and return the full lookup of switch mappings for the configuration class.
-        /// </summary>
-        public static IDictionary<string, string> CreateSwitchMappings<T>()
-            where T : ServiceConfiguration
-            => CreateSwitchMappings(typeof(T));
+        return keyMappings;
+    }
 
-        /// <summary>
-        /// Create and return the full lookup of switch mappings for the configuration class.
-        /// </summary>
-        public static IDictionary<string, string> CreateSwitchMappings(Type configurationType)
-        {
-            Dictionary<string, string> keyMappings = new();
-            foreach (PropertyInfo propertyInfo in configurationType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                keyMappings[CreateSwitchFromName(propertyInfo.Name)] = propertyInfo.Name;
-
-            return keyMappings;
-        }
-
-        /// <summary>
-        /// Create a deterministic command switch (ie: --some-switch ) from the given property name.
-        /// </summary>
-        public static string CreateSwitchFromName(string propertyName)
-        {
-            propertyName = propertyName.ToLower();
-            propertyName = propertyName.Replace('_', '-');
-            propertyName = "--" + propertyName;
-            return propertyName;
-        }
+    /// <summary>
+    /// Create a deterministic command switch (ie: --some-switch ) from the given property name.
+    /// </summary>
+    public static string CreateSwitchFromName(string propertyName)
+    {
+        propertyName = propertyName.ToLower();
+        propertyName = propertyName.Replace('_', '-');
+        propertyName = "--" + propertyName;
+        return propertyName;
     }
 }

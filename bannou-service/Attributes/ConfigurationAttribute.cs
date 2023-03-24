@@ -1,32 +1,28 @@
-﻿using BeyondImmersion.BannouService.Application;
-using System.Reflection;
+﻿namespace BeyondImmersion.BannouService.Attributes;
 
-namespace BeyondImmersion.BannouService.Attributes
+/// <summary>
+/// Attribute for auto-loading service configuration.
+/// </summary>
+[AttributeUsage(validOn: AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+public class ServiceConfigurationAttribute : BaseServiceAttribute
 {
     /// <summary>
-    /// Attribute for auto-loading service configuration.
+    /// The specific service type this configuration is meant for.
+    /// Can be null.
     /// </summary>
-    [AttributeUsage(validOn: AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-    public class ServiceConfigurationAttribute : BaseServiceAttribute
+    public Type? ServiceType { get; private set; }
+
+    /// <summary>
+    /// Prefix for ENVs for this configuration.
+    /// Can be null.
+    /// </summary>
+    public string? EnvPrefix { get; private set; }
+
+    public ServiceConfigurationAttribute() { }
+
+    public ServiceConfigurationAttribute(Type? serviceType = null, string? envPrefix = null)
     {
-        /// <summary>
-        /// The specific service type this configuration is meant for.
-        /// Can be null.
-        /// </summary>
-        public Type? ServiceType { get; private set; }
-
-        /// <summary>
-        /// Prefix for ENVs for this configuration.
-        /// Can be null.
-        /// </summary>
-        public string? EnvPrefix { get; private set; }
-
-        public ServiceConfigurationAttribute() { }
-
-        public ServiceConfigurationAttribute(Type? serviceType = null, string? envPrefix = null)
-        {
-            ServiceType = serviceType;
-            EnvPrefix = envPrefix;
-        }
+        ServiceType = serviceType;
+        EnvPrefix = envPrefix;
     }
 }
