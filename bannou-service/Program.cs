@@ -43,7 +43,7 @@ public static class Program
         Logger.Log(LogLevel.Debug, null, "Service starting.");
 
         Configuration = IServiceConfiguration.BuildConfiguration<ServiceConfiguration>(args);
-        if (!ValidateConfiguration())
+        if (!IServiceConfiguration.Validate(Configuration))
             return;
 
         ServiceGUID = Configuration.ForceServiceID ?? Guid.NewGuid().ToString().ToLower();
@@ -97,39 +97,10 @@ public static class Program
     public static void InitiateShutdown() => ShutdownCancellationTokenSource.Cancel();
 
     /// <summary>
-    /// Verifies that the service configuration contains required values (from ENVs/switches/etc).
-    /// </summary>
-    private static bool ValidateConfiguration()
-    {
-        if (Configuration == null)
-        {
-            Logger.Log(LogLevel.Error, null, "Service configuration required, even if only with default values.");
-            return false;
-        }
-
-        if (!IServiceConfiguration.IsAnyServiceEnabled())
-        {
-            Logger.Log(LogLevel.Error, null, "Dapr services not configured to handle any roles / APIs.");
-            return false;
-        }
-
-        foreach ((Type, DaprServiceAttribute) serviceClassData in IDaprService.FindAll(enabledOnly: true))
-        {
-            Type serviceType = serviceClassData.Item1;
-
-            if (!IServiceConfiguration.HasRequiredConfiguration(serviceType))
-            {
-                Logger.Log(LogLevel.Debug, null, $"Required configuration is missing to start an enabled dapr service.",
-                    logParams: new JObject() { ["service_type"] = serviceType.Name });
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /// <summary>
     /// Binds the HTTP endpoints for root administrative commands against this service against.
     /// </summary>
-    private static void SetAdminEndpoints(WebApplication webApp) => webApp.MapGet($"/admin_{ServiceGUID}/shutdown", InitiateShutdown);
+    private static void SetAdminEndpoints(WebApplication webApp)
+    {
+        webApp.MapGet($"/admin_{ServiceGUID}/shutdown", InitiateShutdown);
+    }
 }

@@ -1,6 +1,9 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 using Dapr.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace BeyondImmersion.BannouService.Application;
 
@@ -25,6 +28,44 @@ public interface IServiceConfiguration
     };
 
     public string? ForceServiceID { get; }
+
+    /// <summary>
+    /// Verifies that the service configuration contains required values (from ENVs/switches/etc).
+    /// </summary>
+    public bool Validate()
+        => Validate(this);
+
+    /// <summary>
+    /// Verifies that the service configuration contains required values (from ENVs/switches/etc).
+    /// </summary>
+    public static bool Validate(IServiceConfiguration configuration)
+    {
+        if (configuration == null)
+        {
+            Program.Logger.Log(LogLevel.Error, null, "Service configuration required, even if only with default values.");
+            return false;
+        }
+
+        if (!IsAnyServiceEnabled())
+        {
+            Program.Logger.Log(LogLevel.Error, null, "Dapr services not configured to handle any roles / APIs.");
+            return false;
+        }
+
+        foreach ((Type, DaprServiceAttribute) serviceClassData in IDaprService.FindAll(enabledOnly: true))
+        {
+            Type serviceType = serviceClassData.Item1;
+
+            if (!HasRequiredConfiguration(configuration.GetType()))
+            {
+                Program.Logger.Log(LogLevel.Debug, null, $"Required configuration is missing to start an enabled dapr service.",
+                    logParams: new JObject() { ["service_type"] = serviceType.Name });
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     /// <summary>
     /// Returns whether the configuration indicates ANY services should be enabled.
