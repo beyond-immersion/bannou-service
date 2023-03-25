@@ -112,4 +112,34 @@ public static partial class ExtensionMethods
         var bytes = Encoding.GetEncoding("Cyrillic").GetBytes(txt);
         return Encoding.ASCII.GetString(bytes);
     }
+
+    /// <summary>
+    /// Binds HTTP endpoints for all registered dapr services.
+    /// </summary>
+    public static bool MapDaprControllerRoutes(this WebApplication webApp)
+    {
+        var routeAdded = false;
+        foreach ((Type, DaprServiceAttribute) serviceClassInfo in IDaprService.FindAll(enabledOnly: true))
+        {
+            var serviceType = serviceClassInfo.Item1;
+
+            if (IServiceConfiguration.IsServiceEnabled(serviceType))
+            {
+                var serviceName = serviceType.GetServiceName();
+                var controllerTemplate = serviceName;
+
+                foreach (var daprControllerInfo in Controllers.IDaprController<IDaprService>.Find(serviceClassInfo.Item1))
+                {
+                    var tmpTemplate = daprControllerInfo.Item2?.Template;
+                    if (!string.IsNullOrWhiteSpace(tmpTemplate))
+                        controllerTemplate = tmpTemplate;
+
+                    webApp.MapControllerRoute(controllerTemplate, controllerTemplate + "/{action=Index}/{id?}");
+                    routeAdded = true;
+                }
+            }
+        }
+
+        return routeAdded;
+    }
 }

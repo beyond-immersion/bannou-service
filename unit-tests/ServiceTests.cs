@@ -23,9 +23,9 @@ public class ServiceTests
     [Fact]
     public void GetServiceName()
     {
-        Assert.Equal("Test", typeof(TestService).GetServiceName());
-        Assert.Equal("Test", typeof(TestController).GetServiceName());
-        Assert.Equal("Test", typeof(TestDaprService).GetServiceName());
-        Assert.Equal("Test", typeof(TestDaprController).GetServiceName());
+        Assert.Equal("test", typeof(TestService).GetServiceName());
+        Assert.Equal("test", typeof(TestController).GetServiceName());
+        Assert.Equal("test", typeof(TestDaprService).GetServiceName());
+        Assert.Equal("test", typeof(TestDaprController).GetServiceName());
     }
 }

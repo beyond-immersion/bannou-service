@@ -118,7 +118,8 @@ public interface IServiceConfiguration
     /// Builds the service configuration from available Config.json, ENVs, and command line switches.
     /// </summary>
     public static IServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
-        => BuildConfigurationRoot(args, envPrefix).Get<ServiceConfiguration>() ?? new();
+        => BuildConfigurationRoot(args, envPrefix)
+            .Get<ServiceConfiguration>((options) => options.BindNonPublicProperties = true) ?? new();
 
     /// <summary>
     /// Builds the given service configuration from available Config.json, ENVs, and command line switches.
@@ -162,7 +163,8 @@ public interface IServiceConfiguration
             .AddEnvironmentVariables(envPrefix)
             .AddCommandLine(args ?? Array.Empty<string>(), CreateSwitchMappings(configurationType));
 
-        return configurationBuilder.Build().Get(configurationType) as IServiceConfiguration;
+        return configurationBuilder.Build()
+            .Get(configurationType, (options) => options.BindNonPublicProperties = true) as IServiceConfiguration;
     }
 
     /// <summary>

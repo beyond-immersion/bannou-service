@@ -15,7 +15,7 @@ public class ConfigurationTests
 
     public abstract class TestConfigBase : IServiceConfiguration
     {
-        public string? ForceServiceID { get; }
+        public string? ForceServiceID { get; set; }
     }
 
     [ServiceConfiguration]
@@ -79,15 +79,17 @@ public class ConfigurationTests
         Environment.SetEnvironmentVariable("test_ForceServiceID", null);
     }
 
+#pragma warning disable CS0162 // Unreachable code detected
     [Fact]
     public void ServiceEnabled_Default()
     {
         ResetENVs();
         if (ServiceConstants.ENABLE_SERVICES_BY_DEFAULT)
-            Assert.True(IServiceConfiguration.IsAnyServiceEnabled());
+            Assert.True(IServiceConfiguration.IsServiceEnabled(typeof(TestService)));
         else
-            Assert.False(IServiceConfiguration.IsAnyServiceEnabled());
+            Assert.False(IServiceConfiguration.IsServiceEnabled(typeof(TestService)));
     }
+#pragma warning restore CS0162 // Unreachable code detected
 
     [Fact]
     public void ServiceEnabled_TestType()

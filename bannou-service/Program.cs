@@ -68,7 +68,7 @@ public static class Program
         try
         {
             SetAdminEndpoints(webApp);
-            var unused = AddDaprServiceEndpoints(webApp);
+            webApp.MapDaprControllerRoutes();
 
             Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
             {
@@ -113,7 +113,7 @@ public static class Program
             return false;
         }
 
-        foreach ((Type, DaprServiceAttribute) serviceClassData in GetDaprServiceTypes(enabledOnly: true))
+        foreach ((Type, DaprServiceAttribute) serviceClassData in IDaprService.FindAll(enabledOnly: true))
         {
             Type serviceType = serviceClassData.Item1;
 
@@ -132,63 +132,4 @@ public static class Program
     /// Binds the HTTP endpoints for root administrative commands against this service against.
     /// </summary>
     private static void SetAdminEndpoints(WebApplication webApp) => webApp.MapGet($"/admin_{ServiceGUID}/shutdown", InitiateShutdown);
-
-    /// <summary>
-    /// Gets the full list of all dapr service classes (with associated attribute) in loaded assemblies.
-    /// </summary>
-    private static (Type, DaprServiceAttribute)[] GetDaprServiceTypes(bool enabledOnly = false)
-    {
-        List<(Type, DaprServiceAttribute)> serviceClasses = IServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
-        if (!serviceClasses.Any())
-        {
-            Logger.Log(LogLevel.Error, null, $"No dapr services found to instantiate.");
-            return Array.Empty<(Type, DaprServiceAttribute)>();
-        }
-
-        // prefixes need to be unique, so assign to a tmp hash/dictionary lookup
-        var serviceLookup = new Dictionary<string, (Type, DaprServiceAttribute)>();
-        foreach ((Type, DaprServiceAttribute) serviceClass in serviceClasses)
-        {
-            Type serviceType = serviceClass.Item1;
-            DaprServiceAttribute serviceAttr = serviceClass.Item2;
-
-            if (!typeof(IDaprService).IsAssignableFrom(serviceType))
-            {
-                Logger.Log(LogLevel.Error, null, $"Dapr service attribute attached to a non-service class.",
-                    logParams: new JObject() { ["service_type"] = serviceType.Name });
-                continue;
-            }
-
-            if (enabledOnly && !IServiceConfiguration.IsServiceEnabled(serviceType))
-                continue;
-
-            var servicePrefix = ((IDaprService)serviceType).GetName().ToLower();
-            if (!serviceLookup.ContainsKey(servicePrefix) || serviceClass.GetType().Assembly != Assembly.GetExecutingAssembly())
-                serviceLookup[servicePrefix] = serviceClass;
-        }
-
-        return serviceLookup.Values.ToArray();
-    }
-
-    /// <summary>
-    /// Binds HTTP endpoints for all registered dapr services.
-    /// </summary>
-    private static bool AddDaprServiceEndpoints(WebApplication webApp)
-    {
-        var routeAdded = false;
-        foreach (var serviceClass in GetDaprServiceTypes(enabledOnly: true))
-        {
-            var serviceName = ((IDaprService)serviceClass.Item1).GetName();
-
-            var controllerType = serviceClass.Item2;
-            var controllerTemplate = serviceClass.Item2.Template ?? serviceName;
-            if (IServiceConfiguration.IsServiceEnabled(serviceClass.Item1))
-            {
-                webApp.MapControllerRoute(controllerTemplate, controllerTemplate + "/{action=Index}/{id?}");
-                routeAdded = true;
-            }
-        }
-
-        return routeAdded;
-    }
 }
