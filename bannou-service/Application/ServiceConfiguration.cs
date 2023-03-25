@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Text.Json;
 using Dapr.Extensions.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Application;
 
@@ -42,7 +43,7 @@ public class ServiceConfiguration
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
     /// </summary>
-    public static bool IsServiceEnabled<T>(T _)
+    public static bool IsServiceEnabled<T>()
         => IsServiceEnabled(typeof(T));
 
     /// <summary>
@@ -92,7 +93,7 @@ public class ServiceConfiguration
         if (serviceConfig == null)
             return true;
 
-        return BaseServiceAttribute.GetPropertiesWithAttribute(configurationType, typeof(Required))
+        return BaseServiceAttribute.GetPropertiesWithAttribute(configurationType, typeof(ServiceConfigRequiredAttribute))
             .All(t =>
             {
                 var propValue = t.Item1.GetValue(serviceConfig);
