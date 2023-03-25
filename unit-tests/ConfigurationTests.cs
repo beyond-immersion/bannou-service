@@ -1,5 +1,3 @@
-using Google.Api;
-
 namespace BeyondImmersion.UnitTests;
 
 public class ConfigurationTests
@@ -32,10 +30,66 @@ public class ConfigurationTests
 
     private static void ResetENVs()
     {
+        Environment.SetEnvironmentVariable("TestServiceEnabled", null);
+        Environment.SetEnvironmentVariable("Test_Service_Enabled", null);
         Environment.SetEnvironmentVariable("TestProperty", null);
         Environment.SetEnvironmentVariable("ForceServiceID", null);
         Environment.SetEnvironmentVariable("test_TestProperty", null);
         Environment.SetEnvironmentVariable("test_ForceServiceID", null);
+    }
+
+    [Fact]
+    public void ServiceEnabled_Default()
+    {
+        ResetENVs();
+        if (ServiceConstants.ENABLE_SERVICES_BY_DEFAULT)
+            Assert.True(ServiceConfiguration.IsAnyServiceEnabled());
+        else
+            Assert.False(ServiceConfiguration.IsAnyServiceEnabled());
+    }
+
+    [Fact]
+    public void ServiceEnabled_TestType()
+    {
+        ResetENVs();
+        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
+        Assert.False(ServiceConfiguration.IsServiceEnabled(typeof(TestService)));
+
+        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "true");
+        Assert.True(ServiceConfiguration.IsServiceEnabled(typeof(TestService)));
+    }
+
+    [Fact]
+    public void ServiceEnabled_TestType_Lower()
+    {
+        ResetENVs();
+        Environment.SetEnvironmentVariable("test_service_enabled", "false");
+        Assert.False(ServiceConfiguration.IsServiceEnabled(typeof(TestService)));
+
+        Environment.SetEnvironmentVariable("test_service_enabled", "true");
+        Assert.True(ServiceConfiguration.IsServiceEnabled(typeof(TestService)));
+    }
+
+    [Fact]
+    public void ServiceEnabled_TestString()
+    {
+        ResetENVs();
+        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
+        Assert.False(ServiceConfiguration.IsServiceEnabled("TestService"));
+
+        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "true");
+        Assert.True(ServiceConfiguration.IsServiceEnabled("TestService"));
+    }
+
+    [Fact]
+    public void ServiceEnabled_TestString_Lower()
+    {
+        ResetENVs();
+        Environment.SetEnvironmentVariable("test_service_enabled", "false");
+        Assert.False(ServiceConfiguration.IsServiceEnabled("testservice"));
+
+        Environment.SetEnvironmentVariable("test_service_enabled", "true");
+        Assert.True(ServiceConfiguration.IsServiceEnabled("testservice"));
     }
 
     [Fact]
@@ -110,10 +164,12 @@ public class ConfigurationTests
         var serviceID = Guid.NewGuid().ToString().ToLower();
         var config = ServiceConfiguration.BuildConfiguration(typeof(TestConfiguration_NoAttribute),
                         args: new string[] { $"--ForceServiceID={serviceID}" });
+        Assert.NotNull(config);
         Assert.Equal(serviceID, config.ForceServiceID);
 
-        config = ServiceConfiguration.BuildConfiguration<TestConfiguration_NoAttribute>(
+        config = ServiceConfiguration.BuildConfiguration(typeof(TestConfiguration_NoAttribute),
                         args: new string[] { $"--forceserviceid={serviceID}" });
+        Assert.NotNull(config);
         Assert.Equal(serviceID, config.ForceServiceID);
     }
 

@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Reflection;
 using System.Text.Json;
+using Dapr.Extensions.Configuration;
 
 namespace BeyondImmersion.BannouService.Application;
 
@@ -35,10 +36,8 @@ public class ServiceConfiguration
     /// Returns whether the configuration indicates ANY services should be enabled.
     /// </summary>
     public static bool IsAnyServiceEnabled()
-    {
-        return BaseServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>()
+        => BaseServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>()
             .Any(t => IsServiceEnabled(t.Item1));
-    }
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
@@ -50,9 +49,24 @@ public class ServiceConfiguration
     /// Returns whether the configuration indicates the service should be enabled.
     /// </summary>
     public static bool IsServiceEnabled(Type serviceType)
+        => IsServiceEnabled(serviceType.GetServiceName());
+
+    /// <summary>
+    /// Returns whether the configuration indicates the service should be enabled.
+    /// </summary>
+    public static bool IsServiceEnabled(string serviceName)
     {
+        if (serviceName.EndsWith("Service", comparisonType: StringComparison.InvariantCultureIgnoreCase))
+            serviceName = serviceName.Remove(serviceName.Length - "Service".Length, "Service".Length);
+
+        if (serviceName.EndsWith("Controller", comparisonType: StringComparison.CurrentCultureIgnoreCase))
+            serviceName = serviceName.Remove(serviceName.Length - "Controller".Length, "Controller".Length);
+
+        if (serviceName.EndsWith("Dapr", comparisonType: StringComparison.CurrentCultureIgnoreCase))
+            serviceName = serviceName.Remove(serviceName.Length - "Dapr".Length, "Dapr".Length);
+
         IConfigurationRoot configRoot = BuildConfigurationRoot();
-        var serviceEnabledFlag = configRoot.GetValue<bool?>($"{serviceType.GetServiceName().ToUpper()}_SERVICE_ENABLED");
+        var serviceEnabledFlag = configRoot.GetValue<bool?>($"{serviceName.ToUpper()}_SERVICE_ENABLED", null);
         if (serviceEnabledFlag.HasValue)
             return serviceEnabledFlag.Value;
 
@@ -98,6 +112,9 @@ public class ServiceConfiguration
             .AddJsonFile("Config.json", true)
             .AddEnvironmentVariables(envPrefix)
             .AddCommandLine(args ?? Array.Empty<string>(), CreateAllSwitchMappings());
+
+        if (Program.DaprClient != null)
+            configurationBuilder.AddDaprConfigurationStore("ConfigurationStore", Array.Empty<string>(), Program.DaprClient, TimeSpan.FromSeconds(3), null);
 
         return configurationBuilder.Build();
     }
