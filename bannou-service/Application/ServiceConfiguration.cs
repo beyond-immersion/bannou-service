@@ -1,6 +1,6 @@
-﻿using Newtonsoft.Json;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text.Json;
+using Dapr.Extensions.Configuration;
 
 namespace BeyondImmersion.BannouService.Application;
 
@@ -35,24 +35,37 @@ public class ServiceConfiguration
     /// Returns whether the configuration indicates ANY services should be enabled.
     /// </summary>
     public static bool IsAnyServiceEnabled()
-    {
-        return BaseServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>()
+        => BaseServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>()
             .Any(t => IsServiceEnabled(t.Item1));
-    }
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
     /// </summary>
-    public static bool IsServiceEnabled<T>(T _)
+    public static bool IsServiceEnabled<T>()
         => IsServiceEnabled(typeof(T));
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
     /// </summary>
     public static bool IsServiceEnabled(Type serviceType)
+        => IsServiceEnabled(serviceType.GetServiceName());
+
+    /// <summary>
+    /// Returns whether the configuration indicates the service should be enabled.
+    /// </summary>
+    public static bool IsServiceEnabled(string serviceName)
     {
+        if (serviceName.EndsWith("Service", comparisonType: StringComparison.InvariantCultureIgnoreCase))
+            serviceName = serviceName.Remove(serviceName.Length - "Service".Length, "Service".Length);
+
+        if (serviceName.EndsWith("Controller", comparisonType: StringComparison.CurrentCultureIgnoreCase))
+            serviceName = serviceName.Remove(serviceName.Length - "Controller".Length, "Controller".Length);
+
+        if (serviceName.EndsWith("Dapr", comparisonType: StringComparison.CurrentCultureIgnoreCase))
+            serviceName = serviceName.Remove(serviceName.Length - "Dapr".Length, "Dapr".Length);
+
         IConfigurationRoot configRoot = BuildConfigurationRoot();
-        var serviceEnabledFlag = configRoot.GetValue<bool?>($"{serviceType.GetServiceName().ToUpper()}_SERVICE_ENABLED");
+        var serviceEnabledFlag = configRoot.GetValue<bool?>($"{serviceName.ToUpper()}_SERVICE_ENABLED", null);
         if (serviceEnabledFlag.HasValue)
             return serviceEnabledFlag.Value;
 
@@ -60,13 +73,14 @@ public class ServiceConfiguration
     }
 
     /// <summary>
-    /// Returns whether the configuration is provided for a service to run properly.
+    /// Returns whether the configuration is provided for a given service type to run properly.
     /// </summary>
     public static bool HasRequiredConfiguration<T>()
         where T : class, IDaprService
     {
         return BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
-            .Any(t => t.Item2.ServiceType == typeof(T) && HasRequiredConfiguration(t.Item1));
+            .Where(t => t.Item2.ServiceType == typeof(T))
+            .All(t => HasRequiredConfiguration(t.Item1));
     }
 
     /// <summary>
@@ -78,7 +92,7 @@ public class ServiceConfiguration
         if (serviceConfig == null)
             return true;
 
-        return BaseServiceAttribute.GetPropertiesWithAttribute(configurationType, typeof(Required))
+        return BaseServiceAttribute.GetPropertiesWithAttribute(configurationType, typeof(ServiceConfigRequiredAttribute))
             .All(t =>
             {
                 var propValue = t.Item1.GetValue(serviceConfig);
@@ -99,6 +113,9 @@ public class ServiceConfiguration
             .AddEnvironmentVariables(envPrefix)
             .AddCommandLine(args ?? Array.Empty<string>(), CreateAllSwitchMappings());
 
+        if (Program.DaprClient != null)
+            configurationBuilder.AddDaprConfigurationStore("ConfigurationStore", Array.Empty<string>(), Program.DaprClient, TimeSpan.FromSeconds(3), null);
+
         return configurationBuilder.Build();
     }
 
@@ -106,7 +123,7 @@ public class ServiceConfiguration
     /// Builds the service configuration from available Config.json, ENVs, and command line switches.
     /// </summary>
     public static ServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
-        => BuildConfigurationRoot(args, envPrefix).Get<ServiceConfiguration>() ?? new ServiceConfiguration();
+        => BuildConfigurationRoot(args, envPrefix).Get<ServiceConfiguration>() ?? new();
 
     /// <summary>
     /// Builds the given service configuration from available Config.json, ENVs, and command line switches.
@@ -158,11 +175,13 @@ public class ServiceConfiguration
     /// </summary>
     public static IDictionary<string, string>? CreateAllSwitchMappings()
     {
-        IEnumerable<KeyValuePair<string, string>> keyMappings = new Dictionary<string, string>();
+        var allSwitchMappings = new Dictionary<string, string>();
         foreach ((Type, ServiceConfigurationAttribute) classWithAttr in BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
-            keyMappings = keyMappings.Concat(CreateSwitchMappings(classWithAttr.Item1));
+            foreach (var kvp in CreateSwitchMappings(classWithAttr.Item1))
+                if (!allSwitchMappings.ContainsKey(kvp.Key))
+                    allSwitchMappings[kvp.Key] = kvp.Value;
 
-        return keyMappings as IDictionary<string, string>;
+        return allSwitchMappings;
     }
 
     /// <summary>
