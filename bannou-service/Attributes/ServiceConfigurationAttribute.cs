@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace BeyondImmersion.BannouService.Attributes;
+﻿namespace BeyondImmersion.BannouService.Attributes;
 
 /// <summary>
 /// Attribute for auto-loading service configuration.

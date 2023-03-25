@@ -10,6 +10,9 @@ public class ConfigurationTests
     [DaprService("test")]
     public class RequiredTestService : Controller, IDaprService { }
 
+    [DaprService("test")]
+    public class MultipleRequiredTestService : Controller, IDaprService { }
+
     [ServiceConfiguration]
     public class TestConfiguration_Attribute_NoService : ServiceConfiguration
     {
@@ -40,11 +43,32 @@ public class ConfigurationTests
         public string? TestProperty { get; set; }
     }
 
+    [ServiceConfiguration(typeof(MultipleRequiredTestService))]
+    public class TestConfiguration_MultipleRequiredProperties_A : ServiceConfiguration
+    {
+        [ServiceConfigRequired(AllowEmptyStrings = false)]
+        public string? TestProperty_A { get; set; }
+    }
+
+    [ServiceConfiguration(typeof(MultipleRequiredTestService))]
+    public class TestConfiguration_MultipleRequiredProperties_B : ServiceConfiguration
+    {
+        [ServiceConfigRequired(AllowEmptyStrings = false)]
+        public string? TestProperty_B { get; set; }
+    }
+
+    public ConfigurationTests()
+    {
+        ResetENVs();
+    }
+
     private static void ResetENVs()
     {
         Environment.SetEnvironmentVariable("TestServiceEnabled", null);
         Environment.SetEnvironmentVariable("Test_Service_Enabled", null);
         Environment.SetEnvironmentVariable("TestProperty", null);
+        Environment.SetEnvironmentVariable("TestProperty_A", null);
+        Environment.SetEnvironmentVariable("TestProperty_B", null);
         Environment.SetEnvironmentVariable("ForceServiceID", null);
         Environment.SetEnvironmentVariable("test_TestProperty", null);
         Environment.SetEnvironmentVariable("test_ForceServiceID", null);
@@ -140,6 +164,42 @@ public class ConfigurationTests
         Assert.NotNull(switchLookup);
         Assert.Equal("ForceServiceID", switchLookup["--forceserviceid"]);
         Assert.False(switchLookup.ContainsKey("--test-service-enabled"));
+    }
+
+    [Fact]
+    public void HasRequiredConfig_TestConfiguration()
+    {
+        ResetENVs();
+        Assert.False(ServiceConfiguration.HasRequiredConfiguration(typeof(TestConfiguration_RequiredProperty)));
+
+        Environment.SetEnvironmentVariable("TestProperty", "Test");
+        Assert.True(ServiceConfiguration.HasRequiredConfiguration(typeof(TestConfiguration_RequiredProperty)));
+    }
+
+    [Fact]
+    public void HasRequiredConfig_ByService()
+    {
+        ResetENVs();
+        Assert.False(ServiceConfiguration.HasRequiredConfiguration<RequiredTestService>());
+
+        Environment.SetEnvironmentVariable("TestProperty", "Test");
+        Assert.True(ServiceConfiguration.HasRequiredConfiguration<RequiredTestService>());
+    }
+
+    [Fact]
+    public void HasRequiredConfig_ByService_MultipleConfigTypes()
+    {
+        ResetENVs();
+        Assert.False(ServiceConfiguration.HasRequiredConfiguration<MultipleRequiredTestService>());
+
+        Environment.SetEnvironmentVariable("TestProperty", "Test");
+        Assert.False(ServiceConfiguration.HasRequiredConfiguration<MultipleRequiredTestService>());
+
+        Environment.SetEnvironmentVariable("TestProperty_A", "Test");
+        Assert.False(ServiceConfiguration.HasRequiredConfiguration<MultipleRequiredTestService>());
+
+        Environment.SetEnvironmentVariable("TestProperty_B", "Test");
+        Assert.True(ServiceConfiguration.HasRequiredConfiguration<MultipleRequiredTestService>());
     }
 
     [Fact]
@@ -437,26 +497,6 @@ public class ConfigurationTests
         config = ServiceConfiguration.BuildConfiguration<TestConfiguration_Attribute_TestService_WithPrefix>();
         Assert.Equal("Test", config.TestProperty);
         Assert.Equal(serviceID, config.ForceServiceID);
-    }
-
-    [Fact]
-    public void HasRequiredConfig_TestConfiguration()
-    {
-        ResetENVs();
-        Assert.False(ServiceConfiguration.HasRequiredConfiguration(typeof(TestConfiguration_RequiredProperty)));
-
-        Environment.SetEnvironmentVariable("TestProperty", "Test");
-        Assert.True(ServiceConfiguration.HasRequiredConfiguration(typeof(TestConfiguration_RequiredProperty)));
-    }
-
-    [Fact]
-    public void HasRequiredConfig_ByService()
-    {
-        ResetENVs();
-        Assert.False(ServiceConfiguration.HasRequiredConfiguration<RequiredTestService>());
-
-        Environment.SetEnvironmentVariable("TestProperty", "Test");
-        Assert.True(ServiceConfiguration.HasRequiredConfiguration<RequiredTestService>());
     }
 
     [Fact]

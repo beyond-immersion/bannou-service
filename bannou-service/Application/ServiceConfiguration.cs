@@ -1,8 +1,6 @@
-﻿using Newtonsoft.Json;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text.Json;
 using Dapr.Extensions.Configuration;
-using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Application;
 
@@ -75,13 +73,14 @@ public class ServiceConfiguration
     }
 
     /// <summary>
-    /// Returns whether the configuration is provided for a service to run properly.
+    /// Returns whether the configuration is provided for a given service type to run properly.
     /// </summary>
     public static bool HasRequiredConfiguration<T>()
         where T : class, IDaprService
     {
         return BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
-            .Any(t => t.Item2.ServiceType == typeof(T) && HasRequiredConfiguration(t.Item1));
+            .Where(t => t.Item2.ServiceType == typeof(T))
+            .All(t => HasRequiredConfiguration(t.Item1));
     }
 
     /// <summary>
