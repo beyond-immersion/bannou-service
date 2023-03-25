@@ -4,12 +4,11 @@ namespace BeyondImmersion.BannouService.Attributes;
 
 /// <summary>
 /// Attribute for auto-loading dapr services.
-/// Use {Name}_SERVICE_ENABLE as ENV or switch to enable/disable.
+/// Use [RunServiceIfEnabled] on configuration to optionally/automatically enable services.
 /// </summary>
 [AttributeUsage(validOn: AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-public sealed class DaprServiceAttribute : BaseServiceAttribute
+public class DaprControllerAttribute : RouteAttribute, IServiceAttribute
 {
-    public string? Name { get; }
-    public DaprServiceAttribute(string name)
-        => Name = name;
+    public DaprControllerAttribute(string template)
+        : base(template) {}
 }

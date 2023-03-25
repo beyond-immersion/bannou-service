@@ -1,8 +1,10 @@
 using Dapr.Client;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
+[assembly: ApiController]
 [assembly: InternalsVisibleTo("unit-tests")]
 namespace BeyondImmersion.BannouService;
 
@@ -40,7 +42,7 @@ public static class Program
 
         Logger.Log(LogLevel.Debug, null, "Service starting.");
 
-        Configuration = ServiceConfiguration.BuildConfiguration(args, "BANNOU_");
+        Configuration = IServiceConfiguration.BuildConfiguration<ServiceConfiguration>(args);
         if (!ValidateConfiguration())
             return;
 
@@ -54,7 +56,7 @@ public static class Program
         }
 
         DaprClient = new DaprClientBuilder()
-            .UseJsonSerializationOptions(ServiceConfiguration.DaprSerializerConfig)
+            .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig)
             .Build();
 
         if (!await DaprClient.CheckHealthAsync(ShutdownCancellationTokenSource.Token))
@@ -105,7 +107,7 @@ public static class Program
             return false;
         }
 
-        if (!ServiceConfiguration.IsAnyServiceEnabled())
+        if (!IServiceConfiguration.IsAnyServiceEnabled())
         {
             Logger.Log(LogLevel.Error, null, "Dapr services not configured to handle any roles / APIs.");
             return false;
@@ -115,7 +117,7 @@ public static class Program
         {
             Type serviceType = serviceClassData.Item1;
 
-            if (!ServiceConfiguration.HasRequiredConfiguration(serviceType))
+            if (!IServiceConfiguration.HasRequiredConfiguration(serviceType))
             {
                 Logger.Log(LogLevel.Debug, null, $"Required configuration is missing to start an enabled dapr service.",
                     logParams: new JObject() { ["service_type"] = serviceType.Name });
@@ -136,7 +138,7 @@ public static class Program
     /// </summary>
     private static (Type, DaprServiceAttribute)[] GetDaprServiceTypes(bool enabledOnly = false)
     {
-        List<(Type, DaprServiceAttribute)> serviceClasses = BaseServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
+        List<(Type, DaprServiceAttribute)> serviceClasses = IServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
         if (!serviceClasses.Any())
         {
             Logger.Log(LogLevel.Error, null, $"No dapr services found to instantiate.");
@@ -157,10 +159,10 @@ public static class Program
                 continue;
             }
 
-            if (enabledOnly && !ServiceConfiguration.IsServiceEnabled(serviceType))
+            if (enabledOnly && !IServiceConfiguration.IsServiceEnabled(serviceType))
                 continue;
 
-            string servicePrefix = ((IDaprService)serviceType).GetServiceName().ToLower();
+            var servicePrefix = ((IDaprService)serviceType).GetName().ToLower();
             if (!serviceLookup.ContainsKey(servicePrefix) || serviceClass.GetType().Assembly != Assembly.GetExecutingAssembly())
                 serviceLookup[servicePrefix] = serviceClass;
         }
@@ -176,9 +178,11 @@ public static class Program
         var routeAdded = false;
         foreach (var serviceClass in GetDaprServiceTypes(enabledOnly: true))
         {
-            string serviceName = ((IDaprService)serviceClass.Item1).GetServiceName();
-            string controllerTemplate = serviceClass.Item2.Template ?? serviceName;
-            if (ServiceConfiguration.IsServiceEnabled(serviceClass.Item1))
+            var serviceName = ((IDaprService)serviceClass.Item1).GetName();
+
+            var controllerType = serviceClass.Item2;
+            var controllerTemplate = serviceClass.Item2.Template ?? serviceName;
+            if (IServiceConfiguration.IsServiceEnabled(serviceClass.Item1))
             {
                 webApp.MapControllerRoute(controllerTemplate, controllerTemplate + "/{action=Index}/{id?}");
                 routeAdded = true;

@@ -4,16 +4,16 @@ namespace BeyondImmersion.UnitTests;
 
 public class ServiceTests
 {
-    [DaprService(template: "test")]
-    public class TestService : Controller, IDaprService { }
+    [DaprService("test")]
+    public class TestService : IDaprService { }
 
-    [DaprService(template: "test")]
-    public class TestDaprService : Controller, IDaprService { }
+    [DaprService("test")]
+    public class TestDaprService : IDaprService { }
 
-    [DaprService(template: "test")]
+    [DaprService("test")]
     public class TestController : Controller, IDaprService { }
 
-    [DaprService(template: "test")]
+    [DaprService("test")]
     public class TestDaprController : Controller, IDaprService { }
 
     public ServiceTests()

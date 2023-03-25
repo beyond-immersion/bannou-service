@@ -6,6 +6,6 @@ namespace BeyondImmersion.BannouService.Attributes;
 /// The configuration property is required for the service to function.
 /// </summary>
 [AttributeUsage(validOn: AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-public class ServiceConfigRequiredAttribute : RequiredAttribute, IServiceAttribute
+public class ConfigRequiredAttribute : RequiredAttribute, IServiceAttribute
 {
 }

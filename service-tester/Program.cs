@@ -14,7 +14,7 @@ public class Program
 
     internal static void Main(string[] args)
     {
-        Configuration = ServiceConfiguration.BuildConfiguration<TestConfiguration>(args);
+        Configuration = IServiceConfiguration.BuildConfiguration<TestConfiguration>(args);
         if (!ValidateConfiguration())
             return;
 

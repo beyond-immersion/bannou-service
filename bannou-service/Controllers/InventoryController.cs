@@ -1,18 +1,22 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BeyondImmersion.BannouService.Controllers.Messages;
+using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
 
-namespace BeyondImmersion.BannouService.Services;
+namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
 /// Service component responsible for inventory handling.
 /// </summary>
-[DaprService("inventory")]
-public class InventoryService : IDaprService
+[DaprController("inventory")]
+[Consumes(MediaTypeNames.Application.Json)]
+[Produces(MediaTypeNames.Application.Json)]
+public class InventoryController : Controller, IDaprController<InventoryService>
 {
     /// <summary>
     /// Create new inventory (player, world, chest, etc).
     /// </summary>
-    public async Task CreateInventory()
+    [DaprRoute("/create")]
+    public async Task CreateInventory(HttpContext context)
     {
         await Task.CompletedTask;
     }
@@ -20,7 +24,8 @@ public class InventoryService : IDaprService
     /// <summary>
     /// Add items to inventory.
     /// </summary>
-    public async Task AddItems()
+    [DaprRoute("/add")]
+    public async Task AddItems(HttpContext context)
     {
         await Task.CompletedTask;
     }
@@ -28,7 +33,8 @@ public class InventoryService : IDaprService
     /// <summary>
     /// Update items in inventory.
     /// </summary>
-    public async Task UpdateItem()
+    [DaprRoute("/update")]
+    public async Task UpdateItem(HttpContext context)
     {
         await Task.CompletedTask;
     }
@@ -36,7 +42,8 @@ public class InventoryService : IDaprService
     /// <summary>
     /// Remove items from inventory.
     /// </summary>
-    public async Task RemoveItems()
+    [DaprRoute("/remove")]
+    public async Task RemoveItems(HttpContext context)
     {
         await Task.CompletedTask;
     }
@@ -44,7 +51,8 @@ public class InventoryService : IDaprService
     /// <summary>
     /// Transfer items from one inventory to another.
     /// </summary>
-    public async Task TransferItems()
+    [DaprRoute("/transfer")]
+    public async Task TransferItems(HttpContext context)
     {
         await Task.CompletedTask;
     }
@@ -52,7 +60,8 @@ public class InventoryService : IDaprService
     /// <summary>
     /// Destroy inventory.
     /// </summary>
-    public async Task DestroyInventory()
+    [DaprRoute("/destroy")]
+    public async Task DestroyInventory(HttpContext context)
     {
         await Task.CompletedTask;
     }

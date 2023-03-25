@@ -1,14 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Net.Mime;
-
-namespace BeyondImmersion.BannouService.Services;
+﻿namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Service component responsible for login authorization handling.
 /// </summary>
 [DaprService("authorization")]
-[Consumes(MediaTypeNames.Application.Json)]
-[Produces(MediaTypeNames.Application.Json)]
 public class AuthorizationService : IDaprService
 {
     /// <summary>
@@ -16,8 +11,7 @@ public class AuthorizationService : IDaprService
     /// Will hand back a specific instance endpoint to use, for
     /// follow-up requests / exchanges.
     /// </summary>
-    [ServiceRoute("/")]
-    public async Task Authorize(HttpContext context)
+    public async Task Authorize()
     {
         await Task.CompletedTask;
     }
@@ -26,8 +20,7 @@ public class AuthorizationService : IDaprService
     /// Instance endpoint, for any follow-up exchanges beyond the
     /// initial handshake, for authorizing a client connection.
     /// </summary>
-    [ServiceRoute($"/{ServiceConstants.SERVICE_UUID_PLACEHOLDER}")]
-    public async Task AuthorizeDirect(HttpContext context)
+    public async Task AuthorizeDirect()
     {
         await Task.CompletedTask;
     }

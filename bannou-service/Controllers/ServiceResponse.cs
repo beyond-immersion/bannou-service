@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace BeyondImmersion.BannouService.Services;
+namespace BeyondImmersion.BannouService.Controllers;
 
 [JsonObject(MemberSerialization = MemberSerialization.OptIn, ItemNullValueHandling = NullValueHandling.Ignore)]
 public class ServiceResponse<T> : ServiceResponse

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace BeyondImmersion.BannouService.Services.Template.Data;
+namespace BeyondImmersion.BannouService.Models;
 
 /// <summary>
 /// The interface for a template definition data model.

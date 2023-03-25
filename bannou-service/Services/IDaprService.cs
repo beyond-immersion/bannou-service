@@ -10,18 +10,18 @@
 /// </summary>
 public interface IDaprService
 {
-    public string GetServiceName()
+    public string GetName()
         => GetType().GetServiceName();
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
     /// </summary>
     public bool IsEnabled()
-        => ServiceConfiguration.IsServiceEnabled(GetType());
+        => IServiceConfiguration.IsServiceEnabled(GetType());
 
     /// <summary>
     /// Returns whether the configuration is provided for a service to run properly.
     /// </summary>
     public bool HasRequiredConfiguration()
-        => ServiceConfiguration.HasRequiredConfiguration(GetType());
+        => IServiceConfiguration.HasRequiredConfiguration(GetType());
 }
