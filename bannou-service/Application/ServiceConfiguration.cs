@@ -176,11 +176,13 @@ public class ServiceConfiguration
     /// </summary>
     public static IDictionary<string, string>? CreateAllSwitchMappings()
     {
-        IEnumerable<KeyValuePair<string, string>> keyMappings = new Dictionary<string, string>();
+        var allSwitchMappings = new Dictionary<string, string>();
         foreach ((Type, ServiceConfigurationAttribute) classWithAttr in BaseServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
-            keyMappings = keyMappings.Concat(CreateSwitchMappings(classWithAttr.Item1));
+            foreach (var kvp in CreateSwitchMappings(classWithAttr.Item1))
+                if (!allSwitchMappings.ContainsKey(kvp.Key))
+                    allSwitchMappings[kvp.Key] = kvp.Value;
 
-        return keyMappings as IDictionary<string, string>;
+        return allSwitchMappings;
     }
 
     /// <summary>

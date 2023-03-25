@@ -105,6 +105,44 @@ public class ConfigurationTests
     }
 
     [Fact]
+    public void CreateSwitchFromProperty()
+    {
+        ResetENVs();
+        var switchString = ServiceConfiguration.CreateSwitchFromName(nameof(TestConfiguration_NoAttribute.TestProperty));
+        Assert.Equal("--testproperty", switchString);
+    }
+
+    [Fact]
+    public void CreateSwitchMappings_All()
+    {
+        ResetENVs();
+        var switchLookup = ServiceConfiguration.CreateAllSwitchMappings();
+        Assert.NotNull(switchLookup);
+        Assert.Equal("ForceServiceID", switchLookup["--forceserviceid"]);
+        Assert.False(switchLookup.ContainsKey("--test-service-enabled"));
+    }
+
+    [Fact]
+    public void CreateSwitchMappings_TestConfiguration()
+    {
+        ResetENVs();
+        var switchLookup = ServiceConfiguration.CreateSwitchMappings(typeof(TestConfiguration_NoAttribute));
+        Assert.NotNull(switchLookup);
+        Assert.Equal("ForceServiceID", switchLookup["--forceserviceid"]);
+        Assert.False(switchLookup.ContainsKey("--test-service-enabled"));
+    }
+
+    [Fact]
+    public void CreateSwitchMappings_TestConfiguration_Generic()
+    {
+        ResetENVs();
+        var switchLookup = ServiceConfiguration.CreateSwitchMappings<TestConfiguration_NoAttribute>();
+        Assert.NotNull(switchLookup);
+        Assert.Equal("ForceServiceID", switchLookup["--forceserviceid"]);
+        Assert.False(switchLookup.ContainsKey("--test-service-enabled"));
+    }
+
+    [Fact]
     public void GlobalConfiguration_Root()
     {
         ResetENVs();
