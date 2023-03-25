@@ -106,7 +106,7 @@ public class ServiceConfiguration
     /// Builds the service configuration from available Config.json, ENVs, and command line switches.
     /// </summary>
     public static ServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
-        => BuildConfigurationRoot(args, envPrefix).Get<ServiceConfiguration>() ?? new ServiceConfiguration();
+        => BuildConfigurationRoot(args, envPrefix).Get<ServiceConfiguration>() ?? new();
 
     /// <summary>
     /// Builds the given service configuration from available Config.json, ENVs, and command line switches.
