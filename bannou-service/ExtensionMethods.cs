@@ -128,7 +128,7 @@ public static partial class ExtensionMethods
                 var serviceName = serviceType.GetServiceName();
                 var controllerTemplate = serviceName;
 
-                foreach (var daprControllerInfo in Controllers.IDaprController<IDaprService>.Find(serviceClassInfo.Item1))
+                foreach (var daprControllerInfo in IDaprController.FindAll(serviceClassInfo.Item1))
                 {
                     var tmpTemplate = daprControllerInfo.Item2?.Template;
                     if (!string.IsNullOrWhiteSpace(tmpTemplate))

@@ -84,7 +84,12 @@ public interface IServiceConfiguration
     /// Returns whether the configuration indicates the service should be enabled.
     /// </summary>
     public static bool IsServiceEnabled(Type serviceType)
-        => IsServiceEnabled(serviceType.GetServiceName());
+    {
+        if (!typeof(IDaprService).IsAssignableFrom(serviceType))
+            throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
+
+        return IsServiceEnabled(serviceType.GetServiceName());
+    }
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
@@ -124,6 +129,9 @@ public interface IServiceConfiguration
     /// </summary>
     public static bool HasRequiredConfiguration(Type configurationType)
     {
+        if (!typeof(IServiceConfiguration).IsAssignableFrom(configurationType))
+            throw new InvalidCastException($"Type provided does not implement {nameof(IServiceConfiguration)}");
+
         IServiceConfiguration? serviceConfig = BuildConfiguration(configurationType);
         if (serviceConfig == null)
             return true;
@@ -199,6 +207,9 @@ public interface IServiceConfiguration
     /// </summary>
     public static IServiceConfiguration? BuildConfiguration(Type configurationType, string[]? args = null, string? envPrefix = null)
     {
+        if (!typeof(IServiceConfiguration).IsAssignableFrom(configurationType))
+            throw new InvalidCastException($"Type provided does not implement {nameof(IServiceConfiguration)}");
+
         IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
             .AddJsonFile("Config.json", true)
             .AddEnvironmentVariables(envPrefix)
@@ -234,6 +245,9 @@ public interface IServiceConfiguration
     /// </summary>
     public static IDictionary<string, string> CreateSwitchMappings(Type configurationType)
     {
+        if (!typeof(IServiceConfiguration).IsAssignableFrom(configurationType))
+            throw new InvalidCastException($"Type provided does not implement {nameof(IServiceConfiguration)}");
+
         Dictionary<string, string> keyMappings = new();
         foreach (PropertyInfo propertyInfo in configurationType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             keyMappings[CreateSwitchFromName(propertyInfo.Name)] = propertyInfo.Name;
