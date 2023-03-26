@@ -43,11 +43,14 @@ public static class Program
         Logger.Log(LogLevel.Debug, null, "Service starting.");
 
         Configuration = IServiceConfiguration.BuildConfiguration<ServiceConfiguration>(args);
-        if (!IServiceConfiguration.Validate(Configuration))
+
+        if (!Validators.RunAll())
+        {
+            Logger.Log(LogLevel.Error, null, "Validation error- service start aborted.");
             return;
+        }
 
         ServiceGUID = Configuration.ForceServiceID ?? Guid.NewGuid().ToString().ToLower();
-
         WebApplication? webApp = WebApplication.CreateBuilder(args)?.Build();
         if (webApp == null)
         {

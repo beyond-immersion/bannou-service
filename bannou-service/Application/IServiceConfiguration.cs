@@ -1,8 +1,6 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 using Dapr.Extensions.Configuration;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 
 namespace BeyondImmersion.BannouService.Application;
@@ -41,16 +39,7 @@ public interface IServiceConfiguration
     public static bool Validate(IServiceConfiguration configuration)
     {
         if (configuration == null)
-        {
-            Program.Logger.Log(LogLevel.Error, null, "Service configuration required, even if only with default values.");
             return false;
-        }
-
-        if (!IsAnyServiceEnabled())
-        {
-            Program.Logger.Log(LogLevel.Error, null, "Dapr services not configured to handle any roles / APIs.");
-            return false;
-        }
 
         foreach ((Type, DaprServiceAttribute) serviceClassData in IDaprService.FindAll(enabledOnly: true))
         {
