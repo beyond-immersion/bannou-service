@@ -1,7 +1,5 @@
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 [assembly: ApiController]

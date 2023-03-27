@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 using Dapr.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 
 namespace BeyondImmersion.BannouService.Application;
 
@@ -26,92 +25,6 @@ public interface IServiceConfiguration
     };
 
     public string? ForceServiceID { get; }
-
-    /// <summary>
-    /// Verifies that the service configuration contains required values (from ENVs/switches/etc).
-    /// </summary>
-    public bool Validate()
-        => Validate(this);
-
-    /// <summary>
-    /// Verifies that the service configuration contains required values (from ENVs/switches/etc).
-    /// </summary>
-    public static bool Validate(IServiceConfiguration configuration)
-    {
-        if (configuration == null)
-            return false;
-
-        foreach ((Type, DaprServiceAttribute) serviceClassData in IDaprService.FindAll(enabledOnly: true))
-        {
-            Type serviceType = serviceClassData.Item1;
-
-            if (!HasRequiredConfiguration(configuration.GetType()))
-            {
-                Program.Logger.Log(LogLevel.Debug, null, $"Required configuration is missing to start an enabled dapr service.",
-                    logParams: new JObject() { ["service_type"] = serviceType.Name });
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Returns whether the configuration indicates ANY services should be enabled.
-    /// </summary>
-    public static bool IsAnyServiceEnabled()
-        => IServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>()
-            .Any(t => IsServiceEnabled(t.Item1));
-
-    /// <summary>
-    /// Returns whether the configuration indicates the service should be enabled.
-    /// </summary>
-    public static bool IsServiceEnabled<T>()
-        => IsServiceEnabled(typeof(T));
-
-    /// <summary>
-    /// Returns whether the configuration indicates the service should be enabled.
-    /// </summary>
-    public static bool IsServiceEnabled(Type serviceType)
-    {
-        if (!typeof(IDaprService).IsAssignableFrom(serviceType))
-            throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
-
-        return IsServiceEnabled(serviceType.GetServiceName());
-    }
-
-    /// <summary>
-    /// Returns whether the configuration indicates the service should be enabled.
-    /// </summary>
-    public static bool IsServiceEnabled(string serviceName)
-    {
-        if (serviceName.EndsWith("Service", comparisonType: StringComparison.InvariantCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Service".Length, "Service".Length);
-
-        if (serviceName.EndsWith("Controller", comparisonType: StringComparison.CurrentCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Controller".Length, "Controller".Length);
-
-        if (serviceName.EndsWith("Dapr", comparisonType: StringComparison.CurrentCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Dapr".Length, "Dapr".Length);
-
-        IConfigurationRoot configRoot = BuildConfigurationRoot();
-        var serviceEnabledFlag = configRoot.GetValue<bool?>($"{serviceName.ToUpper()}_SERVICE_ENABLED", null);
-        if (serviceEnabledFlag.HasValue)
-            return serviceEnabledFlag.Value;
-
-        return ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
-    }
-
-    /// <summary>
-    /// Returns whether the configuration is provided for a given service type to run properly.
-    /// </summary>
-    public static bool HasRequiredConfiguration<T>()
-        where T : class, IDaprService
-    {
-        return IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
-            .Where(t => t.Item2.ServiceType == typeof(T))
-            .All(t => HasRequiredConfiguration(t.Item1));
-    }
 
     /// <summary>
     /// Returns whether the configuration is provided for a service to run properly.
@@ -171,24 +84,6 @@ public interface IServiceConfiguration
             envPrefix = configAttr.EnvPrefix;
 
         return BuildConfiguration(typeof(T), args, envPrefix) as T ?? new();
-    }
-
-    /// <summary>
-    /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
-    /// </summary>
-    public static IServiceConfiguration? BuildServiceConfiguration<T>(string[]? args = null)
-        where T : class, IDaprService
-    {
-        foreach ((Type, ServiceConfigurationAttribute) classWithAttr in IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
-            if (classWithAttr.Item2.ServiceType == typeof(T))
-                return BuildConfiguration(classWithAttr.Item1, args, classWithAttr.Item2.EnvPrefix);
-
-        string? envPrefix = null;
-        ServiceConfigurationAttribute? configAttr = typeof(IServiceConfiguration).GetCustomAttribute<ServiceConfigurationAttribute>();
-        if (configAttr != null)
-            envPrefix = configAttr.EnvPrefix;
-
-        return BuildConfiguration(typeof(IServiceConfiguration), args, envPrefix);
     }
 
     /// <summary>

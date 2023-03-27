@@ -85,9 +85,9 @@ public class ConfigurationTests
     {
         ResetENVs();
         if (ServiceConstants.ENABLE_SERVICES_BY_DEFAULT)
-            Assert.True(IServiceConfiguration.IsServiceEnabled(typeof(TestService)));
+            Assert.True(IDaprService.IsEnabled(typeof(TestService)));
         else
-            Assert.False(IServiceConfiguration.IsServiceEnabled(typeof(TestService)));
+            Assert.False(IDaprService.IsEnabled(typeof(TestService)));
     }
 #pragma warning restore CS0162 // Unreachable code detected
 
@@ -96,10 +96,10 @@ public class ConfigurationTests
     {
         ResetENVs();
         Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
-        Assert.False(IServiceConfiguration.IsServiceEnabled(typeof(TestService)));
+        Assert.False(IDaprService.IsEnabled(typeof(TestService)));
 
         Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "true");
-        Assert.True(IServiceConfiguration.IsServiceEnabled(typeof(TestService)));
+        Assert.True(IDaprService.IsEnabled(typeof(TestService)));
     }
 
     [Fact]
@@ -107,10 +107,10 @@ public class ConfigurationTests
     {
         ResetENVs();
         Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
-        Assert.False(IServiceConfiguration.IsServiceEnabled<TestService>());
+        Assert.False(IDaprService.IsEnabled<TestService>());
 
         Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "true");
-        Assert.True(IServiceConfiguration.IsServiceEnabled<TestService>());
+        Assert.True(IDaprService.IsEnabled<TestService>());
     }
 
     [Fact]
@@ -118,10 +118,10 @@ public class ConfigurationTests
     {
         ResetENVs();
         Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
-        Assert.False(IServiceConfiguration.IsServiceEnabled("TestService"));
+        Assert.False(IDaprService.IsEnabled("TestService"));
 
         Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "true");
-        Assert.True(IServiceConfiguration.IsServiceEnabled("TestService"));
+        Assert.True(IDaprService.IsEnabled("TestService"));
     }
 
     [Fact]
@@ -129,10 +129,10 @@ public class ConfigurationTests
     {
         ResetENVs();
         Environment.SetEnvironmentVariable("test_service_enabled", "false");
-        Assert.False(IServiceConfiguration.IsServiceEnabled("testservice"));
+        Assert.False(IDaprService.IsEnabled("testservice"));
 
         Environment.SetEnvironmentVariable("test_service_enabled", "true");
-        Assert.True(IServiceConfiguration.IsServiceEnabled("testservice"));
+        Assert.True(IDaprService.IsEnabled("testservice"));
     }
 
     [Fact]
@@ -187,26 +187,26 @@ public class ConfigurationTests
     public void HasRequiredConfig_ByService()
     {
         ResetENVs();
-        Assert.False(IServiceConfiguration.HasRequiredConfiguration<RequiredTestService>());
+        Assert.False(IDaprService.HasRequiredConfiguration<RequiredTestService>());
 
         Environment.SetEnvironmentVariable("TestProperty", "Test");
-        Assert.True(IServiceConfiguration.HasRequiredConfiguration<RequiredTestService>());
+        Assert.True(IDaprService.HasRequiredConfiguration<RequiredTestService>());
     }
 
     [Fact]
     public void HasRequiredConfig_ByService_MultipleConfigTypes()
     {
         ResetENVs();
-        Assert.False(IServiceConfiguration.HasRequiredConfiguration<MultipleRequiredTestService>());
+        Assert.False(IDaprService.HasRequiredConfiguration<MultipleRequiredTestService>());
 
         Environment.SetEnvironmentVariable("TestProperty", "Test");
-        Assert.False(IServiceConfiguration.HasRequiredConfiguration<MultipleRequiredTestService>());
+        Assert.False(IDaprService.HasRequiredConfiguration<MultipleRequiredTestService>());
 
         Environment.SetEnvironmentVariable("TestProperty_A", "Test");
-        Assert.False(IServiceConfiguration.HasRequiredConfiguration<MultipleRequiredTestService>());
+        Assert.False(IDaprService.HasRequiredConfiguration<MultipleRequiredTestService>());
 
         Environment.SetEnvironmentVariable("TestProperty_B", "Test");
-        Assert.True(IServiceConfiguration.HasRequiredConfiguration<MultipleRequiredTestService>());
+        Assert.True(IDaprService.HasRequiredConfiguration<MultipleRequiredTestService>());
     }
 
     [Fact]
@@ -510,7 +510,7 @@ public class ConfigurationTests
     public void TestConfiguration_ByService()
     {
         ResetENVs();
-        var config = (TestConfiguration_Attribute_TestService?)IServiceConfiguration.BuildServiceConfiguration<TestService>();
+        var config = (TestConfiguration_Attribute_TestService?)IDaprService.BuildConfiguration<TestService>();
         Assert.NotNull(config);
         Assert.Null(config.TestProperty);
         Assert.Null(config.ForceServiceID);
@@ -518,7 +518,7 @@ public class ConfigurationTests
         var serviceID = Guid.NewGuid().ToString().ToLower();
         Environment.SetEnvironmentVariable("TestProperty", "Test");
         Environment.SetEnvironmentVariable("ForceServiceID", serviceID);
-        config = (TestConfiguration_Attribute_TestService?)IServiceConfiguration.BuildServiceConfiguration<TestService>();
+        config = (TestConfiguration_Attribute_TestService?)IDaprService.BuildConfiguration<TestService>();
         Assert.NotNull(config);
         Assert.Equal("Test", config.TestProperty);
         Assert.Equal(serviceID, config.ForceServiceID);
@@ -529,12 +529,12 @@ public class ConfigurationTests
     {
         ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
-        var config = IServiceConfiguration.BuildServiceConfiguration<TestService>(
+        var config = IDaprService.BuildConfiguration<TestService>(
                         args: new string[] { $"--ForceServiceID={serviceID}" });
         Assert.NotNull(config);
         Assert.Equal(serviceID, config.ForceServiceID);
 
-        config = IServiceConfiguration.BuildServiceConfiguration<TestService>(
+        config = IDaprService.BuildConfiguration<TestService>(
                         args: new string[] { $"--forceserviceid={serviceID}" });
         Assert.NotNull(config);
         Assert.Equal(serviceID, config.ForceServiceID);

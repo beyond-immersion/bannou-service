@@ -15,7 +15,7 @@ public interface IDaprController
         if (!typeof(IDaprService).IsAssignableFrom(serviceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
-        return IServiceConfiguration.IsServiceEnabled(serviceType);
+        return IDaprService.IsEnabled(serviceType);
     }
 
     /// <summary>
@@ -132,7 +132,7 @@ public interface IDaprController<T> : IDaprController
     /// Returns whether the configuration indicates the service should be enabled.
     /// </summary>
     public bool IsEnabled()
-        => IServiceConfiguration.IsServiceEnabled(typeof(T));
+        => IDaprService.IsEnabled(typeof(T));
 
     /// <summary>
     /// Returns whether the configuration is provided for a service to run properly.

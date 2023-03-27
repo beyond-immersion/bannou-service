@@ -7,6 +7,11 @@
 public class ServiceConfigurationAttribute : BaseServiceAttribute
 {
     /// <summary>
+    /// Is this the 'primary' configuration for this service type?
+    /// </summary>
+    public bool Primary { get; private set; } = true;
+
+    /// <summary>
     /// The specific service type this configuration is meant for.
     /// Can be null.
     /// </summary>
@@ -20,9 +25,10 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
 
     public ServiceConfigurationAttribute() { }
 
-    public ServiceConfigurationAttribute(Type? serviceType = null, string? envPrefix = null)
+    public ServiceConfigurationAttribute(Type? serviceType = null, string? envPrefix = null, bool primary = true)
     {
         ServiceType = serviceType;
         EnvPrefix = envPrefix;
+        Primary = primary;
     }
 }

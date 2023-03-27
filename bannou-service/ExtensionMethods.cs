@@ -123,7 +123,7 @@ public static partial class ExtensionMethods
         {
             var serviceType = serviceClassInfo.Item1;
 
-            if (IServiceConfiguration.IsServiceEnabled(serviceType))
+            if (IDaprService.IsEnabled(serviceType))
             {
                 var serviceName = serviceType.GetServiceName();
                 var controllerTemplate = serviceName;

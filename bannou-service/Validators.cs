@@ -1,8 +1,11 @@
-﻿namespace BeyondImmersion.BannouService;
+﻿using Newtonsoft.Json.Linq;
+
+namespace BeyondImmersion.BannouService;
 
 public static class Validators
 {
-    private static IDictionary<string, Func<bool>> sValidatorLookup;
+    private readonly static IDictionary<string, Func<bool>> sValidatorLookup;
+
     static Validators()
     {
         sValidatorLookup = new Dictionary<string, Func<bool>>();
@@ -13,12 +16,10 @@ public static class Validators
 
             try
             {
-                var validatorAttr = validatorInst.Item3 as ServiceValidator;
-                if (validatorAttr == null)
+                if (validatorInst.Item3 is not ServiceValidator validatorAttr)
                     continue;
 
-                var validatorDel = Delegate.CreateDelegate(typeof(Func<bool>), validatorInst.Item2) as Func<bool>;
-                if (validatorDel == null)
+                if (Delegate.CreateDelegate(typeof(Func<bool>), validatorInst.Item2) is not Func<bool> validatorDel)
                     continue;
 
                 sValidatorLookup[validatorAttr.Name] = validatorDel;
@@ -35,33 +36,43 @@ public static class Validators
         return defaultIfMissing;
     }
 
-    public static bool RunAll()
+    public static bool RunAll(bool runThroughFailure = false)
     {
+        var allSuccess = true;
         foreach (var validator in sValidatorLookup.Values)
+        {
             if (!validator())
-                return false;
+            {
+                if (!runThroughFailure)
+                    return false;
 
-        return true;
+                allSuccess = false;
+            }
+        }
+
+        return allSuccess;
     }
 
     [ServiceValidator("configuration")]
     public static bool ValidateConfiguration()
     {
+        Program.Logger.Log(LogLevel.Debug, null, "Executing validation for required service configuration.");
+
         if (Program.Configuration == null)
         {
-            Program.Logger.Log(LogLevel.Error, null, "Service configuration required, even if only with default values.");
+            Program.Logger.Log(LogLevel.Error, null, "Service configuration missing.");
             return false;
         }
 
-        if (!IServiceConfiguration.IsAnyServiceEnabled())
+        if (!IDaprService.IsAnyEnabled())
         {
-            Program.Logger.Log(LogLevel.Error, null, "Dapr services not configured to handle any roles / APIs.");
+            Program.Logger.Log(LogLevel.Error, null, "No Dapr services have been enabled.");
             return false;
         }
 
-        if (!((IServiceConfiguration)Program.Configuration).Validate())
+        if (!IDaprService.AllHaveRequiredConfiguration())
         {
-            Program.Logger.Log(LogLevel.Error, null, "Missing required service configuration.");
+            Program.Logger.Log(LogLevel.Error, null, "Required configuration not set for enabled dapr services.");
             return false;
         }
 
