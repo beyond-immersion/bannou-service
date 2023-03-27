@@ -19,7 +19,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 [DaprController("login")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
-public sealed class LoginController : Controller, IDaprController<LoginService>
+public sealed class LoginController : BaseDaprController
 {
     /// <summary>
     /// Unique service ID for instance that's being forwarded to, if applicable.

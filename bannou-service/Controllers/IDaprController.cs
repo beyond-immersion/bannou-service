@@ -1,7 +1,8 @@
-﻿using System.Reflection;
+﻿namespace BeyondImmersion.BannouService.Controllers;
 
-namespace BeyondImmersion.BannouService.Controllers;
-
+/// <summary>
+/// Interface implemented for all dapr API controllers.
+/// </summary>
 public interface IDaprController
 {
     public string GetName()
@@ -30,113 +31,44 @@ public interface IDaprController
     }
 
     /// <summary>
-    /// Gets the full list of associated controllers to the given service type.
+    /// Gets the full list of dapr controllers.
     /// </summary>
-    public static (Type, DaprControllerAttribute?)[] FindAll()
+    public static (Type, DaprControllerAttribute)[] FindAll()
     {
-        List<(Type, DaprControllerAttribute?)> results = new();
-        Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-        if (loadedAssemblies == null || loadedAssemblies.Length == 0)
-            return results.ToArray();
+        var controllerClasses = IServiceAttribute.GetClassesWithAttribute<DaprControllerAttribute>()
+            .Where(t => {
+                if (!typeof(IDaprController).IsAssignableFrom(t.Item1))
+                    return false;
 
-        foreach (Assembly assembly in loadedAssemblies)
-        {
-            Type[] classTypes = assembly.GetTypes();
-            if (classTypes == null || classTypes.Length == 0)
-                continue;
+                return true;
+            });
 
-            foreach (Type classType in classTypes)
-            {
-                if (!typeof(IDaprController).IsAssignableFrom(classType))
-                    continue;
-
-                DaprControllerAttribute? attr = classType.GetCustomAttribute<DaprControllerAttribute>();
-                results.Add((classType, attr));
-            }
-        }
-
-        return results.ToArray();
+        return controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();
     }
 
     /// <summary>
     /// Gets the full list of associated controllers to the given service type.
     /// </summary>
-    public static (Type, DaprControllerAttribute?)[] FindAll<T>()
+    public static (Type, DaprControllerAttribute)[] FindAll<T>()
         where T : class, IDaprService
-    {
-        List<(Type, DaprControllerAttribute?)> results = new();
-        Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-        if (loadedAssemblies == null || loadedAssemblies.Length == 0)
-            return results.ToArray();
-
-        foreach (Assembly assembly in loadedAssemblies)
-        {
-            Type[] classTypes = assembly.GetTypes();
-            if (classTypes == null || classTypes.Length == 0)
-                continue;
-
-            foreach (Type classType in classTypes)
-            {
-                if (!typeof(IDaprController<T>).IsAssignableFrom(classType))
-                    continue;
-
-                DaprControllerAttribute? attr = classType.GetCustomAttribute<DaprControllerAttribute>();
-                results.Add((classType, attr));
-            }
-        }
-
-        return results.ToArray();
-    }
+        => FindAll(typeof(T));
 
     /// <summary>
     /// Gets the full list of associated controllers to a given service type.
     /// </summary>
-    public static (Type, DaprControllerAttribute?)[] FindAll(Type serviceType)
+    public static (Type, DaprControllerAttribute)[] FindAll(Type serviceType)
     {
         if (!typeof(IDaprService).IsAssignableFrom(serviceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
-        List<(Type, DaprControllerAttribute?)> results = new();
-        Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-        if (loadedAssemblies == null || loadedAssemblies.Length == 0)
-            return results.ToArray();
+        var controllerClasses = FindAll()
+            .Where(t => {
+                if (!serviceType.IsAssignableFrom(t.Item2?.ServiceType))
+                    return false;
 
-        foreach (Assembly assembly in loadedAssemblies)
-        {
-            Type[] classTypes = assembly.GetTypes();
-            if (classTypes == null || classTypes.Length == 0)
-                continue;
+                return true;
+            });
 
-            Type genericControllerType = typeof(IDaprController<>).MakeGenericType(serviceType);
-            foreach (Type classType in classTypes)
-            {
-                if (!genericControllerType.IsAssignableFrom(classType))
-                    continue;
-
-                DaprControllerAttribute? attr = classType.GetCustomAttribute<DaprControllerAttribute>();
-                results.Add((classType, attr));
-            }
-        }
-
-        return results.ToArray();
+        return controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();
     }
-}
-
-/// <summary>
-/// Implemented for all service API controller.
-/// </summary>
-public interface IDaprController<T> : IDaprController
-    where T : class, IDaprService
-{
-    /// <summary>
-    /// Returns whether the configuration indicates the service should be enabled.
-    /// </summary>
-    public bool IsEnabled()
-        => IDaprService.IsEnabled(typeof(T));
-
-    /// <summary>
-    /// Returns whether the configuration is provided for a service to run properly.
-    /// </summary>
-    public bool HasRequiredConfiguration()
-        => IServiceConfiguration.HasRequiredConfiguration(typeof(T));
 }

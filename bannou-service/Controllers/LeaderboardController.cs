@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 [DaprController("leaderboard")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
-public class LeaderboardController : Controller, IDaprController<LeaderboardService>
+public class LeaderboardController : BaseDaprController
 {
     /// <summary>
     /// List available leaderboards.

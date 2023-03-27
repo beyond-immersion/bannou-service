@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 [DaprController("asset")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
-public class AssetController : Controller, IDaprController<AssetService>
+public class AssetController : BaseDaprController
 {
     /// <summary>
     /// List the assets in a given asset category.

@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 [DaprController("authorization")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
-public class AuthorizationController : Controller, IDaprController<AuthorizationService>
+public class AuthorizationController : BaseDaprController
 {
     /// <summary>
     /// Shared endpoint to try authorizing a client connection.

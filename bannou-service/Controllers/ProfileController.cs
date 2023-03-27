@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 [DaprController("profile")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
-public class ProfileController : Controller, IDaprController<ProfileService>
+public class ProfileController : BaseDaprController
 {
     /// <summary>
     /// Create new player profile.

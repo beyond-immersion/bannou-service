@@ -9,14 +9,14 @@ public static class Validators
     static Validators()
     {
         sValidatorLookup = new Dictionary<string, Func<bool>>();
-        foreach (var validatorInst in IServiceAttribute.GetMethodsWithAttribute(typeof(ServiceValidator)))
+        foreach (var validatorInst in IServiceAttribute.GetMethodsWithAttribute(typeof(ServiceValidatorAttribute)))
         {
             if (!validatorInst.Item2.IsStatic)
                 continue;
 
             try
             {
-                if (validatorInst.Item3 is not ServiceValidator validatorAttr)
+                if (validatorInst.Item3 is not ServiceValidatorAttribute validatorAttr)
                     continue;
 
                 if (Delegate.CreateDelegate(typeof(Func<bool>), validatorInst.Item2) is not Func<bool> validatorDel)
@@ -53,7 +53,7 @@ public static class Validators
         return allSuccess;
     }
 
-    [ServiceValidator("configuration")]
+    [ServiceValidatorAttribute("configuration")]
     public static bool ValidateConfiguration()
     {
         Program.Logger.Log(LogLevel.Debug, null, "Executing validation for required service configuration.");

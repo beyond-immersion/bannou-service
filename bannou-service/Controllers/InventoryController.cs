@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 [DaprController("inventory")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
-public class InventoryController : Controller, IDaprController<InventoryService>
+public class InventoryController : BaseDaprController
 {
     /// <summary>
     /// Create new inventory (player, world, chest, etc).
