@@ -24,10 +24,16 @@ public interface IDaprService
         => IsEnabled(GetType());
 
     /// <summary>
+    /// Returns the best configuration type for this service type.
+    /// </summary>
+    public Type GetConfigurationType()
+        => GetConfigurationType(GetType());
+
+    /// <summary>
     /// Returns whether the configuration is provided for a service to run properly.
     /// </summary>
     public bool HasRequiredConfiguration()
-        => IServiceConfiguration.HasRequiredForType(GetType());
+        => IServiceConfiguration.HasRequiredForType(GetConfigurationType());
 
     /// <summary>
     /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
@@ -51,7 +57,7 @@ public interface IDaprService
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
         foreach ((Type, ServiceConfigurationAttribute) classWithAttr in IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
-            if (classWithAttr.Item2.ServiceType == serviceType)
+            if (serviceType.IsAssignableFrom(classWithAttr.Item2.ServiceType))
                 return IServiceConfiguration.BuildConfiguration(classWithAttr.Item1, args, classWithAttr.Item2.EnvPrefix);
 
         string? envPrefix = null;
@@ -59,7 +65,7 @@ public interface IDaprService
         if (configAttr != null)
             envPrefix = configAttr.EnvPrefix;
 
-        return IServiceConfiguration.BuildConfiguration(typeof(IServiceConfiguration), args, envPrefix);
+        return IServiceConfiguration.BuildConfiguration(typeof(ServiceConfiguration), args, envPrefix);
     }
 
     /// <summary>
@@ -86,7 +92,7 @@ public interface IDaprService
     /// Returns the best service configuration type for the given service type.
     /// Returned type is based on DaprServiceAttribute service target type.
     /// </summary>
-    public static Type GetConfiguration(Type serviceType)
+    public static Type GetConfigurationType(Type serviceType)
     {
         if (!typeof(IDaprService).IsAssignableFrom(serviceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
@@ -114,7 +120,7 @@ public interface IDaprService
         foreach ((Type, DaprServiceAttribute) serviceClassData in FindAll(enabledOnly: true))
         {
             Type serviceType = serviceClassData.Item1;
-            var serviceConfig = GetConfiguration(serviceType);
+            var serviceConfig = GetConfigurationType(serviceType);
             if (serviceConfig == null)
                 continue;
 

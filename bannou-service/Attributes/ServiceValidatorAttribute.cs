@@ -9,6 +9,7 @@ public class ServiceValidatorAttribute : BaseServiceAttribute
 {
     /// <summary>
     /// Validation name, to allow running with Validators.Run(testName).
+    /// Required.
     /// </summary>
     public string Name { get; }
     public ServiceValidatorAttribute(string name)

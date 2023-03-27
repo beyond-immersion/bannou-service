@@ -9,5 +9,5 @@ namespace BeyondImmersion.BannouService.Attributes;
 public sealed class DaprRouteAttribute : RouteAttribute, IServiceAttribute
 {
     public DaprRouteAttribute(string template)
-        : base(template) {}
+        : base(template) { }
 }

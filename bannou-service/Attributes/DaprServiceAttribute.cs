@@ -10,6 +10,6 @@ namespace BeyondImmersion.BannouService.Attributes;
 public sealed class DaprServiceAttribute : BaseServiceAttribute
 {
     public string? Name { get; }
-    public DaprServiceAttribute(string name)
+    public DaprServiceAttribute(string? name = null)
         => Name = name;
 }

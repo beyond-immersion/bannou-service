@@ -17,7 +17,7 @@ public class DaprControllerAttribute : RouteAttribute, IServiceAttribute
     public DaprControllerAttribute(string template, Type? serviceType = null)
         : base(template)
     {
-        if (serviceType != null && typeof(IDaprService).IsAssignableFrom(serviceType))
+        if (serviceType != null && !typeof(IDaprService).IsAssignableFrom(serviceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
         ServiceType = serviceType;

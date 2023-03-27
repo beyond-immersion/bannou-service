@@ -1,9 +1,7 @@
-﻿using System.Reflection;
-
-namespace BeyondImmersion.BannouService.Attributes;
+﻿namespace BeyondImmersion.BannouService.Attributes;
 
 /// <summary>
-/// Base type for custom attributes.
+/// Easy base type for custom attributes.
 /// </summary>
 public abstract class BaseServiceAttribute : Attribute, IServiceAttribute
 {
