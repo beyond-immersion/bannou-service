@@ -31,11 +31,16 @@ public interface IServiceConfiguration
     /// </summary>
     public bool HasRequired()
     {
-        return IServiceAttribute.GetPropertiesWithAttribute(GetType(), typeof(ConfigRequiredAttribute))
+        return IServiceAttribute.GetPropertiesWithAttribute<ConfigRequiredAttribute>(GetType())
             .All(t =>
             {
                 var propValue = t.Item1.GetValue(this);
                 if (propValue == null)
+                    return false;
+
+                if (!t.Item2.AllowEmptyStrings &&
+                    t.Item1.PropertyType == typeof(string) &&
+                    string.IsNullOrWhiteSpace((string)propValue))
                     return false;
 
                 return true;
@@ -61,20 +66,7 @@ public interface IServiceConfiguration
         if (serviceConfig == null)
             return true;
 
-        return IServiceAttribute.GetPropertiesWithAttribute<ConfigRequiredAttribute>(configurationType)
-            .All(t =>
-            {
-                var propValue = t.Item1.GetValue(serviceConfig);
-                if (propValue == null)
-                    return false;
-
-                if (!t.Item2.AllowEmptyStrings &&
-                    t.Item1.PropertyType == typeof(string) &&
-                    string.IsNullOrWhiteSpace((string)propValue))
-                    return false;
-
-                return true;
-            });
+        return serviceConfig.HasRequired();
     }
 
     /// <summary>
