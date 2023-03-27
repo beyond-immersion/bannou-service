@@ -27,7 +27,7 @@ public interface IDaprController
         if (!typeof(IDaprService).IsAssignableFrom(serviceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
-        return IServiceConfiguration.HasRequiredConfiguration(serviceType);
+        return IServiceConfiguration.HasRequiredForType(serviceType);
     }
 
     /// <summary>

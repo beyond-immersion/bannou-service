@@ -27,7 +27,7 @@ public interface IDaprService
     /// Returns whether the configuration is provided for a service to run properly.
     /// </summary>
     public bool HasRequiredConfiguration()
-        => IServiceConfiguration.HasRequiredConfiguration(GetType());
+        => IServiceConfiguration.HasRequiredForType(GetType());
 
     /// <summary>
     /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
@@ -79,7 +79,7 @@ public interface IDaprService
 
         return IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
             .Where(t => t.Item2.ServiceType == serviceType)
-            .All(t => IServiceConfiguration.HasRequiredConfiguration(t.Item1));
+            .All(t => IServiceConfiguration.HasRequiredForType(t.Item1));
     }
 
     /// <summary>

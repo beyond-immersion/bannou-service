@@ -27,9 +27,32 @@ public interface IServiceConfiguration
     public string? ForceServiceID { get; }
 
     /// <summary>
-    /// Returns whether the configuration is provided for a service to run properly.
+    /// Returns whether this configuration has values set for all required properties.
     /// </summary>
-    public static bool HasRequiredConfiguration(Type configurationType)
+    public bool HasRequired()
+    {
+        return IServiceAttribute.GetPropertiesWithAttribute(GetType(), typeof(ConfigRequiredAttribute))
+            .All(t =>
+            {
+                var propValue = t.Item1.GetValue(this);
+                if (propValue == null)
+                    return false;
+
+                return true;
+            });
+    }
+
+    /// <summary>
+    /// Returns whether the required configuration is provided for the given configuration type.
+    /// </summary>
+    public static bool HasRequiredForType<T>()
+        where T : class, IServiceConfiguration
+        => HasRequiredForType(typeof(T));
+
+    /// <summary>
+    /// Returns whether the required configuration is provided for the given configuration type.
+    /// </summary>
+    public static bool HasRequiredForType(Type configurationType)
     {
         if (!typeof(IServiceConfiguration).IsAssignableFrom(configurationType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IServiceConfiguration)}");
@@ -38,11 +61,16 @@ public interface IServiceConfiguration
         if (serviceConfig == null)
             return true;
 
-        return IServiceAttribute.GetPropertiesWithAttribute(configurationType, typeof(ConfigRequiredAttribute))
+        return IServiceAttribute.GetPropertiesWithAttribute<ConfigRequiredAttribute>(configurationType)
             .All(t =>
             {
                 var propValue = t.Item1.GetValue(serviceConfig);
                 if (propValue == null)
+                    return false;
+
+                if (!t.Item2.AllowEmptyStrings &&
+                    t.Item1.PropertyType == typeof(string) &&
+                    string.IsNullOrWhiteSpace((string)propValue))
                     return false;
 
                 return true;

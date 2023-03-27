@@ -177,10 +177,10 @@ public class ConfigurationTests
     public void HasRequiredConfig_TestConfiguration()
     {
         ResetENVs();
-        Assert.False(IServiceConfiguration.HasRequiredConfiguration(typeof(TestConfiguration_RequiredProperty)));
+        Assert.False(IServiceConfiguration.HasRequiredForType(typeof(TestConfiguration_RequiredProperty)));
 
         Environment.SetEnvironmentVariable("TestProperty", "Test");
-        Assert.True(IServiceConfiguration.HasRequiredConfiguration(typeof(TestConfiguration_RequiredProperty)));
+        Assert.True(IServiceConfiguration.HasRequiredForType(typeof(TestConfiguration_RequiredProperty)));
     }
 
     [Fact]
