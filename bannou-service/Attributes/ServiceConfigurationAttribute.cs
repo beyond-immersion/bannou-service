@@ -10,7 +10,7 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
     /// <summary>
     /// Is this the 'primary' configuration for this service type?
     /// </summary>
-    public bool Primary { get; private set; } = true;
+    public bool Primary { get; private set; }
 
     /// <summary>
     /// The specific service type this configuration is meant for.
@@ -26,7 +26,7 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
 
     public ServiceConfigurationAttribute() { }
 
-    public ServiceConfigurationAttribute(Type? serviceType = null, string? envPrefix = null, bool primary = true)
+    public ServiceConfigurationAttribute(Type? serviceType = null, string? envPrefix = null, bool primary = false)
     {
         if (serviceType != null && !typeof(IDaprService).IsAssignableFrom(serviceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
