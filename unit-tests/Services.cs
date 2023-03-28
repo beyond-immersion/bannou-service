@@ -1,9 +1,9 @@
 namespace BeyondImmersion.UnitTests;
 
 [Collection("core tests")]
-public class Services : IClassFixture<Fixture>
+public class Services : IClassFixture<CollectionFixture>
 {
-    private Fixture TestFixture { get; }
+    private CollectionFixture TestCollectionContext { get; }
 
     private class TestService_Invalid { }
 
@@ -62,9 +62,9 @@ public class Services : IClassFixture<Fixture>
         public string? TestProperty_B { get; set; }
     }
 
-    public Services(Fixture fixture)
+    public Services(CollectionFixture collectionContext)
     {
-        TestFixture = fixture;
+        TestCollectionContext = collectionContext;
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void ServiceEnabled_Default()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         if (ServiceConstants.ENABLE_SERVICES_BY_DEFAULT)
             Assert.True(IDaprService.IsEnabled(typeof(TestService_Attribute)));
         else
@@ -92,14 +92,14 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void ServiceEnabled_BadType()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         Assert.Throws<InvalidCastException>(() => IDaprService.IsEnabled(typeof(TestService_Invalid)));
     }
 
     [Fact]
     public void ServiceEnabled_TestType()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
         Assert.False(IDaprService.IsEnabled(typeof(TestService_Attribute)));
 
@@ -110,7 +110,7 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void ServiceEnabled_TestType_Generic()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
         Assert.False(IDaprService.IsEnabled<TestService_Attribute>());
 
@@ -121,7 +121,7 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void ServiceEnabled_TestString()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
         Assert.False(IDaprService.IsEnabled("TestService"));
 
@@ -132,7 +132,7 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void ServiceEnabled_TestString_Lower()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         Environment.SetEnvironmentVariable("test_service_enabled", "false");
         Assert.False(IDaprService.IsEnabled("testservice"));
 
@@ -143,7 +143,7 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void BuildServiceConfiguration()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var config = (TestConfiguration_Attribute_TestService?)IDaprService.BuildConfiguration(typeof(TestService_Attribute));
         Assert.NotNull(config);
         Assert.Null(config.TestProperty);
@@ -161,7 +161,7 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void BuildServiceConfiguration_Generic()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var config = (TestConfiguration_Attribute_TestService?)IDaprService.BuildConfiguration<TestService_Attribute>();
         Assert.NotNull(config);
         Assert.Null(config.TestProperty);
@@ -179,7 +179,7 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void BuildServiceConfiguration_WithArgs()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
         var config = IDaprService.BuildConfiguration(typeof(TestService_Attribute),
                         args: new string[] { $"--ForceServiceID={serviceID}" });
@@ -195,7 +195,7 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void BuildServiceConfiguration_Generic_WithArgs()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
         var config = IDaprService.BuildConfiguration<TestService_Attribute>(
                         args: new string[] { $"--ForceServiceID={serviceID}" });
@@ -211,7 +211,7 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void HasRequiredConfiguration()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         IDaprService testService = new TestService_Required();
         Assert.False(testService.HasRequiredConfiguration());
 
@@ -222,7 +222,7 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void HasRequiredConfiguration_MultipleTypes()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         IDaprService testService = new TestService_MultipleRequired();
         Assert.False(testService.HasRequiredConfiguration());
 
@@ -239,7 +239,7 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void HasRequiredConfiguration_ByType()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         Assert.False(IDaprService.HasRequiredConfiguration<TestService_Required>());
 
         Environment.SetEnvironmentVariable("TestProperty", "Test");
@@ -249,7 +249,7 @@ public class Services : IClassFixture<Fixture>
     [Fact]
     public void HasRequiredConfiguration_ByType_MultipleTypes()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         Assert.False(IDaprService.HasRequiredConfiguration<TestService_MultipleRequired>());
 
         Environment.SetEnvironmentVariable("TestProperty", "Test");

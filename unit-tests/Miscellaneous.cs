@@ -1,8 +1,8 @@
 ﻿namespace BeyondImmersion.UnitTests;
 
-public class Miscellaneous : IClassFixture<Fixture>
+public class Miscellaneous : IClassFixture<CollectionFixture>
 {
-    private Fixture TestFixture { get; }
+    private CollectionFixture TestCollectionContext { get; }
 
     [Obsolete(message: "Test message")]
     private readonly bool ObsoleteTestField = true;
@@ -13,9 +13,9 @@ public class Miscellaneous : IClassFixture<Fixture>
     [Obsolete]
     private bool ObsoleteTestMethod() => true;
 
-    public Miscellaneous(Fixture testFixture)
+    public Miscellaneous(CollectionFixture collectionContext)
     {
-        TestFixture = testFixture;
+        TestCollectionContext = collectionContext;
     }
 
     [Fact]

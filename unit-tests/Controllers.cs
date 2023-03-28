@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace BeyondImmersion.UnitTests;
 
 [Collection("core tests")]
-public class Controllers : IClassFixture<Fixture>
+public class Controllers : IClassFixture<CollectionFixture>
 {
-    private Fixture TestFixture { get; }
+    private CollectionFixture TestCollectionContext { get; }
 
     [DaprService("test")]
     public class TestController : Controller, IDaprController { }
@@ -13,9 +13,9 @@ public class Controllers : IClassFixture<Fixture>
     [DaprService("test")]
     public class TestDaprController : Controller, IDaprController { }
 
-    public Controllers(Fixture fixture)
+    public Controllers(CollectionFixture collectionContext)
     {
-        TestFixture = fixture;
+        TestCollectionContext = collectionContext;
     }
 
     [Fact]

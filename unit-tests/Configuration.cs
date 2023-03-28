@@ -3,9 +3,9 @@ using Microsoft.Extensions.Configuration;
 namespace BeyondImmersion.UnitTests;
 
 [Collection("core tests")]
-public class Configuration : IClassFixture<Fixture>
+public class Configuration : IClassFixture<CollectionFixture>
 {
-    private Fixture TestFixture { get; }
+    private CollectionFixture TestCollectionContext { get; }
 
     [DaprService("Test")]
     private class TestService_Attribute : IDaprService { }
@@ -64,15 +64,15 @@ public class Configuration : IClassFixture<Fixture>
         public string? TestProperty { get; set; }
     }
 
-    public Configuration(Fixture fixture)
+    public Configuration(CollectionFixture collectionContext)
     {
-        TestFixture = fixture;
+        TestCollectionContext = collectionContext;
     }
 
     [Fact]
     public void CreateSwitchFromProperty()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var switchString = IServiceConfiguration.CreateSwitchFromName(nameof(TestConfiguration_NoAttribute.TestProperty));
         Assert.Equal("--testproperty", switchString);
     }
@@ -80,7 +80,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void CreateSwitchMappings_All()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         IDictionary<string, string>? switchLookup = IServiceConfiguration.CreateAllSwitchMappings();
         Assert.NotNull(switchLookup);
         Assert.Equal("ForceServiceID", switchLookup["--forceserviceid"]);
@@ -90,14 +90,14 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void CreateSwitchMappings_TestConfiguration_BadType()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         Assert.Throws<InvalidCastException>(() => IServiceConfiguration.CreateSwitchMappings(typeof(TestConfiguration_Invalid)));
     }
 
     [Fact]
     public void CreateSwitchMappings_TestConfiguration()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         IDictionary<string, string> switchLookup = IServiceConfiguration.CreateSwitchMappings(typeof(TestConfiguration_NoAttribute));
         Assert.NotNull(switchLookup);
         Assert.Equal("ForceServiceID", switchLookup["--forceserviceid"]);
@@ -107,7 +107,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void CreateSwitchMappings_TestConfiguration_Generic()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         IDictionary<string, string> switchLookup = IServiceConfiguration.CreateSwitchMappings<TestConfiguration_NoAttribute>();
         Assert.NotNull(switchLookup);
         Assert.Equal("ForceServiceID", switchLookup["--forceserviceid"]);
@@ -117,7 +117,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void HasRequiredConfig_TestConfiguration()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         IServiceConfiguration testConfig = IServiceConfiguration.BuildConfiguration<TestConfiguration_RequiredProperty>();
         Assert.False(testConfig.HasRequired());
 
@@ -129,14 +129,14 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void HasRequiredConfig_TestConfiguration_BadType()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         Assert.Throws<InvalidCastException>(() => IServiceConfiguration.HasRequiredForType(typeof(TestConfiguration_Invalid)));
     }
 
     [Fact]
     public void HasRequiredConfig_TestConfiguration_ByType()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         Assert.False(IServiceConfiguration.HasRequiredForType(typeof(TestConfiguration_RequiredProperty)));
 
         Environment.SetEnvironmentVariable("TestProperty", "Test");
@@ -146,7 +146,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void HasRequiredConfig_TestConfiguration_ByType_Generic()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         Assert.False(IServiceConfiguration.HasRequiredForType<TestConfiguration_RequiredProperty>());
 
         Environment.SetEnvironmentVariable("TestProperty", "Test");
@@ -156,7 +156,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void GlobalConfiguration_Root()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         IConfigurationRoot configRoot = IServiceConfiguration.BuildConfigurationRoot();
         Assert.NotNull(configRoot);
         Assert.Null(configRoot["ForceServiceID"]);
@@ -172,7 +172,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void GlobalConfiguration_Root_WithArgs()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
         IConfigurationRoot configRoot = IServiceConfiguration.BuildConfigurationRoot(args: new string[] { $"--ForceServiceID={serviceID}" });
         Assert.NotNull(configRoot);
@@ -182,7 +182,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void GlobalConfiguration_Root_WithPrefix()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
         Environment.SetEnvironmentVariable("Test_ForceServiceID", serviceID);
         IConfigurationRoot configRoot = IServiceConfiguration.BuildConfigurationRoot(envPrefix: "test_");
@@ -194,7 +194,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void GlobalConfiguration()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var config = IServiceConfiguration.BuildConfiguration();
         Assert.Null(config.ForceServiceID);
 
@@ -207,7 +207,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void GlobalConfiguration_WithArgs()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
         var config = IServiceConfiguration.BuildConfiguration(new string[] {$"--ForceServiceID={serviceID}"});
         Assert.Equal(serviceID, config.ForceServiceID);
@@ -222,7 +222,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void GlobalConfiguration_WithPrefix()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var config = IServiceConfiguration.BuildConfiguration(envPrefix: "test_");
         Assert.Null(config.ForceServiceID);
 
@@ -239,14 +239,14 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void TestConfiguration_BadType()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         Assert.Throws<InvalidCastException>(() => IServiceConfiguration.BuildConfiguration(typeof(TestConfiguration_Invalid)));
     }
 
     [Fact]
     public void TestConfiguration()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var config = (TestConfiguration_NoAttribute?)IServiceConfiguration.BuildConfiguration(
                         typeof(TestConfiguration_NoAttribute));
         Assert.NotNull(config);
@@ -266,7 +266,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void TestConfiguration_WithArgs()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
         var config = IServiceConfiguration.BuildConfiguration(typeof(TestConfiguration_NoAttribute),
                         args: new string[] { $"--ForceServiceID={serviceID}" });
@@ -282,7 +282,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void TestConfiguration_Generic()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var config = IServiceConfiguration.BuildConfiguration<TestConfiguration_NoAttribute>();
         Assert.Null(config.TestProperty);
         Assert.Null(config.ForceServiceID);
@@ -298,7 +298,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void TestConfiguration_Generic_WithArgs()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
         var config = IServiceConfiguration.BuildConfiguration<TestConfiguration_NoAttribute>(
                         args: new string[] { $"--ForceServiceID={serviceID}" });
@@ -312,7 +312,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void TestConfiguration_WithAttribute()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var config = (TestConfiguration_Attribute_NoService?)IServiceConfiguration.BuildConfiguration(
                         typeof(TestConfiguration_Attribute_NoService));
         Assert.NotNull(config);
@@ -332,7 +332,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void TestConfiguration_Generic_WithAttribute()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var config = IServiceConfiguration.BuildConfiguration<TestConfiguration_Attribute_NoService>();
         Assert.Null(config.TestProperty);
         Assert.Null(config.ForceServiceID);
@@ -348,7 +348,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void TestConfiguration_ForService()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var config = (TestConfiguration_Attribute_TestService?)IServiceConfiguration.BuildConfiguration(
                         typeof(TestConfiguration_Attribute_TestService));
         Assert.NotNull(config);
@@ -368,7 +368,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void TestConfiguration_ForService_WithArgs()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
         var config = IServiceConfiguration.BuildConfiguration(typeof(TestConfiguration_Attribute_TestService),
                         args: new string[] { $"--ForceServiceID={serviceID}" });
@@ -384,7 +384,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void TestConfiguration_Generic_ForService()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var config = IServiceConfiguration.BuildConfiguration<TestConfiguration_Attribute_TestService>();
         Assert.Null(config.TestProperty);
         Assert.Null(config.ForceServiceID);
@@ -400,7 +400,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void TestConfiguration_Generic_ForService_WithArgs()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
         var config = IServiceConfiguration.BuildConfiguration<TestConfiguration_Attribute_TestService>(
                         args: new string[] { $"--ForceServiceID={serviceID}" });
@@ -414,7 +414,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void TestConfiguration_ForService_WithPrefix()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var config = (TestConfiguration_Attribute_TestService_WithPrefix?)IServiceConfiguration.BuildConfiguration(
                         typeof(TestConfiguration_Attribute_TestService_WithPrefix), envPrefix: "test_");
         Assert.Null(config);
@@ -438,7 +438,7 @@ public class Configuration : IClassFixture<Fixture>
     [Fact]
     public void TestConfiguration_Generic_ForService_WithPrefix()
     {
-        TestFixture.ResetENVs();
+        TestCollectionContext.ResetENVs();
         var config = IServiceConfiguration.BuildConfiguration<TestConfiguration_Attribute_TestService_WithPrefix>();
         Assert.Null(config.TestProperty);
         Assert.Null(config.ForceServiceID);

@@ -1,13 +1,14 @@
 namespace BeyondImmersion.UnitTests;
 
-public class Fixture : IDisposable
+public class CollectionFixture : IDisposable
 {
-    public Fixture()
+    public CollectionFixture()
     {
     }
 
     public void Dispose()
     {
+        ResetENVs();
     }
 
     public void ResetENVs()

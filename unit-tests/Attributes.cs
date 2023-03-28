@@ -1,12 +1,12 @@
 namespace BeyondImmersion.UnitTests;
 
 [Collection("core tests")]
-public class Attributes : IClassFixture<Fixture>
+public class Attributes : IClassFixture<CollectionFixture>
 {
-    private Fixture TestFixture { get; }
+    private CollectionFixture TestCollectionContext { get; }
 
-    public Attributes(Fixture testFixture)
+    public Attributes(CollectionFixture collectionContext)
     {
-        TestFixture = testFixture;
+        TestCollectionContext = collectionContext;
     }
 }
