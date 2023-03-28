@@ -270,27 +270,6 @@ public interface IServiceAttribute
     /// <summary>
     /// Will retrieve PropertyInfo for all properties with the given attribute in the given class type.
     /// </summary>
-    public static List<(PropertyInfo, T)> GetPropertiesWithAttribute<T, S>(S _)
-        where T : Attribute, IServiceAttribute
-        => GetPropertiesWithAttribute<T>(typeof(S));
-
-    /// <summary>
-    /// Will retrieve FieldInfo for all fields with the given attribute in the given class type.
-    /// </summary>
-    public static List<(FieldInfo, T)> GetFieldsWithAttribute<T, S>(S _)
-        where T : Attribute, IServiceAttribute
-        => GetFieldsWithAttribute<T>(typeof(S));
-
-    /// <summary>
-    /// Will retrieve MethodInfo for all methods with the given attribute in the given class type.
-    /// </summary>
-    public static List<(MethodInfo, T)> GetMethodsWithAttribute<T, S>(S _)
-        where T : Attribute, IServiceAttribute
-        => GetMethodsWithAttribute<T>(typeof(S));
-
-    /// <summary>
-    /// Will retrieve PropertyInfo for all properties with the given attribute in the given class type.
-    /// </summary>
     public static List<(PropertyInfo, IServiceAttribute)> GetPropertiesWithAttribute(Type classType, Type attributeType)
     {
         List<(PropertyInfo, IServiceAttribute)> results = new();

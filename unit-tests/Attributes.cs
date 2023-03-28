@@ -336,4 +336,112 @@ public class Attributes : IClassFixture<CollectionFixture>
         Assert.DoesNotContain(withAttrB, t => t.Item2 ==
             typeof(TestFieldClassB).GetField("FieldC", UseAllBindingFlags()));
     }
+
+    [Fact]
+    public void GetMethodWithAttribute_SpecificClass()
+    {
+        var withAttr = IServiceAttribute.GetMethodsWithAttribute(typeof(TestMethodClassA), typeof(TestMethodAttributeA));
+        Assert.NotNull(withAttr);
+        Assert.Contains(withAttr, t => t.Item1 ==
+            typeof(TestMethodClassA).GetMethod(nameof(TestMethodClassA.TestMethodA), UseAllBindingFlags()));
+        Assert.DoesNotContain(withAttr, t => t.Item1 ==
+            typeof(TestMethodClassB).GetMethod("TestMethodA", UseAllBindingFlags()));
+
+        withAttr = IServiceAttribute.GetMethodsWithAttribute(typeof(TestMethodClassB), typeof(TestMethodAttributeB));
+        Assert.NotNull(withAttr);
+        Assert.Contains(withAttr, t => t.Item1 ==
+            typeof(TestMethodClassB).GetMethod("TestMethodB", UseAllBindingFlags()));
+        Assert.DoesNotContain(withAttr, t => t.Item1 ==
+            typeof(TestMethodClassA).GetMethod(nameof(TestMethodClassA.TestMethodB), UseAllBindingFlags()));
+    }
+
+    [Fact]
+    public void GetMethodWithAttribute_SpecificClass_Generic()
+    {
+        var withAttrA = IServiceAttribute.GetMethodsWithAttribute<TestMethodAttributeA>(typeof(TestMethodClassA));
+        Assert.NotNull(withAttrA);
+        Assert.Contains(withAttrA, t => t.Item1 ==
+            typeof(TestMethodClassA).GetMethod(nameof(TestMethodClassA.TestMethodA), UseAllBindingFlags()));
+        Assert.DoesNotContain(withAttrA, t => t.Item1 ==
+            typeof(TestMethodClassB).GetMethod("TestMethodA", UseAllBindingFlags()));
+
+        var withAttrB = IServiceAttribute.GetMethodsWithAttribute<TestMethodAttributeB>(typeof(TestMethodClassB));
+        Assert.NotNull(withAttrB);
+        Assert.Contains(withAttrB, t => t.Item1 ==
+            typeof(TestMethodClassB).GetMethod("TestMethodB", UseAllBindingFlags()));
+        Assert.DoesNotContain(withAttrB, t => t.Item1 ==
+            typeof(TestMethodClassA).GetMethod(nameof(TestMethodClassA.TestMethodB), UseAllBindingFlags()));
+    }
+
+    [Fact]
+    public void GetPropertyWithAttribute_SpecificClass()
+    {
+        var withAttr = IServiceAttribute.GetPropertiesWithAttribute(typeof(TestPropertyClassA), typeof(TestPropertyAttributeA));
+        Assert.NotNull(withAttr);
+        Assert.Contains(withAttr, t => t.Item1 ==
+            typeof(TestPropertyClassA).GetProperty(nameof(TestPropertyClassA.PropA), UseAllBindingFlags()));
+        Assert.DoesNotContain(withAttr, t => t.Item1 ==
+            typeof(TestPropertyClassB).GetProperty("PropA", UseAllBindingFlags()));
+
+        withAttr = IServiceAttribute.GetPropertiesWithAttribute(typeof(TestPropertyClassB), typeof(TestPropertyAttributeB));
+        Assert.NotNull(withAttr);
+        Assert.Contains(withAttr, t => t.Item1 ==
+            typeof(TestPropertyClassB).GetProperty("PropB", UseAllBindingFlags()));
+        Assert.DoesNotContain(withAttr, t => t.Item1 ==
+            typeof(TestPropertyClassA).GetProperty(nameof(TestPropertyClassA.PropB), UseAllBindingFlags()));
+    }
+
+    [Fact]
+    public void GetPropertyWithAttribute_SpecificClass_Generic()
+    {
+        var withAttrA = IServiceAttribute.GetPropertiesWithAttribute<TestPropertyAttributeA>(typeof(TestPropertyClassA));
+        Assert.NotNull(withAttrA);
+        Assert.Contains(withAttrA, t => t.Item1 ==
+            typeof(TestPropertyClassA).GetProperty(nameof(TestPropertyClassA.PropA), UseAllBindingFlags()));
+        Assert.DoesNotContain(withAttrA, t => t.Item1 ==
+            typeof(TestPropertyClassB).GetProperty("PropA", UseAllBindingFlags()));
+
+        var withAttrB = IServiceAttribute.GetPropertiesWithAttribute<TestPropertyAttributeB>(typeof(TestPropertyClassB));
+        Assert.NotNull(withAttrB);
+        Assert.Contains(withAttrB, t => t.Item1 ==
+            typeof(TestPropertyClassB).GetProperty("PropB", UseAllBindingFlags()));
+        Assert.DoesNotContain(withAttrB, t => t.Item1 ==
+            typeof(TestPropertyClassA).GetProperty(nameof(TestPropertyClassA.PropB), UseAllBindingFlags()));
+    }
+
+    [Fact]
+    public void GetFieldWithAttribute_SpecificClass()
+    {
+        var withAttr = IServiceAttribute.GetFieldsWithAttribute(typeof(TestFieldClassA), typeof(TestFieldAttributeA));
+        Assert.NotNull(withAttr);
+        Assert.Contains(withAttr, t => t.Item1 ==
+            typeof(TestFieldClassA).GetField(nameof(TestFieldClassA.FieldA), UseAllBindingFlags()));
+        Assert.DoesNotContain(withAttr, t => t.Item1 ==
+            typeof(TestFieldClassB).GetField("FieldA", UseAllBindingFlags()));
+
+        withAttr = IServiceAttribute.GetFieldsWithAttribute(typeof(TestFieldClassB), typeof(TestFieldAttributeB));
+        Assert.NotNull(withAttr);
+        Assert.Contains(withAttr, t => t.Item1 ==
+            typeof(TestFieldClassB).GetField("FieldB", UseAllBindingFlags()));
+        Assert.DoesNotContain(withAttr, t => t.Item1 ==
+            typeof(TestFieldClassA).GetField(nameof(TestFieldClassA.FieldB), UseAllBindingFlags()));
+    }
+
+    [Fact]
+    public void GetFieldWithAttribute_SpecificClass_Generic()
+    {
+        var withAttrA = IServiceAttribute.GetFieldsWithAttribute<TestFieldAttributeA>(typeof(TestFieldClassA));
+        Assert.NotNull(withAttrA);
+        Assert.Contains(withAttrA, t => t.Item1 ==
+            typeof(TestFieldClassA).GetField(nameof(TestFieldClassA.FieldA), UseAllBindingFlags()));
+        Assert.DoesNotContain(withAttrA, t => t.Item1 ==
+            typeof(TestFieldClassB).GetField("FieldA", UseAllBindingFlags()));
+
+        var withAttrB = IServiceAttribute.GetFieldsWithAttribute<TestFieldAttributeB>(typeof(TestFieldClassB));
+        Assert.NotNull(withAttrB);
+        Assert.Contains(withAttrB, t => t.Item1 ==
+            typeof(TestFieldClassB).GetField("FieldB", UseAllBindingFlags()));
+        Assert.DoesNotContain(withAttrB, t => t.Item1 ==
+            typeof(TestFieldClassA).GetField(nameof(TestFieldClassA.FieldB), UseAllBindingFlags()));
+    }
 }

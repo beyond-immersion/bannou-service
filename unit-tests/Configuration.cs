@@ -19,10 +19,7 @@ public class Configuration : IClassFixture<CollectionFixture>
     [DaprService("test")]
     private class TestService_MultipleRequired : IDaprService { }
 
-    private abstract class TestConfigBase : IServiceConfiguration
-    {
-        public string? ForceServiceID { get; set; }
-    }
+    private abstract class TestConfigBase : ServiceConfiguration { }
 
     private class TestConfiguration_Invalid
     {
