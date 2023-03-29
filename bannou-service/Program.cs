@@ -101,12 +101,4 @@ public static class Program
     /// Will stop the webhost and initiate a service shutdown.
     /// </summary>
     public static void InitiateShutdown() => ShutdownCancellationTokenSource.Cancel();
-
-    /// <summary>
-    /// Binds the HTTP endpoints for root administrative commands against this service against.
-    /// </summary>
-    private static void SetAdminEndpoints(WebApplication webApp)
-    {
-        webApp.MapGet($"/admin_{ServiceGUID}/shutdown", InitiateShutdown);
-    }
 }
