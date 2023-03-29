@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -114,11 +115,34 @@ public static partial class ExtensionMethods
     }
 
     /// <summary>
+    /// Binds HTTP endpoints for admin commands.
+    /// </summary>
+    public static IEndpointRouteBuilder MapNonServiceControllers(this IEndpointRouteBuilder builder)
+    {
+        // expose admin / application-level controller routes
+        foreach (var daprControllerInfo in IDaprController.FindAll())
+        {
+            if (daprControllerInfo.Item2?.ServiceType != null)
+                continue;
+
+            string name = daprControllerInfo.Item2?.Name ?? daprControllerInfo.Item1.Name;
+            string template = "";
+            var tmp = daprControllerInfo.Item2?.Template;
+            if (!string.IsNullOrWhiteSpace(tmp))
+                template = tmp;
+
+            Program.Logger?.Log(LogLevel.Debug, null, $"Adding non-service controller {name} at path {template}.");
+            builder.MapControllerRoute(name, template + "/{action=Index}/{id?}");
+        }
+
+        return builder;
+    }
+
+    /// <summary>
     /// Binds HTTP endpoints for all registered dapr services.
     /// </summary>
-    public static bool MapDaprControllerRoutes(this WebApplication webApp)
+    public static IEndpointRouteBuilder MapDaprServiceControllers(this IEndpointRouteBuilder builder)
     {
-        var routeAdded = false;
         foreach ((Type, DaprServiceAttribute) serviceClassInfo in IDaprService.FindAll(enabledOnly: true))
         {
             var serviceType = serviceClassInfo.Item1;
@@ -134,12 +158,12 @@ public static partial class ExtensionMethods
                     if (!string.IsNullOrWhiteSpace(tmpTemplate))
                         controllerTemplate = tmpTemplate;
 
-                    webApp.MapControllerRoute(controllerTemplate, controllerTemplate + "/{action=Index}/{id?}");
-                    routeAdded = true;
+                    Program.Logger?.Log(LogLevel.Debug, null, $"Adding controller for service {serviceName} at path {controllerTemplate}.");
+                    builder.MapControllerRoute(controllerTemplate, controllerTemplate + "/{action=Index}/{id?}");
                 }
             }
         }
 
-        return routeAdded;
+        return builder;
     }
 }

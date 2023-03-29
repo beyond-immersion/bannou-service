@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-
-namespace BeyondImmersion.BannouService;
+﻿namespace BeyondImmersion.BannouService;
 
 public static class Validators
 {
@@ -53,7 +51,7 @@ public static class Validators
         return allSuccess;
     }
 
-    [ServiceValidatorAttribute("configuration")]
+    [ServiceValidator("configuration")]
     public static bool ValidateConfiguration()
     {
         Program.Logger.Log(LogLevel.Debug, null, "Executing validation for required service configuration.");

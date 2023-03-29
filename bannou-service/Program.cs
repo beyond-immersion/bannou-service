@@ -68,8 +68,13 @@ public static class Program
 
         try
         {
-            SetAdminEndpoints(webApp);
-            webApp.MapDaprControllerRoutes();
+            webApp
+                .UseRouting()
+                .UseEndpoints((b) =>
+                {
+                    b.MapNonServiceControllers();
+                    b.MapDaprServiceControllers();
+                });
 
             Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
             {
