@@ -159,7 +159,7 @@ public static partial class ExtensionMethods
                         controllerTemplate = tmpTemplate;
 
                     Program.Logger?.Log(LogLevel.Debug, null, $"Adding controller for service {serviceName} at path {controllerTemplate}.");
-                    builder.MapControllerRoute(controllerTemplate, controllerTemplate + "/{action=Index}/{id?}");
+                    builder.MapControllerRoute(serviceName, controllerTemplate + "/{action=Index}/{id?}");
                 }
             }
         }
