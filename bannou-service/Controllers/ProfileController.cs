@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Service component responsible for player profile handling.
 /// </summary>
-[DaprController("profile")]
+[DaprController(template: "profile", serviceType: typeof(ProfileService))]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class ProfileController : BaseDaprController

@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Service component responsible for leaderboard handling.
 /// </summary>
-[DaprController("leaderboard")]
+[DaprController(template: "leaderboard", serviceType: typeof(LeaderboardService))]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class LeaderboardController : BaseDaprController

@@ -1,8 +1,4 @@
-﻿using System.Reflection;
-using System.Text.Json;
-using Dapr.Extensions.Configuration;
-
-namespace BeyondImmersion.BannouService.Application;
+﻿namespace BeyondImmersion.BannouService.Application;
 
 [ServiceConfiguration]
 public class ServiceConfiguration : IServiceConfiguration
@@ -12,4 +8,6 @@ public class ServiceConfiguration : IServiceConfiguration
     /// If not set, will generate a new GUID automatically on service startup.
     /// </summary>
     public string? ForceServiceID { get; set; }
+
+    public string? DaprConfigurationName { get; set; }
 }

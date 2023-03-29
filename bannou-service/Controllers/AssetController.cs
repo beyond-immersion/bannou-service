@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Service component responsible for asset handling.
 /// </summary>
-[DaprController("asset")]
+[DaprController(template: "asset", serviceType: typeof(AssetService))]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class AssetController : BaseDaprController

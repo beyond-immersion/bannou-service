@@ -16,7 +16,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// This would mean that a bad actor could spam a specific login server instance, but if that doesn't actually increase the internal
 /// network traffic on each request, I'm not sure it matters.
 /// </summary>
-[DaprController("login")]
+[DaprController(template: "login", serviceType: typeof(LoginService))]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public sealed class LoginController : BaseDaprController

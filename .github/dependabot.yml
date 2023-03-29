@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    rebase-strategy: "auto"
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types: ["version-update:semver-major"]
