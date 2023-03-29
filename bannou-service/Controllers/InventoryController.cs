@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Service component responsible for inventory handling.
 /// </summary>
-[DaprController("inventory")]
+[DaprController(template: "inventory", serviceType: typeof(InventoryService))]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class InventoryController : BaseDaprController

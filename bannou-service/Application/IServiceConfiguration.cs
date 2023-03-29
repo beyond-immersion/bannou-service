@@ -79,8 +79,9 @@ public interface IServiceConfiguration
             .AddEnvironmentVariables(envPrefix)
             .AddCommandLine(args ?? Array.Empty<string>(), CreateAllSwitchMappings());
 
-        if (Program.DaprClient != null)
-            configurationBuilder.AddDaprConfigurationStore("ConfigurationStore", Array.Empty<string>(), Program.DaprClient, TimeSpan.FromSeconds(3), null);
+        if (Program.DaprClient != null && Program.Configuration?.DaprConfigurationName != null)
+            configurationBuilder.AddDaprConfigurationStore(Program.Configuration.DaprConfigurationName,
+                Array.Empty<string>(), Program.DaprClient, TimeSpan.FromSeconds(3), null);
 
         return configurationBuilder.Build();
     }

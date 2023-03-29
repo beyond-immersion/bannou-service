@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Service component responsible for template definition handling.
 /// </summary>
-[DaprController("template")]
+[DaprController(template: "template", serviceType: typeof(TemplateService))]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class TemplateController : BaseDaprController

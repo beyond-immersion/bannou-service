@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Service component responsible for login authorization handling.
 /// </summary>
-[DaprController("authorization")]
+[DaprController(template: "authorization", serviceType: typeof(AuthorizationService))]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class AuthorizationController : BaseDaprController
