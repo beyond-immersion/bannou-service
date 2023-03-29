@@ -6,9 +6,10 @@ services:
     build:
       context: ../
       dockerfile: provisioning/Dockerfile
-    env_file: ../.env
     depends_on:
       - placement
+    environment:
+      - TEMPLATE_SERVICE_ENABLED=true
     networks:
       - celestial_network
 
@@ -17,7 +18,6 @@ services:
     command: [
       "./daprd",
       "--app-id", "bannou",
-      "--app-port", "3000",
       "--placement-host-address", "placement:50006",
       "--resources-path", "./components"
     ]

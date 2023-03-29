@@ -49,12 +49,18 @@ public static class Program
         }
 
         ServiceGUID = Configuration.ForceServiceID ?? Guid.NewGuid().ToString().ToLower();
-        WebApplication? webApp = WebApplication.CreateBuilder(args)?.Build();
-        if (webApp == null)
+        WebApplicationBuilder? webAppBuilder = WebApplication.CreateBuilder(args);
+        if (webAppBuilder == null)
         {
-            Logger.Log(LogLevel.Error, null, "Building web application failed- exiting application.");
+            Logger.Log(LogLevel.Error, null, "Failed to create web application builder- exiting application.");
             return;
         }
+
+        webAppBuilder.Services.AddAuthentication();
+        webAppBuilder.Services.AddControllersWithViews();
+        webAppBuilder.Services.AddDaprClient();
+
+        WebApplication webApp = webAppBuilder.Build();
 
         DaprClient = new DaprClientBuilder()
             .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig)
@@ -70,6 +76,7 @@ public static class Program
         {
             webApp
                 .UseRouting()
+                .UseAuthorization()
                 .UseEndpoints((b) =>
                 {
                     b.MapNonServiceControllers();
@@ -95,6 +102,11 @@ public static class Program
         }
 
         Logger.Log(LogLevel.Debug, null, "Service shutdown complete.");
+    }
+
+    public static void ConfigurationServices(IServiceCollection services)
+    {
+        services.AddControllersWithViews();
     }
 
     /// <summary>

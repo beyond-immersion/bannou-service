@@ -11,7 +11,6 @@ RUN dotnet publish -o /app/bannou-service/publish -c Release /app/bannou-service
 FROM mcr.microsoft.com/dotnet/aspnet:7.0
 
 COPY --from=intermediate /app/bannou-service/publish /app
-COPY ./ca /app/ca
 COPY --from=intermediate /REVISION /REVISION
 
 WORKDIR /app
