@@ -1,0 +1,41 @@
+version: "3.4"
+
+services:
+
+  bannou:
+    build:
+      context: ../
+      dockerfile: provisioning/Dockerfile
+    env_file: ../.env
+    depends_on:
+      - placement
+    networks:
+      - celestial_network
+
+  bannou-dapr:
+    image: "daprio/daprd:edge"
+    command: [
+      "./daprd",
+      "--app-id", "bannou",
+      "--app-port", "3000",
+      "--placement-host-address", "placement:50006",
+      "--resources-path", "./components"
+    ]
+    volumes:
+      - "./components/:/components"
+    depends_on:
+      - bannou
+    network_mode: "service:bannou"
+
+  placement:
+    image: "daprio/dapr"
+    command: [
+      "./placement", "--port", "50006"
+    ]
+    networks:
+      - celestial_network
+    ports:
+      - "50006:50006"
+
+networks:
+  celestial_network:
