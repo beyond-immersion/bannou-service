@@ -11,12 +11,12 @@ public static class Program
     /// <summary>
     /// Service configuration- pulled from Config.json, ENVs, and command switches.
     /// </summary>
-    internal static ServiceConfiguration Configuration { get; private set; }
+    internal static ServiceConfiguration Configuration { get; set; }
 
     /// <summary>
     /// Service logger.
     /// </summary>
-    internal static ILogger Logger { get; private set; }
+    internal static ILogger Logger { get; set; }
 
     /// <summary>
     /// Internal service GUID- largely used for administrative network commands.

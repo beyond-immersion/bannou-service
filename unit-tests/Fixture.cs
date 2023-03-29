@@ -1,3 +1,5 @@
+using Xunit.Abstractions;
+
 namespace BeyondImmersion.UnitTests;
 
 public class CollectionFixture : IDisposable
@@ -13,6 +15,8 @@ public class CollectionFixture : IDisposable
 
     public void ResetENVs()
     {
+        Environment.SetEnvironmentVariable("TEST_REQUIRED_SERVICE_ENABLED", null);
+        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", null);
         Environment.SetEnvironmentVariable("TestServiceEnabled", null);
         Environment.SetEnvironmentVariable("Test_Service_Enabled", null);
         Environment.SetEnvironmentVariable("TestProperty", null);

@@ -124,9 +124,9 @@ public interface IDaprService
             if (serviceConfig == null)
                 continue;
 
-            if (!HasRequiredConfiguration(serviceConfig))
+            if (!IServiceConfiguration.HasRequiredForType(serviceConfig))
             {
-                Program.Logger.Log(LogLevel.Debug, null, $"Required configuration is missing to start an enabled dapr service.",
+                Program.Logger?.Log(LogLevel.Error, null, $"Required configuration is missing to start an enabled dapr service.",
                     logParams: new JObject() { ["service_type"] = serviceType.Name });
 
                 return false;
@@ -189,33 +189,24 @@ public interface IDaprService
     {
         List<(Type, DaprServiceAttribute)> serviceClasses = IServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
         if (!serviceClasses.Any())
-        {
-            Program.Logger.Log(LogLevel.Error, null, $"No dapr services found to instantiate.");
             return Array.Empty<(Type, DaprServiceAttribute)>();
-        }
 
         // prefixes need to be unique, so assign to a tmp hash/dictionary lookup
-        var serviceLookup = new Dictionary<string, (Type, DaprServiceAttribute)>();
+        var serviceLookup = new List<(Type, DaprServiceAttribute)>();
         foreach ((Type, DaprServiceAttribute) serviceClass in serviceClasses)
         {
             Type serviceType = serviceClass.Item1;
             DaprServiceAttribute serviceAttr = serviceClass.Item2;
 
             if (!typeof(IDaprService).IsAssignableFrom(serviceType))
-            {
-                Program.Logger.Log(LogLevel.Error, null, $"Dapr service attribute attached to a non-service class.",
-                    logParams: new JObject() { ["service_type"] = serviceType.Name });
                 continue;
-            }
 
             if (enabledOnly && !IsEnabled(serviceType))
                 continue;
 
-            var servicePrefix = ((IDaprService)serviceType).GetName().ToLower();
-            if (!serviceLookup.ContainsKey(servicePrefix) || serviceClass.GetType().Assembly != Assembly.GetExecutingAssembly())
-                serviceLookup[servicePrefix] = serviceClass;
+            serviceLookup.Add(serviceClass);
         }
 
-        return serviceLookup.Values.ToArray();
+        return serviceLookup.ToArray();
     }
 }

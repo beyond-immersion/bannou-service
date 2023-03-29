@@ -20,18 +20,22 @@ public interface IServiceAttribute
 
         foreach (Assembly assembly in loadedAssemblies)
         {
-            Type[] classTypes = assembly.GetTypes();
-            if (classTypes == null || classTypes.Length == 0)
-                continue;
-
-            foreach (Type classType in classTypes)
+            try
             {
-                T? attr = classType.GetCustomAttribute<T>();
-                if (attr == null)
+                Type[] classTypes = assembly.GetTypes();
+                if (classTypes == null || classTypes.Length == 0)
                     continue;
 
-                results.Add((classType, attr));
+                foreach (Type classType in classTypes)
+                {
+                    T? attr = classType.GetCustomAttribute<T>();
+                    if (attr == null)
+                        continue;
+
+                    results.Add((classType, attr));
+                }
             }
+            catch { }
         }
 
         return results;
@@ -49,18 +53,22 @@ public interface IServiceAttribute
 
         foreach (Assembly assembly in loadedAssemblies)
         {
-            Type[] classTypes = assembly.GetTypes();
-            if (classTypes == null || classTypes.Length == 0)
-                continue;
-
-            foreach (Type classType in classTypes)
+            try
             {
-                Attribute? attr = classType.GetCustomAttribute(attributeType);
-                if (attr == null)
+                Type[] classTypes = assembly.GetTypes();
+                if (classTypes == null || classTypes.Length == 0)
                     continue;
 
-                results.Add((classType, (IServiceAttribute)attr));
+                foreach (Type classType in classTypes)
+                {
+                    Attribute? attr = classType.GetCustomAttribute(attributeType);
+                    if (attr == null)
+                        continue;
+
+                    results.Add((classType, (IServiceAttribute)attr));
+                }
             }
+            catch { }
         }
 
         return results;
@@ -82,19 +90,23 @@ public interface IServiceAttribute
 
         foreach (Assembly assembly in loadedAssemblies)
         {
-            Type[] classTypes = assembly.GetTypes();
-            if (classTypes == null || classTypes.Length == 0)
-                continue;
-
-            foreach (Type classType in classTypes)
+            try
             {
-                List<(PropertyInfo, T)> propsInfo = GetPropertiesWithAttribute<T>(classType);
-                if (propsInfo == null)
+                Type[] classTypes = assembly.GetTypes();
+                if (classTypes == null || classTypes.Length == 0)
                     continue;
 
-                foreach ((PropertyInfo, T) propInfo in propsInfo)
-                    results.Add((classType, propInfo.Item1, propInfo.Item2));
+                foreach (Type classType in classTypes)
+                {
+                    List<(PropertyInfo, T)> propsInfo = GetPropertiesWithAttribute<T>(classType);
+                    if (propsInfo == null)
+                        continue;
+
+                    foreach ((PropertyInfo, T) propInfo in propsInfo)
+                        results.Add((classType, propInfo.Item1, propInfo.Item2));
+                }
             }
+            catch { }
         }
 
         return results;
@@ -115,19 +127,23 @@ public interface IServiceAttribute
 
         foreach (Assembly assembly in loadedAssemblies)
         {
-            Type[] classTypes = assembly.GetTypes();
-            if (classTypes == null || classTypes.Length == 0)
-                continue;
-
-            foreach (Type classType in classTypes)
+            try
             {
-                List<(PropertyInfo, IServiceAttribute)> propsInfo = GetPropertiesWithAttribute(classType, attributeType);
-                if (propsInfo == null)
+                Type[] classTypes = assembly.GetTypes();
+                if (classTypes == null || classTypes.Length == 0)
                     continue;
 
-                foreach ((PropertyInfo, IServiceAttribute) propInfo in propsInfo)
-                    results.Add((classType, propInfo.Item1, propInfo.Item2));
+                foreach (Type classType in classTypes)
+                {
+                    List<(PropertyInfo, IServiceAttribute)> propsInfo = GetPropertiesWithAttribute(classType, attributeType);
+                    if (propsInfo == null)
+                        continue;
+
+                    foreach ((PropertyInfo, IServiceAttribute) propInfo in propsInfo)
+                        results.Add((classType, propInfo.Item1, propInfo.Item2));
+                }
             }
+            catch { }
         }
 
         return results;
@@ -149,19 +165,23 @@ public interface IServiceAttribute
 
         foreach (Assembly assembly in loadedAssemblies)
         {
-            Type[] classTypes = assembly.GetTypes();
-            if (classTypes == null || classTypes.Length == 0)
-                continue;
-
-            foreach (Type classType in classTypes)
+            try
             {
-                List<(FieldInfo, T)> fieldsInfo = GetFieldsWithAttribute<T>(classType);
-                if (fieldsInfo == null)
+                Type[] classTypes = assembly.GetTypes();
+                if (classTypes == null || classTypes.Length == 0)
                     continue;
 
-                foreach ((FieldInfo, T) fieldInfo in fieldsInfo)
-                    results.Add((classType, fieldInfo.Item1, fieldInfo.Item2));
+                foreach (Type classType in classTypes)
+                {
+                    List<(FieldInfo, T)> fieldsInfo = GetFieldsWithAttribute<T>(classType);
+                    if (fieldsInfo == null)
+                        continue;
+
+                    foreach ((FieldInfo, T) fieldInfo in fieldsInfo)
+                        results.Add((classType, fieldInfo.Item1, fieldInfo.Item2));
+                }
             }
+            catch { }
         }
 
         return results;
@@ -182,19 +202,23 @@ public interface IServiceAttribute
 
         foreach (Assembly assembly in loadedAssemblies)
         {
-            Type[] classTypes = assembly.GetTypes();
-            if (classTypes == null || classTypes.Length == 0)
-                continue;
-
-            foreach (Type classType in classTypes)
+            try
             {
-                List<(FieldInfo, IServiceAttribute)> fieldsInfo = GetFieldsWithAttribute(classType, attributeType);
-                if (fieldsInfo == null)
+                Type[] classTypes = assembly.GetTypes();
+                if (classTypes == null || classTypes.Length == 0)
                     continue;
 
-                foreach ((FieldInfo, IServiceAttribute) fieldInfo in fieldsInfo)
-                    results.Add((classType, fieldInfo.Item1, fieldInfo.Item2));
+                foreach (Type classType in classTypes)
+                {
+                    List<(FieldInfo, IServiceAttribute)> fieldsInfo = GetFieldsWithAttribute(classType, attributeType);
+                    if (fieldsInfo == null)
+                        continue;
+
+                    foreach ((FieldInfo, IServiceAttribute) fieldInfo in fieldsInfo)
+                        results.Add((classType, fieldInfo.Item1, fieldInfo.Item2));
+                }
             }
+            catch { }
         }
 
         return results;
@@ -216,19 +240,23 @@ public interface IServiceAttribute
 
         foreach (Assembly assembly in loadedAssemblies)
         {
-            Type[] classTypes = assembly.GetTypes();
-            if (classTypes == null || classTypes.Length == 0)
-                continue;
-
-            foreach (Type classType in classTypes)
+            try
             {
-                List<(MethodInfo, T)> methodsInfo = GetMethodsWithAttribute<T>(classType);
-                if (methodsInfo == null)
+                Type[] classTypes = assembly.GetTypes();
+                if (classTypes == null || classTypes.Length == 0)
                     continue;
 
-                foreach ((MethodInfo, T) methodInfo in methodsInfo)
-                    results.Add((classType, methodInfo.Item1, methodInfo.Item2));
+                foreach (Type classType in classTypes)
+                {
+                    List<(MethodInfo, T)> methodsInfo = GetMethodsWithAttribute<T>(classType);
+                    if (methodsInfo == null)
+                        continue;
+
+                    foreach ((MethodInfo, T) methodInfo in methodsInfo)
+                        results.Add((classType, methodInfo.Item1, methodInfo.Item2));
+                }
             }
+            catch { }
         }
 
         return results;
@@ -249,19 +277,23 @@ public interface IServiceAttribute
 
         foreach (Assembly assembly in loadedAssemblies)
         {
-            Type[] classTypes = assembly.GetTypes();
-            if (classTypes == null || classTypes.Length == 0)
-                continue;
-
-            foreach (Type classType in classTypes)
+            try
             {
-                List<(MethodInfo, IServiceAttribute)> methodsInfo = GetMethodsWithAttribute(classType, attributeType);
-                if (methodsInfo == null)
+                Type[] classTypes = assembly.GetTypes();
+                if (classTypes == null || classTypes.Length == 0)
                     continue;
 
-                foreach ((MethodInfo, IServiceAttribute) methodInfo in methodsInfo)
-                    results.Add((classType, methodInfo.Item1, methodInfo.Item2));
+                foreach (Type classType in classTypes)
+                {
+                    List<(MethodInfo, IServiceAttribute)> methodsInfo = GetMethodsWithAttribute(classType, attributeType);
+                    if (methodsInfo == null)
+                        continue;
+
+                    foreach ((MethodInfo, IServiceAttribute) methodInfo in methodsInfo)
+                        results.Add((classType, methodInfo.Item1, methodInfo.Item2));
+                }
             }
+            catch { }
         }
 
         return results;
@@ -279,12 +311,16 @@ public interface IServiceAttribute
 
         foreach (PropertyInfo propInfo in retrievedProps)
         {
-            var attrs = propInfo.GetCustomAttributes(attributeType, true);
-            if (attrs == null || !attrs.Any())
-                continue;
+            try
+            {
+                var attrs = propInfo.GetCustomAttributes(attributeType, true);
+                if (attrs == null || !attrs.Any())
+                    continue;
 
-            foreach (var attr in attrs)
-                results.Add((propInfo, (IServiceAttribute)attr));
+                foreach (var attr in attrs)
+                    results.Add((propInfo, (IServiceAttribute)attr));
+            }
+            catch { }
         }
 
         return results;
@@ -303,12 +339,16 @@ public interface IServiceAttribute
 
         foreach (PropertyInfo propInfo in retrievedProps)
         {
-            IEnumerable<T> attrs = propInfo.GetCustomAttributes<T>(true);
-            if (attrs == null || !attrs.Any())
-                continue;
+            try
+            {
+                IEnumerable<T> attrs = propInfo.GetCustomAttributes<T>(true);
+                if (attrs == null || !attrs.Any())
+                    continue;
 
-            foreach (T attr in attrs)
-                results.Add((propInfo, attr));
+                foreach (T attr in attrs)
+                    results.Add((propInfo, attr));
+            }
+            catch { }
         }
 
         return results;
@@ -327,12 +367,16 @@ public interface IServiceAttribute
 
         foreach (FieldInfo fieldInfo in retrievedFields)
         {
-            IEnumerable<T> attrs = fieldInfo.GetCustomAttributes<T>(true);
-            if (attrs == null || !attrs.Any())
-                continue;
+            try
+            {
+                IEnumerable<T> attrs = fieldInfo.GetCustomAttributes<T>(true);
+                if (attrs == null || !attrs.Any())
+                    continue;
 
-            foreach (T attr in attrs)
-                results.Add((fieldInfo, attr));
+                foreach (T attr in attrs)
+                    results.Add((fieldInfo, attr));
+            }
+            catch { }
         }
 
         return results;
@@ -350,12 +394,16 @@ public interface IServiceAttribute
 
         foreach (FieldInfo fieldInfo in retrievedFields)
         {
-            var attrs = fieldInfo.GetCustomAttributes(attributeType, true);
-            if (attrs == null || !attrs.Any())
-                continue;
+            try
+            {
+                var attrs = fieldInfo.GetCustomAttributes(attributeType, true);
+                if (attrs == null || !attrs.Any())
+                    continue;
 
-            foreach (var attr in attrs)
-                results.Add((fieldInfo, (IServiceAttribute)attr));
+                foreach (var attr in attrs)
+                    results.Add((fieldInfo, (IServiceAttribute)attr));
+            }
+            catch { }
         }
 
         return results;
@@ -376,12 +424,16 @@ public interface IServiceAttribute
 
         foreach (MethodInfo methodInfo in retrievedMethods)
         {
-            var attrs = methodInfo.GetCustomAttributes(attributeType, true);
-            if (attrs == null || !attrs.Any())
-                continue;
+            try
+            {
+                var attrs = methodInfo.GetCustomAttributes(attributeType, true);
+                if (attrs == null || !attrs.Any())
+                    continue;
 
-            foreach (var attr in attrs)
-                results.Add((methodInfo, (IServiceAttribute)attr));
+                foreach (var attr in attrs)
+                    results.Add((methodInfo, (IServiceAttribute)attr));
+            }
+            catch { }
         }
 
         return results;
@@ -400,12 +452,16 @@ public interface IServiceAttribute
 
         foreach (MethodInfo methodInfo in retrievedMethods)
         {
-            IEnumerable<T> attrs = methodInfo.GetCustomAttributes<T>(true);
-            if (attrs == null || !attrs.Any())
-                continue;
+            try
+            {
+                IEnumerable<T> attrs = methodInfo.GetCustomAttributes<T>(true);
+                if (attrs == null || !attrs.Any())
+                    continue;
 
-            foreach (T attr in attrs)
-                results.Add((methodInfo, attr));
+                foreach (T attr in attrs)
+                    results.Add((methodInfo, attr));
+            }
+            catch { }
         }
 
         return results;

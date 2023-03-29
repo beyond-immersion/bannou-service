@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Services;
+using Xunit.Abstractions;
 
 namespace BeyondImmersion.UnitTests;
 
@@ -31,7 +32,7 @@ public class Services : IClassFixture<CollectionFixture>
         public string? TestProperty { get; set; }
     }
 
-    [DaprService("test")]
+    [DaprService("test_required")]
     private class TestService_Required : IDaprService { }
 
     [DaprService("test")]
@@ -64,9 +65,10 @@ public class Services : IClassFixture<CollectionFixture>
         public string? TestProperty_B { get; set; }
     }
 
-    public Services(CollectionFixture collectionContext)
+    public Services(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
+        Program.Logger = output.BuildLoggerFor<Services>();
     }
 
     [Fact]
@@ -276,6 +278,50 @@ public class Services : IClassFixture<CollectionFixture>
         Assert.NotNull(config);
         Assert.Equal("Test", config.TestProperty);
         Assert.Equal(serviceID, config.ForceServiceID);
+    }
+
+    [Fact]
+    public void FindAll()
+    {
+        TestCollectionContext.ResetENVs();
+
+        Assert.DoesNotContain(IDaprService.FindAll(), t => t.Item1 == typeof(TestService));
+        Assert.Contains(IDaprService.FindAll(), t => t.Item1 == typeof(TestService_Attribute));
+        Assert.Contains(IDaprService.FindAll(), t => t.Item1 == typeof(TestService_Required));
+        Assert.Contains(IDaprService.FindAll(), t => t.Item1 == typeof(TestService_MultipleRequired));
+
+#pragma warning disable CS0162 // Unreachable code detected
+        if (ServiceConstants.ENABLE_SERVICES_BY_DEFAULT)
+        {
+            Assert.Contains(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Attribute));
+            Assert.Contains(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Required));
+            Assert.Contains(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+        }
+        else
+        {
+            Assert.DoesNotContain(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Attribute));
+            Assert.DoesNotContain(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Required));
+            Assert.DoesNotContain(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+
+            Environment.SetEnvironmentVariable("TEST_REQUIRED_SERVICE_ENABLED", "true");
+            Assert.Contains(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Required));
+        }
+#pragma warning restore CS0162 // Unreachable code detected
+
+    }
+
+    [Fact]
+    public void AllHaveRequiredConfiguration()
+    {
+        TestCollectionContext.ResetENVs();
+
+        Assert.True(IDaprService.AllHaveRequiredConfiguration());
+
+        Environment.SetEnvironmentVariable("TEST_REQUIRED_SERVICE_ENABLED", "true");
+        Assert.False(IDaprService.AllHaveRequiredConfiguration());
+
+        Environment.SetEnvironmentVariable("TestProperty", "something");
+        Assert.True(IDaprService.AllHaveRequiredConfiguration());
     }
 
     [Fact]
