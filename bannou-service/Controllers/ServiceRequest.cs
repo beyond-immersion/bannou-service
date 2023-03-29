@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace BeyondImmersion.BannouService.Services;
+namespace BeyondImmersion.BannouService.Controllers;
 
 [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
 public class ServiceRequest<T> : ServiceRequest

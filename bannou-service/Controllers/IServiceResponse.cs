@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Services;
+﻿namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
 /// The interface all response models from service endpoints should implement.

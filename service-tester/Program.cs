@@ -14,7 +14,7 @@ public class Program
 
     internal static void Main(string[] args)
     {
-        Configuration = ServiceConfiguration.BuildConfiguration<TestConfiguration>(args);
+        Configuration = IServiceConfiguration.BuildConfiguration<TestConfiguration>(args);
         if (!ValidateConfiguration())
             return;
 
@@ -70,7 +70,22 @@ public class Program
         } while (true);
     }
 
-    private static bool ValidateConfiguration() => true;
+    private static bool ValidateConfiguration()
+    {
+        if (Configuration == null)
+        {
+            Console.WriteLine("Error: missing configuration.");
+            return false;
+        }
+
+        if (!(Configuration as IServiceConfiguration).HasRequired())
+        {
+            Console.WriteLine("Error: missing required configuration.");
+            return false;
+        }
+
+        return true;
+    }
 
     private static void LoadServiceTests()
     {

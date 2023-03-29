@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Services;
+﻿namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
 /// The interface all message payload models to service endpoints should implement.

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace BeyondImmersion.BannouService.Services.Template.Data;
+namespace BeyondImmersion.BannouService.Models;
 
 /// <summary>
 /// A reference to a given "template context".

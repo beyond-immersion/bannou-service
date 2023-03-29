@@ -7,15 +7,12 @@ namespace BeyondImmersion.BannouService.Services;
 /// Service component responsible for leaderboard handling.
 /// </summary>
 [DaprService("leaderboard")]
-[Consumes(MediaTypeNames.Application.Json)]
-[Produces(MediaTypeNames.Application.Json)]
 public class LeaderboardService : IDaprService
 {
     /// <summary>
     /// List available leaderboards.
     /// </summary>
-    [ServiceRoute("/list")]
-    public async Task ListLeaderboards(HttpContext context)
+    public async Task ListLeaderboards()
     {
         await Task.CompletedTask;
     }
@@ -23,8 +20,7 @@ public class LeaderboardService : IDaprService
     /// <summary>
     /// Create new leaderboard.
     /// </summary>
-    [ServiceRoute("/create")]
-    public async Task CreateLeaderboard(HttpContext context)
+    public async Task CreateLeaderboard()
     {
         await Task.CompletedTask;
     }
@@ -32,8 +28,7 @@ public class LeaderboardService : IDaprService
     /// <summary>
     /// Update existing leaderboard.
     /// </summary>
-    [ServiceRoute("/update")]
-    public async Task UpdateLeaderboard(HttpContext context)
+    public async Task UpdateLeaderboard()
     {
         await Task.CompletedTask;
     }
@@ -41,8 +36,7 @@ public class LeaderboardService : IDaprService
     /// <summary>
     /// Destroy existing leaderboard.
     /// </summary>
-    [ServiceRoute("/destroy")]
-    public async Task DestroyLeaderboard(HttpContext context)
+    public async Task DestroyLeaderboard()
     {
         await Task.CompletedTask;
     }

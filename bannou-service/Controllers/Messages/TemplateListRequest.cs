@@ -1,7 +1,6 @@
-﻿using BeyondImmersion.BannouService.Services.Template.Data;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
-namespace BeyondImmersion.BannouService.Services.Template.Messages;
+namespace BeyondImmersion.BannouService.Controllers.Messages;
 
 /// <summary>
 /// The request model for service API calls to `/template/list`.
