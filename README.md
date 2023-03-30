@@ -11,7 +11,13 @@ Bannou Service is a versatile ASP.NET Core application designed to provide a sea
     - [Prerequisites](#prerequisites)
     - [Manual](#manual)
     - [Make](#make)
-  - [Documentation](#documentation)
+  - [Extending the Service](#extending-the-service)
+    - [Adding APIs](#adding-apis)
+    - [Implementing IDaprService](#implementing-idaprservice)
+    - [Implementing IServiceConfiguration](#implementing-iserviceconfiguration)
+    - [Implementing IDaprController](#implementing-idaprcontroller)
+    - [Implementing IServiceAttribute](#implementing-iserviceattribute)
+  - [Generated Docs](#generated-docs)
   - [Contributing](#contributing)
   - [License](#license)
 
@@ -54,11 +60,45 @@ Alternatively, the following make commands have been provided to simplify the pr
 2. `make up -d`
 3. `make down`
 
-## Documentation
+## Extending the Service
+
+The Bannou Service's primary goal is to be extensible, and as such, there are numerous ways to do so. The traditional approach would be to fork this repository, adding your own APIs (see below on adding APIs) directly to the main application code in the same way that the existing services, controllers, and configuration are set up. The application code itself is your guide- MVC controllers are still the same MVC controllers you'd always deal with in .NET 7, and should be fairly self-explanatory.
+
+Alternatively, you can add this entire repository as a project reference / git submodule of your own .NET application. The Program class in this monoservice has been kept intentionally minimalist, and all mechanisms of service, controller, and configuration discovery have been written in a way to also include other loaded assemblies. Until more examples can be included, the `unit tests` project clearly shows that extending the base attribute, configuration, service, and controller classes works just fine when using the Bannou Service as a project reference.
+
+Finally, you can build this application using the dotnet commandline build tool, and reference/include in the generated library in your own application.
+
+### Adding APIs
+
+To add an API controller, first determine if the APIs are distinct enough to potentially have their own on/off switch enabling them for a given service instance. In other words, would you want only some nodes in your services network to have these APIs enabled, while others have them disabled?
+
+If you need that control, then you'll want to start by implementing IDaprService in a new "service handler" class- this new class is where you'll do your initial setup in support of the API controller you'll be adding. It gives you the on/off switch to enable and disable the controllers by configuration, as well as handling long-running tasks for maintenance, cleanup, or generating events of some kind.
+
+If your new APIs are generic enough that you don't mind requests being spread across every node in the network without that level of control, you can forego having a "service handler" entirely, and move right to adding the Controller.
+
+### Implementing IDaprService
+
+Dapr services are the classes which support the API controllers, by providing the business logic of transactional requests, an entry point for starting long-running service tasks, the cleanup handler when the service is shutting down, and the means by which easy per-controller configuration can be generated.
+
+There are two requirements for adding a new "service handler" to the application- one is implementing the IDaprService interface, and the second is decorating the class with the `[DaprServiceAttribute]`. The attribute allows you to specify a service handler name- this should be unique per Dapr service, as it's used to determine the ENV for enabling and disabling the service handler (and its associated API controllers).
+
+Your individual Dapr service can be enabled by setting `{SERVICE_NAME}_SERVICE_ENABLED=true` as an ENV or `--{service_name}-service-enabled=true` as a switch.
+
+### Implementing IServiceConfiguration
+
+
+
+### Implementing IDaprController
+
+
+### Implementing IServiceAttribute
+
+
+
+## Generated Docs
 
 - [Service Configuration](#documentation/configuration.md)
 - [Service APIs](#documentation/controllers.md)
-- [Service Diagram](#documentation/diagram.md)
 
 ## Contributing
 
