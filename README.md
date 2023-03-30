@@ -42,7 +42,7 @@ The service can be deployed locally (usually for initial testing purposes) with 
 
 1. Clone this repository:
 
-    `git clone https://github.com/your_username/bannou-service.git`
+    `git clone https://github.com/ParnassianStudios/bannou-service.git`
 
 2. To build, run the following, replacing `my_project` with your own project name:
 
@@ -90,20 +90,27 @@ Your individual Dapr service can be enabled by setting `{SERVICE_NAME}_SERVICE_E
 
 ### Implementing IDaprController
 
+To add a new API controller exposed through Dapr, implement IDaprController and decorate the class with the `[DaprController]` attribute. The attribute extends the `[Route]` attribute, so can be thought of the same way- add a template string for the route your controller will use, and each method will then further append to that route.
+
+If your API controller has business logic, you should add a Dapr Service class (see above) as well to handle that logic, and reference the Dapr service type from the attribute on your Dapr controller class, to indicate that the controller is under the control of that Dapr service. A Dapr service can have any number of associated controllers (meaning, any number of controllers can reference the service), but the opposite is not true- Dapr controllers can only reference one Dapr service each.
+
+If you need to make a request to a different Dapr service, meaning to APIs that may be optionally disabled on your particular node, then you MUST post that request out to the Dapr sidecar, and not attempt to bypass that step internally. This is prevent issues with concurrency, among other things.
 
 ### Implementing IServiceAttribute
 
+IServiceAttribute is a shared interface for all app-specific attributes. The interface contains helper methods for finding all classes, methods, properties, or fields decorated with a given concrete type implementing IServiceAttribute.
 
+The `[DaprService]`, `[DaprController]`, and `[ServiceConfiguration]` attributes all implement IServiceAttribute, and those same helper methods are what are used to locate and perform operations on all of the classes decorated with those attributes, so they can be used as examples of how those methods work.
 
 ## Generated Docs
 
-- [Service Configuration](#documentation/configuration.md)
-- [Service APIs](#documentation/controllers.md)
+- [Service Configuration](documentation/configuration.md)
+- [Service APIs](documentation/services.md)
 
 ## Contributing
 
-If you would like to contribute to the Bannou Service project, please follow the [contributing guidelines](#documentation/CONTRIBUTING.md).
+If you would like to contribute to the Bannou Service project, please follow the [contributing guidelines](documentation/CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the [MIT License](#LICENSE).
+This project is licensed under the [MIT License](LICENSE).
