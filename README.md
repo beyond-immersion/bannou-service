@@ -1,5 +1,7 @@
 # Bannou Service
 
+[![GitHub Actions](https://github.com/ParnassianStudios/bannou-service/actions/workflows/all.yml/badge.svg)](https://github.com/ParnassianStudios/bannou-service/actions/workflows/all.yml)
+
 Bannou Service is a versatile ASP.NET Core application designed to provide a seamless codebase for creating HTTP Dapr APIs with minimal effort. Primarily designed to support a common backend microservice framework for largely multiplayer online video games, the service could in theory be a core part of any system requiring infinitely extensible REST APIs. By coupling with game engine servers like Unreal or Unity, Bannou Service becomes the foundation of the universal cloud-based platform for developing and hosting multiplayer video games, tentatively called "CelestialLink".
 
 ## Table of Contents
@@ -17,7 +19,7 @@ Bannou Service is a versatile ASP.NET Core application designed to provide a sea
     - [Implementing IServiceConfiguration](#implementing-iserviceconfiguration)
     - [Implementing IDaprController](#implementing-idaprcontroller)
     - [Implementing IServiceAttribute](#implementing-iserviceattribute)
-  - [Generated Docs](#generated-docs)
+  - [Generated Docs (WIP)](#generated-docs-wip)
   - [Contributing](#contributing)
   - [License](#license)
 
@@ -86,7 +88,11 @@ Your individual Dapr service can be enabled by setting `{SERVICE_NAME}_SERVICE_E
 
 ### Implementing IServiceConfiguration
 
+Configuration is meant to be generated per-Dapr service, so there are a few mechanisms for doing so easily. Implement the IServiceConfiguration interface and decorate your configuration class with the `[ServiceConfiguration]` attribute pointing to the particular Dapr service it's meant for, and that's all you need. Any existing ENVs (and args/switches, if you provide them) will be used to populate your configuration class automatically. By adding a "prefix" param to the config attribute, you can specify that only ENVs with a given prefix should be used to populate it instead (a common mechanism for per-component configuration in a .NET application).
 
+By decorating any configuration property in your new class with `[Required]` (from DataAnnotations), it will cause the service to fail to start if the configuration is NOT provided when the Dapr service is set to be enabled.
+
+Dapr services can have any number of configuration classes without issue, but if you have more than one, then you should be sure to set `primary=true` in the configuration attribute for the one you wish to be treated as such. This equated to the configuration type being selected / populated automatically when building from the direction of the Dapr service / controller, without knowing the specific configuration type to use. And `[Required]` attributes in classes that are NOT the primary configuration for a service type will effectively be by ignored.
 
 ### Implementing IDaprController
 
@@ -102,7 +108,7 @@ IServiceAttribute is a shared interface for all app-specific attributes. The int
 
 The `[DaprService]`, `[DaprController]`, and `[ServiceConfiguration]` attributes all implement IServiceAttribute, and those same helper methods are what are used to locate and perform operations on all of the classes decorated with those attributes, so they can be used as examples of how those methods work.
 
-## Generated Docs
+## Generated Docs (WIP)
 
 - [Service Configuration](documentation/configuration.md)
 - [Service APIs](documentation/services.md)
