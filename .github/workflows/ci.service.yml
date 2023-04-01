@@ -38,8 +38,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Compose Action
-        uses: isbang/compose-action@v1.4.1
+      - uses: isbang/compose-action@v1.4.1
         with:
           up-flags: wait
           compose-file: |
