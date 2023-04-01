@@ -13,8 +13,4 @@ public class TemplateGetRequest : ServiceRequest<TemplateGetResponse>
     /// </summary>
     [JsonProperty("id", Required = Required.Always)]
     public string ID { get; }
-
-    private TemplateGetRequest() { }
-    public TemplateGetRequest(string templateID)
-        => ID = templateID ?? throw new ArgumentNullException(nameof(templateID));
 }

@@ -3,3 +3,4 @@ services:
   bannou:
     environment:
       - TESTING_SERVICE_ENABLED=true
+      - ASPNETCORE_URLS=http://+:80"

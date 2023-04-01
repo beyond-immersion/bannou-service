@@ -14,5 +14,6 @@ COPY --from=intermediate /app/bannou-service/publish /app
 COPY --from=intermediate /REVISION /REVISION
 
 WORKDIR /app
+EXPOSE 80
 
 CMD ["dotnet", "bannou-service.dll"]

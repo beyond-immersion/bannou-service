@@ -10,8 +10,4 @@ public class TemplateGetResponse : ServiceResponse<TemplateGetRequest>
 {
     [JsonProperty("template")]
     public TemplateModel Template { get; set; }
-
-    public TemplateGetResponse() { }
-    public TemplateGetResponse(TemplateModel template)
-        => Template = template;
 }
