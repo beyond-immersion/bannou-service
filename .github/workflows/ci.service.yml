@@ -1,0 +1,51 @@
+name: 'GitHub Actions'
+on:
+
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '7.0.202'
+  DOTNET_INSTALL_DIR: './.dotnet'
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --no-restore --verbosity normal
+
+  deploy-and-test:
+    name: Test Deploy
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Compose Action
+        uses: isbang/compose-action@v1.4.1
+        with:
+          up-flags: wait
+          compose-file: |
+            "./provisioning/docker-compose.yml"
+            "./provisioning/docker-compose.ci.yml"
+        env:
+          TESTING_SERVICE_ENABLED: true
+
+      - name: Service Testing
+        run: ./provisioning/service-tests.sh
