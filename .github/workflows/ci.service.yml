@@ -1,4 +1,4 @@
-name: 'GitHub Actions'
+name: 'Active PR CI Tests'
 on:
 
   push:
