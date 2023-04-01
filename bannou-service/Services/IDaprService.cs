@@ -189,7 +189,10 @@ public interface IDaprService
     {
         List<(Type, DaprServiceAttribute)> serviceClasses = IServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
         if (!serviceClasses.Any())
+        {
+            Program.Logger?.Log(LogLevel.Trace, null, $"No service handler types were located.");
             return Array.Empty<(Type, DaprServiceAttribute)>();
+        }
 
         // prefixes need to be unique, so assign to a tmp hash/dictionary lookup
         var serviceLookup = new List<(Type, DaprServiceAttribute)>();
@@ -199,10 +202,16 @@ public interface IDaprService
             DaprServiceAttribute serviceAttr = serviceClass.Item2;
 
             if (!typeof(IDaprService).IsAssignableFrom(serviceType))
+            {
+                Program.Logger?.Log(LogLevel.Trace, null, $"Service handler type {serviceType.Name} doesn't implement {typeof(IDaprService).Name}.");
                 continue;
+            }
 
             if (enabledOnly && !IsEnabled(serviceType))
+            {
+                Program.Logger?.Log(LogLevel.Trace, null, $"Service handler type {serviceType.Name} has been disabled, and won't be returned.");
                 continue;
+            }
 
             serviceLookup.Add(serviceClass);
         }

@@ -146,21 +146,26 @@ public static partial class ExtensionMethods
         foreach ((Type, DaprServiceAttribute) serviceClassInfo in IDaprService.FindAll(enabledOnly: true))
         {
             var serviceType = serviceClassInfo.Item1;
+            var serviceName = serviceType.GetServiceName();
 
-            if (IDaprService.IsEnabled(serviceType))
+            var serviceEnabled = IDaprService.IsEnabled(serviceType);
+            if (!serviceEnabled)
             {
-                var serviceName = serviceType.GetServiceName();
-                var controllerTemplate = serviceName;
+                Program.Logger?.Log(LogLevel.Debug, null, $"Controller for service {serviceName} is disabled.");
+                continue;
+            }
 
-                foreach (var daprControllerInfo in IDaprController.FindAll(serviceClassInfo.Item1))
-                {
-                    var tmpTemplate = daprControllerInfo.Item2?.Template;
-                    if (!string.IsNullOrWhiteSpace(tmpTemplate))
-                        controllerTemplate = tmpTemplate;
+            Program.Logger?.Log(LogLevel.Trace, null, $"Controller for service {serviceName} is enabled.");
 
-                    Program.Logger?.Log(LogLevel.Debug, null, $"Adding controller for service {serviceName} at path {controllerTemplate}.");
-                    builder.MapControllerRoute(serviceName, controllerTemplate + "/{action=Index}/{id?}");
-                }
+            var controllerTemplate = serviceName;
+            foreach (var daprControllerInfo in IDaprController.FindAll(serviceClassInfo.Item1))
+            {
+                var tmpTemplate = daprControllerInfo.Item2?.Template;
+                if (!string.IsNullOrWhiteSpace(tmpTemplate))
+                    controllerTemplate = tmpTemplate;
+
+                Program.Logger?.Log(LogLevel.Debug, null, $"Adding controller for service {serviceName} at path {controllerTemplate}.");
+                builder.MapControllerRoute(serviceName, controllerTemplate + "/{action=Index}/{id?}");
             }
         }
 

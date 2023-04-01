@@ -12,7 +12,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 [Produces(MediaTypeNames.Application.Json)]
 public class TestingController : BaseDaprController
 {
-    private TestingService _service;
+    private readonly TestingService _service;
     public TestingController(TestingService service)
     {
         _service = service;

@@ -10,6 +10,7 @@ services:
       - placement
     environment:
       - TEMPLATE_SERVICE_ENABLED=true
+      - TESTING_SERVICE_ENABLED=true
     networks:
       - celestial_network
 
