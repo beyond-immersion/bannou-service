@@ -42,8 +42,8 @@ jobs:
         with:
           up-flags: wait
           compose-file: |
-            "./provisioning/docker-compose.yml"
-            "./provisioning/docker-compose.ci.yml"
+            ./provisioning/docker-compose.yml
+            ./provisioning/docker-compose.ci.yml
         env:
           TESTING_SERVICE_ENABLED: true
 
