@@ -50,7 +50,6 @@ public class TestingController : BaseDaprController
     public async Task<IActionResult> Run([FromRoute] string id)
     {
         await Task.CompletedTask;
-        return BadRequest(false);
         return new OkObjectResult(await _service.Run(id, null));
     }
 
@@ -62,7 +61,6 @@ public class TestingController : BaseDaprController
     public async Task<IActionResult> Run([FromBody] TestingRunTestRequest request)
     {
         await Task.CompletedTask;
-        return BadRequest(false);
         return new OkObjectResult(await _service.Run(request.ID, request.Service));
     }
 
