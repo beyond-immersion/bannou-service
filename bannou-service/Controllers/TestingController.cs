@@ -50,7 +50,7 @@ public class TestingController : BaseDaprController
     /// API to run a given test by ID.
     /// </summary>
     [HttpGet]
-    [DaprRoute("run/{id:string}")]
+    [DaprRoute("run/{id}")]
     public async Task<IActionResult> Run([FromRoute] string id)
     {
         if (string.IsNullOrWhiteSpace(id))
@@ -67,7 +67,7 @@ public class TestingController : BaseDaprController
     /// API to run a given test by ID.
     /// </summary>
     [HttpGet]
-    [DaprRoute("run/{serviceName:string}/{id:string}")]
+    [DaprRoute("run/{serviceName}/{id}")]
     public async Task<IActionResult> Run([FromRoute] string service, [FromRoute] string id)
     {
         if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(service))

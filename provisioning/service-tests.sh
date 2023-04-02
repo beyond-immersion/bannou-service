@@ -1,7 +1,6 @@
 #!/bin/bash
 
 apt-get update
-apt-get upgrade -y
 apt-get install curl -y
 echo "tools installed"
 
