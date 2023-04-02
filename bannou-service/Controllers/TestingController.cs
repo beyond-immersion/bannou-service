@@ -27,6 +27,7 @@ public class TestingController : BaseDaprController
     public async Task<IActionResult> RunAll()
     {
         await Task.CompletedTask;
+        return Ok();
         return new OkObjectResult(await _service.RunAll());
     }
 
@@ -39,6 +40,7 @@ public class TestingController : BaseDaprController
     public async Task<IActionResult> RunEnabled()
     {
         await Task.CompletedTask;
+        return Ok();
         return new OkObjectResult(await _service.RunAllEnabled());
     }
 
@@ -50,6 +52,7 @@ public class TestingController : BaseDaprController
     public async Task<IActionResult> Run([FromRoute] string id)
     {
         await Task.CompletedTask;
+        return Ok();
         return new OkObjectResult(await _service.Run(id, null));
     }
 
