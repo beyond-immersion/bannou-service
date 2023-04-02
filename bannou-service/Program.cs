@@ -57,8 +57,9 @@ public static class Program
         }
 
         webAppBuilder.Services.AddAuthentication();
-        webAppBuilder.Services.AddControllersWithViews();
+        webAppBuilder.Services.AddControllers();
         webAppBuilder.Services.AddDaprClient();
+        webAppBuilder.Services.AddDaprServices();
 
         WebApplication webApp = webAppBuilder.Build();
 
@@ -74,14 +75,8 @@ public static class Program
 
         try
         {
-            webApp
-                .UseRouting()
-                .UseAuthorization()
-                .UseEndpoints((b) =>
-                {
-                    b.MapNonServiceControllers();
-                    b.MapDaprServiceControllers();
-                });
+            webApp.MapNonServiceControllers();
+            webApp.MapDaprServiceControllers();
 
             Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
             {
@@ -102,11 +97,6 @@ public static class Program
         }
 
         Logger.Log(LogLevel.Debug, null, "Service shutdown complete.");
-    }
-
-    public static void ConfigurationServices(IServiceCollection services)
-    {
-        services.AddControllersWithViews();
     }
 
     /// <summary>

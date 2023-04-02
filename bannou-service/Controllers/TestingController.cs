@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Service component responsible for template definition handling.
 /// </summary>
-[DaprController(template: "testing", serviceType: typeof(TestingService))]
+[DaprController(template: "testing", serviceType: typeof(TestingService), Name = "testing")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class TestingController : BaseDaprController
@@ -23,7 +23,7 @@ public class TestingController : BaseDaprController
     /// </summary>
     [HttpGet]
     [HttpPost]
-    [DaprRoute("/run-all")]
+    [DaprRoute("run-all")]
     public async Task<IActionResult> RunAll()
     {
         await Task.CompletedTask;
@@ -35,7 +35,7 @@ public class TestingController : BaseDaprController
     /// </summary>
     [HttpGet]
     [HttpPost]
-    [DaprRoute("/run-enabled")]
+    [DaprRoute("run-enabled")]
     public async Task<IActionResult> RunEnabled()
     {
         await Task.CompletedTask;
@@ -46,7 +46,7 @@ public class TestingController : BaseDaprController
     /// API to run a given test by ID.
     /// </summary>
     [HttpGet]
-    [DaprRoute("/run/{id}")]
+    [DaprRoute("run/{id}")]
     public async Task<IActionResult> Run([FromRoute] string id)
     {
         await Task.CompletedTask;
@@ -57,7 +57,7 @@ public class TestingController : BaseDaprController
     /// API to run a given test by ID.
     /// </summary>
     [HttpPost]
-    [DaprRoute("/run")]
+    [DaprRoute("run")]
     public async Task<IActionResult> Run([FromBody] TestingRunTestRequest request)
     {
         await Task.CompletedTask;
@@ -68,7 +68,7 @@ public class TestingController : BaseDaprController
     /// API to run all tests against a given service.
     /// </summary>
     [HttpPost]
-    [DaprRoute("/run-all-service")]
+    [DaprRoute("run-all-service")]
     public async Task<IActionResult> RunAllService([FromBody] TestingRunAllServiceTestsRequest request)
     {
         await Task.CompletedTask;

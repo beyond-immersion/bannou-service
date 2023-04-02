@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Service component responsible for asset handling.
 /// </summary>
-[DaprController(template: "asset", serviceType: typeof(AssetService))]
+[DaprController(template: "asset", serviceType: typeof(AssetService), Name = "asset")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class AssetController : BaseDaprController
@@ -18,7 +18,7 @@ public class AssetController : BaseDaprController
     /// List only includes metadata about the assets,
     /// not the content of the assets themselves.
     /// </summary>
-    [DaprRoute("/list")]
+    [DaprRoute("list")]
     public async Task ListAssets(HttpContext context)
     {
         await Task.CompletedTask;
@@ -29,7 +29,7 @@ public class AssetController : BaseDaprController
     /// and the manner of providing the data, this
     /// could take awhile.
     /// </summary>
-    [DaprRoute("/create")]
+    [DaprRoute("create")]
     public async Task CreateAsset(HttpContext context)
     {
         await Task.CompletedTask;
@@ -39,7 +39,7 @@ public class AssetController : BaseDaprController
     /// Update the metadata or content or an existing
     /// asset.
     /// </summary>
-    [DaprRoute("/update")]
+    [DaprRoute("update")]
     public async Task UpdateAsset(HttpContext context)
     {
         await Task.CompletedTask;
@@ -48,7 +48,7 @@ public class AssetController : BaseDaprController
     /// <summary>
     /// Destroy an existing asset.
     /// </summary>
-    [DaprRoute("/destroy")]
+    [DaprRoute("destroy")]
     public async Task DestroyAsset(HttpContext context)
     {
         await Task.CompletedTask;

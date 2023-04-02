@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Service component responsible for leaderboard handling.
 /// </summary>
-[DaprController(template: "leaderboard", serviceType: typeof(LeaderboardService))]
+[DaprController(template: "leaderboard", serviceType: typeof(LeaderboardService), Name = "leaderboard")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class LeaderboardController : BaseDaprController
@@ -15,7 +15,7 @@ public class LeaderboardController : BaseDaprController
     /// <summary>
     /// List available leaderboards.
     /// </summary>
-    [DaprRoute("/list")]
+    [DaprRoute("list")]
     public async Task ListLeaderboards(HttpContext context)
     {
         await Task.CompletedTask;
@@ -24,7 +24,7 @@ public class LeaderboardController : BaseDaprController
     /// <summary>
     /// Create new leaderboard.
     /// </summary>
-    [DaprRoute("/create")]
+    [DaprRoute("create")]
     public async Task CreateLeaderboard(HttpContext context)
     {
         await Task.CompletedTask;
@@ -33,7 +33,7 @@ public class LeaderboardController : BaseDaprController
     /// <summary>
     /// Update existing leaderboard.
     /// </summary>
-    [DaprRoute("/update")]
+    [DaprRoute("update")]
     public async Task UpdateLeaderboard(HttpContext context)
     {
         await Task.CompletedTask;
@@ -42,7 +42,7 @@ public class LeaderboardController : BaseDaprController
     /// <summary>
     /// Destroy existing leaderboard.
     /// </summary>
-    [DaprRoute("/destroy")]
+    [DaprRoute("destroy")]
     public async Task DestroyLeaderboard(HttpContext context)
     {
         await Task.CompletedTask;
