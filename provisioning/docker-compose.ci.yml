@@ -4,6 +4,8 @@ services:
     environment:
       - TESTING_SERVICE_ENABLED=true
       - ASPNETCORE_URLS=http://+:80"
+    ports:
+      - 80:80
     command:
       - /bin/bash
       - -c
