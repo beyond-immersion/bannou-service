@@ -57,4 +57,5 @@ jobs:
           TESTING_SERVICE_ENABLED: true
 
       - name: Service Testing
-        run: curl -X GET bannou/testing/run/basic
+        run: |
+          curl -X GET "127.0.0.1/testing/run/basic"
