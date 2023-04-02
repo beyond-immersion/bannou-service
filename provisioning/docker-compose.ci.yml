@@ -4,10 +4,13 @@ services:
     environment:
       - TESTING_SERVICE_ENABLED=true
       - ASPNETCORE_URLS=http://+:80"
-    networks:
-      - host
-    ports:
-      - 80:80
+
+  bannou-tester:
+    image: ubuntu
+    network_mode:
+      "service:bannou"
+    depends_on:
+      - bannou
     command:
       - /bin/bash
       - -c
@@ -16,7 +19,4 @@ services:
         apt-get upgrade -y
         apt-get install curl -y
         echo "tools installed"
-        dotnet bannou-service.dll
-
-networks:
-  host:
+        curl -X GET "127.0.0.1/testing/run/basic"
