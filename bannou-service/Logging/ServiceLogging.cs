@@ -14,7 +14,7 @@ public static class ServiceLogging
     /// <summary>
     /// Return a JSON-enabled logger factory.
     /// </summary>
-    public static ILoggerFactory LogFactory { get; } = LoggerFactory.Create((options) =>
+    public static ILoggerFactory LogFactory { get; private set; } = LoggerFactory.Create((options) =>
         {
             ILoggingBuilder unused1 = options.AddJsonConsole((options) =>
             {
@@ -29,6 +29,18 @@ public static class ServiceLogging
             ILoggingBuilder unused = options.SetMinimumLevel(LogLevel.Trace);
         });
 
+    public static ILoggerFactory SimpleLogFactory { get; private set; } = LoggerFactory.Create((options) =>
+        {
+            _ = options.AddSimpleConsole((options) =>
+            {
+                options.ColorBehavior = Microsoft.Extensions.Logging.Console.LoggerColorBehavior.Enabled;
+                options.IncludeScopes = false;
+                options.UseUtcTimestamp = true;
+                options.SingleLine = true;
+            });
+            ILoggingBuilder unused = options.SetMinimumLevel(LogLevel.Trace);
+        });
+
     /// <summary>
     /// Create a JSON-enabled service logger.
     /// </summary>
@@ -38,6 +50,16 @@ public static class ServiceLogging
     /// Create a JSON-enabled logger for the given class.
     /// </summary>
     public static ILogger CreateLogger<T>() => LogFactory.CreateLogger<T>();
+
+    /// <summary>
+    /// Create a simple service logger.
+    /// </summary>
+    public static ILogger CreateSimpleLogger() => SimpleLogFactory.CreateLogger("service");
+
+    /// <summary>
+    /// Create a simple logger for the given class.
+    /// </summary>
+    public static ILogger CreateSimpleLogger<T>() => SimpleLogFactory.CreateLogger<T>();
 
     /// <summary>
     /// Additional log method that allows for arbitrary JSON metadata to be included.

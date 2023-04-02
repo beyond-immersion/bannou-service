@@ -3,7 +3,6 @@ using Xunit.Abstractions;
 
 namespace BeyondImmersion.UnitTests;
 
-[Collection("core tests")]
 public class Services : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
@@ -63,6 +62,11 @@ public class Services : IClassFixture<CollectionFixture>
 
         [ConfigRequired(AllowEmptyStrings = false)]
         public string? TestProperty_B { get; set; }
+    }
+
+    private Services(CollectionFixture collectionFixture)
+    {
+        TestCollectionContext = collectionFixture;
     }
 
     public Services(CollectionFixture collectionContext, ITestOutputHelper output)

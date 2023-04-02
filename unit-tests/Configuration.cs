@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Configuration;
+using Xunit.Abstractions;
 
 namespace BeyondImmersion.UnitTests;
 
-[Collection("core tests")]
 public class Configuration : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
@@ -61,9 +61,15 @@ public class Configuration : IClassFixture<CollectionFixture>
         public string? TestProperty { get; set; }
     }
 
-    public Configuration(CollectionFixture collectionContext)
+    private Configuration(CollectionFixture collectionContext)
     {
         TestCollectionContext = collectionContext;
+    }
+
+    public Configuration(CollectionFixture collectionContext, ITestOutputHelper output)
+    {
+        TestCollectionContext = collectionContext;
+        Program.Logger = output.BuildLoggerFor<Configuration>();
     }
 
     [Fact]

@@ -1,4 +1,6 @@
-﻿namespace BeyondImmersion.UnitTests;
+﻿using Xunit.Abstractions;
+
+namespace BeyondImmersion.UnitTests;
 
 public class Miscellaneous : IClassFixture<CollectionFixture>
 {
@@ -13,9 +15,15 @@ public class Miscellaneous : IClassFixture<CollectionFixture>
     [Obsolete]
     private bool ObsoleteTestMethod() => true;
 
-    public Miscellaneous(CollectionFixture collectionContext)
+    private Miscellaneous(CollectionFixture collectionContext)
     {
         TestCollectionContext = collectionContext;
+    }
+
+    public Miscellaneous(CollectionFixture collectionContext, ITestOutputHelper output)
+    {
+        TestCollectionContext = collectionContext;
+        Program.Logger = output.BuildLoggerFor<Miscellaneous>();
     }
 
     [Fact]

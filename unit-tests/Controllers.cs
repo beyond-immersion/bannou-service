@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Xunit.Abstractions;
 
 namespace BeyondImmersion.UnitTests;
 
-[Collection("core tests")]
 public class Controllers : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
@@ -13,9 +13,15 @@ public class Controllers : IClassFixture<CollectionFixture>
     [DaprService("test")]
     public class TestDaprController : Controller, IDaprController { }
 
-    public Controllers(CollectionFixture collectionContext)
+    private Controllers(CollectionFixture collectionContext)
     {
         TestCollectionContext = collectionContext;
+    }
+
+    public Controllers(CollectionFixture collectionContext, ITestOutputHelper output)
+    {
+        TestCollectionContext = collectionContext;
+        Program.Logger = output.BuildLoggerFor<Controllers>();
     }
 
     [Fact]
