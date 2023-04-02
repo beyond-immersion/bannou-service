@@ -4,6 +4,8 @@ services:
     environment:
       - TESTING_SERVICE_ENABLED=true
       - ASPNETCORE_URLS=http://+:80"
+    networks:
+      - host
     ports:
       - 80:80
     command:
@@ -15,3 +17,6 @@ services:
         apt-get install curl -y
         echo "tools installed"
         dotnet bannou-service.dll
+
+networks:
+  host:
