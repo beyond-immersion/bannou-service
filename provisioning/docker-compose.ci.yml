@@ -19,4 +19,4 @@ services:
         apt-get upgrade -y
         apt-get install curl -y
         echo "tools installed"
-        curl -X GET "127.0.0.1/testing/run/basic"
+        curl --silent --show-error --fail -X GET "127.0.0.1/testing/run/basic"
