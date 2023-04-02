@@ -48,16 +48,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: isbang/compose-action@v1.4.1
-        with:
-          up-flags: --exit-code-from=bannou-tester
-          compose-file: |
-            ./provisioning/docker-compose.yml
-            ./provisioning/docker-compose.ci.yml
-          services: |
-            bannou
-            bannou-dapr
-            placement
-            bannou-tester
+        name: Checkout Repo
+
+      - name: Start Containers
+        run: docker-compose -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --build --exit-code-from=bannou-tester
         env:
           TESTING_SERVICE_ENABLED: true
