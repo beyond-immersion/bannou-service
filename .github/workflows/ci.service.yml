@@ -57,4 +57,4 @@ jobs:
           TESTING_SERVICE_ENABLED: true
 
       - name: Service Testing
-        run: ./provisioning/service-tests.sh
+        run: curl -X GET bannou/testing/run/basic

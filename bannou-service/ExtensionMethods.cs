@@ -163,7 +163,7 @@ public static partial class ExtensionMethods
 
             Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} is enabled.");
 
-            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindAll())
+            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindAll(serviceType))
             {
                 string? controllerName = controllerClassInfo.Item2?.Name ?? controllerClassInfo.Item2?.Template;
                 if (string.IsNullOrWhiteSpace(controllerName))
