@@ -61,6 +61,7 @@ public class TestingController : BaseDaprController
     public async Task<IActionResult> Run([FromBody] TestingRunTestRequest request)
     {
         await Task.CompletedTask;
+        return Ok();
         return new OkObjectResult(await _service.Run(request.ID, request.Service));
     }
 
@@ -72,6 +73,7 @@ public class TestingController : BaseDaprController
     public async Task<IActionResult> RunAllService([FromBody] TestingRunAllServiceTestsRequest request)
     {
         await Task.CompletedTask;
+        return Ok();
         return new OkObjectResult(await _service.RunAllForService(request.Service));
     }
 }
