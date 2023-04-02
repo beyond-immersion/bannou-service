@@ -61,7 +61,7 @@ public class TestingController : BaseDaprController
     public async Task<IActionResult> Run([FromBody] TestingRunTestRequest request)
     {
         await Task.CompletedTask;
-        return Ok(true);
+        return BadRequest(false);
         return new OkObjectResult(await _service.Run(request.ID, request.Service));
     }
 
