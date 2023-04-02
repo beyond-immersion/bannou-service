@@ -9,14 +9,8 @@ services:
     image: ubuntu
     network_mode:
       "service:bannou"
+    volumes:
+      - ./:/provisioning/
     depends_on:
       - bannou
-    command:
-      - /bin/bash
-      - -c
-      - |
-        apt-get update
-        apt-get upgrade -y
-        apt-get install curl -y
-        echo "tools installed"
-        curl --silent --show-error --fail -X GET "127.0.0.1/testing/run/basic"
+    command: bash provisioning/service-tests.sh
