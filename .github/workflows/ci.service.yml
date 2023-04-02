@@ -53,9 +53,14 @@ jobs:
           compose-file: |
             ./provisioning/docker-compose.yml
             ./provisioning/docker-compose.ci.yml
+          services: |
+            bannou
+            bannou-dapr
+            placement
         env:
           TESTING_SERVICE_ENABLED: true
 
-      - name: Service Testing
+      - shell: bash
+        name: Service Testing
         run: |
-          curl -X GET "127.0.0.1/testing/run/basic"
+          curl -X GET "bannou/testing/run/basic"
