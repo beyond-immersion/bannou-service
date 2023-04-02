@@ -8,8 +8,8 @@ namespace BeyondImmersion.BannouService.Controllers.Messages;
 [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
 public class TestingRunTestRequest : ServiceRequest
 {
-    [JsonProperty(Required = Required.Always)]
-    public string ID { get; set; }
+    [JsonProperty]
+    public string? ID { get; set; }
 
     [JsonProperty]
     public string? Service { get; set; }

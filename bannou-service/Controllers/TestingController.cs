@@ -26,9 +26,11 @@ public class TestingController : BaseDaprController
     [DaprRoute("run-all")]
     public async Task<IActionResult> RunAll()
     {
-        await Task.CompletedTask;
-        return Ok();
-        return new OkObjectResult(await _service.RunAll());
+        var result = await _service.RunAll();
+        if (result)
+            return Ok();
+
+        return Conflict();
     }
 
     /// <summary>
@@ -39,21 +41,50 @@ public class TestingController : BaseDaprController
     [DaprRoute("run-enabled")]
     public async Task<IActionResult> RunEnabled()
     {
-        await Task.CompletedTask;
-        return Ok();
-        return new OkObjectResult(await _service.RunAllEnabled());
+        var result = await _service.RunAllEnabled();
+        if (result)
+            return Ok();
+
+        return Conflict();
     }
 
     /// <summary>
     /// API to run a given test by ID.
     /// </summary>
     [HttpGet]
-    [DaprRoute("run/{id}")]
+    [DaprRoute("run/{id:string}")]
     public async Task<IActionResult> Run([FromRoute] string id)
     {
-        await Task.CompletedTask;
-        return Ok();
-        return new OkObjectResult(await _service.Run(id, null));
+        if (string.IsNullOrWhiteSpace(id))
+            return BadRequest();
+
+        var result = await _service.Run(id: id);
+        if (result)
+            return Ok();
+
+        return Conflict();
+    }
+
+    /// <summary>
+    /// API to run a given test by ID.
+    /// </summary>
+    [HttpGet]
+    [DaprRoute("run/{serviceName:string}/{id:string}")]
+    public async Task<IActionResult> Run([FromRoute] string service, [FromRoute] string id)
+    {
+        if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(service))
+            return BadRequest();
+
+        bool result;
+        if (string.IsNullOrWhiteSpace(id))
+            result = await _service.RunAllForService(service: service);
+        else
+            result = await _service.Run(service: service, id: id);
+
+        if (result)
+            return Ok();
+
+        return Conflict();
     }
 
     /// <summary>
@@ -61,22 +92,25 @@ public class TestingController : BaseDaprController
     /// </summary>
     [HttpPost]
     [DaprRoute("run")]
-    public async Task<IActionResult> Run([FromBody] TestingRunTestRequest request)
+    public async Task<IActionResult> Run([FromBody]TestingRunTestRequest request)
     {
-        await Task.CompletedTask;
-        return Ok();
-        return new OkObjectResult(await _service.Run(request.ID, request.Service));
-    }
+        if (request == null)
+            return BadRequest();
 
-    /// <summary>
-    /// API to run all tests against a given service.
-    /// </summary>
-    [HttpPost]
-    [DaprRoute("run-all-service")]
-    public async Task<IActionResult> RunAllService([FromBody] TestingRunAllServiceTestsRequest request)
-    {
-        await Task.CompletedTask;
-        return Ok();
-        return new OkObjectResult(await _service.RunAllForService(request.Service));
+        bool result;
+        if (string.IsNullOrWhiteSpace(request.ID))
+        {
+            if (string.IsNullOrWhiteSpace(request.Service))
+                return BadRequest();
+
+            result = await _service.RunAllForService(service: request.Service);
+        }
+        else
+            result = await _service.Run(service: request.Service, id: request.ID);
+
+        if (result)
+            return Ok();
+
+        return Conflict();
     }
 }
