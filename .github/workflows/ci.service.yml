@@ -63,4 +63,4 @@ jobs:
       - shell: bash
         name: Service Testing
         run: |
-          curl -X GET "bannou/testing/run/basic"
+          curl -X GET "127.0.0.1/testing/run/basic"
