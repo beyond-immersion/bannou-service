@@ -68,23 +68,27 @@ public static class ServiceLogging
     public static void Log(ILogger logger, LogLevel level, Exception? exception, string message, JObject? logParams,
         [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
     {
-        // avoid manipulating the params object, for safety
-        JObject logParamsObj = new();
-        if (logParams != null)
+        try
         {
-            foreach (KeyValuePair<string, JToken?> kvp in logParams)
+            // avoid manipulating the params input
+            JObject logParamsObj = new();
+            if (logParams != null)
             {
-                if (!string.IsNullOrWhiteSpace(kvp.Key) && kvp.Value != null && kvp.Value.Type != JTokenType.Null)
-                    logParamsObj[kvp.Key] = kvp.Value;
+                foreach (KeyValuePair<string, JToken?> kvp in logParams)
+                {
+                    if (!string.IsNullOrWhiteSpace(kvp.Key) && kvp.Value != null && kvp.Value.Type != JTokenType.Null)
+                        logParamsObj[kvp.Key] = kvp.Value;
+                }
             }
+
+            logParamsObj["calling-file"] = Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+            logParamsObj["message"] = message;
+
+            logger.Log(level, new EventId(), logParamsObj, exception, DefaultLogStateFormatter);
         }
-
-        logParamsObj["calling-file"] = Path.GetFileName(callerFile);
-        logParamsObj["calling-method"] = callerName;
-        logParamsObj["calling-line-number"] = lineNumber.ToString();
-        logParamsObj["message"] = message;
-
-        logger.Log(level, new EventId(), logParamsObj, exception, DefaultLogStateFormatter);
+        catch { }
     }
 
     /// <summary>

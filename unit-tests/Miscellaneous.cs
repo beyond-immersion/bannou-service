@@ -2,6 +2,7 @@
 
 namespace BeyondImmersion.UnitTests;
 
+[Collection("unit tests")]
 public class Miscellaneous : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }

@@ -3,6 +3,7 @@ using Xunit.Abstractions;
 
 namespace BeyondImmersion.UnitTests;
 
+[Collection("unit tests")]
 public class Configuration : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
