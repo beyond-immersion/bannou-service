@@ -2,8 +2,7 @@ name: 'Active PR CI Tests'
 on:
 
   push:
-  #push:
-  #  branches: [ master ]
+    branches: [ master ]
   workflow_dispatch:
 
 env:
@@ -39,7 +38,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test --no-restore --verbosity normal -p:ParallelizeTestCollections=false
+        run: dotnet test --no-restore --verbosity normal
 
   integration-tests:
     name: Integration Tests

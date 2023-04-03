@@ -1,9 +1,7 @@
 name: 'Basic CI Tests'
 on:
 
-  #push
-  pull_request:
-    branches: [ master ]
+  push:
   workflow_dispatch:
 
 env:
