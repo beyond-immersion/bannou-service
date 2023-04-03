@@ -1,6 +1,6 @@
 # Bannou Service
 
-[![GitHub Actions](https://github.com/ParnassianStudios/bannou-service/actions/workflows/all.yml/badge.svg)](https://github.com/ParnassianStudios/bannou-service/actions/workflows/all.yml)
+[![Build Status](https://github.com/ParnassianStudios/bannou-service/actions/workflows/ci.service.yml/badge.svg)](https://github.com/ParnassianStudios/bannou-service/actions/workflows/ci.service.yml)
 
 Bannou Service is a versatile ASP.NET Core application designed to provide a seamless codebase for creating HTTP Dapr APIs with minimal effort. Primarily designed to support a common backend microservice framework for largely multiplayer online video games, the service could in theory be a core part of any system requiring infinitely extensible REST APIs. By coupling with game engine servers like Unreal or Unity, Bannou Service becomes the foundation of the universal cloud-based platform for developing and hosting multiplayer video games, tentatively called "CelestialLink".
 
