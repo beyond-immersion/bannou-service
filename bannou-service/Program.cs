@@ -14,15 +14,10 @@ public static class Program
     internal static ServiceConfiguration Configuration { get; set; }
 
     /// <summary>
-    /// Service logger.
-    /// </summary>
-    internal static ILogger Logger { get; set; }
-
-    /// <summary>
     /// Internal service GUID- largely used for administrative network commands.
     /// Randomly generated on service startup.
     /// </summary>
-    internal static string ServiceGUID { get; private set; }
+    internal static string ServiceGUID { get; set; }
 
     /// <summary>
     /// Shared dapr client interface, used by all enabled internal services.
@@ -32,12 +27,34 @@ public static class Program
     /// <summary>
     /// Token source for initiating a clean shutdown.
     /// </summary>
-    internal static CancellationTokenSource ShutdownCancellationTokenSource { get; } = new CancellationTokenSource();
+    internal static CancellationTokenSource ShutdownCancellationTokenSource { get; private set; } = new CancellationTokenSource();
+
+    private static ILogger _logger;
+    /// <summary>
+    /// Service logger.
+    /// </summary>
+    internal static ILogger Logger
+    {
+        get
+        {
+            if (_logger == null)
+            {
+                var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+                var isDevelopment = string.Equals(Environments.Development, environment, StringComparison.CurrentCultureIgnoreCase);
+                _logger = isDevelopment ? ServiceLogging.CreateSimpleLogger() : ServiceLogging.CreateLogger();
+            }
+
+            return _logger;
+        }
+
+        set
+        {
+            _logger ??= value;
+        }
+    }
 
     private static async Task Main(string[] args)
     {
-        Logger = ServiceLogging.CreateLogger();
-
         Logger.Log(LogLevel.Debug, null, "Service starting.");
 
         Configuration = IServiceConfiguration.BuildConfiguration<ServiceConfiguration>(args);
@@ -57,8 +74,9 @@ public static class Program
         }
 
         webAppBuilder.Services.AddAuthentication();
-        webAppBuilder.Services.AddControllersWithViews();
+        webAppBuilder.Services.AddControllers();
         webAppBuilder.Services.AddDaprClient();
+        webAppBuilder.Services.AddDaprServices();
 
         WebApplication webApp = webAppBuilder.Build();
 
@@ -66,22 +84,10 @@ public static class Program
             .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig)
             .Build();
 
-        if (!await DaprClient.CheckHealthAsync(ShutdownCancellationTokenSource.Token))
-        {
-            Logger.Log(LogLevel.Error, null, "Dapr sidecar unhealthy/not found- exiting application.");
-            return;
-        }
-
         try
         {
-            webApp
-                .UseRouting()
-                .UseAuthorization()
-                .UseEndpoints((b) =>
-                {
-                    b.MapNonServiceControllers();
-                    b.MapDaprServiceControllers();
-                });
+            webApp.MapNonServiceControllers();
+            webApp.MapDaprServiceControllers();
 
             Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
             {
@@ -102,11 +108,6 @@ public static class Program
         }
 
         Logger.Log(LogLevel.Debug, null, "Service shutdown complete.");
-    }
-
-    public static void ConfigurationServices(IServiceCollection services)
-    {
-        services.AddControllersWithViews();
     }
 
     /// <summary>

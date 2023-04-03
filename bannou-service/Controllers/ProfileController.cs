@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Service component responsible for player profile handling.
 /// </summary>
-[DaprController(template: "profile", serviceType: typeof(ProfileService))]
+[DaprController(template: "profile", serviceType: typeof(ProfileService), Name = "profile")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class ProfileController : BaseDaprController
@@ -15,7 +15,7 @@ public class ProfileController : BaseDaprController
     /// <summary>
     /// Create new player profile.
     /// </summary>
-    [DaprRoute("/create")]
+    [DaprRoute("create")]
     public async Task CreateProfile(HttpContext context)
     {
         await Task.CompletedTask;
@@ -24,7 +24,7 @@ public class ProfileController : BaseDaprController
     /// <summary>
     /// Update existing player profile.
     /// </summary>
-    [DaprRoute("/update")]
+    [DaprRoute("update")]
     public async Task UpdateProfile(HttpContext context)
     {
         await Task.CompletedTask;
@@ -33,7 +33,7 @@ public class ProfileController : BaseDaprController
     /// <summary>
     /// Destroy existing player profile.
     /// </summary>
-    [DaprRoute("/destroy")]
+    [DaprRoute("destroy")]
     public async Task DestroyProfile(HttpContext context)
     {
         await Task.CompletedTask;

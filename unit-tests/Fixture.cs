@@ -1,5 +1,4 @@
-using Xunit.Abstractions;
-
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 namespace BeyondImmersion.UnitTests;
 
 public class CollectionFixture : IDisposable

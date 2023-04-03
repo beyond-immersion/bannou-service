@@ -1,0 +1,55 @@
+name: 'Active PR CI Tests'
+on:
+
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '7.0.202'
+  DOTNET_INSTALL_DIR: './.dotnet'
+
+jobs:
+
+  lint-tests:
+    name: Lint Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: editorconfig-checker/action-editorconfig-checker@main
+      - run: editorconfig-checker -disable-end-of-line -disable-insert-final-newline -v
+  
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint-tests
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --no-restore --verbosity normal
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout Repo
+
+      - name: Run Service Tests
+        run: docker-compose -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --build --exit-code-from=bannou-tester
+        env:
+          TESTING_SERVICE_ENABLED: true

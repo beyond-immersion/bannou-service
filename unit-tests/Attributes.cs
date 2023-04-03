@@ -1,8 +1,9 @@
 using System.Reflection;
+using Xunit.Abstractions;
 
 namespace BeyondImmersion.UnitTests;
 
-[Collection("core tests")]
+[Collection("unit tests")]
 public class Attributes : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
@@ -169,9 +170,15 @@ public class Attributes : IClassFixture<CollectionFixture>
         }
     }
 
-    public Attributes(CollectionFixture collectionContext)
+    private Attributes(CollectionFixture collectionContext)
     {
         TestCollectionContext = collectionContext;
+    }
+
+    public Attributes(CollectionFixture collectionContext, ITestOutputHelper output)
+    {
+        TestCollectionContext = collectionContext;
+        Program.Logger = output.BuildLoggerFor<Attributes>();
     }
 
     private BindingFlags UseAllBindingFlags()

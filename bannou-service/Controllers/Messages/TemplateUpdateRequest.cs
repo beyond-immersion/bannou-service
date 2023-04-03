@@ -13,8 +13,4 @@ public class TemplateUpdateRequest : ServiceRequest
     /// </summary>
     [JsonProperty("templates", Required = Required.Always)]
     public TemplateModel[] Templates { get; }
-
-    private TemplateUpdateRequest() { }
-    public TemplateUpdateRequest(TemplateModel[] templates)
-        => Templates = templates ?? throw new ArgumentNullException(nameof(templates));
 }

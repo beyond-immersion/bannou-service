@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Service component responsible for login authorization handling.
 /// </summary>
-[DaprController(template: "authorization", serviceType: typeof(AuthorizationService))]
+[DaprController(template: "authorization", serviceType: typeof(AuthorizationService), Name = "authorization")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class AuthorizationController : BaseDaprController
@@ -17,7 +17,7 @@ public class AuthorizationController : BaseDaprController
     /// Will hand back a specific instance endpoint to use, for
     /// follow-up requests / exchanges.
     /// </summary>
-    [DaprRoute("/")]
+    [DaprRoute("")]
     public async Task Authorize(HttpContext context)
     {
         await Task.CompletedTask;
@@ -27,7 +27,7 @@ public class AuthorizationController : BaseDaprController
     /// Instance endpoint, for any follow-up exchanges beyond the
     /// initial handshake, for authorizing a client connection.
     /// </summary>
-    [DaprRoute($"/{ServiceConstants.SERVICE_UUID_PLACEHOLDER}")]
+    [DaprRoute($"{ServiceConstants.SERVICE_UUID_PLACEHOLDER}")]
     public async Task AuthorizeDirect(HttpContext context)
     {
         await Task.CompletedTask;

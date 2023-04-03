@@ -16,7 +16,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// This would mean that a bad actor could spam a specific login server instance, but if that doesn't actually increase the internal
 /// network traffic on each request, I'm not sure it matters.
 /// </summary>
-[DaprController(template: "login", serviceType: typeof(LoginService))]
+[DaprController(template: "login", serviceType: typeof(LoginService), Name = "login")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public sealed class LoginController : BaseDaprController
@@ -62,7 +62,7 @@ public sealed class LoginController : BaseDaprController
     /// Generate the queue_id, and feed the queue_url back to the client
     /// for any follow-up requests (if there's a queue).
     /// </summary>
-    [DaprRoute("/")]
+    [DaprRoute("")]
     public async Task Login(HttpContext context)
     {
         HttpResponse response = context.Response;
@@ -96,7 +96,7 @@ public sealed class LoginController : BaseDaprController
     /// Unique login endpoint- track client's position in queue, ensuring that requests to the
     /// datastore happen at fixed intervals and no more frequently, even if a client is impatient.
     /// </summary>
-    [DaprRoute($"/{ServiceConstants.SERVICE_UUID_PLACEHOLDER}")]
+    [DaprRoute($"{ServiceConstants.SERVICE_UUID_PLACEHOLDER}")]
     public async Task LoginDirect(HttpContext context)
     {
         await Task.CompletedTask;

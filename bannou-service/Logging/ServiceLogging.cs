@@ -14,9 +14,9 @@ public static class ServiceLogging
     /// <summary>
     /// Return a JSON-enabled logger factory.
     /// </summary>
-    public static ILoggerFactory LogFactory { get; } = LoggerFactory.Create((options) =>
+    public static ILoggerFactory LogFactory { get; private set; } = LoggerFactory.Create((options) =>
         {
-            ILoggingBuilder unused1 = options.AddJsonConsole((options) =>
+            _ = options.AddJsonConsole((options) =>
             {
                 options.JsonWriterOptions = new JsonWriterOptions()
                 {
@@ -25,8 +25,20 @@ public static class ServiceLogging
                     MaxDepth = 32,
                     SkipValidation = false
                 };
-            });
-            ILoggingBuilder unused = options.SetMinimumLevel(LogLevel.Trace);
+            })
+            .SetMinimumLevel(LogLevel.Trace);
+        });
+
+    public static ILoggerFactory SimpleLogFactory { get; private set; } = LoggerFactory.Create((options) =>
+        {
+            _ = options.AddSimpleConsole((options) =>
+            {
+                options.ColorBehavior = Microsoft.Extensions.Logging.Console.LoggerColorBehavior.Enabled;
+                options.IncludeScopes = false;
+                options.UseUtcTimestamp = true;
+                options.SingleLine = true;
+            })
+            .SetMinimumLevel(LogLevel.Trace);
         });
 
     /// <summary>
@@ -40,29 +52,43 @@ public static class ServiceLogging
     public static ILogger CreateLogger<T>() => LogFactory.CreateLogger<T>();
 
     /// <summary>
+    /// Create a simple service logger.
+    /// </summary>
+    public static ILogger CreateSimpleLogger() => SimpleLogFactory.CreateLogger("service");
+
+    /// <summary>
+    /// Create a simple logger for the given class.
+    /// </summary>
+    public static ILogger CreateSimpleLogger<T>() => SimpleLogFactory.CreateLogger<T>();
+
+    /// <summary>
     /// Additional log method that allows for arbitrary JSON metadata to be included.
     /// Has accompanying extension methods to logger, for seamless use in service.
     /// </summary>
     public static void Log(ILogger logger, LogLevel level, Exception? exception, string message, JObject? logParams,
         [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
     {
-        // avoid manipulating the params object, for safety
-        JObject logParamsObj = new();
-        if (logParams != null)
+        try
         {
-            foreach (KeyValuePair<string, JToken?> kvp in logParams)
+            // avoid manipulating the params input
+            JObject logParamsObj = new();
+            if (logParams != null)
             {
-                if (!string.IsNullOrWhiteSpace(kvp.Key) && kvp.Value != null && kvp.Value.Type != JTokenType.Null)
-                    logParamsObj[kvp.Key] = kvp.Value;
+                foreach (KeyValuePair<string, JToken?> kvp in logParams)
+                {
+                    if (!string.IsNullOrWhiteSpace(kvp.Key) && kvp.Value != null && kvp.Value.Type != JTokenType.Null)
+                        logParamsObj[kvp.Key] = kvp.Value;
+                }
             }
+
+            logParamsObj["calling-file"] = Path.GetFileName(callerFile);
+            logParamsObj["calling-method"] = callerName;
+            logParamsObj["calling-line-number"] = lineNumber.ToString();
+            logParamsObj["message"] = message;
+
+            logger.Log(level, new EventId(), logParamsObj, exception, DefaultLogStateFormatter);
         }
-
-        logParamsObj["calling-file"] = Path.GetFileName(callerFile);
-        logParamsObj["calling-method"] = callerName;
-        logParamsObj["calling-line-number"] = lineNumber.ToString();
-        logParamsObj["message"] = message;
-
-        logger.Log(level, new EventId(), logParamsObj, exception, DefaultLogStateFormatter);
+        catch { }
     }
 
     /// <summary>

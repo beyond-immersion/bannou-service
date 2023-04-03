@@ -13,8 +13,4 @@ public class TemplateDestroyRequest : ServiceRequest
     /// </summary>
     [JsonProperty("templates", Required = Required.Always)]
     public TemplateModel[] Templates { get; }
-
-    private TemplateDestroyRequest() { }
-    public TemplateDestroyRequest(TemplateModel[] templates)
-        => templates = templates ?? throw new ArgumentNullException(nameof(templates));
 }

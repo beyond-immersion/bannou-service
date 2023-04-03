@@ -3,7 +3,7 @@
 /// <summary>
 /// Service component responsible for template definition handling.
 /// </summary>
-[DaprService("template")]
+[DaprService(name: "template")]
 public class TemplateService : IDaprService
 {
     /// <summary>

@@ -13,8 +13,4 @@ public class TemplateDestroyByKeyRequest : ServiceRequest
     /// </summary>
     [JsonProperty("ids", Required = Required.Always)]
     public string[] IDs { get; }
-
-    private TemplateDestroyByKeyRequest() { }
-    public TemplateDestroyByKeyRequest(string[] templateIDs)
-        => templateIDs = templateIDs ?? throw new ArgumentNullException(nameof(templateIDs));
 }
