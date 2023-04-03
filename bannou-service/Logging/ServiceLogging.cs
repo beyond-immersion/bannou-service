@@ -16,7 +16,7 @@ public static class ServiceLogging
     /// </summary>
     public static ILoggerFactory LogFactory { get; private set; } = LoggerFactory.Create((options) =>
         {
-            ILoggingBuilder unused1 = options.AddJsonConsole((options) =>
+            _ = options.AddJsonConsole((options) =>
             {
                 options.JsonWriterOptions = new JsonWriterOptions()
                 {
@@ -25,8 +25,8 @@ public static class ServiceLogging
                     MaxDepth = 32,
                     SkipValidation = false
                 };
-            });
-            ILoggingBuilder unused = options.SetMinimumLevel(LogLevel.Trace);
+            })
+            .SetMinimumLevel(LogLevel.Trace);
         });
 
     public static ILoggerFactory SimpleLogFactory { get; private set; } = LoggerFactory.Create((options) =>
@@ -37,8 +37,8 @@ public static class ServiceLogging
                 options.IncludeScopes = false;
                 options.UseUtcTimestamp = true;
                 options.SingleLine = true;
-            });
-            ILoggingBuilder unused = options.SetMinimumLevel(LogLevel.Trace);
+            })
+            .SetMinimumLevel(LogLevel.Trace);
         });
 
     /// <summary>

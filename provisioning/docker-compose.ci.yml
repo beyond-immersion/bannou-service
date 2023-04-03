@@ -4,6 +4,7 @@ services:
     environment:
       - TESTING_SERVICE_ENABLED=true
       - ASPNETCORE_URLS=http://+:80"
+      - ASPNETCORE_ENVIRONMENT=development"
 
   bannou-tester:
     image: ubuntu

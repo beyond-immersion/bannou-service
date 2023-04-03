@@ -84,12 +84,6 @@ public static class Program
             .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig)
             .Build();
 
-        if (!await DaprClient.CheckHealthAsync(ShutdownCancellationTokenSource.Token))
-        {
-            Logger.Log(LogLevel.Error, null, "Dapr sidecar unhealthy/not found- exiting application.");
-            return;
-        }
-
         try
         {
             webApp.MapNonServiceControllers();

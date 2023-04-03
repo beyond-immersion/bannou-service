@@ -1,4 +1,5 @@
-﻿using Google.Api;
+﻿using BeyondImmersion.BannouService.Controllers.Messages;
+using Google.Api;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Services;
@@ -30,32 +31,61 @@ public class TestingService : IDaprService
     }
 
     public TestingServiceConfiguration Configuration { get; private set; }
-    private IDictionary<string, IDictionary<string, Func<Task<bool>>>> AsyncServiceTests { get; set; }
+    private IDictionary<string, IDictionary<string, Func<TestingService, Task<bool>>>> AsyncServiceTests { get; set; }
+
+    public string? LastTestID { get; private set; }
+    public string? LastTestService { get; private set; }
+    public IServiceRequest? LastTestRequest { get; private set; }
+
+    /// <summary>
+    /// Set last testID to come in to a test API.
+    /// </summary>
+    /// <param name="id"></param>
+    public void SetLastTestID(string? id)
+        => LastTestID = id;
+
+    /// <summary>
+    /// Set last test service to come in to a test API.
+    /// </summary>
+    /// <param name="service"></param>
+    public void SetLastTestService(string? service)
+        => LastTestService = service;
+
+    /// <summary>
+    /// Set last POST request object to test API.
+    /// </summary>
+    /// <param name="request"></param>
+    public void SetLastPostRequest(IServiceRequest? request)
+        => LastTestRequest = request;
 
     public TestingService()
     {
         Configuration = IServiceConfiguration.BuildConfiguration<TestingServiceConfiguration>();
 
-        AsyncServiceTests = new Dictionary<string, IDictionary<string, Func<Task<bool>>>>();
+        AsyncServiceTests = new Dictionary<string, IDictionary<string, Func<TestingService, Task<bool>>>>();
         foreach ((Type, MethodInfo, ServiceTestAttribute) methodInfo in IServiceAttribute.GetMethodsWithAttribute<ServiceTestAttribute>())
         {
             var testID = methodInfo.Item3?.TestID?.ToLower();
             if (string.IsNullOrWhiteSpace(testID))
                 continue;
 
-            var serviceName = methodInfo.Item3?.ServiceType?.GetServiceName()?.ToLower() ?? string.Empty;
-            var methodDel = (Func<Task<bool>>?)Delegate.CreateDelegate(type: typeof(Func<Task<bool>>), method: methodInfo.Item2, throwOnBindFailure: true);
-            if (methodDel == null)
-                continue;
-
-            if (!AsyncServiceTests.ContainsKey(serviceName))
+            try
             {
-                var newDict = new Dictionary<string, Func<Task<bool>>>();
-                newDict.Add(testID, methodDel);
-                AsyncServiceTests.Add(serviceName, newDict);
+                var serviceName = methodInfo.Item3?.ServiceType?.GetServiceName()?.ToLower() ?? string.Empty;
+                var methodDel = (Func<TestingService, Task<bool>>?)Delegate.CreateDelegate(type: typeof(Func<TestingService, Task<bool>>), method: methodInfo.Item2, throwOnBindFailure: true);
+                if (methodDel == null)
+                    continue;
+
+                if (!AsyncServiceTests.ContainsKey(serviceName))
+                {
+                    var newDict = new Dictionary<string, Func<TestingService, Task<bool>>>();
+                    newDict.Add(testID, methodDel);
+                    AsyncServiceTests.Add(serviceName, newDict);
+                }
+                else
+                    _ = AsyncServiceTests[serviceName].TryAdd(testID, methodDel);
             }
-            else
-                _ = AsyncServiceTests[serviceName].TryAdd(testID, methodDel);
+            catch { }
         }
     }
 
@@ -67,7 +97,7 @@ public class TestingService : IDaprService
     {
         id = id.ToLower();
 
-        Func<Task<bool>>? testDel = null;
+        Func<TestingService, Task<bool>>? testDel = null;
         if (!string.IsNullOrWhiteSpace(service))
         {
             if (AsyncServiceTests.TryGetValue(service.ToLower(), out var idLookup))
@@ -93,7 +123,7 @@ public class TestingService : IDaprService
         }
 
         Program.Logger?.Log(LogLevel.Debug, $"Running test '{id}' against service '{service}'.");
-        return await testDel.Invoke();
+        return await testDel.Invoke(this);
     }
 
     /// <summary>
@@ -110,7 +140,7 @@ public class TestingService : IDaprService
                 testsFound = true;
                 Program.Logger?.Log(LogLevel.Debug, $"Running test '{testLookup.Key}' against service '{service}'.");
 
-                if (!await testLookup.Value.Invoke())
+                if (!await testLookup.Value.Invoke(this))
                 {
                     results = false;
                     if (stopOnFailure)
@@ -148,7 +178,7 @@ public class TestingService : IDaprService
 
                     Program.Logger?.Log(LogLevel.Debug, $"Running test '{testName}' against service '{serviceName}'.");
 
-                    if (!await testLookup.Value.Invoke())
+                    if (!await testLookup.Value.Invoke(this))
                     {
                         results = false;
                         if (stopOnFailure)
@@ -185,7 +215,7 @@ public class TestingService : IDaprService
 
                 Program.Logger?.Log(LogLevel.Debug, $"Running test '{testName}' against service '{serviceName}'.");
 
-                if (!await testLookup.Value.Invoke())
+                if (!await testLookup.Value.Invoke(this))
                 {
                     results = false;
                     if (stopOnFailure)

@@ -111,4 +111,44 @@ public class TestingController : BaseDaprController
 
         return Conflict();
     }
+
+    [HttpGet]
+    [DaprRoute("dapr-test/{id}")]
+    public async Task<IActionResult> TestGET_ID([FromRoute] string id)
+    {
+        await Task.CompletedTask;
+
+        if (!string.IsNullOrWhiteSpace(id))
+            _service.SetLastTestID(id);
+
+        return Ok();
+    }
+
+    [HttpGet]
+    [DaprRoute("dapr-test/{service}/{id}")]
+    public async Task<IActionResult> TestGET_Service_ID([FromRoute] string service, [FromRoute] string id)
+    {
+        await Task.CompletedTask;
+
+        if (!string.IsNullOrWhiteSpace(service))
+            _service.SetLastTestService(service);
+
+        if (!string.IsNullOrWhiteSpace(id))
+            _service.SetLastTestID(id);
+
+        return Ok();
+    }
+
+    [HttpPost]
+    [DaprRoute("dapr-test")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    public async Task<IActionResult> TestPOST_Model([FromBody] TestingRunTestRequest request)
+    {
+        await Task.CompletedTask;
+
+        _service.SetLastPostRequest(request);
+
+        return Ok();
+    }
 }
