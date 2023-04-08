@@ -38,6 +38,16 @@ public class TestingService : IDaprService
     public IServiceRequest? LastTestRequest { get; private set; }
 
     /// <summary>
+    /// Resets all testing variables.
+    /// </summary>
+    public void ResetTestVars()
+    {
+        LastTestID = null;
+        LastTestService = null;
+        LastTestRequest = null;
+    }
+
+    /// <summary>
     /// Set last testID to come in to a test API.
     /// </summary>
     /// <param name="id"></param>
