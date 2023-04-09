@@ -12,9 +12,9 @@ public class Program
     /// </summary>
     private static readonly Dictionary<string, Action<string[]>> sTestRegistry = new();
 
-    internal static void Main(string[] args)
+    internal static void Main()
     {
-        Configuration = IServiceConfiguration.BuildConfiguration<TestConfiguration>(args);
+        Configuration = IServiceConfiguration.BuildConfiguration<TestConfiguration>();
         if (!ValidateConfiguration())
             return;
 

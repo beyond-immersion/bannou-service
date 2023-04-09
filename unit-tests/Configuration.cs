@@ -413,14 +413,18 @@ public class Configuration : IClassFixture<CollectionFixture>
         TestCollectionContext.ResetENVs();
         var config = (TestConfiguration_Attribute_TestService_WithPrefix?)IServiceConfiguration.BuildConfiguration(
                         typeof(TestConfiguration_Attribute_TestService_WithPrefix), envPrefix: "test_");
-        Assert.Null(config);
+        Assert.NotNull(config);
+        Assert.Null(config.TestProperty);
+        Assert.Null(config.ForceServiceID);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
         Environment.SetEnvironmentVariable("FORCESERVICEID", serviceID);
         config = (TestConfiguration_Attribute_TestService_WithPrefix?)IServiceConfiguration.BuildConfiguration(
                         typeof(TestConfiguration_Attribute_TestService_WithPrefix), envPrefix: "test_");
-        Assert.Null(config);
+        Assert.NotNull(config);
+        Assert.Null(config.TestProperty);
+        Assert.Null(config.ForceServiceID);
 
         Environment.SetEnvironmentVariable("TEST_TESTPROPERTY", "Test");
         Environment.SetEnvironmentVariable("TEST_FORCESERVICEID", serviceID);

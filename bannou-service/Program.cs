@@ -8,32 +8,69 @@ namespace BeyondImmersion.BannouService;
 
 public static class Program
 {
+    private static IConfigurationRoot _configurationRoot;
     /// <summary>
-    /// Service configuration- pulled from Config.json, ENVs, and command switches.
+    /// Shared service configuration root.
+    /// Includes command line args.
     /// </summary>
-    internal static ServiceConfiguration Configuration { get; set; }
+    public static IConfigurationRoot ConfigurationRoot
+    {
+        get
+        {
+            if (_configurationRoot == null)
+                _configurationRoot = IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
 
+            return _configurationRoot;
+        }
+
+        internal set => _configurationRoot = value;
+    }
+
+    private static ServiceConfiguration _configuration;
+    /// <summary>
+    /// Service configuration.
+    /// 
+    /// Pull from:
+    ///     Config.json,
+    ///     ENVs,
+    ///     command line args.
+    /// </summary>
+    public static ServiceConfiguration Configuration
+    {
+        get
+        {
+            if (_configuration == null)
+                _configuration = ConfigurationRoot.Get<ServiceConfiguration>() ?? new ServiceConfiguration();
+
+            return _configuration;
+        }
+
+        internal set => _configuration = value;
+    }
+
+    private static string _serviceGUID;
     /// <summary>
     /// Internal service GUID- largely used for administrative network commands.
     /// Randomly generated on service startup.
     /// </summary>
-    internal static string ServiceGUID { get; set; }
+    public static string ServiceGUID
+    {
+        get
+        {
+            if (_serviceGUID == null)
+                _serviceGUID = Configuration.ForceServiceID ?? Guid.NewGuid().ToString().ToLower();
 
-    /// <summary>
-    /// Shared dapr client interface, used by all enabled internal services.
-    /// </summary>
-    internal static DaprClient DaprClient { get; private set; }
+            return _serviceGUID;
+        }
 
-    /// <summary>
-    /// Token source for initiating a clean shutdown.
-    /// </summary>
-    internal static CancellationTokenSource ShutdownCancellationTokenSource { get; private set; } = new CancellationTokenSource();
+        internal set => _serviceGUID = value;
+    }
 
     private static ILogger _logger;
     /// <summary>
     /// Service logger.
     /// </summary>
-    internal static ILogger Logger
+    public static ILogger Logger
     {
         get
         {
@@ -47,17 +84,22 @@ public static class Program
             return _logger;
         }
 
-        set
-        {
-            _logger ??= value;
-        }
+        internal set => _logger = value;
     }
+
+    /// <summary>
+    /// Shared dapr client interface, used by all enabled service handlers.
+    /// </summary>
+    public static DaprClient DaprClient { get; private set; }
+
+    /// <summary>
+    /// Token source for initiating a clean shutdown.
+    /// </summary>
+    public static CancellationTokenSource ShutdownCancellationTokenSource { get; } = new CancellationTokenSource();
 
     private static async Task Main(string[] args)
     {
         Logger.Log(LogLevel.Debug, null, "Service starting.");
-
-        Configuration = IServiceConfiguration.BuildConfiguration<ServiceConfiguration>(args);
 
         if (!Validators.RunAll())
         {
@@ -65,7 +107,6 @@ public static class Program
             return;
         }
 
-        ServiceGUID = Configuration.ForceServiceID ?? Guid.NewGuid().ToString().ToLower();
         WebApplicationBuilder? webAppBuilder = WebApplication.CreateBuilder(args);
         if (webAppBuilder == null)
         {
