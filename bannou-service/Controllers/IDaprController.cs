@@ -5,7 +5,7 @@
 /// </summary>
 public interface IDaprController
 {
-    public string GetName()
+    public string? GetName()
         => GetType().GetServiceName();
 
     /// <summary>
@@ -51,12 +51,12 @@ public interface IDaprController
     /// </summary>
     public static (Type, DaprControllerAttribute)[] FindAll<T>()
         where T : class, IDaprService
-        => FindAll(typeof(T));
+        => FindForHandler(typeof(T));
 
     /// <summary>
     /// Gets the full list of associated controllers to a given service type.
     /// </summary>
-    public static (Type, DaprControllerAttribute)[] FindAll(Type serviceType)
+    public static (Type, DaprControllerAttribute)[] FindForHandler(Type serviceType)
     {
         if (!typeof(IDaprService).IsAssignableFrom(serviceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");

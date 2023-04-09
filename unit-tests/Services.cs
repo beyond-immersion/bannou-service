@@ -21,37 +21,48 @@ public class Services : IClassFixture<CollectionFixture>
     /// <summary>
     /// Service for testing priority overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.PriorityTest")]
+    [DaprService("ServiceTests.PriorityTest", type: typeof(TestService_Priority_1))]
     private class TestService_Priority_1 : IDaprService { }
 
     /// <summary>
     /// Service for testing priority overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.PriorityTest", priority: true)]
+    [DaprService("ServiceTests.PriorityTest", type: typeof(TestService_Priority_1), priority: true)]
     private class TestService_Priority_2 : IDaprService { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.OverrideTest")]
+    [DaprService("ServiceTests.OverrideTest", type: typeof(TestService_Override_1))]
     private class TestService_Override_1 : IDaprService { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.OverrideTest")]
+    [DaprService("ServiceTests.OverrideTest", type: typeof(TestService_Override_1))]
     private class TestService_Override_2 : TestService_Override_1 { }
+
+    /// <summary>
+    /// Service for testing implicit overrides without using attributes.
+    /// </summary>
+    [DaprService("ServiceTests.OverrideNoAttrTest", type: typeof(TestService_Override_NoAttribute_1))]
+    private class TestService_Override_NoAttribute_1 : IDaprService { }
+
+    /// <summary>
+    /// Service for testing implicit overrides without using attributes.
+    /// </summary>
+    private class TestService_Override_NoAttribute_2 : TestService_Override_NoAttribute_1 { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.PriorityOverrideTest", priority: true)]
+    [DaprService("ServiceTests.PriorityOverrideTest", type: typeof(TestService_PriorityAndOverride_1), priority: true)]
     private class TestService_PriorityAndOverride_1 : IDaprService { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.PriorityOverrideTest")]
+    [DaprService("ServiceTests.PriorityOverrideTest", type: typeof(TestService_PriorityAndOverride_1))]
     private class TestService_PriorityAndOverride_2 : TestService_PriorityAndOverride_1 { }
 
     [ServiceConfiguration(typeof(TestService_Attribute))]
@@ -334,26 +345,26 @@ public class Services : IClassFixture<CollectionFixture>
     {
         ResetENVs();
 
-        Assert.DoesNotContain(IDaprService.FindAll(), t => t.Item1 == typeof(TestService));
-        Assert.Contains(IDaprService.FindAll(), t => t.Item1 == typeof(TestService_Attribute));
-        Assert.Contains(IDaprService.FindAll(), t => t.Item1 == typeof(TestService_Required));
-        Assert.Contains(IDaprService.FindAll(), t => t.Item1 == typeof(TestService_MultipleRequired));
+        Assert.DoesNotContain(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService));
+        Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_Attribute));
+        Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_Required));
+        Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_MultipleRequired));
 
 #pragma warning disable CS0162 // Unreachable code detected
         if (ServiceConstants.ENABLE_SERVICES_BY_DEFAULT)
         {
-            Assert.Contains(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Attribute));
-            Assert.Contains(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Required));
-            Assert.Contains(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Attribute));
+            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
+            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_MultipleRequired));
         }
         else
         {
-            Assert.DoesNotContain(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Attribute));
-            Assert.DoesNotContain(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Required));
-            Assert.DoesNotContain(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+            Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Attribute));
+            Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
+            Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_MultipleRequired));
 
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
-            Assert.Contains(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Required));
+            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
         }
 #pragma warning restore CS0162 // Unreachable code detected
 
@@ -363,27 +374,36 @@ public class Services : IClassFixture<CollectionFixture>
     public void FindAll_TestOverride_MostDerivedType()
     {
         ResetENVs();
-        var locateService = IDaprService.FindByName("ServiceTests.OverrideTest");
+        var locateService = IDaprService.FindHandler("ServiceTests.OverrideTest");
         Assert.True(locateService.HasValue);
-        Assert.Equal(typeof(TestService_Override_2), locateService.Value.Item1);
+        Assert.Equal(typeof(TestService_Override_2), locateService.Value.Item2);
+    }
+
+    [Fact]
+    public void FindAll_TestOverride_MostDerivedType_NoAttribute()
+    {
+        ResetENVs();
+        var locateService = IDaprService.FindHandler("ServiceTests.OverrideNoAttrTest");
+        Assert.True(locateService.HasValue);
+        Assert.Equal(typeof(TestService_Override_NoAttribute_2), locateService.Value.Item2);
     }
 
     [Fact]
     public void FindAll_TestOverride_Priority()
     {
         ResetENVs();
-        var locateService = IDaprService.FindByName("ServiceTests.PriorityTest");
+        var locateService = IDaprService.FindHandler("ServiceTests.PriorityTest");
         Assert.True(locateService.HasValue);
-        Assert.Equal(typeof(TestService_Priority_2), locateService.Value.Item1);
+        Assert.Equal(typeof(TestService_Priority_2), locateService.Value.Item2);
     }
 
     [Fact]
     public void FindAll_TestOverride_PriorityOverMostDerivedType()
     {
         ResetENVs();
-        var locateService = IDaprService.FindByName("ServiceTests.PriorityOverrideTest");
+        var locateService = IDaprService.FindHandler("ServiceTests.PriorityOverrideTest");
         Assert.True(locateService.HasValue);
-        Assert.Equal(typeof(TestService_PriorityAndOverride_1), locateService.Value.Item1);
+        Assert.Equal(typeof(TestService_PriorityAndOverride_1), locateService.Value.Item2);
     }
 
     [Fact]
