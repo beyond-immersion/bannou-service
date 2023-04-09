@@ -9,7 +9,16 @@ namespace BeyondImmersion.BannouService.Attributes;
 [AttributeUsage(validOn: AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class DaprServiceAttribute : BaseServiceAttribute
 {
-    public string? Name { get; }
-    public DaprServiceAttribute(string? name = null)
-        => Name = name;
+    public bool Priority { get; }
+    public string Name { get; }
+
+    private DaprServiceAttribute() { }
+    public DaprServiceAttribute(string name, bool priority = false)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentNullException(nameof(name));
+
+        Name = name;
+        Priority = priority;
+    }
 }

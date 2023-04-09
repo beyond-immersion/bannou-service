@@ -8,9 +8,13 @@ public class Controllers : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
 
-    public class TestController : ControllerBase, IDaprController { }
+    public class TestController_NoAttribute : ControllerBase, IDaprController { }
 
-    public class TestDaprController : ControllerBase, IDaprController { }
+    [DaprController("/", serviceType: typeof(TestService_Attribute))]
+    public class TestController_Attribute : ControllerBase, IDaprController { }
+
+    [DaprService("ControllerTests.Test")]
+    public class TestService_Attribute : IDaprService { }
 
     private Controllers(CollectionFixture collectionContext)
     {
@@ -21,12 +25,5 @@ public class Controllers : IClassFixture<CollectionFixture>
     {
         TestCollectionContext = collectionContext;
         Program.Logger = output.BuildLoggerFor<Controllers>();
-    }
-
-    [Fact]
-    public void GetServiceName()
-    {
-        Assert.Equal("Test", typeof(TestController).GetServiceName());
-        Assert.Equal("Test", typeof(TestDaprController).GetServiceName());
     }
 }

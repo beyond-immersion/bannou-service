@@ -140,8 +140,7 @@ public interface IDaprService
     /// Returns whether the configuration indicates ANY services should be enabled.
     /// </summary>
     public static bool IsAnyEnabled()
-        => IServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>()
-            .Any(t => IsEnabled(t.Item1));
+        => FindAll(enabledOnly: true).Any();
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
@@ -157,7 +156,11 @@ public interface IDaprService
         if (!typeof(IDaprService).IsAssignableFrom(serviceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
-        return IsEnabled(serviceType.GetServiceName());
+        var serviceName = serviceType.GetServiceName();
+        if (string.IsNullOrWhiteSpace(serviceName))
+            return false;
+
+        return IsEnabled(serviceName);
     }
 
     /// <summary>
@@ -165,14 +168,8 @@ public interface IDaprService
     /// </summary>
     public static bool IsEnabled(string serviceName)
     {
-        if (serviceName.EndsWith("Service", comparisonType: StringComparison.InvariantCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Service".Length, "Service".Length);
-
-        if (serviceName.EndsWith("Controller", comparisonType: StringComparison.CurrentCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Controller".Length, "Controller".Length);
-
-        if (serviceName.EndsWith("Dapr", comparisonType: StringComparison.CurrentCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Dapr".Length, "Dapr".Length);
+        if (string.IsNullOrWhiteSpace(serviceName))
+            return false;
 
         IConfigurationRoot configRoot = IServiceConfiguration.BuildConfigurationRoot();
         var serviceEnabledFlag = configRoot.GetValue<bool?>($"{serviceName.ToUpper()}_SERVICE_ENABLED", null);
@@ -183,39 +180,71 @@ public interface IDaprService
     }
 
     /// <summary>
+    /// Find the highest priority/derived service type with the given name.
+    /// </summary>
+    public static (Type, DaprServiceAttribute)? FindByName(string name, bool enabledOnly = false)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return null;
+
+        foreach (var serviceInfo in FindAll(enabledOnly))
+            if (string.Equals(name, serviceInfo.Item2.Name))
+                return serviceInfo;
+
+        return null;
+    }
+
+    /// <summary>
     /// Gets the full list of all dapr service classes (with associated attribute) in loaded assemblies.
+    /// If BestOnly selected, will only return the highest priority service with each name (not case sensitive).
     /// </summary>
     public static (Type, DaprServiceAttribute)[] FindAll(bool enabledOnly = false)
     {
+        var servicesByName = new Dictionary<string, (Type, DaprServiceAttribute)>();
+
+        // first get all service types
         List<(Type, DaprServiceAttribute)> serviceClasses = IServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
         if (!serviceClasses.Any())
         {
             Program.Logger?.Log(LogLevel.Trace, null, $"No service handler types were located.");
-            return Array.Empty<(Type, DaprServiceAttribute)>();
+            return servicesByName.Values.ToArray();
         }
 
-        // prefixes need to be unique, so assign to a tmp hash/dictionary lookup
-        var serviceLookup = new List<(Type, DaprServiceAttribute)>();
+        // now filter by "best types", into lookup
         foreach ((Type, DaprServiceAttribute) serviceClass in serviceClasses)
         {
             Type serviceType = serviceClass.Item1;
             DaprServiceAttribute serviceAttr = serviceClass.Item2;
 
-            if (!typeof(IDaprService).IsAssignableFrom(serviceType))
+            if (serviceType.IsAbstract || serviceType.IsInterface || !serviceType.IsAssignableTo(typeof(IDaprService)))
             {
-                Program.Logger?.Log(LogLevel.Trace, null, $"Service handler type {serviceType.Name} doesn't implement {typeof(IDaprService).Name}.");
+                Program.Logger?.Log(LogLevel.Trace, null, $"Invalid service handler type {serviceType.Name} won't be returned.");
                 continue;
             }
 
+            if (servicesByName.TryGetValue(serviceAttr.Name.ToLower(), out var existingEntry))
+            {
+                if (existingEntry.Item2.Priority)
+                {
+                    Program.Logger?.Log(LogLevel.Trace, null, $"Service handler type {serviceType.Name} skipped in favour of existing override.");
+                    continue;
+                }
+
+                // derived types get automatic priority
+                if (existingEntry.Item1.IsAssignableFrom(serviceType))
+                    _ = servicesByName.Remove(serviceAttr.Name.ToLower());
+            }
+
+            // don't return a disabled service type, in a way that ensures types it derives from will also be disabled
             if (enabledOnly && !IsEnabled(serviceType))
             {
                 Program.Logger?.Log(LogLevel.Trace, null, $"Service handler type {serviceType.Name} has been disabled, and won't be returned.");
                 continue;
             }
 
-            serviceLookup.Add(serviceClass);
+            servicesByName[serviceAttr.Name.ToLower()] = serviceClass;
         }
 
-        return serviceLookup.ToArray();
+        return servicesByName.Values.ToArray();
     }
 }

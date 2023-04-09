@@ -78,22 +78,12 @@ public static partial class ExtensionMethods
         return str;
     }
 
-    public static string GetServiceName(this Type serviceType)
+    public static string? GetServiceName(this Type serviceType)
     {
-        var serviceName = serviceType.Name;
-
+        string? serviceName = null;
         var serviceAttr = serviceType.GetCustomAttribute<DaprServiceAttribute>();
         if (serviceAttr != null && !string.IsNullOrWhiteSpace(serviceAttr.Name))
             serviceName = serviceAttr.Name;
-
-        if (serviceName.EndsWith("Service", comparisonType: StringComparison.InvariantCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Service".Length, "Service".Length);
-
-        if (serviceName.EndsWith("Controller", comparisonType: StringComparison.CurrentCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Controller".Length, "Controller".Length);
-
-        if (serviceName.EndsWith("Dapr", comparisonType: StringComparison.CurrentCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Dapr".Length, "Dapr".Length);
 
         return serviceName;
     }
