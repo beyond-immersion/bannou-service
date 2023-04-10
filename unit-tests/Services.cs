@@ -10,20 +10,60 @@ public class Services : IClassFixture<CollectionFixture>
 
     private class TestService_Invalid { }
 
-    [DaprService("InvalidTest")]
+    [DaprService("ServiceTests.InvalidTest")]
     private class TestService_Invalid_Attribute { }
 
     private class TestService : IDaprService { }
 
-    private class TestDaprService : IDaprService { }
-
-    [DaprService("Test")]
+    [DaprService("ServiceTests.Test")]
     private class TestService_Attribute : IDaprService { }
 
-    private class TestService_NoConvention_NoAttribute : IDaprService { }
+    /// <summary>
+    /// Service for testing priority overrides using attributes.
+    /// </summary>
+    [DaprService("ServiceTests.PriorityTest", type: typeof(TestService_Priority_1))]
+    private class TestService_Priority_1 : IDaprService { }
 
-    [DaprService("Test")]
-    private class TestService_NoConvention_Attribute : IDaprService { }
+    /// <summary>
+    /// Service for testing priority overrides using attributes.
+    /// </summary>
+    [DaprService("ServiceTests.PriorityTest", type: typeof(TestService_Priority_1), priority: true)]
+    private class TestService_Priority_2 : IDaprService { }
+
+    /// <summary>
+    /// Service for testing implicit overrides using attributes.
+    /// </summary>
+    [DaprService("ServiceTests.OverrideTest", type: typeof(TestService_Override_1))]
+    private class TestService_Override_1 : IDaprService { }
+
+    /// <summary>
+    /// Service for testing implicit overrides using attributes.
+    /// </summary>
+    [DaprService("ServiceTests.OverrideTest", type: typeof(TestService_Override_1))]
+    private class TestService_Override_2 : TestService_Override_1 { }
+
+    /// <summary>
+    /// Service for testing implicit overrides without using attributes.
+    /// </summary>
+    [DaprService("ServiceTests.OverrideNoAttrTest", type: typeof(TestService_Override_NoAttribute_1))]
+    private class TestService_Override_NoAttribute_1 : IDaprService { }
+
+    /// <summary>
+    /// Service for testing implicit overrides without using attributes.
+    /// </summary>
+    private class TestService_Override_NoAttribute_2 : TestService_Override_NoAttribute_1 { }
+
+    /// <summary>
+    /// Service for testing implicit overrides using attributes.
+    /// </summary>
+    [DaprService("ServiceTests.PriorityOverrideTest", type: typeof(TestService_PriorityAndOverride_1), priority: true)]
+    private class TestService_PriorityAndOverride_1 : IDaprService { }
+
+    /// <summary>
+    /// Service for testing implicit overrides using attributes.
+    /// </summary>
+    [DaprService("ServiceTests.PriorityOverrideTest", type: typeof(TestService_PriorityAndOverride_1))]
+    private class TestService_PriorityAndOverride_2 : TestService_PriorityAndOverride_1 { }
 
     [ServiceConfiguration(typeof(TestService_Attribute))]
     private class TestConfiguration_Attribute_TestService : IServiceConfiguration
@@ -32,10 +72,10 @@ public class Services : IClassFixture<CollectionFixture>
         public string? TestProperty { get; set; }
     }
 
-    [DaprService("test_required")]
+    [DaprService("ServiceTests.test_required")]
     private class TestService_Required : IDaprService { }
 
-    [DaprService("test")]
+    [DaprService("ServiceTests.test_multiple_required")]
     private class TestService_MultipleRequired : IDaprService { }
 
     [ServiceConfiguration(typeof(TestService_Required))]
@@ -76,39 +116,65 @@ public class Services : IClassFixture<CollectionFixture>
         Program.Logger = output.BuildLoggerFor<Services>();
     }
 
+    private void ResetENVs()
+    {
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", null);
+        Environment.SetEnvironmentVariable("SERVICETESTS.TESTSERVICEENABLED", null);
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+        Environment.SetEnvironmentVariable("SERVICETESTS.TESTPROPERTY", null);
+        Environment.SetEnvironmentVariable("SERVICETESTS.TESTPROPERTY_A", null);
+        Environment.SetEnvironmentVariable("SERVICETESTS.TESTPROPERTY_B", null);
+        Environment.SetEnvironmentVariable("SERVICETESTS.FORCESERVICEID", null);
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_TESTPROPERTY", null);
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_FORCESERVICEID", null);
+
+        TestCollectionContext.ResetENVs();
+    }
+
     [Fact]
     public void GetServiceName()
     {
-        Assert.Equal("Test", typeof(TestService).GetServiceName());
-        Assert.Equal("Test", typeof(TestDaprService).GetServiceName());
-        Assert.Equal("Test", typeof(TestService_Attribute).GetServiceName());
-        Assert.Equal("Test", typeof(TestService_NoConvention_Attribute).GetServiceName());
-        Assert.Equal(nameof(TestService_NoConvention_NoAttribute), typeof(TestService_NoConvention_NoAttribute).GetServiceName());
+        Assert.Null(typeof(TestService).GetServiceName());
+        Assert.Equal("ServiceTests.Test", typeof(TestService_Attribute).GetServiceName());
     }
 
     [Fact]
     public void GetServiceName_FromService()
     {
-        IDaprService testService = new TestService_NoConvention_NoAttribute();
-        Assert.Equal(nameof(TestService_NoConvention_NoAttribute), testService.GetName());
+        IDaprService testService = new TestService();
+        Assert.Null(testService.GetName());
+
+        testService = new TestService_Attribute();
+        Assert.Equal("ServiceTests.Test", testService.GetName());
     }
 
     [Fact]
     public void AnyServiceEnabled()
     {
-        TestCollectionContext.ResetENVs();
-        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "true");
+        ResetENVs();
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
         Assert.True(IDaprService.IsAnyEnabled());
+    }
+
+    [Fact]
+    public void ServiceEnabled_NoAttribute()
+    {
+        ResetENVs();
+        IDaprService testService = new TestService();
+        Assert.False(testService.IsEnabled());
+
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
+        Assert.False(testService.IsEnabled());
     }
 
     [Fact]
     public void ServiceEnabled()
     {
-        TestCollectionContext.ResetENVs();
-        IDaprService testService = new TestService();
+        ResetENVs();
+        IDaprService testService = new TestService_Attribute();
         Assert.False(testService.IsEnabled());
 
-        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "true");
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
         Assert.True(testService.IsEnabled());
     }
 
@@ -116,7 +182,7 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void ServiceEnabled_Default()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         if (ServiceConstants.ENABLE_SERVICES_BY_DEFAULT)
             Assert.True(IDaprService.IsEnabled(typeof(TestService_Attribute)));
         else
@@ -127,58 +193,47 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void ServiceEnabled_BadType()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         Assert.Throws<InvalidCastException>(() => IDaprService.IsEnabled(typeof(TestService_Invalid)));
     }
 
     [Fact]
     public void ServiceEnabled_TestType()
     {
-        TestCollectionContext.ResetENVs();
-        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
+        ResetENVs();
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
         Assert.False(IDaprService.IsEnabled(typeof(TestService_Attribute)));
 
-        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "true");
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
         Assert.True(IDaprService.IsEnabled(typeof(TestService_Attribute)));
     }
 
     [Fact]
     public void ServiceEnabled_TestType_Generic()
     {
-        TestCollectionContext.ResetENVs();
-        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
+        ResetENVs();
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
         Assert.False(IDaprService.IsEnabled<TestService_Attribute>());
 
-        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "true");
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
         Assert.True(IDaprService.IsEnabled<TestService_Attribute>());
     }
 
     [Fact]
     public void ServiceEnabled_TestString()
     {
-        TestCollectionContext.ResetENVs();
-        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
-        Assert.False(IDaprService.IsEnabled("TestService"));
+        ResetENVs();
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
+        Assert.False(IDaprService.IsEnabled("ServiceTests.Test"));
 
-        Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "true");
-        Assert.True(IDaprService.IsEnabled("TestService"));
-    }
-
-    [Fact]
-    public void ServiceEnabled_TestString_Lower()
-    {
-        TestCollectionContext.ResetENVs();
-        Environment.SetEnvironmentVariable("test_service_enabled", "false");
-        Assert.False(IDaprService.IsEnabled("testservice"));
-
-        Environment.SetEnvironmentVariable("test_service_enabled", "true");
-        Assert.True(IDaprService.IsEnabled("testservice"));
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
+        Assert.True(IDaprService.IsEnabled("ServiceTests.Test"));
     }
 
     [Fact]
     public void GetConfigurationType()
     {
-        IDaprService testService = new TestService_NoConvention_NoAttribute();
+        IDaprService testService = new TestService();
         Assert.Equal(typeof(ServiceConfiguration), testService.GetConfigurationType());
 
         testService = new TestService_Attribute();
@@ -192,7 +247,7 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void GetConfigurationType_ByServiceType()
     {
-        Assert.Equal(typeof(ServiceConfiguration), IDaprService.GetConfigurationType(typeof(TestService_NoConvention_NoAttribute)));
+        Assert.Equal(typeof(ServiceConfiguration), IDaprService.GetConfigurationType(typeof(TestService)));
         Assert.Equal(typeof(TestConfiguration_Attribute_TestService), IDaprService.GetConfigurationType(typeof(TestService_Attribute)));
         Assert.Equal(typeof(TestConfiguration_MultipleRequiredProperties_A), IDaprService.GetConfigurationType(typeof(TestService_MultipleRequired)));
         Assert.NotEqual(typeof(TestConfiguration_MultipleRequiredProperties_B), IDaprService.GetConfigurationType(typeof(TestService_MultipleRequired)));
@@ -201,15 +256,15 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void BuildServiceConfiguration()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         var config = (TestConfiguration_Attribute_TestService?)IDaprService.BuildConfiguration(typeof(TestService_Attribute));
         Assert.NotNull(config);
         Assert.Null(config.TestProperty);
         Assert.Null(config.ForceServiceID);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
-        Environment.SetEnvironmentVariable("TestProperty", "Test");
-        Environment.SetEnvironmentVariable("ForceServiceID", serviceID);
+        Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
+        Environment.SetEnvironmentVariable("FORCESERVICEID", serviceID);
         config = (TestConfiguration_Attribute_TestService?)IDaprService.BuildConfiguration(typeof(TestService_Attribute));
         Assert.NotNull(config);
         Assert.Equal("Test", config.TestProperty);
@@ -219,15 +274,15 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void BuildServiceConfiguration_Generic()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         var config = (TestConfiguration_Attribute_TestService?)IDaprService.BuildConfiguration<TestService_Attribute>();
         Assert.NotNull(config);
         Assert.Null(config.TestProperty);
         Assert.Null(config.ForceServiceID);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
-        Environment.SetEnvironmentVariable("TestProperty", "Test");
-        Environment.SetEnvironmentVariable("ForceServiceID", serviceID);
+        Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
+        Environment.SetEnvironmentVariable("FORCESERVICEID", serviceID);
         config = (TestConfiguration_Attribute_TestService?)IDaprService.BuildConfiguration<TestService_Attribute>();
         Assert.NotNull(config);
         Assert.Equal("Test", config.TestProperty);
@@ -237,7 +292,7 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void BuildServiceConfiguration_WithArgs()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
         var config = IDaprService.BuildConfiguration(typeof(TestService_Attribute),
                         args: new string[] { $"--ForceServiceID={serviceID}" });
@@ -253,7 +308,7 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void BuildServiceConfiguration_Generic_WithArgs()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
         var config = IDaprService.BuildConfiguration<TestService_Attribute>(
                         args: new string[] { $"--ForceServiceID={serviceID}" });
@@ -269,7 +324,7 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void BuildServiceConfiguration_FromService()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         IDaprService testService = new TestService_Attribute();
         var config = testService.BuildConfiguration() as TestConfiguration_Attribute_TestService;
         Assert.NotNull(config);
@@ -277,8 +332,8 @@ public class Services : IClassFixture<CollectionFixture>
         Assert.Null(config.ForceServiceID);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
-        Environment.SetEnvironmentVariable("TestProperty", "Test");
-        Environment.SetEnvironmentVariable("ForceServiceID", serviceID);
+        Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
+        Environment.SetEnvironmentVariable("FORCESERVICEID", serviceID);
         config = testService.BuildConfiguration() as TestConfiguration_Attribute_TestService;
         Assert.NotNull(config);
         Assert.Equal("Test", config.TestProperty);
@@ -288,124 +343,160 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void FindAll()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
 
-        Assert.DoesNotContain(IDaprService.FindAll(), t => t.Item1 == typeof(TestService));
-        Assert.Contains(IDaprService.FindAll(), t => t.Item1 == typeof(TestService_Attribute));
-        Assert.Contains(IDaprService.FindAll(), t => t.Item1 == typeof(TestService_Required));
-        Assert.Contains(IDaprService.FindAll(), t => t.Item1 == typeof(TestService_MultipleRequired));
+        Assert.DoesNotContain(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService));
+        Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_Attribute));
+        Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_Required));
+        Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_MultipleRequired));
 
 #pragma warning disable CS0162 // Unreachable code detected
         if (ServiceConstants.ENABLE_SERVICES_BY_DEFAULT)
         {
-            Assert.Contains(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Attribute));
-            Assert.Contains(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Required));
-            Assert.Contains(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Attribute));
+            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
+            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_MultipleRequired));
         }
         else
         {
-            Assert.DoesNotContain(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Attribute));
-            Assert.DoesNotContain(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Required));
-            Assert.DoesNotContain(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+            Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Attribute));
+            Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
+            Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_MultipleRequired));
 
-            Environment.SetEnvironmentVariable("TEST_REQUIRED_SERVICE_ENABLED", "true");
-            Assert.Contains(IDaprService.FindAll(true), t => t.Item1 == typeof(TestService_Required));
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
+            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
         }
 #pragma warning restore CS0162 // Unreachable code detected
 
     }
 
     [Fact]
+    public void FindAll_TestOverride_MostDerivedType()
+    {
+        ResetENVs();
+        var locateService = IDaprService.FindHandler("ServiceTests.OverrideTest");
+        Assert.True(locateService.HasValue);
+        Assert.Equal(typeof(TestService_Override_2), locateService.Value.Item2);
+    }
+
+    [Fact]
+    public void FindAll_TestOverride_MostDerivedType_NoAttribute()
+    {
+        ResetENVs();
+        var locateService = IDaprService.FindHandler("ServiceTests.OverrideNoAttrTest");
+        Assert.True(locateService.HasValue);
+        Assert.Equal(typeof(TestService_Override_NoAttribute_2), locateService.Value.Item2);
+    }
+
+    [Fact]
+    public void FindAll_TestOverride_Priority()
+    {
+        ResetENVs();
+        var locateService = IDaprService.FindHandler("ServiceTests.PriorityTest");
+        Assert.True(locateService.HasValue);
+        Assert.Equal(typeof(TestService_Priority_2), locateService.Value.Item2);
+    }
+
+    [Fact]
+    public void FindAll_TestOverride_PriorityOverMostDerivedType()
+    {
+        ResetENVs();
+        var locateService = IDaprService.FindHandler("ServiceTests.PriorityOverrideTest");
+        Assert.True(locateService.HasValue);
+        Assert.Equal(typeof(TestService_PriorityAndOverride_1), locateService.Value.Item2);
+    }
+
+    [Fact]
     public void AllHaveRequiredConfiguration()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
 
         Assert.True(IDaprService.AllHaveRequiredConfiguration());
 
-        Environment.SetEnvironmentVariable("TEST_REQUIRED_SERVICE_ENABLED", "true");
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
         Assert.False(IDaprService.AllHaveRequiredConfiguration());
 
-        Environment.SetEnvironmentVariable("TestProperty", "something");
+        Environment.SetEnvironmentVariable("TESTPROPERTY", "something");
         Assert.True(IDaprService.AllHaveRequiredConfiguration());
     }
 
     [Fact]
     public void HasRequiredConfiguration()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         IDaprService testService = new TestService_Required();
         Assert.False(testService.HasRequiredConfiguration());
 
-        Environment.SetEnvironmentVariable("TestProperty", "Test");
+        Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
         Assert.True(testService.HasRequiredConfiguration());
     }
 
     [Fact]
     public void HasRequiredConfiguration_MultipleTypes()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         IDaprService testService = new TestService_MultipleRequired();
         Assert.False(testService.HasRequiredConfiguration());
 
-        Environment.SetEnvironmentVariable("TestProperty", "Test");
+        Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
         Assert.False(testService.HasRequiredConfiguration());
 
-        Environment.SetEnvironmentVariable("TestProperty_A", "Test");
+        Environment.SetEnvironmentVariable("TESTPROPERTY_A", "Test");
         Assert.True(testService.HasRequiredConfiguration());
 
-        Environment.SetEnvironmentVariable("TestProperty_B", "Test");
+        Environment.SetEnvironmentVariable("TESTPROPERTY_B", "Test");
         Assert.True(testService.HasRequiredConfiguration());
     }
 
     [Fact]
     public void HasRequiredConfiguration_ByType()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         Assert.False(IDaprService.HasRequiredConfiguration(typeof(TestService_Required)));
 
-        Environment.SetEnvironmentVariable("TestProperty", "Test");
+        Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
         Assert.True(IDaprService.HasRequiredConfiguration(typeof(TestService_Required)));
     }
 
     [Fact]
     public void HasRequiredConfiguration_ByType_MultipleTypes()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         Assert.False(IDaprService.HasRequiredConfiguration(typeof(TestService_MultipleRequired)));
 
-        Environment.SetEnvironmentVariable("TestProperty", "Test");
+        Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
         Assert.False(IDaprService.HasRequiredConfiguration(typeof(TestService_MultipleRequired)));
 
-        Environment.SetEnvironmentVariable("TestProperty_A", "Test");
+        Environment.SetEnvironmentVariable("TESTPROPERTY_A", "Test");
         Assert.False(IDaprService.HasRequiredConfiguration(typeof(TestService_MultipleRequired)));
 
-        Environment.SetEnvironmentVariable("TestProperty_B", "Test");
+        Environment.SetEnvironmentVariable("TESTPROPERTY_B", "Test");
         Assert.True(IDaprService.HasRequiredConfiguration(typeof(TestService_MultipleRequired)));
     }
 
     [Fact]
     public void HasRequiredConfiguration_ByType_Generic()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         Assert.False(IDaprService.HasRequiredConfiguration<TestService_Required>());
 
-        Environment.SetEnvironmentVariable("TestProperty", "Test");
+        Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
         Assert.True(IDaprService.HasRequiredConfiguration<TestService_Required>());
     }
 
     [Fact]
     public void HasRequiredConfiguration_ByType_MultipleTypes_Generic()
     {
-        TestCollectionContext.ResetENVs();
+        ResetENVs();
         Assert.False(IDaprService.HasRequiredConfiguration<TestService_MultipleRequired>());
 
-        Environment.SetEnvironmentVariable("TestProperty", "Test");
+        Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
         Assert.False(IDaprService.HasRequiredConfiguration<TestService_MultipleRequired>());
 
-        Environment.SetEnvironmentVariable("TestProperty_A", "Test");
+        Environment.SetEnvironmentVariable("TESTPROPERTY_A", "Test");
         Assert.False(IDaprService.HasRequiredConfiguration<TestService_MultipleRequired>());
 
-        Environment.SetEnvironmentVariable("TestProperty_B", "Test");
+        Environment.SetEnvironmentVariable("TESTPROPERTY_B", "Test");
         Assert.True(IDaprService.HasRequiredConfiguration<TestService_MultipleRequired>());
     }
 }

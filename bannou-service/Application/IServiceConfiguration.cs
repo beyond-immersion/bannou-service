@@ -77,7 +77,7 @@ public interface IServiceConfiguration
         IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
             .AddJsonFile("Config.json", true)
             .AddEnvironmentVariables(envPrefix)
-            .AddCommandLine(args ?? Array.Empty<string>(), CreateAllSwitchMappings());
+            .AddCommandLine(args ?? Environment.GetCommandLineArgs(), CreateAllSwitchMappings());
 
         if (Program.DaprClient != null && Program.Configuration?.DaprConfigurationName != null)
             configurationBuilder.AddDaprConfigurationStore(Program.Configuration.DaprConfigurationName,
@@ -118,7 +118,7 @@ public interface IServiceConfiguration
         IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
             .AddJsonFile("Config.json", true)
             .AddEnvironmentVariables(envPrefix)
-            .AddCommandLine(args ?? Array.Empty<string>(), CreateSwitchMappings(configurationType));
+            .AddCommandLine(args ?? Environment.GetCommandLineArgs(), CreateSwitchMappings(configurationType));
 
         return configurationBuilder.Build()
             .Get(configurationType, (options) => options.BindNonPublicProperties = true) as IServiceConfiguration;

@@ -14,7 +14,7 @@ namespace BeyondImmersion.BannouService.Services;
 /// </summary>
 public interface IDaprService
 {
-    public string GetName()
+    public string? GetName()
         => GetType().GetServiceName();
 
     /// <summary>
@@ -92,15 +92,15 @@ public interface IDaprService
     /// Returns the best service configuration type for the given service type.
     /// Returned type is based on DaprServiceAttribute service target type.
     /// </summary>
-    public static Type GetConfigurationType(Type serviceType)
+    public static Type GetConfigurationType(Type handlerType)
     {
-        if (!typeof(IDaprService).IsAssignableFrom(serviceType))
+        if (!typeof(IDaprService).IsAssignableFrom(handlerType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
         Type? serviceConfigType = null;
         foreach (var configAttr in IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
         {
-            if (serviceType.IsAssignableFrom(configAttr.Item2.ServiceType))
+            if (handlerType.IsAssignableFrom(configAttr.Item2.ServiceType))
             {
                 if (serviceConfigType != null && !configAttr.Item2.Primary)
                     continue;
@@ -117,10 +117,11 @@ public interface IDaprService
     /// </summary>
     public static bool AllHaveRequiredConfiguration()
     {
-        foreach ((Type, DaprServiceAttribute) serviceClassData in FindAll(enabledOnly: true))
+        foreach ((Type, Type, DaprServiceAttribute) serviceClassInfo in FindHandlers(enabledOnly: true))
         {
-            Type serviceType = serviceClassData.Item1;
-            var serviceConfig = GetConfigurationType(serviceType);
+            Type handlerType = serviceClassInfo.Item1;
+            Type serviceType = serviceClassInfo.Item2;
+            var serviceConfig = GetConfigurationType(handlerType);
             if (serviceConfig == null)
                 continue;
 
@@ -140,8 +141,7 @@ public interface IDaprService
     /// Returns whether the configuration indicates ANY services should be enabled.
     /// </summary>
     public static bool IsAnyEnabled()
-        => IServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>()
-            .Any(t => IsEnabled(t.Item1));
+        => FindHandlers(enabledOnly: true).Any();
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
@@ -157,7 +157,11 @@ public interface IDaprService
         if (!typeof(IDaprService).IsAssignableFrom(serviceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
-        return IsEnabled(serviceType.GetServiceName());
+        var serviceName = serviceType.GetServiceName();
+        if (string.IsNullOrWhiteSpace(serviceName))
+            return false;
+
+        return IsEnabled(serviceName);
     }
 
     /// <summary>
@@ -165,14 +169,8 @@ public interface IDaprService
     /// </summary>
     public static bool IsEnabled(string serviceName)
     {
-        if (serviceName.EndsWith("Service", comparisonType: StringComparison.InvariantCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Service".Length, "Service".Length);
-
-        if (serviceName.EndsWith("Controller", comparisonType: StringComparison.CurrentCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Controller".Length, "Controller".Length);
-
-        if (serviceName.EndsWith("Dapr", comparisonType: StringComparison.CurrentCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Dapr".Length, "Dapr".Length);
+        if (string.IsNullOrWhiteSpace(serviceName))
+            return false;
 
         IConfigurationRoot configRoot = IServiceConfiguration.BuildConfigurationRoot();
         var serviceEnabledFlag = configRoot.GetValue<bool?>($"{serviceName.ToUpper()}_SERVICE_ENABLED", null);
@@ -183,39 +181,101 @@ public interface IDaprService
     }
 
     /// <summary>
-    /// Gets the full list of all dapr service classes (with associated attribute) in loaded assemblies.
+    /// Find the highest priority/derived service type with the given name.
     /// </summary>
-    public static (Type, DaprServiceAttribute)[] FindAll(bool enabledOnly = false)
+    public static (Type, Type, DaprServiceAttribute)? FindHandler(string name)
     {
-        List<(Type, DaprServiceAttribute)> serviceClasses = IServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
-        if (!serviceClasses.Any())
+        if (string.IsNullOrWhiteSpace(name))
+            return null;
+
+        foreach (var serviceInfo in FindHandlers())
+            if (string.Equals(name, serviceInfo.Item3.Name, StringComparison.InvariantCultureIgnoreCase))
+                return serviceInfo;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Find the implementation for the given service handler.
+    /// </summary>
+    public static (Type, Type, DaprServiceAttribute)? FindHandler(Type handlerType)
+    {
+        foreach (var serviceInfo in FindHandlers())
+            if (serviceInfo.Item1 == handlerType)
+                return serviceInfo;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the full list of all dapr service classes (with associated attribute) in loaded assemblies.
+    /// If enabledOnly set, will not return services that have been disabled via configuration.
+    /// </summary>
+    public static (Type, Type, DaprServiceAttribute)[] FindHandlers(bool enabledOnly = false)
+    {
+        // first get all service types
+        List<(Type, DaprServiceAttribute)> serviceProviders = IServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
+        if (!serviceProviders.Any())
         {
             Program.Logger?.Log(LogLevel.Trace, null, $"No service handler types were located.");
-            return Array.Empty<(Type, DaprServiceAttribute)>();
+            return Array.Empty<(Type, Type, DaprServiceAttribute)>();
         }
 
-        // prefixes need to be unique, so assign to a tmp hash/dictionary lookup
-        var serviceLookup = new List<(Type, DaprServiceAttribute)>();
-        foreach ((Type, DaprServiceAttribute) serviceClass in serviceClasses)
-        {
-            Type serviceType = serviceClass.Item1;
-            DaprServiceAttribute serviceAttr = serviceClass.Item2;
+        var handlerLookup = new Dictionary<Type, (Type, Type, DaprServiceAttribute)>();
 
-            if (!typeof(IDaprService).IsAssignableFrom(serviceType))
+        // now filter by "best types", into lookup
+        foreach ((Type, DaprServiceAttribute) serviceProvider in serviceProviders)
+        {
+            Type serviceType = serviceProvider.Item1;
+            DaprServiceAttribute serviceAttr = serviceProvider.Item2;
+            Type handlerType = serviceAttr.Type ?? serviceType;
+
+            Program.Logger?.Log(LogLevel.Trace, null, $"Checking service type {serviceType.Name}...");
+
+            if (serviceType.IsAbstract || serviceType.IsInterface || !serviceType.IsAssignableTo(typeof(IDaprService)))
             {
-                Program.Logger?.Log(LogLevel.Trace, null, $"Service handler type {serviceType.Name} doesn't implement {typeof(IDaprService).Name}.");
+                Program.Logger?.Log(LogLevel.Debug, null, $"Invalid service type {serviceType.Name} won't be returned.");
                 continue;
             }
 
+            if (!handlerType.IsAssignableTo(typeof(IDaprService)))
+            {
+                Program.Logger?.Log(LogLevel.Debug, null, $"Invalid handler for service type {serviceType.Name}.");
+                continue;
+            }
+
+            if (handlerLookup.TryGetValue(handlerType, out var existingEntry))
+            {
+                if (existingEntry.Item3.Priority)
+                {
+                    Program.Logger?.Log(LogLevel.Debug, null, $"Service type {serviceType.Name} skipped in favour of existing override {existingEntry.Item2.Name}.");
+                    continue;
+                }
+
+                if (existingEntry.Item2.IsAssignableTo(serviceType))
+                {
+                    Program.Logger?.Log(LogLevel.Debug, null, $"Service type {serviceType.Name} skipped in favour of existing more-derived type {existingEntry.Item2.Name}.");
+                    continue;
+                }
+
+                // derived types get automatic priority
+                if (existingEntry.Item2.IsAssignableFrom(serviceType))
+                {
+                    Program.Logger?.Log(LogLevel.Debug, null, $"Service type {serviceType.Name} is more derived than existing type {existingEntry.Item2.Name}, and will override it.");
+                    _ = handlerLookup.Remove(handlerType);
+                }
+            }
+
+            // don't return a disabled service type, in a way that ensures types it derives from will also be disabled
             if (enabledOnly && !IsEnabled(serviceType))
             {
-                Program.Logger?.Log(LogLevel.Trace, null, $"Service handler type {serviceType.Name} has been disabled, and won't be returned.");
+                Program.Logger?.Log(LogLevel.Debug, null, $"Service type {serviceType.Name} has been disabled, and won't be returned.");
                 continue;
             }
 
-            serviceLookup.Add(serviceClass);
+            handlerLookup[handlerType] = (handlerType, serviceType, serviceAttr);
         }
 
-        return serviceLookup.ToArray();
+        return handlerLookup.Values.ToArray();
     }
 }

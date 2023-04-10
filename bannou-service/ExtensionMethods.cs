@@ -78,22 +78,12 @@ public static partial class ExtensionMethods
         return str;
     }
 
-    public static string GetServiceName(this Type serviceType)
+    public static string? GetServiceName(this Type serviceType)
     {
-        var serviceName = serviceType.Name;
-
-        var serviceAttr = serviceType.GetCustomAttribute<DaprServiceAttribute>();
+        string? serviceName = null;
+        var serviceAttr = serviceType.GetCustomAttributes<DaprServiceAttribute>().FirstOrDefault();
         if (serviceAttr != null && !string.IsNullOrWhiteSpace(serviceAttr.Name))
             serviceName = serviceAttr.Name;
-
-        if (serviceName.EndsWith("Service", comparisonType: StringComparison.InvariantCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Service".Length, "Service".Length);
-
-        if (serviceName.EndsWith("Controller", comparisonType: StringComparison.CurrentCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Controller".Length, "Controller".Length);
-
-        if (serviceName.EndsWith("Dapr", comparisonType: StringComparison.CurrentCultureIgnoreCase))
-            serviceName = serviceName.Remove(serviceName.Length - "Dapr".Length, "Dapr".Length);
 
         return serviceName;
     }
@@ -119,20 +109,16 @@ public static partial class ExtensionMethods
     /// </summary>
     public static void AddDaprServices(this IServiceCollection builder)
     {
-        foreach ((Type, DaprServiceAttribute) serviceClassInfo in IDaprService.FindAll(enabledOnly: true))
+        foreach ((Type, Type, DaprServiceAttribute) serviceClassInfo in IDaprService.FindHandlers(enabledOnly: true))
         {
-            var serviceType = serviceClassInfo.Item1;
+            var handlerType = serviceClassInfo.Item1;
+            var serviceType = serviceClassInfo.Item2;
+            var serviceLifetime = serviceClassInfo.Item3.Lifetime;
             var serviceName = serviceType.GetServiceName();
 
-            var serviceEnabled = IDaprService.IsEnabled(serviceType);
-            if (!serviceEnabled)
-            {
-                Program.Logger?.Log(LogLevel.Debug, null, $"Service {serviceName} is disabled.");
-                continue;
-            }
+            Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} has been enabled to handle type {handlerType}.");
 
-            Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} is enabled.");
-            builder.Add(new ServiceDescriptor(serviceType, serviceType, ServiceLifetime.Singleton));
+            builder.Add(new ServiceDescriptor(handlerType, serviceType, serviceLifetime));
         }
     }
 
@@ -145,27 +131,19 @@ public static partial class ExtensionMethods
     }
 
     /// <summary>
-    /// Binds HTTP endpoints for all registered dapr services.
+    /// Binds HTTP endpoints for all registered dapr service handlers.
     /// </summary>
     public static IEndpointRouteBuilder MapDaprServiceControllers(this IEndpointRouteBuilder builder)
     {
-        foreach ((Type, DaprServiceAttribute) serviceClassInfo in IDaprService.FindAll(enabledOnly: true))
+        foreach ((Type, Type, DaprServiceAttribute) serviceClassInfo in IDaprService.FindHandlers(enabledOnly: true))
         {
-            var serviceType = serviceClassInfo.Item1;
+            var handlerType = serviceClassInfo.Item1;
+            var serviceType = serviceClassInfo.Item2;
             var serviceName = serviceType.GetServiceName();
 
-            var serviceEnabled = IDaprService.IsEnabled(serviceType);
-            if (!serviceEnabled)
+            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForHandler(handlerType))
             {
-                Program.Logger?.Log(LogLevel.Debug, null, $"Service {serviceName} is disabled.");
-                continue;
-            }
-
-            Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} is enabled.");
-
-            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindAll(serviceType))
-            {
-                string? controllerName = controllerClassInfo.Item2?.Name ?? controllerClassInfo.Item2?.Template;
+                var controllerName = controllerClassInfo.Item2?.Name ?? controllerClassInfo.Item2?.Template;
                 if (string.IsNullOrWhiteSpace(controllerName))
                     controllerName = controllerClassInfo.Item1.GetServiceName();
 

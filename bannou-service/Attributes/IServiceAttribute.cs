@@ -28,11 +28,13 @@ public interface IServiceAttribute
 
                 foreach (Type classType in classTypes)
                 {
-                    T? attr = classType.GetCustomAttribute<T>();
-                    if (attr == null)
-                        continue;
+                    foreach (var attr in classType.GetCustomAttributes<T>(inherit: true))
+                    {
+                        if (attr == null)
+                            continue;
 
-                    results.Add((classType, attr));
+                        results.Add((classType, attr));
+                    }
                 }
             }
             catch { }
@@ -61,11 +63,13 @@ public interface IServiceAttribute
 
                 foreach (Type classType in classTypes)
                 {
-                    Attribute? attr = classType.GetCustomAttribute(attributeType);
-                    if (attr == null)
-                        continue;
+                    foreach (var attr in classType.GetCustomAttributes(attributeType, inherit: true))
+                    {
+                        if (attr == null)
+                            continue;
 
-                    results.Add((classType, (IServiceAttribute)attr));
+                        results.Add((classType, (IServiceAttribute)attr));
+                    }
                 }
             }
             catch { }
@@ -313,7 +317,7 @@ public interface IServiceAttribute
         {
             try
             {
-                var attrs = propInfo.GetCustomAttributes(attributeType, true);
+                var attrs = propInfo.GetCustomAttributes(attributeType, inherit: true);
                 if (attrs == null || !attrs.Any())
                     continue;
 
@@ -341,7 +345,7 @@ public interface IServiceAttribute
         {
             try
             {
-                IEnumerable<T> attrs = propInfo.GetCustomAttributes<T>(true);
+                IEnumerable<T> attrs = propInfo.GetCustomAttributes<T>(inherit: true);
                 if (attrs == null || !attrs.Any())
                     continue;
 
@@ -369,7 +373,7 @@ public interface IServiceAttribute
         {
             try
             {
-                IEnumerable<T> attrs = fieldInfo.GetCustomAttributes<T>(true);
+                IEnumerable<T> attrs = fieldInfo.GetCustomAttributes<T>(inherit: true);
                 if (attrs == null || !attrs.Any())
                     continue;
 
@@ -396,7 +400,7 @@ public interface IServiceAttribute
         {
             try
             {
-                var attrs = fieldInfo.GetCustomAttributes(attributeType, true);
+                var attrs = fieldInfo.GetCustomAttributes(attributeType, inherit: true);
                 if (attrs == null || !attrs.Any())
                     continue;
 
@@ -426,7 +430,7 @@ public interface IServiceAttribute
         {
             try
             {
-                var attrs = methodInfo.GetCustomAttributes(attributeType, true);
+                var attrs = methodInfo.GetCustomAttributes(attributeType, inherit: true);
                 if (attrs == null || !attrs.Any())
                     continue;
 
@@ -454,7 +458,7 @@ public interface IServiceAttribute
         {
             try
             {
-                IEnumerable<T> attrs = methodInfo.GetCustomAttributes<T>(true);
+                IEnumerable<T> attrs = methodInfo.GetCustomAttributes<T>(inherit: true);
                 if (attrs == null || !attrs.Any())
                     continue;
 
