@@ -87,6 +87,35 @@ public static class Program
         internal set => _logger = value;
     }
 
+    private static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> _serviceAppLookup;
+    public static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> ServiceAppLookup
+    {
+        get
+        {
+            if (_serviceAppLookup == null)
+            {
+                _serviceAppLookup = new Dictionary<string, IList<(Type, Type, DaprServiceAttribute)>>();
+                foreach (var serviceHandler in IDaprService.FindHandlers(enabledOnly: false))
+                {
+                    string serviceName = serviceHandler.Item3.Name;
+                    string defaultApp = serviceHandler.Item3.DefaultApp.ToLower();
+                    string? appOverride = ConfigurationRoot.GetValue<string>(serviceName.ToUpper() + "_APP_MAPPING");
+                    string appName = appOverride ?? defaultApp;
+
+                    if (_serviceAppLookup.TryGetValue(appName, out var existingApp))
+                    {
+                        existingApp.Add(serviceHandler);
+                        continue;
+                    }
+
+                    _serviceAppLookup.Add(appName, new List<(Type, Type, DaprServiceAttribute)>() { serviceHandler });
+                }
+            }
+
+            return _serviceAppLookup;
+        }
+    }
+
     /// <summary>
     /// Shared dapr client interface, used by all enabled service handlers.
     /// </summary>
@@ -150,6 +179,24 @@ public static class Program
 
         Logger.Log(LogLevel.Debug, null, "Service shutdown complete.");
     }
+
+    /// <summary>
+    /// Get the app name for the given handler type.
+    /// </summary>
+    public static string? GetAppByHandlerType(Type handlerType)
+        => ServiceAppLookup.Where(t => t.Value.Any(s => s.Item1 == handlerType)).FirstOrDefault().Key;
+
+    /// <summary>
+    /// Get the app name for the given handler type.
+    /// </summary>
+    public static string? GetAppByImplementationType(Type implementationType)
+        => ServiceAppLookup.Where(t => t.Value.Any(s => s.Item2 == implementationType)).FirstOrDefault().Key;
+
+    /// <summary>
+    /// Get the app name for the given handler type.
+    /// </summary>
+    public static string? GetAppByServiceName(string serviceName)
+        => ServiceAppLookup.Where(t => t.Value.Any(s => string.Equals(serviceName, s.Item3.Name, StringComparison.InvariantCultureIgnoreCase))).FirstOrDefault().Key;
 
     /// <summary>
     /// Will stop the webhost and initiate a service shutdown.
