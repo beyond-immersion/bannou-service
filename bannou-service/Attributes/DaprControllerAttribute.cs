@@ -14,6 +14,16 @@ public class DaprControllerAttribute : RouteAttribute, IServiceAttribute
     /// If requiring multiple service, add more attributes.
     /// </summary>
     public Type? ServiceType { get; }
+
+    public DaprControllerAttribute(Type? serviceType = null)
+        : base("/")
+    {
+        if (serviceType != null && !typeof(IDaprService).IsAssignableFrom(serviceType))
+            throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
+
+        ServiceType = serviceType;
+    }
+
     public DaprControllerAttribute(string template, Type? serviceType = null)
         : base(template)
     {
