@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
 	<RootNamespace>BeyondImmersion.UnitTests</RootNamespace>
 	<IsPackable>false</IsPackable>
+	<Configurations>Debug;Release;Development</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
