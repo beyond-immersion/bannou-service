@@ -14,6 +14,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisioning", "{6905E47E-6C04-4CF6-894F-2643528E490D}"
+	ProjectSection(SolutionItems) = preProject
+		provisioning\docker-compose.ci.yml = provisioning\docker-compose.ci.yml
+		provisioning\docker-compose.yml = provisioning\docker-compose.yml
+		provisioning\Dockerfile = provisioning\Dockerfile
+		provisioning\service-tests.sh = provisioning\service-tests.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +43,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6905E47E-6C04-4CF6-894F-2643528E490D} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC13195D-546C-43E1-9AAA-2C0BF08BA428}
