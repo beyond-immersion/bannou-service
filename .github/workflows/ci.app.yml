@@ -28,6 +28,7 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          ASPNETCORE_ENVIRONMENT: development
 
       - name: Install dependencies
         run: dotnet restore
@@ -36,4 +37,4 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test --no-restore --verbosity normal
+        run: dotnet test --configuration Development --no-restore --verbosity normal
