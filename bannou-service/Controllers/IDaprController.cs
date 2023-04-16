@@ -10,8 +10,9 @@ public interface IDaprController
     /// </summary>
     public static (Type, DaprControllerAttribute)[] FindAll(bool enabledOnly = false)
     {
-        var controllerClasses = IServiceAttribute.GetClassesWithAttribute<DaprControllerAttribute>()
-            .Where(t => {
+        IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = IServiceAttribute.GetClassesWithAttribute<DaprControllerAttribute>()
+            .Where(t =>
+            {
                 if (!typeof(IDaprController).IsAssignableFrom(t.Item1))
                     return false;
 
@@ -21,11 +22,8 @@ public interface IDaprController
                 if (t.Item2?.ServiceType == null)
                     return true;
 
-                var handlerType = IDaprService.FindHandler(t.Item2.ServiceType);
-                if (handlerType == null)
-                    return false;
-
-                return IDaprService.IsEnabled(handlerType.Value.Item2);
+                (Type, Type, DaprServiceAttribute)? handlerType = IDaprService.FindHandler(t.Item2.ServiceType);
+                return handlerType != null && IDaprService.IsEnabled(handlerType.Value.Item2);
             });
 
         return controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();
@@ -46,12 +44,10 @@ public interface IDaprController
         if (!typeof(IDaprService).IsAssignableFrom(handlerType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
-        var controllerClasses = FindAll()
-            .Where(t => {
-                if (handlerType != t.Item2?.ServiceType)
-                    return false;
-
-                return true;
+        IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = FindAll()
+            .Where(t =>
+            {
+                return handlerType == (t.Item2?.ServiceType);
             });
 
         return controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();

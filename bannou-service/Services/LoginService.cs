@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Collections.Concurrent;
-using System.Net.Mime;
-
-namespace BeyondImmersion.BannouService.Services;
+﻿namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Service component responsible for login queue handling.
@@ -21,8 +17,5 @@ public sealed class LoginService : IDaprService
     /// <summary>
     /// 
     /// </summary>
-    public async Task Login()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task Login() => await Task.CompletedTask;
 }

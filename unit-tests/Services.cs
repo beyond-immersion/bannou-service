@@ -1,4 +1,3 @@
-using BeyondImmersion.BannouService.Services;
 using Xunit.Abstractions;
 
 namespace BeyondImmersion.UnitTests;
@@ -105,10 +104,7 @@ public class Services : IClassFixture<CollectionFixture>
         public string? TestProperty_B { get; set; }
     }
 
-    private Services(CollectionFixture collectionFixture)
-    {
-        TestCollectionContext = collectionFixture;
-    }
+    private Services(CollectionFixture collectionFixture) => TestCollectionContext = collectionFixture;
 
     public Services(CollectionFixture collectionContext, ITestOutputHelper output)
     {
@@ -194,7 +190,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void ServiceEnabled_BadType()
     {
         ResetENVs();
-        Assert.Throws<InvalidCastException>(() => IDaprService.IsEnabled(typeof(TestService_Invalid)));
+        _ = Assert.Throws<InvalidCastException>(() => IDaprService.IsEnabled(typeof(TestService_Invalid)));
     }
 
     [Fact]
@@ -294,7 +290,7 @@ public class Services : IClassFixture<CollectionFixture>
     {
         ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
-        var config = IDaprService.BuildConfiguration(typeof(TestService_Attribute),
+        IServiceConfiguration? config = IDaprService.BuildConfiguration(typeof(TestService_Attribute),
                         args: new string[] { $"--ForceServiceID={serviceID}" });
         Assert.NotNull(config);
         Assert.Equal(serviceID, config.ForceServiceID);
@@ -310,7 +306,7 @@ public class Services : IClassFixture<CollectionFixture>
     {
         ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
-        var config = IDaprService.BuildConfiguration<TestService_Attribute>(
+        IServiceConfiguration config = IDaprService.BuildConfiguration<TestService_Attribute>(
                         args: new string[] { $"--ForceServiceID={serviceID}" });
         Assert.NotNull(config);
         Assert.Equal(serviceID, config.ForceServiceID);
@@ -374,7 +370,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void FindAll_TestOverride_MostDerivedType()
     {
         ResetENVs();
-        var locateService = IDaprService.FindHandler("ServiceTests.OverrideTest");
+        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.FindHandler("ServiceTests.OverrideTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(TestService_Override_2), locateService.Value.Item2);
     }
@@ -383,7 +379,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void FindAll_TestOverride_MostDerivedType_NoAttribute()
     {
         ResetENVs();
-        var locateService = IDaprService.FindHandler("ServiceTests.OverrideNoAttrTest");
+        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.FindHandler("ServiceTests.OverrideNoAttrTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(TestService_Override_NoAttribute_2), locateService.Value.Item2);
     }
@@ -392,7 +388,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void FindAll_TestOverride_Priority()
     {
         ResetENVs();
-        var locateService = IDaprService.FindHandler("ServiceTests.PriorityTest");
+        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.FindHandler("ServiceTests.PriorityTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(TestService_Priority_2), locateService.Value.Item2);
     }
@@ -401,7 +397,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void FindAll_TestOverride_PriorityOverMostDerivedType()
     {
         ResetENVs();
-        var locateService = IDaprService.FindHandler("ServiceTests.PriorityOverrideTest");
+        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.FindHandler("ServiceTests.PriorityOverrideTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(TestService_PriorityAndOverride_1), locateService.Value.Item2);
     }

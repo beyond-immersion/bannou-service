@@ -16,10 +16,7 @@ public class Miscellaneous : IClassFixture<CollectionFixture>
     [Obsolete]
     private bool ObsoleteTestMethod() => true;
 
-    private Miscellaneous(CollectionFixture collectionContext)
-    {
-        TestCollectionContext = collectionContext;
-    }
+    private Miscellaneous(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
 
     public Miscellaneous(CollectionFixture collectionContext, ITestOutputHelper output)
     {
@@ -59,7 +56,7 @@ public class Miscellaneous : IClassFixture<CollectionFixture>
     [Fact]
     public void ObsoleteTest_Field()
     {
-        var obsMemberInfo = GetType().GetField(nameof(ObsoleteTestField), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        System.Reflection.FieldInfo? obsMemberInfo = GetType().GetField(nameof(ObsoleteTestField), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.NotNull(obsMemberInfo);
         Assert.True(obsMemberInfo.IsObsolete());
     }
@@ -67,7 +64,7 @@ public class Miscellaneous : IClassFixture<CollectionFixture>
     [Fact]
     public void ObsoleteTest_Property()
     {
-        var obsMemberInfo = GetType().GetProperty(nameof(ObsoleteTestProperty), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        System.Reflection.PropertyInfo? obsMemberInfo = GetType().GetProperty(nameof(ObsoleteTestProperty), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.NotNull(obsMemberInfo);
         Assert.True(obsMemberInfo.IsObsolete());
     }
@@ -75,7 +72,7 @@ public class Miscellaneous : IClassFixture<CollectionFixture>
     [Fact]
     public void ObsoleteTest_Method()
     {
-        var obsMemberInfo = GetType().GetMethod(nameof(ObsoleteTestMethod), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        System.Reflection.MethodInfo? obsMemberInfo = GetType().GetMethod(nameof(ObsoleteTestMethod), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.NotNull(obsMemberInfo);
         Assert.True(obsMemberInfo.IsObsolete());
     }
@@ -83,10 +80,10 @@ public class Miscellaneous : IClassFixture<CollectionFixture>
     [Fact]
     public void ObsoleteTest_GetMessage()
     {
-        var obsMemberInfo = GetType().GetField(nameof(ObsoleteTestField), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        System.Reflection.FieldInfo? obsMemberInfo = GetType().GetField(nameof(ObsoleteTestField), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.NotNull(obsMemberInfo);
 
-        obsMemberInfo.IsObsolete(out var message);
+        _ = obsMemberInfo.IsObsolete(out var message);
         Assert.Equal("Test message", message);
     }
 

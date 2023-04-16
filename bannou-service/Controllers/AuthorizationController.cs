@@ -1,5 +1,4 @@
-﻿using BeyondImmersion.BannouService.Controllers.Messages;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
 
 namespace BeyondImmersion.BannouService.Controllers;
@@ -18,18 +17,12 @@ public class AuthorizationController : BaseDaprController
     /// follow-up requests / exchanges.
     /// </summary>
     [DaprRoute("")]
-    public async Task Authorize(HttpContext context)
-    {
-        await Task.CompletedTask;
-    }
+    public async Task Authorize(HttpContext context) => await Task.CompletedTask;
 
     /// <summary>
     /// Instance endpoint, for any follow-up exchanges beyond the
     /// initial handshake, for authorizing a client connection.
     /// </summary>
     [DaprRoute($"{ServiceConstants.SERVICE_UUID_PLACEHOLDER}")]
-    public async Task AuthorizeDirect(HttpContext context)
-    {
-        await Task.CompletedTask;
-    }
+    public async Task AuthorizeDirect(HttpContext context) => await Task.CompletedTask;
 }

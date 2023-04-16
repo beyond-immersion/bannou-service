@@ -11,17 +11,11 @@ public class AuthorizationService : IDaprService
     /// Will hand back a specific instance endpoint to use, for
     /// follow-up requests / exchanges.
     /// </summary>
-    public async Task Authorize()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task Authorize() => await Task.CompletedTask;
 
     /// <summary>
     /// Instance endpoint, for any follow-up exchanges beyond the
     /// initial handshake, for authorizing a client connection.
     /// </summary>
-    public async Task AuthorizeDirect()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task AuthorizeDirect() => await Task.CompletedTask;
 }

@@ -2,12 +2,12 @@
 
 public static class Validators
 {
-    private readonly static IDictionary<string, Func<bool>> sValidatorLookup;
+    private static readonly IDictionary<string, Func<bool>> sValidatorLookup;
 
     static Validators()
     {
         sValidatorLookup = new Dictionary<string, Func<bool>>();
-        foreach (var validatorInst in IServiceAttribute.GetMethodsWithAttribute(typeof(ServiceValidatorAttribute)))
+        foreach ((Type, System.Reflection.MethodInfo, IServiceAttribute) validatorInst in IServiceAttribute.GetMethodsWithAttribute(typeof(ServiceValidatorAttribute)))
         {
             if (!validatorInst.Item2.IsStatic)
                 continue;
@@ -26,18 +26,12 @@ public static class Validators
         }
     }
 
-    public static bool Run(string name, bool defaultIfMissing = false)
-    {
-        if (sValidatorLookup.TryGetValue(name, out var validator))
-            return validator();
-
-        return defaultIfMissing;
-    }
+    public static bool Run(string name, bool defaultIfMissing = false) => sValidatorLookup.TryGetValue(name, out Func<bool>? validator) ? validator() : defaultIfMissing;
 
     public static bool RunAll(bool runThroughFailure = false)
     {
         var allSuccess = true;
-        foreach (var validator in sValidatorLookup.Values)
+        foreach (Func<bool> validator in sValidatorLookup.Values)
         {
             if (!validator())
             {

@@ -9,48 +9,30 @@ public class TemplateService : IDaprService
     /// <summary>
     /// Dapr endpoint to get a specific template definition.
     /// </summary>
-    public async Task Get()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task Get() => await Task.CompletedTask;
 
     /// <summary>
     /// Dapr endpoint to list template definitions.
     /// </summary>
-    public async Task List()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task List() => await Task.CompletedTask;
 
     /// <summary>
     /// Dapr endpoint to create new template definitions.
     /// </summary>
-    public async Task Create()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task Create() => await Task.CompletedTask;
 
     /// <summary>
     /// Dapr endpoint to update an existing template definition.
     /// </summary>
-    public async Task Update()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task Update() => await Task.CompletedTask;
 
     /// <summary>
     /// Dapr endpoint to destroy an existing template definition.
     /// </summary>
-    public async Task Destroy()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task Destroy() => await Task.CompletedTask;
 
     /// <summary>
     /// Dapr endpoint to destroy an existing template definition.
     /// </summary>
-    public async Task DestroyByKey()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task DestroyByKey() => await Task.CompletedTask;
 }

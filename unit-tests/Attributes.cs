@@ -142,10 +142,10 @@ public class Attributes : IClassFixture<CollectionFixture>
     [TestClassAttributeB]
     private class TestFieldClassB
     {
-        private string FieldA = "Default";
+        private readonly string FieldA = "Default";
         [TestFieldAttributeB]
-        private string FieldB = "Default";
-        private string FieldC = "Default";
+        private readonly string FieldB = "Default";
+        private readonly string FieldC = "Default";
 
         public TestFieldClassB(string fieldA, string fieldB, string fieldC)
         {
@@ -158,9 +158,9 @@ public class Attributes : IClassFixture<CollectionFixture>
     private class TestFieldClassA_NoAttr
     {
         [TestFieldAttributeA]
-        private string FieldA;
-        private string FieldB;
-        private string FieldC;
+        private readonly string FieldA;
+        private readonly string FieldB;
+        private readonly string FieldC;
 
         public TestFieldClassA_NoAttr(string name, string value, string type)
         {
@@ -170,10 +170,7 @@ public class Attributes : IClassFixture<CollectionFixture>
         }
     }
 
-    private Attributes(CollectionFixture collectionContext)
-    {
-        TestCollectionContext = collectionContext;
-    }
+    private Attributes(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
 
     public Attributes(CollectionFixture collectionContext, ITestOutputHelper output)
     {
@@ -187,7 +184,7 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetClassWithAttribute()
     {
-        var withAttr = IServiceAttribute.GetClassesWithAttribute(typeof(TestClassAttributeA));
+        List<(Type, IServiceAttribute)> withAttr = IServiceAttribute.GetClassesWithAttribute(typeof(TestClassAttributeA));
         Assert.NotNull(withAttr);
         Assert.Contains(withAttr, t => t.Item1 == typeof(TestClassA));
         Assert.DoesNotContain(withAttr, t => t.Item1 == typeof(TestClassB));
@@ -201,12 +198,12 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetClassWithAttribute_Generic()
     {
-        var withAttrA = IServiceAttribute.GetClassesWithAttribute<TestClassAttributeA>();
+        List<(Type, TestClassAttributeA)> withAttrA = IServiceAttribute.GetClassesWithAttribute<TestClassAttributeA>();
         Assert.NotNull(withAttrA);
         Assert.Contains(withAttrA, t => t.Item1 == typeof(TestClassA));
         Assert.DoesNotContain(withAttrA, t => t.Item1 == typeof(TestClassB));
 
-        var withAttrB = IServiceAttribute.GetClassesWithAttribute<TestClassAttributeB>();
+        List<(Type, TestClassAttributeB)> withAttrB = IServiceAttribute.GetClassesWithAttribute<TestClassAttributeB>();
         Assert.NotNull(withAttrB);
         Assert.DoesNotContain(withAttrB, t => t.Item1 == typeof(TestClassA));
         Assert.Contains(withAttrB, t => t.Item1 == typeof(TestClassB));
@@ -215,7 +212,7 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetMethodWithAttribute()
     {
-        var withAttr = IServiceAttribute.GetMethodsWithAttribute(typeof(TestMethodAttributeA));
+        List<(Type, MethodInfo, IServiceAttribute)> withAttr = IServiceAttribute.GetMethodsWithAttribute(typeof(TestMethodAttributeA));
         Assert.NotNull(withAttr);
         Assert.Contains(withAttr, t => t.Item2 ==
             typeof(TestMethodClassA).GetMethod(nameof(TestMethodClassA.TestMethodA), UseAllBindingFlags()));
@@ -237,7 +234,7 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetMethodWithAttribute_Generic()
     {
-        var withAttrA = IServiceAttribute.GetMethodsWithAttribute<TestMethodAttributeA>();
+        List<(Type, MethodInfo, TestMethodAttributeA)> withAttrA = IServiceAttribute.GetMethodsWithAttribute<TestMethodAttributeA>();
         Assert.NotNull(withAttrA);
         Assert.Contains(withAttrA, t => t.Item2 ==
             typeof(TestMethodClassA).GetMethod(nameof(TestMethodClassA.TestMethodA), UseAllBindingFlags()));
@@ -246,7 +243,7 @@ public class Attributes : IClassFixture<CollectionFixture>
         Assert.DoesNotContain(withAttrA, t => t.Item2 ==
             typeof(TestMethodClassA).GetMethod(nameof(TestMethodClassA.TestMethodC), UseAllBindingFlags()));
 
-        var withAttrB = IServiceAttribute.GetMethodsWithAttribute<TestMethodAttributeB>();
+        List<(Type, MethodInfo, TestMethodAttributeB)> withAttrB = IServiceAttribute.GetMethodsWithAttribute<TestMethodAttributeB>();
         Assert.NotNull(withAttrB);
         Assert.DoesNotContain(withAttrB, t => t.Item2 ==
             typeof(TestMethodClassB).GetMethod("TestMethodA", UseAllBindingFlags()));
@@ -259,7 +256,7 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetPropertyWithAttribute()
     {
-        var withAttr = IServiceAttribute.GetPropertiesWithAttribute(typeof(TestPropertyAttributeA));
+        List<(Type, PropertyInfo, IServiceAttribute)> withAttr = IServiceAttribute.GetPropertiesWithAttribute(typeof(TestPropertyAttributeA));
         Assert.NotNull(withAttr);
         Assert.Contains(withAttr, t => t.Item2 ==
             typeof(TestPropertyClassA).GetProperty(nameof(TestPropertyClassA.PropA), UseAllBindingFlags()));
@@ -281,7 +278,7 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetPropertyWithAttribute_Generic()
     {
-        var withAttrA = IServiceAttribute.GetPropertiesWithAttribute<TestPropertyAttributeA>();
+        List<(Type, PropertyInfo, TestPropertyAttributeA)> withAttrA = IServiceAttribute.GetPropertiesWithAttribute<TestPropertyAttributeA>();
         Assert.NotNull(withAttrA);
         Assert.Contains(withAttrA, t => t.Item2 ==
             typeof(TestPropertyClassA).GetProperty(nameof(TestPropertyClassA.PropA), UseAllBindingFlags()));
@@ -290,7 +287,7 @@ public class Attributes : IClassFixture<CollectionFixture>
         Assert.DoesNotContain(withAttrA, t => t.Item2 ==
             typeof(TestPropertyClassA).GetProperty(nameof(TestPropertyClassA.PropC), UseAllBindingFlags()));
 
-        var withAttrB = IServiceAttribute.GetPropertiesWithAttribute<TestPropertyAttributeB>();
+        List<(Type, PropertyInfo, TestPropertyAttributeB)> withAttrB = IServiceAttribute.GetPropertiesWithAttribute<TestPropertyAttributeB>();
         Assert.NotNull(withAttrB);
         Assert.DoesNotContain(withAttrB, t => t.Item2 ==
             typeof(TestPropertyClassB).GetProperty("PropA", UseAllBindingFlags()));
@@ -303,7 +300,7 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetFieldWithAttribute()
     {
-        var withAttr = IServiceAttribute.GetFieldsWithAttribute(typeof(TestFieldAttributeA));
+        List<(Type, FieldInfo, IServiceAttribute)> withAttr = IServiceAttribute.GetFieldsWithAttribute(typeof(TestFieldAttributeA));
         Assert.NotNull(withAttr);
         Assert.Contains(withAttr, t => t.Item2 ==
             typeof(TestFieldClassA).GetField(nameof(TestFieldClassA.FieldA), UseAllBindingFlags()));
@@ -325,7 +322,7 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetFieldWithAttribute_Generic()
     {
-        var withAttrA = IServiceAttribute.GetFieldsWithAttribute<TestFieldAttributeA>();
+        List<(Type, FieldInfo, TestFieldAttributeA)> withAttrA = IServiceAttribute.GetFieldsWithAttribute<TestFieldAttributeA>();
         Assert.NotNull(withAttrA);
         Assert.Contains(withAttrA, t => t.Item2 ==
             typeof(TestFieldClassA).GetField(nameof(TestFieldClassA.FieldA), UseAllBindingFlags()));
@@ -334,7 +331,7 @@ public class Attributes : IClassFixture<CollectionFixture>
         Assert.DoesNotContain(withAttrA, t => t.Item2 ==
             typeof(TestFieldClassA).GetField(nameof(TestFieldClassA.FieldC), UseAllBindingFlags()));
 
-        var withAttrB = IServiceAttribute.GetFieldsWithAttribute<TestFieldAttributeB>();
+        List<(Type, FieldInfo, TestFieldAttributeB)> withAttrB = IServiceAttribute.GetFieldsWithAttribute<TestFieldAttributeB>();
         Assert.NotNull(withAttrB);
         Assert.DoesNotContain(withAttrB, t => t.Item2 ==
             typeof(TestFieldClassB).GetField("FieldA", UseAllBindingFlags()));
@@ -347,7 +344,7 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetMethodWithAttribute_SpecificClass()
     {
-        var withAttr = IServiceAttribute.GetMethodsWithAttribute(typeof(TestMethodClassA), typeof(TestMethodAttributeA));
+        List<(MethodInfo, IServiceAttribute)> withAttr = IServiceAttribute.GetMethodsWithAttribute(typeof(TestMethodClassA), typeof(TestMethodAttributeA));
         Assert.NotNull(withAttr);
         Assert.Contains(withAttr, t => t.Item1 ==
             typeof(TestMethodClassA).GetMethod(nameof(TestMethodClassA.TestMethodA), UseAllBindingFlags()));
@@ -365,14 +362,14 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetMethodWithAttribute_SpecificClass_Generic()
     {
-        var withAttrA = IServiceAttribute.GetMethodsWithAttribute<TestMethodAttributeA>(typeof(TestMethodClassA));
+        List<(MethodInfo, TestMethodAttributeA)> withAttrA = IServiceAttribute.GetMethodsWithAttribute<TestMethodAttributeA>(typeof(TestMethodClassA));
         Assert.NotNull(withAttrA);
         Assert.Contains(withAttrA, t => t.Item1 ==
             typeof(TestMethodClassA).GetMethod(nameof(TestMethodClassA.TestMethodA), UseAllBindingFlags()));
         Assert.DoesNotContain(withAttrA, t => t.Item1 ==
             typeof(TestMethodClassB).GetMethod("TestMethodA", UseAllBindingFlags()));
 
-        var withAttrB = IServiceAttribute.GetMethodsWithAttribute<TestMethodAttributeB>(typeof(TestMethodClassB));
+        List<(MethodInfo, TestMethodAttributeB)> withAttrB = IServiceAttribute.GetMethodsWithAttribute<TestMethodAttributeB>(typeof(TestMethodClassB));
         Assert.NotNull(withAttrB);
         Assert.Contains(withAttrB, t => t.Item1 ==
             typeof(TestMethodClassB).GetMethod("TestMethodB", UseAllBindingFlags()));
@@ -383,7 +380,7 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetPropertyWithAttribute_SpecificClass()
     {
-        var withAttr = IServiceAttribute.GetPropertiesWithAttribute(typeof(TestPropertyClassA), typeof(TestPropertyAttributeA));
+        List<(PropertyInfo, IServiceAttribute)> withAttr = IServiceAttribute.GetPropertiesWithAttribute(typeof(TestPropertyClassA), typeof(TestPropertyAttributeA));
         Assert.NotNull(withAttr);
         Assert.Contains(withAttr, t => t.Item1 ==
             typeof(TestPropertyClassA).GetProperty(nameof(TestPropertyClassA.PropA), UseAllBindingFlags()));
@@ -401,14 +398,14 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetPropertyWithAttribute_SpecificClass_Generic()
     {
-        var withAttrA = IServiceAttribute.GetPropertiesWithAttribute<TestPropertyAttributeA>(typeof(TestPropertyClassA));
+        List<(PropertyInfo, TestPropertyAttributeA)> withAttrA = IServiceAttribute.GetPropertiesWithAttribute<TestPropertyAttributeA>(typeof(TestPropertyClassA));
         Assert.NotNull(withAttrA);
         Assert.Contains(withAttrA, t => t.Item1 ==
             typeof(TestPropertyClassA).GetProperty(nameof(TestPropertyClassA.PropA), UseAllBindingFlags()));
         Assert.DoesNotContain(withAttrA, t => t.Item1 ==
             typeof(TestPropertyClassB).GetProperty("PropA", UseAllBindingFlags()));
 
-        var withAttrB = IServiceAttribute.GetPropertiesWithAttribute<TestPropertyAttributeB>(typeof(TestPropertyClassB));
+        List<(PropertyInfo, TestPropertyAttributeB)> withAttrB = IServiceAttribute.GetPropertiesWithAttribute<TestPropertyAttributeB>(typeof(TestPropertyClassB));
         Assert.NotNull(withAttrB);
         Assert.Contains(withAttrB, t => t.Item1 ==
             typeof(TestPropertyClassB).GetProperty("PropB", UseAllBindingFlags()));
@@ -419,7 +416,7 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetFieldWithAttribute_SpecificClass()
     {
-        var withAttr = IServiceAttribute.GetFieldsWithAttribute(typeof(TestFieldClassA), typeof(TestFieldAttributeA));
+        List<(FieldInfo, IServiceAttribute)> withAttr = IServiceAttribute.GetFieldsWithAttribute(typeof(TestFieldClassA), typeof(TestFieldAttributeA));
         Assert.NotNull(withAttr);
         Assert.Contains(withAttr, t => t.Item1 ==
             typeof(TestFieldClassA).GetField(nameof(TestFieldClassA.FieldA), UseAllBindingFlags()));
@@ -437,14 +434,14 @@ public class Attributes : IClassFixture<CollectionFixture>
     [Fact]
     public void GetFieldWithAttribute_SpecificClass_Generic()
     {
-        var withAttrA = IServiceAttribute.GetFieldsWithAttribute<TestFieldAttributeA>(typeof(TestFieldClassA));
+        List<(FieldInfo, TestFieldAttributeA)> withAttrA = IServiceAttribute.GetFieldsWithAttribute<TestFieldAttributeA>(typeof(TestFieldClassA));
         Assert.NotNull(withAttrA);
         Assert.Contains(withAttrA, t => t.Item1 ==
             typeof(TestFieldClassA).GetField(nameof(TestFieldClassA.FieldA), UseAllBindingFlags()));
         Assert.DoesNotContain(withAttrA, t => t.Item1 ==
             typeof(TestFieldClassB).GetField("FieldA", UseAllBindingFlags()));
 
-        var withAttrB = IServiceAttribute.GetFieldsWithAttribute<TestFieldAttributeB>(typeof(TestFieldClassB));
+        List<(FieldInfo, TestFieldAttributeB)> withAttrB = IServiceAttribute.GetFieldsWithAttribute<TestFieldAttributeB>(typeof(TestFieldClassB));
         Assert.NotNull(withAttrB);
         Assert.Contains(withAttrB, t => t.Item1 ==
             typeof(TestFieldClassB).GetField("FieldB", UseAllBindingFlags()));

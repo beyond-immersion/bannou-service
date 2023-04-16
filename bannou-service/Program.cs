@@ -17,8 +17,7 @@ public static class Program
     {
         get
         {
-            if (_configurationRoot == null)
-                _configurationRoot = IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
+            _configurationRoot ??= IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
 
             return _configurationRoot;
         }
@@ -39,8 +38,7 @@ public static class Program
     {
         get
         {
-            if (_configuration == null)
-                _configuration = ConfigurationRoot.Get<ServiceConfiguration>() ?? new ServiceConfiguration();
+            _configuration ??= ConfigurationRoot.Get<ServiceConfiguration>() ?? new ServiceConfiguration();
 
             return _configuration;
         }
@@ -57,8 +55,7 @@ public static class Program
     {
         get
         {
-            if (_serviceGUID == null)
-                _serviceGUID = Configuration.ForceServiceID ?? Guid.NewGuid().ToString().ToLower();
+            _serviceGUID ??= Configuration.ForceServiceID ?? Guid.NewGuid().ToString().ToLower();
 
             return _serviceGUID;
         }
@@ -95,14 +92,14 @@ public static class Program
             if (_serviceAppLookup == null)
             {
                 _serviceAppLookup = new Dictionary<string, IList<(Type, Type, DaprServiceAttribute)>>();
-                foreach (var serviceHandler in IDaprService.FindHandlers(enabledOnly: false))
+                foreach ((Type, Type, DaprServiceAttribute) serviceHandler in IDaprService.FindHandlers(enabledOnly: false))
                 {
-                    string serviceName = serviceHandler.Item3.Name;
-                    string defaultApp = serviceHandler.Item3.DefaultApp.ToLower();
-                    string? appOverride = ConfigurationRoot.GetValue<string>(serviceName.ToUpper() + "_APP_MAPPING");
-                    string appName = appOverride ?? defaultApp;
+                    var serviceName = serviceHandler.Item3.Name;
+                    var defaultApp = serviceHandler.Item3.DefaultApp.ToLower();
+                    var appOverride = ConfigurationRoot.GetValue<string>(serviceName.ToUpper() + "_APP_MAPPING");
+                    var appName = appOverride ?? defaultApp;
 
-                    if (_serviceAppLookup.TryGetValue(appName, out var existingApp))
+                    if (_serviceAppLookup.TryGetValue(appName, out IList<(Type, Type, DaprServiceAttribute)>? existingApp))
                     {
                         existingApp.Add(serviceHandler);
                         continue;
@@ -143,8 +140,8 @@ public static class Program
             return;
         }
 
-        webAppBuilder.Services.AddAuthentication();
-        webAppBuilder.Services.AddControllers();
+        _ = webAppBuilder.Services.AddAuthentication();
+        _ = webAppBuilder.Services.AddControllers();
         webAppBuilder.Services.AddDaprClient();
         webAppBuilder.Services.AddDaprServices();
 
@@ -156,8 +153,8 @@ public static class Program
 
         try
         {
-            webApp.MapNonServiceControllers();
-            webApp.MapDaprServiceControllers();
+            _ = webApp.MapNonServiceControllers();
+            _ = webApp.MapDaprServiceControllers();
 
             Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
             {

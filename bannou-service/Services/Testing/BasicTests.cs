@@ -1,6 +1,4 @@
 ﻿using BeyondImmersion.BannouService.Controllers.Messages;
-using BeyondImmersion.BannouService.Services;
-using Google.Api;
 
 namespace BeyondImmersion.BannouService.Services.Testing;
 
@@ -49,7 +47,7 @@ public static class BasicTests
             TEST_POST
         };
 
-        foreach (var method in testMethods)
+        foreach (Func<TestingService, Task<bool>> method in testMethods)
         {
             try
             {
@@ -74,15 +72,12 @@ public static class BasicTests
         service.ResetTestVars();
         var testID = "test_id_1";
 
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, TEST_LOOPBACK_URI_PREFIX + $"/{testID}");
+        var request = new HttpRequestMessage(HttpMethod.Get, TEST_LOOPBACK_URI_PREFIX + $"/{testID}");
         await Program.DaprClient.InvokeMethodAsync(request, Program.ShutdownCancellationTokenSource.Token);
 
         await Task.Delay(TEST_WAIT_TIME_MS);
 
-        if (service.LastTestID != testID)
-            return false;
-
-        return true;
+        return service.LastTestID == testID;
     }
 
     private static async Task<bool> TEST_GET_Localhost(TestingService service)
@@ -90,15 +85,12 @@ public static class BasicTests
         service.ResetTestVars();
         var testID = "test_id_1";
 
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, TEST_LOCALHOST_URI_PREFIX + $"/{testID}");
+        var request = new HttpRequestMessage(HttpMethod.Get, TEST_LOCALHOST_URI_PREFIX + $"/{testID}");
         await Program.DaprClient.InvokeMethodAsync(request, Program.ShutdownCancellationTokenSource.Token);
 
         await Task.Delay(TEST_WAIT_TIME_MS);
 
-        if (service.LastTestID != testID)
-            return false;
-
-        return true;
+        return service.LastTestID == testID;
     }
 
     private static async Task<bool> TEST_GET_ID(TestingService service)
@@ -111,10 +103,7 @@ public static class BasicTests
 
         await Task.Delay(TEST_WAIT_TIME_MS);
 
-        if (service.LastTestID != testID)
-            return false;
-
-        return true;
+        return service.LastTestID == testID;
     }
 
     private static async Task<bool> TEST_GET_Service_ID(TestingService service)
@@ -128,10 +117,7 @@ public static class BasicTests
 
         await Task.Delay(TEST_WAIT_TIME_MS);
 
-        if (service.LastTestID != testID || service.LastTestService != testService)
-            return false;
-
-        return true;
+        return service.LastTestID == testID && service.LastTestService == testService;
     }
 
     private static async Task<bool> TEST_POST(TestingService service)
@@ -154,9 +140,6 @@ public static class BasicTests
             return false;
 
         var receivedData = (TestingRunTestRequest)service.LastTestRequest;
-        if (receivedData.ID != testID || receivedData.Service != testService)
-            return false;
-
-        return true;
+        return receivedData.ID == testID && receivedData.Service == testService;
     }
 }

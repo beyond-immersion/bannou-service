@@ -1,6 +1,6 @@
-﻿using System.Reflection;
+﻿using Dapr.Extensions.Configuration;
+using System.Reflection;
 using System.Text.Json;
-using Dapr.Extensions.Configuration;
 
 namespace BeyondImmersion.BannouService.Application;
 
@@ -35,15 +35,10 @@ public interface IServiceConfiguration
             .All(t =>
             {
                 var propValue = t.Item1.GetValue(this);
-                if (propValue == null)
-                    return false;
-
-                if (!t.Item2.AllowEmptyStrings &&
-                    t.Item1.PropertyType == typeof(string) &&
-                    string.IsNullOrWhiteSpace((string)propValue))
-                    return false;
-
-                return true;
+                return propValue != null
+&& (t.Item2.AllowEmptyStrings ||
+                    t.Item1.PropertyType != typeof(string) ||
+!string.IsNullOrWhiteSpace((string)propValue));
             });
     }
 
@@ -63,10 +58,7 @@ public interface IServiceConfiguration
             throw new InvalidCastException($"Type provided does not implement {nameof(IServiceConfiguration)}");
 
         IServiceConfiguration? serviceConfig = BuildConfiguration(configurationType);
-        if (serviceConfig == null)
-            return true;
-
-        return serviceConfig.HasRequired();
+        return serviceConfig == null || serviceConfig.HasRequired();
     }
 
     /// <summary>
@@ -80,8 +72,10 @@ public interface IServiceConfiguration
             .AddCommandLine(args ?? Environment.GetCommandLineArgs(), CreateAllSwitchMappings());
 
         if (Program.DaprClient != null && Program.Configuration?.DaprConfigurationName != null)
-            configurationBuilder.AddDaprConfigurationStore(Program.Configuration.DaprConfigurationName,
+        {
+            _ = configurationBuilder.AddDaprConfigurationStore(Program.Configuration.DaprConfigurationName,
                 Array.Empty<string>(), Program.DaprClient, TimeSpan.FromSeconds(3), null);
+        }
 
         return configurationBuilder.Build();
     }
@@ -131,9 +125,13 @@ public interface IServiceConfiguration
     {
         var allSwitchMappings = new Dictionary<string, string>();
         foreach ((Type, ServiceConfigurationAttribute) classWithAttr in IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
-            foreach (var kvp in CreateSwitchMappings(classWithAttr.Item1))
+        {
+            foreach (KeyValuePair<string, string> kvp in CreateSwitchMappings(classWithAttr.Item1))
+            {
                 if (!allSwitchMappings.ContainsKey(kvp.Key))
                     allSwitchMappings[kvp.Key] = kvp.Value;
+            }
+        }
 
         return allSwitchMappings;
     }

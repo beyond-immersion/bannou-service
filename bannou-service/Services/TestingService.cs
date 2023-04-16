@@ -1,5 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Controllers.Messages;
-using Google.Api;
+using BeyondImmersion.BannouService.Services.Configuration;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Services;
@@ -88,12 +88,16 @@ public class TestingService : IDaprService
 
                 if (!AsyncServiceTests.ContainsKey(serviceName))
                 {
-                    var newDict = new Dictionary<string, Func<TestingService, Task<bool>>>();
-                    newDict.Add(testID, methodDel);
+                    var newDict = new Dictionary<string, Func<TestingService, Task<bool>>>
+                    {
+                        { testID, methodDel }
+                    };
                     AsyncServiceTests.Add(serviceName, newDict);
                 }
                 else
+                {
                     _ = AsyncServiceTests[serviceName].TryAdd(testID, methodDel);
+                }
             }
             catch { }
         }
@@ -110,12 +114,12 @@ public class TestingService : IDaprService
         Func<TestingService, Task<bool>>? testDel = null;
         if (!string.IsNullOrWhiteSpace(service))
         {
-            if (AsyncServiceTests.TryGetValue(service.ToLower(), out var idLookup))
-                idLookup.TryGetValue(id, out testDel);
+            if (AsyncServiceTests.TryGetValue(service.ToLower(), out IDictionary<string, Func<TestingService, Task<bool>>>? idLookup))
+                _ = idLookup.TryGetValue(id, out testDel);
         }
         else
         {
-            foreach (var serviceLookup in AsyncServiceTests)
+            foreach (KeyValuePair<string, IDictionary<string, Func<TestingService, Task<bool>>>> serviceLookup in AsyncServiceTests)
             {
                 if (serviceLookup.Value.ContainsKey(id))
                 {
@@ -141,11 +145,11 @@ public class TestingService : IDaprService
     /// </summary>
     public async Task<bool> RunAllForService(string service, bool defaultIfNotFound = false, bool stopOnFailure = false)
     {
-        bool testsFound = false;
-        bool results = true;
+        var testsFound = false;
+        var results = true;
         if (AsyncServiceTests.ContainsKey(service))
         {
-            foreach (var testLookup in AsyncServiceTests[service])
+            foreach (KeyValuePair<string, Func<TestingService, Task<bool>>> testLookup in AsyncServiceTests[service])
             {
                 testsFound = true;
                 Program.Logger?.Log(LogLevel.Debug, $"Running test '{testLookup.Key}' against service '{service}'.");
@@ -173,17 +177,17 @@ public class TestingService : IDaprService
     /// </summary>
     public async Task<bool> RunAllEnabled(bool defaultIfNotFound = false, bool stopOnFailure = false)
     {
-        bool testsFound = false;
-        bool results = true;
-        foreach (var serviceLookup in AsyncServiceTests)
+        var testsFound = false;
+        var results = true;
+        foreach (KeyValuePair<string, IDictionary<string, Func<TestingService, Task<bool>>>> serviceLookup in AsyncServiceTests)
         {
-            string serviceName = serviceLookup.Key;
+            var serviceName = serviceLookup.Key;
 
             if (IDaprService.IsEnabled(serviceName))
             {
-                foreach (var testLookup in serviceLookup.Value)
+                foreach (KeyValuePair<string, Func<TestingService, Task<bool>>> testLookup in serviceLookup.Value)
                 {
-                    string testName = testLookup.Key;
+                    var testName = testLookup.Key;
                     testsFound = true;
 
                     Program.Logger?.Log(LogLevel.Debug, $"Running test '{testName}' against service '{serviceName}'.");
@@ -212,15 +216,15 @@ public class TestingService : IDaprService
     /// </summary>
     public async Task<bool> RunAll(bool defaultIfNotFound = false, bool stopOnFailure = false)
     {
-        bool testsFound = false;
-        bool results = true;
-        foreach (var serviceLookup in AsyncServiceTests)
+        var testsFound = false;
+        var results = true;
+        foreach (KeyValuePair<string, IDictionary<string, Func<TestingService, Task<bool>>>> serviceLookup in AsyncServiceTests)
         {
-            string serviceName = serviceLookup.Key;
+            var serviceName = serviceLookup.Key;
 
-            foreach (var testLookup in serviceLookup.Value)
+            foreach (KeyValuePair<string, Func<TestingService, Task<bool>>> testLookup in serviceLookup.Value)
             {
-                string testName = testLookup.Key;
+                var testName = testLookup.Key;
                 testsFound = true;
 
                 Program.Logger?.Log(LogLevel.Debug, $"Running test '{testName}' against service '{serviceName}'.");
