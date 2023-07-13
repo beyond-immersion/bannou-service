@@ -28,6 +28,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{
 		.github\workflows\ci.service.yml = .github\workflows\ci.service.yml
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{1E4033CE-EDE2-4140-ABB1-0B55250255F9}"
+	ProjectSection(SolutionItems) = preProject
+		documentation\CONTRIBUTING.md = documentation\CONTRIBUTING.md
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,6 +67,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{6905E47E-6C04-4CF6-894F-2643528E490D} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
 		{8104DBD9-C9EB-460A-842B-9385C32836C6} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
+		{1E4033CE-EDE2-4140-ABB1-0B55250255F9} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC13195D-546C-43E1-9AAA-2C0BF08BA428}

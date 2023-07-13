@@ -20,47 +20,15 @@ namespace BeyondImmersion.BannouService.Controllers;
 [Produces(MediaTypeNames.Application.Json)]
 public sealed class LoginController : BaseDaprController
 {
-    /// <summary>
-    /// Unique service ID for instance that's being forwarded to, if applicable.
-    /// </summary>
-    internal string ForwardServiceID { get; }
+    protected LoginService Service { get; }
 
-    /// <summary>
-    /// Number of login requests to handle (per second).
-    /// -1 indicates to let everything through.
-    /// </summary>
-    internal int QueueTime { get; } = -1;
-
-    /// <summary>
-    /// List of clients in the queue to login.
-    /// </summary>
-    internal ConcurrentQueue<string> LoginQueue = new();
-
-    [Obsolete]
-    public LoginController()
+    public LoginController(LoginService service)
     {
-        if (Program.DaprClient != null)
-        {
-            Dapr.Client.GetConfigurationResponse configurationResponse = Program.DaprClient.GetConfiguration("service config", new[] { "login_queue_time" }).Result;
-            if (configurationResponse != null)
-            {
-                foreach (KeyValuePair<string, Dapr.Client.ConfigurationItem> configKvp in configurationResponse.Items)
-                {
-                    if (configKvp.Key == "login_queue_time")
-                    {
-                        // use configured processing rate for login queue, if set (per second)
-                        if (int.TryParse(configKvp.Value.Value, out var configuredProcessingRate))
-                            QueueTime = configuredProcessingRate;
-                    }
-                }
-            }
-        }
+        Service = service;
     }
 
     /// <summary>
     /// Shared login endpoint / first point of contact for clients.
-    /// Generate the queue_id, and feed the queue_url back to the client
-    /// for any follow-up requests (if there's a queue).
     /// </summary>
     [DaprRoute("login")]
     public async Task Login(HttpContext context)
@@ -68,6 +36,8 @@ public sealed class LoginController : BaseDaprController
         string? queueID = null;
         if (context.Request.Headers.TryGetValue("queue_id", out Microsoft.Extensions.Primitives.StringValues queueIDHeader))
             queueID = queueIDHeader.ToString();
+
+        var response = await Service.EnqueueClient(queueID);
 
         await context.Response.StartAsync();
     }

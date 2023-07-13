@@ -13,6 +13,9 @@ namespace BeyondImmersion.BannouService.Services;
 /// </summary>
 public interface IDaprService
 {
+    bool OnLoad() { return true; }
+    void OnExit() { }
+
     public string? GetName()
         => GetType().GetServiceName();
 
