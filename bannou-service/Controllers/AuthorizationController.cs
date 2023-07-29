@@ -31,6 +31,8 @@ public class AuthorizationController : BaseDaprController
         await Task.CompletedTask;
         string token = Guid.NewGuid().ToString();
 
+        Program.Logger?.Log(LogLevel.Debug, $"Authorization API generated token [{token}] for user [{username}].");
+
         var response = new AuthorizationTokenResponse()
         {
             Token = token

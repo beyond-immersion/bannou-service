@@ -72,6 +72,7 @@ public static class AuthorizationTests
         if (string.IsNullOrWhiteSpace(response.Token))
             return false;
 
+        Program.Logger?.Log(LogLevel.Information, $"Authorization API responded with token: [{response.Token}].");
         return true;
     }
 }
