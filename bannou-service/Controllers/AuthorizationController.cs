@@ -21,9 +21,10 @@ public class AuthorizationController : BaseDaprController
         Service = service;
     }
 
+    [HttpPost]
     [DaprRoute("token")]
-    public async Task<ActionResult> POST_Token(
-        [FromHeader(Name = "username")]string username,
+    public async Task<IActionResult> POST_Token(
+        [FromHeader(Name = "username")] string username,
         [FromHeader(Name = "password")] string password,
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)]AuthorizationTokenRequest? request)
     {

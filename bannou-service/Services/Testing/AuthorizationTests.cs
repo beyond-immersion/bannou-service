@@ -42,13 +42,13 @@ public static class AuthorizationTests
         {
             if (!await TEST_POST(service))
             {
-                Program.Logger?.Log(LogLevel.Error, $"Integration test '{TEST_POST}' failed.");
+                Program.Logger?.Log(LogLevel.Error, $"Integration test '{nameof(TEST_POST)}' failed.");
                 return false;
             }
         }
         catch (Exception exc)
         {
-            Program.Logger?.Log(LogLevel.Error, exc, $"An exception occurred running integration test '{TEST_POST}'.");
+            Program.Logger?.Log(LogLevel.Error, exc, $"An exception occurred running integration test '{nameof(TEST_POST)}'.");
             return false;
         }
 
