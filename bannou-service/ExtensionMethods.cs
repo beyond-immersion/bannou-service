@@ -133,11 +133,11 @@ public static partial class ExtensionMethods
     {
         foreach ((Type, Type, DaprServiceAttribute) serviceClassInfo in IDaprService.FindHandlers(enabledOnly: true))
         {
-            Type handlerType = serviceClassInfo.Item1;
-            Type serviceType = serviceClassInfo.Item2;
-            var serviceName = serviceType.GetServiceName();
+            Type interfaceType = serviceClassInfo.Item1;
+            Type implementationType = serviceClassInfo.Item2;
+            var serviceName = implementationType.GetServiceName();
 
-            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForHandler(handlerType))
+            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForHandler(interfaceType))
             {
                 var controllerName = controllerClassInfo.Item2?.Name ?? controllerClassInfo.Item2?.Template;
                 if (string.IsNullOrWhiteSpace(controllerName))

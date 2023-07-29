@@ -1,5 +1,6 @@
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using System.Runtime.CompilerServices;
 
 [assembly: ApiController]
@@ -133,6 +134,17 @@ public static class Program
             return;
         }
 
+        var serviceTypes = IDaprService.FindHandlers(enabledOnly: true).Select(t => t.Item2);
+        if (serviceTypes == null)
+        {
+            Logger.Log(LogLevel.Error, null, "No services enabled- exiting application.");
+            return;
+        }
+
+        DaprClient = new DaprClientBuilder()
+            .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig)
+            .Build();
+
         WebApplicationBuilder? webAppBuilder = WebApplication.CreateBuilder(args);
         if (webAppBuilder == null)
         {
@@ -146,15 +158,21 @@ public static class Program
         webAppBuilder.Services.AddDaprServices();
 
         WebApplication webApp = webAppBuilder.Build();
-
-        DaprClient = new DaprClientBuilder()
-            .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig)
-            .Build();
-
         try
         {
             _ = webApp.MapNonServiceControllers();
             _ = webApp.MapDaprServiceControllers();
+
+            // initialize service handlers
+            foreach (var serviceType in serviceTypes)
+            {
+                if (serviceType != null)
+                {
+                    IDaprService? serviceInst = (IDaprService?)webApp.Services.GetService(serviceType);
+                    if (serviceInst != null)
+                        await serviceInst.OnLoad(webApp);
+                }
+            }
 
             Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
             {
@@ -163,6 +181,17 @@ public static class Program
             }
 
             Logger.Log(LogLevel.Debug, null, "Webhost stopped- starting controlled service shutdown.");
+
+            // stop service handlers
+            foreach (var serviceType in serviceTypes)
+            {
+                if (serviceType != null)
+                {
+                    IDaprService? serviceInst = (IDaprService?)webApp.Services.GetService(serviceType);
+                    if (serviceInst != null)
+                        await serviceInst.OnExit();
+                }
+            }
         }
         catch (Exception e)
         {

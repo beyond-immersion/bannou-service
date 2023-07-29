@@ -37,7 +37,7 @@ public interface IDaprController
         => FindForHandler(typeof(T));
 
     /// <summary>
-    /// Gets the full list of associated controllers to a given service type.
+    /// Gets the full list of associated controllers to a given handler type.
     /// </summary>
     public static (Type, DaprControllerAttribute)[] FindForHandler(Type handlerType)
     {

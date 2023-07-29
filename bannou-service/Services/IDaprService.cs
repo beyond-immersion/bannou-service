@@ -13,8 +13,17 @@ namespace BeyondImmersion.BannouService.Services;
 /// </summary>
 public interface IDaprService
 {
-    bool OnLoad() { return true; }
-    void OnExit() { }
+    async Task<bool> OnLoad(IApplicationBuilder appBuilder)
+    {
+        await Task.CompletedTask;
+        return true;
+    }
+
+    async Task OnExit()
+    {
+        await Task.CompletedTask;
+    }
+
 
     public string? GetName()
         => GetType().GetServiceName();
@@ -179,6 +188,7 @@ public interface IDaprService
     /// <summary>
     /// Find the highest priority/derived service type with the given name.
     /// </summary>
+    /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
     public static (Type, Type, DaprServiceAttribute)? FindHandler(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -196,6 +206,7 @@ public interface IDaprService
     /// <summary>
     /// Find the implementation for the given service handler.
     /// </summary>
+    /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
     public static (Type, Type, DaprServiceAttribute)? FindHandler(Type handlerType)
     {
         foreach ((Type, Type, DaprServiceAttribute) serviceInfo in FindHandlers())
@@ -211,6 +222,7 @@ public interface IDaprService
     /// Gets the full list of all dapr service classes (with associated attribute) in loaded assemblies.
     /// If enabledOnly set, will not return services that have been disabled via configuration.
     /// </summary>
+    /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
     public static (Type, Type, DaprServiceAttribute)[] FindHandlers(bool enabledOnly = false)
     {
         // first get all service types
