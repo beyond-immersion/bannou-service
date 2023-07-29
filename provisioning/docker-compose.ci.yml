@@ -3,6 +3,7 @@ services:
   bannou:
     environment:
       - TESTING_SERVICE_ENABLED=true
+      - AUTHORIZATION_SERVICE_ENABLED=true
       - ASPNETCORE_URLS=http://+:80"
       - ASPNETCORE_ENVIRONMENT=development"
 
