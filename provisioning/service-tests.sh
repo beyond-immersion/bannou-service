@@ -2,11 +2,10 @@
 
 apt-get update
 apt-get install curl -y
+apt-get install jq -y
 echo "tools installed"
 
-response=$(curl --silent --show-error --fail -X GET "127.0.0.1/testing/run-enabled")
-if [ -z "$response" ]
-then
-  exit 0
+if curl --fail -X GET "127.0.0.1/testing/run-enabled"; then
+  exit 1
 fi
-exit 1
+exit 0
