@@ -4,13 +4,20 @@ using System.Net.Mime;
 namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
-/// Service component responsible for player profile handling.
+/// Profile APIs- backed by the Profile service.
 /// </summary>
 [DaprController(template: "profile", serviceType: typeof(ProfileService), Name = "profile")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class ProfileController : BaseDaprController
 {
+    protected ProfileService Service { get; }
+
+    public ProfileController(ProfileService service)
+    {
+        Service = service;
+    }
+
     /// <summary>
     /// Create new player profile.
     /// </summary>

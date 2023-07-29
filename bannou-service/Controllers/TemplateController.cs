@@ -5,13 +5,20 @@ using System.Net.Mime;
 namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
-/// Service component responsible for template definition handling.
+/// Template APIs- backed by the Template service.
 /// </summary>
 [DaprController(template: "template", serviceType: typeof(TemplateService), Name = "template")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class TemplateController : BaseDaprController
 {
+    protected TemplateService Service { get; }
+
+    public TemplateController(TemplateService service)
+    {
+        Service = service;
+    }
+
     /// <summary>
     /// Dapr endpoint to get a specific template definition.
     /// </summary>

@@ -1,6 +1,6 @@
 ﻿using Xunit.Abstractions;
 
-namespace BeyondImmersion.UnitTests;
+namespace BeyondImmersion.UnitTests.Miscellaneous;
 
 [Collection("unit tests")]
 public class Miscellaneous : IClassFixture<CollectionFixture>

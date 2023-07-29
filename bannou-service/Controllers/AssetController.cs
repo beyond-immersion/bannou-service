@@ -4,13 +4,20 @@ using System.Net.Mime;
 namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
-/// Service component responsible for asset handling.
+/// Asset APIs- backed by the Asset service.
 /// </summary>
 [DaprController(template: "asset", serviceType: typeof(AssetService), Name = "asset")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class AssetController : BaseDaprController
 {
+    protected AssetService Service { get; }
+
+    public AssetController(AssetService service)
+    {
+        Service = service;
+    }
+
     /// <summary>
     /// List the assets in a given asset category.
     /// 

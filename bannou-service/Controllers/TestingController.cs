@@ -4,13 +4,17 @@ using Microsoft.AspNetCore.Mvc;
 namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
-/// Service component responsible for template definition handling.
+/// Test APIs- backed by the Testing service.
 /// </summary>
 [DaprController(template: "testing", serviceType: typeof(TestingService), Name = "testing")]
 public class TestingController : BaseDaprController
 {
-    private readonly TestingService _service;
-    public TestingController(TestingService service) => _service = service;
+    protected TestingService Service { get; }
+
+    public TestingController(TestingService service)
+    {
+        Service = service;
+    }
 
     /// <summary>
     /// API to run all tests.
@@ -20,7 +24,7 @@ public class TestingController : BaseDaprController
     [DaprRoute("run-all")]
     public async Task<IActionResult> RunAll()
     {
-        var result = await _service.RunAll();
+        var result = await Service.RunAll();
         return result ? Ok() : Conflict();
     }
 
@@ -32,7 +36,7 @@ public class TestingController : BaseDaprController
     [DaprRoute("run-enabled")]
     public async Task<IActionResult> RunEnabled()
     {
-        var result = await _service.RunAllEnabled();
+        var result = await Service.RunAllEnabled();
         return result ? Ok() : Conflict();
     }
 
@@ -46,7 +50,7 @@ public class TestingController : BaseDaprController
         if (string.IsNullOrWhiteSpace(id))
             return BadRequest();
 
-        var result = await _service.Run(id: id);
+        var result = await Service.Run(id: id);
         return result ? Ok() : Conflict();
     }
 
@@ -61,8 +65,8 @@ public class TestingController : BaseDaprController
             return BadRequest();
 
         var result = string.IsNullOrWhiteSpace(id)
-            ? await _service.RunAllForService(service: service)
-            : await _service.Run(service: service, id: id);
+            ? await Service.RunAllForService(service: service)
+            : await Service.Run(service: service, id: id);
         return result ? Ok() : Conflict();
     }
 
@@ -82,11 +86,11 @@ public class TestingController : BaseDaprController
             if (string.IsNullOrWhiteSpace(request.Service))
                 return BadRequest();
 
-            result = await _service.RunAllForService(service: request.Service);
+            result = await Service.RunAllForService(service: request.Service);
         }
         else
         {
-            result = await _service.Run(service: request.Service, id: request.ID);
+            result = await Service.Run(service: request.Service, id: request.ID);
         }
 
         return result ? Ok() : Conflict();
@@ -99,7 +103,7 @@ public class TestingController : BaseDaprController
         await Task.CompletedTask;
 
         if (!string.IsNullOrWhiteSpace(id))
-            _service.SetLastTestID(id);
+            Service.SetLastTestID(id);
 
         return Ok();
     }
@@ -111,10 +115,10 @@ public class TestingController : BaseDaprController
         await Task.CompletedTask;
 
         if (!string.IsNullOrWhiteSpace(service))
-            _service.SetLastTestService(service);
+            Service.SetLastTestService(service);
 
         if (!string.IsNullOrWhiteSpace(id))
-            _service.SetLastTestID(id);
+            Service.SetLastTestID(id);
 
         return Ok();
     }
@@ -127,7 +131,7 @@ public class TestingController : BaseDaprController
     {
         await Task.CompletedTask;
 
-        _service.SetLastPostRequest(request);
+        Service.SetLastPostRequest(request);
 
         return Ok();
     }

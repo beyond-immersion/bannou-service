@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Xunit.Abstractions;
 
-namespace BeyondImmersion.UnitTests;
+namespace BeyondImmersion.UnitTests.Controllers;
 
 [Collection("unit tests")]
 public class Controllers : IClassFixture<CollectionFixture>

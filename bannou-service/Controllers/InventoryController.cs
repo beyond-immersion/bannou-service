@@ -4,13 +4,20 @@ using System.Net.Mime;
 namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
-/// Service component responsible for inventory handling.
+/// Inventory APIs- backed by the Inventory service.
 /// </summary>
 [DaprController(template: "inventory", serviceType: typeof(InventoryService), Name = "inventory")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class InventoryController : BaseDaprController
 {
+    protected InventoryService Service { get; }
+
+    public InventoryController(InventoryService service)
+    {
+        Service = service;
+    }
+
     /// <summary>
     /// Create new inventory (player, world, chest, etc).
     /// </summary>

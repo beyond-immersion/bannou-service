@@ -4,13 +4,20 @@ using System.Net.Mime;
 namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
-/// Service component responsible for leaderboard handling.
+/// Leaderboard APIs- backed by the Leaderboard service.
 /// </summary>
 [DaprController(template: "leaderboard", serviceType: typeof(LeaderboardService), Name = "leaderboard")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class LeaderboardController : BaseDaprController
 {
+    protected LeaderboardService Service { get; }
+
+    public LeaderboardController(LeaderboardService service)
+    {
+        Service = service;
+    }
+
     /// <summary>
     /// List available leaderboards.
     /// </summary>

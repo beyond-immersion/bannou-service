@@ -4,13 +4,20 @@ using System.Net.Mime;
 namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
-/// Service component responsible for login authorization handling.
+/// Auth APIs- backed by the Authorization service.
 /// </summary>
 [DaprController(template: "authorization", serviceType: typeof(AuthorizationService), Name = "authorization")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class AuthorizationController : BaseDaprController
 {
+    protected AuthorizationService Service { get; }
+
+    public AuthorizationController(AuthorizationService service)
+    {
+        Service = service;
+    }
+
     /// <summary>
     /// Shared endpoint to try authorizing a client connection.
     /// Will hand back a specific instance endpoint to use, for

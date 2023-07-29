@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Xunit.Abstractions;
 
-namespace BeyondImmersion.UnitTests;
+namespace BeyondImmersion.UnitTests.Configuration;
 
 [Collection("unit tests")]
 public class Configuration : IClassFixture<CollectionFixture>

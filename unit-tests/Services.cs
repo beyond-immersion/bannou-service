@@ -1,6 +1,6 @@
 using Xunit.Abstractions;
 
-namespace BeyondImmersion.UnitTests;
+namespace BeyondImmersion.UnitTests.Services;
 
 [Collection("unit tests")]
 public class Services : IClassFixture<CollectionFixture>
