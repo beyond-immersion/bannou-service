@@ -11,12 +11,9 @@ namespace BeyondImmersion.BannouService.Services;
 [DaprService("login", lifetime: ServiceLifetime.Singleton)]
 public sealed class LoginService : IDaprService
 {
-    bool IDaprService.OnLoad()
+    async Task<bool> IDaprService.OnLoad(IApplicationBuilder appBuilder)
     {
+        await Task.CompletedTask;
         return true;
-    }
-
-    void IDaprService.OnExit()
-    {
     }
 }

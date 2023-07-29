@@ -12,7 +12,7 @@ namespace BeyondImmersion.BannouService.Controllers;
 [Produces(MediaTypeNames.Application.Json)]
 public sealed class LoginController : BaseDaprController
 {
-    protected LoginService Service { get; }
+    public LoginService Service { get; }
 
     public LoginController(LoginService service)
     {
