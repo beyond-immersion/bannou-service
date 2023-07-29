@@ -7,14 +7,14 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// <summary>
 /// Login APIs- backed by the Login service.
 /// </summary>
-[DaprController(template: "login", serviceType: typeof(LoginService), Name = "login")]
+[DaprController(template: "connect", serviceType: typeof(ConnectService), Name = "connect")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
-public sealed class LoginController : BaseDaprController
+public sealed class ConnectController : BaseDaprController
 {
-    public LoginService Service { get; }
+    public ConnectService Service { get; }
 
-    public LoginController(LoginService service)
+    public ConnectController(ConnectService service)
     {
         Service = service;
     }

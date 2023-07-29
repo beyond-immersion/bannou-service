@@ -6,10 +6,10 @@ using System.Collections.Concurrent;
 namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
-/// Service component responsible for login handling.
+/// Service component responsible for login/connection handling.
 /// </summary>
-[DaprService("login", lifetime: ServiceLifetime.Singleton)]
-public sealed class LoginService : IDaprService
+[DaprService("connect", lifetime: ServiceLifetime.Singleton)]
+public sealed class ConnectService : IDaprService
 {
     async Task<bool> IDaprService.OnLoad(IApplicationBuilder appBuilder)
     {

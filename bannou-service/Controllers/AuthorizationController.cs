@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using BeyondImmersion.BannouService.Controllers.Messages;
+using Newtonsoft.Json.Linq;
 
 namespace BeyondImmersion.BannouService.Controllers;
 
@@ -18,18 +21,19 @@ public class AuthorizationController : BaseDaprController
         Service = service;
     }
 
-    /// <summary>
-    /// Shared endpoint to try authorizing a client connection.
-    /// Will hand back a specific instance endpoint to use, for
-    /// follow-up requests / exchanges.
-    /// </summary>
-    [DaprRoute("")]
-    public async Task Authorize(HttpContext context) => await Task.CompletedTask;
+    [DaprRoute("token")]
+    public async Task<ActionResult> POST_Token(
+        [FromHeader(Name = "username")]string username,
+        [FromHeader(Name = "password")] string password,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)]AuthorizationTokenRequest? request)
+    {
+        await Task.CompletedTask;
+        string token = Guid.NewGuid().ToString();
 
-    /// <summary>
-    /// Instance endpoint, for any follow-up exchanges beyond the
-    /// initial handshake, for authorizing a client connection.
-    /// </summary>
-    [DaprRoute($"{ServiceConstants.SERVICE_UUID_PLACEHOLDER}")]
-    public async Task AuthorizeDirect(HttpContext context) => await Task.CompletedTask;
+        var response = new AuthorizationTokenResponse()
+        {
+            Token = token
+        };
+        return new OkObjectResult(response);
+    }
 }
