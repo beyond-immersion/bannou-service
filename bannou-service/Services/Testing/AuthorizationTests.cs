@@ -1,5 +1,4 @@
 ﻿using BeyondImmersion.BannouService.Controllers.Messages;
-using System.Net.Http.Headers;
 
 namespace BeyondImmersion.BannouService.Services.Testing;
 
@@ -25,7 +24,7 @@ public static class AuthorizationTests
     public static async Task<bool> RunAuthorizationTests(TestingService service)
     {
         await Task.CompletedTask;
-        Program.Logger?.Log(LogLevel.Trace, "Running all basic tests!");
+        Program.Logger?.Log(LogLevel.Trace, "Running all authorization tests!");
 
         if (service == null)
         {
