@@ -26,16 +26,37 @@ public class AuthorizationController : BaseDaprController
     public async Task<IActionResult> POST_Token(
         [FromHeader(Name = "username")] string username,
         [FromHeader(Name = "password")] string password,
-        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)]AuthorizationTokenRequest? request)
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] AuthorizationTokenRequest? request)
     {
-        await Task.CompletedTask;
-        string token = Guid.NewGuid().ToString();
+        string? token = await Service.GetJWT(username, password);
+        if (token == null)
+        {
+            // technically this could be a 403 / unauthorized situation
+            // but it's best not to leak that the account even exists
+            Program.Logger?.Log(LogLevel.Debug, $"Authorization API could not generate token for user [{username}].");
+            return new NotFoundResult();
+        }
 
         Program.Logger?.Log(LogLevel.Debug, $"Authorization API generated token [{token}] for user [{username}].");
 
         var response = new AuthorizationTokenResponse()
         {
             Token = token
+        };
+        return new OkObjectResult(response);
+    }
+
+    [HttpPost]
+    [DaprRoute("validate")]
+    public async Task<IActionResult> POST_Validate(
+        [FromBody] AuthorizationValidateRequest request)
+    {
+        await Task.CompletedTask;
+
+        Program.Logger?.Log(LogLevel.Debug, $"Authorization API validating token [{request.Token}].");
+
+        var response = new AuthorizationValidateResponse()
+        {
         };
         return new OkObjectResult(response);
     }

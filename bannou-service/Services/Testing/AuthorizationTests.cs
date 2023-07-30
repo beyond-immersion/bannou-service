@@ -40,24 +40,33 @@ public static class AuthorizationTests
 
         try
         {
-            if (!await TEST_POST(service))
+            Func<TestingService, Task<bool>>[] tests = new Func<TestingService, Task<bool>>[]
             {
-                Program.Logger?.Log(LogLevel.Error, $"Integration test '{nameof(TEST_POST)}' failed.");
-                return false;
+                TEST_Success,
+                TEST_UsernameNotFound
+            };
+
+            foreach (var test in tests)
+            {
+                if (!await test.Invoke(service))
+                {
+                    Program.Logger?.Log(LogLevel.Error, $"Integration test [{test.Method.Name}] failed.");
+                    return false;
+                }
             }
         }
         catch (Exception exc)
         {
-            Program.Logger?.Log(LogLevel.Error, exc, $"An exception occurred running integration test '{nameof(TEST_POST)}'.");
+            Program.Logger?.Log(LogLevel.Error, exc, $"An exception occurred running integration test '{nameof(TEST_Success)}'.");
             return false;
         }
 
         return true;
     }
 
-    private static async Task<bool> TEST_POST(TestingService service)
+    private static async Task<bool> TEST_Success(TestingService service)
     {
-        var testUsername = "user_1";
+        var testUsername = "user_1@celestialmail.com";
         var testPassword = "user_1_password";
 
         var request = new AuthorizationTokenRequest()
@@ -72,7 +81,26 @@ public static class AuthorizationTests
         if (string.IsNullOrWhiteSpace(response.Token))
             return false;
 
-        Program.Logger?.Log(LogLevel.Information, $"Authorization API responded with token: [{response.Token}].");
         return true;
+    }
+
+    private static async Task<bool> TEST_UsernameNotFound(TestingService service)
+    {
+        var testUsername = "user_2@celestialmail.com";
+        var testPassword = "user_2_password";
+
+        var request = new AuthorizationTokenRequest()
+        {
+        };
+
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", request);
+        newRequest.Headers.Add("username", testUsername);
+        newRequest.Headers.Add("password", testPassword);
+
+        AuthorizationTokenResponse response = await Program.DaprClient.InvokeMethodAsync<AuthorizationTokenResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
+        if (string.IsNullOrWhiteSpace(response.Token))
+            return true;
+
+        return false;
     }
 }

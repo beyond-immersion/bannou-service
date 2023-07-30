@@ -23,4 +23,6 @@ jobs:
         env:
           TESTING_SERVICE_ENABLED: true
           AUTHORIZATION_SERVICE_ENABLED: true
+          TOKEN_SECRET_KEY: "TOKEN_SECRET_KEY"
+          APP_LOGGING_LEVEL: Information
           ASPNETCORE_ENVIRONMENT: development

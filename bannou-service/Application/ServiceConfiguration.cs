@@ -10,4 +10,6 @@ public class ServiceConfiguration : IServiceConfiguration
     public string? ForceServiceID { get; set; }
 
     public string? DaprConfigurationName { get; set; }
+
+    public LogLevel AppLoggingLevel { get; set; } = LogLevel.Warning;
 }

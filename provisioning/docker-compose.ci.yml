@@ -4,6 +4,8 @@ services:
     environment:
       - TESTING_SERVICE_ENABLED=${TESTING_SERVICE_ENABLED:-false}
       - AUTHORIZATION_SERVICE_ENABLED=${AUTHORIZATION_SERVICE_ENABLED:-false}
+      - AUTHORIZATION_TOKEN_SECRET_KEY=${TOKEN_SECRET_KEY}
+      - APP_LOGGING_LEVEL=${APP_LOGGING_LEVEL:-Trace}
       - ASPNETCORE_URLS=http://+:80"
       - ASPNETCORE_ENVIRONMENT=development"
 
@@ -16,3 +18,14 @@ services:
     depends_on:
       - bannou
     command: bash provisioning/service-tests.sh
+
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: example
+
+  placement:
+    depends_on:
+      - postgres

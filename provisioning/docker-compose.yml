@@ -8,8 +8,6 @@ services:
       dockerfile: provisioning/Dockerfile
     depends_on:
       - placement
-    environment:
-      - TEMPLATE_SERVICE_ENABLED=true
     networks:
       - celestial_network
 
@@ -24,7 +22,7 @@ services:
       "--resources-path", "./components"
     ]
     volumes:
-      - "./components/:/components"
+      - "./provisioning/components/:/components"
     depends_on:
       - bannou
     network_mode: "service:bannou"

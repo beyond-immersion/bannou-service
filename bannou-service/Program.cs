@@ -170,7 +170,7 @@ public static class Program
                 {
                     IDaprService? serviceInst = (IDaprService?)webApp.Services.GetService(serviceType);
                     if (serviceInst != null)
-                        await serviceInst.OnLoad(webApp);
+                        await serviceInst.OnBuild(webApp);
                 }
             }
 
@@ -189,7 +189,7 @@ public static class Program
                 {
                     IDaprService? serviceInst = (IDaprService?)webApp.Services.GetService(serviceType);
                     if (serviceInst != null)
-                        await serviceInst.OnExit();
+                        await serviceInst.OnShutdown();
                 }
             }
         }

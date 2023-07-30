@@ -11,7 +11,7 @@ namespace BeyondImmersion.BannouService.Services;
 [DaprService("connect", lifetime: ServiceLifetime.Singleton)]
 public sealed class ConnectService : IDaprService
 {
-    async Task<bool> IDaprService.OnLoad(IApplicationBuilder appBuilder)
+    async Task<bool> IDaprService.OnBuild(IApplicationBuilder appBuilder)
     {
         await Task.CompletedTask;
         return true;

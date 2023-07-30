@@ -179,10 +179,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void ServiceEnabled_Default()
     {
         ResetENVs();
-        if (ServiceConstants.ENABLE_SERVICES_BY_DEFAULT)
-            Assert.True(IDaprService.IsEnabled(typeof(TestService_Attribute)));
-        else
-            Assert.False(IDaprService.IsEnabled(typeof(TestService_Attribute)));
+        Assert.False(IDaprService.IsEnabled(typeof(TestService_Attribute)));
     }
 #pragma warning restore CS0162 // Unreachable code detected
 
@@ -346,24 +343,12 @@ public class Services : IClassFixture<CollectionFixture>
         Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_Required));
         Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_MultipleRequired));
 
-#pragma warning disable CS0162 // Unreachable code detected
-        if (ServiceConstants.ENABLE_SERVICES_BY_DEFAULT)
-        {
-            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Attribute));
-            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
-            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_MultipleRequired));
-        }
-        else
-        {
-            Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Attribute));
-            Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
-            Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+        Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Attribute));
+        Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
+        Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_MultipleRequired));
 
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
-            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
-        }
-#pragma warning restore CS0162 // Unreachable code detected
-
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
+        Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
     }
 
     [Fact]
