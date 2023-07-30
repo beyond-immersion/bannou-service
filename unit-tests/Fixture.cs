@@ -15,9 +15,9 @@ public class CollectionFixture : IDisposable
         Environment.SetEnvironmentVariable("TESTPROPERTY", null);
         Environment.SetEnvironmentVariable("TESTPROPERTY_A", null);
         Environment.SetEnvironmentVariable("TESTPROPERTY_B", null);
-        Environment.SetEnvironmentVariable("FORCESERVICEID", null);
+        Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", null);
         Environment.SetEnvironmentVariable("TEST_TESTPROPERTY", null);
-        Environment.SetEnvironmentVariable("TEST_FORCESERVICEID", null);
+        Environment.SetEnvironmentVariable("TEST_FORCE_SERVICE_ID", null);
 
         Thread.Sleep(TimeSpan.Zero);
     }

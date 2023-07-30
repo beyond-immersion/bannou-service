@@ -7,9 +7,9 @@ public class ServiceConfiguration : IServiceConfiguration
     /// Set to override GUID for administrative service endpoints.
     /// If not set, will generate a new GUID automatically on service startup.
     /// </summary>
-    public string? ForceServiceID { get; set; }
+    public string? Force_Service_ID { get; set; }
 
-    public string? DaprConfigurationName { get; set; }
+    public string? Configuration_Store { get; set; }
 
-    public LogLevel AppLoggingLevel { get; set; } = LogLevel.Warning;
+    public LogLevel App_Logging_Level { get; set; } = LogLevel.Warning;
 }

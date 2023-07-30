@@ -24,7 +24,7 @@ public interface IServiceConfiguration
         WriteIndented = false
     };
 
-    public string? ForceServiceID { get; }
+    public string? Force_Service_ID { get; }
 
     /// <summary>
     /// Returns whether this configuration has values set for all required properties.
@@ -71,9 +71,9 @@ public interface IServiceConfiguration
             .AddEnvironmentVariables(envPrefix)
             .AddCommandLine(args ?? Environment.GetCommandLineArgs(), CreateAllSwitchMappings());
 
-        if (Program.DaprClient != null && !string.IsNullOrWhiteSpace(Program.Configuration?.DaprConfigurationName))
+        if (Program.DaprClient != null && !string.IsNullOrWhiteSpace(Program.Configuration?.Configuration_Store))
         {
-            _ = configurationBuilder.AddDaprConfigurationStore(Program.Configuration.DaprConfigurationName,
+            _ = configurationBuilder.AddDaprConfigurationStore(Program.Configuration.Configuration_Store,
                 Array.Empty<string>(), Program.DaprClient, TimeSpan.FromSeconds(3), null);
         }
 

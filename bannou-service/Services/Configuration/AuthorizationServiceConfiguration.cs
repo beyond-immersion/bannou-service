@@ -7,7 +7,5 @@ namespace BeyondImmersion.BannouService.Services.Configuration;
 [ServiceConfiguration(serviceType: typeof(AuthorizationService), envPrefix: "AUTHORIZATION_", primary: true)]
 public class AuthorizationServiceConfiguration : ServiceConfiguration
 {
-    [JsonPropertyName("token_secret_key")]
-    [JsonProperty("token_secret_key")]
-    public string TokenSecretKey { get; set; }
+    public string Token_Secret_Key { get; set; }
 }

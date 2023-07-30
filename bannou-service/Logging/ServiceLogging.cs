@@ -26,7 +26,7 @@ public static class ServiceLogging
                     SkipValidation = false
                 };
             })
-            .SetMinimumLevel(Program.Configuration.AppLoggingLevel);
+            .SetMinimumLevel(Program.Configuration.App_Logging_Level);
         });
 
     public static ILoggerFactory SimpleLogFactory { get; private set; } = LoggerFactory.Create((options) =>
@@ -38,7 +38,7 @@ public static class ServiceLogging
                 options.UseUtcTimestamp = true;
                 options.SingleLine = true;
             })
-            .SetMinimumLevel(Program.Configuration.AppLoggingLevel);
+            .SetMinimumLevel(Program.Configuration.App_Logging_Level);
         });
 
     /// <summary>

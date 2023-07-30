@@ -56,7 +56,7 @@ public static class Program
     {
         get
         {
-            _serviceGUID ??= Configuration.ForceServiceID ?? Guid.NewGuid().ToString().ToLower();
+            _serviceGUID ??= Configuration.Force_Service_ID ?? Guid.NewGuid().ToString().ToLower();
 
             return _serviceGUID;
         }

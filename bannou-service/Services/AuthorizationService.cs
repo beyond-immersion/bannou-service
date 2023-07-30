@@ -23,12 +23,12 @@ public class AuthorizationService : IDaprService
             try
             {
                 var secretEntry = await Program.DaprClient.GetSecretAsync("app-secrets", "auth", cancellationToken: Program.ShutdownCancellationTokenSource.Token);
-                if (secretEntry != null && secretEntry.TryGetValue("token_shared_secret", out var tokenSecretKey))
-                    Configuration.TokenSecretKey = tokenSecretKey;
+                if (secretEntry != null && secretEntry.TryGetValue("token_secret_key", out var tokenSecretKey))
+                    Configuration.Token_Secret_Key = tokenSecretKey;
             }
             catch { }
 
-            if (string.IsNullOrWhiteSpace(Configuration.TokenSecretKey))
+            if (string.IsNullOrWhiteSpace(Configuration.Token_Secret_Key))
                 throw new NullReferenceException("Shared secret for encoding/decoding authorizaton tokens not set.");
 
             var id = Guid.NewGuid().ToString();
@@ -75,7 +75,7 @@ public class AuthorizationService : IDaprService
         builder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
         builder.MustVerifySignature();
         builder.AddClaim("role", accountEntry.Role);
-        builder.WithSecret(Configuration.TokenSecretKey);
+        builder.WithSecret(Configuration.Token_Secret_Key);
 
         return builder.Encode();
     }
