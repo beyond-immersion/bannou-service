@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          ASPNETCORE_ENVIRONMENT: development
+          ASPNETCORE_ENVIRONMENT: Development
 
       - name: Install dependencies
         run: dotnet restore

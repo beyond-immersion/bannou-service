@@ -2,6 +2,7 @@ version: "3.4"
 
 services:
 
+  # build the monoservice
   bannou:
     build:
       context: ../
@@ -11,6 +12,7 @@ services:
     networks:
       - celestial_network
 
+  # attach the dapr sidecar to the monoservice
   bannou-dapr:
     image: "daprio/daprd:edge"
     command: [
@@ -25,6 +27,7 @@ services:
       - bannou
     network_mode: "service:bannou"
 
+  # placement service for coordinating dapr actors
   placement:
     image: "daprio/dapr"
     command: [
