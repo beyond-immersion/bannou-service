@@ -22,7 +22,7 @@ services:
       "--resources-path", "./components"
     ]
     volumes:
-      - "./provisioning/components/:/components"
+      - "./components/:/components"
     depends_on:
       - bannou
     network_mode: "service:bannou"
@@ -32,6 +32,8 @@ services:
     command: [
       "./placement", "--port", "50006"
     ]
+    volumes:
+      - "./components/:/components"
     networks:
       - celestial_network
     ports:
