@@ -2,7 +2,7 @@ services:
 
   bannou:
     depends_on:
-      - postgres
+      - postgres-db
     environment:
       - TESTING_SERVICE_ENABLED=${TESTING_SERVICE_ENABLED:-false}
       - AUTHORIZATION_SERVICE_ENABLED=${AUTHORIZATION_SERVICE_ENABLED:-false}
@@ -21,10 +21,13 @@ services:
       - bannou
     command: bash provisioning/service-tests.sh
 
-  postgres:
+  postgres-db:
     image: postgres
     restart: always
+    container_name: postgres-db
     environment:
+      DATABASE_PORT: "5432"
+      DATABASE_HOST: postgres-db
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: example
@@ -36,4 +39,4 @@ services:
 networks:
   celestial_network:
     external:
-      name: "celestial_network"
+      name: celestial_network
