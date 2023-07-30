@@ -23,7 +23,7 @@ services:
 
   postgres-db:
     image: postgres
-    restart: always
+    restart: on-failure
     container_name: postgres-db
     environment:
       DATABASE_PORT: "5432"
