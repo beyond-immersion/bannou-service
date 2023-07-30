@@ -27,7 +27,10 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: example
-    network_mode: "service:bannou"
+    networks:
+      - celestial_network
+    ports:
+      - "5432:5432"
 
 networks:
   celestial_network:
