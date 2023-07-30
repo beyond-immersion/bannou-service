@@ -2,7 +2,7 @@ services:
 
   bannou:
     depends_on:
-      postgres:
+      redis-db:
         condition: service_healthy
     environment:
       - TESTING_SERVICE_ENABLED=${TESTING_SERVICE_ENABLED:-false}
@@ -12,6 +12,10 @@ services:
       - ASPNETCORE_URLS=http://+:80"
       - ASPNETCORE_ENVIRONMENT=development"
 
+  bannou-dapr:
+    volumes:
+      - "./components/ci/:/components"
+
   bannou-tester:
     image: ubuntu
     network_mode:
@@ -20,25 +24,19 @@ services:
       - ./:/provisioning/
     depends_on:
       - bannou
-    command: bash provisioning/service-tests.sh
+    command: bash sleep 5 && provisioning/service-tests.sh
 
-  postgres:
-    image: postgres
-    restart: on-failure
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: example
+  redis-db:
+    image: redis
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+    ports:
+     - "6379:6379"
     networks:
       - celestial_network
-    ports:
-      - "5432:5432"
-    volumes:
-      - "/var/run/postgres.sock:/var/run/postgres/postgres.sock"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 networks:
   celestial_network:

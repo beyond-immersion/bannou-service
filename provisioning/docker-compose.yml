@@ -21,8 +21,6 @@ services:
       "--placement-host-address", "placement:50006",
       "--resources-path", "./components"
     ]
-    volumes:
-      - "./components/:/components"
     depends_on:
       - bannou
     network_mode: "service:bannou"
@@ -32,10 +30,10 @@ services:
     command: [
       "./placement", "--port", "50006"
     ]
-    networks:
-      - celestial_network
     ports:
       - "50006:50006"
+    networks:
+      - celestial_network
 
 networks:
   celestial_network:
