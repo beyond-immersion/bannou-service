@@ -47,5 +47,18 @@ services:
     networks:
       - celestial_network
 
+  # backing datastore for testing accounts- matches CI component
+  postgres-db:
+    image: bitnami/postgres
+    hostname: account-db-2
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=example
+      - POSTGRESQL_DATABASE=postgres
+    networks:
+      - celestial_network
+
 networks:
   celestial_network:

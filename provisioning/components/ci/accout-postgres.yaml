@@ -1,14 +1,14 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: accounts
+  name: accounts-2
 spec:
   type: state.postgresql
   version: v1
   metadata:
   # Connection string
   - name: connectionString
-    value: "host=account-db-2 user=postgres password=example port=5432 connect_timeout=10 database=postgres"
+    value: "host=localhost user=postgres password=example port=5432 connect_timeout=10 database=postgres"
   # Timeout for database operations, in seconds (optional)
   #- name: timeoutInSeconds
   #  value: 20
