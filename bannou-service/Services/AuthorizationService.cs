@@ -124,18 +124,20 @@ public class AuthorizationService : IDaprService
         try
         {
             var subscribeResponse = await Program.DaprClient.SubscribeConfiguration("app-secrets", new[] { "auth" }, cancellationToken: Program.ShutdownCancellationTokenSource.Token);
-            SubscribeConfigurationTask = new Task(async () =>
+            SubscribeConfigurationTask = Task.Run(async () => 
             {
-                await foreach (var configurationItems in subscribeResponse.Source.WithCancellation(Program.ShutdownCancellationTokenSource.Token))
+                while (true)
                 {
-                    if (configurationItems.TryGetValue("token_public_key", out var tokenPublicKey))
-                        Configuration.Token_Public_Key = tokenPublicKey.Value;
+                    await foreach (var configurationItems in subscribeResponse.Source.WithCancellation(Program.ShutdownCancellationTokenSource.Token))
+                    {
+                        if (configurationItems.TryGetValue("token_public_key", out var tokenPublicKey))
+                            Configuration.Token_Public_Key = tokenPublicKey.Value;
 
-                    if (configurationItems.TryGetValue("token_private_key", out var tokenPrivateKey))
-                        Configuration.Token_Private_Key = tokenPrivateKey.Value;
+                        if (configurationItems.TryGetValue("token_private_key", out var tokenPrivateKey))
+                            Configuration.Token_Private_Key = tokenPrivateKey.Value;
+                    }
                 }
             }, Program.ShutdownCancellationTokenSource.Token);
-            SubscribeConfigurationTask.Start();
 
             var secretEntry = await Program.DaprClient.GetSecretAsync("app-secrets", "auth", cancellationToken: Program.ShutdownCancellationTokenSource.Token);
             if (secretEntry != null)

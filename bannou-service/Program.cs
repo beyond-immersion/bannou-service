@@ -192,7 +192,7 @@ public static class Program
             Logger.Log(LogLevel.Information, null, "Webhost starting.");
             {
                 // start running webhost, but don't block on it just yet
-                var runTask = Task.Run(async () => await webApp.RunAsync(ShutdownCancellationTokenSource.Token), ShutdownCancellationTokenSource.Token);
+                var runTask = webApp.RunAsync(ShutdownCancellationTokenSource.Token);
 
                 // run secondary initialization on service handlers, now that webhost is running
                 foreach (var serviceType in serviceTypes)
