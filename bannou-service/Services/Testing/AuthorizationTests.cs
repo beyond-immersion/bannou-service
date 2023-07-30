@@ -80,7 +80,7 @@ public static class AuthorizationTests
         try
         {
             AuthorizationTokenResponse response = await Program.DaprClient.InvokeMethodAsync<AuthorizationTokenResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
-            if (!string.IsNullOrWhiteSpace(response.Token))
+            if (!string.IsNullOrWhiteSpace(response?.Token))
                 return true;
         }
         catch { }
@@ -103,7 +103,9 @@ public static class AuthorizationTests
 
         try
         {
-            AuthorizationTokenResponse response = await Program.DaprClient.InvokeMethodAsync<AuthorizationTokenResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
+            HttpResponseMessage response = await Program.DaprClient.InvokeMethodWithResponseAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return true;
         }
         catch (HttpRequestException exc)
         {
