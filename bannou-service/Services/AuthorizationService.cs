@@ -1,6 +1,10 @@
 ﻿using BeyondImmersion.BannouService.Services.Configuration;
+using JWT;
+using JWT.Algorithms;
 using JWT.Builder;
+using JWT.Serializers;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
 
@@ -23,13 +27,22 @@ public class AuthorizationService : IDaprService
             try
             {
                 var secretEntry = await Program.DaprClient.GetSecretAsync("app-secrets", "auth", cancellationToken: Program.ShutdownCancellationTokenSource.Token);
-                if (secretEntry != null && secretEntry.TryGetValue("token_secret_key", out var tokenSecretKey))
-                    Configuration.Token_Secret_Key = tokenSecretKey;
+                if (secretEntry != null)
+                {
+                    if (secretEntry.TryGetValue("token_public_key", out var tokenPublicKey))
+                        Configuration.Token_Public_Key = tokenPublicKey;
+
+                    if (secretEntry.TryGetValue("token_private_key", out var tokenPrivateKey))
+                        Configuration.Token_Private_Key = tokenPrivateKey;
+                }
             }
             catch { }
 
-            if (string.IsNullOrWhiteSpace(Configuration.Token_Secret_Key))
-                throw new NullReferenceException("Shared secret for encoding/decoding authorizaton tokens not set.");
+            if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key))
+                throw new NullReferenceException("Shared public key for encoding/decoding authorizaton tokens not set.");
+
+            if (string.IsNullOrWhiteSpace(Configuration.Token_Private_Key))
+                throw new NullReferenceException("Shared private key for encoding/decoding authorizaton tokens not set.");
 
             var id = Guid.NewGuid().ToString();
             var email = "user_1@celestialmail.com";
@@ -65,19 +78,51 @@ public class AuthorizationService : IDaprService
         if (!string.Equals(accountEntry.HashedSecret, hashedSecret))
             return null;
 
-        var builder = new JwtBuilder();
-        builder.AddHeader("email", accountEntry.Email);
-        builder.AddHeader("display-name", accountEntry.DisplayName);
+        var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
+        jwtBuilder.AddHeader("email", accountEntry.Email);
+        jwtBuilder.AddHeader("display-name", accountEntry.DisplayName);
 
-        builder.Id(accountEntry.ID);
-        builder.Issuer("AUTHORIZATION_SERVICE:" + Program.ServiceGUID);
-        builder.IssuedAt(DateTime.Now);
-        builder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
-        builder.MustVerifySignature();
-        builder.AddClaim("role", accountEntry.Role);
-        builder.WithSecret(Configuration.Token_Secret_Key);
+        jwtBuilder.Id(accountEntry.ID);
+        jwtBuilder.Issuer("AUTHORIZATION_SERVICE:" + Program.ServiceGUID);
+        jwtBuilder.IssuedAt(DateTime.Now);
+        jwtBuilder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
+        jwtBuilder.MustVerifySignature();
+        jwtBuilder.AddClaim("role", accountEntry.Role);
 
-        return builder.Encode();
+        var newJWT = jwtBuilder.Encode();
+        return newJWT;
+    }
+
+    private JwtBuilder CreateJWTBuilder(string publicKey, string privateKey)
+    {
+        var jwtBuilder = new JwtBuilder();
+
+        var publicKeyByes = Convert.FromBase64String(publicKey);
+        var publicKeyDecoded = Encoding.UTF8.GetString(publicKeyByes);
+        var privateKeyBytes = Convert.FromBase64String(privateKey);
+        var privateKeyDecoded = Encoding.UTF8.GetString(privateKeyBytes);
+
+        var publicRSA = RSA.Create();
+        publicRSA.ImportFromPem(publicKeyDecoded);
+        var privateRSA = RSA.Create();
+        privateRSA.ImportFromPem(privateKeyDecoded);
+        var jwtAlgorithm = new RS512Algorithm(publicRSA, privateRSA);
+
+        var jwtSerializer = new JsonNetSerializer();
+        var jwtDateTimeProvider = new UtcDateTimeProvider();
+        var jwtUrlEncoder = new JwtBase64UrlEncoder();
+        var jwtValidator = new JwtValidator(jwtSerializer, jwtDateTimeProvider);
+        var jwtEncoder = new JwtEncoder(jwtAlgorithm, jwtSerializer, jwtUrlEncoder);
+        var jwtDecoder = new JwtDecoder(jwtSerializer, jwtValidator, jwtUrlEncoder, jwtAlgorithm);
+        jwtBuilder.WithJsonSerializer(jwtSerializer);
+        jwtBuilder.WithDateTimeProvider(jwtDateTimeProvider);
+        jwtBuilder.WithUrlEncoder(jwtUrlEncoder);
+        jwtBuilder.WithAlgorithm(jwtAlgorithm);
+        jwtBuilder.WithEncoder(jwtEncoder);
+        jwtBuilder.WithDecoder(jwtDecoder);
+        jwtBuilder.WithValidator(jwtValidator);
+
+        return jwtBuilder;
     }
 
     private string GenerateHashedSecret(string secretString, string secretSalt)

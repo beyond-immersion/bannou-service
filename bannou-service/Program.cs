@@ -168,9 +168,10 @@ public static class Program
             {
                 if (serviceType != null)
                 {
-                    IDaprService? serviceInst = (IDaprService?)webApp.Services.GetService(serviceType);
+                    var serviceInst = (IDaprService?)webApp.Services.GetService(serviceType);
                     if (serviceInst != null)
-                        await serviceInst.OnBuild(webApp);
+                        if (!await serviceInst.OnBuild(webApp))
+                            throw new Exception($"Service handler [{serviceType}] failed on build.");
                 }
             }
 
