@@ -24,7 +24,7 @@ services:
       - ./:/provisioning/
     depends_on:
       - bannou
-    command: bash sleep 5 && provisioning/service-tests.sh
+    command: bash provisioning/service-tests.sh
 
   redis-db:
     image: redis
