@@ -19,7 +19,7 @@ public class AuthorizationService : IDaprService
     public AuthorizationServiceConfiguration Configuration { get; set; }
     protected Task SubscribeConfigurationTask { get; set; }
 
-    async Task<bool> IDaprService.OnBuild(IApplicationBuilder appBuilder)
+    async Task<bool> IDaprService.OnBuild()
     {
         try
         {
