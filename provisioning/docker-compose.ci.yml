@@ -1,6 +1,8 @@
 services:
 
   bannou:
+    depends_on:
+      - postgres
     environment:
       - TESTING_SERVICE_ENABLED=${TESTING_SERVICE_ENABLED:-false}
       - AUTHORIZATION_SERVICE_ENABLED=${AUTHORIZATION_SERVICE_ENABLED:-false}
@@ -29,7 +31,3 @@ services:
       - "5432:5432"
     networks:
       - celestial_network
-
-  placement:
-    depends_on:
-      - postgres
