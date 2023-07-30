@@ -32,8 +32,6 @@ services:
     command: [
       "./placement", "--port", "50006"
     ]
-    volumes:
-      - "./components/:/components"
     networks:
       - celestial_network
     ports:
