@@ -77,11 +77,15 @@ public static class AuthorizationTests
         newRequest.Headers.Add("username", testUsername);
         newRequest.Headers.Add("password", testPassword);
 
-        AuthorizationTokenResponse response = await Program.DaprClient.InvokeMethodAsync<AuthorizationTokenResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
-        if (string.IsNullOrWhiteSpace(response.Token))
-            return false;
+        try
+        {
+            AuthorizationTokenResponse response = await Program.DaprClient.InvokeMethodAsync<AuthorizationTokenResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
+            if (!string.IsNullOrWhiteSpace(response.Token))
+                return true;
+        }
+        catch { }
 
-        return true;
+        return false;
     }
 
     private static async Task<bool> TEST_UsernameNotFound(TestingService service)
@@ -97,9 +101,15 @@ public static class AuthorizationTests
         newRequest.Headers.Add("username", testUsername);
         newRequest.Headers.Add("password", testPassword);
 
-        AuthorizationTokenResponse response = await Program.DaprClient.InvokeMethodAsync<AuthorizationTokenResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
-        if (string.IsNullOrWhiteSpace(response.Token))
-            return true;
+        try
+        {
+            AuthorizationTokenResponse response = await Program.DaprClient.InvokeMethodAsync<AuthorizationTokenResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
+        }
+        catch (HttpRequestException exc)
+        {
+            if (exc.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return true;
+        }
 
         return false;
     }
