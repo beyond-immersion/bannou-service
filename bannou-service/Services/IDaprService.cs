@@ -19,6 +19,11 @@ public interface IDaprService
         return true;
     }
 
+    async Task OnRunning()
+    {
+        await Task.CompletedTask;
+    }
+
     async Task OnShutdown()
     {
         await Task.CompletedTask;

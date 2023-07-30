@@ -126,13 +126,27 @@ public static class Program
 
     private static async Task Main(string[] args)
     {
-        Logger.Log(LogLevel.Debug, null, "Service starting.");
+        Logger.Log(LogLevel.Information, null, "Service starting.");
 
-        if (!Validators.RunAll())
+        if (Configuration == null)
         {
-            Logger.Log(LogLevel.Error, null, "Validation error- service start aborted.");
+            Logger.Log(LogLevel.Error, null, "Service configuration missing.");
             return;
         }
+
+        if (!IDaprService.IsAnyEnabled())
+        {
+            Logger.Log(LogLevel.Error, null, "No Dapr services have been enabled.");
+            return;
+        }
+
+        if (!IDaprService.AllHaveRequiredConfiguration())
+        {
+            Logger.Log(LogLevel.Error, null, "Required configuration not set for enabled dapr services.");
+            return;
+        }
+
+        Logger.Log(LogLevel.Information, null, "Configuration established.");
 
         var serviceTypes = IDaprService.FindHandlers(enabledOnly: true).Select(t => t.Item2);
         if (serviceTypes == null)
@@ -175,13 +189,29 @@ public static class Program
                 }
             }
 
-            Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
+            Logger.Log(LogLevel.Information, null, "Webhost starting.");
             {
-                // blocks until webhost dies / server shutdown command received
-                await Task.Run(async () => await webApp.RunAsync(ShutdownCancellationTokenSource.Token), ShutdownCancellationTokenSource.Token);
+                // start running webhost, but don't block on it just yet
+                var runTask = Task.Run(async () => await webApp.RunAsync(ShutdownCancellationTokenSource.Token), ShutdownCancellationTokenSource.Token);
+
+                // run secondary initialization on service handlers, now that webhost is running
+                foreach (var serviceType in serviceTypes)
+                {
+                    if (serviceType != null)
+                    {
+                        var serviceInst = (IDaprService?)webApp.Services.GetService(serviceType);
+                        if (serviceInst != null)
+                            await serviceInst.OnRunning();
+                    }
+                }
+
+                Logger.Log(LogLevel.Information, null, "Service startup complete- settling in.");
+
+                // wait for webhost to finish / shutdown to be initiated
+                await runTask;
             }
 
-            Logger.Log(LogLevel.Debug, null, "Webhost stopped- starting controlled service shutdown.");
+            Logger.Log(LogLevel.Information, null, "Webhost stopped- starting controlled service shutdown.");
 
             // stop service handlers
             foreach (var serviceType in serviceTypes)
@@ -197,6 +227,7 @@ public static class Program
         catch (Exception e)
         {
             Logger.Log(LogLevel.Error, e, "A critical error has occurred- starting service shutdown.");
+            ShutdownCancellationTokenSource.Cancel();
         }
         finally
         {

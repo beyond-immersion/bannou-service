@@ -11,5 +11,7 @@ public class ServiceConfiguration : IServiceConfiguration
 
     public string? Configuration_Store { get; set; }
 
+    public bool Integration_Testing { get; set; }
+
     public LogLevel App_Logging_Level { get; set; } = LogLevel.Warning;
 }
