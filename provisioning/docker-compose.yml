@@ -2,17 +2,17 @@ version: "3.4"
 
 services:
 
+  # build the monoservice
   bannou:
     build:
       context: ../
       dockerfile: provisioning/Dockerfile
     depends_on:
       - placement
-    environment:
-      - TEMPLATE_SERVICE_ENABLED=true
     networks:
       - celestial_network
 
+  # attach the dapr sidecar to the monoservice
   bannou-dapr:
     image: "daprio/daprd:edge"
     command: [
@@ -23,21 +23,20 @@ services:
       "--placement-host-address", "placement:50006",
       "--resources-path", "./components"
     ]
-    volumes:
-      - "./components/:/components"
     depends_on:
       - bannou
     network_mode: "service:bannou"
 
+  # placement service for coordinating dapr actors
   placement:
     image: "daprio/dapr"
     command: [
       "./placement", "--port", "50006"
     ]
-    networks:
-      - celestial_network
     ports:
       - "50006:50006"
+    networks:
+      - celestial_network
 
 networks:
   celestial_network:

@@ -4,10 +4,6 @@ on:
   pull_request:
   workflow_dispatch:
 
-env:
-  DOTNET_VERSION: '7.0.202'
-  DOTNET_INSTALL_DIR: './.dotnet'
-
 jobs:
 
   integration-tests:
@@ -20,5 +16,3 @@ jobs:
 
       - name: Run Service Tests
         run: docker-compose -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --build --exit-code-from=bannou-tester
-        env:
-          TESTING_SERVICE_ENABLED: true

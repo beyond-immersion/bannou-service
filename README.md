@@ -19,6 +19,8 @@ Bannou Service is a versatile ASP.NET Core application designed to provide a sea
     - [Implementing IServiceConfiguration](#implementing-iserviceconfiguration)
     - [Implementing IDaprController](#implementing-idaprcontroller)
     - [Implementing IServiceAttribute](#implementing-iserviceattribute)
+  - [Deployment Notes](#deployment-notes)
+    - [Applications](#applications)
   - [Generated Docs (WIP)](#generated-docs-wip)
   - [Contributing](#contributing)
   - [License](#license)
@@ -64,11 +66,11 @@ Alternatively, the following make commands have been provided to simplify the pr
 
 ## Extending the Service
 
-The Bannou Service's primary goal is to be extensible, and as such, there are numerous ways to do so. The traditional approach would be to fork this repository, adding your own APIs (see below on adding APIs) directly to the main application code in the same way that the existing services, controllers, and configuration are set up. The application code itself is your guide- MVC controllers are still the same MVC controllers you'd always deal with in .NET 7, and should be fairly self-explanatory.
+The Bannou Service's primary goal is to be flexible, so there are numerous ways to use and extend it. The classic use would be to fork this repository, adding your own APIs (see below on adding APIs) directly to the main application in the same way that the existing services, controllers, and configuration are set up. The application code itself is your guide- MVC controllers are still the same MVC controllers you'd always deal with in .NET 7, and should be fairly self-explanatory.
 
-Alternatively, you can add this entire repository as a project reference / git submodule of your own .NET application. The Program class in this monoservice has been kept intentionally minimalist, and all mechanisms of service, controller, and configuration discovery have been written in a way to also include other loaded assemblies. Until more examples can be included, the `unit tests` project clearly shows that extending the base attribute, configuration, service, and controller classes works just fine when using the Bannou Service as a project reference.
+Alternatively, you can add this repository as a project reference / git submodule of your own .NET application. The Program class in this monoservice has been kept intentionally minimalistic, and all mechanisms of service, controller, and configuration discovery have been written in a way to also include other loaded assemblies. Until more examples can be included, the `unit tests` project clearly shows that extending the base attribute, configuration, service, and controller classes works just fine when using the Bannou Service as a project reference.
 
-Finally, you can build this application using the dotnet commandline build tool, and reference/include in the generated library in your own application.
+Finally, you can build this application using the dotnet commandline build tool, and reference/include in the generated library in your own app.
 
 ### Adding APIs
 
@@ -88,25 +90,45 @@ Your individual Dapr service can be enabled by setting `{SERVICE_NAME}_SERVICE_E
 
 ### Implementing IServiceConfiguration
 
-Configuration is meant to be generated per-Dapr service, so there are a few mechanisms for doing so easily. Implement the IServiceConfiguration interface and decorate your configuration class with the `[ServiceConfiguration]` attribute pointing to the particular Dapr service it's meant for, and that's all you need. Any existing ENVs (and args/switches, if you provide them) will be used to populate your configuration class automatically. By adding a "prefix" param to the config attribute, you can specify that only ENVs with a given prefix should be used to populate it instead (a common mechanism for per-component configuration in a .NET application).
+Configuration is meant to be per-Dapr service, so there are several ways through the service and associated controllers that configuration can be retrieved in the application. To add a new configuration class, implement the IServiceConfiguration interface and decorate it with the `[ServiceConfiguration]` attribute pointing to the particular Dapr service that the configuration is meant for. Any existing ENVs (and args/switches, if you provide them) will be used to populate your configuration class automatically. By adding a "prefix" param to the config attribute, you can specify that only ENVs with a given prefix should be used to populate it instead (a common mechanism for per-component configuration in a .NET application).
 
-By decorating any configuration property in your new class with `[Required]` (from DataAnnotations), it will cause the service to fail to start if the configuration is NOT provided when the Dapr service is set to be enabled.
+By decorating any configuration property in your new class with `[Required]` (from DataAnnotations), your service will then fail to start if the configuration is NOT provided. This is only when the Dapr service is enabled on that node- if it's disabled, then its required configuration obviously doesn't matter.
 
-Dapr services can have any number of configuration classes without issue, but if you have more than one, then you should be sure to set `primary=true` in the configuration attribute for the one you wish to be treated as such. This equated to the configuration type being selected / populated automatically when building from the direction of the Dapr service / controller, without knowing the specific configuration type to use. And `[Required]` attributes in classes that are NOT the primary configuration for a service type will effectively be by ignored.
+Dapr services can have any number of configuration classes without issue, but if you have more than one, then you should set `primary=true` in the attribute constructor for the one you wish to be treated as the service's primary configuration. This means the configuration is selected and populated automatically when building from the direction of the Dapr service or associated controller (as if it were the only configuration). Properties set with the `[Required]` attribute in classes that are NOT the primary configuration for a service type will be ignored.
 
 ### Implementing IDaprController
 
-To add a new API controller exposed through Dapr, implement IDaprController and decorate the class with the `[DaprController]` attribute. The attribute extends the `[Route]` attribute, so can be thought of the same way- add a template string for the route your controller will use, and each method will then further append to that route.
+To add a new API controller to use through Dapr, implement IDaprController and decorate the class with the `[DaprController]` attribute. The attribute extends the `[Route]` attribute, so can be thought of similarly- add a template string for the route your controller will use, and each method path will be appended to that route.
 
-If your API controller has business logic, you should add a Dapr Service class (see above) as well to handle that logic, and reference the Dapr service type from the attribute on your Dapr controller class, to indicate that the controller is under the control of that Dapr service. A Dapr service can have any number of associated controllers (meaning, any number of controllers can reference the service), but the opposite is not true- Dapr controllers can only reference one Dapr service each.
+If your API controller has business logic then you should also add a Dapr service class (see above) to handle that logic, and reference said Dapr service from the attribute decorating your controller. A Dapr service can have any number of associated controllers (meaning, any number of controllers can reference back to and use the service), but the opposite is not true- Dapr controllers can only reference one Dapr service each.
 
-If you need to make a request to a different Dapr service, meaning to APIs that may be optionally disabled on your particular node, then you MUST post that request out to the Dapr sidecar, and not attempt to bypass that step internally. This is prevent issues with concurrency, among other things.
+If you need to make a request from one Dapr service to another, keep in mind that the 2nd service may be disabled on your particular node at some point in the future, leading to problems. You MUST make such requests back out through Dapr to an internal controller, and not attempt to bypass that step- this is to prevent issues with concurrency, as well as simply keeping internal depencencies to a minimum.
 
 ### Implementing IServiceAttribute
 
-IServiceAttribute is a shared interface for all app-specific attributes. The interface contains helper methods for finding all classes, methods, properties, or fields decorated with a given concrete type implementing IServiceAttribute.
+IServiceAttribute is a shared interface for custom attributes within the application. The interface largely provides a set of utility methods, useful for finding all instances of the attribute decorating targets within the application (classes, methods, fields, etc).
 
 The `[DaprService]`, `[DaprController]`, and `[ServiceConfiguration]` attributes all implement IServiceAttribute, and those same helper methods are what are used to locate and perform operations on all of the classes decorated with those attributes, so they can be used as examples of how those methods work.
+
+## Deployment Notes
+
+Deploying the monoservice can be handled in number number of ways, depending on the specific requirements. We'll add a section soon with example projects which outline the entire process taking different paths with fresh installs. In the meantime, there are some notes below to keep in mind.
+
+### Applications
+
+Each group of services that need to be routed and scaled independently in the deployment environment are referred to as "applications"/"apps". Common applications might be login, queue, and account management in one place, or an app which handle various types of assets, like images, audio, and video via different controllers. While this logic might be spread across several services and/or API controllers, they might use much of the same backend support or have other commonalities in which it makes sense to group and scale them together. The concept of applications make that process much easier.
+
+Application setups might be:
+1. *Every* service type being given its own application so that they can be scaled separately.
+2. Some services/controllers making up one application, while all of the rest are also grouped apart from it.
+3. One application for all services/controllers, scaled across any number of instances/nodes (all APIs scale equally).
+4. One instance of a single app handling all APIs and performing all tasks (local dev / single node).
+
+You have complete control over how complex your deployment environment needs to be.
+
+Applications are assigned via Dapr configuration, which means they can be updated while running so that certain apps (service groups) can handle more or less responsibilities at any given time depending on the network state, as failovers, for transitions, etc. However, keep in mind that an individual monoservice instance's ***capabilities*** can't be changed dynamically, without restarting the service stack. Service classes and controllers are set up during program start based on ENVs, and make their connections to various backend databases and such at that time- even if you were to change the "login" application to suddenly handle something new, like the leaderboard APIs, it wouldn't be able to actually do so unless the leaderboard service class/controller had already been enabled on start. It needs that internal set of services and API controllers actually enabled to use them.
+
+The separation between enabling services/controllers (via ENVs) and mapping services to applications (Dapr configuration) might be a bit hard to wrap your head around at first, but it's a key piece of what makes this monoservice so versatile, regardless of your project's requirements.
 
 ## Generated Docs (WIP)
 

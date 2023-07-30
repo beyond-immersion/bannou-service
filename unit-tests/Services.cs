@@ -1,7 +1,6 @@
-using BeyondImmersion.BannouService.Services;
 using Xunit.Abstractions;
 
-namespace BeyondImmersion.UnitTests;
+namespace BeyondImmersion.UnitTests.Services;
 
 [Collection("unit tests")]
 public class Services : IClassFixture<CollectionFixture>
@@ -68,7 +67,7 @@ public class Services : IClassFixture<CollectionFixture>
     [ServiceConfiguration(typeof(TestService_Attribute))]
     private class TestConfiguration_Attribute_TestService : IServiceConfiguration
     {
-        public string? ForceServiceID { get; set; }
+        public string? Force_Service_ID { get; set; }
         public string? TestProperty { get; set; }
     }
 
@@ -81,7 +80,7 @@ public class Services : IClassFixture<CollectionFixture>
     [ServiceConfiguration(typeof(TestService_Required))]
     private class TestConfiguration_RequiredProperty : IServiceConfiguration
     {
-        public string? ForceServiceID { get; set; }
+        public string? Force_Service_ID { get; set; }
 
         [ConfigRequired(AllowEmptyStrings = false)]
         public string? TestProperty { get; set; }
@@ -90,7 +89,7 @@ public class Services : IClassFixture<CollectionFixture>
     [ServiceConfiguration(typeof(TestService_MultipleRequired), primary: true)]
     private class TestConfiguration_MultipleRequiredProperties_A : IServiceConfiguration
     {
-        public string? ForceServiceID { get; set; }
+        public string? Force_Service_ID { get; set; }
 
         [ConfigRequired(AllowEmptyStrings = false)]
         public string? TestProperty_A { get; set; }
@@ -99,16 +98,13 @@ public class Services : IClassFixture<CollectionFixture>
     [ServiceConfiguration(typeof(TestService_MultipleRequired))]
     private class TestConfiguration_MultipleRequiredProperties_B : IServiceConfiguration
     {
-        public string? ForceServiceID { get; set; }
+        public string? Force_Service_ID { get; set; }
 
         [ConfigRequired(AllowEmptyStrings = false)]
         public string? TestProperty_B { get; set; }
     }
 
-    private Services(CollectionFixture collectionFixture)
-    {
-        TestCollectionContext = collectionFixture;
-    }
+    private Services(CollectionFixture collectionFixture) => TestCollectionContext = collectionFixture;
 
     public Services(CollectionFixture collectionContext, ITestOutputHelper output)
     {
@@ -183,10 +179,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void ServiceEnabled_Default()
     {
         ResetENVs();
-        if (ServiceConstants.ENABLE_SERVICES_BY_DEFAULT)
-            Assert.True(IDaprService.IsEnabled(typeof(TestService_Attribute)));
-        else
-            Assert.False(IDaprService.IsEnabled(typeof(TestService_Attribute)));
+        Assert.False(IDaprService.IsEnabled(typeof(TestService_Attribute)));
     }
 #pragma warning restore CS0162 // Unreachable code detected
 
@@ -194,7 +187,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void ServiceEnabled_BadType()
     {
         ResetENVs();
-        Assert.Throws<InvalidCastException>(() => IDaprService.IsEnabled(typeof(TestService_Invalid)));
+        _ = Assert.Throws<InvalidCastException>(() => IDaprService.IsEnabled(typeof(TestService_Invalid)));
     }
 
     [Fact]
@@ -260,15 +253,15 @@ public class Services : IClassFixture<CollectionFixture>
         var config = (TestConfiguration_Attribute_TestService?)IDaprService.BuildConfiguration(typeof(TestService_Attribute));
         Assert.NotNull(config);
         Assert.Null(config.TestProperty);
-        Assert.Null(config.ForceServiceID);
+        Assert.Null(config.Force_Service_ID);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
-        Environment.SetEnvironmentVariable("FORCESERVICEID", serviceID);
+        Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", serviceID);
         config = (TestConfiguration_Attribute_TestService?)IDaprService.BuildConfiguration(typeof(TestService_Attribute));
         Assert.NotNull(config);
         Assert.Equal("Test", config.TestProperty);
-        Assert.Equal(serviceID, config.ForceServiceID);
+        Assert.Equal(serviceID, config.Force_Service_ID);
     }
 
     [Fact]
@@ -278,15 +271,15 @@ public class Services : IClassFixture<CollectionFixture>
         var config = (TestConfiguration_Attribute_TestService?)IDaprService.BuildConfiguration<TestService_Attribute>();
         Assert.NotNull(config);
         Assert.Null(config.TestProperty);
-        Assert.Null(config.ForceServiceID);
+        Assert.Null(config.Force_Service_ID);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
-        Environment.SetEnvironmentVariable("FORCESERVICEID", serviceID);
+        Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", serviceID);
         config = (TestConfiguration_Attribute_TestService?)IDaprService.BuildConfiguration<TestService_Attribute>();
         Assert.NotNull(config);
         Assert.Equal("Test", config.TestProperty);
-        Assert.Equal(serviceID, config.ForceServiceID);
+        Assert.Equal(serviceID, config.Force_Service_ID);
     }
 
     [Fact]
@@ -294,15 +287,15 @@ public class Services : IClassFixture<CollectionFixture>
     {
         ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
-        var config = IDaprService.BuildConfiguration(typeof(TestService_Attribute),
-                        args: new string[] { $"--ForceServiceID={serviceID}" });
+        IServiceConfiguration? config = IDaprService.BuildConfiguration(typeof(TestService_Attribute),
+                        args: new string[] { $"--Force-Service-ID={serviceID}" });
         Assert.NotNull(config);
-        Assert.Equal(serviceID, config.ForceServiceID);
+        Assert.Equal(serviceID, config.Force_Service_ID);
 
         config = IDaprService.BuildConfiguration(typeof(TestService_Attribute),
-                        args: new string[] { $"--forceserviceid={serviceID}" });
+                        args: new string[] { $"--force-service-id={serviceID}" });
         Assert.NotNull(config);
-        Assert.Equal(serviceID, config.ForceServiceID);
+        Assert.Equal(serviceID, config.Force_Service_ID);
     }
 
     [Fact]
@@ -310,15 +303,15 @@ public class Services : IClassFixture<CollectionFixture>
     {
         ResetENVs();
         var serviceID = Guid.NewGuid().ToString().ToLower();
-        var config = IDaprService.BuildConfiguration<TestService_Attribute>(
-                        args: new string[] { $"--ForceServiceID={serviceID}" });
+        IServiceConfiguration config = IDaprService.BuildConfiguration<TestService_Attribute>(
+                        args: new string[] { $"--Force-Service-ID={serviceID}" });
         Assert.NotNull(config);
-        Assert.Equal(serviceID, config.ForceServiceID);
+        Assert.Equal(serviceID, config.Force_Service_ID);
 
         config = IDaprService.BuildConfiguration<TestService_Attribute>(
-                        args: new string[] { $"--forceserviceid={serviceID}" });
+                        args: new string[] { $"--force-service-id={serviceID}" });
         Assert.NotNull(config);
-        Assert.Equal(serviceID, config.ForceServiceID);
+        Assert.Equal(serviceID, config.Force_Service_ID);
     }
 
     [Fact]
@@ -329,15 +322,15 @@ public class Services : IClassFixture<CollectionFixture>
         var config = testService.BuildConfiguration() as TestConfiguration_Attribute_TestService;
         Assert.NotNull(config);
         Assert.Null(config.TestProperty);
-        Assert.Null(config.ForceServiceID);
+        Assert.Null(config.Force_Service_ID);
 
         var serviceID = Guid.NewGuid().ToString().ToLower();
         Environment.SetEnvironmentVariable("TESTPROPERTY", "Test");
-        Environment.SetEnvironmentVariable("FORCESERVICEID", serviceID);
+        Environment.SetEnvironmentVariable("FORCE_SERVICE_ID", serviceID);
         config = testService.BuildConfiguration() as TestConfiguration_Attribute_TestService;
         Assert.NotNull(config);
         Assert.Equal("Test", config.TestProperty);
-        Assert.Equal(serviceID, config.ForceServiceID);
+        Assert.Equal(serviceID, config.Force_Service_ID);
     }
 
     [Fact]
@@ -350,31 +343,19 @@ public class Services : IClassFixture<CollectionFixture>
         Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_Required));
         Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_MultipleRequired));
 
-#pragma warning disable CS0162 // Unreachable code detected
-        if (ServiceConstants.ENABLE_SERVICES_BY_DEFAULT)
-        {
-            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Attribute));
-            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
-            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_MultipleRequired));
-        }
-        else
-        {
-            Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Attribute));
-            Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
-            Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+        Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Attribute));
+        Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
+        Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_MultipleRequired));
 
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
-            Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
-        }
-#pragma warning restore CS0162 // Unreachable code detected
-
+        Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
+        Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
     }
 
     [Fact]
     public void FindAll_TestOverride_MostDerivedType()
     {
         ResetENVs();
-        var locateService = IDaprService.FindHandler("ServiceTests.OverrideTest");
+        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.FindHandler("ServiceTests.OverrideTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(TestService_Override_2), locateService.Value.Item2);
     }
@@ -383,7 +364,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void FindAll_TestOverride_MostDerivedType_NoAttribute()
     {
         ResetENVs();
-        var locateService = IDaprService.FindHandler("ServiceTests.OverrideNoAttrTest");
+        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.FindHandler("ServiceTests.OverrideNoAttrTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(TestService_Override_NoAttribute_2), locateService.Value.Item2);
     }
@@ -392,7 +373,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void FindAll_TestOverride_Priority()
     {
         ResetENVs();
-        var locateService = IDaprService.FindHandler("ServiceTests.PriorityTest");
+        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.FindHandler("ServiceTests.PriorityTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(TestService_Priority_2), locateService.Value.Item2);
     }
@@ -401,7 +382,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void FindAll_TestOverride_PriorityOverMostDerivedType()
     {
         ResetENVs();
-        var locateService = IDaprService.FindHandler("ServiceTests.PriorityOverrideTest");
+        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.FindHandler("ServiceTests.PriorityOverrideTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(TestService_PriorityAndOverride_1), locateService.Value.Item2);
     }

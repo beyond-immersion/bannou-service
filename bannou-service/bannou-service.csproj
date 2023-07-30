@@ -6,9 +6,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>BeyondImmersion.BannouService</RootNamespace>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <Configurations>Debug;Release;Development</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;8618</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|AnyCPU'">
     <NoWarn>1701;1702;8618</NoWarn>
   </PropertyGroup>
 
@@ -22,11 +31,16 @@
     <PackageReference Include="Dapr.AspNetCore" Version="1.11.0" />
     <PackageReference Include="Dapr.Client" Version="1.11.0" />
     <PackageReference Include="Dapr.Extensions.Configuration" Version="1.11.0" />
+    <PackageReference Include="JWT" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.18.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
+    <Exec Command="dotnet format --no-restore" />
+  </Target>
 
 </Project>

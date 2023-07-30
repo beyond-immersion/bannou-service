@@ -22,14 +22,5 @@ public interface ITemplateModel
     List<TemplateContextRef>? Contexts { get; }
 
     [JsonIgnore]
-    string Slug
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(Name))
-                return Name;
-
-            return Name.GenerateSlug();
-        }
-    }
+    string Slug => string.IsNullOrWhiteSpace(Name) ? Name : Name.GenerateSlug();
 }

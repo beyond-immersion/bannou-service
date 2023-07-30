@@ -1,17 +1,23 @@
-﻿using BeyondImmersion.BannouService.Controllers.Messages;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
 
 namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
-/// Service component responsible for asset handling.
+/// Asset APIs- backed by the Asset service.
 /// </summary>
 [DaprController(template: "asset", serviceType: typeof(AssetService), Name = "asset")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class AssetController : BaseDaprController
 {
+    protected AssetService Service { get; }
+
+    public AssetController(AssetService service)
+    {
+        Service = service;
+    }
+
     /// <summary>
     /// List the assets in a given asset category.
     /// 
@@ -19,10 +25,7 @@ public class AssetController : BaseDaprController
     /// not the content of the assets themselves.
     /// </summary>
     [DaprRoute("list")]
-    public async Task ListAssets(HttpContext context)
-    {
-        await Task.CompletedTask;
-    }
+    public async Task ListAssets(HttpContext context) => await Task.CompletedTask;
 
     /// <summary>
     /// Create a new asset. Depending on the asset,
@@ -30,27 +33,18 @@ public class AssetController : BaseDaprController
     /// could take awhile.
     /// </summary>
     [DaprRoute("create")]
-    public async Task CreateAsset(HttpContext context)
-    {
-        await Task.CompletedTask;
-    }
+    public async Task CreateAsset(HttpContext context) => await Task.CompletedTask;
 
     /// <summary>
     /// Update the metadata or content or an existing
     /// asset.
     /// </summary>
     [DaprRoute("update")]
-    public async Task UpdateAsset(HttpContext context)
-    {
-        await Task.CompletedTask;
-    }
+    public async Task UpdateAsset(HttpContext context) => await Task.CompletedTask;
 
     /// <summary>
     /// Destroy an existing asset.
     /// </summary>
     [DaprRoute("destroy")]
-    public async Task DestroyAsset(HttpContext context)
-    {
-        await Task.CompletedTask;
-    }
+    public async Task DestroyAsset(HttpContext context) => await Task.CompletedTask;
 }

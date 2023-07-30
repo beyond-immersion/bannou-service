@@ -28,7 +28,7 @@ public interface IServiceAttribute
 
                 foreach (Type classType in classTypes)
                 {
-                    foreach (var attr in classType.GetCustomAttributes<T>(inherit: true))
+                    foreach (T attr in classType.GetCustomAttributes<T>(inherit: true))
                     {
                         if (attr == null)
                             continue;

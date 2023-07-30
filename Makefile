@@ -12,3 +12,8 @@ clean:
 
 sync:
 	git pull && git submodule update --init --recursive
+
+tagname := $(shell date -u +%FT%H-%M-%SZ)
+tag:
+	git tag $(tagname) -a -m '$(msg)'
+	git push origin $(tagname)

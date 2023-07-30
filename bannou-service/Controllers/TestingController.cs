@@ -1,19 +1,19 @@
 ﻿using BeyondImmersion.BannouService.Controllers.Messages;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Mime;
 
 namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
-/// Service component responsible for template definition handling.
+/// Test APIs- backed by the Testing service.
 /// </summary>
 [DaprController(template: "testing", serviceType: typeof(TestingService), Name = "testing")]
 public class TestingController : BaseDaprController
 {
-    private readonly TestingService _service;
+    protected TestingService Service { get; }
+
     public TestingController(TestingService service)
     {
-        _service = service;
+        Service = service;
     }
 
     /// <summary>
@@ -24,11 +24,8 @@ public class TestingController : BaseDaprController
     [DaprRoute("run-all")]
     public async Task<IActionResult> RunAll()
     {
-        var result = await _service.RunAll();
-        if (result)
-            return Ok();
-
-        return Conflict();
+        var result = await Service.RunAll();
+        return result ? Ok() : Conflict();
     }
 
     /// <summary>
@@ -39,11 +36,8 @@ public class TestingController : BaseDaprController
     [DaprRoute("run-enabled")]
     public async Task<IActionResult> RunEnabled()
     {
-        var result = await _service.RunAllEnabled();
-        if (result)
-            return Ok();
-
-        return Conflict();
+        var result = await Service.RunAllEnabled();
+        return result ? Ok() : Conflict();
     }
 
     /// <summary>
@@ -56,11 +50,8 @@ public class TestingController : BaseDaprController
         if (string.IsNullOrWhiteSpace(id))
             return BadRequest();
 
-        var result = await _service.Run(id: id);
-        if (result)
-            return Ok();
-
-        return Conflict();
+        var result = await Service.Run(id: id);
+        return result ? Ok() : Conflict();
     }
 
     /// <summary>
@@ -73,16 +64,10 @@ public class TestingController : BaseDaprController
         if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(service))
             return BadRequest();
 
-        bool result;
-        if (string.IsNullOrWhiteSpace(id))
-            result = await _service.RunAllForService(service: service);
-        else
-            result = await _service.Run(service: service, id: id);
-
-        if (result)
-            return Ok();
-
-        return Conflict();
+        var result = string.IsNullOrWhiteSpace(id)
+            ? await Service.RunAllForService(service: service)
+            : await Service.Run(service: service, id: id);
+        return result ? Ok() : Conflict();
     }
 
     /// <summary>
@@ -90,7 +75,7 @@ public class TestingController : BaseDaprController
     /// </summary>
     [HttpPost]
     [DaprRoute("run")]
-    public async Task<IActionResult> Run([FromBody]TestingRunTestRequest request)
+    public async Task<IActionResult> Run([FromBody] TestingRunTestRequest request)
     {
         if (request == null)
             return BadRequest();
@@ -101,15 +86,14 @@ public class TestingController : BaseDaprController
             if (string.IsNullOrWhiteSpace(request.Service))
                 return BadRequest();
 
-            result = await _service.RunAllForService(service: request.Service);
+            result = await Service.RunAllForService(service: request.Service);
         }
         else
-            result = await _service.Run(service: request.Service, id: request.ID);
+        {
+            result = await Service.Run(service: request.Service, id: request.ID);
+        }
 
-        if (result)
-            return Ok();
-
-        return Conflict();
+        return result ? Ok() : Conflict();
     }
 
     [HttpGet]
@@ -119,7 +103,7 @@ public class TestingController : BaseDaprController
         await Task.CompletedTask;
 
         if (!string.IsNullOrWhiteSpace(id))
-            _service.SetLastTestID(id);
+            Service.SetLastTestID(id);
 
         return Ok();
     }
@@ -131,10 +115,10 @@ public class TestingController : BaseDaprController
         await Task.CompletedTask;
 
         if (!string.IsNullOrWhiteSpace(service))
-            _service.SetLastTestService(service);
+            Service.SetLastTestService(service);
 
         if (!string.IsNullOrWhiteSpace(id))
-            _service.SetLastTestID(id);
+            Service.SetLastTestID(id);
 
         return Ok();
     }
@@ -147,7 +131,7 @@ public class TestingController : BaseDaprController
     {
         await Task.CompletedTask;
 
-        _service.SetLastPostRequest(request);
+        Service.SetLastPostRequest(request);
 
         return Ok();
     }

@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Net.Mime;
-
-namespace BeyondImmersion.BannouService.Services;
+﻿namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Service component responsible for leaderboard handling.
@@ -12,32 +9,20 @@ public class LeaderboardService : IDaprService
     /// <summary>
     /// List available leaderboards.
     /// </summary>
-    public async Task ListLeaderboards()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task ListLeaderboards() => await Task.CompletedTask;
 
     /// <summary>
     /// Create new leaderboard.
     /// </summary>
-    public async Task CreateLeaderboard()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task CreateLeaderboard() => await Task.CompletedTask;
 
     /// <summary>
     /// Update existing leaderboard.
     /// </summary>
-    public async Task UpdateLeaderboard()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task UpdateLeaderboard() => await Task.CompletedTask;
 
     /// <summary>
     /// Destroy existing leaderboard.
     /// </summary>
-    public async Task DestroyLeaderboard()
-    {
-        await Task.CompletedTask;
-    }
+    public async Task DestroyLeaderboard() => await Task.CompletedTask;
 }

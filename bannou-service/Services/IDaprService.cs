@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Services;
@@ -14,6 +13,23 @@ namespace BeyondImmersion.BannouService.Services;
 /// </summary>
 public interface IDaprService
 {
+    async Task<bool> OnBuild()
+    {
+        await Task.CompletedTask;
+        return true;
+    }
+
+    async Task OnRunning()
+    {
+        await Task.CompletedTask;
+    }
+
+    async Task OnShutdown()
+    {
+        await Task.CompletedTask;
+    }
+
+
     public string? GetName()
         => GetType().GetServiceName();
 
@@ -57,8 +73,10 @@ public interface IDaprService
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
         foreach ((Type, ServiceConfigurationAttribute) classWithAttr in IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
+        {
             if (serviceType.IsAssignableFrom(classWithAttr.Item2.ServiceType))
                 return IServiceConfiguration.BuildConfiguration(classWithAttr.Item1, args, classWithAttr.Item2.EnvPrefix);
+        }
 
         string? envPrefix = null;
         ServiceConfigurationAttribute? configAttr = typeof(IServiceConfiguration).GetCustomAttribute<ServiceConfigurationAttribute>();
@@ -80,10 +98,8 @@ public interface IDaprService
     /// </summary>
     public static bool HasRequiredConfiguration(Type serviceType)
     {
-        if (!typeof(IDaprService).IsAssignableFrom(serviceType))
-            return false;
-
-        return IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
+        return typeof(IDaprService).IsAssignableFrom(serviceType)
+&& IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
             .Where(t => t.Item2.ServiceType == serviceType)
             .All(t => IServiceConfiguration.HasRequiredForType(t.Item1));
     }
@@ -98,7 +114,7 @@ public interface IDaprService
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
         Type? serviceConfigType = null;
-        foreach (var configAttr in IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
+        foreach ((Type, ServiceConfigurationAttribute) configAttr in IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
         {
             if (handlerType.IsAssignableFrom(configAttr.Item2.ServiceType))
             {
@@ -121,7 +137,7 @@ public interface IDaprService
         {
             Type handlerType = serviceClassInfo.Item1;
             Type serviceType = serviceClassInfo.Item2;
-            var serviceConfig = GetConfigurationType(handlerType);
+            Type serviceConfig = GetConfigurationType(handlerType);
             if (serviceConfig == null)
                 continue;
 
@@ -158,10 +174,7 @@ public interface IDaprService
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
         var serviceName = serviceType.GetServiceName();
-        if (string.IsNullOrWhiteSpace(serviceName))
-            return false;
-
-        return IsEnabled(serviceName);
+        return !string.IsNullOrWhiteSpace(serviceName) && IsEnabled(serviceName);
     }
 
     /// <summary>
@@ -174,23 +187,23 @@ public interface IDaprService
 
         IConfigurationRoot configRoot = IServiceConfiguration.BuildConfigurationRoot();
         var serviceEnabledFlag = configRoot.GetValue<bool?>($"{serviceName.ToUpper()}_SERVICE_ENABLED", null);
-        if (serviceEnabledFlag.HasValue)
-            return serviceEnabledFlag.Value;
-
-        return ServiceConstants.ENABLE_SERVICES_BY_DEFAULT;
+        return serviceEnabledFlag.HasValue && serviceEnabledFlag.Value;
     }
 
     /// <summary>
     /// Find the highest priority/derived service type with the given name.
     /// </summary>
+    /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
     public static (Type, Type, DaprServiceAttribute)? FindHandler(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
             return null;
 
-        foreach (var serviceInfo in FindHandlers())
+        foreach ((Type, Type, DaprServiceAttribute) serviceInfo in FindHandlers())
+        {
             if (string.Equals(name, serviceInfo.Item3.Name, StringComparison.InvariantCultureIgnoreCase))
                 return serviceInfo;
+        }
 
         return null;
     }
@@ -198,11 +211,14 @@ public interface IDaprService
     /// <summary>
     /// Find the implementation for the given service handler.
     /// </summary>
+    /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
     public static (Type, Type, DaprServiceAttribute)? FindHandler(Type handlerType)
     {
-        foreach (var serviceInfo in FindHandlers())
+        foreach ((Type, Type, DaprServiceAttribute) serviceInfo in FindHandlers())
+        {
             if (serviceInfo.Item1 == handlerType)
                 return serviceInfo;
+        }
 
         return null;
     }
@@ -211,6 +227,7 @@ public interface IDaprService
     /// Gets the full list of all dapr service classes (with associated attribute) in loaded assemblies.
     /// If enabledOnly set, will not return services that have been disabled via configuration.
     /// </summary>
+    /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
     public static (Type, Type, DaprServiceAttribute)[] FindHandlers(bool enabledOnly = false)
     {
         // first get all service types
@@ -244,7 +261,7 @@ public interface IDaprService
                 continue;
             }
 
-            if (handlerLookup.TryGetValue(handlerType, out var existingEntry))
+            if (handlerLookup.TryGetValue(handlerType, out (Type, Type, DaprServiceAttribute) existingEntry))
             {
                 if (existingEntry.Item3.Priority)
                 {

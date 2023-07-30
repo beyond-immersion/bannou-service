@@ -7,29 +7,73 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bannou-service", "bannou-se
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "service-tester", "service-tester\service-tester.csproj", "{3E450249-3580-4178-BB5E-7F36D254D38E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "unit-tests", "unit-tests\unit-tests.csproj", "{F33DE2EC-6A19-401A-894F-7E23BB429562}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "unit-tests", "unit-tests\unit-tests.csproj", "{F33DE2EC-6A19-401A-894F-7E23BB429562}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisioning", "{6905E47E-6C04-4CF6-894F-2643528E490D}"
+	ProjectSection(SolutionItems) = preProject
+		provisioning\docker-compose.ci.yml = provisioning\docker-compose.ci.yml
+		provisioning\docker-compose.yml = provisioning\docker-compose.yml
+		provisioning\Dockerfile = provisioning\Dockerfile
+		provisioning\service-tests.sh = provisioning\service-tests.sh
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{8104DBD9-C9EB-460A-842B-9385C32836C6}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\ci.app.yml = .github\workflows\ci.app.yml
+		.github\workflows\ci.service.yml = .github\workflows\ci.service.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{1E4033CE-EDE2-4140-ABB1-0B55250255F9}"
+	ProjectSection(SolutionItems) = preProject
+		documentation\CONTRIBUTING.md = documentation\CONTRIBUTING.md
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Components", "Components", "{47B2858E-0EA2-43AB-85CF-E1335FF1D0A8}"
+	ProjectSection(SolutionItems) = preProject
+		provisioning\components\ci\account-redis.yaml = provisioning\components\ci\account-redis.yaml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Development|Any CPU = Development|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{FD238707-4552-4A0E-8F17-6A12CC731B86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FD238707-4552-4A0E-8F17-6A12CC731B86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD238707-4552-4A0E-8F17-6A12CC731B86}.Development|Any CPU.ActiveCfg = Development|Any CPU
+		{FD238707-4552-4A0E-8F17-6A12CC731B86}.Development|Any CPU.Build.0 = Development|Any CPU
 		{FD238707-4552-4A0E-8F17-6A12CC731B86}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FD238707-4552-4A0E-8F17-6A12CC731B86}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3E450249-3580-4178-BB5E-7F36D254D38E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3E450249-3580-4178-BB5E-7F36D254D38E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E450249-3580-4178-BB5E-7F36D254D38E}.Development|Any CPU.ActiveCfg = Development|Any CPU
+		{3E450249-3580-4178-BB5E-7F36D254D38E}.Development|Any CPU.Build.0 = Development|Any CPU
 		{3E450249-3580-4178-BB5E-7F36D254D38E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E450249-3580-4178-BB5E-7F36D254D38E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F33DE2EC-6A19-401A-894F-7E23BB429562}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F33DE2EC-6A19-401A-894F-7E23BB429562}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F33DE2EC-6A19-401A-894F-7E23BB429562}.Development|Any CPU.ActiveCfg = Development|Any CPU
+		{F33DE2EC-6A19-401A-894F-7E23BB429562}.Development|Any CPU.Build.0 = Development|Any CPU
 		{F33DE2EC-6A19-401A-894F-7E23BB429562}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F33DE2EC-6A19-401A-894F-7E23BB429562}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6905E47E-6C04-4CF6-894F-2643528E490D} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
+		{8104DBD9-C9EB-460A-842B-9385C32836C6} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
+		{1E4033CE-EDE2-4140-ABB1-0B55250255F9} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
+		{47B2858E-0EA2-43AB-85CF-E1335FF1D0A8} = {6905E47E-6C04-4CF6-894F-2643528E490D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC13195D-546C-43E1-9AAA-2C0BF08BA428}

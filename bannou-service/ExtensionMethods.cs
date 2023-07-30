@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -81,7 +80,7 @@ public static partial class ExtensionMethods
     public static string? GetServiceName(this Type serviceType)
     {
         string? serviceName = null;
-        var serviceAttr = serviceType.GetCustomAttributes<DaprServiceAttribute>().FirstOrDefault();
+        DaprServiceAttribute? serviceAttr = serviceType.GetCustomAttributes<DaprServiceAttribute>().FirstOrDefault();
         if (serviceAttr != null && !string.IsNullOrWhiteSpace(serviceAttr.Name))
             serviceName = serviceAttr.Name;
 
@@ -111,9 +110,9 @@ public static partial class ExtensionMethods
     {
         foreach ((Type, Type, DaprServiceAttribute) serviceClassInfo in IDaprService.FindHandlers(enabledOnly: true))
         {
-            var handlerType = serviceClassInfo.Item1;
-            var serviceType = serviceClassInfo.Item2;
-            var serviceLifetime = serviceClassInfo.Item3.Lifetime;
+            Type handlerType = serviceClassInfo.Item1;
+            Type serviceType = serviceClassInfo.Item2;
+            ServiceLifetime serviceLifetime = serviceClassInfo.Item3.Lifetime;
             var serviceName = serviceType.GetServiceName();
 
             Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} has been enabled to handle type {handlerType}.");
@@ -125,10 +124,7 @@ public static partial class ExtensionMethods
     /// <summary>
     /// Binds HTTP endpoints for admin commands.
     /// </summary>
-    public static IEndpointRouteBuilder MapNonServiceControllers(this IEndpointRouteBuilder builder)
-    {
-        return builder;
-    }
+    public static IEndpointRouteBuilder MapNonServiceControllers(this IEndpointRouteBuilder builder) => builder;
 
     /// <summary>
     /// Binds HTTP endpoints for all registered dapr service handlers.
@@ -137,11 +133,11 @@ public static partial class ExtensionMethods
     {
         foreach ((Type, Type, DaprServiceAttribute) serviceClassInfo in IDaprService.FindHandlers(enabledOnly: true))
         {
-            var handlerType = serviceClassInfo.Item1;
-            var serviceType = serviceClassInfo.Item2;
-            var serviceName = serviceType.GetServiceName();
+            Type interfaceType = serviceClassInfo.Item1;
+            Type implementationType = serviceClassInfo.Item2;
+            var serviceName = implementationType.GetServiceName();
 
-            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForHandler(handlerType))
+            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForHandler(interfaceType))
             {
                 var controllerName = controllerClassInfo.Item2?.Name ?? controllerClassInfo.Item2?.Template;
                 if (string.IsNullOrWhiteSpace(controllerName))
@@ -151,12 +147,12 @@ public static partial class ExtensionMethods
                     continue;
 
                 Program.Logger?.Log(LogLevel.Trace, null, $"Activating service controller route {controllerName}/{{action}}/{{id}}.");
-                builder.MapControllerRoute(
+                _ = builder.MapControllerRoute(
                     name: "ControllerActionIdApi",
                     pattern: controllerName + "/{action}/{id}");
 
                 Program.Logger?.Log(LogLevel.Trace, null, $"Activating service controller route {controllerName}/{{action}}.");
-                builder.MapControllerRoute(
+                _ = builder.MapControllerRoute(
                     name: "ControllerActionApi",
                     pattern: controllerName + "/{action}");
             }

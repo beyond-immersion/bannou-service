@@ -5,13 +5,20 @@ using System.Net.Mime;
 namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
-/// Service component responsible for template definition handling.
+/// Template APIs- backed by the Template service.
 /// </summary>
 [DaprController(template: "template", serviceType: typeof(TemplateService), Name = "template")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class TemplateController : BaseDaprController
 {
+    protected TemplateService Service { get; }
+
+    public TemplateController(TemplateService service)
+    {
+        Service = service;
+    }
+
     /// <summary>
     /// Dapr endpoint to get a specific template definition.
     /// </summary>
@@ -21,7 +28,7 @@ public class TemplateController : BaseDaprController
     {
         await Task.CompletedTask;
 
-        var response = request.CreateResponse();
+        TemplateGetResponse response = request.CreateResponse();
         response.Code = 200;
         return Ok(response);
     }
@@ -31,53 +38,33 @@ public class TemplateController : BaseDaprController
     /// </summary>
     [HttpGet]
     [DaprRoute("list")]
-    public async Task List([FromBody] TemplateListRequest request)
-    {
-        await Task.CompletedTask;
-
-    }
+    public async Task List([FromBody] TemplateListRequest request) => await Task.CompletedTask;
 
     /// <summary>
     /// Dapr endpoint to create new template definitions.
     /// </summary>
     [HttpPost]
     [DaprRoute("create")]
-    public async Task Create([FromBody] TemplateCreateRequest request)
-    {
-        await Task.CompletedTask;
-
-    }
+    public async Task Create([FromBody] TemplateCreateRequest request) => await Task.CompletedTask;
 
     /// <summary>
     /// Dapr endpoint to update an existing template definition.
     /// </summary>
     [HttpPost]
     [DaprRoute("update")]
-    public async Task Update([FromBody] TemplateUpdateRequest request)
-    {
-        await Task.CompletedTask;
-
-    }
+    public async Task Update([FromBody] TemplateUpdateRequest request) => await Task.CompletedTask;
 
     /// <summary>
     /// Dapr endpoint to destroy an existing template definition.
     /// </summary>
     [HttpPost]
     [DaprRoute("destroy")]
-    public async Task Destroy([FromBody] TemplateDestroyRequest request)
-    {
-        await Task.CompletedTask;
-
-    }
+    public async Task Destroy([FromBody] TemplateDestroyRequest request) => await Task.CompletedTask;
 
     /// <summary>
     /// Dapr endpoint to destroy an existing template definition.
     /// </summary>
     [HttpPost]
     [DaprRoute("destroy-by-key")]
-    public async Task DestroyByKey([FromBody] TemplateDestroyByKeyRequest request)
-    {
-        await Task.CompletedTask;
-
-    }
+    public async Task DestroyByKey([FromBody] TemplateDestroyByKeyRequest request) => await Task.CompletedTask;
 }

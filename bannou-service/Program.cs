@@ -1,5 +1,6 @@
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using System.Runtime.CompilerServices;
 
 [assembly: ApiController]
@@ -17,8 +18,7 @@ public static class Program
     {
         get
         {
-            if (_configurationRoot == null)
-                _configurationRoot = IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
+            _configurationRoot ??= IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
 
             return _configurationRoot;
         }
@@ -39,8 +39,7 @@ public static class Program
     {
         get
         {
-            if (_configuration == null)
-                _configuration = ConfigurationRoot.Get<ServiceConfiguration>() ?? new ServiceConfiguration();
+            _configuration ??= ConfigurationRoot.Get<ServiceConfiguration>() ?? new ServiceConfiguration();
 
             return _configuration;
         }
@@ -57,8 +56,7 @@ public static class Program
     {
         get
         {
-            if (_serviceGUID == null)
-                _serviceGUID = Configuration.ForceServiceID ?? Guid.NewGuid().ToString().ToLower();
+            _serviceGUID ??= Configuration.Force_Service_ID ?? Guid.NewGuid().ToString().ToLower();
 
             return _serviceGUID;
         }
@@ -95,14 +93,14 @@ public static class Program
             if (_serviceAppLookup == null)
             {
                 _serviceAppLookup = new Dictionary<string, IList<(Type, Type, DaprServiceAttribute)>>();
-                foreach (var serviceHandler in IDaprService.FindHandlers(enabledOnly: false))
+                foreach ((Type, Type, DaprServiceAttribute) serviceHandler in IDaprService.FindHandlers(enabledOnly: false))
                 {
-                    string serviceName = serviceHandler.Item3.Name;
-                    string defaultApp = serviceHandler.Item3.DefaultApp.ToLower();
-                    string? appOverride = ConfigurationRoot.GetValue<string>(serviceName.ToUpper() + "_APP_MAPPING");
-                    string appName = appOverride ?? defaultApp;
+                    var serviceName = serviceHandler.Item3.Name;
+                    var defaultApp = serviceHandler.Item3.DefaultApp.ToLower();
+                    var appOverride = ConfigurationRoot.GetValue<string>(serviceName.ToUpper() + "_APP_MAPPING");
+                    var appName = appOverride ?? defaultApp;
 
-                    if (_serviceAppLookup.TryGetValue(appName, out var existingApp))
+                    if (_serviceAppLookup.TryGetValue(appName, out IList<(Type, Type, DaprServiceAttribute)>? existingApp))
                     {
                         existingApp.Add(serviceHandler);
                         continue;
@@ -128,13 +126,38 @@ public static class Program
 
     private static async Task Main(string[] args)
     {
-        Logger.Log(LogLevel.Debug, null, "Service starting.");
+        Logger.Log(LogLevel.Information, null, "Service starting.");
 
-        if (!Validators.RunAll())
+        if (Configuration == null)
         {
-            Logger.Log(LogLevel.Error, null, "Validation error- service start aborted.");
+            Logger.Log(LogLevel.Error, null, "Service configuration missing.");
             return;
         }
+
+        if (!IDaprService.IsAnyEnabled())
+        {
+            Logger.Log(LogLevel.Error, null, "No Dapr services have been enabled.");
+            return;
+        }
+
+        if (!IDaprService.AllHaveRequiredConfiguration())
+        {
+            Logger.Log(LogLevel.Error, null, "Required configuration not set for enabled dapr services.");
+            return;
+        }
+
+        Logger.Log(LogLevel.Information, null, "Configuration established.");
+
+        var serviceTypes = IDaprService.FindHandlers(enabledOnly: true).Select(t => t.Item2);
+        if (serviceTypes == null)
+        {
+            Logger.Log(LogLevel.Error, null, "No services enabled- exiting application.");
+            return;
+        }
+
+        DaprClient = new DaprClientBuilder()
+            .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig)
+            .Build();
 
         WebApplicationBuilder? webAppBuilder = WebApplication.CreateBuilder(args);
         if (webAppBuilder == null)
@@ -143,33 +166,68 @@ public static class Program
             return;
         }
 
-        webAppBuilder.Services.AddAuthentication();
-        webAppBuilder.Services.AddControllers();
+        _ = webAppBuilder.Services.AddAuthentication();
+        _ = webAppBuilder.Services.AddControllers();
         webAppBuilder.Services.AddDaprClient();
         webAppBuilder.Services.AddDaprServices();
 
         WebApplication webApp = webAppBuilder.Build();
-
-        DaprClient = new DaprClientBuilder()
-            .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig)
-            .Build();
-
         try
         {
-            webApp.MapNonServiceControllers();
-            webApp.MapDaprServiceControllers();
+            _ = webApp.MapNonServiceControllers();
+            _ = webApp.MapDaprServiceControllers();
 
-            Logger.Log(LogLevel.Debug, null, "Service startup complete- webhost starting.");
+            // initialize service handlers
+            foreach (var serviceType in serviceTypes)
             {
-                // blocks until webhost dies / server shutdown command received
-                await Task.Run(async () => await webApp.RunAsync(ShutdownCancellationTokenSource.Token), ShutdownCancellationTokenSource.Token);
+                if (serviceType != null)
+                {
+                    var serviceInst = (IDaprService?)webApp.Services.GetService(serviceType);
+                    if (serviceInst != null)
+                        if (!await serviceInst.OnBuild())
+                            throw new Exception($"Service handler [{serviceType}] failed on build.");
+                }
             }
 
-            Logger.Log(LogLevel.Debug, null, "Webhost stopped- starting controlled service shutdown.");
+            Logger.Log(LogLevel.Information, null, "Webhost starting.");
+            {
+                // start running webhost, but don't block on it just yet
+                var runTask = webApp.RunAsync(ShutdownCancellationTokenSource.Token);
+
+                // run secondary initialization on service handlers, now that webhost is running
+                foreach (var serviceType in serviceTypes)
+                {
+                    if (serviceType != null)
+                    {
+                        var serviceInst = (IDaprService?)webApp.Services.GetService(serviceType);
+                        if (serviceInst != null)
+                            await serviceInst.OnRunning();
+                    }
+                }
+
+                Logger.Log(LogLevel.Information, null, "Service startup complete- settling in.");
+
+                // wait for webhost to finish / shutdown to be initiated
+                await runTask;
+            }
+
+            Logger.Log(LogLevel.Information, null, "Webhost stopped- starting controlled service shutdown.");
+
+            // stop service handlers
+            foreach (var serviceType in serviceTypes)
+            {
+                if (serviceType != null)
+                {
+                    IDaprService? serviceInst = (IDaprService?)webApp.Services.GetService(serviceType);
+                    if (serviceInst != null)
+                        await serviceInst.OnShutdown();
+                }
+            }
         }
         catch (Exception e)
         {
             Logger.Log(LogLevel.Error, e, "A critical error has occurred- starting service shutdown.");
+            ShutdownCancellationTokenSource.Cancel();
         }
         finally
         {
