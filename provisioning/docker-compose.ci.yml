@@ -35,4 +35,5 @@ services:
 
 networks:
   celestial_network:
-  
+    external:
+      name: "celestial_network"

@@ -26,8 +26,6 @@ services:
     depends_on:
       - bannou
     network_mode: "service:bannou"
-    networks:
-      - celestial_network
 
   placement:
     image: "daprio/dapr"
@@ -41,3 +39,5 @@ services:
 
 networks:
   celestial_network:
+    external:
+      name: celestial_network
