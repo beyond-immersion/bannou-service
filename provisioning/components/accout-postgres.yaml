@@ -1,7 +1,7 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: accounts
+  name: accounts-2
 spec:
   type: state.postgresql
   version: v1
