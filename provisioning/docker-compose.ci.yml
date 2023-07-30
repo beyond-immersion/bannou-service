@@ -49,7 +49,7 @@ services:
 
   # backing datastore for testing accounts- matches CI component
   postgres-db:
-    image: bitnami/postgres
+    image: bitnami/postgresql
     hostname: account-db-2
     ports:
       - "5432:5432"
