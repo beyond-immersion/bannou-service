@@ -20,9 +20,13 @@ public class AuthorizationService : IDaprService
         {
             Configuration = IServiceConfiguration.BuildConfiguration<AuthorizationServiceConfiguration>();
 
-            var secretEntry = await Program.DaprClient.GetSecretAsync("app-secrets", "auth", cancellationToken: Program.ShutdownCancellationTokenSource.Token);
-            if (secretEntry != null && secretEntry.TryGetValue("token_shared_secret", out var tokenSharedSecret))
-                Configuration.TokenSharedSecret = tokenSharedSecret;
+            try
+            {
+                var secretEntry = await Program.DaprClient.GetSecretAsync("app-secrets", "auth", cancellationToken: Program.ShutdownCancellationTokenSource.Token);
+                if (secretEntry != null && secretEntry.TryGetValue("token_shared_secret", out var tokenSharedSecret))
+                    Configuration.TokenSharedSecret = tokenSharedSecret;
+            }
+            catch { }
 
             if (string.IsNullOrWhiteSpace(Configuration.TokenSharedSecret))
                 throw new NullReferenceException("Shared secret for encoding/decoding authorizaton tokens not set.");
