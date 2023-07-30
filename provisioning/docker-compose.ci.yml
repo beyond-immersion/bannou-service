@@ -25,9 +25,14 @@ services:
     image: postgres
     restart: always
     environment:
+      POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: example
     ports:
       - "5432:5432"
     networks:
       - celestial_network
+
+networks:
+  celestial_network:
+  
