@@ -2,7 +2,8 @@ services:
 
   bannou:
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       - TESTING_SERVICE_ENABLED=${TESTING_SERVICE_ENABLED:-false}
       - AUTHORIZATION_SERVICE_ENABLED=${AUTHORIZATION_SERVICE_ENABLED:-false}
@@ -31,6 +32,13 @@ services:
       - celestial_network
     ports:
       - "5432:5432"
+    volumes:
+      - "/var/run/postgres.sock:/var/run/postgres/postgres.sock"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   celestial_network:
