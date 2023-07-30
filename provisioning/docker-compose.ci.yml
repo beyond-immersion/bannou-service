@@ -28,6 +28,7 @@ services:
 
   redis-db:
     image: redis
+    hostname: account-db
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
       interval: 1s
