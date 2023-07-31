@@ -30,6 +30,7 @@ public static class ConnectTests
         Func<TestingService, Task<bool>>[] tests = new Func<TestingService, Task<bool>>[]
         {
             Connect_Success,
+            Connect_WebsocketUpgrade_Success,
             Connect_TokenEmpty_BadRequest,
             Connect_TokenMissing_BadRequest
         };
@@ -65,6 +66,30 @@ public static class ConnectTests
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(SERVICE_NAME), endpointPath, request);
         newRequest.Headers.Add("token", testToken);
+
+        try
+        {
+            ConnectResponse response = await Program.DaprClient.InvokeMethodAsync<ConnectResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
+            return true;
+        }
+        catch { }
+
+        return false;
+    }
+
+    private static async Task<bool> Connect_WebsocketUpgrade_Success(TestingService service)
+    {
+        var endpointPath = $"{SERVICE_NAME}";
+        var testToken = "eyJlbWFpbCI6InVzZXJfMUBjZWxlc3RpYWxtYWlsLmNvbSIsImRpc3BsYXktbmFtZSI6IlRlc3QgQWNjb3VudCIsInR5cCI6IkpXVCIsImFsZyI6IlJTNTEyIn0.eyJqdGkiOiI3OTY5OTM3OS1hMDQyLTQ2MjUtOWIwMi1iM2E3YTliMDYwM2EiLCJpc3MiOiJBVVRIT1JJWkFUSU9OX1NFUlZJQ0U6NjY0NWQxYWYtMWFlNC00OGE1LTllYmUtNWE1YjQ3YjhjODJlIiwiaWF0IjoxNjkwNzcxOTM0LjAsImV4cCI6MTY5MDg1ODMzNC4wLCJyb2xlIjoidXNlciJ9.qr53M8pxvDN-vFB7Yj_ilCPuNwyXUpxNsLFIZ-Knk3Vu2wAa9BWhvY5NgQ2lo1cePOrimg1mY-QwkrXoTZXTCXr8WzKd12vmvOwPUb2AaWy5phV-k1PRWnp_px-qRq2SAyBd23fQLPQ85EeC_J0_dupna7GlJqzP8-YayjjYogU";
+
+        var request = new ConnectRequest()
+        {
+        };
+
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(SERVICE_NAME), endpointPath, request);
+        newRequest.Headers.Add("token", testToken);
+        newRequest.Headers.Add("Connection", "Upgrade");
+        newRequest.Headers.Add("Upgrade", "websocket");
 
         try
         {
