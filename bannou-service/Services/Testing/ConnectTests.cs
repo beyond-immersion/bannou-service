@@ -98,6 +98,11 @@ public static class ConnectTests
             if (exc.StatusCode == System.Net.HttpStatusCode.BadRequest)
                 return true;
         }
+        catch (Dapr.Client.InvocationException exc)
+        {
+            if (exc.Response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                return true;
+        }
 
         return false;
     }
@@ -120,6 +125,11 @@ public static class ConnectTests
         catch (HttpRequestException exc)
         {
             if (exc.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                return true;
+        }
+        catch (Dapr.Client.InvocationException exc)
+        {
+            if (exc.Response.StatusCode == System.Net.HttpStatusCode.BadRequest)
                 return true;
         }
 
