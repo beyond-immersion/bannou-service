@@ -27,16 +27,16 @@ public static class AuthorizationTests
             return false;
         }
 
-        try
+        Func<TestingService, Task<bool>>[] tests = new Func<TestingService, Task<bool>>[]
         {
-            Func<TestingService, Task<bool>>[] tests = new Func<TestingService, Task<bool>>[]
-            {
-                GetJWT_Success,
-                GetJWT_UsernameNotFound,
-                GetJWT_PasswordNotFound
-            };
+            GetJWT_Success,
+            GetJWT_UsernameNotFound,
+            GetJWT_PasswordNotFound
+        };
 
-            foreach (var test in tests)
+        foreach (var test in tests)
+        {
+            try
             {
                 if (!await test.Invoke(service))
                 {
@@ -44,11 +44,11 @@ public static class AuthorizationTests
                     return false;
                 }
             }
-        }
-        catch (Exception exc)
-        {
-            Program.Logger?.Log(LogLevel.Error, exc, $"An exception occurred running integration test [{nameof(GetJWT_Success)}].");
-            return false;
+            catch (Exception exc)
+            {
+                Program.Logger?.Log(LogLevel.Error, exc, $"An exception occurred running integration test [{test.Method.Name}].");
+                return false;
+            }
         }
 
         return true;
