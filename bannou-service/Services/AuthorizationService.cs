@@ -45,7 +45,7 @@ public class AuthorizationService : IDaprService
                 var hashedSecret = GenerateHashedSecret(secretString, secretSalt);
 
                 var accountEntry = new AccountModel(id, email, hashedSecret, secretSalt, displayName);
-                await Program.DaprClient.SaveStateAsync("accounts-2", email.ToLower(), accountEntry, cancellationToken: Program.ShutdownCancellationTokenSource.Token);
+                await Program.DaprClient.SaveStateAsync("accounts", email.ToLower(), accountEntry, cancellationToken: Program.ShutdownCancellationTokenSource.Token);
             }
         }
         catch(Exception exc)
@@ -64,7 +64,7 @@ public class AuthorizationService : IDaprService
 
     public async Task<string?> GetJWT(string email, string password)
     {
-        AccountModel accountEntry = await Program.DaprClient.GetStateAsync<AccountModel>("accounts-2", email.ToLower(), cancellationToken: Program.ShutdownCancellationTokenSource.Token);
+        AccountModel accountEntry = await Program.DaprClient.GetStateAsync<AccountModel>("accounts", email.ToLower(), cancellationToken: Program.ShutdownCancellationTokenSource.Token);
         if (accountEntry == null)
             return null;
 

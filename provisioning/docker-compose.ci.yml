@@ -35,7 +35,7 @@ services:
 
   # backing datastore for testing accounts- matches CI component
   redis-db:
-    image: redis
+    image: redis/redis-stack-server:latest
     hostname: account-db
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
@@ -44,19 +44,6 @@ services:
       retries: 5
     ports:
      - "6379:6379"
-    networks:
-      - celestial_network
-
-  # backing datastore for testing accounts- matches CI component
-  postgres-db:
-    image: bitnami/postgresql
-    hostname: account-db-2
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRESQL_USERNAME=postgres
-      - POSTGRESQL_PASSWORD=example
-      - POSTGRESQL_DATABASE=postgres
     networks:
       - celestial_network
 
