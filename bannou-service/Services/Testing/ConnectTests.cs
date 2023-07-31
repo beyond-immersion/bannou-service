@@ -57,7 +57,7 @@ public static class ConnectTests
     private static async Task<bool> Connect_Success(TestingService service)
     {
         var endpointPath = $"{SERVICE_NAME}";
-        var testToken = "some_token";
+        var testToken = "eyJlbWFpbCI6InVzZXJfMUBjZWxlc3RpYWxtYWlsLmNvbSIsImRpc3BsYXktbmFtZSI6IlRlc3QgQWNjb3VudCIsInR5cCI6IkpXVCIsImFsZyI6IlJTNTEyIn0.eyJqdGkiOiI3OTY5OTM3OS1hMDQyLTQ2MjUtOWIwMi1iM2E3YTliMDYwM2EiLCJpc3MiOiJBVVRIT1JJWkFUSU9OX1NFUlZJQ0U6NjY0NWQxYWYtMWFlNC00OGE1LTllYmUtNWE1YjQ3YjhjODJlIiwiaWF0IjoxNjkwNzcxOTM0LjAsImV4cCI6MTY5MDg1ODMzNC4wLCJyb2xlIjoidXNlciJ9.qr53M8pxvDN-vFB7Yj_ilCPuNwyXUpxNsLFIZ-Knk3Vu2wAa9BWhvY5NgQ2lo1cePOrimg1mY-QwkrXoTZXTCXr8WzKd12vmvOwPUb2AaWy5phV-k1PRWnp_px-qRq2SAyBd23fQLPQ85EeC_J0_dupna7GlJqzP8-YayjjYogU";
 
         var request = new ConnectRequest()
         {

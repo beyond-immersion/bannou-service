@@ -179,6 +179,11 @@ public static class Program
             _ = webApp.MapNonServiceControllers();
             _ = webApp.MapDaprServiceControllers();
 
+            webApp.UseWebSockets(new WebSocketOptions()
+            {
+                KeepAliveInterval = TimeSpan.FromMinutes(2)
+            });
+
             await InvokeAllServiceStartMethods(webApp, serviceTypes);
 
             Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- WebHost starting.");
