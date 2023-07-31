@@ -170,6 +170,7 @@ public static class Program
         catch (Exception exc)
         {
             Logger.Log(LogLevel.Error, exc, "Failed to add required services to registry- exiting application.");
+            return;
         }
 
         WebApplication webApp = webAppBuilder.Build();

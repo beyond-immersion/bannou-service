@@ -73,7 +73,7 @@ public static class AuthorizationTests
         {
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", request);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName("authorization"), $"{TEST_CONTROLLER}/{TEST_ACTION}", request);
         newRequest.Headers.Add("username", testUsername);
         newRequest.Headers.Add("password", testPassword);
 
@@ -97,7 +97,7 @@ public static class AuthorizationTests
         {
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", request);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName("authorization"), $"{TEST_CONTROLLER}/{TEST_ACTION}", request);
         newRequest.Headers.Add("username", testUsername);
         newRequest.Headers.Add("password", testPassword);
 
