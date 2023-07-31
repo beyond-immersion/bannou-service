@@ -30,6 +30,7 @@ public static class ConnectTests
         Func<TestingService, Task<bool>>[] tests = new Func<TestingService, Task<bool>>[]
         {
             Connect_Success,
+            Connect_TokenEmpty_BadRequest,
             Connect_TokenMissing_BadRequest
         };
 
@@ -75,7 +76,7 @@ public static class ConnectTests
         return false;
     }
 
-    private static async Task<bool> Connect_TokenMissing_BadRequest(TestingService service)
+    private static async Task<bool> Connect_TokenEmpty_BadRequest(TestingService service)
     {
         var endpointPath = $"{SERVICE_NAME}";
         var testToken = "";
@@ -90,9 +91,37 @@ public static class ConnectTests
         try
         {
             ConnectResponse response = await Program.DaprClient.InvokeMethodAsync<ConnectResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
-            return true;
+            return false;
         }
-        catch { }
+        catch (HttpRequestException exc)
+        {
+            if (exc.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static async Task<bool> Connect_TokenMissing_BadRequest(TestingService service)
+    {
+        var endpointPath = $"{SERVICE_NAME}";
+
+        var request = new ConnectRequest()
+        {
+        };
+
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(SERVICE_NAME), endpointPath, request);
+
+        try
+        {
+            ConnectResponse response = await Program.DaprClient.InvokeMethodAsync<ConnectResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
+            return false;
+        }
+        catch (HttpRequestException exc)
+        {
+            if (exc.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                return true;
+        }
 
         return false;
     }
