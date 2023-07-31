@@ -19,42 +19,32 @@ public class AuthorizationService : IDaprService
     public AuthorizationServiceConfiguration Configuration { get; set; }
     protected Task SubscribeConfigurationTask { get; set; }
 
-    async Task<bool> IDaprService.OnBuild()
+    async Task IDaprService.OnStart()
     {
-        try
+        Configuration = IServiceConfiguration.BuildConfiguration<AuthorizationServiceConfiguration>();
+
+        // override sensitive configuration Dapr secret store
+        await TryLoadFromDaprSecrets();
+
+        if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key))
+            throw new NullReferenceException("Shared public key for encoding/decoding authorizaton tokens not set.");
+
+        if (string.IsNullOrWhiteSpace(Configuration.Token_Private_Key))
+            throw new NullReferenceException("Shared private key for encoding/decoding authorizaton tokens not set.");
+
+        // if integration testing, then add default test record to account datastore
+        if (Program.Configuration.Integration_Testing)
         {
-            Configuration = IServiceConfiguration.BuildConfiguration<AuthorizationServiceConfiguration>();
+            var id = Guid.NewGuid().ToString();
+            var email = "user_1@celestialmail.com";
+            var displayName = "Test Account";
+            var secretString = "user_1_password";
+            var secretSalt = Guid.NewGuid().ToString();
+            var hashedSecret = GenerateHashedSecret(secretString, secretSalt);
 
-            // override sensitive configuration Dapr secret store
-            await LoadFromDaprSecrets();
-
-            if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key))
-                throw new NullReferenceException("Shared public key for encoding/decoding authorizaton tokens not set.");
-
-            if (string.IsNullOrWhiteSpace(Configuration.Token_Private_Key))
-                throw new NullReferenceException("Shared private key for encoding/decoding authorizaton tokens not set.");
-
-            // if integration testing, then add default test record to account datastore
-            if (Program.Configuration.Integration_Testing)
-            {
-                var id = Guid.NewGuid().ToString();
-                var email = "user_1@celestialmail.com";
-                var displayName = "Test Account";
-                var secretString = "user_1_password";
-                var secretSalt = Guid.NewGuid().ToString();
-                var hashedSecret = GenerateHashedSecret(secretString, secretSalt);
-
-                var accountEntry = new AccountModel(id, email, hashedSecret, secretSalt, displayName);
-                await Program.DaprClient.SaveStateAsync("accounts", email.ToLower(), accountEntry, cancellationToken: Program.ShutdownCancellationTokenSource.Token);
-            }
+            var accountEntry = new AccountModel(id, email, hashedSecret, secretSalt, displayName);
+            await Program.DaprClient.SaveStateAsync("accounts", email.ToLower(), accountEntry, cancellationToken: Program.ShutdownCancellationTokenSource.Token);
         }
-        catch(Exception exc)
-        {
-            Program.Logger.Log(LogLevel.Error, exc, $"An error occurred on build with service handler [{nameof(AuthorizationService)}].");
-            return false;
-        }
-
-        return true;
     }
 
     async Task IDaprService.OnShutdown()
@@ -119,7 +109,7 @@ public class AuthorizationService : IDaprService
         return jwtBuilder;
     }
 
-    private async Task LoadFromDaprSecrets()
+    private async Task TryLoadFromDaprSecrets()
     {
         try
         {

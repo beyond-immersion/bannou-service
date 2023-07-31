@@ -13,10 +13,9 @@ namespace BeyondImmersion.BannouService.Services;
 /// </summary>
 public interface IDaprService
 {
-    async Task<bool> OnBuild()
+    async Task OnStart()
     {
         await Task.CompletedTask;
-        return true;
     }
 
     async Task OnRunning()
