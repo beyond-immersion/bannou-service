@@ -43,7 +43,7 @@ public class AccountService : IDaprService
 
     public async Task<AccountModel?> GetAccount(string email)
     {
-        return await Program.DaprClient.GetStateAsync<AccountModel>(Program.GetAppByServiceName(ServiceConstants.ACCOUNTS_STORE_NAME), email.ToLower(), cancellationToken: Program.ShutdownCancellationTokenSource.Token);
+        return await Program.DaprClient.GetStateAsync<AccountModel>(ServiceConstants.ACCOUNTS_STORE_NAME, email.ToLower(), cancellationToken: Program.ShutdownCancellationTokenSource.Token);
     }
 
     public static string GenerateHashedSecret(string secretString, string secretSalt)
