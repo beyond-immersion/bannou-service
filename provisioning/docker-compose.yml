@@ -7,6 +7,8 @@ services:
     build:
       context: ../
       dockerfile: provisioning/Dockerfile
+    volumes:
+      - "./provisioning/certificates:/certificates"
     depends_on:
       - placement
     networks:
@@ -23,8 +25,10 @@ services:
       "--placement-host-address", "placement:50006",
       "--resources-path", "./components"
     ]
+    volumes:
+      - "./provisioning/certificates:/certificates"
     environment:
-      - "SSL_CERT_DIR=/root/.dotnet/corefx/cryptography/x509stores/my/"
+      - "SSL_CERT_DIR=/certificates"
     depends_on:
       - bannou
     network_mode: "service:bannou"
