@@ -12,7 +12,7 @@ public static class BasicTests
     private const string TEST_LOOPBACK_URI_PREFIX = $"{TEST_PROTOCOL}://{TEST_HOST_LOOPBACK}:{TEST_HOST_PORT}/v1.0/invoke/{TEST_SERVICE_NAME}/method/{TEST_CONTROLLER}/{TEST_ACTION}";
     private const string TEST_LOCALHOST_URI_PREFIX = $"{TEST_PROTOCOL}://{TEST_HOST_LOCALHOST}:{TEST_HOST_PORT}/v1.0/invoke/{TEST_SERVICE_NAME}/method/{TEST_CONTROLLER}/{TEST_ACTION}";
 
-    private const string TEST_PROTOCOL = "http";
+    private const string TEST_PROTOCOL = "https";
     private const string TEST_HOST_LOCALHOST = "localhost";
     private const string TEST_HOST_LOOPBACK = "127.0.0.1";
     private const string TEST_HOST_PORT = "3500";
