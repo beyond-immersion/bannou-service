@@ -6,7 +6,6 @@ on:
 
 env:
   DOTNET_VERSION: '7.0.202'
-  DOTNET_INSTALL_DIR: './.dotnet'
 
 jobs:
   lint-tests:
@@ -28,7 +27,6 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          ASPNETCORE_ENVIRONMENT: Development
 
       - name: Install dependencies
         run: dotnet restore
