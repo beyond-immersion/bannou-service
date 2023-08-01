@@ -33,11 +33,6 @@ public class AuthorizationService : IDaprService
             throw new NullReferenceException("Shared private key for encoding/decoding authorizaton tokens not set.");
     }
 
-    async Task IDaprService.OnShutdown()
-    {
-        await Task.CompletedTask;
-    }
-
     public async Task<string?> GetJWT(string email, string password)
     {
         var dataModel = new AccountGetAccountRequest()

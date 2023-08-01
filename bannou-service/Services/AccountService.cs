@@ -41,16 +41,6 @@ public class AccountService : IDaprService
         }
     }
 
-    async Task IDaprService.OnRunning()
-    {
-        await Task.CompletedTask;
-    }
-
-    async Task IDaprService.OnShutdown()
-    {
-        await Task.CompletedTask;
-    }
-
     public async Task<AccountModel?> GetAccount(string email)
     {
         return await Program.DaprClient.GetStateAsync<AccountModel>(Program.GetAppByServiceName(ServiceConstants.ACCOUNTS_STORE_NAME), email.ToLower(), cancellationToken: Program.ShutdownCancellationTokenSource.Token);
