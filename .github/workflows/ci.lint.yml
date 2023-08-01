@@ -1,0 +1,27 @@
+name: 'Lint Tests'
+
+on:
+  push:
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    name: Lint Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0 # If you use VALIDATE_ALL_CODEBASE = true, you can remove this line to improve performances
+
+      - name: Run Lint Tests
+        id: ml
+        # More info at https://megalinter.io/flavors/
+        uses: oxsecurity/megalinter/flavors/dotnet@v7.2.0
+        env:
+          # https://megalinter.io/configuration/
+          VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENABLE: EDITORCONFIG

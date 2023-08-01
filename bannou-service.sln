@@ -24,8 +24,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisionin
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{8104DBD9-C9EB-460A-842B-9385C32836C6}"
 	ProjectSection(SolutionItems) = preProject
-		.github\workflows\ci.app.yml = .github\workflows\ci.app.yml
-		.github\workflows\ci.service.yml = .github\workflows\ci.service.yml
+		.github\workflows\ci.lint.yml = .github\workflows\ci.lint.yml
+		.github\workflows\ci.integration.yml = .github\workflows\ci.integration.yml
+		.github\workflows\ci.unit.yml = .github\workflows\ci.unit.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{1E4033CE-EDE2-4140-ABB1-0B55250255F9}"

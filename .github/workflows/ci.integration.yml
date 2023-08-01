@@ -1,0 +1,22 @@
+name: 'Integration Tests'
+
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    env:
+      AUTH_TOKEN_PUBLIC_KEY: ${{ secrets.AUTH_TOKEN_PUBLIC_KEY }}
+      AUTH_TOKEN_PRIVATE_KEY: ${{ secrets.AUTH_TOKEN_PRIVATE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout Repo
+
+      - name: Run Integration Tests
+        run: docker-compose -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --build --exit-code-from=bannou-tester

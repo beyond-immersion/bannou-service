@@ -1,0 +1,30 @@
+name: 'Unit Tests'
+
+on:
+  push:
+  pull_request:
+    branches: [master]
+
+env:
+  DOTNET_VERSION: '7.0.202'
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install Dependencies
+        run: dotnet restore
+
+      - name: Build Application
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run Unit Tests
+        run: dotnet test --configuration Development --no-restore --verbosity normal
