@@ -23,6 +23,8 @@ services:
       "--placement-host-address", "placement:50006",
       "--resources-path", "./components"
     ]
+    environment:
+      - "SSL_CERT_DIR=/root/.dotnet/corefx/cryptography/x509stores/my/"
     depends_on:
       - bannou
     network_mode: "service:bannou"
