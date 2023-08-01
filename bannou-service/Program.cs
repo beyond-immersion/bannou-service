@@ -166,6 +166,26 @@ public static class Program
             _ = webAppBuilder.Services.AddControllers();
             webAppBuilder.Services.AddDaprClient();
             webAppBuilder.Services.AddDaprServices();
+
+            webAppBuilder.WebHost
+                .UseKestrel((kestrelOptions) =>
+                {
+                    kestrelOptions.ListenAnyIP(Configuration.Web_Host_Port, (listenOptions) =>
+                    {
+                        listenOptions.UseHttps((httpsOptions) =>
+                        {
+                            httpsOptions.SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13;
+                        });
+                    });
+                })
+                .UseConfiguration(ConfigurationRoot)
+                .UseSetting(WebHostDefaults.SuppressStatusMessagesKey, "True")
+                .ConfigureLogging((loggingOptions) =>
+                {
+                    loggingOptions
+                        .AddSimpleConsole()
+                        .SetMinimumLevel(Configuration.Web_Host_Logging_Level);
+                });
         }
         catch (Exception exc)
         {
@@ -178,6 +198,7 @@ public static class Program
         {
             _ = webApp.MapNonServiceControllers();
             _ = webApp.MapDaprServiceControllers();
+            _ = webApp.UseHttpsRedirection();
 
             webApp.UseWebSockets(new WebSocketOptions()
             {

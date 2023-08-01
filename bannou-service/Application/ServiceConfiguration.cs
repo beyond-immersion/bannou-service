@@ -13,5 +13,8 @@ public class ServiceConfiguration : IServiceConfiguration
 
     public bool Integration_Testing { get; set; }
 
+    public int Web_Host_Port { get; set; } = 80;
+
     public LogLevel App_Logging_Level { get; set; } = LogLevel.Warning;
+    public LogLevel Web_Host_Logging_Level { get; set; } = LogLevel.Warning;
 }
