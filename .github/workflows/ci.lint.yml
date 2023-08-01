@@ -13,8 +13,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0 # If you use VALIDATE_ALL_CODEBASE = true, you can remove this line to improve performances
+          fetch-depth: 0
 
       - name: Run Lint Tests
         id: ml
@@ -23,6 +22,5 @@ jobs:
         env:
           # https://megalinter.io/configuration/
           VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ENABLE: EDITORCONFIG
           EDITORCONFIG_EDITORCONFIG_CHECKER_ARGUMENTS: -disable-end-of-line -disable-insert-final-newline -v

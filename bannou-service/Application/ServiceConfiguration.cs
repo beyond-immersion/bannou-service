@@ -12,12 +12,12 @@ public class ServiceConfiguration : IServiceConfiguration
     /// <summary>
     /// Dapr configuration store name to use.
     /// </summary>
-    public string Dapr_Configuration_Store { get; set; } = "app-configuration";
+    public string Dapr_Configuration_Store { get; set; }
 
     /// <summary>
     /// Dapr secret store name to use.
     /// </summary>
-    public string Dapr_Secret_Store { get; set; } = "app-secrets";
+    public string Dapr_Secret_Store { get; set; }
 
     /// <summary>
     /// Whether we're integration testing, or running normally.

@@ -105,14 +105,17 @@ public class AuthorizationService : IDaprService
     {
         try
         {
-            var secretEntry = await Program.DaprClient.GetSecretAsync(Program.Configuration.Dapr_Secret_Store, "authorization", cancellationToken: Program.ShutdownCancellationTokenSource.Token);
-            if (secretEntry != null)
+            if (!string.IsNullOrWhiteSpace(Program.Configuration.Dapr_Secret_Store))
             {
-                if (secretEntry.TryGetValue("AUTH_TOKEN_PUBLIC_KEY", out var tokenPublicKey))
-                    Configuration.Token_Public_Key = tokenPublicKey;
+                var secretEntry = await Program.DaprClient.GetSecretAsync(Program.Configuration.Dapr_Secret_Store, "authorization", cancellationToken: Program.ShutdownCancellationTokenSource.Token);
+                if (secretEntry != null)
+                {
+                    if (secretEntry.TryGetValue("AUTH_TOKEN_PUBLIC_KEY", out var tokenPublicKey))
+                        Configuration.Token_Public_Key = tokenPublicKey;
 
-                if (secretEntry.TryGetValue("AUTH_TOKEN_PRIVATE_KEY", out var tokenPrivateKey))
-                    Configuration.Token_Private_Key = tokenPrivateKey;
+                    if (secretEntry.TryGetValue("AUTH_TOKEN_PRIVATE_KEY", out var tokenPrivateKey))
+                        Configuration.Token_Private_Key = tokenPrivateKey;
+                }
             }
         }
         catch { }
