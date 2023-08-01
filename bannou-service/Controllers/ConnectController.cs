@@ -35,8 +35,8 @@ public sealed class ConnectController : BaseDaprController
         // use service handler to obtain JWT
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
-            using var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            await EchoMessage(websocket);
+            //using var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+            //await EchoMessage(websocket);
         }
 
         var result = new ConnectResponse()
