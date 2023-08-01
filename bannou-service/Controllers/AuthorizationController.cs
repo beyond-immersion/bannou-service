@@ -23,41 +23,54 @@ public class AuthorizationController : BaseDaprController
 
     [HttpPost]
     [DaprRoute("token")]
-    public async Task<IActionResult> POST_Token(
+    public async Task<IActionResult> GetToken(
         [FromHeader(Name = "username")] string username,
         [FromHeader(Name = "password")] string password,
-        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] AuthorizationTokenRequest? request)
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] AuthorizationGetTokenRequest? request)
     {
-        string? token = await Service.GetJWT(username, password);
-        if (token == null)
+        try
         {
-            // technically this could be a 403 / unauthorized situation
-            // but it's best not to leak that the account even exists
-            Program.Logger?.Log(LogLevel.Debug, $"Authorization API could not generate token for user [{username}].");
-            return new NotFoundResult();
+            if (string.IsNullOrWhiteSpace(username))
+                return new BadRequestResult();
+
+            if (string.IsNullOrWhiteSpace(password))
+                return new BadRequestResult();
+
+            string? token = await Service.GetJWT(username, password);
+            if (token == null)
+                return new NotFoundResult();
+
+            var response = new AuthorizationGetTokenResponse()
+            {
+                Token = token
+            };
+            return new OkObjectResult(response);
         }
-
-        Program.Logger?.Log(LogLevel.Debug, $"Authorization API generated token [{token}] for user [{username}].");
-
-        var response = new AuthorizationTokenResponse()
+        catch (Exception exc)
         {
-            Token = token
-        };
-        return new OkObjectResult(response);
+            Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(GetToken)}] endpoint on [{nameof(AuthorizationController)}].");
+            return new StatusCodeResult(500);
+        }
     }
 
     [HttpPost]
     [DaprRoute("validate")]
-    public async Task<IActionResult> POST_Validate(
-        [FromBody] AuthorizationValidateRequest request)
+    public async Task<IActionResult> ValidateToken(
+        [FromBody] AuthorizationValidateTokenRequest request)
     {
-        await Task.CompletedTask;
-
-        Program.Logger?.Log(LogLevel.Debug, $"Authorization API validating token [{request.Token}].");
-
-        var response = new AuthorizationValidateResponse()
+        try
         {
-        };
-        return new OkObjectResult(response);
+            await Task.CompletedTask;
+
+            var response = new AuthorizationValidateTokenResponse()
+            {
+            };
+            return new OkObjectResult(response);
+        }
+        catch (Exception exc)
+        {
+            Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(ValidateToken)}] endpoint on [{nameof(AuthorizationController)}].");
+            return new StatusCodeResult(500);
+        }
     }
 }

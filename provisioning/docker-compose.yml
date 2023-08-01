@@ -7,6 +7,8 @@ services:
     build:
       context: ../
       dockerfile: provisioning/Dockerfile
+    volumes:
+      - "./certificates:/certificates"
     depends_on:
       - placement
     networks:
@@ -19,10 +21,15 @@ services:
       "./daprd",
       "--app-id", "bannou",
       "--app-port", "80",
+      "--app-protocol", "https",
       "--dapr-http-port", "3500",
       "--placement-host-address", "placement:50006",
       "--resources-path", "./components"
     ]
+    volumes:
+      - "./certificates:/certificates"
+    environment:
+      - "SSL_CERT_DIR=/certificates"
     depends_on:
       - bannou
     network_mode: "service:bannou"

@@ -1,4 +1,5 @@
-﻿using BeyondImmersion.BannouService.Services.Configuration;
+﻿using BeyondImmersion.BannouService.Controllers.Messages;
+using BeyondImmersion.BannouService.Services.Configuration;
 using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
@@ -17,58 +18,39 @@ namespace BeyondImmersion.BannouService.Services;
 public class AuthorizationService : IDaprService
 {
     public AuthorizationServiceConfiguration Configuration { get; set; }
-    protected Task SubscribeConfigurationTask { get; set; }
 
-    async Task<bool> IDaprService.OnBuild()
+    async Task IDaprService.OnStart()
     {
-        try
-        {
-            Configuration = IServiceConfiguration.BuildConfiguration<AuthorizationServiceConfiguration>();
+        Configuration = IServiceConfiguration.BuildConfiguration<AuthorizationServiceConfiguration>();
 
-            // override sensitive configuration Dapr secret store
-            await LoadFromDaprSecrets();
+        // override sensitive configuration Dapr secret store
+        await TryLoadFromDaprSecrets();
 
-            if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key))
-                throw new NullReferenceException("Shared public key for encoding/decoding authorizaton tokens not set.");
+        if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key))
+            throw new NullReferenceException("Shared public key for encoding/decoding authorizaton tokens not set.");
 
-            if (string.IsNullOrWhiteSpace(Configuration.Token_Private_Key))
-                throw new NullReferenceException("Shared private key for encoding/decoding authorizaton tokens not set.");
-
-            // if integration testing, then add default test record to account datastore
-            if (Program.Configuration.Integration_Testing)
-            {
-                var id = Guid.NewGuid().ToString();
-                var email = "user_1@celestialmail.com";
-                var displayName = "Test Account";
-                var secretString = "user_1_password";
-                var secretSalt = Guid.NewGuid().ToString();
-                var hashedSecret = GenerateHashedSecret(secretString, secretSalt);
-
-                var accountEntry = new AccountModel(id, email, hashedSecret, secretSalt, displayName);
-                await Program.DaprClient.SaveStateAsync("accounts", email.ToLower(), accountEntry, cancellationToken: Program.ShutdownCancellationTokenSource.Token);
-            }
-        }
-        catch(Exception exc)
-        {
-            Program.Logger.Log(LogLevel.Error, exc, $"An error occurred on build with service handler [{nameof(AuthorizationService)}].");
-            return false;
-        }
-
-        return true;
-    }
-
-    async Task IDaprService.OnShutdown()
-    {
-        await Task.CompletedTask;
+        if (string.IsNullOrWhiteSpace(Configuration.Token_Private_Key))
+            throw new NullReferenceException("Shared private key for encoding/decoding authorizaton tokens not set.");
     }
 
     public async Task<string?> GetJWT(string email, string password)
     {
-        AccountModel accountEntry = await Program.DaprClient.GetStateAsync<AccountModel>("accounts", email.ToLower(), cancellationToken: Program.ShutdownCancellationTokenSource.Token);
+        var dataModel = new AccountGetAccountRequest()
+        {
+            Email = email
+        };
+
+        HttpRequestMessage accountRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName("account"), $"account/get", dataModel);
+        var accountResponse = await Program.DaprClient.InvokeMethodWithResponseAsync(accountRequest, Program.ShutdownCancellationTokenSource.Token);
+
+        if (accountResponse == null || !accountResponse.IsSuccessStatusCode)
+            return null;
+
+        AccountModel? accountEntry = await accountResponse.Content.ReadFromJsonAsync<AccountModel>();
         if (accountEntry == null)
             return null;
 
-        var hashedSecret = GenerateHashedSecret(password, accountEntry.SecretSalt);
+        var hashedSecret = accountEntry.GenerateHashedSecret(password);
         if (!string.Equals(accountEntry.HashedSecret, hashedSecret))
             return null;
 
@@ -119,49 +101,23 @@ public class AuthorizationService : IDaprService
         return jwtBuilder;
     }
 
-    private async Task LoadFromDaprSecrets()
+    private async Task TryLoadFromDaprSecrets()
     {
         try
         {
-            var subscribeResponse = await Program.DaprClient.SubscribeConfiguration("app-secrets", new[] { "auth" }, cancellationToken: Program.ShutdownCancellationTokenSource.Token);
-            SubscribeConfigurationTask = Task.Run(async () => 
+            if (!string.IsNullOrWhiteSpace(Program.Configuration.Dapr_Secret_Store))
             {
-                while (true)
+                var secretEntry = await Program.DaprClient.GetSecretAsync(Program.Configuration.Dapr_Secret_Store, "authorization", cancellationToken: Program.ShutdownCancellationTokenSource.Token);
+                if (secretEntry != null)
                 {
-                    await foreach (var configurationItems in subscribeResponse.Source.WithCancellation(Program.ShutdownCancellationTokenSource.Token))
-                    {
-                        if (configurationItems.TryGetValue("token_public_key", out var tokenPublicKey))
-                            Configuration.Token_Public_Key = tokenPublicKey.Value;
+                    if (secretEntry.TryGetValue("AUTH_TOKEN_PUBLIC_KEY", out var tokenPublicKey))
+                        Configuration.Token_Public_Key = tokenPublicKey;
 
-                        if (configurationItems.TryGetValue("token_private_key", out var tokenPrivateKey))
-                            Configuration.Token_Private_Key = tokenPrivateKey.Value;
-                    }
+                    if (secretEntry.TryGetValue("AUTH_TOKEN_PRIVATE_KEY", out var tokenPrivateKey))
+                        Configuration.Token_Private_Key = tokenPrivateKey;
                 }
-            }, Program.ShutdownCancellationTokenSource.Token);
-
-            var secretEntry = await Program.DaprClient.GetSecretAsync("app-secrets", "auth", cancellationToken: Program.ShutdownCancellationTokenSource.Token);
-            if (secretEntry != null)
-            {
-                if (secretEntry.TryGetValue("token_public_key", out var tokenPublicKey))
-                    Configuration.Token_Public_Key = tokenPublicKey;
-
-                if (secretEntry.TryGetValue("token_private_key", out var tokenPrivateKey))
-                    Configuration.Token_Private_Key = tokenPrivateKey;
             }
         }
         catch { }
-    }
-
-    private string GenerateHashedSecret(string secretString, string secretSalt)
-    {
-        var hashAlgo = SHA512.Create();
-        var hashedBytes = hashAlgo.ComputeHash(Encoding.UTF8.GetBytes(secretString + secretSalt));
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < hashedBytes.Length; i++)
-        {
-            builder.Append(hashedBytes[i].ToString("x2"));
-        }
-        var hashedSecret = builder.ToString();
-        return hashedSecret;
     }
 }

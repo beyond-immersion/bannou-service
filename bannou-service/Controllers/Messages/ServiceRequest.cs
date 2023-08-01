@@ -19,9 +19,4 @@ where T : class, IServiceResponse, new()
 [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
 public class ServiceRequest : IServiceRequest
 {
-    /// <summary>
-    /// Message ID, for logging/tracing through the system.
-    /// </summary>
-    [JsonProperty("request_id", Required = Required.Default)]
-    public virtual string RequestID { get; } = Guid.NewGuid().ToString().ToLower();
 }

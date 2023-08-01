@@ -22,7 +22,7 @@ public interface IDaprController
                 if (t.Item2?.ServiceType == null)
                     return true;
 
-                (Type, Type, DaprServiceAttribute)? handlerType = IDaprService.FindHandler(t.Item2.ServiceType);
+                (Type, Type, DaprServiceAttribute)? handlerType = IDaprService.GetServiceInfo(t.Item2.ServiceType);
                 return handlerType != null && IDaprService.IsEnabled(handlerType.Value.Item2);
             });
 

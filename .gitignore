@@ -33,6 +33,9 @@ bld/
 msbuild.log
 msbuild.err
 msbuild.wrn
+[Cc]ertificates/
 
 # Visual Studio 2015
 .vs/
+
+[Pp]rovisioning/[Cc]ertificates/

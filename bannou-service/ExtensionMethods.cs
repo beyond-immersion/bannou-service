@@ -106,13 +106,13 @@ public static partial class ExtensionMethods
     /// <summary>
     /// Binds HTTP endpoints for all registered dapr services.
     /// </summary>
-    public static void AddDaprServices(this IServiceCollection builder)
+    public static void AddDaprServices(this IServiceCollection builder, (Type, Type, DaprServiceAttribute)[] enabledServiceInfo)
     {
-        foreach ((Type, Type, DaprServiceAttribute) serviceClassInfo in IDaprService.FindHandlers(enabledOnly: true))
+        foreach (var serviceInfo in enabledServiceInfo)
         {
-            Type handlerType = serviceClassInfo.Item1;
-            Type serviceType = serviceClassInfo.Item2;
-            ServiceLifetime serviceLifetime = serviceClassInfo.Item3.Lifetime;
+            Type handlerType = serviceInfo.Item1;
+            Type serviceType = serviceInfo.Item2;
+            ServiceLifetime serviceLifetime = serviceInfo.Item3.Lifetime;
             var serviceName = serviceType.GetServiceName();
 
             Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} has been enabled to handle type {handlerType}.");
@@ -129,12 +129,12 @@ public static partial class ExtensionMethods
     /// <summary>
     /// Binds HTTP endpoints for all registered dapr service handlers.
     /// </summary>
-    public static IEndpointRouteBuilder MapDaprServiceControllers(this IEndpointRouteBuilder builder)
+    public static IEndpointRouteBuilder MapDaprServiceControllers(this IEndpointRouteBuilder builder, (Type, Type, DaprServiceAttribute)[] enabledServiceInfo)
     {
-        foreach ((Type, Type, DaprServiceAttribute) serviceClassInfo in IDaprService.FindHandlers(enabledOnly: true))
+        foreach (var serviceInfo in enabledServiceInfo)
         {
-            Type interfaceType = serviceClassInfo.Item1;
-            Type implementationType = serviceClassInfo.Item2;
+            Type interfaceType = serviceInfo.Item1;
+            Type implementationType = serviceInfo.Item2;
             var serviceName = implementationType.GetServiceName();
 
             foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForHandler(interfaceType))
