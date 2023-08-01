@@ -25,3 +25,4 @@ jobs:
           VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ENABLE: EDITORCONFIG
+          EDITORCONFIG_EDITORCONFIG_CHECKER_ARGUMENTS: -disable-end-of-line -disable-insert-final-newline -v
