@@ -12,6 +12,6 @@ WORKDIR /app
 EXPOSE 80
 
 RUN apt-get update && apt-get install -y curl
-HEALTHCHECK CMD curl --fail https://localhost:80/health || exit 1
+HEALTHCHECK CMD curl -k --fail https://localhost:80/health || exit 1
 
 CMD ["dotnet", "bannou-service.dll"]
