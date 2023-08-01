@@ -8,7 +8,7 @@ services:
       context: ../
       dockerfile: provisioning/Dockerfile
     volumes:
-      - "./provisioning/certificates:/certificates"
+      - "./certificates:/certificates"
     depends_on:
       - placement
     networks:
@@ -26,7 +26,7 @@ services:
       "--resources-path", "./components"
     ]
     volumes:
-      - "./provisioning/certificates:/certificates"
+      - "./certificates:/certificates"
     environment:
       - "SSL_CERT_DIR=/certificates"
     depends_on:
