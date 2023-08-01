@@ -1,4 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Controllers.Messages;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BeyondImmersion.BannouService.Services.Testing;
 
@@ -7,13 +8,14 @@ namespace BeyondImmersion.BannouService.Services.Testing;
 /// </summary>
 public static class AuthorizationTests
 {
-    private const string SERVICE_NAME = "authorization";
+    private const string AUTHORIZATION_SERVICE_NAME = "authorization";
 
-    [TestingService.ServiceTest(testID: SERVICE_NAME, serviceType: typeof(AuthorizationService))]
+    [TestingService.ServiceTest(testID: AUTHORIZATION_SERVICE_NAME, serviceType: typeof(AuthorizationService))]
+    [SuppressMessage("Usage", "CA2254:Template should be a static expression", Justification = "Identifying failed integration tests")]
     public static async Task<bool> RunAuthorizationTests(TestingService service)
     {
         await Task.CompletedTask;
-        Program.Logger?.Log(LogLevel.Trace, $"Running all [{SERVICE_NAME}] integration tests!");
+        Program.Logger?.Log(LogLevel.Trace, $"Running all [{AUTHORIZATION_SERVICE_NAME}] integration tests!");
 
         if (service == null)
         {
@@ -27,7 +29,7 @@ public static class AuthorizationTests
             return false;
         }
 
-        Func<TestingService, Task<bool>>[] tests = new Func<TestingService, Task<bool>>[]
+        var tests = new Func<TestingService, Task<bool>>[]
         {
             GetJWT_Success,
             GetJWT_UsernameNotFound,
@@ -56,21 +58,19 @@ public static class AuthorizationTests
 
     private static async Task<bool> GetJWT_Success(TestingService service)
     {
-        var endpointPath = $"{SERVICE_NAME}/token";
-        var testUsername = "user_1@celestialmail.com";
-        var testPassword = "user_1_password";
+        var endpointPath = $"{AUTHORIZATION_SERVICE_NAME}/token";
 
-        var request = new AuthorizationTokenRequest()
+        var request = new AuthorizationGetTokenRequest()
         {
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(SERVICE_NAME), endpointPath, request);
-        newRequest.Headers.Add("username", testUsername);
-        newRequest.Headers.Add("password", testPassword);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(AUTHORIZATION_SERVICE_NAME), endpointPath, request);
+        newRequest.Headers.Add("username", ServiceConstants.TEST_ACCOUNT_EMAIL);
+        newRequest.Headers.Add("password", ServiceConstants.TEST_ACCOUNT_SECRET);
 
         try
         {
-            AuthorizationTokenResponse response = await Program.DaprClient.InvokeMethodAsync<AuthorizationTokenResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
+            AuthorizationGetTokenResponse response = await Program.DaprClient.InvokeMethodAsync<AuthorizationGetTokenResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
             if (!string.IsNullOrWhiteSpace(response?.Token))
                 return true;
         }
@@ -81,17 +81,15 @@ public static class AuthorizationTests
 
     private static async Task<bool> GetJWT_UsernameNotFound(TestingService service)
     {
-        var endpointPath = $"{SERVICE_NAME}/token";
-        var testUsername = "user_2@celestialmail.com";
-        var testPassword = "user_2_password";
+        var endpointPath = $"{AUTHORIZATION_SERVICE_NAME}/token";
 
-        var request = new AuthorizationTokenRequest()
+        var request = new AuthorizationGetTokenRequest()
         {
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(SERVICE_NAME), endpointPath, request);
-        newRequest.Headers.Add("username", testUsername);
-        newRequest.Headers.Add("password", testPassword);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(AUTHORIZATION_SERVICE_NAME), endpointPath, request);
+        newRequest.Headers.Add("username", "fail_" + ServiceConstants.TEST_ACCOUNT_EMAIL);
+        newRequest.Headers.Add("password", ServiceConstants.TEST_ACCOUNT_SECRET);
 
         try
         {
@@ -114,17 +112,15 @@ public static class AuthorizationTests
     /// </summary>
     private static async Task<bool> GetJWT_PasswordNotFound(TestingService service)
     {
-        var endpointPath = $"{SERVICE_NAME}/token";
-        var testUsername = "user_1@celestialmail.com";
-        var testPassword = "user_2_password";
+        var endpointPath = $"{AUTHORIZATION_SERVICE_NAME}/token";
 
-        var request = new AuthorizationTokenRequest()
+        var request = new AuthorizationGetTokenRequest()
         {
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(SERVICE_NAME), endpointPath, request);
-        newRequest.Headers.Add("username", testUsername);
-        newRequest.Headers.Add("password", testPassword);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(AUTHORIZATION_SERVICE_NAME), endpointPath, request);
+        newRequest.Headers.Add("username", ServiceConstants.TEST_ACCOUNT_EMAIL);
+        newRequest.Headers.Add("password", "fail_" + ServiceConstants.TEST_ACCOUNT_SECRET);
 
         try
         {

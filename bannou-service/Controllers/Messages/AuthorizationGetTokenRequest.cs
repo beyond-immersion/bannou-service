@@ -6,7 +6,7 @@ namespace BeyondImmersion.BannouService.Controllers.Messages;
 /// The request model for service API calls to `/authorization/token`.
 /// </summary>
 [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-public class AuthorizationTokenRequest
+public class AuthorizationGetTokenRequest
 {
 
 }

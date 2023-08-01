@@ -4,10 +4,10 @@ using System.Text.Json.Serialization;
 namespace BeyondImmersion.BannouService.Controllers.Messages;
 
 /// <summary>
-/// The request model for service API calls to `/authorization/authenticate`.
+/// The request model for service API calls to `/authorization/validate`.
 /// </summary>
 [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-public class AuthorizationValidateRequest
+public class AuthorizationValidateTokenRequest
 {
     [JsonPropertyName("token")]
     [JsonProperty("token", Required = Required.Always)]

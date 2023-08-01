@@ -1,4 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Controllers.Messages;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BeyondImmersion.BannouService.Services.Testing;
 
@@ -7,13 +8,14 @@ namespace BeyondImmersion.BannouService.Services.Testing;
 /// </summary>
 public static class ConnectTests
 {
-    private const string SERVICE_NAME = "connect";
+    private const string CONNECT_SERVICE_NAME = "connect";
 
-    [TestingService.ServiceTest(testID: SERVICE_NAME, serviceType: typeof(ConnectService))]
+    [TestingService.ServiceTest(testID: CONNECT_SERVICE_NAME, serviceType: typeof(ConnectService))]
+    [SuppressMessage("Usage", "CA2254:Template should be a static expression", Justification = "Identifying failed integration tests")]
     public static async Task<bool> RunConnectTests(TestingService service)
     {
         await Task.CompletedTask;
-        Program.Logger?.Log(LogLevel.Trace, $"Running all [{SERVICE_NAME}] integration tests!");
+        Program.Logger?.Log(LogLevel.Trace, $"Running all [{CONNECT_SERVICE_NAME}] integration tests!");
 
         if (service == null)
         {
@@ -27,7 +29,7 @@ public static class ConnectTests
             return false;
         }
 
-        Func<TestingService, Task<bool>>[] tests = new Func<TestingService, Task<bool>>[]
+        var tests = new Func<TestingService, Task<bool>>[]
         {
             Connect_Success,
             Connect_WebsocketUpgrade_Success,
@@ -57,14 +59,14 @@ public static class ConnectTests
 
     private static async Task<bool> Connect_Success(TestingService service)
     {
-        var endpointPath = $"{SERVICE_NAME}";
+        var endpointPath = $"{CONNECT_SERVICE_NAME}";
         var testToken = "eyJlbWFpbCI6InVzZXJfMUBjZWxlc3RpYWxtYWlsLmNvbSIsImRpc3BsYXktbmFtZSI6IlRlc3QgQWNjb3VudCIsInR5cCI6IkpXVCIsImFsZyI6IlJTNTEyIn0.eyJqdGkiOiI3OTY5OTM3OS1hMDQyLTQ2MjUtOWIwMi1iM2E3YTliMDYwM2EiLCJpc3MiOiJBVVRIT1JJWkFUSU9OX1NFUlZJQ0U6NjY0NWQxYWYtMWFlNC00OGE1LTllYmUtNWE1YjQ3YjhjODJlIiwiaWF0IjoxNjkwNzcxOTM0LjAsImV4cCI6MTY5MDg1ODMzNC4wLCJyb2xlIjoidXNlciJ9.qr53M8pxvDN-vFB7Yj_ilCPuNwyXUpxNsLFIZ-Knk3Vu2wAa9BWhvY5NgQ2lo1cePOrimg1mY-QwkrXoTZXTCXr8WzKd12vmvOwPUb2AaWy5phV-k1PRWnp_px-qRq2SAyBd23fQLPQ85EeC_J0_dupna7GlJqzP8-YayjjYogU";
 
         var request = new ConnectRequest()
         {
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(SERVICE_NAME), endpointPath, request);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(CONNECT_SERVICE_NAME), endpointPath, request);
         newRequest.Headers.Add("token", testToken);
 
         try
@@ -79,14 +81,14 @@ public static class ConnectTests
 
     private static async Task<bool> Connect_WebsocketUpgrade_Success(TestingService service)
     {
-        var endpointPath = $"{SERVICE_NAME}";
+        var endpointPath = $"{CONNECT_SERVICE_NAME}";
         var testToken = "eyJlbWFpbCI6InVzZXJfMUBjZWxlc3RpYWxtYWlsLmNvbSIsImRpc3BsYXktbmFtZSI6IlRlc3QgQWNjb3VudCIsInR5cCI6IkpXVCIsImFsZyI6IlJTNTEyIn0.eyJqdGkiOiI3OTY5OTM3OS1hMDQyLTQ2MjUtOWIwMi1iM2E3YTliMDYwM2EiLCJpc3MiOiJBVVRIT1JJWkFUSU9OX1NFUlZJQ0U6NjY0NWQxYWYtMWFlNC00OGE1LTllYmUtNWE1YjQ3YjhjODJlIiwiaWF0IjoxNjkwNzcxOTM0LjAsImV4cCI6MTY5MDg1ODMzNC4wLCJyb2xlIjoidXNlciJ9.qr53M8pxvDN-vFB7Yj_ilCPuNwyXUpxNsLFIZ-Knk3Vu2wAa9BWhvY5NgQ2lo1cePOrimg1mY-QwkrXoTZXTCXr8WzKd12vmvOwPUb2AaWy5phV-k1PRWnp_px-qRq2SAyBd23fQLPQ85EeC_J0_dupna7GlJqzP8-YayjjYogU";
 
         var request = new ConnectRequest()
         {
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(SERVICE_NAME), endpointPath, request);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(CONNECT_SERVICE_NAME), endpointPath, request);
         newRequest.Headers.Add("token", testToken);
         newRequest.Headers.Add("Connection", "Upgrade");
         newRequest.Headers.Add("Upgrade", "websocket");
@@ -103,14 +105,14 @@ public static class ConnectTests
 
     private static async Task<bool> Connect_TokenEmpty_BadRequest(TestingService service)
     {
-        var endpointPath = $"{SERVICE_NAME}";
+        var endpointPath = $"{CONNECT_SERVICE_NAME}";
         var testToken = "";
 
         var request = new ConnectRequest()
         {
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(SERVICE_NAME), endpointPath, request);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(CONNECT_SERVICE_NAME), endpointPath, request);
         newRequest.Headers.Add("token", testToken);
 
         try
@@ -134,13 +136,13 @@ public static class ConnectTests
 
     private static async Task<bool> Connect_TokenMissing_BadRequest(TestingService service)
     {
-        var endpointPath = $"{SERVICE_NAME}";
+        var endpointPath = $"{CONNECT_SERVICE_NAME}";
 
         var request = new ConnectRequest()
         {
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(SERVICE_NAME), endpointPath, request);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(CONNECT_SERVICE_NAME), endpointPath, request);
 
         try
         {

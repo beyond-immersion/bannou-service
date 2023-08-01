@@ -104,8 +104,6 @@ public class Services : IClassFixture<CollectionFixture>
         public string? TestProperty_B { get; set; }
     }
 
-    private Services(CollectionFixture collectionFixture) => TestCollectionContext = collectionFixture;
-
     public Services(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
@@ -174,14 +172,12 @@ public class Services : IClassFixture<CollectionFixture>
         Assert.True(testService.IsEnabled());
     }
 
-#pragma warning disable CS0162 // Unreachable code detected
     [Fact]
     public void ServiceEnabled_Default()
     {
         ResetENVs();
         Assert.False(IDaprService.IsEnabled(typeof(TestService_Attribute)));
     }
-#pragma warning restore CS0162 // Unreachable code detected
 
     [Fact]
     public void ServiceEnabled_BadType()
@@ -338,24 +334,24 @@ public class Services : IClassFixture<CollectionFixture>
     {
         ResetENVs();
 
-        Assert.DoesNotContain(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService));
-        Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_Attribute));
-        Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_Required));
-        Assert.Contains(IDaprService.FindHandlers(), t => t.Item1 == typeof(TestService_MultipleRequired));
+        Assert.DoesNotContain(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService));
+        Assert.Contains(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService_Attribute));
+        Assert.Contains(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService_Required));
+        Assert.Contains(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService_MultipleRequired));
 
-        Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Attribute));
-        Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
-        Assert.DoesNotContain(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+        Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Attribute));
+        Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Required));
+        Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_MultipleRequired));
 
         Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
-        Assert.Contains(IDaprService.FindHandlers(true), t => t.Item1 == typeof(TestService_Required));
+        Assert.Contains(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Required));
     }
 
     [Fact]
     public void FindAll_TestOverride_MostDerivedType()
     {
         ResetENVs();
-        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.FindHandler("ServiceTests.OverrideTest");
+        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.GetServiceInfo("ServiceTests.OverrideTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(TestService_Override_2), locateService.Value.Item2);
     }
@@ -364,7 +360,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void FindAll_TestOverride_MostDerivedType_NoAttribute()
     {
         ResetENVs();
-        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.FindHandler("ServiceTests.OverrideNoAttrTest");
+        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.GetServiceInfo("ServiceTests.OverrideNoAttrTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(TestService_Override_NoAttribute_2), locateService.Value.Item2);
     }
@@ -373,7 +369,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void FindAll_TestOverride_Priority()
     {
         ResetENVs();
-        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.FindHandler("ServiceTests.PriorityTest");
+        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.GetServiceInfo("ServiceTests.PriorityTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(TestService_Priority_2), locateService.Value.Item2);
     }
@@ -382,7 +378,7 @@ public class Services : IClassFixture<CollectionFixture>
     public void FindAll_TestOverride_PriorityOverMostDerivedType()
     {
         ResetENVs();
-        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.FindHandler("ServiceTests.PriorityOverrideTest");
+        (Type, Type, DaprServiceAttribute)? locateService = IDaprService.GetServiceInfo("ServiceTests.PriorityOverrideTest");
         Assert.True(locateService.HasValue);
         Assert.Equal(typeof(TestService_PriorityAndOverride_1), locateService.Value.Item2);
     }
@@ -392,13 +388,13 @@ public class Services : IClassFixture<CollectionFixture>
     {
         ResetENVs();
 
-        Assert.True(IDaprService.AllHaveRequiredConfiguration());
+        Assert.True(IDaprService.AllHaveRequiredConfiguration(IDaprService.GetAllServiceInfo(enabledOnly: true)));
 
         Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
-        Assert.False(IDaprService.AllHaveRequiredConfiguration());
+        Assert.False(IDaprService.AllHaveRequiredConfiguration(IDaprService.GetAllServiceInfo(enabledOnly: true)));
 
         Environment.SetEnvironmentVariable("TESTPROPERTY", "something");
-        Assert.True(IDaprService.AllHaveRequiredConfiguration());
+        Assert.True(IDaprService.AllHaveRequiredConfiguration(IDaprService.GetAllServiceInfo(enabledOnly: true)));
     }
 
     [Fact]

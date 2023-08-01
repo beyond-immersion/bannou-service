@@ -29,7 +29,6 @@ public class TemplateController : BaseDaprController
         await Task.CompletedTask;
 
         TemplateGetResponse response = request.CreateResponse();
-        response.Code = 200;
         return Ok(response);
     }
 

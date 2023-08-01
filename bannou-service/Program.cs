@@ -93,7 +93,7 @@ public static class Program
             if (_serviceAppLookup == null)
             {
                 _serviceAppLookup = new Dictionary<string, IList<(Type, Type, DaprServiceAttribute)>>();
-                foreach ((Type, Type, DaprServiceAttribute) serviceHandler in IDaprService.FindHandlers(enabledOnly: false))
+                foreach ((Type, Type, DaprServiceAttribute) serviceHandler in IDaprService.GetAllServiceInfo(enabledOnly: false))
                 {
                     var serviceName = serviceHandler.Item3.Name;
                     var defaultApp = serviceHandler.Item3.DefaultApp.ToLower();
@@ -134,20 +134,20 @@ public static class Program
             return;
         }
 
-        if (!IDaprService.AllHaveRequiredConfiguration())
+        var enabledServiceInfo = IDaprService.GetAllServiceInfo(enabledOnly: true);
+        if (enabledServiceInfo == null || enabledServiceInfo.Count() == 0)
+        {
+            Logger.Log(LogLevel.Error, null, "No services have been enabled- exiting application.");
+            return;
+        }
+
+        if (!IDaprService.AllHaveRequiredConfiguration(enabledServiceInfo))
         {
             Logger.Log(LogLevel.Error, null, "Required configuration not set for enabled services- exiting application.");
             return;
         }
 
         Logger.Log(LogLevel.Information, null, "Configuration built and validated.");
-
-        var serviceTypes = IDaprService.FindHandlers(enabledOnly: true).Select(t => t.Item2);
-        if (serviceTypes == null)
-        {
-            Logger.Log(LogLevel.Error, null, "No services have been enabled- exiting application.");
-            return;
-        }
 
         DaprClient = new DaprClientBuilder()
             .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig)
@@ -165,7 +165,7 @@ public static class Program
             _ = webAppBuilder.Services.AddAuthentication();
             _ = webAppBuilder.Services.AddControllers();
             webAppBuilder.Services.AddDaprClient();
-            webAppBuilder.Services.AddDaprServices();
+            webAppBuilder.Services.AddDaprServices(enabledServiceInfo);
 
             webAppBuilder.WebHost
                 .UseKestrel((kestrelOptions) =>
@@ -197,7 +197,7 @@ public static class Program
         try
         {
             _ = webApp.MapNonServiceControllers();
-            _ = webApp.MapDaprServiceControllers();
+            _ = webApp.MapDaprServiceControllers(enabledServiceInfo);
             _ = webApp.UseHttpsRedirection();
 
             webApp.UseWebSockets(new WebSocketOptions()
@@ -205,14 +205,14 @@ public static class Program
                 KeepAliveInterval = TimeSpan.FromMinutes(2)
             });
 
-            await InvokeAllServiceStartMethods(webApp, serviceTypes);
+            var serviceImplTypes = enabledServiceInfo.Select(t => t.Item2);
+            await InvokeAllServiceStartMethods(webApp, serviceImplTypes);
 
             Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- WebHost starting.");
 
             var webHostTask = webApp.RunAsync(ShutdownCancellationTokenSource.Token);
             await Task.Delay(TimeSpan.FromSeconds(1));
-
-            await InvokeAllServiceRunningMethods(webApp, serviceTypes);
+            await InvokeAllServiceRunningMethods(webApp, serviceImplTypes);
 
             Logger.Log(LogLevel.Information, null, "WebHost started successfully and services running- settling in.");
 
@@ -221,7 +221,7 @@ public static class Program
 
             Logger.Log(LogLevel.Information, null, "WebHost stopped- starting controlled application shutdown.");
 
-            await InvokeAllServiceShutdownMethods(webApp, serviceTypes);
+            await InvokeAllServiceShutdownMethods(webApp, serviceImplTypes);
         }
         catch (Exception exc)
         {
@@ -237,42 +237,33 @@ public static class Program
         Logger.Log(LogLevel.Debug, null, "Application shutdown complete.");
     }
 
-    private static async Task InvokeAllServiceStartMethods(WebApplication webApp, IEnumerable<Type?> implTypes)
+    private static async Task InvokeAllServiceStartMethods(WebApplication webApp, IEnumerable<Type> implTypes)
     {
         foreach (var implType in implTypes)
         {
-            if (implType != null)
-            {
-                var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
-                if (serviceInst != null)
-                    await serviceInst.OnStart();
-            }
+            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            if (serviceInst != null)
+                await serviceInst.OnStart();
         }
     }
 
-    private static async Task InvokeAllServiceRunningMethods(WebApplication webApp, IEnumerable<Type?> implTypes)
+    private static async Task InvokeAllServiceRunningMethods(WebApplication webApp, IEnumerable<Type> implTypes)
     {
         foreach (var implType in implTypes)
         {
-            if (implType != null)
-            {
-                var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
-                if (serviceInst != null)
-                    await serviceInst.OnRunning();
-            }
+            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            if (serviceInst != null)
+                await serviceInst.OnRunning();
         }
     }
 
-    private static async Task InvokeAllServiceShutdownMethods(WebApplication webApp, IEnumerable<Type?> implTypes)
+    private static async Task InvokeAllServiceShutdownMethods(WebApplication webApp, IEnumerable<Type> implTypes)
     {
         foreach (var implType in implTypes)
         {
-            if (implType != null)
-            {
-                var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
-                if (serviceInst != null)
-                    await serviceInst.OnShutdown();
-            }
+            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            if (serviceInst != null)
+                await serviceInst.OnShutdown();
         }
     }
 

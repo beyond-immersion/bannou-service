@@ -28,7 +28,6 @@ public interface IDaprService
         await Task.CompletedTask;
     }
 
-
     public string? GetName()
         => GetType().GetServiceName();
 
@@ -130,12 +129,12 @@ public interface IDaprService
     /// <summary>
     /// Returns whether all enabled services have required configuration set.
     /// </summary>
-    public static bool AllHaveRequiredConfiguration()
+    public static bool AllHaveRequiredConfiguration((Type, Type, DaprServiceAttribute)[] enabledServiceInfo)
     {
-        foreach ((Type, Type, DaprServiceAttribute) serviceClassInfo in FindHandlers(enabledOnly: true))
+        foreach (var serviceInfo in enabledServiceInfo)
         {
-            Type handlerType = serviceClassInfo.Item1;
-            Type serviceType = serviceClassInfo.Item2;
+            Type handlerType = serviceInfo.Item1;
+            Type serviceType = serviceInfo.Item2;
             Type serviceConfig = GetConfigurationType(handlerType);
             if (serviceConfig == null)
                 continue;
@@ -156,7 +155,7 @@ public interface IDaprService
     /// Returns whether the configuration indicates ANY services should be enabled.
     /// </summary>
     public static bool IsAnyEnabled()
-        => FindHandlers(enabledOnly: true).Any();
+        => GetAllServiceInfo(enabledOnly: true).Any();
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
@@ -193,12 +192,12 @@ public interface IDaprService
     /// Find the highest priority/derived service type with the given name.
     /// </summary>
     /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
-    public static (Type, Type, DaprServiceAttribute)? FindHandler(string name)
+    public static (Type, Type, DaprServiceAttribute)? GetServiceInfo(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
             return null;
 
-        foreach ((Type, Type, DaprServiceAttribute) serviceInfo in FindHandlers())
+        foreach ((Type, Type, DaprServiceAttribute) serviceInfo in GetAllServiceInfo())
         {
             if (string.Equals(name, serviceInfo.Item3.Name, StringComparison.InvariantCultureIgnoreCase))
                 return serviceInfo;
@@ -211,9 +210,9 @@ public interface IDaprService
     /// Find the implementation for the given service handler.
     /// </summary>
     /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
-    public static (Type, Type, DaprServiceAttribute)? FindHandler(Type handlerType)
+    public static (Type, Type, DaprServiceAttribute)? GetServiceInfo(Type handlerType)
     {
-        foreach ((Type, Type, DaprServiceAttribute) serviceInfo in FindHandlers())
+        foreach ((Type, Type, DaprServiceAttribute) serviceInfo in GetAllServiceInfo())
         {
             if (serviceInfo.Item1 == handlerType)
                 return serviceInfo;
@@ -227,7 +226,7 @@ public interface IDaprService
     /// If enabledOnly set, will not return services that have been disabled via configuration.
     /// </summary>
     /// <returns>Interface Type, Implementation Type, Service Attribute</returns>
-    public static (Type, Type, DaprServiceAttribute)[] FindHandlers(bool enabledOnly = false)
+    public static (Type, Type, DaprServiceAttribute)[] GetAllServiceInfo(bool enabledOnly = false)
     {
         // first get all service types
         List<(Type, DaprServiceAttribute)> serviceProviders = IServiceAttribute.GetClassesWithAttribute<DaprServiceAttribute>();
