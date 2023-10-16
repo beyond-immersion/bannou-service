@@ -13,6 +13,8 @@ services:
       - placement
     networks:
       - celestial_network
+    environment:
+      - APP_ID=bannou
 
   # attach the dapr sidecar to the monoservice
   bannou-dapr:

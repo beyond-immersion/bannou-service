@@ -35,10 +35,9 @@ public interface IServiceConfiguration
             .All(t =>
             {
                 var propValue = t.Item1.GetValue(this);
-                return propValue != null
-&& (t.Item2.AllowEmptyStrings ||
+                return propValue != null && (t.Item2.AllowEmptyStrings ||
                     t.Item1.PropertyType != typeof(string) ||
-!string.IsNullOrWhiteSpace((string)propValue));
+                    !string.IsNullOrWhiteSpace((string)propValue));
             });
     }
 
@@ -57,7 +56,12 @@ public interface IServiceConfiguration
         if (!typeof(IServiceConfiguration).IsAssignableFrom(configurationType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IServiceConfiguration)}");
 
-        IServiceConfiguration? serviceConfig = BuildConfiguration(configurationType);
+        string? envPrefix = null;
+        ServiceConfigurationAttribute? configAttr = configurationType.GetCustomAttribute<ServiceConfigurationAttribute>();
+        if (configAttr != null)
+            envPrefix = configAttr.EnvPrefix;
+
+        IServiceConfiguration? serviceConfig = BuildConfiguration(configurationType, envPrefix: envPrefix);
         return serviceConfig == null || serviceConfig.HasRequired();
     }
 
@@ -85,7 +89,7 @@ public interface IServiceConfiguration
     /// </summary>
     public static IServiceConfiguration BuildConfiguration(string[]? args = null, string? envPrefix = null)
         => BuildConfigurationRoot(args, envPrefix)
-            .Get<ServiceConfiguration>((options) => options.BindNonPublicProperties = true) ?? new();
+            .Get<AppConfiguration>((options) => options.BindNonPublicProperties = true) ?? new();
 
     /// <summary>
     /// Builds the given service configuration from available Config.json, ENVs, and command line switches.

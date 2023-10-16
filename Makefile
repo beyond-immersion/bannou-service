@@ -10,6 +10,9 @@ down:
 clean:
 	git submodule foreach --recursive git clean -fdx
 
+libs:
+	./build-libs.sh
+
 sync:
 	git pull && git submodule update --init --recursive
 

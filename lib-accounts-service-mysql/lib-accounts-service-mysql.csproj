@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\DaprService.targets" />
+
+	<PropertyGroup>
+		<RootNamespace>$(RootNamespace).Accounts</RootNamespace>
+		<ServiceLib>accounts_service_mysql</ServiceLib>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\lib-accounts-core\lib-accounts-core.csproj" />
+	</ItemGroup>
+
+</Project>

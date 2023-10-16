@@ -1,12 +1,11 @@
+using BeyondImmersion.BannouService.Logging;
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 [assembly: ApiController]
 [assembly: InternalsVisibleTo("unit-tests")]
-namespace BeyondImmersion.BannouService;
-
 public static class Program
 {
     private static IConfigurationRoot _configurationRoot;
@@ -26,7 +25,7 @@ public static class Program
         internal set => _configurationRoot = value;
     }
 
-    private static ServiceConfiguration _configuration;
+    private static AppConfiguration _configuration;
     /// <summary>
     /// Service configuration.
     /// 
@@ -35,11 +34,11 @@ public static class Program
     ///     ENVs,
     ///     command line args.
     /// </summary>
-    public static ServiceConfiguration Configuration
+    public static AppConfiguration Configuration
     {
         get
         {
-            _configuration ??= ConfigurationRoot.Get<ServiceConfiguration>() ?? new ServiceConfiguration();
+            _configuration ??= ConfigurationRoot.Get<AppConfiguration>() ?? new AppConfiguration();
 
             return _configuration;
         }
@@ -96,9 +95,7 @@ public static class Program
                 foreach ((Type, Type, DaprServiceAttribute) serviceHandler in IDaprService.GetAllServiceInfo(enabledOnly: false))
                 {
                     var serviceName = serviceHandler.Item3.Name;
-                    var defaultApp = serviceHandler.Item3.DefaultApp.ToLower();
-                    var appOverride = ConfigurationRoot.GetValue<string>(serviceName.ToUpper() + "_APP_MAPPING");
-                    var appName = appOverride ?? defaultApp;
+                    var appName = ConfigurationRoot.GetValue<string>(serviceName.ToUpper() + "_APP_MAPPING") ?? AppConstants.DEFAULT_APP_NAME;
 
                     if (_serviceAppLookup.TryGetValue(appName, out IList<(Type, Type, DaprServiceAttribute)>? existingApp))
                     {
@@ -128,12 +125,17 @@ public static class Program
     {
         Logger.Log(LogLevel.Information, null, "Service starting.");
 
+        // configuration is auto-created on first get, so this call creates the config too
         if (Configuration == null)
         {
             Logger.Log(LogLevel.Error, null, "Service configuration missing- exiting application.");
             return;
         }
 
+        // load the assemblies
+        LoadAssembliesFromLibs();
+
+        // get info for dapr services in loaded assemblies
         var enabledServiceInfo = IDaprService.GetAllServiceInfo(enabledOnly: true);
         if (enabledServiceInfo == null || enabledServiceInfo.Count() == 0)
         {
@@ -141,6 +143,7 @@ public static class Program
             return;
         }
 
+        // ensure dapr services have their required configuration
         if (!IDaprService.AllHaveRequiredConfiguration(enabledServiceInfo))
         {
             Logger.Log(LogLevel.Error, null, "Required configuration not set for enabled services- exiting application.");
@@ -149,10 +152,12 @@ public static class Program
 
         Logger.Log(LogLevel.Information, null, "Configuration built and validated.");
 
+        // build the dapr client
         DaprClient = new DaprClientBuilder()
             .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig)
             .Build();
 
+        // prepare to build the application
         WebApplicationBuilder? webAppBuilder = WebApplication.CreateBuilder(args);
         if (webAppBuilder == null)
         {
@@ -162,15 +167,18 @@ public static class Program
 
         try
         {
+            // configure services
             _ = webAppBuilder.Services.AddAuthentication();
             _ = webAppBuilder.Services.AddControllers();
             webAppBuilder.Services.AddDaprClient();
             webAppBuilder.Services.AddDaprServices(enabledServiceInfo);
 
+            // configure webhost
             webAppBuilder.WebHost
                 .UseKestrel((kestrelOptions) =>
                 {
-                    kestrelOptions.ListenAnyIP(Configuration.Web_Host_Port, (listenOptions) =>
+                    kestrelOptions.ListenAnyIP(Configuration.HTTP_Web_Host_Port);
+                    kestrelOptions.ListenAnyIP(Configuration.HTTPS_Web_Host_Port, (listenOptions) =>
                     {
                         listenOptions.UseHttps((httpsOptions) =>
                         {
@@ -193,34 +201,42 @@ public static class Program
             return;
         }
 
+        // build the application
         WebApplication webApp = webAppBuilder.Build();
         try
         {
+            // add controllers / configure navigation
             _ = webApp.MapNonServiceControllers();
             _ = webApp.MapDaprServiceControllers(enabledServiceInfo);
             _ = webApp.UseHttpsRedirection();
 
+            // enable websocket connections
             webApp.UseWebSockets(new WebSocketOptions()
             {
                 KeepAliveInterval = TimeSpan.FromMinutes(2)
             });
 
+            // invoke all Service.Start() methods on enabled service handlers
             var serviceImplTypes = enabledServiceInfo.Select(t => t.Item2);
             await InvokeAllServiceStartMethods(webApp, serviceImplTypes);
 
             Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- WebHost starting.");
 
+            // start webhost
             var webHostTask = webApp.RunAsync(ShutdownCancellationTokenSource.Token);
             await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // invoke all Service.Running() methods on enabled service handlers
             await InvokeAllServiceRunningMethods(webApp, serviceImplTypes);
 
             Logger.Log(LogLevel.Information, null, "WebHost started successfully and services running- settling in.");
 
-            // block until token cancelled or webhost crashes
+            // !!! block here until token cancelled or webhost crashes
             await webHostTask;
 
             Logger.Log(LogLevel.Information, null, "WebHost stopped- starting controlled application shutdown.");
 
+            // invoke all Service.Shutdown() methods on enabled service handlers
             await InvokeAllServiceShutdownMethods(webApp, serviceImplTypes);
         }
         catch (Exception exc)
@@ -230,11 +246,37 @@ public static class Program
         }
         finally
         {
+            // perform cleanup
             await webApp.DisposeAsync();
             DaprClient.Dispose();
         }
 
         Logger.Log(LogLevel.Debug, null, "Application shutdown complete.");
+    }
+
+    public static void LoadAssembliesFromLibs()
+    {
+        var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "libs");
+        foreach (var dllPath in GetDllFiles(directoryPath))
+        {
+            try
+            {
+                Assembly.LoadFrom(dllPath);
+                Logger.Log(LogLevel.Error, null, $"Successfully loaded assembly from {dllPath}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log(LogLevel.Error, ex, $"Failed to load assembly from {dllPath}.");
+            }
+        }
+    }
+
+    private static string[] GetDllFiles(string directoryPath)
+    {
+        if (Directory.Exists(directoryPath))
+            return Directory.GetFiles(directoryPath, "*.dll", SearchOption.AllDirectories);
+
+        return Array.Empty<string>();
     }
 
     private static async Task InvokeAllServiceStartMethods(WebApplication webApp, IEnumerable<Type> implTypes)

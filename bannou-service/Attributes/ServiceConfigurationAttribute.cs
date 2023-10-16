@@ -1,4 +1,7 @@
-﻿namespace BeyondImmersion.BannouService.Attributes;
+﻿using System.Reflection;
+using System.Xml.Linq;
+
+namespace BeyondImmersion.BannouService.Attributes;
 
 /// <summary>
 /// Attribute for easily auto-building configuration.
@@ -8,31 +11,35 @@
 public class ServiceConfigurationAttribute : BaseServiceAttribute
 {
     /// <summary>
-    /// Is this the 'primary' configuration for this service type?
-    /// </summary>
-    public bool Primary { get; private set; }
-
-    /// <summary>
     /// The specific service type this configuration is meant for.
     /// Can be null.
     /// </summary>
-    public Type? ServiceType { get; private set; }
+    public Type? ServiceType { get; }
+
+    /// <summary>
+    /// Attribute attached to the service.
+    /// </summary>
+    public DaprServiceAttribute? ServiceAttribute { get; }
 
     /// <summary>
     /// Prefix for ENVs for this configuration.
     /// Can be null.
     /// </summary>
-    public string? EnvPrefix { get; private set; }
+    public string? EnvPrefix { get; }
 
     public ServiceConfigurationAttribute() { }
 
-    public ServiceConfigurationAttribute(Type? serviceType = null, string? envPrefix = null, bool primary = false)
+    public ServiceConfigurationAttribute(Type? serviceType = null, string? envPrefix = null)
     {
         if (serviceType != null && !typeof(IDaprService).IsAssignableFrom(serviceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
         ServiceType = serviceType;
+        if (serviceType != null)
+            ServiceAttribute = serviceType.GetCustomAttribute<DaprServiceAttribute>();
+
         EnvPrefix = envPrefix;
-        Primary = primary;
+        if (ServiceAttribute != null && envPrefix == null)
+            EnvPrefix = $"{ServiceAttribute.Name.ToUpper()}_";
     }
 }

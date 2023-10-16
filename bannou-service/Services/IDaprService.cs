@@ -53,14 +53,14 @@ public interface IDaprService
     /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
     /// </summary>
     public IServiceConfiguration BuildConfiguration()
-        => BuildConfiguration(GetType()) ?? new ServiceConfiguration();
+        => BuildConfiguration(GetType()) ?? new AppConfiguration();
 
     /// <summary>
     /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
     /// </summary>
     public static IServiceConfiguration BuildConfiguration<T>(string[]? args = null)
         where T : class, IDaprService
-        => BuildConfiguration(typeof(T), args) ?? new ServiceConfiguration();
+        => BuildConfiguration(typeof(T), args) ?? new AppConfiguration();
 
     /// <summary>
     /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
@@ -81,7 +81,7 @@ public interface IDaprService
         if (configAttr != null)
             envPrefix = configAttr.EnvPrefix;
 
-        return IServiceConfiguration.BuildConfiguration(typeof(ServiceConfiguration), args, envPrefix);
+        return IServiceConfiguration.BuildConfiguration(typeof(AppConfiguration), args, envPrefix);
     }
 
     /// <summary>
@@ -97,9 +97,9 @@ public interface IDaprService
     public static bool HasRequiredConfiguration(Type serviceType)
     {
         return typeof(IDaprService).IsAssignableFrom(serviceType)
-&& IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
-            .Where(t => t.Item2.ServiceType == serviceType)
-            .All(t => IServiceConfiguration.HasRequiredForType(t.Item1));
+            && IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
+                .Where(t => t.Item2.ServiceType == serviceType)
+                .All(t => IServiceConfiguration.HasRequiredForType(t.Item1));
     }
 
     /// <summary>
@@ -116,14 +116,14 @@ public interface IDaprService
         {
             if (handlerType.IsAssignableFrom(configAttr.Item2.ServiceType))
             {
-                if (serviceConfigType != null && !configAttr.Item2.Primary)
+                if (serviceConfigType != null)
                     continue;
 
                 serviceConfigType = configAttr.Item1;
             }
         }
 
-        return serviceConfigType ?? typeof(ServiceConfiguration);
+        return serviceConfigType ?? typeof(AppConfiguration);
     }
 
     /// <summary>

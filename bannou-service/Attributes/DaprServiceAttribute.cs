@@ -1,9 +1,10 @@
-﻿namespace BeyondImmersion.BannouService.Attributes;
+﻿using BeyondImmersion.BannouService.Services;
+
+namespace BeyondImmersion.BannouService.Attributes;
 
 /// <summary>
 /// Attribute for auto-loading dapr services.
 /// Use {Name}_SERVICE_ENABLE as ENV or switch to enable/disable.
-/// For concrete classes only.
 /// </summary>
 [AttributeUsage(validOn: AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
 public sealed class DaprServiceAttribute : BaseServiceAttribute
@@ -36,15 +37,8 @@ public sealed class DaprServiceAttribute : BaseServiceAttribute
     /// </summary>
     public string Name { get; }
 
-    /// <summary>
-    /// Dapr application this service falls under (by default).
-    /// This can be overridden with configuration.
-    /// Defaults to "bannou" for all shared services.
-    /// </summary>
-    public string DefaultApp { get; } = "bannou";
-
     private DaprServiceAttribute() { }
-    public DaprServiceAttribute(string name, Type? type = null, string? defaultApp = null, bool priority = false, ServiceLifetime lifetime = ServiceLifetime.Singleton)
+    public DaprServiceAttribute(string name, Type? type = null, bool priority = false, ServiceLifetime lifetime = ServiceLifetime.Singleton)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentNullException(nameof(name));
@@ -56,8 +50,5 @@ public sealed class DaprServiceAttribute : BaseServiceAttribute
         Priority = priority;
         Type = type;
         Lifetime = lifetime;
-
-        if (!string.IsNullOrWhiteSpace(defaultApp))
-            DefaultApp = defaultApp;
     }
 }

@@ -15,10 +15,8 @@ services:
       - AUTHORIZATION_TOKEN_PRIVATE_KEY=${AUTH_TOKEN_PRIVATE_KEY}
       - CONNECT_SERVICE_ENABLED=true
       - CONNECT_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
-      - WEB_HOST_PORT=80
       - APP_LOGGING_LEVEL=Debug
       - WEB_HOST_LOGGING_LEVEL=Information
-      - ASPNETCORE_URLS=http://+:80
       - ASPNETCORE_ENVIRONMENT=Development
 
   # add the CI components to the dapr sidecar attached to the monoservice

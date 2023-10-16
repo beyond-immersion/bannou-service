@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService;
+
 namespace BeyondImmersion.ServiceTester;
 
 public class Program

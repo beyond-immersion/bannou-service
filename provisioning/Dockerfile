@@ -11,8 +11,11 @@ COPY --from=intermediate /root/.dotnet/corefx/cryptography/x509stores/my/* /cert
 
 WORKDIR /app
 EXPOSE 80
+EXPOSE 443
+
+ENV ASPNETCORE_URLS=http://+:80;https://+:443
 
 RUN apt-get update && apt-get install -y curl
-HEALTHCHECK CMD curl -k --fail https://localhost:80/health || exit 1
+HEALTHCHECK CMD curl -k --fail https://localhost/health || exit 1
 
 CMD ["dotnet", "bannou-service.dll"]

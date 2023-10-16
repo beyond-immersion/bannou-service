@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\DaprService.targets" />
+
+	<PropertyGroup>
+		<RootNamespace>$(RootNamespace).Connect</RootNamespace>
+		<ServiceLib>connect</ServiceLib>
+	</PropertyGroup>
+
+</Project>

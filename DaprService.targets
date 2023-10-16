@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<Target Name="PrintServiceLib">
+		<Message Text="$(ServiceLib)" Importance="high" />
+	</Target>
+
+	<Target Name="EnsureServiceLibIsSet" BeforeTargets="Build">
+		<Error Text="The ServiceLib property is not set." Condition="'$(ServiceLib)' == ''" />
+	</Target>
+
+	<ItemGroup>
+		<ProjectReference Include="..\bannou-service\bannou-service.csproj" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<RootNamespace>BeyondImmersion.BannouService</RootNamespace>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+</Project>

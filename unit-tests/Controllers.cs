@@ -40,8 +40,6 @@ public class Controllers : IClassFixture<CollectionFixture>
     {
         Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Enabled".ToUpper(), null);
         Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Enabled".ToUpper(), null);
-
-        TestCollectionContext.ResetENVs();
     }
 
     [Fact]
