@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Application;
+﻿namespace BeyondImmersion.BannouService;
 
 /// <summary>
 /// Enumeration for common/supported HTTP methods.

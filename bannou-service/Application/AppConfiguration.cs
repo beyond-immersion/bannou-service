@@ -1,18 +1,14 @@
-﻿namespace BeyondImmersion.BannouService.Application;
+﻿using BeyondImmersion.BannouService.Configuration;
+
+namespace BeyondImmersion.BannouService.Application;
 
 [ServiceConfiguration]
-public class AppConfiguration : IServiceConfiguration
+public class AppConfiguration : BaseServiceConfiguration
 {
     /// <summary>
     /// Application ID.
     /// </summary>
     public string App_ID { get; set; } = "bannou";
-
-    /// <summary>
-    /// Set to override GUID for administrative service endpoints.
-    /// If not set, will generate a new GUID automatically on service startup.
-    /// </summary>
-    public string? Force_Service_ID { get; set; } = null;
 
     /// <summary>
     /// Dapr configuration store name to use.

@@ -13,5 +13,5 @@ public class GetAccountRequest : ServiceRequest<GetAccountResponse>
     /// Email of account to retrieve.
     /// </summary>
     [JsonProperty("email", Required = Required.Always)]
-    public string Email { get; set; }
+    public string? Email { get; set; }
 }

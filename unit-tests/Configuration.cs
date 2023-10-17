@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using Microsoft.Extensions.Configuration;
 using Xunit.Abstractions;
 

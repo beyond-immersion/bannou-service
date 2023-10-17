@@ -12,25 +12,25 @@ public class GetAccountResponse : ServiceResponse<GetAccountRequest>
 {
     [JsonPropertyName("id")]
     [JsonProperty("id")]
-    public string ID { get; set; }
+    public string? ID { get; set; }
 
     [JsonPropertyName("email")]
     [JsonProperty("email")]
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
     [JsonPropertyName("display_name")]
     [JsonProperty("display_name")]
-    public string DisplayName { get; set; }
+    public string? DisplayName { get; set; }
 
     [JsonPropertyName("hashed_secret")]
     [JsonProperty("hashed_secret")]
-    public string HashedSecret { get; set; }
+    public string? HashedSecret { get; set; }
 
     [JsonPropertyName("secret_salt")]
     [JsonProperty("secret_salt")]
-    public string SecretSalt { get; set; }
+    public string? SecretSalt { get; set; }
 
     [JsonPropertyName("role")]
     [JsonProperty("role")]
-    public string Role { get; set; }
+    public string? Role { get; set; }
 }

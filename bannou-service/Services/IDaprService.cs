@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using BeyondImmersion.BannouService.Configuration;
+using Newtonsoft.Json.Linq;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Services;

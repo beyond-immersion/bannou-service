@@ -9,42 +9,42 @@ public sealed class AccountData
     /// </summary>
     [JsonPropertyName("id")]
     [JsonProperty("id", Required = Required.Always)]
-    public string ID { get; }
+    public string? ID { get; }
 
     /// <summary>
     /// The account email address.
     /// </summary>
     [JsonPropertyName("email")]
     [JsonProperty("email", Required = Required.Always)]
-    public string Email { get; }
+    public string? Email { get; }
 
     /// <summary>
     /// The hash of the user's secret.
     /// </summary>
     [JsonPropertyName("hashed_secret")]
     [JsonProperty("hashed_secret", Required = Required.Always)]
-    public string HashedSecret { get; }
+    public string? HashedSecret { get; }
 
     /// <summary>
     /// The salt added to the user's secret before hashing.
     /// </summary>
     [JsonPropertyName("secret_salt")]
     [JsonProperty("secret_salt", Required = Required.Always)]
-    public string SecretSalt { get; }
+    public string? SecretSalt { get; }
 
     /// <summary>
     /// The account username.
     /// </summary>
     [JsonPropertyName("display_name")]
     [JsonProperty("display_name")]
-    public string DisplayName { get; }
+    public string? DisplayName { get; }
 
     /// <summary>
     /// The user's role claim.
     /// </summary>
     [JsonPropertyName("role")]
     [JsonProperty("role", Required = Required.Always)]
-    public string Role { get; }
+    public string? Role { get; }
 
     private AccountData() { }
     public AccountData(string id, string email, string hashedSecret, string secretSalt, string displayName, string role = "user")

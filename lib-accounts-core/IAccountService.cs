@@ -1,10 +1,11 @@
-﻿using System.Security.Cryptography;
+﻿using BeyondImmersion.BannouService.Services;
+using System.Security.Cryptography;
 using System.Text;
 
 /// <summary>
 /// Service responsible for account handling.
 /// </summary>
-public interface IAccountService : BeyondImmersion.BannouService.Services.IDaprService
+public interface IAccountService : IDaprService
 {
     Task<AccountData?> GetAccount(string email);
 

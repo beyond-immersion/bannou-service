@@ -1,11 +1,11 @@
-﻿using BeyondImmersion.BannouService.Services;
+﻿using BeyondImmersion.BannouService.Configuration;
 /// <summary>
 /// Service component responsible for account handling.
 /// </summary>
-[DaprService("account")]
+[DaprService("account", typeof(IAccountService))]
 public class AccountService : IAccountService
 {
-    public AccountServiceConfiguration Configuration { get; set; }
+    public AccountServiceConfiguration? Configuration { get; set; }
 
     public async Task OnStart()
     {

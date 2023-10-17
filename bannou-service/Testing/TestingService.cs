@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using BeyondImmersion.BannouService.Configuration;
+using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Testing;
 
