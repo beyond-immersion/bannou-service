@@ -5,6 +5,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
+namespace BeyondImmersion.BannouService;
+
 public static partial class ExtensionMethods
 {
     private static bool sProviderRegistered = false;

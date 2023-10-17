@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
+namespace BeyondImmersion.BannouService.Accounts;
+
 [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
 public sealed class AccountData
 {

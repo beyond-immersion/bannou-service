@@ -1,4 +1,7 @@
 ﻿using BeyondImmersion.BannouService.Configuration;
+
+namespace BeyondImmersion.BannouService.Accounts;
+
 /// <summary>
 /// Service component responsible for account handling.
 /// </summary>

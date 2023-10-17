@@ -1,6 +1,8 @@
 ﻿using System.Collections.Concurrent;
 
-public class LeakyBucket : ConcurrentQueue<DateTime>
+namespace BeyondImmersion.BannouService;
+
+public class LeakyBucket : ConcurrentQueue<DateTime>, IDisposable
 {
     public class BucketConfiguration
     {
@@ -8,12 +10,17 @@ public class LeakyBucket : ConcurrentQueue<DateTime>
         public int LeakRate { get; set; }
     }
 
-    private ConcurrentQueue<DateTime> _items;
+    private readonly ConcurrentQueue<DateTime> _items;
     private readonly BucketConfiguration _configuration;
-    private Task _leakTask;
+    private readonly Task _leakTask;
 
     public bool IsReadOnly => false;
 
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        _leakTask.Dispose();
+    }
 
     private LeakyBucket() { }
     public LeakyBucket(BucketConfiguration bucketConfiguration)

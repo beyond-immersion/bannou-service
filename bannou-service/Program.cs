@@ -7,6 +7,8 @@ using System.Runtime.CompilerServices;
 
 [assembly: ApiController]
 [assembly: InternalsVisibleTo("unit-tests")]
+namespace BeyondImmersion.BannouService;
+
 public static class Program
 {
     private static IConfigurationRoot _configurationRoot;
@@ -138,7 +140,7 @@ public static class Program
 
         // get info for dapr services in loaded assemblies
         var enabledServiceInfo = IDaprService.GetAllServiceInfo(enabledOnly: true);
-        if (enabledServiceInfo == null || enabledServiceInfo.Count() == 0)
+        if (enabledServiceInfo == null || enabledServiceInfo.Length == 0)
         {
             Logger.Log(LogLevel.Error, null, "No services have been enabled- exiting application.");
             return;

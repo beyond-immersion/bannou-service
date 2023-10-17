@@ -2,6 +2,8 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
+namespace BeyondImmersion.BannouService.Accounts;
+
 /// <summary>
 /// Auth APIs- backed by the Account service.
 /// </summary>
