@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System.ComponentModel;
 using System.Text.Json.Serialization;
 
 namespace BeyondImmersion.BannouService.Authorization.Messages;
@@ -15,22 +14,22 @@ public class ValidateTokenResponse
     {
         [JsonPropertyName("code")]
         [JsonProperty("code")]
-        public string Code { get; set; }
+        public string? Code { get; set; }
 
         [JsonPropertyName("message")]
         [JsonProperty("message")]
-        public string Message { get; set; }
+        public string? Message { get; set; }
 
         [JsonPropertyName("type")]
         [JsonProperty("type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
     }
 
     [JsonPropertyName("token")]
     [JsonProperty("token", DefaultValueHandling = DefaultValueHandling.Ignore)]
-    public string Token { get; set; }
+    public string? Token { get; set; }
 
     [JsonPropertyName("errors")]
     [JsonProperty("errors", DefaultValueHandling = DefaultValueHandling.Ignore)]
-    public ErrorData[] Errors { get; set; }
+    public ErrorData[]? Errors { get; set; }
 }

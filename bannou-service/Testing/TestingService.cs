@@ -29,7 +29,18 @@ public class TestingService : IDaprService
         }
     }
 
-    public TestingServiceConfiguration Configuration { get; private set; }
+    private TestingServiceConfiguration? _configuration;
+    public TestingServiceConfiguration Configuration
+    {
+        get
+        {
+            _configuration ??= IServiceConfiguration.BuildConfiguration<TestingServiceConfiguration>();
+            return _configuration;
+        }
+
+        internal set => _configuration = value;
+    }
+
     private IDictionary<string, IDictionary<string, Func<TestingService, Task<bool>>>> AsyncServiceTests { get; set; }
 
     public string? LastTestID { get; private set; }
@@ -69,8 +80,6 @@ public class TestingService : IDaprService
 
     public TestingService()
     {
-        Configuration = IServiceConfiguration.BuildConfiguration<TestingServiceConfiguration>();
-
         AsyncServiceTests = new Dictionary<string, IDictionary<string, Func<TestingService, Task<bool>>>>();
         foreach ((Type, MethodInfo, ServiceTestAttribute) methodInfo in IServiceAttribute.GetMethodsWithAttribute<ServiceTestAttribute>())
         {

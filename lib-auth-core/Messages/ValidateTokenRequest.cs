@@ -11,5 +11,5 @@ public class ValidateTokenRequest
 {
     [JsonPropertyName("token")]
     [JsonProperty("token", Required = Required.Always)]
-    public string Token { get; set; }
+    public string? Token { get; set; }
 }

@@ -8,17 +8,17 @@ public class AppConfiguration : BaseServiceConfiguration
     /// <summary>
     /// Application ID.
     /// </summary>
-    public string App_ID { get; set; } = "bannou";
+    public string? App_ID { get; set; } = "bannou";
 
     /// <summary>
     /// Dapr configuration store name to use.
     /// </summary>
-    public string Dapr_Configuration_Store { get; set; }
+    public string? Dapr_Configuration_Store { get; set; }
 
     /// <summary>
     /// Dapr secret store name to use.
     /// </summary>
-    public string Dapr_Secret_Store { get; set; }
+    public string? Dapr_Secret_Store { get; set; }
 
     /// <summary>
     /// Whether we're integration testing, or running normally.

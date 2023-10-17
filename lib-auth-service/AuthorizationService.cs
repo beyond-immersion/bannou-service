@@ -1,4 +1,5 @@
-﻿using BeyondImmersion.BannouService.Services;
+﻿using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Services;
 using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
@@ -7,18 +8,28 @@ using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 
+namespace BeyondImmersion.BannouService.Authorization;
+
 /// <summary>
 /// Service component responsible for authorization handling.
 /// </summary>
-[DaprService("authorization")]
+[DaprService("authorization", typeof(IAuthorizationService))]
 public class AuthorizationService : IAuthorizationService
 {
-    public AuthorizationServiceConfiguration Configuration { get; set; }
+    private AuthorizationServiceConfiguration? _configuration;
+    public AuthorizationServiceConfiguration Configuration
+    {
+        get
+        {
+            _configuration ??= IServiceConfiguration.BuildConfiguration<AuthorizationServiceConfiguration>();
+            return _configuration;
+        }
+
+        internal set => _configuration = value;
+    }
 
     async Task IDaprService.OnStart()
     {
-        Configuration = IServiceConfiguration.BuildConfiguration<AuthorizationServiceConfiguration>();
-
         // override sensitive configuration Dapr secret store
         await TryLoadFromDaprSecrets();
 
@@ -31,6 +42,9 @@ public class AuthorizationService : IAuthorizationService
 
     public async Task<string?> GetJWT(string email, string password)
     {
+        if (Configuration.Token_Public_Key == null || Configuration.Token_Private_Key == null)
+            return null;
+
         var dataModel = new GetAccountRequest()
         {
             Email = email
@@ -43,10 +57,10 @@ public class AuthorizationService : IAuthorizationService
             return null;
 
         GetAccountResponse? responseData = await daprResponse.Content.ReadFromJsonAsync<GetAccountResponse>();
-        if (responseData == null)
+        if (responseData == null || responseData.SecretSalt == null)
             return null;
 
-        var hashedSecret = GenerateHashedSecret(password);
+        var hashedSecret = IAccountService.GenerateHashedSecret(responseData.SecretSalt, password);
         if (!string.Equals(responseData.HashedSecret, hashedSecret))
             return null;
 
@@ -65,7 +79,7 @@ public class AuthorizationService : IAuthorizationService
         return newJWT;
     }
 
-    private JwtBuilder CreateJWTBuilder(string publicKey, string privateKey)
+    private static JwtBuilder CreateJWTBuilder(string publicKey, string privateKey)
     {
         var jwtBuilder = new JwtBuilder();
 

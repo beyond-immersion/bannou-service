@@ -8,12 +8,21 @@ namespace BeyondImmersion.BannouService.Accounts;
 [DaprService("account", typeof(IAccountService))]
 public class AccountService : IAccountService
 {
-    public AccountServiceConfiguration? Configuration { get; set; }
+    private AccountServiceConfiguration? _configuration;
+    public AccountServiceConfiguration Configuration
+    {
+        get
+        {
+            _configuration ??= IServiceConfiguration.BuildConfiguration<AccountServiceConfiguration>();
+            return _configuration;
+        }
+
+        internal set => _configuration = value;
+    }
 
     public async Task OnStart()
     {
         await Task.CompletedTask;
-        Configuration = IServiceConfiguration.BuildConfiguration<AccountServiceConfiguration>();
 
         // if integration testing, then add default test record to account datastore
         if (Program.Configuration.Integration_Testing)

@@ -1,18 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using BeyondImmersion.BannouService.Controllers;
+
+namespace BeyondImmersion.BannouService.Authorization;
 
 /// <summary>
 /// Auth APIs- backed by the Authorization service.
 /// </summary>
-[DaprController(typeof(AuthorizationService))]
+[DaprController(typeof(IAuthorizationService))]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public class AuthorizationController : BaseDaprController
 {
-    protected AuthorizationService Service { get; }
+    protected IAuthorizationService Service { get; }
 
-    public AuthorizationController(AuthorizationService service)
+    public AuthorizationController(IAuthorizationService service)
     {
         Service = service;
     }
@@ -32,7 +35,7 @@ public class AuthorizationController : BaseDaprController
             if (string.IsNullOrWhiteSpace(password))
                 return new BadRequestResult();
 
-            string? token = await Service.GetJWT(username, password);
+            var token = await Service.GetJWT(username, password);
             if (token == null)
                 return new NotFoundResult();
 

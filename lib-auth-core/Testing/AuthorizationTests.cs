@@ -1,5 +1,4 @@
-﻿using BeyondImmersion.BannouService.Controllers.Messages;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace BeyondImmersion.BannouService.Testing;
 
@@ -10,7 +9,7 @@ public static class AuthorizationTests
 {
     private const string AUTHORIZATION_SERVICE_NAME = "authorization";
 
-    [TestingService.ServiceTest(testID: AUTHORIZATION_SERVICE_NAME, serviceType: typeof(AuthorizationService))]
+    [TestingService.ServiceTest(testID: AUTHORIZATION_SERVICE_NAME, serviceType: typeof(IAuthorizationService))]
     [SuppressMessage("Usage", "CA2254:Template should be a static expression", Justification = "Identifying failed integration tests")]
     public static async Task<bool> RunAuthorizationTests(TestingService service)
     {
