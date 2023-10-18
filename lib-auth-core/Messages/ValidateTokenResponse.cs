@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using BeyondImmersion.BannouService.Messages;
+using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
 namespace BeyondImmersion.BannouService.Authorization.Messages;
@@ -7,7 +8,7 @@ namespace BeyondImmersion.BannouService.Authorization.Messages;
 /// The response model for service API calls to `/authorization/validate`.
 /// </summary>
 [JsonObject(MemberSerialization = MemberSerialization.OptIn, ItemNullValueHandling = NullValueHandling.Ignore)]
-public class ValidateTokenResponse
+public class ValidateTokenResponse : ServiceResponse<ValidateTokenRequest>
 {
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
     public class ErrorData

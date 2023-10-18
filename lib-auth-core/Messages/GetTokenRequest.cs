@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using BeyondImmersion.BannouService.Messages;
+using Newtonsoft.Json;
 
 namespace BeyondImmersion.BannouService.Authorization.Messages;
 
@@ -6,7 +7,7 @@ namespace BeyondImmersion.BannouService.Authorization.Messages;
 /// The request model for service API calls to `/authorization/token`.
 /// </summary>
 [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
-public class GetTokenRequest
+public class GetTokenRequest : ServiceRequest<GetTokenResponse>
 {
 
 }

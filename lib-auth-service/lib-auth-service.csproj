@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<Import Project="..\DaprService.targets" />
+	<Import Project="..\ServiceLib.targets" />
 
 	<PropertyGroup>
 		<RootNamespace>$(RootNamespace).Authorization</RootNamespace>
 		<ServiceLib>auth_service</ServiceLib>
+		<ServiceLibDependencies>accounts,auth</ServiceLibDependencies>
 	</PropertyGroup>
 
 	<ItemGroup>

@@ -6,9 +6,14 @@ namespace BeyondImmersion.BannouService.Application;
 public class AppConfiguration : BaseServiceConfiguration
 {
     /// <summary>
-    /// Application ID.
+    /// Network mode- determines service -> app mappings.
     /// </summary>
-    public string? App_ID { get; set; } = "bannou";
+    public string? Network_Mode { get; set; } = "bannou";
+
+    /// <summary>
+    /// The assemblies to load from the /libs directory.
+    /// </summary>
+    public string? Include_Assemblies { get; set; } = "all";
 
     /// <summary>
     /// Dapr configuration store name to use.

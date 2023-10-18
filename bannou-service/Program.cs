@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Logging;
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -88,6 +89,9 @@ public static class Program
     }
 
     private static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> _serviceAppLookup;
+    /// <summary>
+    /// 
+    /// </summary>
     public static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> ServiceAppLookup
     {
         get
@@ -114,6 +118,44 @@ public static class Program
         }
     }
 
+    private static Dictionary<string, string> _networkModePresetMappings;
+    /// <summary>
+    /// The service->application name mappings for the network.
+    /// Specific to the network mode that's been configured.
+    /// 
+    /// Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
+    /// mappings to use.
+    /// </summary>
+    public static Dictionary<string, string> NetworkModePresetMappings
+    {
+        get
+        {
+            if (_networkModePresetMappings == null)
+            {
+                if (string.Equals("account-scaling", Configuration.Network_Mode, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    _networkModePresetMappings = new Dictionary<string, string>()
+                    {
+                        ["account"] = "account",
+                        ["authorization"] = "bannou",
+                        ["connect"] = "bannou"
+                    };
+                }
+
+                _networkModePresetMappings = new Dictionary<string, string>()
+                {
+                    ["account"] = "bannou",
+                    ["authorization"] = "bannou",
+                    ["connect"] = "bannou"
+                };
+            }
+
+            return _networkModePresetMappings;
+        }
+
+        private set { _networkModePresetMappings = value; }
+    }
+
     /// <summary>
     /// Shared dapr client interface, used by all enabled service handlers.
     /// </summary>
@@ -136,7 +178,7 @@ public static class Program
         }
 
         // load the assemblies
-        LoadAssembliesFromLibs();
+        LoadAssemblies();
 
         // get info for dapr services in loaded assemblies
         var enabledServiceInfo = IDaprService.GetAllServiceInfo(enabledOnly: true);
@@ -257,31 +299,141 @@ public static class Program
         Logger.Log(LogLevel.Debug, null, "Application shutdown complete.");
     }
 
-    public static void LoadAssembliesFromLibs()
+    private static void LoadAssemblies()
     {
-        var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "libs");
-        foreach (var dllPath in GetDllFiles(directoryPath))
+        AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
+
+        if (string.Equals("none", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
+            return;
+
+        var libsRootDirectory = Path.Combine(Directory.GetCurrentDirectory(), "libs");
+        if (libsRootDirectory == null || !Directory.Exists(libsRootDirectory))
         {
-            try
+            Logger.Log(LogLevel.Warning, null, $"Failed to load additional assemblies- libs directory does not exist.");
+            return;
+        }
+
+        var libDirectories = Directory.GetDirectories(libsRootDirectory);
+        if (libDirectories == null || libDirectories.Length == 0)
+        {
+            Logger.Log(LogLevel.Warning, null, $"Failed to load additional assemblies- nothing found in libs directory.");
+            return;
+        }
+
+        if (string.Equals("all", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
+        {
+            foreach (var libDirectory in libDirectories)
             {
-                Assembly.LoadFrom(dllPath);
-                Logger.Log(LogLevel.Error, null, $"Successfully loaded assembly from {dllPath}");
+                var assemblyPaths = Directory.GetFiles(libDirectory, "*.dll", SearchOption.AllDirectories);
+                foreach (var assemblyPath in assemblyPaths)
+                {
+                    try
+                    {
+                        Assembly.LoadFrom(assemblyPath);
+                        Logger.Log(LogLevel.Information, null, $"Successfully loaded assembly at path: {assemblyPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log(LogLevel.Error, ex, $"Failed to load assembly at path: {assemblyPath}.");
+                    }
+                }
             }
-            catch (Exception ex)
+
+            return;
+        }
+
+        // common libs should always be loaded, if `none` isn't specified
+        {
+            var libDirectory = Directory.GetDirectories(libsRootDirectory, "common", SearchOption.TopDirectoryOnly).FirstOrDefault();
+            if (libDirectory != null)
             {
-                Logger.Log(LogLevel.Error, ex, $"Failed to load assembly from {dllPath}.");
+                var assemblyPaths = Directory.GetFiles(libDirectory, "*.dll", SearchOption.AllDirectories);
+                foreach (var assemblyPath in assemblyPaths)
+                {
+                    try
+                    {
+                        var loadedAssembly = Assembly.LoadFile(assemblyPath);
+                        Logger.Log(LogLevel.Information, null, $"Successfully loaded assembly at path: {assemblyPath}.");
+                    }
+                    catch (Exception exc)
+                    {
+                        Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");
+                    }
+                }
             }
         }
+
+        // if no configuration, or common, then that's all we're going to load
+        if (Configuration.Include_Assemblies == null || string.Equals("common", Configuration.Include_Assemblies))
+            return;
+
+        // otherwise, split by commas, and load the rest manually by assembly name
+        var assemblyNames = Configuration.Include_Assemblies.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        if (assemblyNames == null || assemblyNames.Length == 0)
+            return;
+
+        foreach (var assemblyName in assemblyNames)
+        {
+            var libDirectory = Directory.GetDirectories(libsRootDirectory, assemblyName, SearchOption.TopDirectoryOnly).FirstOrDefault();
+            if (libDirectory == null)
+            {
+                Logger.Log(LogLevel.Warning, null, $"Failed to load assemblies for {assemblyName}- specified in configuration, but no libs were found.");
+                continue;
+            }
+
+            var assemblyPaths = Directory.GetFiles(libDirectory, "*.dll", SearchOption.AllDirectories);
+            foreach (var assemblyPath in assemblyPaths)
+            {
+                try
+                {
+                    var loadedAssembly = Assembly.LoadFile(assemblyPath);
+                    Logger.Log(LogLevel.Information, null, $"Successfully loaded assembly at path: {assemblyPath}.");
+                }
+                catch (Exception exc)
+                {
+                    Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");
+                }
+            }
+        }
+
+        return;
     }
 
-    private static string[] GetDllFiles(string directoryPath)
+    private static Assembly? OnAssemblyResolve(object? sender, ResolveEventArgs args)
     {
-        if (Directory.Exists(directoryPath))
-            return Directory.GetFiles(directoryPath, "*.dll", SearchOption.AllDirectories);
+        if (string.IsNullOrWhiteSpace(args?.Name))
+            return null;
 
-        return Array.Empty<string>();
+        var assemblyName = new AssemblyName(args.Name).Name;
+        var libsRootDirectory = Path.Combine(Directory.GetCurrentDirectory(), "libs");
+        var libDirectories = Directory.GetDirectories(libsRootDirectory);
+
+        foreach (var libDirectory in libDirectories)
+        {
+            var potentialAssemblyPath = Path.Combine(libDirectory, $"{assemblyName}.dll");
+            if (File.Exists(potentialAssemblyPath))
+            {
+                try
+                {
+                    var loadedAssembly = Assembly.LoadFile(potentialAssemblyPath);
+                    Logger.Log(LogLevel.Error, null, $"Successfully loaded assembly {assemblyName} at path: {potentialAssemblyPath}.");
+
+                    return loadedAssembly;
+                }
+                catch (Exception exc)
+                {
+                    Logger.Log(LogLevel.Error, exc, $"Failed to load assembly {assemblyName} at path: {potentialAssemblyPath}.");
+                    return null;
+                }
+            }
+        }
+
+        return null;
     }
 
+    /// <summary>
+    /// Iterates through and invokes the Start() method on all loaded service handlers.
+    /// </summary>
     private static async Task InvokeAllServiceStartMethods(WebApplication webApp, IEnumerable<Type> implTypes)
     {
         foreach (var implType in implTypes)
@@ -292,6 +444,9 @@ public static class Program
         }
     }
 
+    /// <summary>
+    /// Iterates through and invokes the Running() method on all loaded service handlers.
+    /// </summary>
     private static async Task InvokeAllServiceRunningMethods(WebApplication webApp, IEnumerable<Type> implTypes)
     {
         foreach (var implType in implTypes)
@@ -302,6 +457,9 @@ public static class Program
         }
     }
 
+    /// <summary>
+    /// Iterates through and invokes the Shutdown() method on all loaded service handlers.
+    /// </summary>
     private static async Task InvokeAllServiceShutdownMethods(WebApplication webApp, IEnumerable<Type> implTypes)
     {
         foreach (var implType in implTypes)
@@ -311,6 +469,26 @@ public static class Program
                 await serviceInst.OnShutdown();
         }
     }
+
+    /// <summary>
+    /// Returns the application name mapped for the given service name, from the
+    /// network mode preset.
+    /// 
+    /// Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
+    /// mappings to use.
+    /// </summary>
+    public static string? GetPresetAppNameFromServiceName(string serviceName)
+        => NetworkModePresetMappings.FirstOrDefault(t => string.Equals(serviceName, t.Value, StringComparison.InvariantCultureIgnoreCase)).Key;
+
+    /// <summary>
+    /// Returns the service name mapped for the given application name, from the
+    /// network mode preset.
+    /// 
+    /// Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
+    /// mappings to use.
+    /// </summary>
+    public static string? GetPresetServiceNameFromAppName(string appName)
+        => NetworkModePresetMappings[appName];
 
     /// <summary>
     /// Get the app name for the given handler type.

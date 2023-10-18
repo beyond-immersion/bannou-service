@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\ServiceLib.targets" />
+
+	<PropertyGroup>
+		<RootNamespace>$(RootNamespace).Connect</RootNamespace>
+		<ServiceLib>connect_service</ServiceLib>
+		<ServiceLibDependencies>connect</ServiceLibDependencies>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\lib-connect-core\lib-connect-core.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using BeyondImmersion.BannouService.Messages;
+using Newtonsoft.Json;
 
 namespace BeyondImmersion.BannouService.Connect.Messages;
 
@@ -7,7 +8,7 @@ namespace BeyondImmersion.BannouService.Connect.Messages;
 /// Does not use JRPC, as it's exposed directly to clients.
 /// </summary>
 [JsonObject(MemberSerialization = MemberSerialization.OptIn, ItemNullValueHandling = NullValueHandling.Ignore)]
-public class ConnectResponse
+public class ConnectResponse : ServiceResponse<ConnectRequest>
 {
 
 }

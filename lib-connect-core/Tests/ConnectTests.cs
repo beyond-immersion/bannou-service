@@ -1,8 +1,7 @@
-﻿using BeyondImmersion.BannouService.Services;
+﻿using BeyondImmersion.BannouService.Testing;
 using System.Diagnostics.CodeAnalysis;
-using BeyondImmersion.BannouService.Connect.Messages;
 
-namespace BeyondImmersion.BannouService.Testing.Tests;
+namespace BeyondImmersion.BannouService.Connect.Testing;
 
 /// <summary>
 /// Tests for the connect service.
@@ -11,7 +10,7 @@ public static class ConnectTests
 {
     private const string CONNECT_SERVICE_NAME = "connect";
 
-    [TestingService.ServiceTest(testID: CONNECT_SERVICE_NAME, serviceType: typeof(ConnectService))]
+    [TestingService.ServiceTest(testID: CONNECT_SERVICE_NAME, serviceType: typeof(IConnectService))]
     [SuppressMessage("Usage", "CA2254:Template should be a static expression", Justification = "Identifying failed integration tests")]
     public static async Task<bool> RunConnectTests(TestingService service)
     {

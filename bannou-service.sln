@@ -12,15 +12,15 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		Makefile = Makefile
+		ServiceLib.targets = ServiceLib.targets
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisioning", "{6905E47E-6C04-4CF6-894F-2643528E490D}"
 	ProjectSection(SolutionItems) = preProject
-		DaprService.targets = DaprService.targets
 		provisioning\docker-compose.ci.yml = provisioning\docker-compose.ci.yml
 		provisioning\docker-compose.yml = provisioning\docker-compose.yml
 		provisioning\Dockerfile = provisioning\Dockerfile
-		Makefile = Makefile
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{8104DBD9-C9EB-460A-842B-9385C32836C6}"
@@ -50,13 +50,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-auth-core", "lib-auth-c
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-auth-service", "lib-auth-service\lib-auth-service.csproj", "{60317D6B-688A-4099-9DE6-24E4F4128AC5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-connect-core", "lib-connect-core\lib-connect-core.csproj", "{661E2C58-157C-4B7F-9D8F-3BBBF58B01F9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-connect-core", "lib-connect-core\lib-connect-core.csproj", "{661E2C58-157C-4B7F-9D8F-3BBBF58B01F9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{4F07AA77-C49C-498D-BFA1-B47D0139E021}"
 	ProjectSection(SolutionItems) = preProject
 		build-libs.sh = build-libs.sh
-		provisioning\service-tests.sh = provisioning\service-tests.sh
+		service-tests.sh = service-tests.sh
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-connect-service", "lib-connect-service\lib-connect-service.csproj", "{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -113,6 +115,12 @@ Global
 		{661E2C58-157C-4B7F-9D8F-3BBBF58B01F9}.Development|Any CPU.Build.0 = Debug|Any CPU
 		{661E2C58-157C-4B7F-9D8F-3BBBF58B01F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{661E2C58-157C-4B7F-9D8F-3BBBF58B01F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -122,7 +130,7 @@ Global
 		{8104DBD9-C9EB-460A-842B-9385C32836C6} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
 		{1E4033CE-EDE2-4140-ABB1-0B55250255F9} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
 		{47B2858E-0EA2-43AB-85CF-E1335FF1D0A8} = {6905E47E-6C04-4CF6-894F-2643528E490D}
-		{4F07AA77-C49C-498D-BFA1-B47D0139E021} = {6905E47E-6C04-4CF6-894F-2643528E490D}
+		{4F07AA77-C49C-498D-BFA1-B47D0139E021} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC13195D-546C-43E1-9AAA-2C0BF08BA428}

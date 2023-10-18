@@ -1,23 +1,22 @@
-﻿using BeyondImmersion.BannouService.Controllers.Messages;
+﻿using BeyondImmersion.BannouService.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Collections.Concurrent;
 using System.Net.Mime;
 using System.Net.WebSockets;
 
-namespace BeyondImmersion.BannouService.Controllers;
+namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
 /// Connect APIs- backed by the Connect service.
 /// </summary>
-[DaprController(typeof(ConnectService))]
+[DaprController(typeof(IConnectService))]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
 public sealed class ConnectController : BaseDaprController
 {
-    public ConnectService Service { get; }
+    public IConnectService Service { get; }
 
-    public ConnectController(ConnectService service)
+    public ConnectController(IConnectService service)
     {
         Service = service;
     }

@@ -1,6 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using BeyondImmersion.BannouService.Testing;
+using System.Diagnostics.CodeAnalysis;
 
-namespace BeyondImmersion.BannouService.Testing;
+namespace BeyondImmersion.BannouService.Authorization.Testing;
 
 /// <summary>
 /// Tests for the authorization service.
