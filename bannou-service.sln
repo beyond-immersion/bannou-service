@@ -23,16 +23,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisionin
 		provisioning\Dockerfile = provisioning\Dockerfile
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{8104DBD9-C9EB-460A-842B-9385C32836C6}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github", "Github", "{8104DBD9-C9EB-460A-842B-9385C32836C6}"
 	ProjectSection(SolutionItems) = preProject
-		.github\workflows\ci.integration.yml = .github\workflows\ci.integration.yml
-		.github\workflows\ci.lint.yml = .github\workflows\ci.lint.yml
-		.github\workflows\ci.unit.yml = .github\workflows\ci.unit.yml
+		.github\dependabot.yml = .github\dependabot.yml
+		.github\pull_request_template.md = .github\pull_request_template.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{1E4033CE-EDE2-4140-ABB1-0B55250255F9}"
 	ProjectSection(SolutionItems) = preProject
-		documentation\CONTRIBUTING.md = documentation\CONTRIBUTING.md
+		.github\CONTRIBUTING.md = .github\CONTRIBUTING.md
 		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
@@ -58,7 +57,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{4F07
 		service-tests.sh = service-tests.sh
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-connect-service", "lib-connect-service\lib-connect-service.csproj", "{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-connect-service", "lib-connect-service\lib-connect-service.csproj", "{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{9DF51A7F-2307-41EC-97DD-EBC30BF8B859}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\ci.integration.yml = .github\workflows\ci.integration.yml
+		.github\workflows\ci.lint.yml = .github\workflows\ci.lint.yml
+		.github\workflows\ci.unit.yml = .github\workflows\ci.unit.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -131,6 +137,7 @@ Global
 		{1E4033CE-EDE2-4140-ABB1-0B55250255F9} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
 		{47B2858E-0EA2-43AB-85CF-E1335FF1D0A8} = {6905E47E-6C04-4CF6-894F-2643528E490D}
 		{4F07AA77-C49C-498D-BFA1-B47D0139E021} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
+		{9DF51A7F-2307-41EC-97DD-EBC30BF8B859} = {8104DBD9-C9EB-460A-842B-9385C32836C6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC13195D-546C-43E1-9AAA-2C0BF08BA428}
