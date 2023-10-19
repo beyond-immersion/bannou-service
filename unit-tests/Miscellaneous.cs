@@ -127,9 +127,9 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
     [Fact]
     public void CreateRSA_Test()
     {
-        using RSA publicRSA = RSA.Create();
+        using var publicRSA = RSA.Create();
         publicRSA.ImportFromPem(Test_PEMPublicKey);
-        using RSA privateRSA = RSA.Create();
+        using var privateRSA = RSA.Create();
         privateRSA.ImportFromPem(Test_PEMPrivateKey);
         var keyAlgorithm = new RS512Algorithm(publicRSA, privateRSA);
 
@@ -173,7 +173,7 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
         var decodedJwt = jwtBuilder.Decode(encodedJwt);
 
         Assert.NotNull(decodedJwt);
-        JObject jwtObj = JObject.Parse(decodedJwt);
+        var jwtObj = JObject.Parse(decodedJwt);
         Assert.Equal("UNIT_TEST_FRAMEWORK", (string?)jwtObj["iss"]);
         Assert.Equal("user", (string?)jwtObj["role"]);
     }
@@ -209,7 +209,6 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
 
         return jwtBuilder;
     }
-
 
 #pragma warning restore CS0612 // Type or member is obsolete
 #pragma warning restore CS0618 // Type or member is obsolete

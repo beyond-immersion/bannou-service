@@ -1,0 +1,165 @@
+﻿using BeyondImmersion.BannouService.Testing;
+using System.Diagnostics.CodeAnalysis;
+
+namespace BeyondImmersion.BannouService.Connect.Testing;
+
+/// <summary>
+/// Tests for the connect service.
+/// </summary>
+public static class ConnectTests
+{
+    private const string CONNECT_SERVICE_NAME = "connect";
+
+    [TestingService.ServiceTest(testID: CONNECT_SERVICE_NAME, serviceType: typeof(IConnectService))]
+    [SuppressMessage("Usage", "CA2254:Template should be a static expression", Justification = "Identifying failed integration tests")]
+    public static async Task<bool> RunConnectTests(TestingService service)
+    {
+        await Task.CompletedTask;
+        Program.Logger?.Log(LogLevel.Trace, $"Running all [{CONNECT_SERVICE_NAME}] integration tests!");
+
+        if (service == null)
+        {
+            Program.Logger?.Log(LogLevel.Error, "Testing service not found.");
+            return false;
+        }
+
+        if (Program.DaprClient == null)
+        {
+            Program.Logger?.Log(LogLevel.Error, "Dapr client is not loaded.");
+            return false;
+        }
+
+        var tests = new Func<TestingService, Task<bool>>[]
+        {
+            Connect_Success,
+            Connect_WebsocketUpgrade_Success,
+            Connect_TokenEmpty_BadRequest,
+            Connect_TokenMissing_BadRequest
+        };
+
+        foreach (var test in tests)
+        {
+            try
+            {
+                if (!await test.Invoke(service))
+                {
+                    Program.Logger?.Log(LogLevel.Error, $"Integration test [{test.Method.Name}] failed.");
+                    return false;
+                }
+            }
+            catch (Exception exc)
+            {
+                Program.Logger?.Log(LogLevel.Error, exc, $"An exception occurred running integration test [{test.Method.Name}].");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static async Task<bool> Connect_Success(TestingService service)
+    {
+        var endpointPath = $"{CONNECT_SERVICE_NAME}";
+        var testToken = "eyJlbWFpbCI6InVzZXJfMUBjZWxlc3RpYWxtYWlsLmNvbSIsImRpc3BsYXktbmFtZSI6IlRlc3QgQWNjb3VudCIsInR5cCI6IkpXVCIsImFsZyI6IlJTNTEyIn0.eyJqdGkiOiI3OTY5OTM3OS1hMDQyLTQ2MjUtOWIwMi1iM2E3YTliMDYwM2EiLCJpc3MiOiJBVVRIT1JJWkFUSU9OX1NFUlZJQ0U6NjY0NWQxYWYtMWFlNC00OGE1LTllYmUtNWE1YjQ3YjhjODJlIiwiaWF0IjoxNjkwNzcxOTM0LjAsImV4cCI6MTY5MDg1ODMzNC4wLCJyb2xlIjoidXNlciJ9.qr53M8pxvDN-vFB7Yj_ilCPuNwyXUpxNsLFIZ-Knk3Vu2wAa9BWhvY5NgQ2lo1cePOrimg1mY-QwkrXoTZXTCXr8WzKd12vmvOwPUb2AaWy5phV-k1PRWnp_px-qRq2SAyBd23fQLPQ85EeC_J0_dupna7GlJqzP8-YayjjYogU";
+
+        var request = new ConnectRequest()
+        {
+        };
+
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(CONNECT_SERVICE_NAME), endpointPath, request);
+        newRequest.Headers.Add("token", testToken);
+
+        try
+        {
+            ConnectResponse response = await Program.DaprClient.InvokeMethodAsync<ConnectResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
+            return true;
+        }
+        catch { }
+
+        return false;
+    }
+
+    private static async Task<bool> Connect_WebsocketUpgrade_Success(TestingService service)
+    {
+        var endpointPath = $"{CONNECT_SERVICE_NAME}";
+        var testToken = "eyJlbWFpbCI6InVzZXJfMUBjZWxlc3RpYWxtYWlsLmNvbSIsImRpc3BsYXktbmFtZSI6IlRlc3QgQWNjb3VudCIsInR5cCI6IkpXVCIsImFsZyI6IlJTNTEyIn0.eyJqdGkiOiI3OTY5OTM3OS1hMDQyLTQ2MjUtOWIwMi1iM2E3YTliMDYwM2EiLCJpc3MiOiJBVVRIT1JJWkFUSU9OX1NFUlZJQ0U6NjY0NWQxYWYtMWFlNC00OGE1LTllYmUtNWE1YjQ3YjhjODJlIiwiaWF0IjoxNjkwNzcxOTM0LjAsImV4cCI6MTY5MDg1ODMzNC4wLCJyb2xlIjoidXNlciJ9.qr53M8pxvDN-vFB7Yj_ilCPuNwyXUpxNsLFIZ-Knk3Vu2wAa9BWhvY5NgQ2lo1cePOrimg1mY-QwkrXoTZXTCXr8WzKd12vmvOwPUb2AaWy5phV-k1PRWnp_px-qRq2SAyBd23fQLPQ85EeC_J0_dupna7GlJqzP8-YayjjYogU";
+
+        var request = new ConnectRequest()
+        {
+        };
+
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(CONNECT_SERVICE_NAME), endpointPath, request);
+        newRequest.Headers.Add("token", testToken);
+        newRequest.Headers.Add("Connection", "Upgrade");
+        newRequest.Headers.Add("Upgrade", "websocket");
+
+        try
+        {
+            ConnectResponse response = await Program.DaprClient.InvokeMethodAsync<ConnectResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
+            return true;
+        }
+        catch { }
+
+        return false;
+    }
+
+    private static async Task<bool> Connect_TokenEmpty_BadRequest(TestingService service)
+    {
+        var endpointPath = $"{CONNECT_SERVICE_NAME}";
+        var testToken = "";
+
+        var request = new ConnectRequest()
+        {
+        };
+
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(CONNECT_SERVICE_NAME), endpointPath, request);
+        newRequest.Headers.Add("token", testToken);
+
+        try
+        {
+            ConnectResponse response = await Program.DaprClient.InvokeMethodAsync<ConnectResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
+            return false;
+        }
+        catch (HttpRequestException exc)
+        {
+            if (exc.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                return true;
+        }
+        catch (Dapr.Client.InvocationException exc)
+        {
+            if (exc.Response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static async Task<bool> Connect_TokenMissing_BadRequest(TestingService service)
+    {
+        var endpointPath = $"{CONNECT_SERVICE_NAME}";
+
+        var request = new ConnectRequest()
+        {
+        };
+
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(CONNECT_SERVICE_NAME), endpointPath, request);
+
+        try
+        {
+            ConnectResponse response = await Program.DaprClient.InvokeMethodAsync<ConnectResponse>(newRequest, Program.ShutdownCancellationTokenSource.Token);
+            return false;
+        }
+        catch (HttpRequestException exc)
+        {
+            if (exc.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                return true;
+        }
+        catch (Dapr.Client.InvocationException exc)
+        {
+            if (exc.Response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                return true;
+        }
+
+        return false;
+    }
+}

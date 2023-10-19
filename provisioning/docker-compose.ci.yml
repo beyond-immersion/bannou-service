@@ -8,17 +8,11 @@ services:
         condition: service_healthy
     environment:
       - INTEGRATION_TESTING=true
-      - TESTING_SERVICE_ENABLED=true
-      - ACCOUNT_SERVICE_ENABLED=true
-      - AUTHORIZATION_SERVICE_ENABLED=true
       - AUTHORIZATION_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
       - AUTHORIZATION_TOKEN_PRIVATE_KEY=${AUTH_TOKEN_PRIVATE_KEY}
-      - CONNECT_SERVICE_ENABLED=true
       - CONNECT_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
-      - WEB_HOST_PORT=80
       - APP_LOGGING_LEVEL=Debug
       - WEB_HOST_LOGGING_LEVEL=Information
-      - ASPNETCORE_URLS=http://+:80
       - ASPNETCORE_ENVIRONMENT=Development
 
   # add the CI components to the dapr sidecar attached to the monoservice
@@ -33,10 +27,10 @@ services:
     network_mode:
       "service:bannou"
     volumes:
-      - ./:/provisioning/
+      - "../service-tests.sh:/service-tests.sh"
     depends_on:
       - bannou
-    command: bash provisioning/service-tests.sh
+    command: bash service-tests.sh
 
   # backing datastore for testing accounts- matches CI component
   redis-db:

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using BeyondImmersion.BannouService.Configuration;
+using Newtonsoft.Json.Linq;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Services;
@@ -32,10 +33,10 @@ public interface IDaprService
         => GetType().GetServiceName();
 
     /// <summary>
-    /// Returns whether the configuration indicates the service should be enabled.
+    /// Returns whether the configuration indicates the service should be disabled.
     /// </summary>
-    public bool IsEnabled()
-        => IsEnabled(GetType());
+    public bool IsDisabled()
+        => IsDisabled(GetType());
 
     /// <summary>
     /// Returns the best configuration type for this service type.
@@ -53,14 +54,14 @@ public interface IDaprService
     /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
     /// </summary>
     public IServiceConfiguration BuildConfiguration()
-        => BuildConfiguration(GetType()) ?? new ServiceConfiguration();
+        => BuildConfiguration(GetType()) ?? new AppConfiguration();
 
     /// <summary>
     /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
     /// </summary>
     public static IServiceConfiguration BuildConfiguration<T>(string[]? args = null)
         where T : class, IDaprService
-        => BuildConfiguration(typeof(T), args) ?? new ServiceConfiguration();
+        => BuildConfiguration(typeof(T), args) ?? new AppConfiguration();
 
     /// <summary>
     /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
@@ -81,7 +82,7 @@ public interface IDaprService
         if (configAttr != null)
             envPrefix = configAttr.EnvPrefix;
 
-        return IServiceConfiguration.BuildConfiguration(typeof(ServiceConfiguration), args, envPrefix);
+        return IServiceConfiguration.BuildConfiguration(typeof(AppConfiguration), args, envPrefix);
     }
 
     /// <summary>
@@ -97,9 +98,9 @@ public interface IDaprService
     public static bool HasRequiredConfiguration(Type serviceType)
     {
         return typeof(IDaprService).IsAssignableFrom(serviceType)
-&& IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
-            .Where(t => t.Item2.ServiceType == serviceType)
-            .All(t => IServiceConfiguration.HasRequiredForType(t.Item1));
+            && IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
+                .Where(t => t.Item2.ServiceType == serviceType)
+                .All(t => IServiceConfiguration.HasRequiredForType(t.Item1));
     }
 
     /// <summary>
@@ -116,14 +117,14 @@ public interface IDaprService
         {
             if (handlerType.IsAssignableFrom(configAttr.Item2.ServiceType))
             {
-                if (serviceConfigType != null && !configAttr.Item2.Primary)
+                if (serviceConfigType != null)
                     continue;
 
                 serviceConfigType = configAttr.Item1;
             }
         }
 
-        return serviceConfigType ?? typeof(ServiceConfiguration);
+        return serviceConfigType ?? typeof(AppConfiguration);
     }
 
     /// <summary>
@@ -160,32 +161,31 @@ public interface IDaprService
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
     /// </summary>
-    public static bool IsEnabled<T>()
-        => IsEnabled(typeof(T));
+    public static bool IsDisabled<T>()
+        => IsDisabled(typeof(T));
 
     /// <summary>
-    /// Returns whether the configuration indicates the service should be enabled.
+    /// Returns whether the configuration indicates the service should be disabled.
     /// </summary>
-    public static bool IsEnabled(Type serviceType)
+    public static bool IsDisabled(Type serviceType)
     {
         if (!typeof(IDaprService).IsAssignableFrom(serviceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
         var serviceName = serviceType.GetServiceName();
-        return !string.IsNullOrWhiteSpace(serviceName) && IsEnabled(serviceName);
+        return IsDisabled(serviceName);
     }
 
     /// <summary>
-    /// Returns whether the configuration indicates the service should be enabled.
+    /// Returns whether the configuration indicates the service should be disabled.
     /// </summary>
-    public static bool IsEnabled(string serviceName)
+    public static bool IsDisabled(string? serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
-            return false;
+            return !Program.Configuration.Services_Enabled;
 
-        IConfigurationRoot configRoot = IServiceConfiguration.BuildConfigurationRoot();
-        var serviceEnabledFlag = configRoot.GetValue<bool?>($"{serviceName.ToUpper()}_SERVICE_ENABLED", null);
-        return serviceEnabledFlag.HasValue && serviceEnabledFlag.Value;
+        var config = IServiceConfiguration.BuildConfiguration(typeof(BaseServiceConfiguration), null, serviceName.ToUpper() + "_");
+        return config?.Service_Disabled == null ? !Program.Configuration.Services_Enabled : config.Service_Disabled.Value;
     }
 
     /// <summary>
@@ -281,8 +281,8 @@ public interface IDaprService
                 }
             }
 
-            // don't return a disabled service type, in a way that ensures types it derives from will also be disabled
-            if (enabledOnly && !IsEnabled(serviceType))
+            // don't return a disabled service type
+            if (enabledOnly && IsDisabled(serviceType))
             {
                 Program.Logger?.Log(LogLevel.Debug, null, $"Service type {serviceType.Name} has been disabled, and won't be returned.");
                 continue;

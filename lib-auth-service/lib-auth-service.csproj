@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\ServiceLib.targets" />
+
+	<PropertyGroup>
+		<RootNamespace>$(RootNamespace).Authorization</RootNamespace>
+		<ServiceLib>auth_service</ServiceLib>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\lib-accounts-core\lib-accounts-core.csproj" />
+		<ProjectReference Include="..\lib-auth-core\lib-auth-core.csproj" />
+	</ItemGroup>
+
+</Project>

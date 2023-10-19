@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Attributes;
 
@@ -14,15 +15,10 @@ public class DaprControllerAttribute : RouteAttribute, IServiceAttribute
     /// If requiring multiple service, add more attributes.
     /// </summary>
     public Type? ServiceType { get; }
+    public DaprServiceAttribute? ServiceAttribute { get; }
 
     public DaprControllerAttribute(Type? serviceType = null)
-        : base("/")
-    {
-        if (serviceType != null && !typeof(IDaprService).IsAssignableFrom(serviceType))
-            throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
-
-        ServiceType = serviceType;
-    }
+        : this(GetControllerTemplate(serviceType), serviceType) { }
 
     public DaprControllerAttribute(string template, Type? serviceType = null)
         : base(template)
@@ -31,5 +27,23 @@ public class DaprControllerAttribute : RouteAttribute, IServiceAttribute
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
         ServiceType = serviceType;
+        if (serviceType != null)
+            Name = serviceType.Name;
+
+        ServiceAttribute = serviceType?.GetCustomAttribute<DaprServiceAttribute>();
+        if (ServiceAttribute != null)
+            Name = ServiceAttribute.Name;
+    }
+
+    public string GetControllerTemplate()
+        => ServiceAttribute?.Name ?? "/";
+
+    public static string GetControllerTemplate(Type? serviceType)
+    {
+        var serviceAttribute = serviceType?.GetCustomAttribute<DaprServiceAttribute>();
+        if (serviceAttribute != null)
+            return serviceAttribute.Name;
+
+        return "/";
     }
 }

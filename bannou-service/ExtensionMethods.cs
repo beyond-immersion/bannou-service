@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using BeyondImmersion.BannouService.Logging;
+using Newtonsoft.Json.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -65,6 +66,26 @@ public static partial class ExtensionMethods
     }
 
     /// <summary>
+    /// Checks if a string is safe to use as a segment with a Path.Combine().
+    /// </summary>
+    public static bool IsSafeForPath(this string pathSegment)
+    {
+        if (string.IsNullOrEmpty(pathSegment))
+            return false;
+
+        if (pathSegment.Any(ch => Path.GetInvalidFileNameChars().Contains(ch)))
+            return false;
+
+        if (pathSegment.Contains(".."))
+            return false;
+
+        if (Path.IsPathRooted(pathSegment))
+            return false;
+
+        return true;
+    }
+
+    /// <summary>
     /// Generate a URL-safe slug from any string.
     /// </summary>
     public static string GenerateSlug(this string phrase)
@@ -79,12 +100,15 @@ public static partial class ExtensionMethods
 
     public static string? GetServiceName(this Type serviceType)
     {
-        string? serviceName = null;
         DaprServiceAttribute? serviceAttr = serviceType.GetCustomAttributes<DaprServiceAttribute>().FirstOrDefault();
         if (serviceAttr != null && !string.IsNullOrWhiteSpace(serviceAttr.Name))
-            serviceName = serviceAttr.Name;
+            return serviceAttr.Name;
 
-        return serviceName;
+        var serviceInfo = IDaprService.GetServiceInfo(serviceType);
+        if (serviceInfo != null && serviceInfo.HasValue)
+            return serviceInfo.Value.Item3.Name;
+
+        return null;
     }
 
     /// <summary>
