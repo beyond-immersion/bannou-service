@@ -30,7 +30,7 @@ services:
       - "./:/app"
     depends_on:
       - bannou
-    command: bash ./app/service-tests.sh
+    command: bash /app/service-tests.sh
 
   # backing datastore for testing accounts- matches CI component
   redis-db:
