@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Logging;
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -118,7 +117,7 @@ public static class Program
         }
     }
 
-    private static Dictionary<string, string> _networkModePresetMappings;
+    private static Dictionary<string, string> _networkModePresets;
     /// <summary>
     /// The service->application name mappings for the network.
     /// Specific to the network mode that's been configured.
@@ -126,34 +125,74 @@ public static class Program
     /// Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
     /// mappings to use.
     /// </summary>
-    public static Dictionary<string, string> NetworkModePresetMappings
+    public static Dictionary<string, string> NetworkModePresets
     {
         get
         {
-            if (_networkModePresetMappings == null)
+            if (_networkModePresets != null)
+                return _networkModePresets;
+
+            // build presets based on network mode and configuration
+            if (Configuration?.Network_Mode != null)
             {
-                if (string.Equals("account-scaling", Configuration.Network_Mode, StringComparison.InvariantCultureIgnoreCase))
+                if (Configuration.Network_Mode.EndsWith("-scaling", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    _networkModePresetMappings = new Dictionary<string, string>()
+                    var scaledService = Configuration.Network_Mode[..^"-scaling".Length]?.ToUpper();
+                    if (!string.IsNullOrWhiteSpace(scaledService))
                     {
-                        ["account"] = "account",
-                        ["authorization"] = "bannou",
-                        ["connect"] = "bannou"
-                    };
+                        _networkModePresets = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+                        {
+                            [scaledService] = scaledService
+                        };
+
+                        return _networkModePresets;
+                    }
+                    else
+                        Logger.Log(LogLevel.Error, null, $"Couldn't determine service to scale for network mode '{Configuration.Network_Mode}'.");
                 }
 
-                _networkModePresetMappings = new Dictionary<string, string>()
+                if (Configuration.Network_Mode.IsSafeForPath())
                 {
-                    ["account"] = "bannou",
-                    ["authorization"] = "bannou",
-                    ["connect"] = "bannou"
-                };
+                    var configDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), "presets");
+                    var configFilePath = Path.Combine(configDirectoryPath, Configuration.Network_Mode + ".json");
+                    try
+                    {
+                        if (Directory.Exists(configDirectoryPath) && File.Exists(configFilePath))
+                        {
+                            var configStr = File.ReadAllText(configFilePath);
+                            if (configStr != null)
+                            {
+                                var configPresets = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(configStr);
+                                if (configPresets != null)
+                                {
+                                    _networkModePresets = new Dictionary<string, string>(configPresets, StringComparer.InvariantCultureIgnoreCase);
+                                    return _networkModePresets;
+                                }
+                                else
+                                    Logger.Log(LogLevel.Error, null, $"Failed to parse json configuration for network mode '{Configuration.Network_Mode}' presets at path: {configFilePath}.");
+                            }
+                            else
+                                Logger.Log(LogLevel.Error, null, $"Failed to read configuration file for network mode '{Configuration.Network_Mode}' presets at path: {configFilePath}.");
+                        }
+                        else
+                            Logger.Log(LogLevel.Information, null, $"No custom configuration file found for network mode '{Configuration.Network_Mode}' presets at path: {configFilePath}.");
+                    }
+                    catch (Exception exc)
+                    {
+                        Logger.Log(LogLevel.Error, exc, $"An exception occurred loading network mode '{Configuration.Network_Mode}' presets at path: {configFilePath}.");
+                    }
+                }
+                else
+                    Logger.Log(LogLevel.Warning, null, $"Network mode '{Configuration.Network_Mode}' contains characters unfit for automated loading of presets.");
             }
+            else
+                Logger.Log(LogLevel.Information, null, $"Network mode not set- using default service mapping presets.");
 
-            return _networkModePresetMappings;
+            _networkModePresets = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase) { };
+            return _networkModePresets;
         }
 
-        private set { _networkModePresetMappings = value; }
+        private set => _networkModePresets = value;
     }
 
     /// <summary>
@@ -477,36 +516,107 @@ public static class Program
     /// Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
     /// mappings to use.
     /// </summary>
-    public static string? GetPresetAppNameFromServiceName(string serviceName)
-        => NetworkModePresetMappings.FirstOrDefault(t => string.Equals(serviceName, t.Value, StringComparison.InvariantCultureIgnoreCase)).Key;
+    public static string GetPresetAppNameFromServiceName(string serviceName)
+        => NetworkModePresets.TryGetValue(serviceName, out var presetAppName) ? presetAppName : "bannou";
 
-    /// <summary>
-    /// Returns the service name mapped for the given application name, from the
-    /// network mode preset.
-    /// 
-    /// Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
-    /// mappings to use.
-    /// </summary>
-    public static string? GetPresetServiceNameFromAppName(string appName)
-        => NetworkModePresetMappings[appName];
+    public static string[] GetServicePresetsByAppName(string appName)
+    {
+        if (string.IsNullOrWhiteSpace(appName))
+            return Array.Empty<string>();
+
+        // list all possible services, then determine which ones are handled
+        // - the rest are all handled by "bannou"
+        if (string.Equals("bannou", appName, StringComparison.InvariantCultureIgnoreCase))
+        {
+            var allServiceInfo = IDaprService.GetAllServiceInfo();
+            if (allServiceInfo != null)
+            {
+                var serviceList = new List<string>();
+                foreach (var serviceInfo in allServiceInfo)
+                    serviceList.Add(serviceInfo.Item3.Name);
+
+                var unhandledServiceList = new List<string>();
+                foreach (var serviceItem in serviceList)
+                    if (!NetworkModePresets.ContainsKey(serviceItem))
+                        unhandledServiceList.Add(serviceItem);
+
+                return unhandledServiceList.ToArray();
+            }
+
+            return Array.Empty<string>();
+        }
+
+        var presetList = NetworkModePresets.Where(t => t.Value.Equals(appName, StringComparison.InvariantCultureIgnoreCase)).Select(t => t.Key).ToArray();
+        return presetList;
+    }
 
     /// <summary>
     /// Get the app name for the given handler type.
     /// </summary>
-    public static string? GetAppByHandlerType(Type handlerType)
-        => ServiceAppLookup.Where(t => t.Value.Any(s => s.Item1 == handlerType)).FirstOrDefault().Key;
+    public static string? GetAppByServiceInterfaceType(Type interfaceType)
+    {
+        if (!interfaceType.IsAssignableTo(typeof(IDaprService)))
+            return null;
+
+        var serviceAppList = ServiceAppLookup.Where(t => t.Value.Any(s => s.Item1 == interfaceType));
+        if (serviceAppList.Count() > 0)
+            return serviceAppList.First().Key;
+
+        var serviceName = interfaceType.GetServiceName();
+        if (!string.IsNullOrWhiteSpace(serviceName))
+        {
+            var serviceApp = GetPresetAppNameFromServiceName(serviceName);
+            if (!string.IsNullOrWhiteSpace(serviceApp))
+                return serviceApp;
+        }
+
+        return null;
+    }
 
     /// <summary>
     /// Get the app name for the given handler type.
     /// </summary>
     public static string? GetAppByImplementationType(Type implementationType)
-        => ServiceAppLookup.Where(t => t.Value.Any(s => s.Item2 == implementationType)).FirstOrDefault().Key;
+    {
+        if (!implementationType.IsAssignableTo(typeof(IDaprService)))
+            return null;
+
+        var serviceAppList = ServiceAppLookup.Where(t => t.Value.Any(s => s.Item2 == implementationType));
+        if (serviceAppList.Count() > 0)
+            return serviceAppList.First().Key;
+
+        var serviceName = implementationType.GetServiceName();
+        if (!string.IsNullOrWhiteSpace(serviceName))
+        {
+            var serviceApp = GetPresetAppNameFromServiceName(serviceName);
+            if (!string.IsNullOrWhiteSpace(serviceApp))
+                return serviceApp;
+        }
+
+        return null;
+    }
 
     /// <summary>
-    /// Get the app name for the given handler type.
+    /// Get the app name for the given service name.
+    /// 
+    /// The service name is primarily obtained from the DaprService
+    /// attribute attached to the implementation type.
     /// </summary>
     public static string? GetAppByServiceName(string serviceName)
-        => ServiceAppLookup.Where(t => t.Value.Any(s => string.Equals(serviceName, s.Item3.Name, StringComparison.InvariantCultureIgnoreCase))).FirstOrDefault().Key;
+    {
+        if (string.IsNullOrWhiteSpace(serviceName))
+            return null;
+
+        var serviceAppList = ServiceAppLookup.Where(t => t.Value.Any(s => string.Equals(serviceName, s.Item3.Name, StringComparison.InvariantCultureIgnoreCase)));
+        if (serviceAppList.Count() > 0)
+            return serviceAppList.First().Key;
+
+        var serviceApp = GetPresetAppNameFromServiceName(serviceName);
+        if (!string.IsNullOrWhiteSpace(serviceApp))
+            return serviceApp;
+
+        return null;
+    }
 
     /// <summary>
     /// Will stop the webhost and initiate a service shutdown.
