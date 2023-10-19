@@ -551,7 +551,7 @@ public static class Program
     }
 
     /// <summary>
-    /// Get the app name for the given handler type.
+    /// Get the app name for the given service interface type.
     /// </summary>
     public static string? GetAppByServiceInterfaceType(Type interfaceType)
     {
@@ -574,9 +574,9 @@ public static class Program
     }
 
     /// <summary>
-    /// Get the app name for the given handler type.
+    /// Get the app name for the given service implementation type.
     /// </summary>
-    public static string? GetAppByImplementationType(Type implementationType)
+    public static string? GetAppByServiceImplementationType(Type implementationType)
     {
         if (!implementationType.IsAssignableTo(typeof(IDaprService)))
             return null;
