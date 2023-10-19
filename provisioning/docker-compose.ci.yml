@@ -27,10 +27,10 @@ services:
     network_mode:
       "service:bannou"
     volumes:
-      - "./:/"
+      - "./:/app"
     depends_on:
       - bannou
-    command: bash service-tests.sh
+    command: bash ./app/service-tests.sh
 
   # backing datastore for testing accounts- matches CI component
   redis-db:
