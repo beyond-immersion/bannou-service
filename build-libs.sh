@@ -8,7 +8,8 @@ mkdir $LIBS_DIR
 projects=($(find . -name '*.csproj'))
 for proj in "${projects[@]}"
 do
-    namespace=$(msbuild -property:Configuration=Release -nologo -v:q -t:PrintServiceLib $proj)
+    namespace=$(dotnet build $proj --configuration Release -nologo -v:q -t:PrintServiceLib)
+    echo "Copying libs for service $namespace..."
 
     if [[ ! -z "$namespace" ]]; then
         target_dir="$LIBS_DIR/$namespace"
