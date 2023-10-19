@@ -23,7 +23,7 @@ public interface IDaprController
                     return true;
 
                 (Type, Type, DaprServiceAttribute)? handlerType = IDaprService.GetServiceInfo(t.Item2.ServiceType);
-                return handlerType != null && IDaprService.IsEnabled(handlerType.Value.Item2);
+                return handlerType != null && IDaprService.IsDisabled(handlerType.Value.Item2);
             });
 
         return controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();

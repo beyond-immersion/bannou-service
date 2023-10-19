@@ -31,6 +31,11 @@ public class AppConfiguration : BaseServiceConfiguration
     public bool Integration_Testing { get; set; } = false;
 
     /// <summary>
+    /// Whether services are enabled by default.
+    /// </summary>
+    public bool Services_Enabled { get; set; } = true;
+
+    /// <summary>
     /// The port the HTTP webhost is listening on.
     /// </summary>
     public int HTTP_Web_Host_Port { get; set; } = 80;

@@ -50,13 +50,13 @@ public class Controllers : IClassFixture<CollectionFixture>
     [Fact]
     public void FindAllControllers_EnabledOnly()
     {
-        Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Enabled".ToUpper(), null);
-        Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Enabled".ToUpper(), null);
+        Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Disabled".ToUpper(), null);
+        Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Disabled".ToUpper(), null);
 
         try
         {
-            Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Enabled".ToUpper(), "false");
-            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Enabled".ToUpper(), "false");
+            Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Disabled".ToUpper(), "false");
+            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Disabled".ToUpper(), "false");
             (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindAll(enabledOnly: true);
             Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
             Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_NoService));
@@ -64,8 +64,8 @@ public class Controllers : IClassFixture<CollectionFixture>
             Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
             Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
 
-            Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Enabled".ToUpper(), "true");
-            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Enabled".ToUpper(), "false");
+            Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Disabled".ToUpper(), "true");
+            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Disabled".ToUpper(), "false");
             allControllers = IDaprController.FindAll(enabledOnly: true);
             Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
             Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_NoService));
@@ -73,8 +73,8 @@ public class Controllers : IClassFixture<CollectionFixture>
             Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
             Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
 
-            Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Enabled".ToUpper(), "false");
-            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Enabled".ToUpper(), "true");
+            Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Disabled".ToUpper(), "false");
+            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Disabled".ToUpper(), "true");
             allControllers = IDaprController.FindAll(enabledOnly: true);
             Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
             Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_NoService));
@@ -84,8 +84,8 @@ public class Controllers : IClassFixture<CollectionFixture>
         }
         finally
         {
-            Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Enabled".ToUpper(), null);
-            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Enabled".ToUpper(), null);
+            Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Disabled".ToUpper(), null);
+            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Disabled".ToUpper(), null);
         }
     }
 

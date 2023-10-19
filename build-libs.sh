@@ -13,15 +13,7 @@ do
     if [[ ! -z "$namespace" ]]; then
         target_dir="$LIBS_DIR/$namespace"
         mkdir -p "$target_dir"
-        
-        cp "$(dirname $proj)/bin/Release/$TARGET_FRAMEWORK/"* "$target_dir/"
-        deps=$(msbuild.exe -property:Configuration=Release -nologo -v:q -t:PrintServiceLibDependencies $proj)
 
-        if [[ ! -z "$deps" ]]; then
-            IFS=',' read -ra ADDR <<< "$deps"
-            for dep in "${ADDR[@]}"; do
-                echo "$dep" >> "$target_dir/service_dependencies.txt"
-            done
-        fi
+        cp "$(dirname $proj)/bin/Release/$TARGET_FRAMEWORK/"* "$target_dir/"
     fi
 done

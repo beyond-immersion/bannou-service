@@ -21,6 +21,7 @@ public class Configuration : IClassFixture<CollectionFixture>
     private abstract class TestConfigBase : IServiceConfiguration
     {
         public string? Force_Service_ID { get; set; }
+        public bool? Service_Disabled { get; set; }
     }
 
     private class TestConfiguration_Invalid

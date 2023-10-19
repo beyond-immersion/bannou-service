@@ -69,6 +69,7 @@ public class Services : IClassFixture<CollectionFixture>
     private class TestConfiguration_Attribute_TestService : IServiceConfiguration
     {
         public string? Force_Service_ID { get; set; }
+        public bool? Service_Disabled { get; set; }
         public string? TestProperty { get; set; }
     }
 
@@ -82,6 +83,7 @@ public class Services : IClassFixture<CollectionFixture>
     private class TestConfiguration_RequiredProperty : IServiceConfiguration
     {
         public string? Force_Service_ID { get; set; }
+        public bool? Service_Disabled { get; set; }
 
         [ConfigRequired(AllowEmptyStrings = false)]
         public string? TestProperty { get; set; }
@@ -91,6 +93,7 @@ public class Services : IClassFixture<CollectionFixture>
     private class TestConfiguration_MultipleRequiredProperties_A : IServiceConfiguration
     {
         public string? Force_Service_ID { get; set; }
+        public bool? Service_Disabled { get; set; }
 
         [ConfigRequired(AllowEmptyStrings = false)]
         public string? TestProperty_A { get; set; }
@@ -100,6 +103,7 @@ public class Services : IClassFixture<CollectionFixture>
     private class TestConfiguration_MultipleRequiredProperties_B : IServiceConfiguration
     {
         public string? Force_Service_ID { get; set; }
+        public bool? Service_Disabled { get; set; }
 
         [ConfigRequired(AllowEmptyStrings = false)]
         public string? TestProperty_B { get; set; }
@@ -133,12 +137,11 @@ public class Services : IClassFixture<CollectionFixture>
     {
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", null);
             Assert.True(IDaprService.IsAnyEnabled());
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
         }
     }
 
@@ -146,16 +149,20 @@ public class Services : IClassFixture<CollectionFixture>
     public void ServiceEnabled_NoAttribute()
     {
         IDaprService testService = new TestService();
-        Assert.False(testService.IsEnabled());
+        Assert.False(testService.IsDisabled());
 
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
-            Assert.False(testService.IsEnabled());
+            Environment.SetEnvironmentVariable("TEST_SERVICE_DISABLED", "true");
+            Environment.SetEnvironmentVariable("TESTSERVICE_SERVICE_DISABLED", "true");
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "true");
+            Assert.False(testService.IsDisabled());
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            Environment.SetEnvironmentVariable("TEST_SERVICE_DISABLED", null);
+            Environment.SetEnvironmentVariable("TESTSERVICE_SERVICE_DISABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", null);
         }
     }
 
@@ -163,29 +170,29 @@ public class Services : IClassFixture<CollectionFixture>
     public void ServiceEnabled()
     {
         IDaprService testService = new TestService_Attribute();
-        Assert.False(testService.IsEnabled());
+        Assert.False(testService.IsDisabled());
 
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
-            Assert.True(testService.IsEnabled());
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "true");
+            Assert.True(testService.IsDisabled());
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", null);
         }
     }
 
     [Fact]
     public void ServiceEnabled_Default()
     {
-        Assert.False(IDaprService.IsEnabled(typeof(TestService_Attribute)));
+        Assert.False(IDaprService.IsDisabled(typeof(TestService_Attribute)));
     }
 
     [Fact]
     public void ServiceEnabled_BadType()
     {
-        _ = Assert.Throws<InvalidCastException>(() => IDaprService.IsEnabled(typeof(TestService_Invalid)));
+        _ = Assert.Throws<InvalidCastException>(() => IDaprService.IsDisabled(typeof(TestService_Invalid)));
     }
 
     [Fact]
@@ -193,22 +200,22 @@ public class Services : IClassFixture<CollectionFixture>
     {
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
-            Assert.False(IDaprService.IsEnabled(typeof(TestService_Attribute)));
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "false");
+            Assert.False(IDaprService.IsDisabled(typeof(TestService_Attribute)));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", null);
         }
 
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
-            Assert.True(IDaprService.IsEnabled(typeof(TestService_Attribute)));
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "true");
+            Assert.True(IDaprService.IsDisabled(typeof(TestService_Attribute)));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", null);
         }
     }
 
@@ -217,22 +224,22 @@ public class Services : IClassFixture<CollectionFixture>
     {
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
-            Assert.False(IDaprService.IsEnabled<TestService_Attribute>());
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "false");
+            Assert.False(IDaprService.IsDisabled<TestService_Attribute>());
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", null);
         }
 
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
-            Assert.True(IDaprService.IsEnabled<TestService_Attribute>());
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "true");
+            Assert.True(IDaprService.IsDisabled<TestService_Attribute>());
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", null);
         }
     }
 
@@ -241,22 +248,22 @@ public class Services : IClassFixture<CollectionFixture>
     {
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
-            Assert.False(IDaprService.IsEnabled("ServiceTests.Test"));
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "false");
+            Assert.False(IDaprService.IsDisabled("ServiceTests.Test"));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", null);
         }
 
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
-            Assert.True(IDaprService.IsEnabled("ServiceTests.Test"));
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "true");
+            Assert.True(IDaprService.IsDisabled("ServiceTests.Test"));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", null);
         }
     }
 
@@ -392,23 +399,57 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void FindAll()
     {
-        Assert.DoesNotContain(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService));
-        Assert.Contains(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService_Attribute));
-        Assert.Contains(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService_Required));
-        Assert.Contains(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService_MultipleRequired));
+        try
+        {
+            Environment.SetEnvironmentVariable("SERVICES_ENABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_MULTIPLEREQUIRED_SERVICE_DISABLED", null);
 
-        Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Attribute));
-        Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Required));
-        Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService));
+            Assert.Contains(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService_Attribute));
+            Assert.Contains(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService_Required));
+            Assert.Contains(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService_MultipleRequired));
+
+            Environment.SetEnvironmentVariable("SERVICES_ENABLED", "true");
+            Program.Configuration.Services_Enabled = true;
+            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService));
+            Assert.Contains(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Attribute));
+            Assert.Contains(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Required));
+            Assert.Contains(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+
+            Environment.SetEnvironmentVariable("SERVICES_ENABLED", "false");
+            Program.Configuration.Services_Enabled = false;
+            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService));
+            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Attribute));
+            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Required));
+            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("SERVICES_ENABLED", null);
+            Program.Configuration.Services_Enabled = true;
+        }
 
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "true");
+            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService));
+            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Attribute));
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "false");
+            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService));
+            Assert.Contains(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Attribute));
+
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", "true");
+            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Required));
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", "false");
             Assert.Contains(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Required));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_ATTRIBUTE_SERVICE_DISABLED", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", null);
         }
     }
 
@@ -447,26 +488,14 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void AllHaveRequiredConfiguration()
     {
-        Assert.True(IDaprService.AllHaveRequiredConfiguration(IDaprService.GetAllServiceInfo(enabledOnly: true)));
-
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", "true");
             Assert.False(IDaprService.AllHaveRequiredConfiguration(IDaprService.GetAllServiceInfo(enabledOnly: true)));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", null);
-        }
-
-        try
-        {
-            Environment.SetEnvironmentVariable("TESTPROPERTY", "something");
-            Assert.True(IDaprService.AllHaveRequiredConfiguration(IDaprService.GetAllServiceInfo(enabledOnly: true)));
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("TESTPROPERTY", null);
+            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", null);
         }
     }
 

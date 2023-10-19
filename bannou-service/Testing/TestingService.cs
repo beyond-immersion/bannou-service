@@ -191,7 +191,7 @@ public class TestingService : IDaprService
         {
             var serviceName = serviceLookup.Key;
 
-            if (IDaprService.IsEnabled(serviceName))
+            if (!IDaprService.IsDisabled(serviceName))
             {
                 foreach (KeyValuePair<string, Func<TestingService, Task<bool>>> testLookup in serviceLookup.Value)
                 {

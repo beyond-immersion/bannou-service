@@ -3,10 +3,6 @@
 		<Message Text="$(ServiceLib)" Importance="high" />
 	</Target>
 
-	<Target Name="PrintServiceLibDependencies">
-		<Message Text="$(ServiceLibDependencies)" Importance="high" />
-	</Target>
-
 	<Target Name="EnsureServiceLibIsSet" BeforeTargets="Build">
 		<Error Text="The ServiceLib property is not set." Condition="'$(ServiceLib)' == ''" />
 	</Target>

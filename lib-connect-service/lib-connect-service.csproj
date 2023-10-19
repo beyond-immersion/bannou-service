@@ -4,7 +4,6 @@
 	<PropertyGroup>
 		<RootNamespace>$(RootNamespace).Connect</RootNamespace>
 		<ServiceLib>connect_service</ServiceLib>
-		<ServiceLibDependencies>connect</ServiceLibDependencies>
 	</PropertyGroup>
 
 	<ItemGroup>

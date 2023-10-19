@@ -4,7 +4,6 @@
 	<PropertyGroup>
 		<RootNamespace>$(RootNamespace).Accounts</RootNamespace>
 		<ServiceLib>accounts_service_mysql</ServiceLib>
-		<ServiceLibDependencies>accounts</ServiceLibDependencies>
 	</PropertyGroup>
 
 	<ItemGroup>
