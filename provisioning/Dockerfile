@@ -12,7 +12,7 @@ RUN dotnet publish -o /app/bannou-service/publish -c Release /app/bannou-service
 
 FROM mcr.microsoft.com/dotnet/aspnet:7.0
 COPY --from=intermediate /app/bannou-service/publish /app
-COPY --from=intermediate /app/libs /libs
+COPY --from=intermediate /app/libs /app/libs
 COPY --from=intermediate /root/.dotnet/corefx/cryptography/x509stores/my/* /root/.dotnet/corefx/cryptography/x509stores/my/
 COPY --from=intermediate /root/.dotnet/corefx/cryptography/x509stores/my/* /certificates/
 

@@ -6,7 +6,6 @@ if ! command -v xmllint &> /dev/null; then
     exit 1
 fi
 
-
 LIBS_DIR="libs"
 TARGET_FRAMEWORK="net7.0"
 rm -rf $LIBS_DIR
