@@ -15,7 +15,9 @@ do
     elif [[ ! -z "$namespace" ]]; then
         echo "Copying libs for service $namespace."
 
-        source_dir="./$LIBS_DIR/$(basename $proj)/bin/Release/$TARGET_FRAMEWORK"
+        project_dir="$(dirname $proj)"
+        project_name="$(basename $project_dir)"
+        source_dir="./$LIBS_DIR/$project_name/bin/Release/$TARGET_FRAMEWORK"
         target_dir="$LIBS_DIR/$namespace"
         mkdir -p "$target_dir"
 
