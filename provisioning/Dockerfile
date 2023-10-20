@@ -1,6 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:7.0 as intermediate
 COPY ./ /app/
 
+RUN apt-get update && apt-get install -y libxml2-utils
+
 WORKDIR /app
 RUN bash build-libs.sh
 WORKDIR /
