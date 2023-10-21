@@ -4,11 +4,13 @@ services:
 
   # build the monoservice
   bannou:
+    image: bannou:latest
     build:
       context: ../
       dockerfile: provisioning/Dockerfile
     volumes:
       - "./certificates:/certificates"
+      - "logs-volume:/app/logs/"
     depends_on:
       - placement
     networks:
@@ -36,7 +38,7 @@ services:
 
   # placement service for coordinating dapr actors
   placement:
-    image: "daprio/dapr"
+    image: "daprio/placement"
     command: [
       "./placement", "--port", "50006"
     ]
@@ -45,5 +47,18 @@ services:
     networks:
       - celestial_network
 
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.10.4
+    command: sh -c "chown root:root /usr/share/filebeat/filebeat.yml && filebeat -e"
+    volumes:
+      - ./filebeat.console.yml:/usr/share/filebeat/filebeat.yml
+      - logs-volume:/app/logs/
+    user: root
+    environment:
+      - "FILEBEAT_INPUTS_PATHS=/app/logs/*"
+
 networks:
   celestial_network:
+
+volumes:
+  logs-volume:

@@ -1,0 +1,21 @@
+filebeat.inputs:
+- type: log
+  paths:
+    - /app/logs/*.log
+  json.keys_under_root: true
+  json.add_error_key: true
+
+output.console:
+  pretty: true
+
+processors:
+  - add_host_metadata: ~
+  - add_cloud_metadata: ~
+
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat.log
+  keepfiles: 7
+  permissions: 0644

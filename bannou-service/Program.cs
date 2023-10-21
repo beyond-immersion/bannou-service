@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Logging;
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -18,13 +19,7 @@ public static class Program
     /// </summary>
     public static IConfigurationRoot ConfigurationRoot
     {
-        get
-        {
-            _configurationRoot ??= IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
-
-            return _configurationRoot;
-        }
-
+        get => _configurationRoot ??= IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
         internal set => _configurationRoot = value;
     }
 
@@ -39,13 +34,7 @@ public static class Program
     /// </summary>
     public static AppConfiguration Configuration
     {
-        get
-        {
-            _configuration ??= ConfigurationRoot.Get<AppConfiguration>() ?? new AppConfiguration();
-
-            return _configuration;
-        }
-
+        get => _configuration ??= ConfigurationRoot.Get<AppConfiguration>() ?? new AppConfiguration();
         internal set => _configuration = value;
     }
 
@@ -56,64 +45,50 @@ public static class Program
     /// </summary>
     public static string ServiceGUID
     {
-        get
-        {
-            _serviceGUID ??= Configuration.Force_Service_ID ?? Guid.NewGuid().ToString().ToLower();
-
-            return _serviceGUID;
-        }
-
+        get => _serviceGUID ??= Configuration.Force_Service_ID ?? Guid.NewGuid().ToString().ToLower();
         internal set => _serviceGUID = value;
     }
 
-    private static ILogger _logger;
+    private static Microsoft.Extensions.Logging.ILogger _logger;
     /// <summary>
-    /// Service logger.
+    /// Application/global logger.
     /// </summary>
-    public static ILogger Logger
+    public static Microsoft.Extensions.Logging.ILogger Logger
     {
-        get
-        {
-            if (_logger == null)
-            {
-                var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-                var isDevelopment = string.Equals(Environments.Development, environment, StringComparison.CurrentCultureIgnoreCase);
-                _logger = isDevelopment ? ServiceLogging.CreateSimpleLogger() : ServiceLogging.CreateLogger();
-            }
-
-            return _logger;
-        }
-
+        get => _logger ??= ServiceLogging.CreateApplicationLogger();
         internal set => _logger = value;
     }
 
-    private static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> _serviceAppLookup;
+    private static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> _serviceAppMappings;
     /// <summary>
+    /// Lookup for mapping applications to services in the Dapr network.
+    /// Is applied as an override to hardcoded and configurable network_mode presets.
     /// 
+    /// <seealso cref="NetworkModePresets"/>
     /// </summary>
-    public static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> ServiceAppLookup
+    public static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> ServiceAppMappings
     {
         get
         {
-            if (_serviceAppLookup == null)
+            if (_serviceAppMappings == null)
             {
-                _serviceAppLookup = new Dictionary<string, IList<(Type, Type, DaprServiceAttribute)>>();
+                _serviceAppMappings = new Dictionary<string, IList<(Type, Type, DaprServiceAttribute)>>();
                 foreach ((Type, Type, DaprServiceAttribute) serviceHandler in IDaprService.GetAllServiceInfo(enabledOnly: false))
                 {
                     var serviceName = serviceHandler.Item3.Name;
                     var appName = ConfigurationRoot.GetValue<string>(serviceName.ToUpper() + "_APP_MAPPING") ?? AppConstants.DEFAULT_APP_NAME;
 
-                    if (_serviceAppLookup.TryGetValue(appName, out IList<(Type, Type, DaprServiceAttribute)>? existingApp))
+                    if (_serviceAppMappings.TryGetValue(appName, out IList<(Type, Type, DaprServiceAttribute)>? existingApp))
                     {
                         existingApp.Add(serviceHandler);
                         continue;
                     }
 
-                    _serviceAppLookup.Add(appName, new List<(Type, Type, DaprServiceAttribute)>() { serviceHandler });
+                    _serviceAppMappings.Add(appName, new List<(Type, Type, DaprServiceAttribute)>() { serviceHandler });
                 }
             }
 
-            return _serviceAppLookup;
+            return _serviceAppMappings;
         }
     }
 
@@ -124,6 +99,7 @@ public static class Program
     /// 
     /// Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
     /// mappings to use.
+    /// <seealso cref="ServiceAppMappings"/>
     /// </summary>
     public static Dictionary<string, string> NetworkModePresets
     {
@@ -275,6 +251,7 @@ public static class Program
                 .ConfigureLogging((loggingOptions) =>
                 {
                     loggingOptions
+                        .AddSerilog()
                         .AddSimpleConsole()
                         .SetMinimumLevel(Configuration.Web_Host_Logging_Level);
                 });
@@ -558,8 +535,8 @@ public static class Program
         if (!interfaceType.IsAssignableTo(typeof(IDaprService)))
             return null;
 
-        var serviceAppList = ServiceAppLookup.Where(t => t.Value.Any(s => s.Item1 == interfaceType));
-        if (serviceAppList.Count() > 0)
+        var serviceAppList = ServiceAppMappings.Where(t => t.Value.Any(s => s.Item1 == interfaceType));
+        if (serviceAppList.Any())
             return serviceAppList.First().Key;
 
         var serviceName = interfaceType.GetServiceName();
@@ -581,8 +558,8 @@ public static class Program
         if (!implementationType.IsAssignableTo(typeof(IDaprService)))
             return null;
 
-        var serviceAppList = ServiceAppLookup.Where(t => t.Value.Any(s => s.Item2 == implementationType));
-        if (serviceAppList.Count() > 0)
+        var serviceAppList = ServiceAppMappings.Where(t => t.Value.Any(s => s.Item2 == implementationType));
+        if (serviceAppList.Any())
             return serviceAppList.First().Key;
 
         var serviceName = implementationType.GetServiceName();
@@ -607,8 +584,8 @@ public static class Program
         if (string.IsNullOrWhiteSpace(serviceName))
             return null;
 
-        var serviceAppList = ServiceAppLookup.Where(t => t.Value.Any(s => string.Equals(serviceName, s.Item3.Name, StringComparison.InvariantCultureIgnoreCase)));
-        if (serviceAppList.Count() > 0)
+        var serviceAppList = ServiceAppMappings.Where(t => t.Value.Any(s => string.Equals(serviceName, s.Item3.Name, StringComparison.InvariantCultureIgnoreCase)));
+        if (serviceAppList.Any())
             return serviceAppList.First().Key;
 
         var serviceApp = GetPresetAppNameFromServiceName(serviceName);

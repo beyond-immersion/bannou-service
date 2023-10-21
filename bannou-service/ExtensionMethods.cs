@@ -32,13 +32,6 @@ public static partial class ExtensionMethods
     /// <summary>
     /// Logging extension/helper methods, for including additional context as JSON.
     /// </summary>
-    public static void Log(this ILogger logger, LogLevel level, Exception? exception, string message, JObject? logParams,
-        [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
-        => ServiceLogging.Log(logger, level, exception, message, logParams, callerName, callerFile, lineNumber);
-
-    /// <summary>
-    /// Logging extension/helper methods, for including additional context as JSON.
-    /// </summary>
     public static void Log(this ILogger logger, LogLevel level, Exception? exc, string message,
         [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
         => logger.Log(level, exc, message, null, callerName, callerFile, lineNumber);

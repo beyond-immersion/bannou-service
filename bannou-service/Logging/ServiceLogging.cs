@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
+﻿using Serilog;
 
 namespace BeyondImmersion.BannouService.Logging;
 
@@ -12,92 +10,42 @@ namespace BeyondImmersion.BannouService.Logging;
 public static class ServiceLogging
 {
     /// <summary>
-    /// Return a JSON-enabled logger factory.
-    /// </summary>
-    public static ILoggerFactory LogFactory { get; private set; } = LoggerFactory.Create((options) =>
-        {
-            _ = options.AddJsonConsole((options) =>
-            {
-                options.JsonWriterOptions = new JsonWriterOptions()
-                {
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Default,
-                    Indented = true,
-                    MaxDepth = 32,
-                    SkipValidation = false
-                };
-            })
-            .SetMinimumLevel(Program.Configuration.App_Logging_Level);
-        });
-
-    public static ILoggerFactory SimpleLogFactory { get; private set; } = LoggerFactory.Create((options) =>
-        {
-            _ = options.AddSimpleConsole((options) =>
-            {
-                options.ColorBehavior = Microsoft.Extensions.Logging.Console.LoggerColorBehavior.Enabled;
-                options.IncludeScopes = false;
-                options.UseUtcTimestamp = true;
-                options.SingleLine = true;
-            })
-            .SetMinimumLevel(Program.Configuration.App_Logging_Level);
-        });
-
-    /// <summary>
     /// Create a JSON-enabled service logger.
     /// </summary>
-    public static ILogger CreateLogger() => LogFactory.CreateLogger("service");
+    public static Microsoft.Extensions.Logging.ILogger CreateApplicationLogger()
+    {
+        var logFilepath = Path.Combine(Directory.GetCurrentDirectory() + $"logs/app.log");
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.File(logFilepath, rollingInterval: RollingInterval.Day, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}")
+            .ReadFrom.Configuration(Configuration.IServiceConfiguration.BuildConfigurationRoot())
+            .CreateLogger();
 
-    /// <summary>
-    /// Create a JSON-enabled logger for the given class.
-    /// </summary>
-    public static ILogger CreateLogger<T>() => LogFactory.CreateLogger<T>();
+        ILoggerFactory factory = new LoggerFactory().AddSerilog(Log.Logger);
+        return factory.CreateLogger("app");
+    }
 
     /// <summary>
     /// Create a simple service logger.
     /// </summary>
-    public static ILogger CreateSimpleLogger() => SimpleLogFactory.CreateLogger("service");
-
-    /// <summary>
-    /// Create a simple logger for the given class.
-    /// </summary>
-    public static ILogger CreateSimpleLogger<T>() => SimpleLogFactory.CreateLogger<T>();
-
-    /// <summary>
-    /// Additional log method that allows for arbitrary JSON metadata to be included.
-    /// Has accompanying extension methods to logger, for seamless use in service.
-    /// </summary>
-    public static void Log(ILogger logger, LogLevel level, Exception? exception, string message, JObject? logParams,
-        [CallerMemberName] string callerName = "", [CallerFilePath] string callerFile = "", [CallerLineNumber] int lineNumber = 0)
+    public static Microsoft.Extensions.Logging.ILogger CreateServiceLogger(string serviceName)
     {
-        try
-        {
-            // avoid manipulating the params input
-            JObject logParamsObj = new();
-            if (logParams != null)
-            {
-                foreach (KeyValuePair<string, JToken?> kvp in logParams)
-                {
-                    if (!string.IsNullOrWhiteSpace(kvp.Key) && kvp.Value != null && kvp.Value.Type != JTokenType.Null)
-                        logParamsObj[kvp.Key] = kvp.Value;
-                }
-            }
+        if (string.Equals("app", serviceName, StringComparison.InvariantCultureIgnoreCase))
+            throw new ArgumentException("'app' is not a valid service logger name. Use CreateApplicationLogger() instead is meaning to do so.");
 
-            logParamsObj["calling-file"] = Path.GetFileName(callerFile);
-            logParamsObj["calling-method"] = callerName;
-            logParamsObj["calling-line-number"] = lineNumber.ToString();
-            logParamsObj["message"] = message;
+        var logFilepath = Path.Combine(Directory.GetCurrentDirectory() + $"logs/{serviceName.ToLower()}.log");
+        var logger = new LoggerConfiguration()
+            .WriteTo.File(logFilepath, rollingInterval: RollingInterval.Day, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}")
+            .ReadFrom.Configuration(Configuration.IServiceConfiguration.BuildConfigurationRoot())
+            .CreateLogger();
 
-            logger.Log(level, new EventId(), logParamsObj, exception, DefaultLogStateFormatter);
-        }
-        catch { }
+        ILoggerFactory factory = new LoggerFactory().AddSerilog(Log.Logger);
+        return factory.CreateLogger(serviceName.ToLower());
     }
 
     /// <summary>
-    /// Log state formatter that packs the JSON log message (if given) in with the exception message (if exists).
+    /// Create a simple logger for the given service type.
     /// </summary>
-    public static string DefaultLogStateFormatter(JObject state, Exception? exc)
-    {
-        return state != null && state.TryGetValue("message", out JToken? msg) && msg.Type == JTokenType.String
-            ? exc != null ? msg.ToString() + "\n" + exc.ToString() : msg.ToString()
-            : exc?.ToString() ?? string.Empty;
-    }
+    public static void CreateServiceLogger<T>()
+        where T : IDaprService
+        => CreateServiceLogger(typeof(T).Name);
 }
