@@ -14,7 +14,7 @@ public static class ServiceLogging
     /// </summary>
     public static Microsoft.Extensions.Logging.ILogger CreateApplicationLogger()
     {
-        var logFilepath = Path.Combine(Directory.GetCurrentDirectory() + $"logs/app.log");
+        var logFilepath = Path.Combine(Directory.GetCurrentDirectory() + $"logs/app_{Program.ServiceGUID.ToUpper()}.log");
         Log.Logger = new LoggerConfiguration()
             .WriteTo.File(logFilepath, rollingInterval: RollingInterval.Day, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}")
             .ReadFrom.Configuration(Configuration.IServiceConfiguration.BuildConfigurationRoot())
@@ -32,7 +32,7 @@ public static class ServiceLogging
         if (string.Equals("app", serviceName, StringComparison.InvariantCultureIgnoreCase))
             throw new ArgumentException("'app' is not a valid service logger name. Use CreateApplicationLogger() instead is meaning to do so.");
 
-        var logFilepath = Path.Combine(Directory.GetCurrentDirectory() + $"logs/{serviceName.ToLower()}.log");
+        var logFilepath = Path.Combine(Directory.GetCurrentDirectory() + $"logs/{serviceName.ToLower()}_{Program.ServiceGUID.ToUpper()}.log");
         var logger = new LoggerConfiguration()
             .WriteTo.File(logFilepath, rollingInterval: RollingInterval.Day, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}")
             .ReadFrom.Configuration(Configuration.IServiceConfiguration.BuildConfigurationRoot())

@@ -9,6 +9,7 @@ services:
       dockerfile: provisioning/Dockerfile
     volumes:
       - "./certificates:/certificates"
+      - "logs-volume:/app/logs/"
     depends_on:
       - placement
     networks:
@@ -36,7 +37,7 @@ services:
 
   # placement service for coordinating dapr actors
   placement:
-    image: "daprio/dapr"
+    image: "daprio/placement"
     command: [
       "./placement", "--port", "50006"
     ]
@@ -45,5 +46,16 @@ services:
     networks:
       - celestial_network
 
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:latest
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - logs-volume:/app/logs/
+    environment:
+      - "FILEBEAT_INPUTS_PATHS=/app/logs/*"
+
 networks:
   celestial_network:
+
+volumes:
+  logs-volume:
