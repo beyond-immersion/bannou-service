@@ -97,6 +97,118 @@ public interface IDaprService
         }
     }
 
+    private static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> _serviceAppMappings;
+    /// <summary>
+    /// Lookup for mapping applications to services in the Dapr network.
+    /// Is applied as an override to hardcoded and configurable network_mode presets.
+    /// 
+    /// <seealso cref="NetworkModePresets"/>
+    /// </summary>
+    public static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> ServiceAppMappings
+    {
+        get
+        {
+            if (_serviceAppMappings == null)
+            {
+                _serviceAppMappings = new Dictionary<string, IList<(Type, Type, DaprServiceAttribute)>>();
+                foreach ((Type, Type, DaprServiceAttribute) serviceHandler in IDaprService.Services)
+                {
+                    var serviceName = serviceHandler.Item3.Name;
+                    var appName = Program.ConfigurationRoot.GetValue<string>(serviceName.ToUpper() + "_APP_MAPPING") ?? AppConstants.DEFAULT_APP_NAME;
+
+                    if (_serviceAppMappings.TryGetValue(appName, out IList<(Type, Type, DaprServiceAttribute)>? existingApp))
+                    {
+                        existingApp.Add(serviceHandler);
+                        continue;
+                    }
+
+                    _serviceAppMappings.Add(appName, new List<(Type, Type, DaprServiceAttribute)>() { serviceHandler });
+                }
+            }
+
+            return _serviceAppMappings;
+        }
+    }
+
+    private static Dictionary<string, string> _networkModePresets;
+    /// <summary>
+    /// The service->application name mappings for the network.
+    /// Specific to the network mode that's been configured.
+    /// 
+    /// Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
+    /// mappings to use.
+    /// <seealso cref="ServiceAppMappings"/>
+    /// </summary>
+    public static Dictionary<string, string> NetworkModePresets
+    {
+        get
+        {
+            if (_networkModePresets != null)
+                return _networkModePresets;
+
+            var networkMode = Program.Configuration?.Network_Mode;
+            if (networkMode != null)
+            {
+                if (networkMode.EndsWith("-scaling", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var scaledService = networkMode[..^"-scaling".Length]?.ToUpper();
+                    if (!string.IsNullOrWhiteSpace(scaledService))
+                    {
+                        _networkModePresets = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+                        {
+                            [scaledService] = scaledService
+                        };
+
+                        return _networkModePresets;
+                    }
+                    else
+                        Program.Logger.Log(LogLevel.Error, null, $"Couldn't determine service to scale for network mode '{networkMode}'.");
+                }
+
+                if (networkMode.IsSafeForPath())
+                {
+                    var configDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), "presets");
+                    var configFilePath = Path.Combine(configDirectoryPath, networkMode + ".json");
+                    try
+                    {
+                        if (Directory.Exists(configDirectoryPath) && File.Exists(configFilePath))
+                        {
+                            var configStr = File.ReadAllText(configFilePath);
+                            if (configStr != null)
+                            {
+                                var configPresets = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(configStr);
+                                if (configPresets != null)
+                                {
+                                    _networkModePresets = new Dictionary<string, string>(configPresets, StringComparer.InvariantCultureIgnoreCase);
+                                    return _networkModePresets;
+                                }
+                                else
+                                    Program.Logger.Log(LogLevel.Error, null, $"Failed to parse json configuration for network mode '{networkMode}' presets at path: {configFilePath}.");
+                            }
+                            else
+                                Program.Logger.Log(LogLevel.Error, null, $"Failed to read configuration file for network mode '{networkMode}' presets at path: {configFilePath}.");
+                        }
+                        else
+                            Program.Logger.Log(LogLevel.Information, null, $"No custom configuration file found for network mode '{networkMode}' presets at path: {configFilePath}.");
+                    }
+                    catch (Exception exc)
+                    {
+                        Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred loading network mode '{networkMode}' presets at path: {configFilePath}.");
+                    }
+                }
+                else
+                    Program.Logger.Log(LogLevel.Warning, null, $"Network mode '{networkMode}' contains characters unfit for automated loading of presets.");
+            }
+            else
+                Program.Logger.Log(LogLevel.Information, null, $"Network mode not set- using default service mapping presets.");
+
+            _networkModePresets = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase) { };
+            return _networkModePresets;
+        }
+
+        private set => _networkModePresets = value;
+    }
+
     async Task OnStart()
     {
         await Task.CompletedTask;
@@ -134,41 +246,6 @@ public interface IDaprService
         => IServiceConfiguration.HasRequiredForType(GetConfigurationType());
 
     /// <summary>
-    /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
-    /// </summary>
-    public IServiceConfiguration BuildConfiguration()
-        => BuildConfiguration(GetType()) ?? new AppConfiguration();
-
-    /// <summary>
-    /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
-    /// </summary>
-    public static IServiceConfiguration BuildConfiguration<T>(string[]? args = null)
-        where T : class, IDaprService
-        => BuildConfiguration(typeof(T), args) ?? new AppConfiguration();
-
-    /// <summary>
-    /// Builds the best discovered configuration for the given service from available Config.json, ENVs, and command line switches.
-    /// </summary>
-    public static IServiceConfiguration? BuildConfiguration(Type serviceType, string[]? args = null)
-    {
-        if (!typeof(IDaprService).IsAssignableFrom(serviceType))
-            throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
-
-        foreach ((Type, ServiceConfigurationAttribute) classWithAttr in IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
-        {
-            if (serviceType.IsAssignableFrom(classWithAttr.Item2.ServiceType))
-                return IServiceConfiguration.BuildConfiguration(classWithAttr.Item1, args, classWithAttr.Item2.EnvPrefix);
-        }
-
-        string? envPrefix = null;
-        ServiceConfigurationAttribute? configAttr = typeof(IServiceConfiguration).GetCustomAttribute<ServiceConfigurationAttribute>();
-        if (configAttr != null)
-            envPrefix = configAttr.EnvPrefix;
-
-        return IServiceConfiguration.BuildConfiguration(typeof(AppConfiguration), args, envPrefix);
-    }
-
-    /// <summary>
     /// Returns whether the configuration is provided for a given service type to run properly.
     /// </summary>
     public static bool HasRequiredConfiguration<T>()
@@ -178,11 +255,11 @@ public interface IDaprService
     /// <summary>
     /// Returns whether the configuration is provided for a given service type to run properly.
     /// </summary>
-    public static bool HasRequiredConfiguration(Type serviceType)
+    public static bool HasRequiredConfiguration(Type implementationType)
     {
-        return typeof(IDaprService).IsAssignableFrom(serviceType)
+        return typeof(IDaprService).IsAssignableFrom(implementationType)
             && IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
-                .Where(t => t.Item2.ServiceType == serviceType)
+                .Where(t => t.Item2.ServiceImplementationType == implementationType)
                 .All(t => IServiceConfiguration.HasRequiredForType(t.Item1));
     }
 
@@ -190,15 +267,15 @@ public interface IDaprService
     /// Returns the best service configuration type for the given service type.
     /// Returned type is based on DaprServiceAttribute service target type.
     /// </summary>
-    public static Type GetConfigurationType(Type handlerType)
+    public static Type GetConfigurationType(Type implementationType)
     {
-        if (!typeof(IDaprService).IsAssignableFrom(handlerType))
+        if (!typeof(IDaprService).IsAssignableFrom(implementationType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
         Type? serviceConfigType = null;
         foreach ((Type, ServiceConfigurationAttribute) configAttr in IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
         {
-            if (handlerType.IsAssignableFrom(configAttr.Item2.ServiceType))
+            if (implementationType == configAttr.Item2.ServiceImplementationType)
             {
                 if (serviceConfigType != null)
                     continue;
@@ -211,15 +288,15 @@ public interface IDaprService
     }
 
     /// <summary>
-    /// Returns whether all enabled services have required configuration set.
+    /// Returns whether all enabled services have their required configuration set.
     /// </summary>
-    public static bool AllHaveRequiredConfiguration()
+    public static bool EnabledServicesHaveRequiredConfiguration()
     {
         foreach (var serviceInfo in EnabledServices)
         {
-            Type handlerType = serviceInfo.Item1;
-            Type serviceType = serviceInfo.Item2;
-            Type serviceConfig = GetConfigurationType(handlerType);
+            Type interfaceType = serviceInfo.Item1;
+            Type implementationType = serviceInfo.Item2;
+            Type serviceConfig = GetConfigurationType(interfaceType);
             if (serviceConfig == null)
                 continue;
 
@@ -298,6 +375,109 @@ public interface IDaprService
             if (serviceInfo.Item1 == interfaceType)
                 return serviceInfo;
         }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Returns the application name mapped for the given service name, from the
+    /// network mode preset.
+    /// 
+    /// Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
+    /// mappings to use.
+    /// </summary>
+    public static string GetPresetAppNameFromServiceName(string serviceName)
+        => NetworkModePresets.TryGetValue(serviceName, out var presetAppName) ? presetAppName : "bannou";
+
+    public static string[] GetServicePresetsByAppName(string appName)
+    {
+        if (string.IsNullOrWhiteSpace(appName))
+            return Array.Empty<string>();
+
+        // list all possible services, then determine which ones are handled
+        // - the rest are all handled by "bannou"
+        if (string.Equals("bannou", appName, StringComparison.InvariantCultureIgnoreCase))
+        {
+            var serviceList = new List<string>();
+            foreach (var serviceInfo in IDaprService.Services)
+                serviceList.Add(serviceInfo.Item3.Name);
+
+            var unhandledServiceList = new List<string>();
+            foreach (var serviceItem in serviceList)
+                if (!NetworkModePresets.ContainsKey(serviceItem))
+                    unhandledServiceList.Add(serviceItem);
+
+            return unhandledServiceList.ToArray();
+        }
+
+        var presetList = NetworkModePresets.Where(t => t.Value.Equals(appName, StringComparison.InvariantCultureIgnoreCase)).Select(t => t.Key).ToArray();
+        return presetList;
+    }
+
+    /// <summary>
+    /// Get the app name for the given service interface type.
+    /// </summary>
+    public static string? GetAppByServiceInterfaceType(Type interfaceType)
+    {
+        if (!interfaceType.IsAssignableTo(typeof(IDaprService)))
+            return null;
+
+        var serviceAppList = ServiceAppMappings.Where(t => t.Value.Any(s => s.Item1 == interfaceType));
+        if (serviceAppList.Any())
+            return serviceAppList.First().Key;
+
+        var serviceName = interfaceType.GetServiceName();
+        if (!string.IsNullOrWhiteSpace(serviceName))
+        {
+            var serviceApp = GetPresetAppNameFromServiceName(serviceName);
+            if (!string.IsNullOrWhiteSpace(serviceApp))
+                return serviceApp;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Get the app name for the given service implementation type.
+    /// </summary>
+    public static string? GetAppByServiceImplementationType(Type implementationType)
+    {
+        if (!implementationType.IsAssignableTo(typeof(IDaprService)))
+            return null;
+
+        var serviceAppList = ServiceAppMappings.Where(t => t.Value.Any(s => s.Item2 == implementationType));
+        if (serviceAppList.Any())
+            return serviceAppList.First().Key;
+
+        var serviceName = implementationType.GetServiceName();
+        if (!string.IsNullOrWhiteSpace(serviceName))
+        {
+            var serviceApp = GetPresetAppNameFromServiceName(serviceName);
+            if (!string.IsNullOrWhiteSpace(serviceApp))
+                return serviceApp;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Get the app name for the given service name.
+    /// 
+    /// The service name is primarily obtained from the DaprService
+    /// attribute attached to the implementation type.
+    /// </summary>
+    public static string? GetAppByServiceName(string serviceName)
+    {
+        if (string.IsNullOrWhiteSpace(serviceName))
+            return null;
+
+        var serviceAppList = ServiceAppMappings.Where(t => t.Value.Any(s => string.Equals(serviceName, s.Item3.Name, StringComparison.InvariantCultureIgnoreCase)));
+        if (serviceAppList.Any())
+            return serviceAppList.First().Key;
+
+        var serviceApp = GetPresetAppNameFromServiceName(serviceName);
+        if (!string.IsNullOrWhiteSpace(serviceApp))
+            return serviceApp;
 
         return null;
     }

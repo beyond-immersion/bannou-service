@@ -45,7 +45,7 @@ public class AuthorizationService : IAuthorizationService
             Email = email
         };
 
-        HttpRequestMessage daprRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName("account"), $"account/get", dataModel);
+        HttpRequestMessage daprRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, IDaprService.GetAppByServiceName("account"), $"account/get", dataModel);
         var daprResponse = await Program.DaprClient.InvokeMethodWithResponseAsync(daprRequest, Program.ShutdownCancellationTokenSource.Token);
 
         if (daprResponse == null || !daprResponse.IsSuccessStatusCode)
