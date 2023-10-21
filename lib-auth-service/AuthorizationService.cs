@@ -19,12 +19,7 @@ public class AuthorizationService : IAuthorizationService
     private AuthorizationServiceConfiguration? _configuration;
     public AuthorizationServiceConfiguration Configuration
     {
-        get
-        {
-            _configuration ??= IServiceConfiguration.BuildConfiguration<AuthorizationServiceConfiguration>();
-            return _configuration;
-        }
-
+        get => _configuration ??= IServiceConfiguration.BuildConfiguration<AuthorizationServiceConfiguration>();
         internal set => _configuration = value;
     }
 

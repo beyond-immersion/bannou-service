@@ -13,16 +13,16 @@ public class Controllers : IClassFixture<CollectionFixture>
     [DaprController]
     public class TestController_NoService : ControllerBase, IDaprController { }
 
-    [DaprController(serviceType: typeof(TestService_SingleController))]
+    [DaprController(interfaceType: typeof(TestService_SingleController))]
     public class TestController_SingleController : ControllerBase, IDaprController { }
 
     [DaprService("ControllerTests.OneControllerTest")]
     public class TestService_SingleController : IDaprService { }
 
-    [DaprController(serviceType: typeof(TestService_MultipleControllers))]
+    [DaprController(interfaceType: typeof(TestService_MultipleControllers))]
     public class TestControllerA_MultipleControllers : ControllerBase, IDaprController { }
 
-    [DaprController(serviceType: typeof(TestService_MultipleControllers))]
+    [DaprController(interfaceType: typeof(TestService_MultipleControllers))]
     public class TestControllerB_MultipleControllers : ControllerBase, IDaprController { }
 
     [DaprService("ControllerTests.MultipleControllerTest")]
