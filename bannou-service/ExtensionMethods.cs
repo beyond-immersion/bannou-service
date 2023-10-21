@@ -154,7 +154,7 @@ public static partial class ExtensionMethods
             Type implementationType = serviceInfo.Item2;
             var serviceName = implementationType.GetServiceName();
 
-            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForHandler(interfaceType))
+            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForImplementation(interfaceType))
             {
                 var controllerName = controllerClassInfo.Item2?.Name ?? controllerClassInfo.Item2?.Template;
                 if (string.IsNullOrWhiteSpace(controllerName))

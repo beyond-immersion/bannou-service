@@ -1,4 +1,6 @@
-﻿namespace BeyondImmersion.BannouService.Controllers;
+﻿using System.Reflection;
+
+namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
 /// Interface implemented for all dapr API controllers.
@@ -19,35 +21,63 @@ public interface IDaprController
                 if (!enabledOnly)
                     return true;
 
-                if (t.Item2?.ServiceType == null)
+                if (t.Item2?.InterfaceType == null)
                     return true;
 
-                (Type, Type, DaprServiceAttribute)? handlerType = IDaprService.GetServiceInfo(t.Item2.ServiceType);
-                return handlerType != null && IDaprService.IsDisabled(handlerType.Value.Item2);
+                (Type, Type, DaprServiceAttribute)? serviceInfo = IDaprService.GetServiceInfo(t.Item2.InterfaceType);
+                return serviceInfo != null && IDaprService.IsDisabled(serviceInfo.Value.Item2);
             });
 
         return controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();
     }
 
     /// <summary>
-    /// Gets the full list of associated controllers to the given service type.
+    /// Gets the full list of associated controllers to the given service interface.
     /// </summary>
-    public static (Type, DaprControllerAttribute)[] FindForHandler<T>()
+    public static (Type, DaprControllerAttribute)[] FindForInterface<T>()
         where T : class, IDaprService
-        => FindForHandler(typeof(T));
+        => FindForInterface(typeof(T));
 
     /// <summary>
-    /// Gets the full list of associated controllers to a given handler type.
+    /// Gets the full list of associated controllers to the given service implementation.
     /// </summary>
-    public static (Type, DaprControllerAttribute)[] FindForHandler(Type handlerType)
+    public static (Type, DaprControllerAttribute)[] FindForImplementation<T>()
+        where T : class, IDaprService
+        => FindForImplementation(typeof(T));
+
+    /// <summary>
+    /// Gets the full list of associated controllers to a given service interface.
+    /// </summary>
+    public static (Type, DaprControllerAttribute)[] FindForInterface(Type interfaceType)
     {
-        if (!typeof(IDaprService).IsAssignableFrom(handlerType))
+        if (!typeof(IDaprService).IsAssignableFrom(interfaceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
         IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = FindAll()
             .Where(t =>
             {
-                return handlerType == (t.Item2?.ServiceType);
+                return interfaceType == (t.Item2.InterfaceType);
+            });
+
+        return controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();
+    }
+
+    /// <summary>
+    /// Gets the full list of associated controllers to a given service implementation.
+    /// </summary>
+    public static (Type, DaprControllerAttribute)[] FindForImplementation(Type implementationType)
+    {
+        if (!typeof(IDaprService).IsAssignableFrom(implementationType))
+            throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
+
+        DaprServiceAttribute? serviceAttr = implementationType.GetCustomAttribute<DaprServiceAttribute>();
+        if (serviceAttr == null || serviceAttr.InterfaceType == null)
+            return Array.Empty<(Type, DaprControllerAttribute)>();
+
+        IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = FindAll()
+            .Where(t =>
+            {
+                return t.Item2.InterfaceType?.IsAssignableFrom(implementationType) ?? false;
             });
 
         return controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();

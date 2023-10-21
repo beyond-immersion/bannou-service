@@ -14,30 +14,24 @@ public class DaprControllerAttribute : RouteAttribute, IServiceAttribute
     /// If it's independent of any services, leave null.
     /// If requiring multiple service, add more attributes.
     /// </summary>
-    public Type? ServiceType { get; }
-    public DaprServiceAttribute? ServiceAttribute { get; }
+    public Type? InterfaceType { get; }
 
     public DaprControllerAttribute(Type? interfaceType = null)
         : this(GetControllerTemplate(interfaceType), interfaceType) { }
 
     public DaprControllerAttribute(string template, Type? interfaceType = null)
-        : base(template)
+        : base(template ?? GetControllerTemplate(interfaceType))
     {
         if (interfaceType != null && !typeof(IDaprService).IsAssignableFrom(interfaceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
-    }
 
-    public string GetControllerTemplate()
-        => ServiceAttribute?.Name ?? "/";
+        InterfaceType = interfaceType;
+    }
 
     public static string GetControllerTemplate(Type? interfaceType)
     {
         if (interfaceType == null)
             return "/";
-
-        var serviceAttribute = interfaceType.GetCustomAttribute<DaprServiceAttribute>();
-        if (serviceAttribute != null)
-            return serviceAttribute.Name;
 
         var serviceInfo = IDaprService.GetServiceInfo(interfaceType);
         if (serviceInfo != null && serviceInfo.HasValue)

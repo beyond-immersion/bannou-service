@@ -241,7 +241,7 @@ public interface IDaprService
         {
             Type serviceType = serviceProvider.Item1;
             DaprServiceAttribute serviceAttr = serviceProvider.Item2;
-            Type handlerType = serviceAttr.Type ?? serviceType;
+            Type handlerType = serviceAttr.InterfaceType ?? serviceType;
 
             Program.Logger?.Log(LogLevel.Trace, null, $"Checking service type {serviceType.Name}...");
 

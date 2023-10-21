@@ -10,14 +10,14 @@ namespace BeyondImmersion.BannouService.Attributes;
 public sealed class DaprServiceAttribute : BaseServiceAttribute
 {
     /// <summary>
-    /// IDaprService handler type.
+    /// IDaprService interface type.
     /// Must implement/inherit IDaprService.
     /// Can be an interface, abstract or concrete class.
     /// If null, will use exact class type.
     /// 
     /// MUST match the service pulled from DI in related controllers.
     /// </summary>
-    public Type? Type { get; }
+    public Type? InterfaceType { get; }
 
     /// <summary>
     /// How long the service instance lasts.
@@ -38,17 +38,17 @@ public sealed class DaprServiceAttribute : BaseServiceAttribute
     public string Name { get; }
 
     private DaprServiceAttribute() { }
-    public DaprServiceAttribute(string name, Type? type = null, bool priority = false, ServiceLifetime lifetime = ServiceLifetime.Singleton)
+    public DaprServiceAttribute(string name, Type? interfaceType = null, bool priority = false, ServiceLifetime lifetime = ServiceLifetime.Singleton)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentNullException(nameof(name));
 
-        if (type != null && !type.IsAssignableTo(typeof(IDaprService)))
+        if (interfaceType != null && !interfaceType.IsAssignableTo(typeof(IDaprService)))
             throw new InvalidCastException($"Dapr service type specified must implement {nameof(IDaprService)}.");
 
         Name = name;
         Priority = priority;
-        Type = type;
+        InterfaceType = interfaceType;
         Lifetime = lifetime;
     }
 }

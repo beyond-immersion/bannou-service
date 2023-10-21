@@ -21,31 +21,31 @@ public class Services : IClassFixture<CollectionFixture>
     /// <summary>
     /// Service for testing priority overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.PriorityTest", type: typeof(TestService_Priority_1))]
+    [DaprService("ServiceTests.PriorityTest", interfaceType: typeof(TestService_Priority_1))]
     private class TestService_Priority_1 : IDaprService { }
 
     /// <summary>
     /// Service for testing priority overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.PriorityTest", type: typeof(TestService_Priority_1), priority: true)]
+    [DaprService("ServiceTests.PriorityTest", interfaceType: typeof(TestService_Priority_1), priority: true)]
     private class TestService_Priority_2 : IDaprService { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.OverrideTest", type: typeof(TestService_Override_1))]
+    [DaprService("ServiceTests.OverrideTest", interfaceType: typeof(TestService_Override_1))]
     private class TestService_Override_1 : IDaprService { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.OverrideTest", type: typeof(TestService_Override_1))]
+    [DaprService("ServiceTests.OverrideTest", interfaceType: typeof(TestService_Override_1))]
     private class TestService_Override_2 : TestService_Override_1 { }
 
     /// <summary>
     /// Service for testing implicit overrides without using attributes.
     /// </summary>
-    [DaprService("ServiceTests.OverrideNoAttrTest", type: typeof(TestService_Override_NoAttribute_1))]
+    [DaprService("ServiceTests.OverrideNoAttrTest", interfaceType: typeof(TestService_Override_NoAttribute_1))]
     private class TestService_Override_NoAttribute_1 : IDaprService { }
 
     /// <summary>
@@ -56,13 +56,13 @@ public class Services : IClassFixture<CollectionFixture>
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.PriorityOverrideTest", type: typeof(TestService_PriorityAndOverride_1), priority: true)]
+    [DaprService("ServiceTests.PriorityOverrideTest", interfaceType: typeof(TestService_PriorityAndOverride_1), priority: true)]
     private class TestService_PriorityAndOverride_1 : IDaprService { }
 
     /// <summary>
     /// Service for testing implicit overrides using attributes.
     /// </summary>
-    [DaprService("ServiceTests.PriorityOverrideTest", type: typeof(TestService_PriorityAndOverride_1))]
+    [DaprService("ServiceTests.PriorityOverrideTest", interfaceType: typeof(TestService_PriorityAndOverride_1))]
     private class TestService_PriorityAndOverride_2 : TestService_PriorityAndOverride_1 { }
 
     [ServiceConfiguration(typeof(TestService_Attribute))]
