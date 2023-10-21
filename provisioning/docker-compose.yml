@@ -51,6 +51,7 @@ services:
     volumes:
       - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
       - logs-volume:/app/logs/
+    user: root
     environment:
       - "FILEBEAT_INPUTS_PATHS=/app/logs/*"
 
