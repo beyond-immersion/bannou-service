@@ -142,9 +142,7 @@ public interface IDaprService
 
             if (!IServiceConfiguration.HasRequiredForType(serviceConfig))
             {
-                Program.Logger?.Log(LogLevel.Error, null, $"Required configuration is missing to start an enabled dapr service.",
-                    logParams: new JObject() { ["service_type"] = serviceType.Name });
-
+                Program.Logger?.Log(LogLevel.Error, null, $"Required configuration is missing to start an enabled dapr service.");
                 return false;
             }
         }
