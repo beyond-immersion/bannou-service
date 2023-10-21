@@ -47,7 +47,7 @@ services:
       - celestial_network
 
   filebeat:
-    image: docker.elastic.co/beats/filebeat:latest
+    image: docker.elastic.co/beats/filebeat:8.10.4
     volumes:
       - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
       - logs-volume:/app/logs/
