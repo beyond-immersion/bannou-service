@@ -7,28 +7,65 @@ namespace BeyondImmersion.BannouService.Controllers;
 /// </summary>
 public interface IDaprController
 {
+    private static (Type, DaprControllerAttribute)[] _controllers;
     /// <summary>
     /// Gets the full list of dapr controllers.
     /// </summary>
-    public static (Type, DaprControllerAttribute)[] FindAll(bool enabledOnly = false)
+    public static (Type, DaprControllerAttribute)[] Controllers
     {
-        IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = IServiceAttribute.GetClassesWithAttribute<DaprControllerAttribute>()
-            .Where(t =>
+        get
+        {
+            if (_controllers == null)
             {
-                if (!typeof(IDaprController).IsAssignableFrom(t.Item1))
-                    return false;
+                IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = IServiceAttribute.GetClassesWithAttribute<DaprControllerAttribute>()
+                    .Where(t =>
+                    {
+                        if (!typeof(IDaprController).IsAssignableFrom(t.Item1))
+                            return false;
 
-                if (!enabledOnly)
-                    return true;
+                        return true;
+                    });
 
-                if (t.Item2?.InterfaceType == null)
-                    return true;
+                _controllers = controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();
+            }
 
-                (Type, Type, DaprServiceAttribute)? serviceInfo = IDaprService.GetServiceInfo(t.Item2.InterfaceType);
-                return serviceInfo != null && IDaprService.IsDisabled(serviceInfo.Value.Item2);
-            });
+            return _controllers;
+        }
+    }
 
-        return controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();
+    /// <summary>
+    /// Gets the full list of non-service dapr API controllers.
+    /// </summary>
+    public static (Type, DaprControllerAttribute)[] NonServiceControllers
+    {
+        get => Controllers.Where(t => t.Item2?.InterfaceType == null).ToArray();
+    }
+
+    /// <summary>
+    /// Gets the full list of service dapr API controllers.
+    /// </summary>
+    public static (Type, DaprControllerAttribute)[] ServiceControllers
+    {
+        get => Controllers.Where(t => t.Item2?.InterfaceType != null).ToArray();
+    }
+
+    /// <summary>
+    /// Gets the full list of enabled service dapr API controllers.
+    /// </summary>
+    public static (Type, DaprControllerAttribute)[] EnabledServiceControllers
+    {
+        get
+        {
+            return Controllers.Where(t =>
+                {
+                    if (t.Item2?.InterfaceType == null)
+                        return false;
+
+                    (Type, Type, DaprServiceAttribute)? serviceInfo = IDaprService.GetServiceInfo(t.Item2.InterfaceType);
+                    return serviceInfo != null && !IDaprService.IsDisabled(serviceInfo.Value.Item2);
+                })
+                .ToArray();
+        }
     }
 
     /// <summary>
@@ -53,7 +90,7 @@ public interface IDaprController
         if (!typeof(IDaprService).IsAssignableFrom(interfaceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
-        IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = FindAll()
+        IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = ServiceControllers
             .Where(t =>
             {
                 return interfaceType == (t.Item2.InterfaceType);
@@ -74,7 +111,7 @@ public interface IDaprController
         if (serviceAttr == null || serviceAttr.InterfaceType == null)
             return Array.Empty<(Type, DaprControllerAttribute)>();
 
-        IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = FindAll()
+        IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = ServiceControllers
             .Where(t =>
             {
                 return t.Item2.InterfaceType?.IsAssignableFrom(implementationType) ?? false;

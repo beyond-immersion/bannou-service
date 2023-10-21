@@ -1,17 +1,20 @@
 build:
-	docker-compose -f provisioning/docker-compose.yml --project-name cl $(MAKECMDGOALS)
+	if [ ! -f .env ]; then touch .env; fi
+	docker-compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.swarm.yml --project-name cl build
 
 up:
-	docker-compose -f provisioning/docker-compose.yml --project-name cl $(MAKECMDGOALS) --remove-orphans
+	if [ ! -f .env ]; then touch .env; fi
+	docker-compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.swarm.yml --project-name cl up
 
-up-with-elk:
-	docker-compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.elk.yml --project-name cl $(MAKECMDGOALS) --remove-orphans
+elk up:
+	if [ ! -f .env ]; then touch .env; fi
+	docker-compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.swarm.yml -f provisioning/docker-compose.elk.yml --project-name cl up
 
 down:
-	docker-compose -f provisioning/docker-compose.yml --project-name cl $(MAKECMDGOALS)
+	docker-compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.swarm.yml --project-name cl down --remove-orphans
 
-down-with-elk:
-	docker-compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.elk.yml --project-name cl $(MAKECMDGOALS)
+elk down:
+	docker-compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.swarm.yml -f provisioning/docker-compose.elk.yml --project-name cl down --remove-orphans
 
 clean:
 	git submodule foreach --recursive git clean -fdx

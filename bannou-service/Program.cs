@@ -65,7 +65,7 @@ public static class Program
     /// </summary>
     public static CancellationTokenSource ShutdownCancellationTokenSource { get; } = new CancellationTokenSource();
 
-    private static async Task Main(string[] args)
+    private static async Task Main()
     {
         Logger.Log(LogLevel.Information, null, "Service starting.");
 
@@ -101,7 +101,7 @@ public static class Program
             .Build();
 
         // prepare to build the application
-        WebApplicationBuilder? webAppBuilder = WebApplication.CreateBuilder(args);
+        WebApplicationBuilder? webAppBuilder = WebApplication.CreateBuilder(Environment.GetCommandLineArgs());
         if (webAppBuilder == null)
         {
             Logger.Log(LogLevel.Error, null, "Failed to create WebApplicationBuilder- exiting application.");
@@ -161,8 +161,7 @@ public static class Program
             });
 
             // invoke all Service.Start() methods on enabled service handlers
-            var serviceImplTypes = IDaprService.EnabledServices.Select(t => t.Item2);
-            await InvokeAllServiceStartMethods(webApp, serviceImplTypes);
+            await webApp.InvokeAllServiceStartMethods();
 
             Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- WebHost starting.");
 
@@ -171,7 +170,7 @@ public static class Program
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // invoke all Service.Running() methods on enabled service handlers
-            await InvokeAllServiceRunningMethods(webApp, serviceImplTypes);
+            await webApp.InvokeAllServiceRunningMethods();
 
             Logger.Log(LogLevel.Information, null, "WebHost started successfully and services running- settling in.");
 
@@ -181,7 +180,7 @@ public static class Program
             Logger.Log(LogLevel.Information, null, "WebHost stopped- starting controlled application shutdown.");
 
             // invoke all Service.Shutdown() methods on enabled service handlers
-            await InvokeAllServiceShutdownMethods(webApp, serviceImplTypes);
+            await webApp.InvokeAllServiceShutdownMethods();
         }
         catch (Exception exc)
         {
@@ -328,45 +327,6 @@ public static class Program
         }
 
         return null;
-    }
-
-    /// <summary>
-    /// Iterates through and invokes the Start() method on all loaded service handlers.
-    /// </summary>
-    private static async Task InvokeAllServiceStartMethods(WebApplication webApp, IEnumerable<Type> implTypes)
-    {
-        foreach (var implType in implTypes)
-        {
-            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
-            if (serviceInst != null)
-                await serviceInst.OnStart();
-        }
-    }
-
-    /// <summary>
-    /// Iterates through and invokes the Running() method on all loaded service handlers.
-    /// </summary>
-    private static async Task InvokeAllServiceRunningMethods(WebApplication webApp, IEnumerable<Type> implTypes)
-    {
-        foreach (var implType in implTypes)
-        {
-            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
-            if (serviceInst != null)
-                await serviceInst.OnRunning();
-        }
-    }
-
-    /// <summary>
-    /// Iterates through and invokes the Shutdown() method on all loaded service handlers.
-    /// </summary>
-    private static async Task InvokeAllServiceShutdownMethods(WebApplication webApp, IEnumerable<Type> implTypes)
-    {
-        foreach (var implType in implTypes)
-        {
-            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
-            if (serviceInst != null)
-                await serviceInst.OnShutdown();
-        }
     }
 
     /// <summary>

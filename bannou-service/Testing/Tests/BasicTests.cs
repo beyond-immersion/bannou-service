@@ -6,7 +6,6 @@ namespace BeyondImmersion.BannouService.Testing.Tests;
 /// <summary>
 /// Tests that only require the testing service itself.
 /// </summary>
-[SuppressMessage("Usage", "CA2254:Template should be a static expression", Justification = "Identifying failed integration tests")]
 public static class BasicTests
 {
     private const int TEST_WAIT_TIME_MS = 200;

@@ -1,0 +1,11 @@
+services:
+
+  bannou:
+    env_file: ../.env
+
+  bannou-dapr:
+    volumes:
+      - "./components/swarm/:/components"
+
+networks:
+  celestial_network:

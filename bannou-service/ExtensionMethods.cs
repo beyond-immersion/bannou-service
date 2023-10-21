@@ -156,6 +156,41 @@ public static partial class ExtensionMethods
     /// </summary>
     public static IEndpointRouteBuilder MapNonServiceControllers(this IEndpointRouteBuilder builder)
     {
+        foreach (var controllerInfo in IDaprController.NonServiceControllers)
+        {
+            Type controllerType = controllerInfo.Item1;
+            var controllerAttr = controllerInfo.Item2;
+
+            var controllerName = controllerAttr?.Name ?? controllerAttr?.Template;
+            if (string.IsNullOrWhiteSpace(controllerName))
+                controllerName = controllerType.Name;
+
+            if (string.IsNullOrWhiteSpace(controllerName))
+            {
+                Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {{action}}/{{id}}.");
+                _ = builder.MapControllerRoute(
+                    name: "ActionIdApi",
+                    pattern: "{action}/{id}");
+
+                Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {{action}}.");
+                _ = builder.MapControllerRoute(
+                    name: "ActionApi",
+                    pattern: "{action}");
+
+                continue;
+            }
+
+            Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {controllerName}/{{action}}/{{id}}.");
+            _ = builder.MapControllerRoute(
+                name: "ControllerActionIdApi",
+                pattern: controllerName + "/{action}/{id}");
+
+            Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {controllerName}/{{action}}.");
+            _ = builder.MapControllerRoute(
+                name: "ControllerActionApi",
+                pattern: controllerName + "/{action}");
+        }
+
         return builder;
     }
 
@@ -170,27 +205,63 @@ public static partial class ExtensionMethods
             Type implementationType = serviceInfo.Item2;
             var serviceName = implementationType.GetServiceName();
 
-            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForImplementation(interfaceType))
+            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForImplementation(implementationType))
             {
-                var controllerName = controllerClassInfo.Item2?.Name ?? controllerClassInfo.Item2?.Template;
-                if (string.IsNullOrWhiteSpace(controllerName))
-                    controllerName = controllerClassInfo.Item1.GetServiceName();
-
+                var controllerName = controllerClassInfo.Item2?.Template ?? controllerClassInfo.Item2?.Name ?? serviceName;
                 if (string.IsNullOrWhiteSpace(controllerName))
                     continue;
 
                 Program.Logger?.Log(LogLevel.Trace, null, $"Activating service controller route {controllerName}/{{action}}/{{id}}.");
                 _ = builder.MapControllerRoute(
-                    name: "ControllerActionIdApi",
+                    name: "ServiceControllerActionIdApi",
                     pattern: controllerName + "/{action}/{id}");
 
                 Program.Logger?.Log(LogLevel.Trace, null, $"Activating service controller route {controllerName}/{{action}}.");
                 _ = builder.MapControllerRoute(
-                    name: "ControllerActionApi",
+                    name: "ServiceControllerActionApi",
                     pattern: controllerName + "/{action}");
             }
         }
 
         return builder;
+    }
+
+    /// <summary>
+    /// Iterates through and invokes the Start() method on all loaded service handlers.
+    /// </summary>
+    public static async Task InvokeAllServiceStartMethods(this WebApplication webApp)
+    {
+        foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
+        {
+            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            if (serviceInst != null)
+                await serviceInst.OnStart();
+        }
+    }
+
+    /// <summary>
+    /// Iterates through and invokes the Running() method on all loaded service handlers.
+    /// </summary>
+    public static async Task InvokeAllServiceRunningMethods(this WebApplication webApp)
+    {
+        foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
+        {
+            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            if (serviceInst != null)
+                await serviceInst.OnRunning();
+        }
+    }
+
+    /// <summary>
+    /// Iterates through and invokes the Shutdown() method on all loaded service handlers.
+    /// </summary>
+    public static async Task InvokeAllServiceShutdownMethods(this WebApplication webApp)
+    {
+        foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
+        {
+            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            if (serviceInst != null)
+                await serviceInst.OnShutdown();
+        }
     }
 }

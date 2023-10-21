@@ -19,9 +19,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisioning", "{6905E47E-6C04-4CF6-894F-2643528E490D}"
 	ProjectSection(SolutionItems) = preProject
 		provisioning\docker-compose.ci.yml = provisioning\docker-compose.ci.yml
-		provisioning\docker-compose.elk.yml = provisioning\docker-compose.elk.yml
-		provisioning\docker-compose.yml = provisioning\docker-compose.yml
 		provisioning\docker-compose.ek.yml = provisioning\docker-compose.ek.yml
+		provisioning\docker-compose.elk.yml = provisioning\docker-compose.elk.yml
+		provisioning\docker-compose.swarm.yml = provisioning\docker-compose.swarm.yml
+		provisioning\docker-compose.yml = provisioning\docker-compose.yml
 		provisioning\Dockerfile = provisioning\Dockerfile
 		provisioning\filebeat.console.yml = provisioning\filebeat.console.yml
 		provisioning\filebeat.ek.yml = provisioning\filebeat.ek.yml

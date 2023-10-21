@@ -3,9 +3,6 @@ services:
   # modifies the monoservice startup to include a bunch of ENVs for testing
   # and telling it wait for backing datastores, etc to start first
   bannou:
-    depends_on:
-      redis-db:
-        condition: service_healthy
     environment:
       - INTEGRATION_TESTING=true
       - AUTHORIZATION_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
@@ -31,20 +28,6 @@ services:
     depends_on:
       - bannou
     command: bash service-tests.sh
-
-  # backing datastore for testing accounts- matches CI component
-  redis-db:
-    image: redis/redis-stack-server:latest
-    hostname: account-db
-    healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
-      interval: 1s
-      timeout: 3s
-      retries: 5
-    ports:
-     - "6379:6379"
-    networks:
-      - celestial_network
 
 networks:
   celestial_network:
