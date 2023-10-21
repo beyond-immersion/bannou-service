@@ -406,24 +406,24 @@ public class Services : IClassFixture<CollectionFixture>
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", null);
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_MULTIPLEREQUIRED_SERVICE_DISABLED", null);
 
-            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService));
-            Assert.Contains(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService_Attribute));
-            Assert.Contains(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService_Required));
-            Assert.Contains(IDaprService.GetAllServiceInfo(), t => t.Item1 == typeof(TestService_MultipleRequired));
+            Assert.DoesNotContain(IDaprService.Services, t => t.Item1 == typeof(TestService));
+            Assert.Contains(IDaprService.Services, t => t.Item1 == typeof(TestService_Attribute));
+            Assert.Contains(IDaprService.Services, t => t.Item1 == typeof(TestService_Required));
+            Assert.Contains(IDaprService.Services, t => t.Item1 == typeof(TestService_MultipleRequired));
 
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", "true");
             Program.Configuration.Services_Enabled = true;
-            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService));
-            Assert.Contains(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Attribute));
-            Assert.Contains(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Required));
-            Assert.Contains(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService));
+            Assert.Contains(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService_Attribute));
+            Assert.Contains(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService_Required));
+            Assert.Contains(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService_MultipleRequired));
 
             Environment.SetEnvironmentVariable("SERVICES_ENABLED", "false");
             Program.Configuration.Services_Enabled = false;
-            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService));
-            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Attribute));
-            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Required));
-            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_MultipleRequired));
+            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService));
+            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService_Attribute));
+            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService_Required));
+            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService_MultipleRequired));
         }
         finally
         {
@@ -434,16 +434,16 @@ public class Services : IClassFixture<CollectionFixture>
         try
         {
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "true");
-            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService));
-            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Attribute));
+            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService));
+            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService_Attribute));
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", "false");
-            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService));
-            Assert.Contains(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Attribute));
+            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService));
+            Assert.Contains(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService_Attribute));
 
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", "true");
-            Assert.DoesNotContain(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Required));
+            Assert.DoesNotContain(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService_Required));
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", "false");
-            Assert.Contains(IDaprService.GetAllServiceInfo(true), t => t.Item1 == typeof(TestService_Required));
+            Assert.Contains(IDaprService.EnabledServices, t => t.Item1 == typeof(TestService_Required));
         }
         finally
         {
@@ -491,7 +491,7 @@ public class Services : IClassFixture<CollectionFixture>
         try
         {
             Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", "true");
-            Assert.False(IDaprService.AllHaveRequiredConfiguration(IDaprService.GetAllServiceInfo(enabledOnly: true)));
+            Assert.False(IDaprService.AllHaveRequiredConfiguration());
         }
         finally
         {

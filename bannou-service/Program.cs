@@ -73,7 +73,7 @@ public static class Program
             if (_serviceAppMappings == null)
             {
                 _serviceAppMappings = new Dictionary<string, IList<(Type, Type, DaprServiceAttribute)>>();
-                foreach ((Type, Type, DaprServiceAttribute) serviceHandler in IDaprService.GetAllServiceInfo(enabledOnly: false))
+                foreach ((Type, Type, DaprServiceAttribute) serviceHandler in IDaprService.Services)
                 {
                     var serviceName = serviceHandler.Item3.Name;
                     var appName = ConfigurationRoot.GetValue<string>(serviceName.ToUpper() + "_APP_MAPPING") ?? AppConstants.DEFAULT_APP_NAME;
@@ -196,15 +196,14 @@ public static class Program
         LoadAssemblies();
 
         // get info for dapr services in loaded assemblies
-        var enabledServiceInfo = IDaprService.GetAllServiceInfo(enabledOnly: true);
-        if (enabledServiceInfo == null || enabledServiceInfo.Length == 0)
+        if (!IDaprService.EnabledServices.Any())
         {
             Logger.Log(LogLevel.Error, null, "No services have been enabled- exiting application.");
             return;
         }
 
         // ensure dapr services have their required configuration
-        if (!IDaprService.AllHaveRequiredConfiguration(enabledServiceInfo))
+        if (!IDaprService.AllHaveRequiredConfiguration())
         {
             Logger.Log(LogLevel.Error, null, "Required configuration not set for enabled services- exiting application.");
             return;
@@ -231,7 +230,7 @@ public static class Program
             _ = webAppBuilder.Services.AddAuthentication();
             _ = webAppBuilder.Services.AddControllers();
             webAppBuilder.Services.AddDaprClient();
-            webAppBuilder.Services.AddDaprServices(enabledServiceInfo);
+            webAppBuilder.Services.AddDaprServices();
 
             // configure webhost
             webAppBuilder.WebHost
@@ -268,7 +267,7 @@ public static class Program
         {
             // add controllers / configure navigation
             _ = webApp.MapNonServiceControllers();
-            _ = webApp.MapDaprServiceControllers(enabledServiceInfo);
+            _ = webApp.MapDaprServiceControllers();
             _ = webApp.UseHttpsRedirection();
 
             // enable websocket connections
@@ -278,7 +277,7 @@ public static class Program
             });
 
             // invoke all Service.Start() methods on enabled service handlers
-            var serviceImplTypes = enabledServiceInfo.Select(t => t.Item2);
+            var serviceImplTypes = IDaprService.EnabledServices.Select(t => t.Item2);
             await InvokeAllServiceStartMethods(webApp, serviceImplTypes);
 
             Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- WebHost starting.");
@@ -505,22 +504,16 @@ public static class Program
         // - the rest are all handled by "bannou"
         if (string.Equals("bannou", appName, StringComparison.InvariantCultureIgnoreCase))
         {
-            var allServiceInfo = IDaprService.GetAllServiceInfo();
-            if (allServiceInfo != null)
-            {
-                var serviceList = new List<string>();
-                foreach (var serviceInfo in allServiceInfo)
-                    serviceList.Add(serviceInfo.Item3.Name);
+            var serviceList = new List<string>();
+            foreach (var serviceInfo in IDaprService.Services)
+                serviceList.Add(serviceInfo.Item3.Name);
 
-                var unhandledServiceList = new List<string>();
-                foreach (var serviceItem in serviceList)
-                    if (!NetworkModePresets.ContainsKey(serviceItem))
-                        unhandledServiceList.Add(serviceItem);
+            var unhandledServiceList = new List<string>();
+            foreach (var serviceItem in serviceList)
+                if (!NetworkModePresets.ContainsKey(serviceItem))
+                    unhandledServiceList.Add(serviceItem);
 
-                return unhandledServiceList.ToArray();
-            }
-
-            return Array.Empty<string>();
+            return unhandledServiceList.ToArray();
         }
 
         var presetList = NetworkModePresets.Where(t => t.Value.Equals(appName, StringComparison.InvariantCultureIgnoreCase)).Select(t => t.Key).ToArray();

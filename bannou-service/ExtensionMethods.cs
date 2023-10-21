@@ -123,32 +123,35 @@ public static partial class ExtensionMethods
     /// <summary>
     /// Binds HTTP endpoints for all registered dapr services.
     /// </summary>
-    public static void AddDaprServices(this IServiceCollection builder, (Type, Type, DaprServiceAttribute)[] enabledServiceInfo)
+    public static void AddDaprServices(this IServiceCollection builder)
     {
-        foreach (var serviceInfo in enabledServiceInfo)
+        foreach (var serviceInfo in IDaprService.EnabledServices)
         {
-            Type handlerType = serviceInfo.Item1;
-            Type serviceType = serviceInfo.Item2;
+            Type interfaceType = serviceInfo.Item1;
+            Type implementationType = serviceInfo.Item2;
             ServiceLifetime serviceLifetime = serviceInfo.Item3.Lifetime;
-            var serviceName = serviceType.GetServiceName();
+            var serviceName = implementationType.GetServiceName();
 
-            Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} has been enabled to handle type {handlerType}.");
+            Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} has been enabled to handle type {interfaceType}.");
 
-            builder.Add(new ServiceDescriptor(handlerType, serviceType, serviceLifetime));
+            builder.Add(new ServiceDescriptor(interfaceType, implementationType, serviceLifetime));
         }
     }
 
     /// <summary>
     /// Binds HTTP endpoints for admin commands.
     /// </summary>
-    public static IEndpointRouteBuilder MapNonServiceControllers(this IEndpointRouteBuilder builder) => builder;
+    public static IEndpointRouteBuilder MapNonServiceControllers(this IEndpointRouteBuilder builder)
+    {
+        return builder;
+    }
 
     /// <summary>
     /// Binds HTTP endpoints for all registered dapr service handlers.
     /// </summary>
-    public static IEndpointRouteBuilder MapDaprServiceControllers(this IEndpointRouteBuilder builder, (Type, Type, DaprServiceAttribute)[] enabledServiceInfo)
+    public static IEndpointRouteBuilder MapDaprServiceControllers(this IEndpointRouteBuilder builder)
     {
-        foreach (var serviceInfo in enabledServiceInfo)
+        foreach (var serviceInfo in IDaprService.EnabledServices)
         {
             Type interfaceType = serviceInfo.Item1;
             Type implementationType = serviceInfo.Item2;
