@@ -4,6 +4,7 @@ services:
 
   # build the monoservice
   bannou:
+    image: bannou:latest
     build:
       context: ../
       dockerfile: provisioning/Dockerfile
@@ -46,55 +47,18 @@ services:
     networks:
       - celestial_network
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.4
-    environment:
-       - "discovery.type=single-node"
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - elastic-volume:/usr/share/elasticsearch/data
-    ports:
-      - 9200:9200
-      - 9600:9600
-    expose:
-      - "9200"
-    networks:
-      - celestial_network
-
   filebeat:
     image: docker.elastic.co/beats/filebeat:8.10.4
     command: sh -c "chown root:root /usr/share/filebeat/filebeat.yml && filebeat -e"
-    depends_on:
-      - elasticsearch
     volumes:
-      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - ./filebeat.console.yml:/usr/share/filebeat/filebeat.yml
       - logs-volume:/app/logs/
     user: root
     environment:
       - "FILEBEAT_INPUTS_PATHS=/app/logs/*"
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.10.4
-    depends_on:
-      - elasticsearch
-    ports:
-      - 5601:5601
-    expose:
-      - "5601"
-    environment:
-      ELASTICSEARCH_URL: http://elasticsearch:9200
-    networks:
-      - celestial_network
 
 networks:
   celestial_network:
 
 volumes:
   logs-volume:
-  elastic-volume:
