@@ -28,6 +28,18 @@ public class ModelBinders : IClassFixture<CollectionFixture>
     public IEnumerable<KeyValuePair<string, string>>? EnumerableKVPProperty { get; set; }
 
     [FromHeaderArray]
+    public Dictionary<string, IEnumerable<string>>? DictionaryEnumerableProperty { get; set; }
+
+    [FromHeaderArray]
+    public Dictionary<string, string[]>? DictionaryArrayProperty { get; set; }
+
+    [FromHeaderArray]
+    public Dictionary<string, List<string>>? DictionaryListProperty { get; set; }
+
+    [FromHeaderArray]
+    public Dictionary<string, string>? DictionaryProperty { get; set; }
+
+    [FromHeaderArray]
     public IEnumerable<(string, IEnumerable<string>)>? EnumerableTupleEnumerableProperty { get; set; }
 
     [FromHeaderArray]
@@ -35,6 +47,24 @@ public class ModelBinders : IClassFixture<CollectionFixture>
 
     [FromHeaderArray]
     public IEnumerable<(string, List<string>)>? EnumerableTupleListProperty { get; set; }
+
+    [FromHeaderArray]
+    public (string, IEnumerable<string>)[]? ArrayTupleEnumerableProperty { get; set; }
+
+    [FromHeaderArray]
+    public (string, string[])[]? ArrayTupleArrayProperty { get; set; }
+
+    [FromHeaderArray]
+    public (string, List<string>)[]? ArrayTupleListProperty { get; set; }
+
+    [FromHeaderArray]
+    public List<(string, IEnumerable<string>)>? ListTupleEnumerableProperty { get; set; }
+
+    [FromHeaderArray]
+    public List<(string, string[])>? ListTupleArrayProperty { get; set; }
+
+    [FromHeaderArray]
+    public List<(string, List<string>)>? ListTupleListProperty { get; set; }
 
     [FromHeaderArray]
     public (string, string)[]? ArrayTupleProperty { get; set; }
@@ -111,6 +141,59 @@ public class ModelBinders : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    public void ModelBinders_HeaderArray_DictionaryEnumerable()
+    {
+        var propertyData = GetPropertyData(nameof(DictionaryEnumerableProperty));
+        Assert.NotNull(propertyData);
+
+        var headers = new[] { "TEST_KEY_1__TEST_VALUE_1" };
+        var bindResult = HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyData.Value.Item1.PropertyType, headers, propertyData.Value.Item2);
+        Assert.True(bindResult.IsModelSet);
+        DictionaryEnumerableProperty = (Dictionary<string, IEnumerable<string>>?)bindResult.Model;
+        Assert.Equal("TEST_VALUE_1", DictionaryEnumerableProperty?.FirstOrDefault().Value?.FirstOrDefault());
+    }
+
+    [Fact]
+    public void ModelBinders_HeaderArray_DictionaryArray()
+    {
+        var propertyData = GetPropertyData(nameof(DictionaryArrayProperty));
+        Assert.NotNull(propertyData);
+
+        var headers = new[] { "TEST_KEY_1__TEST_VALUE_1" };
+        var bindResult = HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyData.Value.Item1.PropertyType, headers, propertyData.Value.Item2);
+        Assert.True(bindResult.IsModelSet);
+        DictionaryArrayProperty = (Dictionary<string, string[]>?)bindResult.Model;
+        Assert.Equal("TEST_VALUE_1", DictionaryArrayProperty?.FirstOrDefault().Value?.FirstOrDefault());
+    }
+
+    [Fact]
+    public void ModelBinders_HeaderArray_DictionaryList()
+    {
+        var propertyData = GetPropertyData(nameof(DictionaryListProperty));
+        Assert.NotNull(propertyData);
+
+        var headers = new[] { "TEST_KEY_1__TEST_VALUE_1" };
+        var bindResult = HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyData.Value.Item1.PropertyType, headers, propertyData.Value.Item2);
+        Assert.True(bindResult.IsModelSet);
+        DictionaryListProperty = (Dictionary<string, List<string>>?)bindResult.Model;
+        Assert.Equal("TEST_VALUE_1", DictionaryListProperty?.FirstOrDefault().Value?.FirstOrDefault());
+    }
+
+    [Fact]
+    public void ModelBinders_HeaderArray_Dictionary()
+    {
+        var propertyData = GetPropertyData(nameof(DictionaryProperty));
+        Assert.NotNull(propertyData);
+
+        var headers = new[] { "TEST_KEY_1__TEST_VALUE_1" };
+        var bindResult = HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyData.Value.Item1.PropertyType, headers, propertyData.Value.Item2);
+        Assert.True(bindResult.IsModelSet);
+        DictionaryProperty = (Dictionary<string, string>?)bindResult.Model;
+        Assert.Equal("TEST_KEY_1", DictionaryProperty?.FirstOrDefault().Key);
+        Assert.Equal("TEST_VALUE_1", DictionaryProperty?.FirstOrDefault().Value);
+    }
+
+    [Fact]
     public void ModelBinders_HeaderArray_EnumerableTupleEnumerable()
     {
         var propertyData = GetPropertyData(nameof(EnumerableTupleEnumerableProperty));
@@ -153,6 +236,90 @@ public class ModelBinders : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    public void ModelBinders_HeaderArray_ArrayTupleEnumerable()
+    {
+        var propertyData = GetPropertyData(nameof(ArrayTupleEnumerableProperty));
+        Assert.NotNull(propertyData);
+
+        var headers = new[] { "TEST_KEY_1__TEST_VALUE_1" };
+        var bindResult = HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyData.Value.Item1.PropertyType, headers, propertyData.Value.Item2);
+        Assert.True(bindResult.IsModelSet);
+        ArrayTupleEnumerableProperty = ((string, IEnumerable<string>)[]?)bindResult.Model;
+        Assert.Equal("TEST_KEY_1", ArrayTupleEnumerableProperty?.FirstOrDefault().Item1);
+        Assert.Equal("TEST_VALUE_1", ArrayTupleEnumerableProperty?.FirstOrDefault().Item2.FirstOrDefault());
+    }
+
+    [Fact]
+    public void ModelBinders_HeaderArray_ArrayTupleArray()
+    {
+        var propertyData = GetPropertyData(nameof(ArrayTupleArrayProperty));
+        Assert.NotNull(propertyData);
+
+        var headers = new[] { "TEST_KEY_1__TEST_VALUE_1" };
+        var bindResult = HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyData.Value.Item1.PropertyType, headers, propertyData.Value.Item2);
+        Assert.True(bindResult.IsModelSet);
+        ArrayTupleArrayProperty = ((string, string[])[]?)bindResult.Model;
+        Assert.Equal("TEST_KEY_1", ArrayTupleArrayProperty?.FirstOrDefault().Item1);
+        Assert.Equal("TEST_VALUE_1", ArrayTupleArrayProperty?.FirstOrDefault().Item2.FirstOrDefault());
+    }
+
+    [Fact]
+    public void ModelBinders_HeaderArray_ArrayTupleList()
+    {
+        var propertyData = GetPropertyData(nameof(ArrayTupleListProperty));
+        Assert.NotNull(propertyData);
+
+        var headers = new[] { "TEST_KEY_1__TEST_VALUE_1" };
+        var bindResult = HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyData.Value.Item1.PropertyType, headers, propertyData.Value.Item2);
+        Assert.True(bindResult.IsModelSet);
+        ArrayTupleListProperty = ((string, List<string>)[]?)bindResult.Model;
+        Assert.Equal("TEST_KEY_1", ArrayTupleListProperty?.FirstOrDefault().Item1);
+        Assert.Equal("TEST_VALUE_1", ArrayTupleListProperty?.FirstOrDefault().Item2.FirstOrDefault());
+    }
+
+    [Fact]
+    public void ModelBinders_HeaderArray_ListTupleEnumerable()
+    {
+        var propertyData = GetPropertyData(nameof(ListTupleEnumerableProperty));
+        Assert.NotNull(propertyData);
+
+        var headers = new[] { "TEST_KEY_1__TEST_VALUE_1" };
+        var bindResult = HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyData.Value.Item1.PropertyType, headers, propertyData.Value.Item2);
+        Assert.True(bindResult.IsModelSet);
+        ListTupleEnumerableProperty = (List<(string, IEnumerable<string>)>?)bindResult.Model;
+        Assert.Equal("TEST_KEY_1", ListTupleEnumerableProperty?.FirstOrDefault().Item1);
+        Assert.Equal("TEST_VALUE_1", ListTupleEnumerableProperty?.FirstOrDefault().Item2.FirstOrDefault());
+    }
+
+    [Fact]
+    public void ModelBinders_HeaderArray_ListTupleArray()
+    {
+        var propertyData = GetPropertyData(nameof(ListTupleArrayProperty));
+        Assert.NotNull(propertyData);
+
+        var headers = new[] { "TEST_KEY_1__TEST_VALUE_1" };
+        var bindResult = HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyData.Value.Item1.PropertyType, headers, propertyData.Value.Item2);
+        Assert.True(bindResult.IsModelSet);
+        ListTupleArrayProperty = (List<(string, string[])>?)bindResult.Model;
+        Assert.Equal("TEST_KEY_1", ListTupleArrayProperty?.FirstOrDefault().Item1);
+        Assert.Equal("TEST_VALUE_1", ListTupleArrayProperty?.FirstOrDefault().Item2.FirstOrDefault());
+    }
+
+    [Fact]
+    public void ModelBinders_HeaderArray_ListTupleList()
+    {
+        var propertyData = GetPropertyData(nameof(ListTupleListProperty));
+        Assert.NotNull(propertyData);
+
+        var headers = new[] { "TEST_KEY_1__TEST_VALUE_1" };
+        var bindResult = HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyData.Value.Item1.PropertyType, headers, propertyData.Value.Item2);
+        Assert.True(bindResult.IsModelSet);
+        ListTupleListProperty = (List<(string, List<string>)>?)bindResult.Model;
+        Assert.Equal("TEST_KEY_1", ListTupleListProperty?.FirstOrDefault().Item1);
+        Assert.Equal("TEST_VALUE_1", ListTupleListProperty?.FirstOrDefault().Item2.FirstOrDefault());
+    }
+
+    [Fact]
     public void ModelBinders_HeaderArray_EnumerableTuple()
     {
         var propertyData = GetPropertyData(nameof(EnumerableTupleProperty));
@@ -164,6 +331,34 @@ public class ModelBinders : IClassFixture<CollectionFixture>
         EnumerableTupleProperty = (IEnumerable<(string, string)>?)bindResult.Model;
         Assert.Equal("TEST_KEY_1", EnumerableTupleProperty?.FirstOrDefault().Item1);
         Assert.Equal("TEST_VALUE_1", EnumerableTupleProperty?.FirstOrDefault().Item2);
+    }
+
+    [Fact]
+    public void ModelBinders_HeaderArray_ArrayTuple()
+    {
+        var propertyData = GetPropertyData(nameof(ArrayTupleProperty));
+        Assert.NotNull(propertyData);
+
+        var headers = new[] { "TEST_KEY_1__TEST_VALUE_1" };
+        var bindResult = HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyData.Value.Item1.PropertyType, headers, propertyData.Value.Item2);
+        Assert.True(bindResult.IsModelSet);
+        ArrayTupleProperty = ((string, string)[]?)bindResult.Model;
+        Assert.Equal("TEST_KEY_1", ArrayTupleProperty?.FirstOrDefault().Item1);
+        Assert.Equal("TEST_VALUE_1", ArrayTupleProperty?.FirstOrDefault().Item2);
+    }
+
+    [Fact]
+    public void ModelBinders_HeaderArray_ListTuple()
+    {
+        var propertyData = GetPropertyData(nameof(ListTupleProperty));
+        Assert.NotNull(propertyData);
+
+        var headers = new[] { "TEST_KEY_1__TEST_VALUE_1" };
+        var bindResult = HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyData.Value.Item1.PropertyType, headers, propertyData.Value.Item2);
+        Assert.True(bindResult.IsModelSet);
+        ListTupleProperty = (List<(string, string)>?)bindResult.Model;
+        Assert.Equal("TEST_KEY_1", ListTupleProperty?.FirstOrDefault().Item1);
+        Assert.Equal("TEST_VALUE_1", ListTupleProperty?.FirstOrDefault().Item2);
     }
 
     [Fact]
