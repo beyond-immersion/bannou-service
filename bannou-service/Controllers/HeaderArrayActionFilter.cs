@@ -70,6 +70,27 @@ public class HeaderArrayActionFilter : IActionFilter
 
                     break;
 
+                case IEnumerable<(string, IEnumerable<string>)> propVal:
+                    foreach (var kvp in propVal)
+                        foreach (var stringVal in kvp.Item2)
+                            headerKVPs.Add((kvp.Item1, stringVal));
+
+                    break;
+
+                case IEnumerable<(string, string[])> propVal:
+                    foreach (var kvp in propVal)
+                        foreach (var stringVal in kvp.Item2)
+                            headerKVPs.Add((kvp.Item1, stringVal));
+
+                    break;
+
+                case IEnumerable<(string, List<string>)> propVal:
+                    foreach (var kvp in propVal)
+                        foreach (var stringVal in kvp.Item2)
+                            headerKVPs.Add((kvp.Item1, stringVal));
+
+                    break;
+
                 case IEnumerable<(string, string)> propVal:
                     foreach (var kvp in propVal)
                         headerKVPs.Add((kvp.Item1, kvp.Item2));
