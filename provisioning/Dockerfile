@@ -4,7 +4,7 @@ COPY ./ /app/
 RUN apt-get update && apt-get install -y libxml2-utils
 
 WORKDIR /app
-RUN bash build-libs.sh
+RUN build-libs.sh
 WORKDIR /
 
 RUN dotnet dev-certs https

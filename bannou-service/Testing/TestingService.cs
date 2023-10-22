@@ -155,9 +155,9 @@ public class TestingService : IDaprService
     {
         var testsFound = false;
         var results = true;
-        if (AsyncServiceTests.ContainsKey(service))
+        if (AsyncServiceTests.TryGetValue(service, out var asyncServiceTests))
         {
-            foreach (KeyValuePair<string, Func<TestingService, Task<bool>>> testLookup in AsyncServiceTests[service])
+            foreach (KeyValuePair<string, Func<TestingService, Task<bool>>> testLookup in asyncServiceTests)
             {
                 testsFound = true;
                 Program.Logger?.Log(LogLevel.Debug, $"Running test '{testLookup.Key}' against service '{service}'.");

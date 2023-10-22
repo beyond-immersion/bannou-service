@@ -28,7 +28,7 @@ public class HeaderArrayModelBinder : IModelBinder
 
     public static ModelBindingResult BindPropertyToHeaderArray(Type propertyType, IEnumerable<string> headers, FromHeaderArrayAttribute propertyAttr)
     {
-        if (headers.Count() == 0)
+        if (!headers.Any())
             return ModelBindingResult.Failed();
 
         try
@@ -53,8 +53,8 @@ public class HeaderArrayModelBinder : IModelBinder
                     var headerKey = headerString[..delimIndex];
                     var headerValue = headerString.Substring(headerKey.Length + delim.Length, headerString.Length - headerKey.Length - delim.Length);
 
-                    if (headerLookup.ContainsKey(headerKey))
-                        headerLookup[headerKey].Add(headerValue);
+                    if (headerLookup.TryGetValue(headerKey, out var existingList))
+                        existingList.Add(headerValue);
                     else
                         headerLookup[headerKey] = new List<string>() { headerValue };
                 }
@@ -82,8 +82,8 @@ public class HeaderArrayModelBinder : IModelBinder
                     var headerKey = headerString[..delimIndex];
                     var headerValue = headerString.Substring(headerKey.Length + delim.Length, headerString.Length - headerKey.Length - delim.Length);
 
-                    if (headerLookup.ContainsKey(headerKey))
-                        headerLookup[headerKey].Add(headerValue);
+                    if (headerLookup.TryGetValue(headerKey, out var existingList))
+                        existingList.Add(headerValue);
                     else
                         headerLookup[headerKey] = new List<string>() { headerValue };
                 }
@@ -107,8 +107,8 @@ public class HeaderArrayModelBinder : IModelBinder
                     var headerKey = headerString[..delimIndex];
                     var headerValue = headerString.Substring(headerKey.Length + delim.Length, headerString.Length - headerKey.Length - delim.Length);
 
-                    if (headerLookup.ContainsKey(headerKey))
-                        headerLookup[headerKey] = new List<string>(headerLookup[headerKey]);
+                    if (headerLookup.TryGetValue(headerKey, out var existingList))
+                        (existingList as List<string>)?.Add(headerValue);
                     else
                         headerLookup[headerKey] = new List<string>() { headerValue };
                 }
@@ -154,8 +154,8 @@ public class HeaderArrayModelBinder : IModelBinder
                     var headerKey = headerString[..delimIndex];
                     var headerValue = headerString.Substring(headerKey.Length + delim.Length, headerString.Length - headerKey.Length - delim.Length);
 
-                    if (headerLookup.ContainsKey(headerKey))
-                        headerLookup[headerKey].Add(headerValue);
+                    if (headerLookup.TryGetValue(headerKey, out var existingList))
+                        existingList.Add(headerValue);
                     else
                         headerLookup[headerKey] = new List<string>() { headerValue };
                 }
@@ -182,8 +182,8 @@ public class HeaderArrayModelBinder : IModelBinder
                     var headerKey = headerString[..delimIndex];
                     var headerValue = headerString.Substring(headerKey.Length + delim.Length, headerString.Length - headerKey.Length - delim.Length);
 
-                    if (headerLookup.ContainsKey(headerKey))
-                        headerLookup[headerKey].Add(headerValue);
+                    if (headerLookup.TryGetValue(headerKey, out var existingList))
+                        existingList.Add(headerValue);
                     else
                         headerLookup[headerKey] = new List<string>() { headerValue };
                 }
@@ -211,8 +211,8 @@ public class HeaderArrayModelBinder : IModelBinder
                     var headerKey = headerString[..delimIndex];
                     var headerValue = headerString.Substring(headerKey.Length + delim.Length, headerString.Length - headerKey.Length - delim.Length);
 
-                    if (headerLookup.ContainsKey(headerKey))
-                        headerLookup[headerKey].Add(headerValue);
+                    if (headerLookup.TryGetValue(headerKey, out var existingList))
+                        existingList.Add(headerValue);
                     else
                         headerLookup[headerKey] = new List<string>() { headerValue };
                 }
@@ -239,8 +239,8 @@ public class HeaderArrayModelBinder : IModelBinder
                     var headerKey = headerString[..delimIndex];
                     var headerValue = headerString.Substring(headerKey.Length + delim.Length, headerString.Length - headerKey.Length - delim.Length);
 
-                    if (headerLookup.ContainsKey(headerKey))
-                        headerLookup[headerKey].Add(headerValue);
+                    if (headerLookup.TryGetValue(headerKey, out var existingList))
+                        existingList.Add(headerValue);
                     else
                         headerLookup[headerKey] = new List<string>() { headerValue };
                 }
@@ -268,8 +268,8 @@ public class HeaderArrayModelBinder : IModelBinder
                     var headerKey = headerString[..delimIndex];
                     var headerValue = headerString.Substring(headerKey.Length + delim.Length, headerString.Length - headerKey.Length - delim.Length);
 
-                    if (headerLookup.ContainsKey(headerKey))
-                        headerLookup[headerKey].Item2.Add(headerValue);
+                    if (headerLookup.TryGetValue(headerKey, out var existingList))
+                        existingList.Item2.Add(headerValue);
                     else
                         headerLookup[headerKey] = (headerKey, new List<string>() { headerValue });
                 }
@@ -292,8 +292,8 @@ public class HeaderArrayModelBinder : IModelBinder
                     var headerKey = headerString[..delimIndex];
                     var headerValue = headerString.Substring(headerKey.Length + delim.Length, headerString.Length - headerKey.Length - delim.Length);
 
-                    if (headerLookup.ContainsKey(headerKey))
-                        headerLookup[headerKey].Item2.Add(headerValue);
+                    if (headerLookup.TryGetValue(headerKey, out var existingList))
+                        existingList.Item2.Add(headerValue);
                     else
                         headerLookup[headerKey] = (headerKey, new List<string>() { headerValue });
                 }
