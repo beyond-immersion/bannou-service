@@ -40,13 +40,40 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     public Dictionary<string, string>? DictionaryProperty { get; set; }
 
     [ToHeaderArray]
-    public IEnumerable<(string, string)>? TupleEnumerableProperty { get; set; }
+    public IEnumerable<(string, IEnumerable<string>)>? EnumerableTupleEnumerableProperty { get; set; }
 
     [ToHeaderArray]
-    public (string, string)[]? TupleArrayProperty { get; set; }
+    public IEnumerable<(string, List<string>)>? EnumerableTupleListProperty { get; set; }
 
     [ToHeaderArray]
-    public List<(string, string)>? TupleListProperty { get; set; }
+    public IEnumerable<(string, string[])>? EnumerableTupleArrayProperty { get; set; }
+
+    [ToHeaderArray]
+    public (string, IEnumerable<string>)[]? ArrayTupleEnumerableProperty { get; set; }
+
+    [ToHeaderArray]
+    public (string, List<string>)[]? ArrayTupleListProperty { get; set; }
+
+    [ToHeaderArray]
+    public (string, string[])[]? ArrayTupleArrayProperty { get; set; }
+
+    [ToHeaderArray]
+    public List<(string, IEnumerable<string>)>? ListTupleEnumerableProperty { get; set; }
+
+    [ToHeaderArray]
+    public List<(string, List<string>)>? ListTupleListProperty { get; set; }
+
+    [ToHeaderArray]
+    public List<(string, string[])>? ListTupleArrayProperty { get; set; }
+
+    [ToHeaderArray]
+    public IEnumerable<(string, string)>? EnumerableTupleProperty { get; set; }
+
+    [ToHeaderArray]
+    public (string, string)[]? ArrayTupleProperty { get; set; }
+
+    [ToHeaderArray]
+    public List<(string, string)>? ListTupleProperty { get; set; }
 
     [ToHeaderArray]
     public IEnumerable<string>? EnumerableProperty { get; set; }
@@ -844,17 +871,710 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public void ActionFilters_HeaderArray_TupleEnumerable()
+    public void ActionFilters_HeaderArray_EnumerableTupleEnumerable()
     {
-        var propertyName = nameof(TupleEnumerableProperty);
+        var propertyName = nameof(EnumerableTupleEnumerableProperty);
 
         // test null value
-        TupleEnumerableProperty = null;
+        EnumerableTupleEnumerableProperty = null;
+        var propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+
+        // test one key, one value
+        EnumerableTupleEnumerableProperty = new (string, IEnumerable<string>)[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test one key, two values
+        EnumerableTupleEnumerableProperty = new (string, IEnumerable<string>)[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1", "TEST_VALUE_2" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test two keys, one value each
+        EnumerableTupleEnumerableProperty = new (string, IEnumerable<string>)[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1" } ),
+            ( "TEST_KEY_2", new[] { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test two keys, different number of values
+        EnumerableTupleEnumerableProperty = new (string, IEnumerable<string>)[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1", "TEST_VALUE_2" } ),
+            ( "TEST_KEY_2", new[] { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test back to null property value (no caching)
+        EnumerableTupleEnumerableProperty = null;
+        propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+    }
+
+    [Fact]
+    public void ActionFilters_HeaderArray_EnumerableTupleList()
+    {
+        var propertyName = nameof(EnumerableTupleListProperty);
+
+        // test null value
+        EnumerableTupleListProperty = null;
+        var propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+
+        // test one key, one value
+        EnumerableTupleListProperty = new (string, List<string>)[]
+        {
+            ( "TEST_KEY_1", new() { "TEST_VALUE_1" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test one key, two values
+        EnumerableTupleListProperty = new (string, List<string>)[]
+        {
+            ( "TEST_KEY_1", new() { "TEST_VALUE_1", "TEST_VALUE_2" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test two keys, one value each
+        EnumerableTupleListProperty = new (string, List<string>)[]
+        {
+            ( "TEST_KEY_1", new() { "TEST_VALUE_1" } ),
+            ( "TEST_KEY_2", new() { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test two keys, different number of values
+        EnumerableTupleListProperty = new (string, List<string>)[]
+        {
+            ( "TEST_KEY_1", new() { "TEST_VALUE_1", "TEST_VALUE_2" } ),
+            ( "TEST_KEY_2", new() { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test back to null property value (no caching)
+        EnumerableTupleListProperty = null;
+        propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+    }
+
+    [Fact]
+    public void ActionFilters_HeaderArray_EnumerableTupleArray()
+    {
+        var propertyName = nameof(EnumerableTupleArrayProperty);
+
+        // test null value
+        EnumerableTupleArrayProperty = null;
+        var propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+
+        // test one key, one value
+        EnumerableTupleArrayProperty = new (string, string[])[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test one key, two values
+        EnumerableTupleArrayProperty = new (string, string[])[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1", "TEST_VALUE_2" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test two keys, one value each
+        EnumerableTupleArrayProperty = new (string, string[])[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1" } ),
+            ( "TEST_KEY_2", new[] { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test two keys, different number of values
+        EnumerableTupleArrayProperty = new (string, string[])[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1", "TEST_VALUE_2" } ),
+            ( "TEST_KEY_2", new[] { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test back to null property value (no caching)
+        EnumerableTupleArrayProperty = null;
+        propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+    }
+
+    [Fact]
+    public void ActionFilters_HeaderArray_ArrayTupleEnumerable()
+    {
+        var propertyName = nameof(ArrayTupleEnumerableProperty);
+
+        // test null value
+        ArrayTupleEnumerableProperty = null;
+        var propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+
+        // test one key, one value
+        ArrayTupleEnumerableProperty = new (string, IEnumerable<string>)[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test one key, two values
+        ArrayTupleEnumerableProperty = new (string, IEnumerable<string>)[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1", "TEST_VALUE_2" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test two keys, one value each
+        ArrayTupleEnumerableProperty = new (string, IEnumerable<string>)[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1" } ),
+            ( "TEST_KEY_2", new[] { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test two keys, different number of values
+        ArrayTupleEnumerableProperty = new (string, IEnumerable<string>)[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1", "TEST_VALUE_2" } ),
+            ( "TEST_KEY_2", new[] { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test back to null property value (no caching)
+        ArrayTupleEnumerableProperty = null;
+        propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+    }
+
+    [Fact]
+    public void ActionFilters_HeaderArray_ArrayTupleList()
+    {
+        var propertyName = nameof(ArrayTupleListProperty);
+
+        // test null value
+        ArrayTupleListProperty = null;
+        var propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+
+        // test one key, one value
+        ArrayTupleListProperty = new (string, List<string>)[]
+        {
+            ( "TEST_KEY_1", new() { "TEST_VALUE_1" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test one key, two values
+        ArrayTupleListProperty = new (string, List<string>)[]
+        {
+            ( "TEST_KEY_1", new() { "TEST_VALUE_1", "TEST_VALUE_2" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test two keys, one value each
+        ArrayTupleListProperty = new (string, List<string>)[]
+        {
+            ( "TEST_KEY_1", new() { "TEST_VALUE_1" } ),
+            ( "TEST_KEY_2", new() { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test two keys, different number of values
+        ArrayTupleListProperty = new (string, List<string>)[]
+        {
+            ( "TEST_KEY_1", new() { "TEST_VALUE_1", "TEST_VALUE_2" } ),
+            ( "TEST_KEY_2", new() { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test back to null property value (no caching)
+        ArrayTupleListProperty = null;
+        propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+    }
+
+    [Fact]
+    public void ActionFilters_HeaderArray_ArrayTupleArray()
+    {
+        var propertyName = nameof(ArrayTupleArrayProperty);
+
+        // test null value
+        ArrayTupleArrayProperty = null;
+        var propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+
+        // test one key, one value
+        ArrayTupleArrayProperty = new (string, string[])[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test one key, two values
+        ArrayTupleArrayProperty = new (string, string[])[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1", "TEST_VALUE_2" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test two keys, one value each
+        ArrayTupleArrayProperty = new (string, string[])[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1" } ),
+            ( "TEST_KEY_2", new[] { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test two keys, different number of values
+        ArrayTupleArrayProperty = new (string, string[])[]
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1", "TEST_VALUE_2" } ),
+            ( "TEST_KEY_2", new[] { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test back to null property value (no caching)
+        ArrayTupleArrayProperty = null;
+        propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+    }
+
+    [Fact]
+    public void ActionFilters_HeaderArray_ListTupleEnumerable()
+    {
+        var propertyName = nameof(ListTupleEnumerableProperty);
+
+        // test null value
+        ListTupleEnumerableProperty = null;
+        var propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+
+        // test one key, one value
+        ListTupleEnumerableProperty = new()
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test one key, two values
+        ListTupleEnumerableProperty = new()
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1", "TEST_VALUE_2" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test two keys, one value each
+        ListTupleEnumerableProperty = new()
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1" } ),
+            ( "TEST_KEY_2", new[] { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test two keys, different number of values
+        ListTupleEnumerableProperty = new()
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1", "TEST_VALUE_2" } ),
+            ( "TEST_KEY_2", new[] { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test back to null property value (no caching)
+        ListTupleEnumerableProperty = null;
+        propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+    }
+
+    [Fact]
+    public void ActionFilters_HeaderArray_ListTupleList()
+    {
+        var propertyName = nameof(ListTupleListProperty);
+
+        // test null value
+        ListTupleListProperty = null;
+        var propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+
+        // test one key, one value
+        ListTupleListProperty = new()
+        {
+            ( "TEST_KEY_1", new() { "TEST_VALUE_1" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test one key, two values
+        ListTupleListProperty = new()
+        {
+            ( "TEST_KEY_1", new() { "TEST_VALUE_1", "TEST_VALUE_2" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test two keys, one value each
+        ListTupleListProperty = new()
+        {
+            ( "TEST_KEY_1", new() { "TEST_VALUE_1" } ),
+            ( "TEST_KEY_2", new() { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test two keys, different number of values
+        ListTupleListProperty = new()
+        {
+            ( "TEST_KEY_1", new() { "TEST_VALUE_1", "TEST_VALUE_2" } ),
+            ( "TEST_KEY_2", new() { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test back to null property value (no caching)
+        ListTupleListProperty = null;
+        propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+    }
+
+    [Fact]
+    public void ActionFilters_HeaderArray_ListTupleArray()
+    {
+        var propertyName = nameof(ListTupleArrayProperty);
+
+        // test null value
+        ListTupleArrayProperty = null;
+        var propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+
+        // test one key, one value
+        ListTupleArrayProperty = new()
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test one key, two values
+        ListTupleArrayProperty = new()
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1", "TEST_VALUE_2" } )
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+
+        // test two keys, one value each
+        ListTupleArrayProperty = new()
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1" } ),
+            ( "TEST_KEY_2", new[] { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test two keys, different number of values
+        ListTupleArrayProperty = new()
+        {
+            ( "TEST_KEY_1", new[] { "TEST_VALUE_1", "TEST_VALUE_2" } ),
+            ( "TEST_KEY_2", new[] { "TEST_VALUE_2" } ),
+        };
+        propertyData = GetPropertyData(propertyName);
+        Assert.NotNull(propertyData);
+        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        Assert.NotNull(headerArray);
+        Assert.True(headerArray.Count(t => string.Equals(propertyName, t.Item1)) == 1);
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
+        Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_1"));
+        Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_2"));
+
+        // test back to null property value (no caching)
+        ListTupleArrayProperty = null;
+        propertyData = GetPropertyData(propertyName);
+        Assert.Null(propertyData);
+    }
+
+    [Fact]
+    public void ActionFilters_HeaderArray_TupleEnumerable()
+    {
+        var propertyName = nameof(EnumerableTupleProperty);
+
+        // test null value
+        EnumerableTupleProperty = null;
         var propertyData = GetPropertyData(propertyName);
         Assert.Null(propertyData);
 
         // test one key/value pair
-        TupleEnumerableProperty = new[]
+        EnumerableTupleProperty = new[]
         {
             ( "TEST_KEY_1", "TEST_VALUE_1" )
         };
@@ -869,7 +1589,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
 
         // test two key/value pairs
-        TupleEnumerableProperty = new[]
+        EnumerableTupleProperty = new[]
         {
             ( "TEST_KEY_1", "TEST_VALUE_1" ),
             ( "TEST_KEY_2", "TEST_VALUE_1" )
@@ -885,7 +1605,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
 
         // test back to null property value (no caching)
-        TupleEnumerableProperty = null;
+        EnumerableTupleProperty = null;
         propertyData = GetPropertyData(propertyName);
         Assert.Null(propertyData);
     }
@@ -893,15 +1613,15 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     [Fact]
     public void ActionFilters_HeaderArray_TupleArray()
     {
-        var propertyName = nameof(TupleArrayProperty);
+        var propertyName = nameof(ArrayTupleProperty);
 
         // test null value
-        TupleArrayProperty = null;
+        ArrayTupleProperty = null;
         var propertyData = GetPropertyData(propertyName);
         Assert.Null(propertyData);
 
         // test one key/value pair
-        TupleArrayProperty = new[]
+        ArrayTupleProperty = new[]
         {
             ( "TEST_KEY_1", "TEST_VALUE_1" )
         };
@@ -916,7 +1636,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
 
         // test two key/value pairs
-        TupleArrayProperty = new[]
+        ArrayTupleProperty = new[]
         {
             ( "TEST_KEY_1", "TEST_VALUE_1" ),
             ( "TEST_KEY_2", "TEST_VALUE_1" )
@@ -932,7 +1652,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
 
         // test back to null property value (no caching)
-        TupleArrayProperty = null;
+        ArrayTupleProperty = null;
         propertyData = GetPropertyData(propertyName);
         Assert.Null(propertyData);
     }
@@ -940,15 +1660,15 @@ public class ActionFilters : IClassFixture<CollectionFixture>
     [Fact]
     public void ActionFilters_HeaderArray_TupleList()
     {
-        var propertyName = nameof(TupleListProperty);
+        var propertyName = nameof(ListTupleProperty);
 
         // test null value
-        TupleListProperty = null;
+        ListTupleProperty = null;
         var propertyData = GetPropertyData(propertyName);
         Assert.Null(propertyData);
 
         // test one key/value pair
-        TupleListProperty = new()
+        ListTupleProperty = new()
         {
             ( "TEST_KEY_1", "TEST_VALUE_1" )
         };
@@ -963,7 +1683,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
 
         // test two key/value pairs
-        TupleListProperty = new()
+        ListTupleProperty = new()
         {
             ( "TEST_KEY_1", "TEST_VALUE_1" ),
             ( "TEST_KEY_2", "TEST_VALUE_1" )
@@ -979,7 +1699,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         Assert.DoesNotContain(headerArray, t => t.Item2.Contains("TEST_KEY_2__TEST_VALUE_2"));
 
         // test back to null property value (no caching)
-        TupleListProperty = null;
+        ListTupleProperty = null;
         propertyData = GetPropertyData(propertyName);
         Assert.Null(propertyData);
     }
