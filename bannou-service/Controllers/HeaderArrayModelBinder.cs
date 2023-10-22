@@ -46,7 +46,7 @@ public class HeaderArrayModelBinder : IModelBinder
                 if (headerLookup.ContainsKey(headerKey))
                     headerLookup[headerKey].Add(headerValue);
                 else
-                   headerLookup[headerKey] = new List<string>() { headerValue };
+                    headerLookup[headerKey] = new List<string>() { headerValue };
             }
 
             var headerLookupWithArrays = new Dictionary<string, string[]>();
