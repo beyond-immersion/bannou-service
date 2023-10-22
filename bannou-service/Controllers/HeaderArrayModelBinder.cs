@@ -19,24 +19,24 @@ public class HeaderArrayModelBinder : IModelBinder
         if (headerStrings.Count == 0)
             return;
 
-        var delim = "__";
-        if (Program.Configuration.Enable_Custom_Header_Delineation)
-        {
-            var bindingAttr = bindingContext.ModelType.GetCustomAttribute<FromHeaderArrayAttribute>();
-            if (bindingAttr != null && !string.IsNullOrWhiteSpace(bindingAttr.Delimeter))
-                delim = bindingAttr.Delimeter;
-        }
+        var propertyAttr = bindingContext.ModelType.GetCustomAttribute<FromHeaderArrayAttribute>();
+        if (propertyAttr == null)
+            return;
 
-        bindingContext.Result = BindPropertyToHeaderArray(bindingContext.ModelType, headerStrings, delim);
+        bindingContext.Result = BindPropertyToHeaderArray(bindingContext.ModelType, headerStrings, propertyAttr);
     }
 
-    public static ModelBindingResult BindPropertyToHeaderArray(Type propertyType, IEnumerable<string> headers, string delim = "__")
+    public static ModelBindingResult BindPropertyToHeaderArray(Type propertyType, IEnumerable<string> headers, FromHeaderArrayAttribute propertyAttr)
     {
         if (headers.Count() == 0)
             return ModelBindingResult.Failed();
 
         try
         {
+            var delim = "__";
+            if (!string.IsNullOrWhiteSpace(propertyAttr.Delimeter))
+                delim = propertyAttr.Delimeter;
+
             if (propertyType.IsAssignableFrom(typeof(Dictionary<string, string[]>)))
             {
                 var headerLookup = new Dictionary<string, List<string>>();
@@ -152,7 +152,11 @@ public class HeaderArrayModelBinder : IModelBinder
                 return ModelBindingResult.Success(headerLookup);
             }
 
-            return ModelBindingResult.Success(headers.ToArray());
+            if (propertyType.IsAssignableFrom(typeof(List<string>)))
+                return ModelBindingResult.Success(headers.ToList());
+
+            if (propertyType.IsAssignableFrom(typeof(string[])))
+                return ModelBindingResult.Success(headers.ToArray());
         }
         catch (Exception exc)
         {

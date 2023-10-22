@@ -8,32 +8,32 @@ public class Controllers : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
 
-    public class TestController_NoAttribute : ControllerBase, IDaprController { }
+    public class Controller_NoAttribute : ControllerBase, IDaprController { }
 
     [DaprController]
-    public class TestController_NoService : ControllerBase, IDaprController { }
+    public class Controller_NoService : ControllerBase, IDaprController { }
 
-    [DaprController(interfaceType: typeof(TestService_SingleController))]
-    public class TestController_SingleController : ControllerBase, IDaprController { }
+    [DaprController(interfaceType: typeof(Service_SingleController))]
+    public class Controller_SingleController : ControllerBase, IDaprController { }
 
-    [DaprService("ControllerTests.OneControllerTest", interfaceType: typeof(TestService_SingleController))]
-    public class TestService_SingleController : IDaprService { }
+    [DaprService("ControllerTests.OneController", interfaceType: typeof(Service_SingleController))]
+    public class Service_SingleController : IDaprService { }
 
-    [DaprController(interfaceType: typeof(TestService_MultipleControllers))]
-    public class TestControllerA_MultipleControllers : ControllerBase, IDaprController { }
+    [DaprController(interfaceType: typeof(Service_MultipleControllers))]
+    public class ControllerA_MultipleControllers : ControllerBase, IDaprController { }
 
-    [DaprController(interfaceType: typeof(TestService_MultipleControllers))]
-    public class TestControllerB_MultipleControllers : ControllerBase, IDaprController { }
+    [DaprController(interfaceType: typeof(Service_MultipleControllers))]
+    public class ControllerB_MultipleControllers : ControllerBase, IDaprController { }
 
-    [DaprService("ControllerTests.MultipleControllerTest", interfaceType: typeof(TestService_MultipleControllers))]
-    public class TestService_MultipleControllers : IDaprService { }
+    [DaprService("ControllerTests.MultipleControllers", interfaceType: typeof(Service_MultipleControllers))]
+    public class Service_MultipleControllers : IDaprService { }
 
     public interface ITestService_FromInterface : IDaprService { }
-    [DaprService("ControllerTests.FromInterface", typeof(ITestService_FromInterface))]
-    public class TestService_FromInterface: ITestService_FromInterface { }
+    [DaprService("ControllerTests.Interface", typeof(ITestService_FromInterface))]
+    public class Service_FromInterface: ITestService_FromInterface { }
 
     [DaprController(typeof(ITestService_FromInterface))]
-    public class TestController_FromInterface: ControllerBase, IDaprController { }
+    public class Controller_FromInterface: ControllerBase, IDaprController { }
 
     private Controllers(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
 
@@ -44,195 +44,195 @@ public class Controllers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public void FindNonServiceControllers()
+    public void Controllers_FindAllNonServiceControllers()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.NonServiceControllers;
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 
     [Fact]
-    public void FindAllDaprControllers()
+    public void Controllers_FindAllControllers()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.Controllers;
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 
     [Fact]
-    public void FindServiceControllers()
+    public void Controllers_FindAllServiceControllers()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.ServiceControllers;
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 
     [Fact]
-    public void FindServiceControllers_EnabledOnly()
+    public void Controllers_FindServiceControllers_Enabled()
     {
-        Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Disabled".ToUpper(), null);
-        Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Disabled".ToUpper(), null);
+        Environment.SetEnvironmentVariable("ControllerTests.OneController_Service_Disabled".ToUpper(), null);
+        Environment.SetEnvironmentVariable("ControllerTests.MultipleControllers_Service_Disabled".ToUpper(), null);
 
         try
         {
             var serviceControllers = IDaprController.EnabledServiceControllers;
-            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(TestController_NoService));
-            Assert.Contains(serviceControllers, t => t.Item1 == typeof(TestController_SingleController));
-            Assert.Contains(serviceControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-            Assert.Contains(serviceControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(Controller_NoService));
+            Assert.Contains(serviceControllers, t => t.Item1 == typeof(Controller_SingleController));
+            Assert.Contains(serviceControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+            Assert.Contains(serviceControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
 
-            Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Disabled".ToUpper(), "true");
-            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Disabled".ToUpper(), "false");
+            Environment.SetEnvironmentVariable("ControllerTests.OneController_Service_Disabled".ToUpper(), "true");
+            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllers_Service_Disabled".ToUpper(), "false");
             serviceControllers = IDaprController.EnabledServiceControllers;
-            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(TestController_NoService));
-            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(TestController_SingleController));
-            Assert.Contains(serviceControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-            Assert.Contains(serviceControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(Controller_NoService));
+            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(Controller_SingleController));
+            Assert.Contains(serviceControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+            Assert.Contains(serviceControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
 
-            Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Disabled".ToUpper(), "false");
-            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Disabled".ToUpper(), "true");
+            Environment.SetEnvironmentVariable("ControllerTests.OneController_Service_Disabled".ToUpper(), "false");
+            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllers_Service_Disabled".ToUpper(), "true");
             serviceControllers = IDaprController.EnabledServiceControllers;
-            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(TestController_NoService));
-            Assert.Contains(serviceControllers, t => t.Item1 == typeof(TestController_SingleController));
-            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(Controller_NoService));
+            Assert.Contains(serviceControllers, t => t.Item1 == typeof(Controller_SingleController));
+            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+            Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("ControllerTests.OneControllerTest_Service_Disabled".ToUpper(), null);
-            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllerTest_Service_Disabled".ToUpper(), null);
+            Environment.SetEnvironmentVariable("ControllerTests.OneController_Service_Disabled".ToUpper(), null);
+            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllers_Service_Disabled".ToUpper(), null);
         }
     }
 
     [Fact]
-    public void FindServiceControllers_ByServiceInterface()
+    public void Controllers_FindServiceControllers_ByInterface()
     {
         (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface(typeof(ITestService_FromInterface));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_FromInterface));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(Controller_FromInterface));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 
     [Fact]
-    public void FindServiceControllers_ByServiceInterface_OneController()
+    public void Controllers_FindServiceControllers_ByInterface_OneController()
     {
-        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface(typeof(TestService_SingleController));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_FromInterface));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface(typeof(Service_SingleController));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_FromInterface));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 
     [Fact]
-    public void FindServiceControllers_ByServiceInterface_MultipleControllers()
+    public void Controllers_FindServiceControllers_ByInterface_MultipleControllers()
     {
-        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface(typeof(TestService_MultipleControllers));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_FromInterface));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface(typeof(Service_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_FromInterface));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 
     [Fact]
-    public void FindServiceControllers_ByServiceInterface_OneController_Generic()
+    public void Controllers_FindServiceControllers_ByInterface_OneController_Generic()
     {
-        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface<TestService_SingleController>();
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_FromInterface));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface<Service_SingleController>();
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_FromInterface));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 
     [Fact]
-    public void FindServiceControllers_ByServiceInterface_MultipleControllers_Generic()
+    public void Controllers_FindServiceControllers_ByInterface_MultipleControllers_Generic()
     {
-        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface<TestService_MultipleControllers>();
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_FromInterface));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForInterface<Service_MultipleControllers>();
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_FromInterface));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 
     [Fact]
-    public void FindServiceControllers_ByServiceImplementation()
+    public void Controllers_FindServiceControllers_ByImplementation()
     {
-        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation(typeof(TestService_FromInterface));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_FromInterface));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation(typeof(Service_FromInterface));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(Controller_FromInterface));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 
     [Fact]
-    public void FindServiceControllers_ByServiceImplementation_OneController()
+    public void Controllers_FindServiceControllers_ByImplementation_OneController()
     {
-        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation(typeof(TestService_SingleController));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_FromInterface));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation(typeof(Service_SingleController));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_FromInterface));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 
     [Fact]
-    public void FindServiceControllers_ByServiceImplementation_MultipleControllers()
+    public void Controllers_FindServiceControllers_ByImplementation_MultipleControllers()
     {
-        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation(typeof(TestService_MultipleControllers));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_FromInterface));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation(typeof(Service_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_FromInterface));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 
     [Fact]
-    public void FindServiceControllers_ByServiceImplementation_OneController_Generic()
+    public void Controllers_FindServiceControllers_ByImplementation_OneController_Generic()
     {
-        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation<TestService_SingleController>();
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_FromInterface));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation<Service_SingleController>();
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_FromInterface));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 
     [Fact]
-    public void FindServiceControllers_ByServiceImplementation_MultipleControllers_Generic()
+    public void Controllers_FindServiceControllers_ByImplementation_MultipleControllers_Generic()
     {
-        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation<TestService_MultipleControllers>();
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoAttribute));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_NoService));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_SingleController));
-        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(TestController_FromInterface));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestControllerA_MultipleControllers));
-        Assert.Contains(allControllers, t => t.Item1 == typeof(TestControllerB_MultipleControllers));
+        (Type, DaprControllerAttribute)[] allControllers = IDaprController.FindForImplementation<Service_MultipleControllers>();
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoAttribute));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_NoService));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_SingleController));
+        Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_FromInterface));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
+        Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
     }
 }
