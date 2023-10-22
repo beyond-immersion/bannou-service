@@ -36,6 +36,14 @@ public class AppConfiguration : BaseServiceConfiguration
     public bool Services_Enabled { get; set; } = true;
 
     /// <summary>
+    /// If disabled, will skip a bit of reflection that checks
+    /// for the custom delineator to use for all API requests.
+    /// 
+    /// Configurable to measure impact.
+    /// </summary>
+    public bool Enable_Custom_Header_Delineation { get; set; } = false;
+
+    /// <summary>
     /// The port the HTTP webhost is listening on.
     /// </summary>
     public int HTTP_Web_Host_Port { get; set; } = 80;
