@@ -8,9 +8,10 @@ namespace BeyondImmersion.BannouService.Attributes;
 /// Attribute to propagate common headers through dapr requests.
 /// </summary>
 [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-public sealed class FromHeaderArrayAttribute : Attribute, IBindingSourceMetadata, IModelNameProvider, IFromHeaderMetadata
+public sealed class FromHeaderArrayAttribute : Attribute, IBindingSourceMetadata, IModelNameProvider, IFromHeaderMetadata, IBinderTypeProviderMetadata
 {
     public BindingSource BindingSource => BindingSource.Header;
+    public Type? BinderType => typeof(HeaderArrayModelBinder);
     public string? Name { get; set; }
     public string? Delimeter { get; set; }
 }

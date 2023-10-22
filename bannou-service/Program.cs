@@ -112,7 +112,10 @@ public static class Program
         {
             // configure services
             _ = webAppBuilder.Services.AddAuthentication();
-            _ = webAppBuilder.Services.AddControllers();
+            _ = webAppBuilder.Services.AddControllers(mvcOptions =>
+            {
+                mvcOptions.Filters.Add(typeof(HeaderArrayActionFilter));
+            });
             webAppBuilder.Services.AddDaprClient();
             webAppBuilder.Services.AddDaprServices();
 

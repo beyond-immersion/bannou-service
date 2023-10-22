@@ -1,4 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Testing.Messages;
+using Microsoft.Extensions.Primitives;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BeyondImmersion.BannouService.Testing.Tests;
@@ -41,7 +42,8 @@ public static class BasicTests
             TEST_GET_Loopback,
             TEST_GET_ID,
             TEST_GET_Service_ID,
-            TEST_POST
+            TEST_POST,
+            TEST_RequestIDPropagation
         };
 
         foreach (var test in tests)
@@ -125,5 +127,39 @@ public static class BasicTests
 
         var receivedData = (TestingRunTestRequest)service.LastTestRequest;
         return receivedData.ID == testID && receivedData.Service == testService;
+    }
+
+    private static async Task<bool> TEST_RequestIDPropagation(TestingService service)
+    {
+        service.ResetTestVars();
+        var testID = "test_id_1";
+        var testService = "inventory";
+        var serviceID = Guid.NewGuid();
+        var dataModel = new TestingRunTestRequest()
+        {
+            ID = testID,
+            Service = testService,
+            RequestIDs = new()
+            {
+                ["SERVICE_ID"] = serviceID.ToString()
+            }
+        };
+
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
+        if (!newRequest.Headers.TryGetValues("SERVICE_ID", out var headerValues) || !headerValues.Contains(serviceID.ToString()))
+        {
+            Program.Logger.Log(LogLevel.Error, "SERVICE_ID value not auto-added to request headers properly.");
+            return false;
+        }
+
+        await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
+
+        await Task.Delay(TEST_WAIT_TIME_MS);
+
+        if (service.LastTestRequest == null)
+            return false;
+
+        var receivedData = (TestingRunTestRequest)service.LastTestRequest;
+        return receivedData.RequestIDs["SERVICE_ID"] == serviceID.ToString();
     }
 }

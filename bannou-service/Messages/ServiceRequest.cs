@@ -19,4 +19,6 @@ where T : class, IServiceResponse, new()
 [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
 public class ServiceRequest : IServiceRequest
 {
+    [ToHeaderArray(Name = "REQUEST_IDS")]
+    public Dictionary<string, string> RequestIDs { get; set; }
 }
