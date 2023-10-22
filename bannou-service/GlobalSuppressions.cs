@@ -5,4 +5,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Usage", "CA2254:Template should be a static expression", Justification = "Unit test logs")]
+[assembly: SuppressMessage("Usage", "CA2254:Template should be a static expression",
+    Justification = "Bullshit- log aggregators/visualizers don't HAVE to use event grouping based on the message content. " +
+        "Also, reflected type issues really need the specific assembly/type name prominently in the message (+other use cases).")]

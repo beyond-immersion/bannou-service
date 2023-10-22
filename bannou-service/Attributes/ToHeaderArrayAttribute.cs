@@ -7,5 +7,5 @@
 public sealed class ToHeaderArrayAttribute : Attribute
 {
     public string? Name { get; set; }
-    public string? Delineator { get; set; }
+    public string? Delimeter { get; set; }
 }

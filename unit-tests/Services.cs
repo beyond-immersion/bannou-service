@@ -1,7 +1,7 @@
 using BeyondImmersion.BannouService.Configuration;
 using Xunit.Abstractions;
 
-namespace BeyondImmersion.UnitTests.Services;
+namespace BeyondImmersion.BannouService.UnitTests;
 
 [Collection("unit tests")]
 public class Services : IClassFixture<CollectionFixture>

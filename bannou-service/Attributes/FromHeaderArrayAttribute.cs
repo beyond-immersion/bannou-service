@@ -12,5 +12,5 @@ public sealed class FromHeaderArrayAttribute : Attribute, IBindingSourceMetadata
 {
     public BindingSource BindingSource => BindingSource.Header;
     public string? Name { get; set; }
-    public string? Delineator { get; set; }
+    public string? Delimeter { get; set; }
 }

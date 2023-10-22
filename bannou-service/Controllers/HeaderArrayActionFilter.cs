@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Controllers;
@@ -17,7 +17,11 @@ public class HeaderArrayActionFilter : IActionFilter
                 var headerAttr = propertyInfo.GetCustomAttribute<ToHeaderArrayAttribute>();
                 if (headerAttr != null)
                 {
-                    var headersToSet = PropertyValueToHeaderArray(propertyInfo, objectResult.Value, headerAttr);
+                    var propertyValue = propertyInfo.GetValue(objectResult.Value);
+                    if (propertyValue == null)
+                        continue;
+
+                    var headersToSet = PropertyValueToHeaderArray(propertyInfo, propertyValue, headerAttr);
                     foreach (var header in headersToSet)
                         context.HttpContext.Request.Headers.Add(header.Item1, header.Item2);
 
@@ -30,43 +34,50 @@ public class HeaderArrayActionFilter : IActionFilter
         }
     }
 
-    public static (string, string[])[] PropertyValueToHeaderArray(PropertyInfo propertyInfo, object obj, ToHeaderArrayAttribute headerAttr)
+    public static (string, string[])[] PropertyValueToHeaderArray(PropertyInfo propertyInfo, object value, ToHeaderArrayAttribute headerAttr)
     {
         var headersToSet = new List<(string, string[])>();
 
         try
         {
             var headerKVPs = new List<(string, string?)>();
-            switch (obj)
+            switch (value)
             {
-                case IEnumerable<KeyValuePair<string, string[]>> realPropVal:
-                    foreach (var kvp in realPropVal)
+                case IEnumerable<KeyValuePair<string, IEnumerable<string>>> propVal:
+                    foreach (var kvp in propVal)
                         foreach (var stringVal in kvp.Value)
                             headerKVPs.Add((kvp.Key, stringVal));
 
                     break;
 
-                case IEnumerable<KeyValuePair<string, List<string>>> realPropVal:
-                    foreach (var kvp in realPropVal)
+                case IEnumerable<KeyValuePair<string, string[]>> propVal:
+                    foreach (var kvp in propVal)
                         foreach (var stringVal in kvp.Value)
                             headerKVPs.Add((kvp.Key, stringVal));
 
                     break;
 
-                case IEnumerable<KeyValuePair<string, string>> realPropVal:
-                    foreach (var kvp in realPropVal)
+                case IEnumerable<KeyValuePair<string, List<string>>> propVal:
+                    foreach (var kvp in propVal)
+                        foreach (var stringVal in kvp.Value)
+                            headerKVPs.Add((kvp.Key, stringVal));
+
+                    break;
+
+                case IEnumerable<KeyValuePair<string, string>> propVal:
+                    foreach (var kvp in propVal)
                         headerKVPs.Add((kvp.Key, kvp.Value));
 
                     break;
 
-                case IEnumerable<(string, string)> realPropVal:
-                    foreach (var kvp in realPropVal)
+                case IEnumerable<(string, string)> propVal:
+                    foreach (var kvp in propVal)
                         headerKVPs.Add((kvp.Item1, kvp.Item2));
 
                     break;
 
-                case IEnumerable<string> realPropVal:
-                    foreach (var stringVal in realPropVal)
+                case IEnumerable<string> propVal:
+                    foreach (var stringVal in propVal)
                         headerKVPs.Add((stringVal, null));
 
                     break;
@@ -78,20 +89,17 @@ public class HeaderArrayActionFilter : IActionFilter
             if (headerKVPs.Count == 0)
                 return headersToSet.ToArray();
 
-            var delin = "__";
-            if (!string.IsNullOrWhiteSpace(headerAttr.Delineator))
-                delin = headerAttr.Delineator;
+            var delim = "__";
+            if (!string.IsNullOrWhiteSpace(headerAttr.Delimeter))
+                delim = headerAttr.Delimeter;
 
             var headerName = headerAttr.Name ?? propertyInfo.Name;
-            if (headerKVPs.Count > 1 && !headerName.EndsWith("[]"))
-                headerName += "[]";
-
             var headerValues = new List<string>();
             foreach (var headerKVP in headerKVPs)
             {
                 var headerValue = headerKVP.Item1;
                 if (!string.IsNullOrWhiteSpace(headerKVP.Item2))
-                    headerValue = headerValue + delin + headerKVP.Item2;
+                    headerValue = headerValue + delim + headerKVP.Item2;
 
                 headerValues.Add(headerValue);
             }

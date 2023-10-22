@@ -2,7 +2,7 @@ using BeyondImmersion.BannouService.Configuration;
 using Microsoft.Extensions.Configuration;
 using Xunit.Abstractions;
 
-namespace BeyondImmersion.UnitTests.Configuration;
+namespace BeyondImmersion.BannouService.UnitTests;
 
 [Collection("unit tests")]
 public class Configuration : IClassFixture<CollectionFixture>

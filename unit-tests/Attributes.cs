@@ -1,7 +1,7 @@
 using System.Reflection;
 using Xunit.Abstractions;
 
-namespace BeyondImmersion.UnitTests.Attributes;
+namespace BeyondImmersion.BannouService.UnitTests;
 
 [Collection("unit tests")]
 public class Attributes : IClassFixture<CollectionFixture>

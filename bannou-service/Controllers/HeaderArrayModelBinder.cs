@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.Primitives;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Controllers;
@@ -24,8 +23,8 @@ public class HeaderArrayModelBinder : IModelBinder
         if (Program.Configuration.Enable_Custom_Header_Delineation)
         {
             var bindingAttr = bindingContext.ModelType.GetCustomAttribute<FromHeaderArrayAttribute>();
-            if (bindingAttr != null && !string.IsNullOrWhiteSpace(bindingAttr.Delineator))
-                delim = bindingAttr.Delineator;
+            if (bindingAttr != null && !string.IsNullOrWhiteSpace(bindingAttr.Delimeter))
+                delim = bindingAttr.Delimeter;
         }
 
         bindingContext.Result = BindPropertyToHeaderArray(bindingContext.ModelType, headerStrings, delim);
@@ -161,5 +160,5 @@ public class HeaderArrayModelBinder : IModelBinder
         }
 
         return ModelBindingResult.Failed();
-    } 
+    }
 }
