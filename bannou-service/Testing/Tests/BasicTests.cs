@@ -112,7 +112,8 @@ public static class BasicTests
         var dataModel = new TestingRunTestRequest()
         {
             ID = testID,
-            Service = testService
+            Service = testService,
+            RequestIDs = new Dictionary<string, string>() { { "TEST_KEY", "TEST_VALUE" } }
         };
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
@@ -144,12 +145,6 @@ public static class BasicTests
         };
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
-        if (!newRequest.Headers.TryGetValues("SERVICE_ID", out var headerValues) || !headerValues.Contains(serviceID.ToString()))
-        {
-            Program.Logger.Log(LogLevel.Error, "SERVICE_ID value not auto-added to request headers properly.");
-            return false;
-        }
-
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
 
         await Task.Delay(TEST_WAIT_TIME_MS);

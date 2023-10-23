@@ -15,82 +15,82 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         Program.Logger = output.BuildLoggerFor<ActionFilters>();
     }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public IEnumerable<KeyValuePair<string, IEnumerable<string>>>? EnumerableKVPEnumerableProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public IEnumerable<KeyValuePair<string, string[]>>? EnumerableKVPArrayProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public IEnumerable<KeyValuePair<string, List<string>>>? EnumerableKVPListProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public IEnumerable<KeyValuePair<string, string>>? EnumerableKVPProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public Dictionary<string, IEnumerable<string>>? DictionaryEnumerableProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public Dictionary<string, string[]>? DictionaryArrayProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public Dictionary<string, List<string>>? DictionaryListProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public Dictionary<string, string>? DictionaryProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public IEnumerable<(string, IEnumerable<string>)>? EnumerableTupleEnumerableProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public IEnumerable<(string, List<string>)>? EnumerableTupleListProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public IEnumerable<(string, string[])>? EnumerableTupleArrayProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public (string, IEnumerable<string>)[]? ArrayTupleEnumerableProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public (string, List<string>)[]? ArrayTupleListProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public (string, string[])[]? ArrayTupleArrayProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public List<(string, IEnumerable<string>)>? ListTupleEnumerableProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public List<(string, List<string>)>? ListTupleListProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public List<(string, string[])>? ListTupleArrayProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public IEnumerable<(string, string)>? EnumerableTupleProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public (string, string)[]? ArrayTupleProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public List<(string, string)>? ListTupleProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public IEnumerable<string>? EnumerableProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public string[]? ArrayProperty { get; set; }
 
-    [ToHeaderArray]
+    [HeaderArray]
     public List<string>? ListProperty { get; set; }
 
-    [ToHeaderArray(Name = "Different", Delimeter = "@@")]
+    [HeaderArray(Name = "Different", Delimeter = "@@")]
     public Dictionary<string, List<string>>? CustomNameAndDelimeterProperty { get; set; }
 
-    [ToHeaderArray(Name = "NotTheSame")]
+    [HeaderArray(Name = "NotTheSame")]
     public Dictionary<string, List<string>>? CustomNameProperty { get; set; }
 
-    [ToHeaderArray(Delimeter = ";;")]
+    [HeaderArray(Delimeter = ";;")]
     public Dictionary<string, List<string>>? CustomDelimeterProperty { get; set; }
 
     [Fact]
@@ -1845,11 +1845,11 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         Assert.Null(propertyData);
     }
 
-    private (PropertyInfo, object, ToHeaderArrayAttribute)? GetPropertyData(string propertyName)
+    private (PropertyInfo, object, HeaderArrayAttribute)? GetPropertyData(string propertyName)
     {
         var propertyInfo = GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
         var propertyValue = propertyInfo?.GetValue(this);
-        var propertyAttr = propertyInfo?.GetCustomAttribute<ToHeaderArrayAttribute>();
+        var propertyAttr = propertyInfo?.GetCustomAttribute<HeaderArrayAttribute>();
 
         if (propertyInfo == null || propertyValue == null || propertyAttr == null)
             return null;

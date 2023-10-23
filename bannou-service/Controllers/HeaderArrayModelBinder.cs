@@ -19,14 +19,14 @@ public class HeaderArrayModelBinder : IModelBinder
         if (headerStrings.Count == 0)
             return;
 
-        var propertyAttr = bindingContext.ModelType.GetCustomAttribute<FromHeaderArrayAttribute>();
+        var propertyAttr = bindingContext.ModelType.GetCustomAttribute<HeaderArrayAttribute>();
         if (propertyAttr == null)
             return;
 
         bindingContext.Result = BindPropertyToHeaderArray(bindingContext.ModelType, headerStrings, propertyAttr);
     }
 
-    public static ModelBindingResult BindPropertyToHeaderArray(Type propertyType, IEnumerable<string> headers, FromHeaderArrayAttribute propertyAttr)
+    public static ModelBindingResult BindPropertyToHeaderArray(Type propertyType, IEnumerable<string> headers, HeaderArrayAttribute propertyAttr)
     {
         if (!headers.Any())
             return ModelBindingResult.Failed();

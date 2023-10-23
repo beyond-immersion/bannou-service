@@ -199,10 +199,12 @@ public class TestingService : IDaprService
                     var testName = testLookup.Key;
                     testsFound = true;
 
-                    Program.Logger?.Log(LogLevel.Debug, $"Running test '{testName}' against service '{serviceName}'.");
+                    Program.Logger?.Log(LogLevel.Information, $"Running test '{testName}' against service '{serviceName}'.");
 
                     if (!await testLookup.Value.Invoke(this))
                     {
+                        Program.Logger?.Log(LogLevel.Information, $"Test '{testName}' against service '{serviceName}' failed!");
+
                         results = false;
                         if (stopOnFailure)
                             break;

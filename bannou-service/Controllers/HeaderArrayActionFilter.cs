@@ -14,7 +14,7 @@ public class HeaderArrayActionFilter : IActionFilter
             var propertiesToRemove = new List<string>();
             foreach (var propertyInfo in objectResult.Value.GetType().GetProperties())
             {
-                var headerAttr = propertyInfo.GetCustomAttribute<ToHeaderArrayAttribute>();
+                var headerAttr = propertyInfo.GetCustomAttribute<HeaderArrayAttribute>();
                 if (headerAttr != null)
                 {
                     var propertyValue = propertyInfo.GetValue(objectResult.Value);
@@ -34,7 +34,7 @@ public class HeaderArrayActionFilter : IActionFilter
         }
     }
 
-    public static (string, string[])[] PropertyValueToHeaderArray(PropertyInfo propertyInfo, object value, ToHeaderArrayAttribute headerAttr)
+    public static (string, string[])[] PropertyValueToHeaderArray(PropertyInfo propertyInfo, object value, HeaderArrayAttribute headerAttr)
     {
         var headersToSet = new List<(string, string[])>();
 

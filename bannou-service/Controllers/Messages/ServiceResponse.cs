@@ -16,6 +16,6 @@ where T : class, IServiceRequest
 [JsonObject(MemberSerialization = MemberSerialization.OptIn, ItemNullValueHandling = NullValueHandling.Ignore)]
 public class ServiceResponse : IServiceResponse
 {
-    [ToHeaderArray(Name = "REQUEST_IDS")]
-    public Dictionary<string, string> RequestIDs { get; set; }
+    [HeaderArray(Name = "REQUEST_IDS")]
+    public Dictionary<string, string> RequestIDs { get; set; } = new Dictionary<string, string>();
 }

@@ -15,76 +15,76 @@ public class ModelBinders : IClassFixture<CollectionFixture>
         Program.Logger = output.BuildLoggerFor<ModelBinders>();
     }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public IEnumerable<KeyValuePair<string, IEnumerable<string>>>? EnumerableKVPEnumerableProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public IEnumerable<KeyValuePair<string, string[]>>? EnumerableKVPArrayProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public IEnumerable<KeyValuePair<string, List<string>>>? EnumerableKVPListProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public IEnumerable<KeyValuePair<string, string>>? EnumerableKVPProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public Dictionary<string, IEnumerable<string>>? DictionaryEnumerableProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public Dictionary<string, string[]>? DictionaryArrayProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public Dictionary<string, List<string>>? DictionaryListProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public Dictionary<string, string>? DictionaryProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public IEnumerable<(string, IEnumerable<string>)>? EnumerableTupleEnumerableProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public IEnumerable<(string, string[])>? EnumerableTupleArrayProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public IEnumerable<(string, List<string>)>? EnumerableTupleListProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public (string, IEnumerable<string>)[]? ArrayTupleEnumerableProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public (string, string[])[]? ArrayTupleArrayProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public (string, List<string>)[]? ArrayTupleListProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public List<(string, IEnumerable<string>)>? ListTupleEnumerableProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public List<(string, string[])>? ListTupleArrayProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public List<(string, List<string>)>? ListTupleListProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public (string, string)[]? ArrayTupleProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public List<(string, string)>? ListTupleProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public IEnumerable<(string, string)>? EnumerableTupleProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public IEnumerable<string>? EnumerableProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public string[]? ArrayProperty { get; set; }
 
-    [FromHeaderArray]
+    [HeaderArray]
     public List<string>? ListProperty { get; set; }
 
-    [FromHeaderArray(Delimeter = ";;")]
+    [HeaderArray(Delimeter = ";;")]
     public Dictionary<string, List<string>>? CustomDelimeterProperty { get; set; }
 
     [Fact]
@@ -413,10 +413,10 @@ public class ModelBinders : IClassFixture<CollectionFixture>
         Assert.Equal("TEST_VALUE_1", CustomDelimeterProperty?["TEST_KEY_1"].FirstOrDefault());
     }
 
-    private (PropertyInfo, FromHeaderArrayAttribute)? GetPropertyData(string propertyName)
+    private (PropertyInfo, HeaderArrayAttribute)? GetPropertyData(string propertyName)
     {
         var propertyInfo = GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-        var propertyAttr = propertyInfo?.GetCustomAttribute<FromHeaderArrayAttribute>();
+        var propertyAttr = propertyInfo?.GetCustomAttribute<HeaderArrayAttribute>();
 
         if (propertyInfo == null || propertyAttr == null)
             return null;
