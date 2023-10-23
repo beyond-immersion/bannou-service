@@ -155,7 +155,6 @@ public static class Program
             // add controllers / configure navigation
             _ = webApp.MapNonServiceControllers();
             _ = webApp.MapDaprServiceControllers();
-            _ = webApp.UseHttpsRedirection();
 
             // enable websocket connections
             webApp.UseWebSockets(new WebSocketOptions()
