@@ -2,15 +2,12 @@
 using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Unicode;
 using Xunit.Abstractions;
 
-namespace BeyondImmersion.UnitTests.Miscellaneous;
+namespace BeyondImmersion.BannouService.UnitTests;
 
 [Collection("unit tests")]
 public class Miscellaneous : IClassFixture<CollectionFixture>

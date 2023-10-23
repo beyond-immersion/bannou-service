@@ -1,11 +1,20 @@
 build:
-	docker-compose -f provisioning/docker-compose.yml --project-name cl "$@"
+	if [ ! -f .env ]; then touch .env; fi
+	docker-compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.swarm.yml --project-name cl build
 
 up:
-	docker-compose -f provisioning/docker-compose.yml --project-name cl "$@"
+	if [ ! -f .env ]; then touch .env; fi
+	docker-compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.swarm.yml --project-name cl up -d
+
+elk_up:
+	if [ ! -f .env ]; then touch .env; fi
+	docker-compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.swarm.yml -f provisioning/docker-compose.elk.yml --project-name cl up -d
 
 down:
-	docker-compose -f provisioning/docker-compose.yml --project-name cl "$@"
+	docker-compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.swarm.yml --project-name cl down --remove-orphans
+
+elk_down:
+	docker-compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.swarm.yml -f provisioning/docker-compose.elk.yml --project-name cl down --remove-orphans
 
 clean:
 	git submodule foreach --recursive git clean -fdx

@@ -22,8 +22,8 @@ services:
     command: [
       "./daprd",
       "--app-id", "bannou",
-      "--app-port", "443",
-      "--app-protocol", "https",
+      "--app-port", "80",
+      "--app-protocol", "http",
       "--dapr-http-port", "3500",
       "--placement-host-address", "placement:50006",
       "--resources-path", "./components"

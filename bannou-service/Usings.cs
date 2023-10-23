@@ -2,7 +2,7 @@
 global using BeyondImmersion.BannouService.Application;
 global using BeyondImmersion.BannouService.Attributes;
 global using BeyondImmersion.BannouService.Controllers;
-global using BeyondImmersion.BannouService.Messages;
+global using BeyondImmersion.BannouService.Controllers.Messages;
 global using BeyondImmersion.BannouService.Services;
 global using Microsoft.Extensions.Logging;
 global using System.Collections.Generic;

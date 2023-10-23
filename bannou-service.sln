@@ -19,9 +19,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisioning", "{6905E47E-6C04-4CF6-894F-2643528E490D}"
 	ProjectSection(SolutionItems) = preProject
 		provisioning\docker-compose.ci.yml = provisioning\docker-compose.ci.yml
-		provisioning\docker-compose.elk.yml = provisioning\docker-compose.elk.yml
-		provisioning\docker-compose.yml = provisioning\docker-compose.yml
 		provisioning\docker-compose.ek.yml = provisioning\docker-compose.ek.yml
+		provisioning\docker-compose.elk.yml = provisioning\docker-compose.elk.yml
+		provisioning\docker-compose.swarm.yml = provisioning\docker-compose.swarm.yml
+		provisioning\docker-compose.yml = provisioning\docker-compose.yml
 		provisioning\Dockerfile = provisioning\Dockerfile
 		provisioning\filebeat.console.yml = provisioning\filebeat.console.yml
 		provisioning\filebeat.ek.yml = provisioning\filebeat.ek.yml
@@ -43,9 +44,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Components", "Components", "{47B2858E-0EA2-43AB-85CF-E1335FF1D0A8}"
-	ProjectSection(SolutionItems) = preProject
-		provisioning\components\ci\account-redis.yaml = provisioning\components\ci\account-redis.yaml
-	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-accounts-service-mysql", "lib-accounts-service-mysql\lib-accounts-service-mysql.csproj", "{B09563F2-9CB5-482B-9389-EEDE84DCAAA8}"
 EndProject

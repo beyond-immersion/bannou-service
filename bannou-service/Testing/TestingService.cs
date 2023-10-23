@@ -1,4 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Controllers.Messages;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Testing;
@@ -155,9 +156,9 @@ public class TestingService : IDaprService
     {
         var testsFound = false;
         var results = true;
-        if (AsyncServiceTests.ContainsKey(service))
+        if (AsyncServiceTests.TryGetValue(service, out var asyncServiceTests))
         {
-            foreach (KeyValuePair<string, Func<TestingService, Task<bool>>> testLookup in AsyncServiceTests[service])
+            foreach (KeyValuePair<string, Func<TestingService, Task<bool>>> testLookup in asyncServiceTests)
             {
                 testsFound = true;
                 Program.Logger?.Log(LogLevel.Debug, $"Running test '{testLookup.Key}' against service '{service}'.");
@@ -198,10 +199,12 @@ public class TestingService : IDaprService
                     var testName = testLookup.Key;
                     testsFound = true;
 
-                    Program.Logger?.Log(LogLevel.Debug, $"Running test '{testName}' against service '{serviceName}'.");
+                    Program.Logger?.Log(LogLevel.Information, $"Running test '{testName}' against service '{serviceName}'.");
 
                     if (!await testLookup.Value.Invoke(this))
                     {
+                        Program.Logger?.Log(LogLevel.Information, $"Test '{testName}' against service '{serviceName}' failed!");
+
                         results = false;
                         if (stopOnFailure)
                             break;

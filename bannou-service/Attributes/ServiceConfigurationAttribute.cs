@@ -14,7 +14,7 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
     /// The specific service type this configuration is meant for.
     /// Can be null.
     /// </summary>
-    public Type? ServiceType { get; }
+    public Type? ServiceImplementationType { get; }
 
     /// <summary>
     /// Attribute attached to the service.
@@ -29,14 +29,14 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
 
     public ServiceConfigurationAttribute() { }
 
-    public ServiceConfigurationAttribute(Type? serviceType = null, string? envPrefix = null)
+    public ServiceConfigurationAttribute(Type? serviceImplementation = null, string? envPrefix = null)
     {
-        if (serviceType != null && !typeof(IDaprService).IsAssignableFrom(serviceType))
+        if (serviceImplementation != null && !typeof(IDaprService).IsAssignableFrom(serviceImplementation))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
-        ServiceType = serviceType;
-        if (serviceType != null)
-            ServiceAttribute = serviceType.GetCustomAttribute<DaprServiceAttribute>();
+        ServiceImplementationType = serviceImplementation;
+        if (serviceImplementation != null)
+            ServiceAttribute = serviceImplementation.GetCustomAttribute<DaprServiceAttribute>();
 
         EnvPrefix = envPrefix;
         if (ServiceAttribute != null && envPrefix == null)

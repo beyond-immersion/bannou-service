@@ -1,12 +1,10 @@
 ﻿using BeyondImmersion.BannouService.Testing.Messages;
-using System.Diagnostics.CodeAnalysis;
 
 namespace BeyondImmersion.BannouService.Testing.Tests;
 
 /// <summary>
 /// Tests that only require the testing service itself.
 /// </summary>
-[SuppressMessage("Usage", "CA2254:Template should be a static expression", Justification = "Identifying failed integration tests")]
 public static class BasicTests
 {
     private const int TEST_WAIT_TIME_MS = 200;
@@ -23,17 +21,17 @@ public static class BasicTests
     public static async Task<bool> RunBasicTests(TestingService service)
     {
         await Task.CompletedTask;
-        Program.Logger?.Log(LogLevel.Trace, "Running all Basic tests!");
+        Program.Logger.Log(LogLevel.Trace, "Running all Basic tests!");
 
         if (service == null)
         {
-            Program.Logger?.Log(LogLevel.Error, "Testing service not found.");
+            Program.Logger.Log(LogLevel.Error, "Testing service not found.");
             return false;
         }
 
         if (Program.DaprClient == null)
         {
-            Program.Logger?.Log(LogLevel.Error, "Dapr client is not loaded.");
+            Program.Logger.Log(LogLevel.Error, "Dapr client is not loaded.");
             return false;
         }
 
@@ -42,7 +40,8 @@ public static class BasicTests
             TEST_GET_Loopback,
             TEST_GET_ID,
             TEST_GET_Service_ID,
-            TEST_POST
+            TEST_POST,
+            TEST_RequestIDPropagation
         };
 
         foreach (var test in tests)
@@ -51,13 +50,13 @@ public static class BasicTests
             {
                 if (!await test.Invoke(service))
                 {
-                    Program.Logger?.Log(LogLevel.Error, $"Integration test [{test.Method.Name}] failed.");
+                    Program.Logger.Log(LogLevel.Error, $"Integration test [{test.Method.Name}] failed.");
                     return false;
                 }
             }
             catch (Exception exc)
             {
-                Program.Logger?.Log(LogLevel.Error, exc, $"An exception occurred running integration test [{test.Method.Name}].");
+                Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred running integration test [{test.Method.Name}].");
                 return false;
             }
         }
@@ -113,7 +112,8 @@ public static class BasicTests
         var dataModel = new TestingRunTestRequest()
         {
             ID = testID,
-            Service = testService
+            Service = testService,
+            RequestIDs = new Dictionary<string, string>() { { "TEST_KEY", "TEST_VALUE" } }
         };
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
@@ -126,5 +126,33 @@ public static class BasicTests
 
         var receivedData = (TestingRunTestRequest)service.LastTestRequest;
         return receivedData.ID == testID && receivedData.Service == testService;
+    }
+
+    private static async Task<bool> TEST_RequestIDPropagation(TestingService service)
+    {
+        service.ResetTestVars();
+        var testID = "test_id_1";
+        var testService = "inventory";
+        var serviceID = Guid.NewGuid();
+        var dataModel = new TestingRunTestRequest()
+        {
+            ID = testID,
+            Service = testService,
+            RequestIDs = new()
+            {
+                ["SERVICE_ID"] = serviceID.ToString()
+            }
+        };
+
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
+        await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
+
+        await Task.Delay(TEST_WAIT_TIME_MS);
+
+        if (service.LastTestRequest == null)
+            return false;
+
+        var receivedData = (TestingRunTestRequest)service.LastTestRequest;
+        return receivedData.RequestIDs["SERVICE_ID"] == serviceID.ToString();
     }
 }

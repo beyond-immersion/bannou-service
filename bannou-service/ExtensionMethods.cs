@@ -123,58 +123,145 @@ public static partial class ExtensionMethods
     /// <summary>
     /// Binds HTTP endpoints for all registered dapr services.
     /// </summary>
-    public static void AddDaprServices(this IServiceCollection builder, (Type, Type, DaprServiceAttribute)[] enabledServiceInfo)
+    public static void AddDaprServices(this IServiceCollection builder)
     {
-        foreach (var serviceInfo in enabledServiceInfo)
+        foreach (var serviceInfo in IDaprService.EnabledServices)
         {
-            Type handlerType = serviceInfo.Item1;
-            Type serviceType = serviceInfo.Item2;
+            Type interfaceType = serviceInfo.Item1;
+            Type implementationType = serviceInfo.Item2;
             ServiceLifetime serviceLifetime = serviceInfo.Item3.Lifetime;
-            var serviceName = serviceType.GetServiceName();
+            var serviceName = implementationType.GetServiceName();
 
-            Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} has been enabled to handle type {handlerType}.");
+            Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} has been enabled to handle type {interfaceType}.");
 
-            builder.Add(new ServiceDescriptor(handlerType, serviceType, serviceLifetime));
+            builder.Add(new ServiceDescriptor(interfaceType, implementationType, serviceLifetime));
         }
     }
 
     /// <summary>
+    /// Returns whether the configuration is provided for a given service type to run properly.
+    /// </summary>
+    public static bool HasRequiredConfiguration(this Type implementationType)
+        => IDaprService.HasRequiredConfiguration(implementationType);
+
+    /// <summary>
+    /// Returns the best service configuration type for the given service type.
+    /// Returned type is based on DaprServiceAttribute service target type.
+    /// </summary>
+    public static Type GetConfigurationType(this Type implementationType)
+        => IDaprService.GetConfigurationType(implementationType);
+
+    /// <summary>
     /// Binds HTTP endpoints for admin commands.
     /// </summary>
-    public static IEndpointRouteBuilder MapNonServiceControllers(this IEndpointRouteBuilder builder) => builder;
+    public static IEndpointRouteBuilder MapNonServiceControllers(this IEndpointRouteBuilder builder)
+    {
+        foreach (var controllerInfo in IDaprController.NonServiceControllers)
+        {
+            Type controllerType = controllerInfo.Item1;
+            var controllerAttr = controllerInfo.Item2;
+
+            var controllerName = controllerAttr?.Name ?? controllerAttr?.Template;
+            if (string.IsNullOrWhiteSpace(controllerName))
+                controllerName = controllerType.Name;
+
+            if (string.IsNullOrWhiteSpace(controllerName))
+            {
+                Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {{action}}/{{id}}.");
+                _ = builder.MapControllerRoute(
+                    name: "ActionIdApi",
+                    pattern: "{action}/{id}");
+
+                Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {{action}}.");
+                _ = builder.MapControllerRoute(
+                    name: "ActionApi",
+                    pattern: "{action}");
+
+                continue;
+            }
+
+            Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {controllerName}/{{action}}/{{id}}.");
+            _ = builder.MapControllerRoute(
+                name: "ControllerActionIdApi",
+                pattern: controllerName + "/{action}/{id}");
+
+            Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {controllerName}/{{action}}.");
+            _ = builder.MapControllerRoute(
+                name: "ControllerActionApi",
+                pattern: controllerName + "/{action}");
+        }
+
+        return builder;
+    }
 
     /// <summary>
     /// Binds HTTP endpoints for all registered dapr service handlers.
     /// </summary>
-    public static IEndpointRouteBuilder MapDaprServiceControllers(this IEndpointRouteBuilder builder, (Type, Type, DaprServiceAttribute)[] enabledServiceInfo)
+    public static IEndpointRouteBuilder MapDaprServiceControllers(this IEndpointRouteBuilder builder)
     {
-        foreach (var serviceInfo in enabledServiceInfo)
+        foreach (var serviceInfo in IDaprService.EnabledServices)
         {
             Type interfaceType = serviceInfo.Item1;
             Type implementationType = serviceInfo.Item2;
             var serviceName = implementationType.GetServiceName();
 
-            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForHandler(interfaceType))
+            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForImplementation(implementationType))
             {
-                var controllerName = controllerClassInfo.Item2?.Name ?? controllerClassInfo.Item2?.Template;
-                if (string.IsNullOrWhiteSpace(controllerName))
-                    controllerName = controllerClassInfo.Item1.GetServiceName();
-
+                var controllerName = controllerClassInfo.Item2?.Template ?? controllerClassInfo.Item2?.Name ?? serviceName;
                 if (string.IsNullOrWhiteSpace(controllerName))
                     continue;
 
                 Program.Logger?.Log(LogLevel.Trace, null, $"Activating service controller route {controllerName}/{{action}}/{{id}}.");
                 _ = builder.MapControllerRoute(
-                    name: "ControllerActionIdApi",
+                    name: "ServiceControllerActionIdApi",
                     pattern: controllerName + "/{action}/{id}");
 
                 Program.Logger?.Log(LogLevel.Trace, null, $"Activating service controller route {controllerName}/{{action}}.");
                 _ = builder.MapControllerRoute(
-                    name: "ControllerActionApi",
+                    name: "ServiceControllerActionApi",
                     pattern: controllerName + "/{action}");
             }
         }
 
         return builder;
+    }
+
+    /// <summary>
+    /// Iterates through and invokes the Start() method on all loaded service handlers.
+    /// </summary>
+    public static async Task InvokeAllServiceStartMethods(this WebApplication webApp)
+    {
+        foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
+        {
+            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            if (serviceInst != null)
+                await serviceInst.OnStart();
+        }
+    }
+
+    /// <summary>
+    /// Iterates through and invokes the Running() method on all loaded service handlers.
+    /// </summary>
+    public static async Task InvokeAllServiceRunningMethods(this WebApplication webApp)
+    {
+        foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
+        {
+            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            if (serviceInst != null)
+                await serviceInst.OnRunning();
+        }
+    }
+
+    /// <summary>
+    /// Iterates through and invokes the Shutdown() method on all loaded service handlers.
+    /// </summary>
+    public static async Task InvokeAllServiceShutdownMethods(this WebApplication webApp)
+    {
+        foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
+        {
+            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            if (serviceInst != null)
+                await serviceInst.OnShutdown();
+        }
     }
 }

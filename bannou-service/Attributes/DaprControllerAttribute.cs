@@ -14,35 +14,28 @@ public class DaprControllerAttribute : RouteAttribute, IServiceAttribute
     /// If it's independent of any services, leave null.
     /// If requiring multiple service, add more attributes.
     /// </summary>
-    public Type? ServiceType { get; }
-    public DaprServiceAttribute? ServiceAttribute { get; }
+    public Type? InterfaceType { get; }
 
-    public DaprControllerAttribute(Type? serviceType = null)
-        : this(GetControllerTemplate(serviceType), serviceType) { }
+    public DaprControllerAttribute(Type? interfaceType = null)
+        : this(GetControllerTemplate(interfaceType), interfaceType) { }
 
-    public DaprControllerAttribute(string template, Type? serviceType = null)
-        : base(template)
+    public DaprControllerAttribute(string template, Type? interfaceType = null)
+        : base(template ?? GetControllerTemplate(interfaceType))
     {
-        if (serviceType != null && !typeof(IDaprService).IsAssignableFrom(serviceType))
+        if (interfaceType != null && !typeof(IDaprService).IsAssignableFrom(interfaceType))
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
-        ServiceType = serviceType;
-        if (serviceType != null)
-            Name = serviceType.Name;
-
-        ServiceAttribute = serviceType?.GetCustomAttribute<DaprServiceAttribute>();
-        if (ServiceAttribute != null)
-            Name = ServiceAttribute.Name;
+        InterfaceType = interfaceType;
     }
 
-    public string GetControllerTemplate()
-        => ServiceAttribute?.Name ?? "/";
-
-    public static string GetControllerTemplate(Type? serviceType)
+    public static string GetControllerTemplate(Type? interfaceType)
     {
-        var serviceAttribute = serviceType?.GetCustomAttribute<DaprServiceAttribute>();
-        if (serviceAttribute != null)
-            return serviceAttribute.Name;
+        if (interfaceType == null)
+            return "/";
+
+        var serviceInfo = IDaprService.GetServiceInfo(interfaceType);
+        if (serviceInfo != null && serviceInfo.HasValue)
+            return serviceInfo.Value.Item3.Name;
 
         return "/";
     }

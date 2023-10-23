@@ -1,5 +1,5 @@
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
-namespace BeyondImmersion.UnitTests;
+namespace BeyondImmersion.BannouService.UnitTests;
 
 public class CollectionFixture : IDisposable
 {

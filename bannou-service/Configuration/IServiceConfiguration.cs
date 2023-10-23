@@ -12,7 +12,7 @@ public interface IServiceConfiguration
     public static readonly JsonSerializerOptions DaprSerializerConfig = new()
     {
         AllowTrailingCommas = true,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
         IgnoreReadOnlyFields = false,
         IgnoreReadOnlyProperties = false,
         IncludeFields = false,

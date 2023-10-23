@@ -1,4 +1,5 @@
-﻿using BeyondImmersion.BannouService.Testing;
+﻿using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Testing;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BeyondImmersion.BannouService.Authorization.Testing;
@@ -64,7 +65,7 @@ public static class AuthorizationTests
         {
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(AUTHORIZATION_SERVICE_NAME), endpointPath, request);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, IDaprService.GetAppByServiceName(AUTHORIZATION_SERVICE_NAME), endpointPath, request);
         newRequest.Headers.Add("username", ServiceConstants.TEST_ACCOUNT_EMAIL);
         newRequest.Headers.Add("password", ServiceConstants.TEST_ACCOUNT_SECRET);
 
@@ -87,7 +88,7 @@ public static class AuthorizationTests
         {
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(AUTHORIZATION_SERVICE_NAME), endpointPath, request);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, IDaprService.GetAppByServiceName(AUTHORIZATION_SERVICE_NAME), endpointPath, request);
         newRequest.Headers.Add("username", "fail_" + ServiceConstants.TEST_ACCOUNT_EMAIL);
         newRequest.Headers.Add("password", ServiceConstants.TEST_ACCOUNT_SECRET);
 
@@ -118,7 +119,7 @@ public static class AuthorizationTests
         {
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, Program.GetAppByServiceName(AUTHORIZATION_SERVICE_NAME), endpointPath, request);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, IDaprService.GetAppByServiceName(AUTHORIZATION_SERVICE_NAME), endpointPath, request);
         newRequest.Headers.Add("username", ServiceConstants.TEST_ACCOUNT_EMAIL);
         newRequest.Headers.Add("password", "fail_" + ServiceConstants.TEST_ACCOUNT_SECRET);
 

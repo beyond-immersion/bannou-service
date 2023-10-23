@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace BeyondImmersion.BannouService.Messages;
+namespace BeyondImmersion.BannouService.Controllers.Messages;
 
 [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
 public class ServiceRequest<T> : ServiceRequest
@@ -19,4 +19,6 @@ where T : class, IServiceResponse, new()
 [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
 public class ServiceRequest : IServiceRequest
 {
+    [HeaderArray(Name = "REQUEST_IDS")]
+    public Dictionary<string, string> RequestIDs { get; set; } = new Dictionary<string, string>();
 }
