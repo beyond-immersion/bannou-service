@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Controllers.Filters;
 using BeyondImmersion.BannouService.Logging;
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;

@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using BeyondImmersion.BannouService.Controllers.Binders;
+using System.Reflection;
 using Xunit.Abstractions;
 
 namespace BeyondImmersion.BannouService.UnitTests;

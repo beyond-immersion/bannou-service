@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Reflection;
 
-namespace BeyondImmersion.BannouService.Controllers;
+namespace BeyondImmersion.BannouService.Controllers.Filters;
 
 public class HeaderArrayActionFilter : IActionFilter
 {

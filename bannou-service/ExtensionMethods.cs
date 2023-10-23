@@ -58,6 +58,19 @@ public static partial class ExtensionMethods
         return false;
     }
 
+    public static Type[] GetAllImplementedInterfaces(this Type? type)
+    {
+        var interfaces = new List<Type>();
+
+        while (type != null)
+        {
+            interfaces.AddRange(type.GetInterfaces());
+            type = type.BaseType;
+        }
+
+        return interfaces.Distinct().ToArray();
+    }
+
     /// <summary>
     /// Checks if a string is safe to use as a segment with a Path.Combine().
     /// </summary>
