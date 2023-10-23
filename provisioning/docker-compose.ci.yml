@@ -29,5 +29,10 @@ services:
       - bannou
     command: bash service-tests.sh
 
+  # silence filebeat during CI testing
+  filebeat:
+    logging:
+      driver: none
+
 networks:
   celestial_network:

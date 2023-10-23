@@ -1,6 +1,4 @@
 ﻿using BeyondImmersion.BannouService.Testing.Messages;
-using Microsoft.Extensions.Primitives;
-using System.Diagnostics.CodeAnalysis;
 
 namespace BeyondImmersion.BannouService.Testing.Tests;
 
@@ -23,17 +21,17 @@ public static class BasicTests
     public static async Task<bool> RunBasicTests(TestingService service)
     {
         await Task.CompletedTask;
-        Program.Logger?.Log(LogLevel.Trace, "Running all Basic tests!");
+        Program.Logger.Log(LogLevel.Trace, "Running all Basic tests!");
 
         if (service == null)
         {
-            Program.Logger?.Log(LogLevel.Error, "Testing service not found.");
+            Program.Logger.Log(LogLevel.Error, "Testing service not found.");
             return false;
         }
 
         if (Program.DaprClient == null)
         {
-            Program.Logger?.Log(LogLevel.Error, "Dapr client is not loaded.");
+            Program.Logger.Log(LogLevel.Error, "Dapr client is not loaded.");
             return false;
         }
 
@@ -52,13 +50,13 @@ public static class BasicTests
             {
                 if (!await test.Invoke(service))
                 {
-                    Program.Logger?.Log(LogLevel.Error, $"Integration test [{test.Method.Name}] failed.");
+                    Program.Logger.Log(LogLevel.Error, $"Integration test [{test.Method.Name}] failed.");
                     return false;
                 }
             }
             catch (Exception exc)
             {
-                Program.Logger?.Log(LogLevel.Error, exc, $"An exception occurred running integration test [{test.Method.Name}].");
+                Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred running integration test [{test.Method.Name}].");
                 return false;
             }
         }
