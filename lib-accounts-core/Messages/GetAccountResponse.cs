@@ -1,4 +1,4 @@
-﻿using BeyondImmersion.BannouService.Messages;
+﻿using BeyondImmersion.BannouService.Controllers.Messages;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
