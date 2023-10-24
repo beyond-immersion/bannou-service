@@ -155,7 +155,7 @@ public static class BasicTests
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
         foreach (var headerKVP in newRequest.Headers)
-            Program.Logger.Log(LogLevel.Information, $"Published header '{headerKVP.Key}' has a value of '{headerKVP.Value}'");
+            Program.Logger.Log(LogLevel.Error, $"Published header '{headerKVP.Key}' has a value of '{headerKVP.Value}'");
 
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
 
@@ -168,7 +168,7 @@ public static class BasicTests
 
         if (receivedData.RequestIDs != null)
             foreach (var receivedKVP in receivedData.RequestIDs)
-                Program.Logger.Log(LogLevel.Information, $"Received header '{receivedKVP.Key}' has a value of '{receivedKVP.Value}'");
+                Program.Logger.Log(LogLevel.Error, $"Received header '{receivedKVP.Key}' has a value of '{receivedKVP.Value}'");
 
         return receivedData?.RequestIDs?["SERVICE_ID"] == serviceID.ToString();
     }
