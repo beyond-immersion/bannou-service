@@ -1,5 +1,6 @@
 ﻿using BeyondImmersion.BannouService.Testing.Messages;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections;
 
 namespace BeyondImmersion.BannouService.Testing;
 
@@ -130,6 +131,14 @@ public class TestingController : BaseDaprController
     public async Task<IActionResult> TestPOST_Model([FromBody] TestingRunTestRequest request)
     {
         await Task.CompletedTask;
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.SelectMany(x => x.Value?.Errors.Select(p => p.ErrorMessage)).ToList();
+            foreach (var errorMsg in errors)
+                Program.Logger.LogError($"MODEL VALIDATION ERROR! : {errorMsg}");
+
+            return BadRequest(new { Errors = errors });
+        }
 
         Service.SetLastPostRequest(request);
 

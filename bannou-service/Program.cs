@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Controllers.Filters;
 using BeyondImmersion.BannouService.Logging;
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
@@ -112,10 +113,14 @@ public static class Program
         {
             // configure services
             _ = webAppBuilder.Services.AddAuthentication();
-            _ = webAppBuilder.Services.AddControllers(mvcOptions =>
-            {
-                mvcOptions.Filters.Add(typeof(HeaderArrayActionFilter));
-            });
+
+            _ = webAppBuilder.Services
+                .AddControllers(mvcOptions =>
+                {
+                    mvcOptions.Filters.Add(typeof(HeaderArrayActionFilter));
+                    mvcOptions.Filters.Add(typeof(HeaderArrayResultFilter));
+                });
+
             webAppBuilder.Services.AddDaprClient();
             webAppBuilder.Services.AddDaprServices();
 
@@ -192,8 +197,10 @@ public static class Program
         finally
         {
             // perform cleanup
-            await webApp.DisposeAsync();
-            DaprClient.Dispose();
+            if (webApp != null)
+                await webApp.DisposeAsync();
+
+            DaprClient?.Dispose();
         }
 
         Logger.Log(LogLevel.Debug, null, "Application shutdown complete.");

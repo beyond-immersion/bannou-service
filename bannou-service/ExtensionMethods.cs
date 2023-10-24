@@ -1,6 +1,4 @@
-﻿using BeyondImmersion.BannouService.Logging;
-using Newtonsoft.Json.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -56,6 +54,19 @@ public static partial class ExtensionMethods
 
         message = null;
         return false;
+    }
+
+    public static Type[] GetAllImplementedInterfaces(this Type? type)
+    {
+        var interfaces = new List<Type>();
+
+        while (type != null)
+        {
+            interfaces.AddRange(type.GetInterfaces());
+            type = type.BaseType;
+        }
+
+        return interfaces.Distinct().ToArray();
     }
 
     /// <summary>
@@ -259,6 +270,9 @@ public static partial class ExtensionMethods
     {
         foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
         {
+            if (webApp == null)
+                continue;
+
             var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
             if (serviceInst != null)
                 await serviceInst.OnShutdown();

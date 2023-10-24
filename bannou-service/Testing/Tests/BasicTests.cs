@@ -1,4 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Testing.Messages;
+using Dapr.Client;
 
 namespace BeyondImmersion.BannouService.Testing.Tests;
 
@@ -53,6 +54,15 @@ public static class BasicTests
                     Program.Logger.Log(LogLevel.Error, $"Integration test [{test.Method.Name}] failed.");
                     return false;
                 }
+            }
+            catch (InvocationException exc)
+            {
+                var logMsg = $"Integration test [{test.Method.Name}] failed on invoking method {exc.MethodName} for app {exc.AppId}.";
+                if (exc.Response != null)
+                    logMsg += $"\nCode: {exc.Response.StatusCode}, Reason: {exc.Response.ReasonPhrase}";
+
+                Program.Logger.Log(LogLevel.Error, exc, logMsg);
+                return false;
             }
             catch (Exception exc)
             {
@@ -112,8 +122,7 @@ public static class BasicTests
         var dataModel = new TestingRunTestRequest()
         {
             ID = testID,
-            Service = testService,
-            RequestIDs = new Dictionary<string, string>() { { "TEST_KEY", "TEST_VALUE" } }
+            Service = testService
         };
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
@@ -133,18 +142,21 @@ public static class BasicTests
         service.ResetTestVars();
         var testID = "test_id_1";
         var testService = "inventory";
-        var serviceID = Guid.NewGuid();
+        var serviceID = Guid.NewGuid().ToString();
         var dataModel = new TestingRunTestRequest()
         {
             ID = testID,
             Service = testService,
             RequestIDs = new()
             {
-                ["SERVICE_ID"] = serviceID.ToString()
+                ["SERVICE_ID"] = serviceID
             }
         };
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
+        foreach (var headerKVP in newRequest.Headers)
+            Program.Logger.Log(LogLevel.Error, $"Published header '{headerKVP.Key}' has a value of '{headerKVP.Value}'");
+
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
 
         await Task.Delay(TEST_WAIT_TIME_MS);
@@ -153,6 +165,12 @@ public static class BasicTests
             return false;
 
         var receivedData = (TestingRunTestRequest)service.LastTestRequest;
-        return receivedData.RequestIDs["SERVICE_ID"] == serviceID.ToString();
+
+        if (receivedData.RequestIDs != null)
+            foreach (var receivedKVP in receivedData.RequestIDs)
+                Program.Logger.Log(LogLevel.Error, $"Received header '{receivedKVP.Key}' has a value of '{receivedKVP.Value}'");
+
+        return dataModel?.RequestIDs?["SERVICE_ID"] == serviceID &&
+            receivedData?.RequestIDs?["SERVICE_ID"] == serviceID;
     }
 }
