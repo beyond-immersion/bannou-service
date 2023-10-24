@@ -154,8 +154,8 @@ public static class BasicTests
         };
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
-        if (newRequest.Headers.TryGetValues("Content-Type", out var contentTypes))
-            Program.Logger.Log(LogLevel.Information, $"Content-Type of test request: {contentTypes.FirstOrDefault()}");
+        foreach (var headerKVP in newRequest.Headers)
+            Program.Logger.Log(LogLevel.Information, $"Published header '{headerKVP.Key}' has a value of '{headerKVP.Value}'");
 
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
 
@@ -165,6 +165,11 @@ public static class BasicTests
             return false;
 
         var receivedData = (TestingRunTestRequest)service.LastTestRequest;
-        return receivedData.RequestIDs["SERVICE_ID"] == serviceID.ToString();
+
+        if (receivedData.RequestIDs != null)
+            foreach (var receivedKVP in receivedData.RequestIDs)
+                Program.Logger.Log(LogLevel.Information, $"Received header '{receivedKVP.Key}' has a value of '{receivedKVP.Value}'");
+
+        return receivedData?.RequestIDs?["SERVICE_ID"] == serviceID.ToString();
     }
 }
