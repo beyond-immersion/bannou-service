@@ -5,6 +5,17 @@ namespace BeyondImmersion.BannouService.Application;
 [ServiceConfiguration]
 public class AppConfiguration : BaseServiceConfiguration
 {
+    [Flags]
+    public enum LogModes
+    {
+        None = 0,
+        File = 1 << 0,
+        Console = 1 << 1,
+        Cloud = 1 << 2,
+        // convenience flags
+        All = File | Cloud | Console
+    }
+
     /// <summary>
     /// Network mode- determines service -> app mappings.
     /// </summary>
@@ -44,6 +55,11 @@ public class AppConfiguration : BaseServiceConfiguration
     /// The port the HTTPS webhost is listening on.
     /// </summary>
     public int HTTPS_Web_Host_Port { get; set; } = 443;
+
+    /// <summary>
+    /// The log destination.
+    /// </summary>
+    public LogModes Log_Mode { get; set; } = LogModes.Console;
 
     /// <summary>
     /// The minimum level of logs for the application code to write to the console.

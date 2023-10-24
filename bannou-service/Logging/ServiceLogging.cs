@@ -16,7 +16,7 @@ public static class ServiceLogging
     {
         var logFilepath = Path.Combine(Directory.GetCurrentDirectory(), $"logs/app.log");
         Log.Logger = new LoggerConfiguration()
-            .WriteTo.File(logFilepath, rollingInterval: RollingInterval.Day, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}")
+            .WriteToFile(logFilepath).WriteToConsole().WriteToCloud()
             .ReadFrom.Configuration(Configuration.IServiceConfiguration.BuildConfigurationRoot())
             .CreateLogger();
 
@@ -34,12 +34,36 @@ public static class ServiceLogging
 
         var logFilepath = Path.Combine(Directory.GetCurrentDirectory(), $"logs/{serviceName.ToLower()}.log");
         var logger = new LoggerConfiguration()
-            .WriteTo.File(logFilepath, rollingInterval: RollingInterval.Day, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}")
+            .WriteToFile(logFilepath).WriteToConsole().WriteToCloud()
             .ReadFrom.Configuration(Configuration.IServiceConfiguration.BuildConfigurationRoot())
             .CreateLogger();
 
         ILoggerFactory factory = new LoggerFactory().AddSerilog(Log.Logger);
         return factory.CreateLogger(serviceName.ToLower());
+    }
+
+    private static LoggerConfiguration WriteToFile(this LoggerConfiguration config, string logFilepath)
+    {
+        if (Program.Configuration.Log_Mode.HasFlag(AppConfiguration.LogModes.File))
+            config.WriteTo.File(logFilepath, rollingInterval: RollingInterval.Day, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}");
+
+        return config;
+    }
+
+    private static LoggerConfiguration WriteToConsole(this LoggerConfiguration config)
+    {
+        if (Program.Configuration.Log_Mode.HasFlag(AppConfiguration.LogModes.Console))
+            config.WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}");
+
+        return config;
+    }
+
+    private static LoggerConfiguration WriteToCloud(this LoggerConfiguration config)
+    {
+        //if (Program.Configuration.Log_Mode.HasFlag(AppConfiguration.LogModes.Cloud))
+        //    config.WriteTo.File(logFilepath, rollingInterval: RollingInterval.Day, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception}");
+
+        return config;
     }
 
     /// <summary>

@@ -32,3 +32,4 @@ public enum ResponseCodes
     ServerError = 500,
     ServerBusy = 503
 }
+
