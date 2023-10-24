@@ -1,8 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿namespace BeyondImmersion.BannouService.Controllers.Messages;
 
-namespace BeyondImmersion.BannouService.Controllers.Messages;
-
-[Serializable]
+[JsonObject]
 public class ServiceRequest<T> : ServiceRequest
 where T : class, IServiceResponse, new()
 {
@@ -16,7 +14,7 @@ where T : class, IServiceResponse, new()
 /// <summary>
 /// The basic service message payload model.
 /// </summary>
-[Serializable]
+[JsonObject]
 public class ServiceRequest : IServiceRequest
 {
     [HeaderArray(Name = "REQUEST_IDS")]
