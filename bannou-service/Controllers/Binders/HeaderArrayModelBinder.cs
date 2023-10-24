@@ -41,14 +41,14 @@ public class HeaderArrayModelBinder : IModelBinder
         if (bindingContext == null)
             throw new ArgumentNullException(nameof(bindingContext));
 
-        var propertyAttr = bindingContext.ModelType.GetCustomAttribute<HeaderArrayAttribute>();
+        // really? this is convoluted for something that seems necessary
+        var propertyAttr = bindingContext.ModelMetadata.ContainerType?.GetProperty(bindingContext.ModelName)?.GetCustomAttribute<HeaderArrayAttribute>();
         if (propertyAttr == null)
             return;
 
         var headerName = bindingContext.BinderModelName ?? bindingContext.ModelName;
-        Program.Logger.Log(LogLevel.Information, $"Binding model type {bindingContext.ModelName}! Checking for header name {headerName}!");
-
         var headerStrings = bindingContext.HttpContext.Request.Headers[headerName];
+
         bindingContext.Result = BindPropertyToHeaderArray(bindingContext.ModelType, headerStrings, propertyAttr);
     }
 

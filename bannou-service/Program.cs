@@ -196,8 +196,7 @@ public static class Program
             if (webApp != null)
                 await webApp.DisposeAsync();
 
-            if (DaprClient != null)
-                DaprClient?.Dispose();
+            DaprClient?.Dispose();
         }
 
         Logger.Log(LogLevel.Debug, null, "Application shutdown complete.");
