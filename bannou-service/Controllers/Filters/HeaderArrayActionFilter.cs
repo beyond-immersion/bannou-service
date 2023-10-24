@@ -6,33 +6,52 @@ namespace BeyondImmersion.BannouService.Controllers.Filters;
 
 public class HeaderArrayActionFilter : IActionFilter
 {
+    private const string HEADER_ARRAY_LIST = "HEADER_ARRAY_PROPERTIES";
+    private const string HEADER_ARRAY_PREFIX = "HEADER_ARRAY:";
+    private const string PROPERTYINFO_PREFIX = "PROPERTY_INFO:";
+
     public void OnActionExecuting(ActionExecutingContext context) { }
     public void OnActionExecuted(ActionExecutedContext context)
     {
         if (context.Result is ObjectResult objectResult && objectResult?.Value != null)
         {
-            var propertiesToRemove = new List<string>();
-            foreach (var propertyInfo in objectResult.Value.GetType().GetProperties())
+            try
             {
-                var headerAttr = propertyInfo.GetCustomAttribute<HeaderArrayAttribute>();
-                if (headerAttr == null)
-                    continue;
+                var headerPropertiesWithValues = new List<string>();
+                foreach (var propertyInfo in objectResult.Value.GetType().GetProperties())
+                {
+                    var headerAttr = propertyInfo.GetCustomAttribute<HeaderArrayAttribute>();
+                    if (headerAttr == null)
+                        continue;
 
-                var propertyValue = propertyInfo.GetValue(objectResult.Value);
-                if (propertyValue == null)
-                    continue;
+                    var propertyValue = propertyInfo.GetValue(objectResult.Value);
+                    if (propertyValue == null)
+                        continue;
 
-                var headersToSet = PropertyValueToHeaderArray(propertyInfo, propertyValue, headerAttr);
-                foreach (var header in headersToSet)
-                    context.HttpContext.Request.Headers.Add(header.Item1, header.Item2);
+                    // generate header array from property value
+                    var headersToSet = PropertyValueToHeaderArray(propertyInfo, propertyValue, headerAttr);
+                    foreach (var header in headersToSet)
+                        context.HttpContext.Request.Headers.Add(header.Item1, header.Item2);
 
-                if (propertyInfo.PropertyType.IsByRef)
-                    propertiesToRemove.Add(propertyInfo.Name);
+                    var propertyName = propertyInfo.Name;
+                    headerPropertiesWithValues.Add(propertyName);
 
+                    context.HttpContext.Items[PROPERTYINFO_PREFIX + propertyName] = propertyInfo;
+                    context.HttpContext.Items[HEADER_ARRAY_PREFIX + propertyName] = propertyValue;
+                }
+
+                if (headerPropertiesWithValues.Count == 0)
+                    return;
+
+                // cache array of all cached property names, for efficiency
+                context.HttpContext.Items[HEADER_ARRAY_LIST] = headerPropertiesWithValues.ToArray();
+                foreach (var propName in headerPropertiesWithValues)
+                    objectResult.Value.GetType().GetProperty(propName)?.SetValue(objectResult.Value, null);
             }
-
-            foreach (var propName in propertiesToRemove)
-                objectResult.Value.GetType().GetProperty(propName)?.SetValue(objectResult.Value, null);
+            catch (Exception exc)
+            {
+                Program.Logger.Log(LogLevel.Error, exc, "Exception thrown setting header array property values to header strings.");
+            }
         }
     }
 

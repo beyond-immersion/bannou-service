@@ -118,6 +118,7 @@ public static class Program
                 .AddControllers(mvcOptions =>
                 {
                     mvcOptions.Filters.Add(typeof(HeaderArrayActionFilter));
+                    mvcOptions.Filters.Add(typeof(HeaderArrayResultFilter));
                 });
 
             webAppBuilder.Services.AddDaprClient();
