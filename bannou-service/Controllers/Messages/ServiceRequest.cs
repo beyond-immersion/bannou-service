@@ -21,5 +21,5 @@ public class ServiceRequest : IServiceRequest
 {
     [JsonIgnore]
     [HeaderArray(Name = "REQUEST_IDS")]
-    public Dictionary<string, string> RequestIDs { get; set; }
+    public Dictionary<string, string>? RequestIDs { get; set; }
 }
