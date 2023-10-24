@@ -113,10 +113,23 @@ public static class Program
         {
             // configure services
             _ = webAppBuilder.Services.AddAuthentication();
-            _ = webAppBuilder.Services.AddControllers(mvcOptions =>
-            {
-                mvcOptions.Filters.Add(typeof(HeaderArrayActionFilter));
-            });
+
+            _ = webAppBuilder.Services
+                .AddControllers(mvcOptions =>
+                {
+                    mvcOptions.Filters.Add(typeof(HeaderArrayActionFilter));
+                })
+                .AddNewtonsoftJson(jsonOptions =>
+                {
+                    jsonOptions.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.None;
+                    jsonOptions.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                    jsonOptions.SerializerSettings.StringEscapeHandling = Newtonsoft.Json.StringEscapeHandling.Default;
+                    jsonOptions.SerializerSettings.TypeNameHandling = Newtonsoft.Json.TypeNameHandling.All;
+                    jsonOptions.SerializerSettings.MissingMemberHandling = Newtonsoft.Json.MissingMemberHandling.Ignore;
+                    jsonOptions.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+                    jsonOptions.SerializerSettings.MaxDepth = 32;
+                });
+
             webAppBuilder.Services.AddDaprClient();
             webAppBuilder.Services.AddDaprServices();
 
