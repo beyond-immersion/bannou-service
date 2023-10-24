@@ -20,8 +20,15 @@ jobs:
       - uses: actions/checkout@v3
         name: Checkout Repo
 
+      - name: Start Fresh
+        run: |
+            docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans &&
+            docker container prune -f &&
+            docker image prune -f &&
+            docker volume prune -f
+
       - name: Run Integration Tests
         run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --build --exit-code-from=bannou-tester
 
-      - name: Cleanup Tests
+      - name: Cleanup
         run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans
