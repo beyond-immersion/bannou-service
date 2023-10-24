@@ -46,14 +46,15 @@ public class HeaderArrayModelBinder : IModelBinder
             return;
 
         var headerName = bindingContext.BinderModelName ?? bindingContext.ModelName;
-        var headerStrings = bindingContext.HttpContext.Request.Headers[headerName];
+        Program.Logger.Log(LogLevel.Information, $"Binding model type {bindingContext.ModelName}! Checking for header name {headerName}!");
 
+        var headerStrings = bindingContext.HttpContext.Request.Headers[headerName];
         bindingContext.Result = BindPropertyToHeaderArray(bindingContext.ModelType, headerStrings, propertyAttr);
     }
 
     public static ModelBindingResult BindPropertyToHeaderArray(Type propertyType, IEnumerable<string> headers, HeaderArrayAttribute propertyAttr)
     {
-        if (!headers.Any())
+        if (headers == null || !headers.Any())
             return ModelBindingResult.Success(null);
 
         try
