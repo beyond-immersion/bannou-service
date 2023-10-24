@@ -134,6 +134,9 @@ public class TestingController : BaseDaprController
         if (!ModelState.IsValid)
         {
             var errors = ModelState.SelectMany(x => x.Value?.Errors.Select(p => p.ErrorMessage)).ToList();
+            foreach (var errorMsg in errors)
+                Program.Logger.LogError($"MODEL VALIDATION ERROR! : {errorMsg}");
+
             return BadRequest(new { Errors = errors });
         }
 

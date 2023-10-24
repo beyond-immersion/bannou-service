@@ -1,4 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Testing.Messages;
+using Dapr.Client;
 
 namespace BeyondImmersion.BannouService.Testing.Tests;
 
@@ -53,6 +54,15 @@ public static class BasicTests
                     Program.Logger.Log(LogLevel.Error, $"Integration test [{test.Method.Name}] failed.");
                     return false;
                 }
+            }
+            catch (InvocationException exc)
+            {
+                var logMsg = $"Integration test [{test.Method.Name}] failed on invoking method {exc.MethodName} for app {exc.AppId}.";
+                if (exc.Response != null)
+                    logMsg += $"\nCode: {exc.Response.StatusCode}, Reason: {exc.Response.ReasonPhrase}";
+
+                Program.Logger.Log(LogLevel.Error, exc, logMsg);
+                return false;
             }
             catch (Exception exc)
             {
