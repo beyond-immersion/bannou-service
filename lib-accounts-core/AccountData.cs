@@ -1,51 +1,50 @@
-﻿using Newtonsoft.Json;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace BeyondImmersion.BannouService.Accounts;
 
-[JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+[Serializable]
 public sealed class AccountData
 {
     /// <summary>
     /// The unique account ID (GUID).
     /// </summary>
+    [JsonInclude]
     [JsonPropertyName("id")]
-    [JsonProperty("id", Required = Required.Always)]
     public string? ID { get; }
 
     /// <summary>
     /// The account email address.
     /// </summary>
+    [JsonInclude]
     [JsonPropertyName("email")]
-    [JsonProperty("email", Required = Required.Always)]
     public string? Email { get; }
 
     /// <summary>
     /// The hash of the user's secret.
     /// </summary>
+    [JsonInclude]
     [JsonPropertyName("hashed_secret")]
-    [JsonProperty("hashed_secret", Required = Required.Always)]
     public string? HashedSecret { get; }
 
     /// <summary>
     /// The salt added to the user's secret before hashing.
     /// </summary>
+    [JsonInclude]
     [JsonPropertyName("secret_salt")]
-    [JsonProperty("secret_salt", Required = Required.Always)]
     public string? SecretSalt { get; }
 
     /// <summary>
     /// The account username.
     /// </summary>
+    [JsonInclude]
     [JsonPropertyName("display_name")]
-    [JsonProperty("display_name")]
     public string? DisplayName { get; }
 
     /// <summary>
     /// The user's role claim.
     /// </summary>
+    [JsonInclude]
     [JsonPropertyName("role")]
-    [JsonProperty("role", Required = Required.Always)]
     public string? Role { get; }
 
     private AccountData() { }

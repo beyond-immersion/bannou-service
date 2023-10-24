@@ -1,6 +1,4 @@
-﻿using BeyondImmersion.BannouService.Logging;
-using Newtonsoft.Json.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
