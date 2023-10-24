@@ -19,7 +19,6 @@ where T : class, IServiceResponse, new()
 [Serializable]
 public class ServiceRequest : IServiceRequest
 {
-    [JsonIgnore]
     [HeaderArray(Name = "REQUEST_IDS")]
     public Dictionary<string, string>? RequestIDs { get; set; }
 }
