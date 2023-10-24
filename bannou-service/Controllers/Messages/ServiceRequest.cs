@@ -20,5 +20,5 @@ where T : class, IServiceResponse, new()
 public class ServiceRequest : IServiceRequest
 {
     [HeaderArray(Name = "REQUEST_IDS")]
-    public Dictionary<string, string> RequestIDs { get; set; } = new Dictionary<string, string>();
+    public Dictionary<string, string> RequestIDs { get; set; }
 }

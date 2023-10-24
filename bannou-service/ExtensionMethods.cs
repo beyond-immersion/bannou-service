@@ -272,6 +272,9 @@ public static partial class ExtensionMethods
     {
         foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
         {
+            if (webApp == null)
+                continue;
+
             var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
             if (serviceInst != null)
                 await serviceInst.OnShutdown();

@@ -1,6 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Controllers.Binders;
 using Microsoft.AspNetCore.Http.Metadata;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace BeyondImmersion.BannouService.Attributes;

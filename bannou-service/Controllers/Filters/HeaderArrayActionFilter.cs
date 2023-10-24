@@ -11,26 +11,20 @@ public class HeaderArrayActionFilter : IActionFilter
     {
         if (context.Result is ObjectResult objectResult && objectResult?.Value != null)
         {
-            var propertiesToRemove = new List<string>();
             foreach (var propertyInfo in objectResult.Value.GetType().GetProperties())
             {
                 var headerAttr = propertyInfo.GetCustomAttribute<HeaderArrayAttribute>();
-                if (headerAttr != null)
-                {
-                    var propertyValue = propertyInfo.GetValue(objectResult.Value);
-                    if (propertyValue == null)
-                        continue;
+                if (headerAttr == null)
+                    continue;
 
-                    var headersToSet = PropertyValueToHeaderArray(propertyInfo, propertyValue, headerAttr);
-                    foreach (var header in headersToSet)
-                        context.HttpContext.Request.Headers.Add(header.Item1, header.Item2);
+                var propertyValue = propertyInfo.GetValue(objectResult.Value);
+                if (propertyValue == null)
+                    continue;
 
-                    propertiesToRemove.Add(propertyInfo.Name);
-                }
+                var headersToSet = PropertyValueToHeaderArray(propertyInfo, propertyValue, headerAttr);
+                foreach (var header in headersToSet)
+                    context.HttpContext.Request.Headers.Add(header.Item1, header.Item2);
             }
-
-            foreach (var propName in propertiesToRemove)
-                objectResult.Value.GetType().GetProperty(propName)?.SetValue(objectResult.Value, null);
         }
     }
 

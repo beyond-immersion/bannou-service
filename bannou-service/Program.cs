@@ -193,8 +193,11 @@ public static class Program
         finally
         {
             // perform cleanup
-            await webApp.DisposeAsync();
-            DaprClient.Dispose();
+            if (webApp != null)
+                await webApp.DisposeAsync();
+
+            if (DaprClient != null)
+                DaprClient?.Dispose();
         }
 
         Logger.Log(LogLevel.Debug, null, "Application shutdown complete.");

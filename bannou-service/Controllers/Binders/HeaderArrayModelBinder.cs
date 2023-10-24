@@ -41,17 +41,12 @@ public class HeaderArrayModelBinder : IModelBinder
         if (bindingContext == null)
             throw new ArgumentNullException(nameof(bindingContext));
 
-        var headerName = bindingContext.BinderModelName ?? bindingContext.ModelName;
-        if (string.IsNullOrWhiteSpace(headerName))
-            return;
-
-        var headerStrings = bindingContext.HttpContext.Request.Headers[headerName];
-        if (headerStrings.Count == 0)
-            return;
-
         var propertyAttr = bindingContext.ModelType.GetCustomAttribute<HeaderArrayAttribute>();
         if (propertyAttr == null)
             return;
+
+        var headerName = bindingContext.BinderModelName ?? bindingContext.ModelName;
+        var headerStrings = bindingContext.HttpContext.Request.Headers[headerName];
 
         bindingContext.Result = BindPropertyToHeaderArray(bindingContext.ModelType, headerStrings, propertyAttr);
     }
