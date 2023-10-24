@@ -142,14 +142,14 @@ public static class BasicTests
         service.ResetTestVars();
         var testID = "test_id_1";
         var testService = "inventory";
-        var serviceID = Guid.NewGuid();
+        var serviceID = Guid.NewGuid().ToString();
         var dataModel = new TestingRunTestRequest()
         {
             ID = testID,
             Service = testService,
             RequestIDs = new()
             {
-                ["SERVICE_ID"] = serviceID.ToString()
+                ["SERVICE_ID"] = serviceID
             }
         };
 
@@ -170,6 +170,7 @@ public static class BasicTests
             foreach (var receivedKVP in receivedData.RequestIDs)
                 Program.Logger.Log(LogLevel.Error, $"Received header '{receivedKVP.Key}' has a value of '{receivedKVP.Value}'");
 
-        return receivedData?.RequestIDs?["SERVICE_ID"] == serviceID.ToString();
+        return dataModel?.RequestIDs?["SERVICE_ID"] == serviceID &&
+            receivedData?.RequestIDs?["SERVICE_ID"] == serviceID;
     }
 }
