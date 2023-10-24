@@ -119,6 +119,24 @@ public static class Program
                 {
                     mvcOptions.Filters.Add(typeof(HeaderArrayActionFilter));
                     mvcOptions.Filters.Add(typeof(HeaderArrayResultFilter));
+                }).
+                AddNewtonsoftJson(jsonSettings =>
+                {
+                    jsonSettings.SerializerSettings.ConstructorHandling = ConstructorHandling.Default;
+                    jsonSettings.SerializerSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
+                    jsonSettings.SerializerSettings.DateParseHandling = DateParseHandling.DateTimeOffset;
+                    jsonSettings.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
+                    jsonSettings.SerializerSettings.DefaultValueHandling = DefaultValueHandling.Include;
+                    jsonSettings.SerializerSettings.FloatFormatHandling = FloatFormatHandling.String;
+                    jsonSettings.SerializerSettings.FloatParseHandling = FloatParseHandling.Double;
+                    jsonSettings.SerializerSettings.MetadataPropertyHandling = MetadataPropertyHandling.Default;
+                    jsonSettings.SerializerSettings.MissingMemberHandling = MissingMemberHandling.Ignore;
+                    jsonSettings.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                    jsonSettings.SerializerSettings.PreserveReferencesHandling = PreserveReferencesHandling.None;
+                    jsonSettings.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Error;
+                    jsonSettings.SerializerSettings.StringEscapeHandling = StringEscapeHandling.Default;
+                    jsonSettings.SerializerSettings.TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple;
+                    jsonSettings.SerializerSettings.TypeNameHandling = TypeNameHandling.None;
                 });
 
             webAppBuilder.Services.AddDaprClient();

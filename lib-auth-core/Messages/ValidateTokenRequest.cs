@@ -1,15 +1,14 @@
 ﻿using BeyondImmersion.BannouService.Controllers.Messages;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace BeyondImmersion.BannouService.Authorization.Messages;
 
 /// <summary>
 /// The request model for service API calls to `/authorization/validate`.
 /// </summary>
-[Serializable]
+[JsonObject]
 public class ValidateTokenRequest : ServiceRequest<ValidateTokenResponse>
 {
-    [JsonInclude]
-    [JsonPropertyName("token")]
+    [JsonProperty("token")]
     public string? Token { get; set; }
 }

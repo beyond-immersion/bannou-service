@@ -1,5 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Controllers.Messages;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace BeyondImmersion.BannouService.Authorization.Messages;
 
@@ -7,30 +7,25 @@ namespace BeyondImmersion.BannouService.Authorization.Messages;
 /// The response model for service API calls to `/authorization/token`.
 /// Does not use JRPC, as it's exposed directly to clients.
 /// </summary>
-[Serializable]
+[JsonObject]
 public class GetTokenResponse : ServiceResponse<GetTokenRequest>
 {
-    [Serializable]
+    [JsonObject]
     public class ErrorData
     {
-        [JsonInclude]
-        [JsonPropertyName("code")]
+        [JsonProperty("code")]
         public string? Code { get; set; }
 
-        [JsonInclude]
-        [JsonPropertyName("message")]
+        [JsonProperty("message")]
         public string? Message { get; set; }
 
-        [JsonInclude]
-        [JsonPropertyName("type")]
+        [JsonProperty("type")]
         public string? Type { get; set; }
     }
 
-    [JsonInclude]
-    [JsonPropertyName("token")]
+    [JsonProperty("token")]
     public string? Token { get; set; }
 
-    [JsonInclude]
-    [JsonPropertyName("errors")]
+    [JsonProperty("errors")]
     public ErrorData[]? Errors { get; set; }
 }

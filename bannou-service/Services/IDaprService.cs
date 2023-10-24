@@ -109,7 +109,7 @@ public interface IDaprService
             if (_serviceAppMappings == null)
             {
                 _serviceAppMappings = new Dictionary<string, IList<(Type, Type, DaprServiceAttribute)>>();
-                foreach ((Type, Type, DaprServiceAttribute) serviceHandler in IDaprService.Services)
+                foreach ((Type, Type, DaprServiceAttribute) serviceHandler in Services)
                 {
                     var serviceName = serviceHandler.Item3.Name;
                     var appName = Program.ConfigurationRoot.GetValue<string>(serviceName.ToUpper() + "_APP_MAPPING") ?? AppConstants.DEFAULT_APP_NAME;
@@ -174,7 +174,7 @@ public interface IDaprService
                             var configStr = File.ReadAllText(configFilePath);
                             if (configStr != null)
                             {
-                                var configPresets = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(configStr);
+                                var configPresets = JsonConvert.DeserializeObject<Dictionary<string, string>>(configStr);
                                 if (configPresets != null)
                                 {
                                     _networkModePresets = new Dictionary<string, string>(configPresets, StringComparer.InvariantCultureIgnoreCase);

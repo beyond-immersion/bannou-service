@@ -1,4 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Controllers.Messages;
+using Newtonsoft.Json;
 
 namespace BeyondImmersion.BannouService.Connect.Messages;
 
@@ -6,7 +7,7 @@ namespace BeyondImmersion.BannouService.Connect.Messages;
 /// The response model for service API calls to `/connect`.
 /// Does not use JRPC, as it's exposed directly to clients.
 /// </summary>
-[Serializable]
+[JsonObject]
 public class ConnectResponse : ServiceResponse<ConnectRequest>
 {
 }

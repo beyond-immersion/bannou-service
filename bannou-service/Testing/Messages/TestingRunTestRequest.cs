@@ -1,19 +1,14 @@
-﻿using BeyondImmersion.BannouService.Controllers.Messages;
-using System.Text.Json.Serialization;
-
-namespace BeyondImmersion.BannouService.Testing.Messages;
+﻿namespace BeyondImmersion.BannouService.Testing.Messages;
 
 /// <summary>
 /// The request model for service API calls to `/testing/run-test`.
 /// </summary>
-[Serializable]
+[JsonObject]
 public class TestingRunTestRequest : ServiceRequest
 {
-    [JsonInclude]
-    [JsonPropertyName("id")]
+    [JsonProperty("id")]
     public string? ID { get; set; }
 
-    [JsonInclude]
-    [JsonPropertyName("service")]
+    [JsonProperty("service")]
     public string? Service { get; set; }
 }

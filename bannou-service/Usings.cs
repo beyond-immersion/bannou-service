@@ -5,5 +5,6 @@ global using BeyondImmersion.BannouService.Controllers;
 global using BeyondImmersion.BannouService.Controllers.Messages;
 global using BeyondImmersion.BannouService.Services;
 global using Microsoft.Extensions.Logging;
+global using Newtonsoft.Json;
 global using System.Collections.Generic;
 global using System.Linq;
