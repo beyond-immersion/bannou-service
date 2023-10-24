@@ -112,8 +112,7 @@ public static class BasicTests
         var dataModel = new TestingRunTestRequest()
         {
             ID = testID,
-            Service = testService,
-            RequestIDs = new Dictionary<string, string>() { { "TEST_KEY", "TEST_VALUE" } }
+            Service = testService
         };
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
