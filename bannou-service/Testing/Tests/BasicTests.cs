@@ -144,6 +144,9 @@ public static class BasicTests
         };
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
+        if (newRequest.Headers.TryGetValues("Content-Type", out var contentTypes))
+            Program.Logger.Log(LogLevel.Information, $"Content-Type of test request: {contentTypes.FirstOrDefault()}");
+
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
 
         await Task.Delay(TEST_WAIT_TIME_MS);
