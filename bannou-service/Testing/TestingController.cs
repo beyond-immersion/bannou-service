@@ -51,7 +51,7 @@ public class TestingController : BaseDaprController
         if (string.IsNullOrWhiteSpace(id))
             return BadRequest();
 
-        var result = await Service.Run(id: id);
+        var result = await Service.Run(testName: id);
         return result ? Ok() : Conflict();
     }
 
@@ -66,8 +66,8 @@ public class TestingController : BaseDaprController
             return BadRequest();
 
         var result = string.IsNullOrWhiteSpace(id)
-            ? await Service.RunAllForService(service: service)
-            : await Service.Run(service: service, id: id);
+            ? await Service.RunAllForService(serviceName: service)
+            : await Service.Run(serviceName: service, testName: id);
         return result ? Ok() : Conflict();
     }
 
@@ -87,11 +87,11 @@ public class TestingController : BaseDaprController
             if (string.IsNullOrWhiteSpace(request.Service))
                 return BadRequest();
 
-            result = await Service.RunAllForService(service: request.Service);
+            result = await Service.RunAllForService(serviceName: request.Service);
         }
         else
         {
-            result = await Service.Run(service: request.Service, id: request.ID);
+            result = await Service.Run(serviceName: request.Service, testName: request.ID);
         }
 
         return result ? Ok() : Conflict();

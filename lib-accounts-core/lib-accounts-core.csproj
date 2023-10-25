@@ -6,4 +6,8 @@
 		<ServiceLib>accounts</ServiceLib>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <Folder Include="Tests\" />
+	</ItemGroup>
+
 </Project>

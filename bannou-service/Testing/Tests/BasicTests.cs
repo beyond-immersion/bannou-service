@@ -8,18 +8,18 @@ namespace BeyondImmersion.BannouService.Testing.Tests;
 /// </summary>
 public static class BasicTests
 {
-    private const int TEST_WAIT_TIME_MS = 200;
+    public const int ASYNC_HTTP_DELAY = 200;
 
-    private const string TEST_LOOPBACK_URI_PREFIX = $"{TEST_PROTOCOL}://{TEST_HOST_LOOPBACK}:{TEST_HOST_PORT}/v1.0/invoke/{TEST_SERVICE_NAME}/method/{TEST_CONTROLLER}/{TEST_ACTION}";
-    private const string TEST_PROTOCOL = "http";
-    private const string TEST_HOST_LOOPBACK = "127.0.0.1";
-    private const string TEST_HOST_PORT = "3500";
-    private const string TEST_SERVICE_NAME = "bannou";
-    private const string TEST_CONTROLLER = "testing";
-    private const string TEST_ACTION = "dapr-test";
+    private const string LOOPBACK_URI_PREFIX = $"{PROTOCOL}://{HOST_LOOPBACK}:{HOST_PORT}/v1.0/invoke/{SERVICE_NAME}/method/{CONTROLLER_NAME}/{ACTION_NAME}";
+    private const string PROTOCOL = "http";
+    private const string HOST_LOOPBACK = "127.0.0.1";
+    private const string HOST_PORT = "3500";
+    private const string SERVICE_NAME = "bannou";
+    private const string CONTROLLER_NAME = "testing";
+    private const string ACTION_NAME = "dapr-test";
 
-    [TestingService.ServiceTest(testID: "basic", serviceType: typeof(TestingService))]
-    public static async Task<bool> RunBasicTests(TestingService service)
+    [ServiceTest(testName: "basic", serviceType: typeof(TestingService))]
+    public static async Task<bool> BasicControllerTests(TestingService service)
     {
         await Task.CompletedTask;
         Program.Logger.Log(LogLevel.Trace, "Running all Basic tests!");
@@ -38,11 +38,11 @@ public static class BasicTests
 
         var tests = new List<Func<TestingService, Task<bool>>>()
         {
-            TEST_GET_Loopback,
-            TEST_GET_ID,
-            TEST_GET_Service_ID,
-            TEST_POST,
-            TEST_RequestIDPropagation
+            Get_Loopback_StringFromRoute,
+            Get_StringInRoute,
+            Get_MultipleStringsInRoute,
+            Post_ObjectModel,
+            Post_ObjectModel_HeaderArrays
         };
 
         foreach (var test in tests)
@@ -74,47 +74,47 @@ public static class BasicTests
         return true;
     }
 
-    private static async Task<bool> TEST_GET_Loopback(TestingService service)
+    private static async Task<bool> Get_Loopback_StringFromRoute(TestingService service)
     {
         service.ResetTestVars();
         var testID = "test_id_1";
 
-        var request = new HttpRequestMessage(HttpMethod.Get, TEST_LOOPBACK_URI_PREFIX + $"/{testID}");
+        var request = new HttpRequestMessage(HttpMethod.Get, LOOPBACK_URI_PREFIX + $"/{testID}");
         await Program.DaprClient.InvokeMethodAsync(request, Program.ShutdownCancellationTokenSource.Token);
 
-        await Task.Delay(TEST_WAIT_TIME_MS);
+        await Task.Delay(ASYNC_HTTP_DELAY);
 
         return service.LastTestID == testID;
     }
 
-    private static async Task<bool> TEST_GET_ID(TestingService service)
+    private static async Task<bool> Get_StringInRoute(TestingService service)
     {
         service.ResetTestVars();
         var testID = "test_id_1";
 
-        HttpRequestMessage request = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Get, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}/{testID}");
+        HttpRequestMessage request = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Get, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}/{testID}");
         await Program.DaprClient.InvokeMethodAsync(request, Program.ShutdownCancellationTokenSource.Token);
 
-        await Task.Delay(TEST_WAIT_TIME_MS);
+        await Task.Delay(ASYNC_HTTP_DELAY);
 
         return service.LastTestID == testID;
     }
 
-    private static async Task<bool> TEST_GET_Service_ID(TestingService service)
+    private static async Task<bool> Get_MultipleStringsInRoute(TestingService service)
     {
         service.ResetTestVars();
         var testID = "test_id_1";
         var testService = "inventory";
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Get, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}/{testService}/{testID}");
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Get, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}/{testService}/{testID}");
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
 
-        await Task.Delay(TEST_WAIT_TIME_MS);
+        await Task.Delay(ASYNC_HTTP_DELAY);
 
         return service.LastTestID == testID && service.LastTestService == testService;
     }
 
-    private static async Task<bool> TEST_POST(TestingService service)
+    private static async Task<bool> Post_ObjectModel(TestingService service)
     {
         service.ResetTestVars();
         var testID = "test_id_1";
@@ -125,10 +125,10 @@ public static class BasicTests
             Service = testService
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", dataModel);
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
 
-        await Task.Delay(TEST_WAIT_TIME_MS);
+        await Task.Delay(ASYNC_HTTP_DELAY);
 
         if (service.LastTestRequest == null)
             return false;
@@ -137,7 +137,7 @@ public static class BasicTests
         return receivedData.ID == testID && receivedData.Service == testService;
     }
 
-    private static async Task<bool> TEST_RequestIDPropagation(TestingService service)
+    private static async Task<bool> Post_ObjectModel_HeaderArrays(TestingService service)
     {
         service.ResetTestVars();
         var testID = "test_id_1";
@@ -153,24 +153,20 @@ public static class BasicTests
             }
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{TEST_CONTROLLER}/{TEST_ACTION}", dataModel);
-        foreach (var headerKVP in newRequest.Headers)
-            Program.Logger.Log(LogLevel.Error, $"Published header '{headerKVP.Key}' has a value of '{headerKVP.Value}'");
-
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", dataModel);
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
 
-        await Task.Delay(TEST_WAIT_TIME_MS);
+        await Task.Delay(ASYNC_HTTP_DELAY);
 
         if (service.LastTestRequest == null)
             return false;
 
+        // ensure ID is still in request object
         var receivedData = (TestingRunTestRequest)service.LastTestRequest;
+        if (dataModel?.RequestIDs?["SERVICE_ID"] != serviceID)
+            return false;
 
-        if (receivedData.RequestIDs != null)
-            foreach (var receivedKVP in receivedData.RequestIDs)
-                Program.Logger.Log(LogLevel.Error, $"Received header '{receivedKVP.Key}' has a value of '{receivedKVP.Value}'");
-
-        return dataModel?.RequestIDs?["SERVICE_ID"] == serviceID &&
-            receivedData?.RequestIDs?["SERVICE_ID"] == serviceID;
+        // ensure ID is in received / serialized+deserialized payload too
+        return receivedData?.RequestIDs?["SERVICE_ID"] == serviceID;
     }
 }
