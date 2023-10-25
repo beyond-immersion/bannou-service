@@ -205,7 +205,8 @@ public static class Program
             Logger.Log(LogLevel.Information, null, "WebHost stopped- starting controlled application shutdown.");
 
             // invoke all Service.Shutdown() methods on enabled service handlers
-            await webApp.InvokeAllServiceShutdownMethods();
+            if (webApp != null)
+                await webApp.InvokeAllServiceShutdownMethods();
         }
         catch (Exception exc)
         {

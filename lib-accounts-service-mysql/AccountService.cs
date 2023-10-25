@@ -13,23 +13,24 @@ public class AccountService : IAccountService
     private AccountServiceConfiguration? _configuration;
     public AccountServiceConfiguration Configuration
     {
-        get
-        {
-            _configuration ??= IServiceConfiguration.BuildConfiguration<AccountServiceConfiguration>();
-            return _configuration;
-        }
-
+        get => _configuration ??= IServiceConfiguration.BuildConfiguration<AccountServiceConfiguration>();
         internal set => _configuration = value;
     }
 
-    private MySqlConnection? dbConnection;
+    private MySqlConnection? _dbConnection;
 
     public async Task OnStart()
     {
-        await Task.CompletedTask;
+        _dbConnection = new MySqlConnection(Configuration.Connection_String);
+        await _dbConnection.OpenAsync();
 
-        dbConnection = new MySqlConnection(Configuration.Connection_String);
-        dbConnection.Open();
+        await InitializeDatabase();
+    }
+
+    public async Task OnShutdown()
+    {
+        if (_dbConnection != null)
+            await _dbConnection.CloseAsync();
     }
 
     public async Task<AccountData?> GetAccount(string email)
@@ -41,14 +42,45 @@ public class AccountService : IAccountService
     public static string GenerateHashedSecret(string secretString, string secretSalt)
         => IAccountService.GenerateHashedSecret(secretString, secretSalt);
 
-    public static bool CreateUsersTable(MySqlConnection sqlConnection)
+    /// <summary>
+    /// Create all account database tables, if needed.
+    /// Will populate the reference tables as well.
+    /// </summary>
+    public async Task<bool> InitializeDatabase()
+    {
+        if (!await CreateUsersTable())
+            return false;
+
+        if (!await CreateClaimTypesTable())
+            return false;
+
+        if (!await CreateLoginProvidersTable())
+            return false;
+
+        if (!await CreateUserLoginsTable())
+            return false;
+
+        if (!await CreateUserClaimsTable())
+            return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Creates the primary table for user data.
+    /// 
+    /// Clients can potentially have null a username
+    /// and password salt, if their account is purely
+    /// generated off of an OAuth token, and no
+    /// further data has been obtained yet.
+    /// </summary>
+    public async Task<bool> CreateUsersTable()
     {
         var builder = new SqlBuilder();
         var template = builder.AddTemplate(@"
             CREATE TABLE IF NOT EXISTS `Users` (
                 `Id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 `Username` VARCHAR(255) UNIQUE NULL,
-                `PasswordHash` VARCHAR(255) NULL,
                 `PasswordSalt` VARCHAR(255) NULL,
                 `Email` VARCHAR(255) UNIQUE NULL,
                 `EmailVerified` BOOLEAN NOT NULL DEFAULT FALSE,
@@ -65,7 +97,7 @@ public class AccountService : IAccountService
 
         try
         {
-            sqlConnection.Execute(template.RawSql);
+            await _dbConnection.ExecuteAsync(template.RawSql);
             return true;
         }
         catch (Exception exc)
@@ -75,7 +107,14 @@ public class AccountService : IAccountService
         }
     }
 
-    public static bool CreateLoginProvidersTable(MySqlConnection sqlConnection)
+    /// <summary>
+    /// Creates the reference table for login / OAuth providers.
+    /// This is a lot like an enumeration- just a lookup from id -> name.
+    /// 
+    /// Initially supporting Steam and Google, but can trivially add new
+    /// providers if/as we need them.
+    /// </summary>
+    public async Task<bool> CreateLoginProvidersTable()
     {
         var builder = new SqlBuilder();
         var template = builder.AddTemplate(@"
@@ -83,12 +122,12 @@ public class AccountService : IAccountService
                 `Id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 `Name` VARCHAR(255) UNIQUE NOT NULL
             ) ENGINE = InnoDB;
-            INSERT IGNORE INTO `LoginProviders` (`Name`) VALUES ('Google'), ('Steam');
+            INSERT IGNORE INTO `LoginProviders` (`Name`) VALUES ('Google'), ('Steam'), ('Password');
         ");
 
         try
         {
-            sqlConnection.Execute(template.RawSql);
+            await _dbConnection.ExecuteAsync(template.RawSql);
             return true;
         }
         catch (Exception exc)
@@ -98,7 +137,12 @@ public class AccountService : IAccountService
         }
     }
 
-    public static bool CreateUserLoginsTable(MySqlConnection sqlConnection)
+    /// <summary>
+    /// Create the user logins table. Used for the traditional password login, with
+    /// ProviderKey holding the password hash, and also maps users to third-party
+    /// OAuth provider identities / integrations.
+    /// </summary>
+    public async Task<bool> CreateUserLoginsTable()
     {
         var builder = new SqlBuilder();
         var template = builder.AddTemplate(@"
@@ -115,7 +159,7 @@ public class AccountService : IAccountService
 
         try
         {
-            sqlConnection.Execute(template.RawSql);
+            await _dbConnection.ExecuteAsync(template.RawSql);
             return true;
         }
         catch (Exception exc)
@@ -125,7 +169,14 @@ public class AccountService : IAccountService
         }
     }
 
-    public static bool CreateClaimTypesTable(MySqlConnection sqlConnection)
+    /// <summary>
+    /// Creates the reference table for claim types. Like LoginProviders,
+    /// essentially an enum.
+    /// 
+    /// Claim types are much like categories, and a user will have a number of them,
+    /// of many different types.
+    /// </summary>
+    public async Task<bool> CreateClaimTypesTable()
     {
         var builder = new SqlBuilder();
         var template = builder.AddTemplate(@"
@@ -138,7 +189,7 @@ public class AccountService : IAccountService
 
         try
         {
-            sqlConnection.Execute(template.RawSql);
+            await _dbConnection.ExecuteAsync(template.RawSql);
             return true;
         }
         catch (Exception exc)
@@ -148,7 +199,12 @@ public class AccountService : IAccountService
         }
     }
 
-    public static bool CreateUserClaimsTable(MySqlConnection sqlConnection)
+    /// <summary>
+    /// Table for storing all of the claims available to users in the network.
+    /// The Value is a string typically formatted key:value, by convention, but
+    /// can also be complex (JSON) types.
+    /// </summary>
+    public async Task<bool> CreateUserClaimsTable()
     {
         var builder = new SqlBuilder();
         var template = builder.AddTemplate(@"
@@ -156,7 +212,7 @@ public class AccountService : IAccountService
                 `Id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 `UserId` INT UNSIGNED NOT NULL,
                 `TypeId` INT UNSIGNED NOT NULL,
-                `Value` VARCHAR(255) NOT NULL,
+                `Value` VARCHAR(512) NOT NULL,
                 INDEX (`UserId`),
                 FOREIGN KEY (`UserId`) REFERENCES `Users`(`Id`) ON DELETE CASCADE,
                 FOREIGN KEY (`TypeId`) REFERENCES `ClaimTypes`(`Id`) ON DELETE CASCADE,
@@ -166,7 +222,7 @@ public class AccountService : IAccountService
 
         try
         {
-            sqlConnection.Execute(template.RawSql);
+            await _dbConnection.ExecuteAsync(template.RawSql);
             return true;
         }
         catch (Exception exc)
