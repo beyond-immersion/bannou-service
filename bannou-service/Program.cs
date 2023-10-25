@@ -88,9 +88,9 @@ public static class Program
         }
 
         // ensure dapr services have their required configuration
-        if (!IDaprService.EnabledServicesHaveRequiredConfiguration())
+        if (!EnabledServicesHaveRequiredConfiguration())
         {
-            Logger.Log(LogLevel.Error, null, "Required configuration not set for enabled services- exiting application.");
+            Logger.Log(LogLevel.Error, null, "Required configuration missing for enabled services- exiting application.");
             return;
         }
 
@@ -223,6 +223,29 @@ public static class Program
         }
 
         Logger.Log(LogLevel.Debug, null, "Application shutdown complete.");
+    }
+
+    /// <summary>
+    /// Returns whether all enabled services have their required configuration set.
+    /// </summary>
+    private static bool EnabledServicesHaveRequiredConfiguration()
+    {
+        foreach (var serviceInfo in IDaprService.EnabledServices)
+        {
+            Type interfaceType = serviceInfo.Item1;
+            Type implementationType = serviceInfo.Item2;
+            Type serviceConfig = IDaprService.GetConfigurationType(interfaceType);
+            if (serviceConfig == null)
+                continue;
+
+            if (!IServiceConfiguration.HasRequiredForType(serviceConfig))
+            {
+                Logger.Log(LogLevel.Error, null, $"Required configuration is missing for the '{serviceInfo.Item3.Name}' service.");
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static void LoadAssemblies()

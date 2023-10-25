@@ -286,29 +286,6 @@ public interface IDaprService
     }
 
     /// <summary>
-    /// Returns whether all enabled services have their required configuration set.
-    /// </summary>
-    public static bool EnabledServicesHaveRequiredConfiguration()
-    {
-        foreach (var serviceInfo in EnabledServices)
-        {
-            Type interfaceType = serviceInfo.Item1;
-            Type implementationType = serviceInfo.Item2;
-            Type serviceConfig = GetConfigurationType(interfaceType);
-            if (serviceConfig == null)
-                continue;
-
-            if (!IServiceConfiguration.HasRequiredForType(serviceConfig))
-            {
-                Program.Logger?.Log(LogLevel.Error, null, $"Required configuration is missing to start an enabled dapr service.");
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /// <summary>
     /// Returns whether the configuration indicates ANY services should be enabled.
     /// </summary>
     public static bool IsAnyEnabled()
