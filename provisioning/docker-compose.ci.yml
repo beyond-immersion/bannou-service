@@ -29,12 +29,12 @@ services:
       - MYSQL_RANDOM_ROOT_PASSWORD=true
     volumes:
       - account-volume:/var/lib/mysql
-      - ./provisioning/mysql/grant-permissions.sql:/docker-entrypoint-initdb.d/grant-permissions.sql
+      - ./provisioning/mysql:/docker-entrypoint-initdb.d
 
   # adds a new sidecar to the monoservice, just to run the shell script
   # which CURLs an API to trigger all of the integration tests to run
   bannou-tester:
-    image: ubuntu
+    image: ubuntu:latest
     network_mode:
       "service:bannou"
     volumes:

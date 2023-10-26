@@ -9,13 +9,6 @@ on:
 
 jobs:
 
-  prepare-runner:
-    runs-on: [self-hosted, bannou]
-    steps:
-    - name: Set permissions
-      run: |
-        sudo chown -R $(whoami):$(whoami) $GITHUB_WORKSPACE
-
   integration-tests:
     name: Integration Tests
     runs-on: [self-hosted, bannou]
