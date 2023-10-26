@@ -242,27 +242,30 @@ public static partial class ExtensionMethods
     /// </summary>
     public static async Task<bool> InvokeAllServiceStartMethods(this WebApplication webApp)
     {
+        var timeoutTime = Program.Configuration.Service_Start_Timeout;
+
         foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
         {
             var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
             if (serviceInst != null)
             {
-                if (Program.Configuration.Service_Start_Timeout < 1)
+                if (timeoutTime < 1)
                 {
                     await serviceInst.OnStart();
                     continue;
                 }
 
                 // if configured, each service has a set amount of time to start successfully
-                using var timeoutToken = new CancellationTokenSource();
-                var timeoutTime = Program.Configuration.Service_Start_Timeout;
-                var timeoutTask = Task.Delay(timeoutTime, timeoutToken.Token)
-                    .ContinueWith(_ => Program.ShutdownCancellationTokenSource.Cancel(), TaskScheduler.Default);
+                using var timeoutTokenSource = new CancellationTokenSource();
+                var timeoutTask = Task.Delay(timeoutTime, timeoutTokenSource.Token)
+                    .ContinueWith(_ => Program.ShutdownCancellationTokenSource.Cancel(), TaskScheduler.Current);
 
                 try
                 {
                     await serviceInst.OnStart();
-                    timeoutToken.Cancel();
+                    timeoutTokenSource.Cancel();
+
+                    Program.Logger.Log(LogLevel.Information, $"Service startup successful for '{implType.Name}'.");
                 }
                 catch (OperationCanceledException exc)
                 {
@@ -271,6 +274,8 @@ public static partial class ExtensionMethods
                 }
                 catch (Exception exc)
                 {
+                    timeoutTokenSource.Cancel();
+
                     Program.Logger.Log(LogLevel.Error, exc, $"Service startup has failed for '{implType.Name}'.");
                     return false;
                 }
