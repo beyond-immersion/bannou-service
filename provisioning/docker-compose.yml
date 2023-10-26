@@ -49,11 +49,10 @@ services:
 
   filebeat:
     image: docker.elastic.co/beats/filebeat:8.10.4
-    command: sh -c "chown root:root /usr/share/filebeat/filebeat.yml && chmod go-w /usr/share/filebeat/filebeat.yml && filebeat -e"
+    command: sh -c "chmod go-w /usr/share/filebeat/filebeat.yml && filebeat -e"
     volumes:
       - ./filebeat/filebeat.console.yml:/usr/share/filebeat/filebeat.yml
       - logs-volume:/app/logs/
-    user: root
     environment:
       - "FILEBEAT_INPUTS_PATHS=/app/logs/*"
 
