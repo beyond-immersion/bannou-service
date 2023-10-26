@@ -1,2 +1,2 @@
-GRANT SELECT, INSERT, UPDATE ON accounts. TO 'Abraham'@'%';
+GRANT SELECT, INSERT, UPDATE ON accounts.* TO 'Abraham'@'%';
 FLUSH PRIVILEGES;
