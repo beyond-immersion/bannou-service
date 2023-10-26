@@ -24,10 +24,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisionin
 		provisioning\docker-compose.swarm.yml = provisioning\docker-compose.swarm.yml
 		provisioning\docker-compose.yml = provisioning\docker-compose.yml
 		provisioning\Dockerfile = provisioning\Dockerfile
-		provisioning\filebeat.console.yml = provisioning\filebeat.console.yml
-		provisioning\filebeat.ek.yml = provisioning\filebeat.ek.yml
-		provisioning\filebeat.elk.yml = provisioning\filebeat.elk.yml
-		provisioning\logstash.elk.conf = provisioning\logstash.elk.conf
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github", "Github", "{8104DBD9-C9EB-460A-842B-9385C32836C6}"
@@ -42,8 +38,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Components", "Components", "{47B2858E-0EA2-43AB-85CF-E1335FF1D0A8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-accounts-service-mysql", "lib-accounts-service-mysql\lib-accounts-service-mysql.csproj", "{B09563F2-9CB5-482B-9389-EEDE84DCAAA8}"
 EndProject
@@ -69,6 +63,35 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{
 		.github\workflows\ci.lint.yml = .github\workflows\ci.lint.yml
 		.github\workflows\ci.unit.yml = .github\workflows\ci.unit.yml
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dapr", "dapr", "{F8C5D693-9796-4F4E-9627-98A16A3720BE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "components", "components", "{288184FE-562A-4E3A-8BAF-DB6ED084A6C7}"
+	ProjectSection(SolutionItems) = preProject
+		provisioning\dapr\components\account-redis.yaml = provisioning\dapr\components\account-redis.yaml
+		provisioning\dapr\components\accout-postgres.yaml = provisioning\dapr\components\accout-postgres.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mysql", "mysql", "{4D5FB375-61CA-4538-8393-1C74FA1F8E8F}"
+	ProjectSection(SolutionItems) = preProject
+		provisioning\mysql\grant-permissions.sql = provisioning\mysql\grant-permissions.sql
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logstash", "logstash", "{1BA3E060-714F-483C-9369-9339C75CF1AC}"
+	ProjectSection(SolutionItems) = preProject
+		provisioning\logstash\logstash.elk.conf = provisioning\logstash\logstash.elk.conf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "filebeat", "filebeat", "{5D22D6B5-738C-41F6-9AE3-AFEF67B7C4A1}"
+	ProjectSection(SolutionItems) = preProject
+		provisioning\filebeat\filebeat.console.yml = provisioning\filebeat\filebeat.console.yml
+		provisioning\filebeat\filebeat.ek.yml = provisioning\filebeat\filebeat.ek.yml
+		provisioning\filebeat\filebeat.elk.yml = provisioning\filebeat\filebeat.elk.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ci", "ci", "{0ABDF843-F200-4438-AA37-E5E9380F4978}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "swarm", "swarm", "{BDF5F17E-AD78-4107-9E13-C09878032E0D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -139,9 +162,15 @@ Global
 		{6905E47E-6C04-4CF6-894F-2643528E490D} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
 		{8104DBD9-C9EB-460A-842B-9385C32836C6} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
 		{1E4033CE-EDE2-4140-ABB1-0B55250255F9} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
-		{47B2858E-0EA2-43AB-85CF-E1335FF1D0A8} = {6905E47E-6C04-4CF6-894F-2643528E490D}
 		{4F07AA77-C49C-498D-BFA1-B47D0139E021} = {BC5C7349-B53D-4B5D-9883-FC3D2288C3BD}
 		{9DF51A7F-2307-41EC-97DD-EBC30BF8B859} = {8104DBD9-C9EB-460A-842B-9385C32836C6}
+		{F8C5D693-9796-4F4E-9627-98A16A3720BE} = {6905E47E-6C04-4CF6-894F-2643528E490D}
+		{288184FE-562A-4E3A-8BAF-DB6ED084A6C7} = {F8C5D693-9796-4F4E-9627-98A16A3720BE}
+		{4D5FB375-61CA-4538-8393-1C74FA1F8E8F} = {6905E47E-6C04-4CF6-894F-2643528E490D}
+		{1BA3E060-714F-483C-9369-9339C75CF1AC} = {6905E47E-6C04-4CF6-894F-2643528E490D}
+		{5D22D6B5-738C-41F6-9AE3-AFEF67B7C4A1} = {6905E47E-6C04-4CF6-894F-2643528E490D}
+		{0ABDF843-F200-4438-AA37-E5E9380F4978} = {288184FE-562A-4E3A-8BAF-DB6ED084A6C7}
+		{BDF5F17E-AD78-4107-9E13-C09878032E0D} = {288184FE-562A-4E3A-8BAF-DB6ED084A6C7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC13195D-546C-43E1-9AAA-2C0BF08BA428}
