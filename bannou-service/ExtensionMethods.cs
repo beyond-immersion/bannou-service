@@ -256,27 +256,23 @@ public static partial class ExtensionMethods
                     continue;
                 }
 
-                // if configured, each service has a set amount of time to start successfully
-                using var timeoutTokenSource = new CancellationTokenSource();
-                var timeoutTask = Task.Delay(timeoutTime, timeoutTokenSource.Token)
-                    .ContinueWith(_ => Program.ShutdownCancellationTokenSource.Cancel(), TaskScheduler.Current);
-
                 try
                 {
-                    await serviceInst.OnStart();
-                    timeoutTokenSource.Cancel();
+                    var startTask = serviceInst.OnStart();
+                    var timeoutTask = Task.Delay(timeoutTime);
 
-                    Program.Logger.Log(LogLevel.Information, $"Service startup successful for '{serviceData.Item2.Name}'.");
-                }
-                catch (OperationCanceledException exc)
-                {
-                    Program.Logger.Log(LogLevel.Error, exc, $"Service startup has timed out for '{serviceData.Item2.Name}'.");
-                    return false;
+                    if (await Task.WhenAny(startTask, timeoutTask) == startTask)
+                    {
+                        Program.Logger.Log(LogLevel.Information, $"Service startup successful for '{serviceData.Item2.Name}'.");
+                    }
+                    else
+                    {
+                        Program.Logger.Log(LogLevel.Error, $"Service startup has timed out for '{serviceData.Item2.Name}'.");
+                        return false;
+                    }
                 }
                 catch (Exception exc)
                 {
-                    timeoutTokenSource.Cancel();
-
                     Program.Logger.Log(LogLevel.Error, exc, $"Service startup has failed for '{serviceData.Item2.Name}'.");
                     return false;
                 }
