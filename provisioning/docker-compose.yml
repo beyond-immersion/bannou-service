@@ -51,7 +51,7 @@ services:
     image: docker.elastic.co/beats/filebeat:8.10.4
     command: sh -c "chown root:root /usr/share/filebeat/filebeat.yml && filebeat -e"
     volumes:
-      - ./filebeat.console.yml:/usr/share/filebeat/filebeat.yml
+      - ./filebeat/filebeat.console.yml:/usr/share/filebeat/filebeat.yml
       - logs-volume:/app/logs/
     user: root
     environment:

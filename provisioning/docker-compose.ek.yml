@@ -6,7 +6,7 @@ services:
     depends_on:
       - elasticsearch
     volumes:
-      - ./filebeat.ek.yml:/usr/share/filebeat/filebeat.yml
+      - ./filebeat/filebeat.ek.yml:/usr/share/filebeat/filebeat.yml
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.10.4
