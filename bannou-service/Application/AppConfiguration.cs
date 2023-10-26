@@ -12,7 +12,7 @@ public class AppConfiguration : BaseServiceConfiguration
         File = 1 << 0,
         Console = 1 << 1,
         Cloud = 1 << 2,
-        // convenience flags
+        // convenience
         All = File | Cloud | Console
     }
 

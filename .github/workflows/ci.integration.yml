@@ -13,6 +13,8 @@ jobs:
     name: Integration Tests
     runs-on: [self-hosted, bannou]
     env:
+      ACCOUNT_DB_USER: ${{ secrets.ACCOUNT_DB_USER }}
+      ACCOUNT_DB_PASSWORD: ${{ secrets.ACCOUNT_DB_PASSWORD }}
       AUTH_TOKEN_PUBLIC_KEY: ${{ secrets.AUTH_TOKEN_PUBLIC_KEY }}
       AUTH_TOKEN_PRIVATE_KEY: ${{ secrets.AUTH_TOKEN_PRIVATE_KEY }}
 
