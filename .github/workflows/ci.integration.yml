@@ -19,6 +19,10 @@ jobs:
       AUTH_TOKEN_PRIVATE_KEY: ${{ secrets.AUTH_TOKEN_PRIVATE_KEY }}
 
     steps:
+      - name: Set Permissions
+        run: |
+          sudo chown -R $(whoami):$(whoami) $GITHUB_WORKSPACE
+
       - uses: actions/checkout@v3
         name: Checkout Repo
 
