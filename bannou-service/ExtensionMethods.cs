@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -244,9 +245,9 @@ public static partial class ExtensionMethods
     {
         var timeoutTime = Program.Configuration.Service_Start_Timeout;
 
-        foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
+        foreach (var serviceData in IDaprService.EnabledServices)
         {
-            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            var serviceInst = (IDaprService?)webApp.Services.GetService(serviceData.Item1);
             if (serviceInst != null)
             {
                 if (timeoutTime < 1)
@@ -265,18 +266,18 @@ public static partial class ExtensionMethods
                     await serviceInst.OnStart();
                     timeoutTokenSource.Cancel();
 
-                    Program.Logger.Log(LogLevel.Information, $"Service startup successful for '{implType.Name}'.");
+                    Program.Logger.Log(LogLevel.Information, $"Service startup successful for '{serviceData.Item2.Name}'.");
                 }
                 catch (OperationCanceledException exc)
                 {
-                    Program.Logger.Log(LogLevel.Error, exc, $"Service startup has timed out for '{implType.Name}'.");
+                    Program.Logger.Log(LogLevel.Error, exc, $"Service startup has timed out for '{serviceData.Item2.Name}'.");
                     return false;
                 }
                 catch (Exception exc)
                 {
                     timeoutTokenSource.Cancel();
 
-                    Program.Logger.Log(LogLevel.Error, exc, $"Service startup has failed for '{implType.Name}'.");
+                    Program.Logger.Log(LogLevel.Error, exc, $"Service startup has failed for '{serviceData.Item2.Name}'.");
                     return false;
                 }
             }
@@ -290,9 +291,9 @@ public static partial class ExtensionMethods
     /// </summary>
     public static async Task InvokeAllServiceRunningMethods(this WebApplication webApp)
     {
-        foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
+        foreach (var serviceInfo in IDaprService.EnabledServices)
         {
-            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            var serviceInst = (IDaprService?)webApp.Services.GetService(serviceInfo.Item1);
             if (serviceInst != null)
                 await serviceInst.OnRunning();
         }
@@ -303,9 +304,9 @@ public static partial class ExtensionMethods
     /// </summary>
     public static async Task InvokeAllServiceShutdownMethods(this WebApplication webApp)
     {
-        foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
+        foreach (var serviceInfo in IDaprService.EnabledServices)
         {
-            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            var serviceInst = (IDaprService?)webApp.Services.GetService(serviceInfo.Item1);
             if (serviceInst != null)
                 await serviceInst.OnShutdown();
         }

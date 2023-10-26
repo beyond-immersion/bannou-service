@@ -1,4 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Services;
 using Dapper;
 using MySql.Data.MySqlClient;
 
@@ -19,10 +20,11 @@ public class AccountService : IAccountService
 
     private MySqlConnection? _dbConnection;
 
-    public async Task OnStart()
+    async Task IDaprService.OnStart()
     {
         _dbConnection = new MySqlConnection(Configuration.Connection_String);
         await _dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
+
         while (_dbConnection.State != System.Data.ConnectionState.Open)
         {
             Program.Logger.Log(LogLevel.Debug, "Waiting for MySQL connection to become ready...");
@@ -32,7 +34,7 @@ public class AccountService : IAccountService
         await InitializeDatabase();
     }
 
-    public async Task OnShutdown()
+    async Task IDaprService.OnShutdown()
     {
         if (_dbConnection != null)
             await _dbConnection.CloseAsync();
