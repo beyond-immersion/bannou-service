@@ -2,7 +2,7 @@
 
 namespace BeyondImmersion.BannouService.Accounts;
 
-[ServiceConfiguration(typeof(IAccountService))]
+[ServiceConfiguration(typeof(IAccountService), envPrefix: "account_")]
 public class AccountServiceConfiguration :  BaseServiceConfiguration
 {
     [ConfigRequired]
