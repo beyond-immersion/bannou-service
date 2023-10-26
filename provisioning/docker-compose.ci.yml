@@ -26,6 +26,7 @@ services:
       - MYSQL_DATABASE=accounts
       - MYSQL_USER=${ACCOUNT_DB_USER}
       - MYSQL_PASSWORD=${ACCOUNT_DB_PASSWORD}
+      - MYSQL_RANDOM_ROOT_PASSWORD
     volumes:
       - account-volume:/var/lib/mysql
       - ./provisioning/mysql/grant-permissions.sql:/docker-entrypoint-initdb.d/grant-permissions.sql
