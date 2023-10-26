@@ -240,14 +240,44 @@ public static partial class ExtensionMethods
     /// <summary>
     /// Iterates through and invokes the Start() method on all loaded service handlers.
     /// </summary>
-    public static async Task InvokeAllServiceStartMethods(this WebApplication webApp)
+    public static async Task<bool> InvokeAllServiceStartMethods(this WebApplication webApp)
     {
         foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
         {
             var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
             if (serviceInst != null)
-                await serviceInst.OnStart();
+            {
+                if (Program.Configuration.Service_Start_Timeout < 1)
+                {
+                    await serviceInst.OnStart();
+                    continue;
+                }
+
+                // if configured, each service has a set amount of time to start successfully
+                using var timeoutToken = new CancellationTokenSource();
+                var timeoutTime = Program.Configuration.Service_Start_Timeout;
+                var timeoutTask = Task.Delay(timeoutTime, timeoutToken.Token)
+                    .ContinueWith(_ => Program.ShutdownCancellationTokenSource.Cancel(), TaskScheduler.Default);
+
+                try
+                {
+                    await serviceInst.OnStart();
+                    timeoutToken.Cancel();
+                }
+                catch (OperationCanceledException exc)
+                {
+                    Program.Logger.Log(LogLevel.Error, exc, $"Service startup has timed out for '{implType.Name}'.");
+                    return false;
+                }
+                catch (Exception exc)
+                {
+                    Program.Logger.Log(LogLevel.Error, exc, $"Service startup has failed for '{implType.Name}'.");
+                    return false;
+                }
+            }
         }
+
+        return true;
     }
 
     /// <summary>

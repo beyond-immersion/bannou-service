@@ -22,7 +22,12 @@ public class AccountService : IAccountService
     public async Task OnStart()
     {
         _dbConnection = new MySqlConnection(Configuration.Connection_String);
-        await _dbConnection.OpenAsync();
+        await _dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
+        while (_dbConnection.State != System.Data.ConnectionState.Open)
+        {
+            Program.Logger.Log(LogLevel.Debug, "Waiting for MySQL connection to become ready...");
+            await Task.Delay(100);
+        }
 
         await InitializeDatabase();
     }

@@ -186,7 +186,11 @@ public static class Program
             });
 
             // invoke all Service.Start() methods on enabled service handlers
-            await webApp.InvokeAllServiceStartMethods();
+            if (!await webApp.InvokeAllServiceStartMethods())
+            {
+                Logger.Log(LogLevel.Error, "An enabled service handler has failed to start- exiting application.");
+                return;
+            }
 
             Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- WebHost starting.");
 

@@ -45,6 +45,11 @@ public class AppConfiguration : BaseServiceConfiguration
     /// Whether services are enabled by default.
     /// </summary>
     public bool Services_Enabled { get; set; } = true;
+    /// <summary>
+    /// Time in milliseconds for any given service startup to
+    /// throw an error and start application shutdown.
+    /// </summary>
+    public int Service_Start_Timeout { get; set; } = 5000;
 
     /// <summary>
     /// The port the HTTP webhost is listening on.
