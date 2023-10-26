@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:7.0 as intermediate
 COPY ./ /app/
 
-RUN apt-get update && apt-get install -y libxml2-utils
+RUN apt-get update && apt-get install -y libxml2-utils && apt-get install -y rsync
 
 WORKDIR /app
 RUN bash build-libs.sh
@@ -22,7 +22,7 @@ EXPOSE 443
 
 ENV ASPNETCORE_URLS=http://+:80;https://+:443
 
-RUN apt-get update && apt-get install -y curl && apt-get install -y rsync
+RUN apt-get update && apt-get install -y curl
 #HEALTHCHECK CMD curl -k --fail https://localhost/health || exit 1
 
 CMD ["dotnet", "bannou-service.dll"]
