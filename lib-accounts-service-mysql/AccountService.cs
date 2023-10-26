@@ -2,6 +2,7 @@
 using BeyondImmersion.BannouService.Services;
 using Dapper;
 using MySql.Data.MySqlClient;
+using System.Security.Policy;
 
 namespace BeyondImmersion.BannouService.Accounts;
 
@@ -22,9 +23,16 @@ public class AccountService : IAccountService
 
     async Task IDaprService.OnStart()
     {
-        _dbConnection = new MySqlConnection(Configuration.Connection_String);
-        await _dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
+        var db = Configuration.Database;
+        var dbTable = "accounts";
+        var dbPort = Configuration.Database_Port;
+        var dbUser = Uri.EscapeDataString(Configuration.Database_User);
+        var dbPassword = Uri.EscapeDataString(Configuration.Database_Password);
 
+        var connectionString = $"{db}://{dbUser}:{Uri.EscapeDataString(dbPassword)}@{db}:{dbPort}/{dbTable}";
+        _dbConnection = new MySqlConnection(connectionString);
+
+        await _dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
         while (_dbConnection.State != System.Data.ConnectionState.Open)
         {
             Program.Logger.Log(LogLevel.Debug, "Waiting for MySQL connection to become ready...");

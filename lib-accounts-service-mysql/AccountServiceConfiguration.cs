@@ -6,5 +6,14 @@ namespace BeyondImmersion.BannouService.Accounts;
 public class AccountServiceConfiguration :  BaseServiceConfiguration
 {
     [ConfigRequired]
-    public string? Connection_String { get; set; }
+    public string? Database { get; set; } = "account-db";
+
+    [ConfigRequired]
+    public int Database_Port { get; set; } = 3306;
+
+    [ConfigRequired]
+    public string? Database_User { get; set; }
+
+    [ConfigRequired]
+    public string? Database_Password { get; set; }
 }
