@@ -29,7 +29,7 @@ public class AccountService : IAccountService
         var dbUser = Uri.EscapeDataString(Configuration.Database_User);
         var dbPassword = Uri.EscapeDataString(Configuration.Database_Password);
 
-        var connectionString = $"{db}://{dbUser}:{Uri.EscapeDataString(dbPassword)}@{db}:{dbPort}/{dbTable}";
+        var connectionString = $"{db}://{dbUser}:{dbPassword}@{db}:{dbPort}/{dbTable}";
         _dbConnection = new MySqlConnection(connectionString);
 
         await _dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
