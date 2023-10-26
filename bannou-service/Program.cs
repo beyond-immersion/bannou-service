@@ -259,17 +259,26 @@ public static class Program
         if (string.Equals("none", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
             return;
 
-        var libsRootDirectory = Path.Combine(Directory.GetCurrentDirectory(), "libs");
+        // load root app assemblies (probably already loaded anyways)
+        var appDirectory = Directory.GetCurrentDirectory();
+        foreach (var assemblyPath in Directory.GetFiles(appDirectory, "*.dll"))
+            TryLoadAssembly(assemblyPath, out _);
+
+        var libsRootDirectory = Path.Combine(appDirectory, "libs");
         if (libsRootDirectory == null || !Directory.Exists(libsRootDirectory))
         {
             Logger.Log(LogLevel.Warning, null, $"Failed to load additional assemblies- libs directory does not exist.");
             return;
         }
 
+        // load root lib assemblies (should be loaded if `none` isn't selected)
+        foreach (var assemblyPath in Directory.GetFiles(libsRootDirectory, "*.dll"))
+            TryLoadAssembly(assemblyPath, out _);
+
         var libDirectories = Directory.GetDirectories(libsRootDirectory);
         if (libDirectories == null || libDirectories.Length == 0)
         {
-            Logger.Log(LogLevel.Warning, null, $"Failed to load additional assemblies- nothing found in libs directory.");
+            Logger.Log(LogLevel.Warning, null, $"Failed to load non-root assemblies- no subdirectories found in libs.");
             return;
         }
 
@@ -279,44 +288,24 @@ public static class Program
             {
                 var assemblyPaths = Directory.GetFiles(libDirectory, "*.dll", SearchOption.AllDirectories);
                 foreach (var assemblyPath in assemblyPaths)
-                {
-                    try
-                    {
-                        Assembly.LoadFrom(assemblyPath);
-                        Logger.Log(LogLevel.Information, null, $"Successfully loaded assembly at path: {assemblyPath}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Log(LogLevel.Error, ex, $"Failed to load assembly at path: {assemblyPath}.");
-                    }
-                }
+                    TryLoadAssembly(assemblyPath, out _);
             }
 
             return;
         }
 
-        // common libs should always be loaded, if `none` isn't specified
+        // load common lib assemblies (should be loaded if `none` isn't selected and the directory exists)
         {
             var libDirectory = Directory.GetDirectories(libsRootDirectory, "common", SearchOption.TopDirectoryOnly).FirstOrDefault();
             if (libDirectory != null)
             {
                 var assemblyPaths = Directory.GetFiles(libDirectory, "*.dll", SearchOption.AllDirectories);
                 foreach (var assemblyPath in assemblyPaths)
-                {
-                    try
-                    {
-                        var loadedAssembly = Assembly.LoadFile(assemblyPath);
-                        Logger.Log(LogLevel.Information, null, $"Successfully loaded assembly at path: {assemblyPath}.");
-                    }
-                    catch (Exception exc)
-                    {
-                        Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");
-                    }
-                }
+                    TryLoadAssembly(assemblyPath, out _);
             }
         }
 
-        // if no configuration, or common, then that's all we're going to load
+        // if no configuration, or common, then that's all we need
         if (Configuration.Include_Assemblies == null || string.Equals("common", Configuration.Include_Assemblies))
             return;
 
@@ -334,19 +323,10 @@ public static class Program
                 continue;
             }
 
+            // load all files from subdirectories, if assembly directory is there
             var assemblyPaths = Directory.GetFiles(libDirectory, "*.dll", SearchOption.AllDirectories);
             foreach (var assemblyPath in assemblyPaths)
-            {
-                try
-                {
-                    var loadedAssembly = Assembly.LoadFile(assemblyPath);
-                    Logger.Log(LogLevel.Information, null, $"Successfully loaded assembly at path: {assemblyPath}.");
-                }
-                catch (Exception exc)
-                {
-                    Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");
-                }
-            }
+                TryLoadAssembly(assemblyPath, out _);
         }
 
         return;
@@ -358,30 +338,54 @@ public static class Program
             return null;
 
         var assemblyName = new AssemblyName(args.Name).Name;
-        var libsRootDirectory = Path.Combine(Directory.GetCurrentDirectory(), "libs");
-        var libDirectories = Directory.GetDirectories(libsRootDirectory);
 
-        foreach (var libDirectory in libDirectories)
+        // try in app directory
+        var appDirectory = Directory.GetCurrentDirectory();
         {
-            var potentialAssemblyPath = Path.Combine(libDirectory, $"{assemblyName}.dll");
-            if (File.Exists(potentialAssemblyPath))
-            {
-                try
-                {
-                    var loadedAssembly = Assembly.LoadFile(potentialAssemblyPath);
-                    Logger.Log(LogLevel.Error, null, $"Successfully loaded assembly {assemblyName} at path: {potentialAssemblyPath}.");
+            var assemblyPath = Path.Combine(appDirectory, $"{assemblyName}.dll");
+            if (TryLoadAssembly(assemblyPath, out var assemblyFound))
+                return assemblyFound;
+        }
 
-                    return loadedAssembly;
-                }
-                catch (Exception exc)
-                {
-                    Logger.Log(LogLevel.Error, exc, $"Failed to load assembly {assemblyName} at path: {potentialAssemblyPath}.");
-                    return null;
-                }
-            }
+        // try in root libs directory
+        var libsRootDirectory = Path.Combine(appDirectory, "libs");
+        {
+            var assemblyPath = Path.Combine(libsRootDirectory, $"{assemblyName}.dll");
+            if (TryLoadAssembly(assemblyPath, out var assemblyFound))
+                return assemblyFound;
+        }
+
+        // try sub-lib directories
+        var libSubdirectories = Directory.GetDirectories(libsRootDirectory, "*", searchOption: SearchOption.AllDirectories);
+        foreach (var libSubdirectory in libSubdirectories)
+        {
+            var assemblyPath = Path.Combine(libSubdirectory, $"{assemblyName}.dll");
+            if (TryLoadAssembly(assemblyPath, out var assemblyFound))
+                return assemblyFound;
         }
 
         return null;
+    }
+
+    private static bool TryLoadAssembly(string assemblyPath, out Assembly? assembly)
+    {
+        if (File.Exists(assemblyPath))
+        {
+            try
+            {
+                assembly = Assembly.LoadFile(assemblyPath);
+                Logger.Log(LogLevel.Information, null, $"Successfully loaded assembly at path: {assemblyPath}.");
+
+                return true;
+            }
+            catch (Exception exc)
+            {
+                Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");
+            }
+        }
+
+        assembly = null;
+        return false;
     }
 
     /// <summary>
