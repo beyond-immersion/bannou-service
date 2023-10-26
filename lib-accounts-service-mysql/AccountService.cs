@@ -23,13 +23,13 @@ public class AccountService : IAccountService
 
     async Task IDaprService.OnStart()
     {
-        var db = Configuration.Database;
-        var dbTable = "accounts";
+        var dbHost = Configuration.Database_Host;
+        var dbCatalogue = "accounts";
         var dbPort = Configuration.Database_Port;
         var dbUser = Uri.EscapeDataString(Configuration.Database_User);
         var dbPassword = Uri.EscapeDataString(Configuration.Database_Password);
 
-        var connectionString = $"{db}://{dbUser}:{dbPassword}@{db}:{dbPort}/{dbTable}";
+        var connectionString = $"Host='{dbHost}'; Port={dbPort}; UserID='{dbUser}'; Password='{dbPassword}'; Database='{dbCatalogue}'";
         _dbConnection = new MySqlConnection(connectionString);
 
         await _dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
