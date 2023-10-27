@@ -1,7 +1,7 @@
 ﻿using BeyondImmersion.BannouService.Configuration;
 using System.Reflection;
 
-namespace BeyondImmersion.BannouService.Testing;
+namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Service handler responsible for testing service APIs.

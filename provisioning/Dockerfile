@@ -23,6 +23,6 @@ EXPOSE 443
 ENV ASPNETCORE_URLS=http://+:80;https://+:443
 
 RUN apt-get update && apt-get install -y curl
-#HEALTHCHECK CMD curl -k --fail https://localhost/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --retries=5 CMD curl -k --fail https://localhost/health || exit 1
 
 CMD ["dotnet", "bannou-service.dll"]

@@ -1,7 +1,6 @@
-﻿using BeyondImmersion.BannouService.Testing.Messages;
-using Dapr.Client;
+﻿using Dapr.Client;
 
-namespace BeyondImmersion.BannouService.Testing.Tests;
+namespace BeyondImmersion.BannouService.Services.Tests;
 
 /// <summary>
 /// Tests that only require the testing service itself.

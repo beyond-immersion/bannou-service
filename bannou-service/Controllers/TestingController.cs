@@ -1,8 +1,7 @@
-﻿using BeyondImmersion.BannouService.Testing.Messages;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Collections;
 
-namespace BeyondImmersion.BannouService.Testing;
+namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
 /// Test APIs- backed by the Testing service.

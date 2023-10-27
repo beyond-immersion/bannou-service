@@ -13,6 +13,16 @@ namespace BeyondImmersion.BannouService;
 
 public static class Program
 {
+    private static AppRunningStates _appRunningState = AppRunningStates.Stopped;
+    /// <summary>
+    /// Current startup/run state for the application.
+    /// </summary>
+    public static AppRunningStates AppRunningState
+    {
+        get => _appRunningState;
+        private set => _appRunningState = value;
+    }
+
     private static IConfigurationRoot _configurationRoot;
     /// <summary>
     /// Shared service configuration root.
@@ -69,6 +79,7 @@ public static class Program
     private static async Task Main()
     {
         Logger.Log(LogLevel.Information, null, "Service starting.");
+        AppRunningState = AppRunningStates.Starting;
 
         // configuration is auto-created on first get, so this call creates the config too
         if (Configuration == null)
@@ -204,7 +215,9 @@ public static class Program
             Logger.Log(LogLevel.Information, null, "WebHost started successfully and services running- settling in.");
 
             // !!! block here until token cancelled or webhost crashes
+            AppRunningState = AppRunningStates.Running;
             await webHostTask;
+            AppRunningState = AppRunningStates.Stopped;
 
             Logger.Log(LogLevel.Information, null, "WebHost stopped- starting controlled application shutdown.");
 
@@ -219,6 +232,7 @@ public static class Program
         }
         finally
         {
+            AppRunningState = AppRunningStates.Stopped;
             // perform cleanup
             if (webApp != null)
                 await webApp.DisposeAsync();

@@ -1,5 +1,12 @@
 ﻿namespace BeyondImmersion.BannouService;
 
+public enum AppRunningStates
+{
+    Starting,
+    Running,
+    Stopped
+}
+
 /// <summary>
 /// Enumeration for common/supported HTTP methods.
 /// 
@@ -32,4 +39,3 @@ public enum ResponseCodes
     ServerError = 500,
     ServerBusy = 503
 }
-

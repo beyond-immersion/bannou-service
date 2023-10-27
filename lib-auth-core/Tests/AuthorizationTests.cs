@@ -1,6 +1,4 @@
-﻿using BeyondImmersion.BannouService.Testing;
-
-namespace BeyondImmersion.BannouService.Authorization.Testing;
+﻿namespace BeyondImmersion.BannouService.Authorization.Tests;
 
 /// <summary>
 /// Tests for the authorization service.

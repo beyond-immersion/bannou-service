@@ -6,10 +6,10 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Usage", "CA1822:Members should be marked static.",
-    Justification = "These kinds of optimizations aren't meant for unit tests, especially those involving reflection/attributes which don't directly access properties and methods.")]
+    Justification = "Unit tests involving reflection/attributes which don't directly access properties and methods.")]
 
 [assembly: SuppressMessage("Usage", "IDE0051:No value is ever assigned to member.",
-    Justification = "These kinds of optimizations aren't meant for unit tests, especially those involving reflection/attributes which don't directly access properties and methods.")]
+    Justification = "Unit tests involving reflection/attributes which don't directly access properties and methods.")]
 
 [assembly: SuppressMessage("Usage", "IDE0052:Method is never invoked.",
-    Justification = "These kinds of optimizations aren't meant for unit tests, especially those involving reflection/attributes which don't directly access properties and methods.")]
+    Justification = "Unit tests involving reflection/attributes which don't directly access properties and methods.")]
