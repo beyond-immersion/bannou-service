@@ -43,7 +43,7 @@ services:
       - "../service-tests.sh:/service-tests.sh"
     depends_on:
       - bannou
-    command: bash ./wait-for-health.sh && bash ./service-tests.sh
+    command: bash /wait-for-health.sh && bash /service-tests.sh
 
   # silence filebeat during CI testing
   filebeat:
