@@ -53,6 +53,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{4F07
 	ProjectSection(SolutionItems) = preProject
 		build-libs.sh = build-libs.sh
 		service-tests.sh = service-tests.sh
+		wait-for-health.sh = wait-for-health.sh
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-connect-service", "lib-connect-service\lib-connect-service.csproj", "{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}"
