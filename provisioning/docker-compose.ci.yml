@@ -44,7 +44,7 @@ services:
     stdin_open: false
     depends_on:
       - bannou
-    command: /wait-for-health.sh && /service-tests.sh
+    command: bash -c "/wait-for-health.sh && /service-tests.sh"
 
   # silence filebeat during CI testing
   filebeat:
