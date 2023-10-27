@@ -2,7 +2,6 @@
 using BeyondImmersion.BannouService.Services;
 using Dapper;
 using MySql.Data.MySqlClient;
-using System.Security.Policy;
 
 namespace BeyondImmersion.BannouService.Accounts;
 
@@ -24,12 +23,12 @@ public class AccountService : IAccountService
     async Task IDaprService.OnStart()
     {
         var dbHost = Configuration.Database_Host;
-        var dbCatalogue = "accounts";
+        var dbName = "accounts";
         var dbPort = Configuration.Database_Port;
-        var dbUser = Uri.EscapeDataString(Configuration.Database_User);
+        var dbUsername = Uri.EscapeDataString(Configuration.Database_User);
         var dbPassword = Uri.EscapeDataString(Configuration.Database_Password);
 
-        var connectionString = $"Host='{dbHost}'; Port={dbPort}; UserID='{dbUser}'; Password='{dbPassword}'; Database='{dbCatalogue}'";
+        var connectionString = $"Host='{dbHost}'; Port={dbPort}; UserID='{dbUsername}'; Password='{dbPassword}'; Database='{dbName}'";
         _dbConnection = new MySqlConnection(connectionString);
 
         await _dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
@@ -48,14 +47,19 @@ public class AccountService : IAccountService
             await _dbConnection.CloseAsync();
     }
 
-    public async Task<AccountData?> GetAccount(string email)
+    async Task<IAccountService.AccountData?> IAccountService.GetAccount(bool includeClaims, string? guid, string? username,
+        string? email, string? identityClaim)
     {
         await Task.CompletedTask;
         return null;
     }
 
-    public static string GenerateHashedSecret(string secretString, string secretSalt)
-        => IAccountService.GenerateHashedSecret(secretString, secretSalt);
+    async Task<IAccountService.AccountData?> IAccountService.CreateAccount(string? username, string? email, bool emailVerified, bool twoFactorEnabled,
+        HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims)
+    {
+        await Task.CompletedTask;
+        return null;
+    }
 
     /// <summary>
     /// Create all account database tables, if needed.
@@ -63,19 +67,11 @@ public class AccountService : IAccountService
     /// </summary>
     public async Task<bool> InitializeDatabase()
     {
-        if (!await CreateUsersTable())
-            return false;
-
-        if (!await CreateClaimTypesTable())
-            return false;
-
-        if (!await CreateLoginProvidersTable())
-            return false;
-
-        if (!await CreateUserLoginsTable())
-            return false;
-
-        if (!await CreateUserClaimsTable())
+        if (!await CreateUsersTable() ||
+            !await CreateClaimTypesTable() ||
+            !await CreateLoginProvidersTable() ||
+            !await CreateUserLoginsTable() ||
+            !await CreateUserClaimsTable())
             return false;
 
         return true;
@@ -101,8 +97,7 @@ public class AccountService : IAccountService
                 `EmailVerified` BOOLEAN NOT NULL DEFAULT FALSE,
                 `TwoFactorEnabled` BOOLEAN NOT NULL DEFAULT FALSE,
                 `LockoutEnd` TIMESTAMP NULL,
-                `ProfilePictureUrl` VARCHAR(255) NULL,
-                `SecurityStamp` VARCHAR(255) NOT NULL,
+                `SecurityToken` VARCHAR(255) NOT NULL,
                 `LastLoginAt` TIMESTAMP NULL,
                 `CreatedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 `UpdatedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -199,7 +194,7 @@ public class AccountService : IAccountService
                 `Id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 `Name` VARCHAR(255) UNIQUE NOT NULL
             ) ENGINE = InnoDB;
-            INSERT IGNORE INTO `ClaimTypes` (`Name`) VALUES ('Application'), ('Role'), ('Scope'), ('Identity'), ('Profile');
+            INSERT IGNORE INTO `ClaimTypes` (`Name`) VALUES ('Role'), ('Application'), ('Scope'), ('Identity'), ('Profile');
         ");
 
         try

@@ -4,10 +4,10 @@ using Newtonsoft.Json;
 namespace BeyondImmersion.BannouService.Accounts.Messages;
 
 /// <summary>
-/// The response model for service API calls to `/account/get`.
+/// The response model for service API calls to `/accounts/get`.
 /// </summary>
 [JsonObject]
-public class GetAccountResponse : ServiceResponse
+public class GetAccountsResponse : ServiceResponse
 {
     /// <summary>
     /// The unique internal-only account GUID.
@@ -163,7 +163,7 @@ public class GetAccountResponse : ServiceResponse
     [JsonProperty("profile_claims")]
     public HashSet<string>? ProfileClaims { get; set; }
 
-    public GetAccountResponse(string id, string securityToken, DateTime createdAt)
+    public GetAccountsResponse(string id, string securityToken, DateTime createdAt)
     {
         GUID = id;
         SecurityToken = securityToken;

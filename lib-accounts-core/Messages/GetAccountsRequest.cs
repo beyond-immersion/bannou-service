@@ -4,10 +4,10 @@ using Newtonsoft.Json;
 namespace BeyondImmersion.BannouService.Accounts.Messages;
 
 /// <summary>
-/// The request model for service API calls to `/account/get`.
+/// The request model for service API calls to `/accounts/get`.
 /// </summary>
 [JsonObject]
-public class GetAccountRequest : ServiceRequest
+public class GetAccountsRequest : ServiceRequest
 {
     /// <summary>
     /// Internal GUID of account to retrieve.

@@ -1,16 +1,5 @@
 ﻿namespace BeyondImmersion.BannouService.Controllers.Messages;
 
-[JsonObject]
-public class ServiceRequest<T> : ServiceRequest
-where T : class, IServiceResponse, new()
-{
-    public Type GetResponseType()
-        => typeof(T);
-
-    public T CreateResponse()
-        => new();
-}
-
 /// <summary>
 /// The basic service message payload model.
 /// </summary>

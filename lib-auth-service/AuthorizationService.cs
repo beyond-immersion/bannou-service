@@ -52,23 +52,26 @@ public class AuthorizationService : IAuthorizationService
             return null;
 
         GetAccountResponse? responseData = await daprResponse.Content.ReadFromJsonAsync<GetAccountResponse>();
-        if (responseData == null || responseData.SecretSalt == null)
+        if (responseData == null || responseData.SecretSalt == null || responseData.IdentityClaims == null)
             return null;
 
         var hashedSecret = IAccountService.GenerateHashedSecret(responseData.SecretSalt, password);
-        if (!string.Equals(responseData.HashedSecret, hashedSecret))
+        if (!responseData.IdentityClaims.Contains($"Password:{hashedSecret}"))
             return null;
 
         var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
         jwtBuilder.AddHeader("email", responseData.Email);
-        jwtBuilder.AddHeader("display-name", responseData.DisplayName);
+        jwtBuilder.AddHeader("username", responseData.Username);
 
-        jwtBuilder.Id(responseData.ID);
+        jwtBuilder.Id(responseData.GUID);
         jwtBuilder.Issuer("AUTHORIZATION_SERVICE:" + Program.ServiceGUID);
         jwtBuilder.IssuedAt(DateTime.Now);
         jwtBuilder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
         jwtBuilder.MustVerifySignature();
-        jwtBuilder.AddClaim("role", responseData.Role);
+
+        if (responseData.RoleClaims != null)
+            foreach (var roleClaim in responseData.RoleClaims)
+                jwtBuilder.AddClaim("role", roleClaim);
 
         var newJWT = jwtBuilder.Encode();
         return newJWT;

@@ -9,7 +9,6 @@ public class ActionFilters : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
 
-    private ActionFilters(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
     public ActionFilters(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;

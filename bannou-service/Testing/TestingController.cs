@@ -133,7 +133,14 @@ public class TestingController : BaseDaprController
         await Task.CompletedTask;
         if (!ModelState.IsValid)
         {
-            var errors = ModelState.SelectMany(x => x.Value?.Errors.Select(p => p.ErrorMessage)).ToList();
+            var errors = ModelState.SelectMany(x =>
+            {
+                if (x.Value == null)
+                    return Array.Empty<string>();
+
+                return x.Value.Errors.Select(p => p.ErrorMessage);
+            }).ToList();
+
             foreach (var errorMsg in errors)
                 Program.Logger.LogError($"MODEL VALIDATION ERROR! : {errorMsg}");
 
@@ -141,7 +148,6 @@ public class TestingController : BaseDaprController
         }
 
         Service.SetLastPostRequest(request);
-
         return Ok();
     }
 }

@@ -238,7 +238,7 @@ public static class Program
         {
             Type interfaceType = serviceInfo.Item1;
             Type implementationType = serviceInfo.Item2;
-            Type serviceConfig = IDaprService.GetConfigurationType(interfaceType);
+            Type serviceConfig = IDaprService.GetConfigurationType(implementationType);
             if (serviceConfig == null)
                 continue;
 
@@ -374,8 +374,6 @@ public static class Program
             try
             {
                 assembly = Assembly.LoadFile(assemblyPath);
-                Logger.Log(LogLevel.Information, null, $"Successfully loaded assembly at path: {assemblyPath}.");
-
                 return true;
             }
             catch (Exception exc)

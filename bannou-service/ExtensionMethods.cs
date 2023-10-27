@@ -151,19 +151,6 @@ public static partial class ExtensionMethods
     }
 
     /// <summary>
-    /// Returns whether the configuration is provided for a given service type to run properly.
-    /// </summary>
-    public static bool HasRequiredConfiguration(this Type implementationType)
-        => IDaprService.HasRequiredConfiguration(implementationType);
-
-    /// <summary>
-    /// Returns the best service configuration type for the given service type.
-    /// Returned type is based on DaprServiceAttribute service target type.
-    /// </summary>
-    public static Type GetConfigurationType(this Type implementationType)
-        => IDaprService.GetConfigurationType(implementationType);
-
-    /// <summary>
     /// Binds HTTP endpoints for admin commands.
     /// </summary>
     public static IEndpointRouteBuilder MapNonServiceControllers(this IEndpointRouteBuilder builder)
