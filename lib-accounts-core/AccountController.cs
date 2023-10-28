@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Accounts.Messages;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Accounts;
 
@@ -31,21 +34,20 @@ public class AccountController : Controllers.BaseDaprController
                 string.IsNullOrWhiteSpace(request.Email) &&
                 (request.IdentityClaims == null ||
                 request.IdentityClaims.Count == 0))
-                return new BadRequestResult();
+                return BadRequest();
 
             IAccountService.AccountData? accountData = await Service.CreateAccount(
-                request.Username, request.Email, request.EmailVerified, request.TwoFactorEnabled,
+                request.Username, request.Password, request.Email, request.EmailVerified, request.TwoFactorEnabled,
                 request.RoleClaims, request.AppClaims, request.ScopeClaims, request.IdentityClaims, request.ProfileClaims);
 
             if (accountData == null)
-                return new NotFoundResult();
+                return StatusCode(500);
 
-            var response = new CreateAccountResponse(accountData.GUID, accountData.SecurityToken, accountData.CreatedAt)
+            var response = new CreateAccountResponse(accountData.Guid, accountData.SecurityToken, accountData.CreatedAt)
             {
                 Username = accountData.Username,
                 Email = accountData.Email,
                 EmailVerified = accountData.EmailVerified,
-                SecretSalt = accountData.SecretSalt,
                 SecurityToken = accountData.SecurityToken,
                 TwoFactorEnabled = accountData.TwoFactorEnabled,
                 LockoutEnd = accountData.LockoutEnd,
@@ -60,12 +62,12 @@ public class AccountController : Controllers.BaseDaprController
                 ScopeClaims = accountData.ScopeClaims
             };
 
-            return new OkObjectResult(response);
+            return Ok(response);
         }
         catch (Exception exc)
         {
             Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(GetAccount)}] endpoint on [{nameof(AccountController)}].");
-            return new StatusCodeResult(500);
+            return StatusCode(500);
         }
     }
 
@@ -79,18 +81,17 @@ public class AccountController : Controllers.BaseDaprController
                 string.IsNullOrWhiteSpace(request.Username) &&
                 string.IsNullOrWhiteSpace(request.Email) &&
                 string.IsNullOrWhiteSpace(request.IdentityClaim))
-                return new BadRequestResult();
+                return BadRequest();
 
             IAccountService.AccountData? accountData = await Service.GetAccount(false, request.GUID, request.Username, request.Email, request.IdentityClaim);
             if (accountData == null)
-                return new NotFoundResult();
+                return NotFound();
 
-            var response = new GetAccountResponse(accountData.GUID, accountData.SecurityToken, accountData.CreatedAt)
+            var response = new GetAccountResponse(accountData.Guid, accountData.SecurityToken, accountData.CreatedAt)
             {
                 Username = accountData.Username,
                 Email = accountData.Email,
                 EmailVerified = accountData.EmailVerified,
-                SecretSalt = accountData.SecretSalt,
                 SecurityToken = accountData.SecurityToken,
                 TwoFactorEnabled = accountData.TwoFactorEnabled,
                 LockoutEnd = accountData.LockoutEnd,
@@ -105,12 +106,12 @@ public class AccountController : Controllers.BaseDaprController
                 ScopeClaims = accountData.ScopeClaims
             };
 
-            return new OkObjectResult(response);
+            return Ok(response);
         }
         catch (Exception exc)
         {
             Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(GetAccount)}] endpoint on [{nameof(AccountController)}].");
-            return new StatusCodeResult(500);
+            return StatusCode(500);
         }
     }
 }

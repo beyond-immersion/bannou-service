@@ -11,12 +11,11 @@ public interface IAccountService : IDaprService
 {
     public sealed class AccountData
     {
-        public string GUID { get; set; }
+        public string Guid { get; set; }
         public string? Username { get; set; }
         public string? Email { get; set; }
         public bool EmailVerified { get; set; }
         public string SecurityToken { get; set; }
-        public string? SecretSalt { get; set; }
         public bool TwoFactorEnabled { get; set; }
         public DateTime? LockoutEnd { get; set; }
         public DateTime LastLoginAt { get; set; }
@@ -31,7 +30,7 @@ public interface IAccountService : IDaprService
 
         public AccountData(string id, string securityToken, DateTime createdAt)
         {
-            GUID = id;
+            Guid = id;
             SecurityToken = securityToken;
             LastLoginAt = createdAt;
             CreatedAt = createdAt;
@@ -39,8 +38,10 @@ public interface IAccountService : IDaprService
         }
     }
 
-    Task<AccountData?> GetAccount(bool includeClaims = false, string? guid = null, string? username = null, string? email = null, string? identityClaim = null);
-    Task<AccountData?> CreateAccount(string? username, string? email, bool emailVerified, bool twoFactorEnabled,
+    Task<AccountData?> GetAccount(bool includeClaims = false, string? guid = null, string? username = null, string? email = null,
+        string? steamID = null, string? googleID = null, string? identityClaim = null);
+
+    Task<AccountData?> CreateAccount(string? username, string? password, string? email, bool emailVerified, bool twoFactorEnabled,
         HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims);
 
     public static string GenerateHashedSecret(string secretString, string secretSalt)

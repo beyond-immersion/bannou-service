@@ -1,6 +1,4 @@
-﻿using BeyondImmersion.BannouService.Configuration;
-
-namespace BeyondImmersion.BannouService.Application;
+﻿namespace BeyondImmersion.BannouService.Configuration;
 
 [ServiceConfiguration]
 public class AppConfiguration : BaseServiceConfiguration

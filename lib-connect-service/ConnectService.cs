@@ -1,4 +1,5 @@
-﻿using BeyondImmersion.BannouService.Services;
+﻿using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Connect;
 

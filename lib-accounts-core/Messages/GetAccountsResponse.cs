@@ -45,12 +45,6 @@ public class GetAccountsResponse : ServiceResponse
     public string SecurityToken { get; set; }
 
     /// <summary>
-    /// The salt added to the user's secret before hashing.
-    /// </summary>
-    [JsonProperty("secret_salt")]
-    public string? SecretSalt { get; set; }
-
-    /// <summary>
     /// Whether the user has enabled 2-factor authentication.
     /// </summary>
     [JsonProperty("two_factor_enabled", Required = Required.Always)]

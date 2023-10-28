@@ -1,4 +1,7 @@
-﻿using BeyondImmersion.BannouService.Configuration;
+﻿using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Accounts.Messages;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using JWT;
 using JWT.Algorithms;
@@ -40,25 +43,29 @@ public class AuthorizationService : IAuthorizationService
         if (Configuration.Token_Public_Key == null || Configuration.Token_Private_Key == null)
             return null;
 
-        var dataModel = new GetAccountRequest()
-        {
-            Email = email
-        };
+        // retrieve stored account data
+        var dataModel = new GetAccountRequest() { Email = email };
 
         HttpRequestMessage daprRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, IDaprService.GetAppByServiceName("account"), $"account/get", dataModel);
         var daprResponse = await Program.DaprClient.InvokeMethodWithResponseAsync(daprRequest, Program.ShutdownCancellationTokenSource.Token);
-
         if (daprResponse == null || !daprResponse.IsSuccessStatusCode)
             return null;
 
         GetAccountResponse? responseData = await daprResponse.Content.ReadFromJsonAsync<GetAccountResponse>();
-        if (responseData == null || responseData.SecretSalt == null || responseData.IdentityClaims == null)
+        if (responseData == null || responseData.IdentityClaims == null)
             return null;
 
-        var hashedSecret = IAccountService.GenerateHashedSecret(responseData.SecretSalt, password);
-        if (!responseData.IdentityClaims.Contains($"Password:{hashedSecret}"))
+        var secretSalt = responseData.IdentityClaims.Where(t => t.StartsWith("SecretSalt:")).Select(t => t.Remove(0, "SecretSalt:".Length)).FirstOrDefault();
+        var secretHash = responseData.IdentityClaims.Where(t => t.StartsWith("SecretHash:")).Select(t => t.Remove(0, "SecretHash:".Length)).FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(secretSalt) || string.IsNullOrWhiteSpace(secretHash))
             return null;
 
+        // validate password
+        var hashedPassword = IAccountService.GenerateHashedSecret(password, secretSalt);
+        if (!string.Equals(secretHash, hashedPassword))
+            return null;
+
+        // create JWT
         var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
         jwtBuilder.AddHeader("email", responseData.Email);
         jwtBuilder.AddHeader("username", responseData.Username);

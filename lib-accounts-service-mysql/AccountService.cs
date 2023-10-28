@@ -1,12 +1,19 @@
-﻿using BeyondImmersion.BannouService.Configuration;
+﻿using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using Dapper;
+using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
+using Newtonsoft.Json.Linq;
 
 namespace BeyondImmersion.BannouService.Accounts;
 
 /// <summary>
 /// Service component responsible for account handling.
+/// 
+/// Utilizes MySQL for storing / indexing / searching
+/// account data.
 /// </summary>
 [DaprService("account", typeof(IAccountService))]
 public class AccountService : IAccountService
@@ -47,63 +54,175 @@ public class AccountService : IAccountService
             await _dbConnection.CloseAsync();
     }
 
-    async Task<IAccountService.AccountData?> IAccountService.GetAccount(bool includeClaims, string? guid, string? username,
-        string? email, string? identityClaim)
+    async Task<IAccountService.AccountData?> IAccountService.GetAccount(bool includeClaims, string? guid, string? username, string? email,
+        string? steamID, string? googleID, string? identityClaim)
     {
-        await Task.CompletedTask;
-        return null;
+        try
+        {
+            if (_dbConnection == null)
+                throw new NullReferenceException();
+
+            var builder = new SqlBuilder();
+            SqlBuilder.Template? template = null;
+            object? parameters = null;
+
+            if (!string.IsNullOrWhiteSpace(guid))
+            {
+                template = builder.AddTemplate(SqlScripts.Get_ByGuid);
+                parameters = new { UserId = guid };
+            }
+            else if (!string.IsNullOrWhiteSpace(email))
+            {
+                template = builder.AddTemplate(SqlScripts.Get_ByEmail);
+                parameters = new { UserId = email };
+            }
+            else if (!string.IsNullOrWhiteSpace(username))
+            {
+                template = builder.AddTemplate(SqlScripts.Get_ByUsername);
+                parameters = new { UserId = username };
+            }
+            else if (!string.IsNullOrWhiteSpace(steamID))
+            {
+                template = builder.AddTemplate(SqlScripts.Get_BySteamId);
+                parameters = new { UserId = steamID };
+            }
+            else if (!string.IsNullOrWhiteSpace(googleID))
+            {
+                template = builder.AddTemplate(SqlScripts.Get_ByGoogleId);
+                parameters = new { UserId = googleID };
+            }
+            else if (!string.IsNullOrWhiteSpace(identityClaim))
+            {
+                template = builder.AddTemplate(SqlScripts.Get_ByIdentityClaim);
+                parameters = new { UserId = identityClaim };
+            }
+            else
+            { }
+
+            if (template == null || parameters == null)
+                return null;
+
+            var transaction = await _dbConnection.BeginTransactionAsync();
+            var newUser = await _dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
+            transaction.Commit();
+
+            var newAccountData = new IAccountService.AccountData(newUser.Id, newUser.SecurityToken, newUser.CreatedAt)
+            {
+                Username = newUser.Username,
+                Email = newUser.Email,
+                EmailVerified = newUser.EmailVerified,
+                TwoFactorEnabled = newUser.TwoFactorEnabled,
+                LockoutEnd = newUser.LockoutEnd,
+                LastLoginAt = newUser.LastLoginAt,
+                UpdatedAt = newUser.UpdatedAt,
+                RemovedAt = newUser.RemovedAt
+            };
+
+            return newAccountData;
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while fetching the user account.");
+            return null;
+        }
     }
 
-    async Task<IAccountService.AccountData?> IAccountService.CreateAccount(string? username, string? email, bool emailVerified, bool twoFactorEnabled,
+    async Task<IAccountService.AccountData?> IAccountService.CreateAccount(string? username, string? password, string? email, bool emailVerified, bool twoFactorEnabled,
         HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims)
     {
-        await Task.CompletedTask;
-        return null;
+        try
+        {
+            if (_dbConnection == null)
+                throw new NullReferenceException();
+
+            var builder = new SqlBuilder();
+            var template = builder.AddTemplate(SqlScripts.Create_User);
+
+            var securityToken = Guid.NewGuid().ToString();
+            string? passwordSalt = null;
+            string? hashedPassword = null;
+            JObject? passwordData = null;
+
+            if (!string.IsNullOrWhiteSpace(password))
+            {
+                passwordSalt = Guid.NewGuid().ToString();
+                hashedPassword = IAccountService.GenerateHashedSecret(password, passwordSalt);
+                passwordData = new JObject() { ["Hash"] =  hashedPassword, ["Salt"] = passwordSalt };
+
+                if (identityClaims != null)
+                    identityClaims = new HashSet<string>(identityClaims);
+                else
+                    identityClaims = new HashSet<string>();
+
+                identityClaims.Add($"SecretHash:{hashedPassword}");
+                identityClaims.Add($"SecretSalt:{passwordSalt}");
+            }
+
+            var parameters = new
+            {
+                Username = username,
+                SecurityToken = securityToken,
+                Email = email,
+                EmailVerified = emailVerified,
+                TwoFactorEnabled = twoFactorEnabled,
+                PasswordData = passwordData?.ToString(Newtonsoft.Json.Formatting.None)
+            };
+
+            var transaction = await _dbConnection.BeginTransactionAsync();
+            var newUser = await _dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
+            transaction.Commit();
+
+            var newAccountData = new IAccountService.AccountData(newUser.Id, newUser.SecurityToken, newUser.CreatedAt)
+            {
+                Username = newUser.Username,
+                Email = newUser.Email,
+                EmailVerified = newUser.EmailVerified,
+                TwoFactorEnabled = newUser.TwoFactorEnabled,
+                LockoutEnd = newUser.LockoutEnd,
+                LastLoginAt = newUser.LastLoginAt,
+                UpdatedAt = newUser.UpdatedAt,
+                RemovedAt = newUser.RemovedAt,
+                RoleClaims = roleClaims?.ToHashSet(),
+                AppClaims = appClaims?.ToHashSet(),
+                ScopeClaims = scopeClaims?.ToHashSet(),
+                IdentityClaims = identityClaims?.ToHashSet(),
+                ProfileClaims = profileClaims?.ToHashSet()
+            };
+
+            return newAccountData;
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while inserting and fetching the new user account.");
+            return null;
+        }
     }
 
     /// <summary>
     /// Create all account database tables, if needed.
     /// Will populate the reference tables as well.
     /// </summary>
-    public async Task<bool> InitializeDatabase()
+    private async Task<bool> InitializeDatabase()
     {
-        if (!await CreateUsersTable() ||
-            !await CreateClaimTypesTable() ||
-            !await CreateLoginProvidersTable() ||
-            !await CreateUserLoginsTable() ||
-            !await CreateUserClaimsTable())
+        Program.Logger.Log(LogLevel.Information, "Creating initial user account tables in MySQL...");
+
+        if (!await CreateTable("Users", SqlScripts.Create_UsersTable) ||
+            !await CreateTable("ClaimTypes", SqlScripts.Create_ClaimTypesTable) ||
+            !await CreateTable("LoginProviders", SqlScripts.Create_LoginProvidersTable) ||
+            !await CreateTable("UserLogins", SqlScripts.Create_UserLoginsTable) ||
+            !await CreateTable("UserClaims", SqlScripts.Create_UserClaimsTable))
             return false;
 
         return true;
     }
 
     /// <summary>
-    /// Creates the primary table for user data.
-    /// 
-    /// Clients can potentially have null a username
-    /// and password salt, if their account is purely
-    /// generated off of an OAuth token, and no
-    /// further data has been obtained yet.
+    /// Creates a table using the given SQL script.
     /// </summary>
-    public async Task<bool> CreateUsersTable()
+    private async Task<bool> CreateTable(string tableName, string sqlScript)
     {
         var builder = new SqlBuilder();
-        var template = builder.AddTemplate(@"
-            CREATE TABLE IF NOT EXISTS `Users` (
-                `Id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                `Username` VARCHAR(255) UNIQUE NULL,
-                `PasswordSalt` VARCHAR(255) NULL,
-                `Email` VARCHAR(255) UNIQUE NULL,
-                `EmailVerified` BOOLEAN NOT NULL DEFAULT FALSE,
-                `TwoFactorEnabled` BOOLEAN NOT NULL DEFAULT FALSE,
-                `LockoutEnd` TIMESTAMP NULL,
-                `SecurityToken` VARCHAR(255) NOT NULL,
-                `LastLoginAt` TIMESTAMP NULL,
-                `CreatedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                `UpdatedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                `DeletedAt` TIMESTAMP NULL
-            ) ENGINE = InnoDB;
-        ");
+        var template = builder.AddTemplate(sqlScript);
 
         try
         {
@@ -112,132 +231,7 @@ public class AccountService : IAccountService
         }
         catch (Exception exc)
         {
-            Program.Logger.Log(LogLevel.Error, exc, "An error occurred creating the `Users` table.");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Creates the reference table for login / OAuth providers.
-    /// This is a lot like an enumeration- just a lookup from id -> name.
-    /// 
-    /// Initially supporting Steam and Google, but can trivially add new
-    /// providers if/as we need them.
-    /// </summary>
-    public async Task<bool> CreateLoginProvidersTable()
-    {
-        var builder = new SqlBuilder();
-        var template = builder.AddTemplate(@"
-            CREATE TABLE IF NOT EXISTS `LoginProviders` (
-                `Id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                `Name` VARCHAR(255) UNIQUE NOT NULL
-            ) ENGINE = InnoDB;
-            INSERT IGNORE INTO `LoginProviders` (`Name`) VALUES ('Google'), ('Steam'), ('Password');
-        ");
-
-        try
-        {
-            await _dbConnection.ExecuteAsync(template.RawSql);
-            return true;
-        }
-        catch (Exception exc)
-        {
-            Program.Logger.Log(LogLevel.Error, exc, "An error occurred creating the `LoginProviders` table.");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Create the user logins table. Used for the traditional password login, with
-    /// ProviderKey holding the password hash, and also maps users to third-party
-    /// OAuth provider identities / integrations.
-    /// </summary>
-    public async Task<bool> CreateUserLoginsTable()
-    {
-        var builder = new SqlBuilder();
-        var template = builder.AddTemplate(@"
-            CREATE TABLE IF NOT EXISTS `UserLogins` (
-                `Id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                `UserId` INT UNSIGNED NOT NULL,
-                `LoginProviderId` INT UNSIGNED NOT NULL,
-                `ProviderKey` VARCHAR(512) NOT NULL,
-                FOREIGN KEY (`UserId`) REFERENCES `Users`(`Id`) ON DELETE CASCADE,
-                FOREIGN KEY (`LoginProviderId`) REFERENCES `LoginProviders`(`Id`) ON DELETE CASCADE,
-                UNIQUE(`UserId`, `LoginProviderId`)
-            ) ENGINE = InnoDB;
-        ");
-
-        try
-        {
-            await _dbConnection.ExecuteAsync(template.RawSql);
-            return true;
-        }
-        catch (Exception exc)
-        {
-            Program.Logger.Log(LogLevel.Error, exc, "An error occurred creating the user `UserLogins` table.");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Creates the reference table for claim types. Like LoginProviders,
-    /// essentially an enum.
-    /// 
-    /// Claim types are much like categories, and a user will have a number of them,
-    /// of many different types.
-    /// </summary>
-    public async Task<bool> CreateClaimTypesTable()
-    {
-        var builder = new SqlBuilder();
-        var template = builder.AddTemplate(@"
-            CREATE TABLE IF NOT EXISTS `ClaimTypes` (
-                `Id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                `Name` VARCHAR(255) UNIQUE NOT NULL
-            ) ENGINE = InnoDB;
-            INSERT IGNORE INTO `ClaimTypes` (`Name`) VALUES ('Role'), ('Application'), ('Scope'), ('Identity'), ('Profile');
-        ");
-
-        try
-        {
-            await _dbConnection.ExecuteAsync(template.RawSql);
-            return true;
-        }
-        catch (Exception exc)
-        {
-            Program.Logger.Log(LogLevel.Error, exc, "An error occurred creating the `ClaimTypes` table.");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Table for storing all of the claims available to users in the network.
-    /// The Value is a string typically formatted key:value, by convention, but
-    /// can also be complex (JSON) types.
-    /// </summary>
-    public async Task<bool> CreateUserClaimsTable()
-    {
-        var builder = new SqlBuilder();
-        var template = builder.AddTemplate(@"
-            CREATE TABLE IF NOT EXISTS `UserClaims` (
-                `Id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                `UserId` INT UNSIGNED NOT NULL,
-                `TypeId` INT UNSIGNED NOT NULL,
-                `Value` VARCHAR(512) NOT NULL,
-                INDEX (`UserId`),
-                FOREIGN KEY (`UserId`) REFERENCES `Users`(`Id`) ON DELETE CASCADE,
-                FOREIGN KEY (`TypeId`) REFERENCES `ClaimTypes`(`Id`) ON DELETE CASCADE,
-                UNIQUE (`UserId`, `TypeId`, `Value`)
-            ) ENGINE = InnoDB;
-        ");
-
-        try
-        {
-            await _dbConnection.ExecuteAsync(template.RawSql);
-            return true;
-        }
-        catch (Exception exc)
-        {
-            Program.Logger.Log(LogLevel.Error, exc, "An error occurred creating the `UserClaims` table.");
+            Program.Logger.Log(LogLevel.Error, exc, $"An error occurred creating the `{tableName}` table.");
             return false;
         }
     }

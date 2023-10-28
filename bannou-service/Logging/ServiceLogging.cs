@@ -1,4 +1,5 @@
-﻿using Serilog;
+﻿using BeyondImmersion.BannouService.Configuration;
+using Serilog;
 
 namespace BeyondImmersion.BannouService.Logging;
 

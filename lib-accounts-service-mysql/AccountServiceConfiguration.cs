@@ -1,4 +1,5 @@
-﻿using BeyondImmersion.BannouService.Configuration;
+﻿using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Accounts;
 

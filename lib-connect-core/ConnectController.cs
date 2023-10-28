@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Net.Mime;
 using System.Net.WebSockets;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Connect.Messages;
 
 namespace BeyondImmersion.BannouService.Connect;
 
