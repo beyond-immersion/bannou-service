@@ -61,7 +61,7 @@ public class AccountService : IAccountService
         try
         {
             if (_dbConnection == null)
-                throw new SystemException();
+                throw new SystemException("Database connection not found.");
 
             var builder = new SqlBuilder();
             SqlBuilder.Template? template = null;
@@ -101,7 +101,7 @@ public class AccountService : IAccountService
             { }
 
             if (template == null || parameters == null)
-                throw new ArgumentException();
+                throw new ArgumentException("Template or parameters could not be established by the given arguments.");
 
             var transaction = await _dbConnection.BeginTransactionAsync();
             var newUser = await _dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
@@ -158,27 +158,12 @@ public class AccountService : IAccountService
         try
         {
             if (_dbConnection == null)
-                throw new SystemException();
-
-            string? passwordSalt = null;
-            string? hashedPassword = null;
-            JObject? passwordData = null;
+                throw new SystemException("Database connection not found.");
 
             if (identityClaims != null)
                 identityClaims = new HashSet<string>(identityClaims);
             else
                 identityClaims = new HashSet<string>();
-
-            // handle traditional username/password logins
-            if (!string.IsNullOrWhiteSpace(password))
-            {
-                passwordSalt = Guid.NewGuid().ToString();
-                hashedPassword = IAccountService.GenerateHashedSecret(password, passwordSalt);
-                passwordData = new JObject() { ["Hash"] =  hashedPassword, ["Salt"] = passwordSalt };
-
-                identityClaims.Add($"SecretHash:{hashedPassword}");
-                identityClaims.Add($"SecretSalt:{passwordSalt}");
-            }
 
             // handle steam OAUTH
             string? steamData = null;
@@ -212,8 +197,25 @@ public class AccountService : IAccountService
                 }.ToString(Newtonsoft.Json.Formatting.None);
             }
 
-            if (string.IsNullOrWhiteSpace(steamID) && string.IsNullOrWhiteSpace(googleID) && string.IsNullOrWhiteSpace(password) && identityClaims.Count == 0)
-                throw new ArgumentException();
+            // if a third-party identity claim is provided, the account can be accessed through that, but otherwise...
+            if ((string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password)) && identityClaims.Count == 0)
+                throw new ArgumentException("No valid identities provided to create account. " +
+                    "Resulting account would have no manner of access than by GUID, and this is disallowed to prevent orphans.");
+
+            string? passwordSalt = null;
+            string? hashedPassword = null;
+            JObject? passwordData = null;
+
+            // handle traditional username/password logins
+            if (!string.IsNullOrWhiteSpace(password))
+            {
+                passwordSalt = Guid.NewGuid().ToString();
+                hashedPassword = IAccountService.GenerateHashedSecret(password, passwordSalt);
+                passwordData = new JObject() { ["Hash"] = hashedPassword, ["Salt"] = passwordSalt };
+
+                identityClaims.Add($"SecretHash:{hashedPassword}");
+                identityClaims.Add($"SecretSalt:{passwordSalt}");
+            }
 
             var builder = new SqlBuilder();
             var template = builder.AddTemplate(SqlScripts.AddUser_WithClaims);
