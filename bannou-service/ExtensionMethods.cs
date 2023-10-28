@@ -180,12 +180,12 @@ public static partial class ExtensionMethods
 
             Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {controllerName}/{{action}}/{{id}}.");
             _ = builder.MapControllerRoute(
-                name: "ControllerActionIdApi",
+                name: $"Controller{controllerName}ActionIdApi",
                 pattern: controllerName + "/{action}/{id}");
 
             Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {controllerName}/{{action}}.");
             _ = builder.MapControllerRoute(
-                name: "ControllerActionApi",
+                name: $"Controller{controllerName}ActionApi",
                 pattern: controllerName + "/{action}");
         }
 
@@ -199,19 +199,18 @@ public static partial class ExtensionMethods
     {
         foreach (var serviceInfo in IDaprService.EnabledServices)
         {
-            Type implementationType = serviceInfo.Item2;
-            var serviceName = implementationType.GetServiceName();
+            var serviceName = serviceInfo.Item3.Name;
             if (string.IsNullOrWhiteSpace(serviceName))
                 continue;
 
             Program.Logger?.Log(LogLevel.Trace, null, $"Activating service controller route {serviceName}/{{action}}/{{id}}.");
             _ = builder.MapControllerRoute(
-                name: "ServiceControllerActionIdApi",
+                name: $"Service{serviceName}ControllerActionIdApi",
                 pattern: serviceName + "/{action}/{id}");
 
             Program.Logger?.Log(LogLevel.Trace, null, $"Activating service controller route {serviceName}/{{action}}.");
             _ = builder.MapControllerRoute(
-                name: "ServiceControllerActionApi",
+                name: $"Service{serviceName}ControllerActionApi",
                 pattern: serviceName + "/{action}");
         }
 

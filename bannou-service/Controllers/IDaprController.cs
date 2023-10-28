@@ -91,10 +91,7 @@ public interface IDaprController
             throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
 
         IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = ServiceControllers
-            .Where(t =>
-            {
-                return interfaceType == (t.Item2.InterfaceType);
-            });
+            .Where(t => interfaceType == t.Item2.InterfaceType);
 
         return controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();
     }

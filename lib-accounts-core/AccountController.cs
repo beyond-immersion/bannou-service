@@ -25,6 +25,8 @@ public class AccountController : Controllers.BaseDaprController
 
     [HttpPost]
     [DaprRoute("create")]
+    [Consumes(MediaTypeNames.Application.Json)]
+    [Produces(MediaTypeNames.Application.Json)]
     public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest request)
     {
         try
@@ -70,13 +72,15 @@ public class AccountController : Controllers.BaseDaprController
         }
         catch (Exception exc)
         {
-            Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(GetAccount)}] endpoint on [{nameof(AccountController)}].");
+            Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(CreateAccount)}] endpoint on [{nameof(AccountController)}].");
             return StatusCode(500);
         }
     }
 
     [HttpPost]
     [DaprRoute("get")]
+    [Consumes(MediaTypeNames.Application.Json)]
+    [Produces(MediaTypeNames.Application.Json)]
     public async Task<IActionResult> GetAccount([FromBody] GetAccountRequest request)
     {
         try
