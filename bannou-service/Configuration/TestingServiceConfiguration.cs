@@ -1,7 +1,7 @@
 ﻿namespace BeyondImmersion.BannouService.Configuration;
 
 [ServiceConfiguration(typeof(TestingService))]
-public class TestingServiceConfiguration : AppConfiguration
+public class TestingServiceConfiguration : BaseServiceConfiguration
 {
 
 }

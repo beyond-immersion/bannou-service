@@ -5,10 +5,8 @@ namespace BeyondImmersion.BannouService.Services.Tests;
 /// <summary>
 /// Tests that only require the testing service itself.
 /// </summary>
-public static class BasicTests
+public static class BasicControllerTests
 {
-    public const int ASYNC_HTTP_DELAY = 200;
-
     private const string LOOPBACK_URI_PREFIX = $"{PROTOCOL}://{HOST_LOOPBACK}:{HOST_PORT}/v1.0/invoke/{SERVICE_NAME}/method/{CONTROLLER_NAME}/{ACTION_NAME}";
     private const string PROTOCOL = "http";
     private const string HOST_LOOPBACK = "127.0.0.1";
@@ -18,7 +16,7 @@ public static class BasicTests
     private const string ACTION_NAME = "dapr-test";
 
     [ServiceTest(testName: "basic", serviceType: typeof(TestingService))]
-    public static async Task<bool> BasicControllerTests(TestingService service)
+    public static async Task<bool> Run(TestingService service)
     {
         await Task.CompletedTask;
         Program.Logger.Log(LogLevel.Trace, "Running all Basic tests!");
@@ -81,8 +79,6 @@ public static class BasicTests
         var request = new HttpRequestMessage(HttpMethod.Get, LOOPBACK_URI_PREFIX + $"/{testID}");
         await Program.DaprClient.InvokeMethodAsync(request, Program.ShutdownCancellationTokenSource.Token);
 
-        await Task.Delay(ASYNC_HTTP_DELAY);
-
         return service.LastTestID == testID;
     }
 
@@ -93,8 +89,6 @@ public static class BasicTests
 
         HttpRequestMessage request = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Get, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}/{testID}");
         await Program.DaprClient.InvokeMethodAsync(request, Program.ShutdownCancellationTokenSource.Token);
-
-        await Task.Delay(ASYNC_HTTP_DELAY);
 
         return service.LastTestID == testID;
     }
@@ -107,8 +101,6 @@ public static class BasicTests
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Get, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}/{testService}/{testID}");
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
-
-        await Task.Delay(ASYNC_HTTP_DELAY);
 
         return service.LastTestID == testID && service.LastTestService == testService;
     }
@@ -126,8 +118,6 @@ public static class BasicTests
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", dataModel);
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
-
-        await Task.Delay(ASYNC_HTTP_DELAY);
 
         if (service.LastTestRequest == null)
             return false;
@@ -154,8 +144,6 @@ public static class BasicTests
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", dataModel);
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
-
-        await Task.Delay(ASYNC_HTTP_DELAY);
 
         if (service.LastTestRequest == null)
             return false;
