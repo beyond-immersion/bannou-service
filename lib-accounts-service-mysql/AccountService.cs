@@ -68,39 +68,39 @@ public class AccountService : IAccountService
 
             if (!string.IsNullOrWhiteSpace(guid))
             {
-                template = builder.AddTemplate(SqlScripts.Get_ByGuid);
+                template = builder.AddTemplate(includeClaims ? SqlScripts.GetUser_ById_WithClaims : SqlScripts.GetUser_ById);
                 parameters = new { UserId = guid };
             }
             else if (!string.IsNullOrWhiteSpace(email))
             {
-                template = builder.AddTemplate(SqlScripts.Get_ByEmail);
+                template = builder.AddTemplate(includeClaims ? SqlScripts.GetUser_ByEmail_WithClaims : SqlScripts.GetUser_ByEmail);
                 parameters = new { UserId = email };
             }
             else if (!string.IsNullOrWhiteSpace(username))
             {
-                template = builder.AddTemplate(SqlScripts.Get_ByUsername);
+                template = builder.AddTemplate(includeClaims ? SqlScripts.GetUser_ByUsername_WithClaims : SqlScripts.GetUser_ByUsername);
                 parameters = new { UserId = username };
             }
             else if (!string.IsNullOrWhiteSpace(steamID))
             {
-                template = builder.AddTemplate(SqlScripts.Get_BySteamId);
-                parameters = new { UserId = steamID };
+                template = builder.AddTemplate(includeClaims ? SqlScripts.GetUser_ByProviderId_WithClaims : SqlScripts.GetUser_ByProviderId);
+                parameters = new { ProviderName = "Steam", UserId = steamID };
             }
             else if (!string.IsNullOrWhiteSpace(googleID))
             {
-                template = builder.AddTemplate(SqlScripts.Get_ByGoogleId);
-                parameters = new { UserId = googleID };
+                template = builder.AddTemplate(includeClaims ? SqlScripts.GetUser_ByProviderId_WithClaims : SqlScripts.GetUser_ByProviderId);
+                parameters = new { ProviderName = "Google", UserId = googleID };
             }
             else if (!string.IsNullOrWhiteSpace(identityClaim))
             {
-                template = builder.AddTemplate(SqlScripts.Get_ByIdentityClaim);
+                template = builder.AddTemplate(includeClaims ? SqlScripts.GetUser_ByIdentityClaim_WithClaims : SqlScripts.GetUser_ByIdentityClaim);
                 parameters = new { UserId = identityClaim };
             }
             else
             { }
 
             if (template == null || parameters == null)
-                return null;
+                throw new NullReferenceException();
 
             var transaction = await _dbConnection.BeginTransactionAsync();
             var newUser = await _dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
@@ -117,6 +117,29 @@ public class AccountService : IAccountService
                 UpdatedAt = newUser.UpdatedAt,
                 RemovedAt = newUser.RemovedAt
             };
+
+            if (includeClaims)
+            {
+                var claims = newUser.Role?.Split(',');
+                if (claims != null)
+                    newAccountData.RoleClaims = new HashSet<string>(claims);
+
+                claims = newUser.App?.Split(',');
+                if (claims != null)
+                    newAccountData.AppClaims = new HashSet<string>(claims);
+
+                claims = newUser.Scope?.Split(',');
+                if (claims != null)
+                    newAccountData.ScopeClaims = new HashSet<string>(claims);
+
+                claims = newUser.Identity?.Split(',');
+                if (claims != null)
+                    newAccountData.IdentityClaims = new HashSet<string>(claims);
+
+                claims = newUser.Profile?.Split(',');
+                if (claims != null)
+                    newAccountData.ProfileClaims = new HashSet<string>(claims);
+            }
 
             return newAccountData;
         }
@@ -136,7 +159,7 @@ public class AccountService : IAccountService
                 throw new NullReferenceException();
 
             var builder = new SqlBuilder();
-            var template = builder.AddTemplate(SqlScripts.Create_User);
+            var template = builder.AddTemplate(SqlScripts.AddUser);
 
             var securityToken = Guid.NewGuid().ToString();
             string? passwordSalt = null;
@@ -206,11 +229,11 @@ public class AccountService : IAccountService
     {
         Program.Logger.Log(LogLevel.Information, "Creating initial user account tables in MySQL...");
 
-        if (!await CreateTable("Users", SqlScripts.Create_UsersTable) ||
-            !await CreateTable("ClaimTypes", SqlScripts.Create_ClaimTypesTable) ||
-            !await CreateTable("LoginProviders", SqlScripts.Create_LoginProvidersTable) ||
-            !await CreateTable("UserLogins", SqlScripts.Create_UserLoginsTable) ||
-            !await CreateTable("UserClaims", SqlScripts.Create_UserClaimsTable))
+        if (!await CreateTable("Users", SqlScripts.CreateTable_Users) ||
+            !await CreateTable("ClaimTypes", SqlScripts.CreateTable_ClaimTypes) ||
+            !await CreateTable("LoginProviders", SqlScripts.CreateTable_LoginProviders) ||
+            !await CreateTable("UserLogins", SqlScripts.CreateTable_UserLogins) ||
+            !await CreateTable("UserClaims", SqlScripts.CreateTable_UserClaims))
             return false;
 
         return true;
