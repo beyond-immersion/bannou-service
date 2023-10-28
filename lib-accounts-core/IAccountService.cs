@@ -41,7 +41,8 @@ public interface IAccountService : IDaprService
     Task<AccountData?> GetAccount(bool includeClaims = false, string? guid = null, string? username = null, string? email = null,
         string? steamID = null, string? googleID = null, string? identityClaim = null);
 
-    Task<AccountData?> CreateAccount(string? username, string? password, string? email, bool emailVerified, bool twoFactorEnabled,
+    Task<AccountData?> CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? username, string? password,
+        string? steamID, string? steamToken, string? googleID, string? googleToken,
         HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims);
 
     public static string GenerateHashedSecret(string secretString, string secretSalt)

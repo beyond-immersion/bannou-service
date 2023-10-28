@@ -37,7 +37,8 @@ public class AccountController : Controllers.BaseDaprController
                 return BadRequest();
 
             IAccountService.AccountData? accountData = await Service.CreateAccount(
-                request.Username, request.Password, request.Email, request.EmailVerified, request.TwoFactorEnabled,
+                request.Email, request.EmailVerified, request.TwoFactorEnabled, request.Username, request.Password,
+                request.SteamID, request.SteamToken, request.GoogleID, request.GoogleToken,
                 request.RoleClaims, request.AppClaims, request.ScopeClaims, request.IdentityClaims, request.ProfileClaims);
 
             if (accountData == null)

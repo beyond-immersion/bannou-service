@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using Dapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
@@ -60,7 +61,7 @@ public class AccountService : IAccountService
         try
         {
             if (_dbConnection == null)
-                throw new NullReferenceException();
+                throw new SystemException();
 
             var builder = new SqlBuilder();
             SqlBuilder.Template? template = null;
@@ -74,12 +75,12 @@ public class AccountService : IAccountService
             else if (!string.IsNullOrWhiteSpace(email))
             {
                 template = builder.AddTemplate(includeClaims ? SqlScripts.GetUser_ByEmail_WithClaims : SqlScripts.GetUser_ByEmail);
-                parameters = new { UserId = email };
+                parameters = new { Email = email };
             }
             else if (!string.IsNullOrWhiteSpace(username))
             {
                 template = builder.AddTemplate(includeClaims ? SqlScripts.GetUser_ByUsername_WithClaims : SqlScripts.GetUser_ByUsername);
-                parameters = new { UserId = username };
+                parameters = new { Username = username };
             }
             else if (!string.IsNullOrWhiteSpace(steamID))
             {
@@ -100,7 +101,7 @@ public class AccountService : IAccountService
             { }
 
             if (template == null || parameters == null)
-                throw new NullReferenceException();
+                throw new ArgumentException();
 
             var transaction = await _dbConnection.BeginTransactionAsync();
             var newUser = await _dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
@@ -150,45 +151,91 @@ public class AccountService : IAccountService
         }
     }
 
-    async Task<IAccountService.AccountData?> IAccountService.CreateAccount(string? username, string? password, string? email, bool emailVerified, bool twoFactorEnabled,
+    async Task<IAccountService.AccountData?> IAccountService.CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled,
+        string? username, string? password, string? steamID, string? steamToken, string? googleID, string? googleToken,
         HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims)
     {
         try
         {
             if (_dbConnection == null)
-                throw new NullReferenceException();
+                throw new SystemException();
 
-            var builder = new SqlBuilder();
-            var template = builder.AddTemplate(SqlScripts.AddUser);
-
-            var securityToken = Guid.NewGuid().ToString();
             string? passwordSalt = null;
             string? hashedPassword = null;
             JObject? passwordData = null;
 
+            if (identityClaims != null)
+                identityClaims = new HashSet<string>(identityClaims);
+            else
+                identityClaims = new HashSet<string>();
+
+            // handle traditional username/password logins
             if (!string.IsNullOrWhiteSpace(password))
             {
                 passwordSalt = Guid.NewGuid().ToString();
                 hashedPassword = IAccountService.GenerateHashedSecret(password, passwordSalt);
                 passwordData = new JObject() { ["Hash"] =  hashedPassword, ["Salt"] = passwordSalt };
 
-                if (identityClaims != null)
-                    identityClaims = new HashSet<string>(identityClaims);
-                else
-                    identityClaims = new HashSet<string>();
-
                 identityClaims.Add($"SecretHash:{hashedPassword}");
                 identityClaims.Add($"SecretSalt:{passwordSalt}");
             }
 
+            // handle steam OAUTH
+            string? steamData = null;
+            if (string.IsNullOrWhiteSpace(steamID) || string.IsNullOrWhiteSpace(steamToken))
+            {
+                steamID = null;
+                steamToken = null;
+            }
+            else
+            {
+                identityClaims.Add($"SteamID:{steamID}");
+                steamData = new JObject()
+                {
+                    ["Token"] = steamToken
+                }.ToString(Newtonsoft.Json.Formatting.None);
+            }
+
+            // handle Google OAUTH
+            string? googleData = null;
+            if (string.IsNullOrWhiteSpace(googleID) || string.IsNullOrWhiteSpace(googleToken))
+            {
+                googleID = null;
+                googleToken = null;
+            }
+            else
+            {
+                identityClaims.Add($"GoogleID:{googleID}");
+                googleData = new JObject()
+                {
+                    ["Token"] = googleToken
+                }.ToString(Newtonsoft.Json.Formatting.None);
+            }
+
+            if (string.IsNullOrWhiteSpace(steamID) && string.IsNullOrWhiteSpace(googleID) && string.IsNullOrWhiteSpace(password) && identityClaims.Count == 0)
+                throw new ArgumentException();
+
+            var builder = new SqlBuilder();
+            var template = builder.AddTemplate(SqlScripts.AddUser_WithClaims);
+            var securityToken = Guid.NewGuid().ToString();
+
             var parameters = new
             {
-                Username = username,
                 SecurityToken = securityToken,
                 Email = email,
                 EmailVerified = emailVerified,
                 TwoFactorEnabled = twoFactorEnabled,
-                PasswordData = passwordData?.ToString(Newtonsoft.Json.Formatting.None)
+                Username = username,
+                PasswordData = passwordData?.ToString(Newtonsoft.Json.Formatting.None),
+                GoogleUserId = googleID,
+                GoogleData = googleData,
+                SteamUserId = steamID,
+                SteamData = steamData,
+                RoleClaims = roleClaims != null ? JArray.FromObject(roleClaims).ToString(Newtonsoft.Json.Formatting.None) : null,
+                AppClaims = appClaims != null ? JArray.FromObject(appClaims).ToString(Newtonsoft.Json.Formatting.None) : null,
+                ScopeClaims = scopeClaims != null ? JArray.FromObject(scopeClaims).ToString(Newtonsoft.Json.Formatting.None) : null,
+                IdentityClaims = identityClaims != null ? JArray.FromObject(identityClaims).ToString(Newtonsoft.Json.Formatting.None) : null,
+                ProfileClaims = profileClaims != null ? JArray.FromObject(profileClaims).ToString(Newtonsoft.Json.Formatting.None) : null
             };
 
             var transaction = await _dbConnection.BeginTransactionAsync();

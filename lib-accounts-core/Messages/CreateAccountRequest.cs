@@ -10,19 +10,43 @@ namespace BeyondImmersion.BannouService.Accounts.Messages;
 public class CreateAccountRequest : ServiceRequest
 {
     /// <summary>
-    /// Username of account to create.
+    /// Username- optional if using OAUTH.
     /// </summary>
     [JsonProperty("username")]
     public string? Username { get; set; }
 
     /// <summary>
-    /// Username of account to create.
+    /// Password- optional if using OAUTH.
     /// </summary>
     [JsonProperty("password")]
     public string? Password { get; set; }
 
     /// <summary>
-    /// Email of account to create.
+    /// Steam user ID, if using Steam OAUTH.
+    /// </summary>
+    [JsonProperty("steam_id")]
+    public string? SteamID { get; set; }
+
+    /// <summary>
+    /// Steam user token, if using Steam OAUTH.
+    /// </summary>
+    [JsonProperty("steam_token")]
+    public string? SteamToken { get; set; }
+
+    /// <summary>
+    /// Google user ID, if using Google OAUTH.
+    /// </summary>
+    [JsonProperty("google_id")]
+    public string? GoogleID { get; set; }
+
+    /// <summary>
+    /// Google user token, if using Google OAUTH.
+    /// </summary>
+    [JsonProperty("google_token")]
+    public string? GoogleToken { get; set; }
+
+    /// <summary>
+    /// Email address- optional.
     /// </summary>
     [JsonProperty("email")]
     public string? Email { get; set; }
