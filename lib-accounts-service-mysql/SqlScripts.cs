@@ -15,11 +15,11 @@ SELECT * FROM `Users` WHERE `Id` = @lastUserId;";
 
     public const string GetUser_ById_WithClaims = @"
 SELECT u.*,
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Role' THEN uc.`Value` END) AS 'Role',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'App' THEN uc.`Value` END) AS 'App',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Scope' THEN uc.`Value` END) AS 'Scope',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Identity' THEN uc.`Value` END) AS 'Identity',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Profile' THEN uc.`Value` END) AS 'Profile'
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Role' THEN uc.`Value` END) AS 'Role',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'App' THEN uc.`Value` END) AS 'App',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Scope' THEN uc.`Value` END) AS 'Scope',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Identity' THEN uc.`Value` END) AS 'Identity',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Profile' THEN uc.`Value` END) AS 'Profile'
 FROM `Users` u
 LEFT JOIN `UserClaims` uc ON u.`Id` = uc.`UserId`
 LEFT JOIN `ClaimTypes` ct ON uc.`TypeId` = ct.`Id`
@@ -31,11 +31,11 @@ SELECT * FROM `Users` WHERE `Id` = @UserId;";
 
     public const string GetUser_ByEmail_WithClaims = @"
 SELECT u.*,
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Role' THEN uc.`Value` END) AS 'Role',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'App' THEN uc.`Value` END) AS 'App',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Scope' THEN uc.`Value` END) AS 'Scope',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Identity' THEN uc.`Value` END) AS 'Identity',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Profile' THEN uc.`Value` END) AS 'Profile'
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Role' THEN uc.`Value` END) AS 'Role',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'App' THEN uc.`Value` END) AS 'App',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Scope' THEN uc.`Value` END) AS 'Scope',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Identity' THEN uc.`Value` END) AS 'Identity',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Profile' THEN uc.`Value` END) AS 'Profile'
 FROM `Users` u
 LEFT JOIN `UserClaims` uc ON u.`Id` = uc.`UserId`
 LEFT JOIN `ClaimTypes` ct ON uc.`TypeId` = ct.`Id`
@@ -47,11 +47,11 @@ SELECT * FROM `Users` WHERE `Email` = @UserId;";
 
     public const string GetUser_ByUsername_WithClaims = @"
 SELECT u.*,
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Role' THEN uc.`Value` END) AS 'Role',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'App' THEN uc.`Value` END) AS 'App',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Scope' THEN uc.`Value` END) AS 'Scope',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Identity' THEN uc.`Value` END) AS 'Identity',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Profile' THEN uc.`Value` END) AS 'Profile'
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Role' THEN uc.`Value` END) AS 'Role',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'App' THEN uc.`Value` END) AS 'App',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Scope' THEN uc.`Value` END) AS 'Scope',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Identity' THEN uc.`Value` END) AS 'Identity',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Profile' THEN uc.`Value` END) AS 'Profile'
 FROM `Users` u
 LEFT JOIN `UserClaims` uc ON u.`Id` = uc.`UserId`
 LEFT JOIN `ClaimTypes` ct ON uc.`TypeId` = ct.`Id`
@@ -63,11 +63,11 @@ SELECT * FROM `Users` WHERE `Username` = @UserId;";
 
     public const string GetUser_ByProviderId_WithClaims = @"
 SELECT u.*,
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Role' THEN uc.`Value` END) AS 'Role',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'App' THEN uc.`Value` END) AS 'App',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Scope' THEN uc.`Value` END) AS 'Scope',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Identity' THEN uc.`Value` END) AS 'Identity',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Profile' THEN uc.`Value` END) AS 'Profile'
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Role' THEN uc.`Value` END) AS 'Role',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'App' THEN uc.`Value` END) AS 'App',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Scope' THEN uc.`Value` END) AS 'Scope',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Identity' THEN uc.`Value` END) AS 'Identity',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Profile' THEN uc.`Value` END) AS 'Profile'
 FROM `Users` u
 JOIN `UserLogins` ul ON u.`Id` = ul.`UserId`
 JOIN `LoginProviders` lp ON ul.`LoginProviderId` = lp.`Id`
@@ -85,11 +85,11 @@ WHERE lp.`Name` = @ProviderName AND ul.`LoginProviderUserId` = @UserId";
 
     public const string GetUser_ByIdentityClaim_WithClaims = @"
 SELECT u.*,
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Role' THEN uc.`Value` END) AS 'Role',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'App' THEN uc.`Value` END) AS 'App',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Scope' THEN uc.`Value` END) AS 'Scope',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Identity' THEN uc.`Value` END) AS 'Identity',
-       GROUP_CONCAT(CASE WHEN ct.`Name` = 'Profile' THEN uc.`Value` END) AS 'Profile'
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Role' THEN uc.`Value` END) AS 'Role',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'App' THEN uc.`Value` END) AS 'App',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Scope' THEN uc.`Value` END) AS 'Scope',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Identity' THEN uc.`Value` END) AS 'Identity',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Profile' THEN uc.`Value` END) AS 'Profile'
 FROM `Users` u
 JOIN `UserClaims` identityUc ON u.`Id` = identityUc.`UserId`
 JOIN `ClaimTypes` identityCt ON identityUc.`TypeId` = identityCt.`Id`
