@@ -390,6 +390,7 @@ public static class Program
                 assembly = Assembly.LoadFile(assemblyPath);
                 return true;
             }
+            catch (BadImageFormatException) { }
             catch (Exception exc)
             {
                 Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");
