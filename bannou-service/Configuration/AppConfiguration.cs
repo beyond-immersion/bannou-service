@@ -47,7 +47,7 @@ public class AppConfiguration : BaseServiceConfiguration
     /// Time in milliseconds for any given service startup to
     /// throw an error and start application shutdown.
     /// </summary>
-    public int Service_Start_Timeout { get; set; } = (int)TimeSpan.FromMinutes(2).TotalMilliseconds;
+    public int Service_Start_Timeout { get; set; } = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
 
     /// <summary>
     /// The port the HTTP webhost is listening on.
