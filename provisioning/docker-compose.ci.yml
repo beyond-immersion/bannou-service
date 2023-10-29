@@ -23,6 +23,8 @@ services:
 
   account-db:
     image: mysql:8.1.0
+    networks:
+      - celestial_network
     environment:
       - MYSQL_DATABASE=accounts
       - MYSQL_USER=${ACCOUNT_DB_USER}
