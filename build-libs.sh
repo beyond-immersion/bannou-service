@@ -32,8 +32,8 @@ do
         echo "Building libs for project '$project_name'."
         dotnet publish $proj --configuration Release --no-self-contained -nologo --verbosity quiet
 
-        echo "Files in '$source_dir' to be copied to '$LIBS_DIR' directory:"
-        ls "$source_dir"
+        #echo "Files in '$source_dir' to be copied to '$LIBS_DIR' directory:"
+        #ls "$source_dir"
 
         rsync -a "$source_dir/" "$LIBS_DIR/"
     fi

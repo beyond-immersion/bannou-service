@@ -47,12 +47,9 @@ public class AccountService : IAccountService
                 await connectionAttempt.OpenAsync(cancellationToken);
                 dbConnection = connectionAttempt;
             }
-            catch (Exception exc)
+            catch
             {
-                Program.Logger.Log(LogLevel.Warning, exc, $"Failed to connect with MySQL account database with connection string '{_dbConnectionString}'. " +
-                    $"Delaying and then trying again.");
-
-                await Task.Delay(100, cancellationToken);
+                await Task.Delay(200, cancellationToken);
                 if (cancellationToken.IsCancellationRequested)
                     return;
             }
