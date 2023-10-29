@@ -10,6 +10,8 @@ internal class DaprControllersFeatureProvider : IApplicationFeatureProvider<Cont
         var controllersToRemove = new List<TypeInfo>();
         foreach (var controller in feature.Controllers)
         {
+            Program.Logger.Log(LogLevel.Warning, $"Controller type {controller.FullName} being added...");
+
             var attribute = controller.GetCustomAttributes<DaprControllerAttribute>().FirstOrDefault();
             if (attribute == null)
                 continue;
