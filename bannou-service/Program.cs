@@ -128,7 +128,7 @@ public static class Program
             // get all loaded assemblies hosting enabled DaprController types
             IEnumerable<Assembly>? daprControllerAssemblies = IDaprController.EnabledServiceControllers
                 .Where(t => t.Item1.Assembly != Assembly.GetEntryAssembly())
-                .Select(t => t.Item1.GetType().Assembly);
+                .Select(t => t.Item1.Assembly);
 
             foreach (var controllerAssembly in daprControllerAssemblies)
                 Logger.Log(LogLevel.Warning, $"Adding controller assembly {controllerAssembly.FullName}");

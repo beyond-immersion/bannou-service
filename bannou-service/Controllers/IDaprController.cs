@@ -62,7 +62,7 @@ public interface IDaprController
                         return false;
 
                     (Type, Type, DaprServiceAttribute)? serviceInfo = IDaprService.GetServiceInfo(t.Item2.InterfaceType);
-                    return serviceInfo != null && !IDaprService.IsDisabled(serviceInfo.Value.Item2);
+                    return serviceInfo != null && !IDaprService.IsDisabled(serviceInfo.Value.Item3.Name);
                 })
                 .ToArray();
         }
