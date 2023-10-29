@@ -158,7 +158,7 @@ public static partial class ExtensionMethods
         if (assemblies == null)
             return builder;
 
-        foreach(var assembly in assemblies)
+        foreach (var assembly in assemblies)
             builder.AddApplicationPart(assembly);
 
         return builder;

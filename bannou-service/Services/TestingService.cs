@@ -149,6 +149,54 @@ public class TestingService : IDaprService
     }
 
     /// <summary>
+    /// Run a specific collection of tests from delegate functions.
+    /// </summary>
+    /// <param name="testLabel">The test group label to use for logging.</param>
+    /// <param name="testDelegates">The list of delegate functions to run as integration tests.</param>
+    /// <returns></returns>
+    public async Task<bool> RunDelegates(string testLabel, IEnumerable<Func<TestingService, Task<bool>>>? testDelegates)
+    {
+        Program.Logger.Log(LogLevel.Debug, $"Running '{testLabel}' tests!");
+
+        if (Program.DaprClient == null)
+        {
+            Program.Logger.Log(LogLevel.Error, "Dapr client is not loaded.");
+            return false;
+        }
+
+        if (testDelegates == null || !testDelegates.Any())
+            return true;
+
+        foreach (var testMethod in testDelegates)
+        {
+            try
+            {
+                if (!await testMethod.Invoke(this))
+                {
+                    Program.Logger.Log(LogLevel.Error, $"Test failure for [{testMethod.Method.Name}] in '{testLabel}' tests.");
+                    return false;
+                }
+            }
+            catch (Dapr.Client.InvocationException exc)
+            {
+                var logMsg = $"[{testMethod.Method.Name}] in '{testLabel}' tests failed attempting to invoke '{exc.MethodName}' on app '{exc.AppId}'.";
+                if (exc.Response != null)
+                    logMsg += $"\nCode: {exc.Response.StatusCode}, Reason: {exc.Response.ReasonPhrase}";
+
+                Program.Logger.Log(LogLevel.Error, exc, logMsg);
+                return false;
+            }
+            catch (Exception exc)
+            {
+                Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred running [{testMethod.Method.Name}] in '{testLabel}' tests.");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// API to run all tests against a given service.
     /// </summary>
     public async Task<bool> RunAllForService(string serviceName, bool defaultIfNotFound = false, bool stopOnFailure = false)

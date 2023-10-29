@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using Dapper;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
@@ -46,12 +47,7 @@ public class AccountService : IAccountService
         }
 
         await InitializeDatabase();
-    }
-
-    async Task IDaprService.OnShutdown()
-    {
-        if (_dbConnection != null)
-            await _dbConnection.CloseAsync();
+        await _dbConnection.CloseAsync();
     }
 
     async Task<IAccountService.AccountData?> IAccountService.GetAccount(bool includeClaims, string? guid, string? username, string? email,
@@ -102,9 +98,11 @@ public class AccountService : IAccountService
             if (template == null || parameters == null)
                 throw new ArgumentException("Template or parameters could not be established by the given arguments.");
 
+            await _dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
             var transaction = await _dbConnection.BeginTransactionAsync();
             var newUser = await _dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
             transaction.Commit();
+            await _dbConnection.CloseAsync();
 
             var newAccountData = new IAccountService.AccountData(newUser.Id, newUser.SecurityToken, newUser.CreatedAt)
             {
@@ -239,9 +237,11 @@ public class AccountService : IAccountService
                 ProfileClaims = profileClaims != null ? JArray.FromObject(profileClaims).ToString(Newtonsoft.Json.Formatting.None) : null
             };
 
+            await _dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
             var transaction = await _dbConnection.BeginTransactionAsync();
             var newUser = await _dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
             transaction.Commit();
+            await _dbConnection.CloseAsync();
 
             var newAccountData = new IAccountService.AccountData(newUser.Id, newUser.SecurityToken, newUser.CreatedAt)
             {

@@ -1,6 +1,4 @@
-﻿using Dapr.Client;
-
-namespace BeyondImmersion.BannouService.Services.Tests;
+﻿namespace BeyondImmersion.BannouService.Services.Tests;
 
 /// <summary>
 /// Tests that only require the testing service itself.
@@ -17,59 +15,14 @@ public static class BasicControllerTests
 
     [ServiceTest(testName: "basic", serviceType: typeof(TestingService))]
     public static async Task<bool> Run(TestingService service)
-    {
-        await Task.CompletedTask;
-        Program.Logger.Log(LogLevel.Trace, "Running all Basic tests!");
-
-        if (service == null)
-        {
-            Program.Logger.Log(LogLevel.Error, "Testing service not found.");
-            return false;
-        }
-
-        if (Program.DaprClient == null)
-        {
-            Program.Logger.Log(LogLevel.Error, "Dapr client is not loaded.");
-            return false;
-        }
-
-        var tests = new List<Func<TestingService, Task<bool>>>()
-        {
-            Get_Loopback_StringFromRoute,
-            Get_StringInRoute,
-            Get_MultipleStringsInRoute,
-            Post_ObjectModel,
-            Post_ObjectModel_HeaderArrays
-        };
-
-        foreach (var test in tests)
-        {
-            try
+        => await service.RunDelegates("basic", new List<Func<TestingService, Task<bool>>>()
             {
-                if (!await test.Invoke(service))
-                {
-                    Program.Logger.Log(LogLevel.Error, $"Integration test [{test.Method.Name}] failed.");
-                    return false;
-                }
-            }
-            catch (InvocationException exc)
-            {
-                var logMsg = $"Integration test [{test.Method.Name}] failed on invoking method {exc.MethodName} for app {exc.AppId}.";
-                if (exc.Response != null)
-                    logMsg += $"\nCode: {exc.Response.StatusCode}, Reason: {exc.Response.ReasonPhrase}";
-
-                Program.Logger.Log(LogLevel.Error, exc, logMsg);
-                return false;
-            }
-            catch (Exception exc)
-            {
-                Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred running integration test [{test.Method.Name}].");
-                return false;
-            }
-        }
-
-        return true;
-    }
+                Get_Loopback_StringFromRoute,
+                Get_StringInRoute,
+                Get_MultipleStringsInRoute,
+                Post_ObjectModel,
+                Post_ObjectModel_HeaderArrays
+            });
 
     private static async Task<bool> Get_Loopback_StringFromRoute(TestingService service)
     {
