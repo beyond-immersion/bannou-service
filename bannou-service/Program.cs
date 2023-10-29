@@ -130,6 +130,9 @@ public static class Program
                 .Where(t => t.Item1.Assembly != Assembly.GetEntryAssembly())
                 .Select(t => t.Item1.GetType().Assembly);
 
+            foreach (var controllerAssembly in daprControllerAssemblies)
+                Logger.Log(LogLevel.Warning, $"Adding controller assembly {controllerAssembly.FullName}");
+
             _ = webAppBuilder.Services
                 .AddControllers(mvcOptions =>
                 {
