@@ -75,7 +75,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "components", "components", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mysql", "mysql", "{4D5FB375-61CA-4538-8393-1C74FA1F8E8F}"
 	ProjectSection(SolutionItems) = preProject
-		provisioning\mysql\grant-permissions.sql = provisioning\mysql\grant-permissions.sql
+		provisioning\mysql\my.cnf = provisioning\mysql\my.cnf
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logstash", "logstash", "{1BA3E060-714F-483C-9369-9339C75CF1AC}"
@@ -93,6 +93,11 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ci", "ci", "{0ABDF843-F200-4438-AA37-E5E9380F4978}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "swarm", "swarm", "{BDF5F17E-AD78-4107-9E13-C09878032E0D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "run-init", "run-init", "{FD9DCE8B-2D61-48A1-B215-EC10C5AFA54A}"
+	ProjectSection(SolutionItems) = preProject
+		provisioning\mysql\run-init\grant-permissions.sql = provisioning\mysql\run-init\grant-permissions.sql
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -172,6 +177,7 @@ Global
 		{5D22D6B5-738C-41F6-9AE3-AFEF67B7C4A1} = {6905E47E-6C04-4CF6-894F-2643528E490D}
 		{0ABDF843-F200-4438-AA37-E5E9380F4978} = {288184FE-562A-4E3A-8BAF-DB6ED084A6C7}
 		{BDF5F17E-AD78-4107-9E13-C09878032E0D} = {288184FE-562A-4E3A-8BAF-DB6ED084A6C7}
+		{FD9DCE8B-2D61-48A1-B215-EC10C5AFA54A} = {4D5FB375-61CA-4538-8393-1C74FA1F8E8F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC13195D-546C-43E1-9AAA-2C0BF08BA428}

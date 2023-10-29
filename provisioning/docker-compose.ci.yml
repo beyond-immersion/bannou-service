@@ -32,7 +32,8 @@ services:
       - MYSQL_RANDOM_ROOT_PASSWORD=true
     volumes:
       - account-volume:/var/lib/mysql
-      - ./provisioning/mysql:/docker-entrypoint-initdb.d
+      - ./provisioning/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./provisioning/mysql/run-init/:/docker-entrypoint-initdb.d
 
   # adds a new sidecar to the monoservice, just to run the shell script
   # which CURLs an API to trigger all of the integration tests to run
