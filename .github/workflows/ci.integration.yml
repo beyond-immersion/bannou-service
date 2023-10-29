@@ -13,8 +13,6 @@ jobs:
     name: Integration Tests
     runs-on: [self-hosted, bannou]
     env:
-      UID: ${{ runner.os == 'Linux' && runner.user_id || null }}
-      GID: ${{ runner.os == 'Linux' && runner.group_id || null }}
       ACCOUNT_DB_USER: ${{ secrets.ACCOUNT_DB_USER }}
       ACCOUNT_DB_PASSWORD: ${{ secrets.ACCOUNT_DB_PASSWORD }}
       AUTH_TOKEN_PUBLIC_KEY: ${{ secrets.AUTH_TOKEN_PUBLIC_KEY }}
@@ -23,6 +21,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         name: Checkout Repo
+
+      - name: Set UID and GID
+        run: |
+          echo "UID=$(id -u)" >> $GITHUB_ENV
+          echo "GID=$(id -g)" >> $GITHUB_ENV
 
       - name: Rebuild Services
         run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
