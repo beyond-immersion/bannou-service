@@ -25,7 +25,6 @@ services:
     image: mysql:8.1.0
     networks:
       - celestial_network
-    user: "${UID}:${GID}"
     environment:
       - MYSQL_DATABASE=accounts
       - MYSQL_USER=${ACCOUNT_DB_USER}
