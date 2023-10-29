@@ -36,6 +36,8 @@ public class AccountService : IAccountService
         var dbPassword = Uri.EscapeDataString(Configuration.Database_Password);
 
         _dbConnectionString = $"Host={dbHost}; Port={dbPort}; UserID={dbUsername}; Password={dbPassword}; Database={dbName}";
+        Program.Logger.Log(LogLevel.Warning, $"Connecting to MySQL with connection string '{_dbConnectionString}'.");
+
         var dbConnection = new MySqlConnection(_dbConnectionString);
 
         await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
