@@ -80,41 +80,41 @@ IF (@SteamUserId IS NOT NULL AND @SteamData IS NOT NULL) THEN
 END IF;
 
 IF (@RoleClaims IS NOT NULL) THEN
-    SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Role');
+    SET @@ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Role');
     INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-    SELECT @@lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@RoleClaims, CONCAT('$[', idx, ']')))
+    SELECT @@lastUserId, @@ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@RoleClaims, CONCAT('$[', idx, ']')))
     FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
     WHERE JSON_UNQUOTE(JSON_EXTRACT(@RoleClaims, CONCAT('$[', idx, ']'))) IS NOT NULL;
 END IF;
 
 IF (@AppClaims IS NOT NULL) THEN
-    SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'App');
+    SET @@ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'App');
     INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-    SELECT @@lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AppClaims, CONCAT('$[', idx, ']')))
+    SELECT @@lastUserId, @@ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AppClaims, CONCAT('$[', idx, ']')))
     FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
     WHERE JSON_UNQUOTE(JSON_EXTRACT(@AppClaims, CONCAT('$[', idx, ']'))) IS NOT NULL;
 END IF;
 
 IF (@ScopeClaims IS NOT NULL) THEN
-    SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Scope');
+    SET @@ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Scope');
     INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-    SELECT @@lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@ScopeClaims, CONCAT('$[', idx, ']')))
+    SELECT @@lastUserId, @@ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@ScopeClaims, CONCAT('$[', idx, ']')))
     FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
     WHERE JSON_UNQUOTE(JSON_EXTRACT(@ScopeClaims, CONCAT('$[', idx, ']'))) IS NOT NULL;
 END IF;
 
 IF (@IdentityClaims IS NOT NULL) THEN
-    SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Identity');
+    SET @@ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Identity');
     INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-    SELECT @@lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@IdentityClaims, CONCAT('$[', idx, ']')))
+    SELECT @@lastUserId, @@ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@IdentityClaims, CONCAT('$[', idx, ']')))
     FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
     WHERE JSON_UNQUOTE(JSON_EXTRACT(@IdentityClaims, CONCAT('$[', idx, ']'))) IS NOT NULL;
 END IF;
 
 IF (@ProfileClaims IS NOT NULL) THEN
-    SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Profile');
+    SET @@ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Profile');
     INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-    SELECT @@lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@ProfileClaims, CONCAT('$[', idx, ']')))
+    SELECT @@lastUserId, @@ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@ProfileClaims, CONCAT('$[', idx, ']')))
     FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
     WHERE JSON_UNQUOTE(JSON_EXTRACT(@ProfileClaims, CONCAT('$[', idx, ']'))) IS NOT NULL;
 END IF;

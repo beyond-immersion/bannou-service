@@ -35,7 +35,7 @@ jobs:
 
       - name: Reset Permissions
         if: always()
-        run: chown -R $(id -u):$(id -g) ./provisioning/
+        run: sudo chown -R $(id -u):$(id -g) ./provisioning/
 
       - name: Cleanup
         if: always()
