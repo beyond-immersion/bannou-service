@@ -26,7 +26,7 @@ public class AccountService : IAccountService
         internal set => _configuration = value;
     }
 
-    private MySqlConnection? _dbConnection;
+    private string? _dbConnectionString;
 
     async Task IDaprService.OnStart()
     {
@@ -36,18 +36,18 @@ public class AccountService : IAccountService
         var dbUsername = Uri.EscapeDataString(Configuration.Database_User);
         var dbPassword = Uri.EscapeDataString(Configuration.Database_Password);
 
-        var connectionString = $"Host='{dbHost}'; Port={dbPort}; UserID='{dbUsername}'; Password='{dbPassword}'; Database='{dbName}'";
-        _dbConnection = new MySqlConnection(connectionString);
+        _dbConnectionString = $"Host='{dbHost}'; Port={dbPort}; UserID='{dbUsername}'; Password='{dbPassword}'; Database='{dbName}'";
+        var dbConnection = new MySqlConnection(_dbConnectionString);
 
-        await _dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
-        while (_dbConnection.State != System.Data.ConnectionState.Open)
+        await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
+        while (dbConnection.State != System.Data.ConnectionState.Open)
         {
             Program.Logger.Log(LogLevel.Debug, "Waiting for MySQL connection to become ready...");
             await Task.Delay(100);
         }
 
-        await InitializeDatabase();
-        await _dbConnection.CloseAsync();
+        await InitializeDatabase(dbConnection);
+        await dbConnection.CloseAsync();
     }
 
     async Task<IAccountService.AccountData?> IAccountService.GetAccount(bool includeClaims, string? guid, string? username, string? email,
@@ -55,8 +55,8 @@ public class AccountService : IAccountService
     {
         try
         {
-            if (_dbConnection == null)
-                throw new SystemException("Database connection not found.");
+            if (_dbConnectionString == null)
+                throw new SystemException("Database connection string not found.");
 
             var builder = new SqlBuilder();
             SqlBuilder.Template? template = null;
@@ -98,11 +98,12 @@ public class AccountService : IAccountService
             if (template == null || parameters == null)
                 throw new ArgumentException("Template or parameters could not be established by the given arguments.");
 
-            await _dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
-            var transaction = await _dbConnection.BeginTransactionAsync();
-            var newUser = await _dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
+            var dbConnection = new MySqlConnection(_dbConnectionString);
+            await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
+            var transaction = await dbConnection.BeginTransactionAsync();
+            var newUser = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
             transaction.Commit();
-            await _dbConnection.CloseAsync();
+            await dbConnection.CloseAsync();
 
             var newAccountData = new IAccountService.AccountData(newUser.Id, newUser.SecurityToken, newUser.CreatedAt)
             {
@@ -154,8 +155,8 @@ public class AccountService : IAccountService
     {
         try
         {
-            if (_dbConnection == null)
-                throw new SystemException("Database connection not found.");
+            if (_dbConnectionString == null)
+                throw new SystemException("Database connection string not found.");
 
             if (identityClaims != null)
                 identityClaims = new HashSet<string>(identityClaims);
@@ -237,11 +238,12 @@ public class AccountService : IAccountService
                 ProfileClaims = profileClaims != null ? JArray.FromObject(profileClaims).ToString(Newtonsoft.Json.Formatting.None) : null
             };
 
-            await _dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
-            var transaction = await _dbConnection.BeginTransactionAsync();
-            var newUser = await _dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
+            var dbConnection = new MySqlConnection(_dbConnectionString);
+            await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
+            var transaction = await dbConnection.BeginTransactionAsync();
+            var newUser = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
             transaction.Commit();
-            await _dbConnection.CloseAsync();
+            await dbConnection.CloseAsync();
 
             var newAccountData = new IAccountService.AccountData(newUser.Id, newUser.SecurityToken, newUser.CreatedAt)
             {
@@ -273,15 +275,15 @@ public class AccountService : IAccountService
     /// Create all account database tables, if needed.
     /// Will populate the reference tables as well.
     /// </summary>
-    private async Task<bool> InitializeDatabase()
+    private async Task<bool> InitializeDatabase(MySqlConnection dbConnection)
     {
         Program.Logger.Log(LogLevel.Information, "Creating initial user account tables in MySQL...");
 
-        if (!await CreateTable("Users", SqlScripts.CreateTable_Users) ||
-            !await CreateTable("ClaimTypes", SqlScripts.CreateTable_ClaimTypes) ||
-            !await CreateTable("LoginProviders", SqlScripts.CreateTable_LoginProviders) ||
-            !await CreateTable("UserLogins", SqlScripts.CreateTable_UserLogins) ||
-            !await CreateTable("UserClaims", SqlScripts.CreateTable_UserClaims))
+        if (!await CreateTable(dbConnection,"Users", SqlScripts.CreateTable_Users) ||
+            !await CreateTable(dbConnection, "ClaimTypes", SqlScripts.CreateTable_ClaimTypes) ||
+            !await CreateTable(dbConnection, "LoginProviders", SqlScripts.CreateTable_LoginProviders) ||
+            !await CreateTable(dbConnection, "UserLogins", SqlScripts.CreateTable_UserLogins) ||
+            !await CreateTable(dbConnection, "UserClaims", SqlScripts.CreateTable_UserClaims))
             return false;
 
         return true;
@@ -290,14 +292,14 @@ public class AccountService : IAccountService
     /// <summary>
     /// Creates a table using the given SQL script.
     /// </summary>
-    private async Task<bool> CreateTable(string tableName, string sqlScript)
+    private async Task<bool> CreateTable(MySqlConnection dbConnection, string tableName, string sqlScript)
     {
         var builder = new SqlBuilder();
         var template = builder.AddTemplate(sqlScript);
 
         try
         {
-            await _dbConnection.ExecuteAsync(template.RawSql);
+            await dbConnection.ExecuteAsync(template.RawSql);
             return true;
         }
         catch (Exception exc)
