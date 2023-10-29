@@ -26,7 +26,7 @@ public class AuthorizationService : IAuthorizationService
         internal set => _configuration = value;
     }
 
-    async Task IDaprService.OnStart()
+    async Task IDaprService.OnStart(CancellationToken cancellationToken)
     {
         // override sensitive configuration Dapr secret store
         await TryLoadFromDaprSecrets();

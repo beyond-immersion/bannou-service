@@ -27,7 +27,7 @@ public class AccountService : IAccountService
 
     private string? _dbConnectionString;
 
-    async Task IDaprService.OnStart()
+    async Task IDaprService.OnStart(CancellationToken cancellationToken)
     {
         var dbHost = Configuration.Database_Host;
         var dbName = "accounts";
@@ -38,8 +38,25 @@ public class AccountService : IAccountService
         _dbConnectionString = $"Host={dbHost}; Port={dbPort}; UserID={dbUsername}; Password={dbPassword}; Database={dbName}";
         Program.Logger.Log(LogLevel.Warning, $"Connecting to MySQL with connection string '{_dbConnectionString}'.");
 
-        var dbConnection = new MySqlConnection(_dbConnectionString);
-        await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
+        MySqlConnection? dbConnection = null;
+        while (dbConnection == null)
+        {
+            try
+            {
+                var connectionAttempt = new MySqlConnection(_dbConnectionString);
+                await connectionAttempt.OpenAsync(cancellationToken);
+                dbConnection = connectionAttempt;
+            }
+            catch (Exception exc)
+            {
+                Program.Logger.Log(LogLevel.Warning, exc, $"Failed to connect with MySQL account database with connection string '{_dbConnectionString}'. " +
+                    $"Delaying and then trying again.");
+
+                await Task.Delay(100, cancellationToken);
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+            }
+        }
 
         Program.Logger.Log(LogLevel.Warning, $"Creating MySQL tables with connection string '{_dbConnectionString}'.");
 
@@ -276,7 +293,7 @@ public class AccountService : IAccountService
     /// Create all account database tables, if needed.
     /// Will populate the reference tables as well.
     /// </summary>
-    private async Task<bool> InitializeDatabase(MySqlConnection dbConnection)
+    private static async Task<bool> InitializeDatabase(MySqlConnection dbConnection)
     {
         Program.Logger.Log(LogLevel.Information, "Creating initial user account tables in MySQL...");
 
@@ -293,7 +310,7 @@ public class AccountService : IAccountService
     /// <summary>
     /// Creates a table using the given SQL script.
     /// </summary>
-    private async Task<bool> CreateTable(MySqlConnection dbConnection, string tableName, string sqlScript)
+    private static async Task<bool> CreateTable(MySqlConnection dbConnection, string tableName, string sqlScript)
     {
         var builder = new SqlBuilder();
         var template = builder.AddTemplate(sqlScript);

@@ -1,5 +1,4 @@
 ﻿using BeyondImmersion.BannouService.Configuration;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Services;
@@ -7,7 +6,6 @@ namespace BeyondImmersion.BannouService.Services;
 /// <summary>
 /// Service handler responsible for testing service APIs.
 /// </summary>
-[SuppressMessage("Usage", "CA2254:Template should be a static expression", Justification = "Integration test logging benefits from being as specific as possible.")]
 [DaprService("testing", priority: false)]
 public class TestingService : IDaprService
 {

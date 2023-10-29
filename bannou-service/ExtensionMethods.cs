@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace BeyondImmersion.BannouService;
 
@@ -170,6 +171,8 @@ public static partial class ExtensionMethods
     public static async Task<bool> InvokeAllServiceStartMethods(this WebApplication webApp)
     {
         var timeoutTime = Program.Configuration.Service_Start_Timeout;
+        var cancellationToken = Program.ShutdownCancellationTokenSource.Token;
+
         foreach (var serviceData in IDaprService.EnabledServices)
         {
             var serviceInst = (IDaprService?)webApp.Services.GetService(serviceData.Item1);
@@ -178,13 +181,13 @@ public static partial class ExtensionMethods
 
             if (timeoutTime < 1)
             {
-                await serviceInst.OnStart();
+                await serviceInst.OnStart(cancellationToken);
                 continue;
             }
 
             try
             {
-                var startTask = serviceInst.OnStart();
+                var startTask = serviceInst.OnStart(cancellationToken);
                 var timeoutTask = Task.Delay(timeoutTime);
 
                 if (await Task.WhenAny(startTask, timeoutTask) == startTask)
@@ -218,11 +221,13 @@ public static partial class ExtensionMethods
     /// </summary>
     public static async Task InvokeAllServiceRunningMethods(this WebApplication webApp)
     {
+        var cancellationToken = Program.ShutdownCancellationTokenSource.Token;
+
         foreach (var serviceInfo in IDaprService.EnabledServices)
         {
             var serviceInst = (IDaprService?)webApp.Services.GetService(serviceInfo.Item1);
             if (serviceInst != null)
-                await serviceInst.OnRunning();
+                await serviceInst.OnRunning(cancellationToken);
         }
     }
 

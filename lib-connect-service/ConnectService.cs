@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Connect;
 [DaprService("connect", typeof(IConnectService))]
 public sealed class ConnectService : IConnectService
 {
-    async Task IDaprService.OnStart()
+    async Task IDaprService.OnStart(CancellationToken cancellationToken)
     {
         await Task.CompletedTask;
     }
