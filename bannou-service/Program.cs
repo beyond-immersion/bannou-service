@@ -125,12 +125,18 @@ public static class Program
             // configure services
             _ = webAppBuilder.Services.AddAuthentication();
 
+            // get all loaded assemblies hosting enabled DaprController types
+            IEnumerable<Assembly>? daprControllerAssemblies = IDaprController.EnabledServiceControllers
+                .Where(t => t.Item1.Assembly != Assembly.GetEntryAssembly())
+                .Select(t => t.Item1.GetType().Assembly);
+
             _ = webAppBuilder.Services
                 .AddControllers(mvcOptions =>
                 {
                     mvcOptions.Filters.Add(typeof(HeaderArrayActionFilter));
                     mvcOptions.Filters.Add(typeof(HeaderArrayResultFilter));
                 })
+                .AddApplicationParts(daprControllerAssemblies)
                 .ConfigureApplicationPartManager(manager =>
                 {
                     manager.FeatureProviders.Add(new DaprControllersFeatureProvider());

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Controllers;
-internal class DaprControllersFeatureProvider : IApplicationFeatureProvider
+internal class DaprControllersFeatureProvider : IApplicationFeatureProvider<ControllerFeature>
 {
     public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
     {

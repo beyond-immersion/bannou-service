@@ -150,6 +150,21 @@ public static partial class ExtensionMethods
     }
 
     /// <summary>
+    /// Add all of the given assemblies to the application.
+    /// This will make their services and controllers discoverable.
+    /// </summary>
+    public static IMvcBuilder AddApplicationParts(this IMvcBuilder builder, IEnumerable<Assembly>? assemblies)
+    {
+        if (assemblies == null)
+            return builder;
+
+        foreach (var assembly in assemblies)
+            builder.AddApplicationPart(assembly);
+
+        return builder;
+    }
+
+    /// <summary>
     /// Iterates through and invokes the Start() method on all loaded service handlers.
     /// </summary>
     public static async Task<bool> InvokeAllServiceStartMethods(this WebApplication webApp)
