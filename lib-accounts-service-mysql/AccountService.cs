@@ -39,15 +39,10 @@ public class AccountService : IAccountService
         Program.Logger.Log(LogLevel.Warning, $"Connecting to MySQL with connection string '{_dbConnectionString}'.");
 
         var dbConnection = new MySqlConnection(_dbConnectionString);
-
         await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
-        while (dbConnection.State != System.Data.ConnectionState.Open)
-        {
-            Program.Logger.Log(LogLevel.Debug, "Waiting for MySQL connection to become ready...");
-            await Task.Delay(100);
-        }
 
         Program.Logger.Log(LogLevel.Warning, $"Creating MySQL tables with connection string '{_dbConnectionString}'.");
+
         await InitializeDatabase(dbConnection);
         await dbConnection.CloseAsync();
     }

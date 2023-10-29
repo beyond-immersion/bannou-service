@@ -141,7 +141,7 @@ public static partial class ExtensionMethods
             Type interfaceType = serviceInfo.Item1;
             Type implementationType = serviceInfo.Item2;
             ServiceLifetime serviceLifetime = serviceInfo.Item3.Lifetime;
-            var serviceName = implementationType.GetServiceName();
+            var serviceName = serviceInfo.Item3.Name;
 
             Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} has been enabled to handle type {interfaceType}.");
 
@@ -170,38 +170,43 @@ public static partial class ExtensionMethods
     public static async Task<bool> InvokeAllServiceStartMethods(this WebApplication webApp)
     {
         var timeoutTime = Program.Configuration.Service_Start_Timeout;
-
         foreach (var serviceData in IDaprService.EnabledServices)
         {
             var serviceInst = (IDaprService?)webApp.Services.GetService(serviceData.Item1);
-            if (serviceInst != null)
+            if (serviceInst == null)
+                continue;
+
+            if (timeoutTime < 1)
             {
-                if (timeoutTime < 1)
-                {
-                    await serviceInst.OnStart();
-                    continue;
-                }
+                await serviceInst.OnStart();
+                continue;
+            }
 
-                try
-                {
-                    var startTask = serviceInst.OnStart();
-                    var timeoutTask = Task.Delay(timeoutTime);
+            try
+            {
+                var startTask = serviceInst.OnStart();
+                var timeoutTask = Task.Delay(timeoutTime);
 
-                    if (await Task.WhenAny(startTask, timeoutTask) == startTask)
+                if (await Task.WhenAny(startTask, timeoutTask) == startTask)
+                {
+                    if (startTask.IsFaulted)
                     {
-                        Program.Logger.Log(LogLevel.Information, $"Service startup successful for '{serviceData.Item2.Name}'.");
-                    }
-                    else
-                    {
-                        Program.Logger.Log(LogLevel.Error, $"Service startup has timed out for '{serviceData.Item2.Name}'.");
+                        Program.Logger.Log(LogLevel.Error, startTask.Exception, $"An exception was thrown starting service '{serviceData.Item2.Name}'.");
                         return false;
                     }
+
+                    Program.Logger.Log(LogLevel.Information, $"Service startup successful for '{serviceData.Item2.Name}'.");
                 }
-                catch (Exception exc)
+                else
                 {
-                    Program.Logger.Log(LogLevel.Error, exc, $"Service startup has failed for '{serviceData.Item2.Name}'.");
+                    Program.Logger.Log(LogLevel.Error, $"Service startup has timed out for '{serviceData.Item2.Name}'.");
                     return false;
                 }
+            }
+            catch (Exception exc)
+            {
+                Program.Logger.Log(LogLevel.Error, exc, $"Service startup has failed for '{serviceData.Item2.Name}'.");
+                return false;
             }
         }
 
