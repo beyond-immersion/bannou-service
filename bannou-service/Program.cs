@@ -130,8 +130,12 @@ public static class Program
                 {
                     mvcOptions.Filters.Add(typeof(HeaderArrayActionFilter));
                     mvcOptions.Filters.Add(typeof(HeaderArrayResultFilter));
-                }).
-                AddNewtonsoftJson(jsonSettings =>
+                })
+                .ConfigureApplicationPartManager(manager =>
+                {
+                    manager.FeatureProviders.Add(new DaprControllersFeatureProvider());
+                })
+                .AddNewtonsoftJson(jsonSettings =>
                 {
                     jsonSettings.SerializerSettings.ConstructorHandling = ConstructorHandling.Default;
                     jsonSettings.SerializerSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
@@ -186,9 +190,11 @@ public static class Program
         WebApplication webApp = webAppBuilder.Build();
         try
         {
-            // add controllers / configure navigation
-            _ = webApp.MapNonServiceControllers();
-            _ = webApp.MapDaprServiceControllers();
+            // map controller routes
+            _ = webApp.UseRouting().UseEndpoints(endpointOptions =>
+            {
+                endpointOptions.MapDefaultControllerRoute();
+            });
 
             // enable websocket connections
             webApp.UseWebSockets(new WebSocketOptions()
@@ -266,6 +272,12 @@ public static class Program
         return true;
     }
 
+    /// <summary>
+    /// Load appropriate sets of libs in /libs/ and subdirectories
+    /// based on current application configuration.
+    /// 
+    /// <seealso cref="AppConfiguration.Include_Assemblies"/>
+    /// </summary>
     private static void LoadAssemblies()
     {
         AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
@@ -346,6 +358,9 @@ public static class Program
         return;
     }
 
+    /// <summary>
+    /// Include /libs/ and subdirectories in resolving .dll dependencies.
+    /// </summary>
     private static Assembly? OnAssemblyResolve(object? sender, ResolveEventArgs args)
     {
         if (string.IsNullOrWhiteSpace(args?.Name))

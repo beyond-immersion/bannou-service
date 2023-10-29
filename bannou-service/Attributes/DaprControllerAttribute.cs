@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Attributes;
 
@@ -35,7 +34,10 @@ public class DaprControllerAttribute : RouteAttribute, IServiceAttribute
 
         var serviceInfo = IDaprService.GetServiceInfo(interfaceType);
         if (serviceInfo != null && serviceInfo.HasValue)
+        {
+            Program.Logger.Log(LogLevel.Information, $"Controller for interface '{interfaceType.Name}' will use route template of '{serviceInfo.Value.Item3.Name}'");
             return serviceInfo.Value.Item3.Name;
+        }
 
         return "/";
     }

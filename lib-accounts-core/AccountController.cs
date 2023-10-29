@@ -25,8 +25,6 @@ public class AccountController : Controllers.BaseDaprController
 
     [HttpPost]
     [DaprRoute("create")]
-    [Consumes(MediaTypeNames.Application.Json)]
-    [Produces(MediaTypeNames.Application.Json)]
     public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest request)
     {
         try
@@ -79,8 +77,6 @@ public class AccountController : Controllers.BaseDaprController
 
     [HttpPost]
     [DaprRoute("get")]
-    [Consumes(MediaTypeNames.Application.Json)]
-    [Produces(MediaTypeNames.Application.Json)]
     public async Task<IActionResult> GetAccount([FromBody] GetAccountRequest request)
     {
         try
