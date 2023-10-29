@@ -13,6 +13,8 @@ jobs:
     name: Integration Tests
     runs-on: [self-hosted, bannou]
     env:
+      UID: ${{ runner.os == 'Linux' && runner.user_id || null }}
+      GID: ${{ runner.os == 'Linux' && runner.group_id || null }}
       ACCOUNT_DB_USER: ${{ secrets.ACCOUNT_DB_USER }}
       ACCOUNT_DB_PASSWORD: ${{ secrets.ACCOUNT_DB_PASSWORD }}
       AUTH_TOKEN_PUBLIC_KEY: ${{ secrets.AUTH_TOKEN_PUBLIC_KEY }}
