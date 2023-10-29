@@ -3,7 +3,6 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using Dapper;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
@@ -36,7 +35,7 @@ public class AccountService : IAccountService
         var dbUsername = Uri.EscapeDataString(Configuration.Database_User);
         var dbPassword = Uri.EscapeDataString(Configuration.Database_Password);
 
-        _dbConnectionString = $"Host='{dbHost}'; Port={dbPort}; UserID='{dbUsername}'; Password='{dbPassword}'; Database='{dbName}'";
+        _dbConnectionString = $"Host={dbHost}; Port={dbPort}; UserID={dbUsername}; Password={dbPassword}; Database={dbName}";
         var dbConnection = new MySqlConnection(_dbConnectionString);
 
         await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
@@ -46,6 +45,7 @@ public class AccountService : IAccountService
             await Task.Delay(100);
         }
 
+        Program.Logger.Log(LogLevel.Warning, $"Creating MySQL tables with connection string '{_dbConnectionString}'.");
         await InitializeDatabase(dbConnection);
         await dbConnection.CloseAsync();
     }
@@ -57,6 +57,8 @@ public class AccountService : IAccountService
         {
             if (_dbConnectionString == null)
                 throw new SystemException("Database connection string not found.");
+
+            Program.Logger.Log(LogLevel.Warning, $"Executing 'account/get' service function with connection string '{_dbConnectionString}'.");
 
             var builder = new SqlBuilder();
             SqlBuilder.Template? template = null;
@@ -158,6 +160,8 @@ public class AccountService : IAccountService
             if (_dbConnectionString == null)
                 throw new SystemException("Database connection string not found.");
 
+            Program.Logger.Log(LogLevel.Warning, $"Executing 'account/create' service function with connection string '{_dbConnectionString}'.");
+
             if (identityClaims != null)
                 identityClaims = new HashSet<string>(identityClaims);
             else
@@ -240,7 +244,7 @@ public class AccountService : IAccountService
 
             var dbConnection = new MySqlConnection(_dbConnectionString);
             await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
-            var transaction = await dbConnection.BeginTransactionAsync();
+            var transaction = await dbConnection.BeginTransactionAsync(Program.ShutdownCancellationTokenSource.Token);
             var newUser = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
             transaction.Commit();
             await dbConnection.CloseAsync();
@@ -279,7 +283,7 @@ public class AccountService : IAccountService
     {
         Program.Logger.Log(LogLevel.Information, "Creating initial user account tables in MySQL...");
 
-        if (!await CreateTable(dbConnection,"Users", SqlScripts.CreateTable_Users) ||
+        if (!await CreateTable(dbConnection, "Users", SqlScripts.CreateTable_Users) ||
             !await CreateTable(dbConnection, "ClaimTypes", SqlScripts.CreateTable_ClaimTypes) ||
             !await CreateTable(dbConnection, "LoginProviders", SqlScripts.CreateTable_LoginProviders) ||
             !await CreateTable(dbConnection, "UserLogins", SqlScripts.CreateTable_UserLogins) ||
@@ -300,6 +304,7 @@ public class AccountService : IAccountService
         try
         {
             await dbConnection.ExecuteAsync(template.RawSql);
+            Program.Logger.Log(LogLevel.Warning, $"Table {tableName} was created successfully.");
             return true;
         }
         catch (Exception exc)
