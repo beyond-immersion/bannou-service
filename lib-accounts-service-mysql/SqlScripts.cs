@@ -20,7 +20,7 @@ public static class SqlScripts
     public const string AddUser = @"
 INSERT INTO `Users` (`Username`, `SecurityToken`, `Email`, `EmailVerified`, `TwoFactorEnabled`)
 VALUES (@Username, @SecurityToken, @Email, @EmailVerified, @TwoFactorEnabled);
-SET @lastUserId = LAST_INSERT_ID();
+SET @lastUserId := LAST_INSERT_ID();
 
 IF (@Username IS NOT NULL AND @PasswordData IS NOT NULL) THEN
     INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
@@ -62,7 +62,7 @@ SELECT * FROM `Users` WHERE `Id` = @lastUserId;";
     public const string AddUser_WithClaims = @"
 INSERT INTO `Users` (`Username`, `SecurityToken`, `Email`, `EmailVerified`, `TwoFactorEnabled`)
 VALUES (@Username, @SecurityToken, @Email, @EmailVerified, @TwoFactorEnabled);
-SET @lastUserId = LAST_INSERT_ID();
+SET @lastUserId := LAST_INSERT_ID();
 
 IF (@Username IS NOT NULL AND @PasswordData IS NOT NULL) THEN
     INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
