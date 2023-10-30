@@ -295,8 +295,8 @@ public class AccountService : IAccountService
         Program.Logger.Log(LogLevel.Information, "Creating initial user account tables in MySQL...");
 
         if (!await CreateTable(dbConnection, "Users", SqlScripts.CreateTable_Users) ||
-            !await CreateTable(dbConnection, "ClaimTypes", SqlScripts.CreateTable_ClaimTypes) ||
-            !await CreateTable(dbConnection, "LoginProviders", SqlScripts.CreateTable_LoginProviders) ||
+            !await CreateTable(dbConnection, "ClaimTypes", SqlScripts.CreateTable_ClaimTypes_Initialize) ||
+            !await CreateTable(dbConnection, "LoginProviders", SqlScripts.CreateTable_LoginProviders_Initialize) ||
             !await CreateTable(dbConnection, "UserLogins", SqlScripts.CreateTable_UserLogins) ||
             !await CreateTable(dbConnection, "UserClaims", SqlScripts.CreateTable_UserClaims))
             return false;
