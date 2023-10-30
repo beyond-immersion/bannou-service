@@ -22,20 +22,29 @@ INSERT INTO `Users` (`Username`, `SecurityToken`, `Email`, `EmailVerified`, `Two
 VALUES (@Username, @SecurityToken, @Email, @EmailVerified, @TwoFactorEnabled);
 SET @lastUserId := LAST_INSERT_ID();
 
-IF (@Username IS NOT NULL AND @PasswordData IS NOT NULL) THEN
-    INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-    VALUES (@lastUserId, (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password'), @Username, @PasswordData);
-END IF;
+INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
+SELECT 
+    @lastUserId,
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password'),
+    @Username,
+    @PasswordData
+WHERE @Username IS NOT NULL AND @PasswordData IS NOT NULL;
 
-IF (@GoogleUserId IS NOT NULL AND @GoogleData IS NOT NULL) THEN
-    INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-    VALUES (@lastUserId, (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google'), @GoogleUserId, @GoogleData);
-END IF;
+INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
+SELECT 
+    @lastUserId,
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google'),
+    @GoogleUserId,
+    @GoogleData
+WHERE @GoogleUserId IS NOT NULL AND @GoogleData IS NOT NULL;
 
-IF (@SteamUserId IS NOT NULL AND @SteamData IS NOT NULL) THEN
-    INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-    VALUES (@lastUserId, (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam'), @SteamUserId, @SteamData);
-END IF;
+INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
+SELECT 
+    @lastUserId,
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam'),
+    @SteamUserId,
+    @SteamData
+WHERE @SteamUserId IS NOT NULL AND @SteamData IS NOT NULL;
 
 SELECT * FROM `Users` WHERE `Id` = @lastUserId;";
 
@@ -64,60 +73,64 @@ INSERT INTO `Users` (`Username`, `SecurityToken`, `Email`, `EmailVerified`, `Two
 VALUES (@Username, @SecurityToken, @Email, @EmailVerified, @TwoFactorEnabled);
 SET @lastUserId := LAST_INSERT_ID();
 
-IF (@Username IS NOT NULL AND @PasswordData IS NOT NULL) THEN
-    INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-    VALUES (@lastUserId, (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password'), @Username, @PasswordData);
-END IF;
+INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
+SELECT 
+    @lastUserId,
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password'),
+    @Username,
+    @PasswordData
+WHERE @Username IS NOT NULL AND @PasswordData IS NOT NULL;
 
-IF (@GoogleUserId IS NOT NULL AND @GoogleData IS NOT NULL) THEN
-    INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-    VALUES (@lastUserId, (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google'), @GoogleUserId, @GoogleData);
-END IF;
+INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
+SELECT 
+    @lastUserId,
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google'),
+    @GoogleUserId,
+    @GoogleData
+WHERE @GoogleUserId IS NOT NULL AND @GoogleData IS NOT NULL;
 
-IF (@SteamUserId IS NOT NULL AND @SteamData IS NOT NULL) THEN
-    INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-    VALUES (@lastUserId, (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam'), @SteamUserId, @SteamData);
-END IF;
+INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
+SELECT 
+    @lastUserId,
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam'),
+    @SteamUserId,
+    @SteamData
+WHERE @SteamUserId IS NOT NULL AND @SteamData IS NOT NULL;
 
-IF (@RoleClaims IS NOT NULL) THEN
-    SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Role');
-    INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-    SELECT @lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@RoleClaims, CONCAT('$[', idx, ']')))
-    FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
-    WHERE JSON_UNQUOTE(JSON_EXTRACT(@RoleClaims, CONCAT('$[', idx, ']'))) IS NOT NULL;
-END IF;
+SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Role');
+INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
+SELECT @lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@RoleClaims, CONCAT('$[', idx, ']')))
+FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
+WHERE JSON_UNQUOTE(JSON_EXTRACT(@RoleClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+AND @RoleClaims IS NOT NULL;
 
-IF (@AppClaims IS NOT NULL) THEN
-    SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'App');
-    INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-    SELECT @lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AppClaims, CONCAT('$[', idx, ']')))
-    FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
-    WHERE JSON_UNQUOTE(JSON_EXTRACT(@AppClaims, CONCAT('$[', idx, ']'))) IS NOT NULL;
-END IF;
+SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'App');
+INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
+SELECT @lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AppClaims, CONCAT('$[', idx, ']')))
+FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
+WHERE JSON_UNQUOTE(JSON_EXTRACT(@AppClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+AND @AppClaims IS NOT NULL;
 
-IF (@ScopeClaims IS NOT NULL) THEN
-    SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Scope');
-    INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-    SELECT @lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@ScopeClaims, CONCAT('$[', idx, ']')))
-    FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
-    WHERE JSON_UNQUOTE(JSON_EXTRACT(@ScopeClaims, CONCAT('$[', idx, ']'))) IS NOT NULL;
-END IF;
+SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Scope');
+INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
+SELECT @lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@ScopeClaims, CONCAT('$[', idx, ']')))
+FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
+WHERE JSON_UNQUOTE(JSON_EXTRACT(@ScopeClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+AND @ScopeClaims IS NOT NULL;
 
-IF (@IdentityClaims IS NOT NULL) THEN
-    SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Identity');
-    INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-    SELECT @lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@IdentityClaims, CONCAT('$[', idx, ']')))
-    FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
-    WHERE JSON_UNQUOTE(JSON_EXTRACT(@IdentityClaims, CONCAT('$[', idx, ']'))) IS NOT NULL;
-END IF;
+SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Identity');
+INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
+SELECT @lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@IdentityClaims, CONCAT('$[', idx, ']')))
+FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
+WHERE JSON_UNQUOTE(JSON_EXTRACT(@IdentityClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+AND @IdentityClaims IS NOT NULL;
 
-IF (@ProfileClaims IS NOT NULL) THEN
-    SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Profile');
-    INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-    SELECT @lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@ProfileClaims, CONCAT('$[', idx, ']')))
-    FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
-    WHERE JSON_UNQUOTE(JSON_EXTRACT(@ProfileClaims, CONCAT('$[', idx, ']'))) IS NOT NULL;
-END IF;
+SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Profile');
+INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
+SELECT @lastUserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@ProfileClaims, CONCAT('$[', idx, ']')))
+FROM (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) AS indexes
+WHERE JSON_UNQUOTE(JSON_EXTRACT(@ProfileClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+AND @ProfileClaims IS NOT NULL;
 
 SELECT * FROM `Users` WHERE `Id` = @lastUserId;";
 
