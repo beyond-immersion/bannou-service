@@ -119,7 +119,7 @@ public class AccountService : IAccountService
             await dbConnection.CloseAsync();
 
             // should move to DTO later
-            int resUserID = userResult.Id;
+            int resUserID = (int)userResult.Id;
             string resSecurityToken = userResult.SecurityToken;
             string? resUsername = userResult.Username;
             string? resEmail = userResult.Email;
@@ -279,7 +279,7 @@ public class AccountService : IAccountService
                 throw new NullReferenceException(nameof(userResult));
 
             // should move to DTO later
-            int resUserID = userResult.Id;
+            int resUserID = (int)userResult.Id;
             string resSecurityToken = userResult.SecurityToken;
             string? resUsername = userResult.Username;
             string? resEmail = userResult.Email;
