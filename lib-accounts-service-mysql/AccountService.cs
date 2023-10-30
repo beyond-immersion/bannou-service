@@ -114,46 +114,61 @@ public class AccountService : IAccountService
             var dbConnection = new MySqlConnection(_dbConnectionString);
             await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
             var transaction = await dbConnection.BeginTransactionAsync();
-            var newUser = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
+            var userResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
             transaction.Commit();
             await dbConnection.CloseAsync();
 
-            var newAccountData = new IAccountService.AccountData(newUser.Id, newUser.SecurityToken, newUser.CreatedAt)
+            // should move to DTO later
+            int resUserID = userResult.Id;
+            string resSecurityToken = userResult.SecurityToken;
+            string? resUsername = userResult.Username;
+            string? resEmail = userResult.Email;
+            bool resEmailVerified = userResult.EmailVerified;
+            bool resTwoFactorEnabled = userResult.TwoFactorEnabled;
+            DateTime resCreatedAt = userResult.CreatedAt;
+            DateTime resUpdatedAt = userResult.UpdatedAt ?? resCreatedAt;
+            DateTime resLastLoginAt = userResult.LastLoginAt ?? resCreatedAt;
+            DateTime? resRemovedAt = userResult.RemovedAt;
+            DateTime? resLockoutEnd = userResult.LockoutEnd;
+
+            // NOTE: should never be the same as the DTO (if added)
+            // or the Controller API response model- stay decoupled
+            var responseObj = new IAccountService.AccountData(resUserID, resSecurityToken, resCreatedAt)
             {
-                Username = newUser.Username,
-                Email = newUser.Email,
-                EmailVerified = newUser.EmailVerified,
-                TwoFactorEnabled = newUser.TwoFactorEnabled,
-                LockoutEnd = newUser.LockoutEnd,
-                LastLoginAt = newUser.LastLoginAt,
-                UpdatedAt = newUser.UpdatedAt,
-                RemovedAt = newUser.RemovedAt
+                Username = resUsername,
+                Email = resEmail,
+                EmailVerified = resEmailVerified,
+                TwoFactorEnabled = resTwoFactorEnabled,
+                LockoutEnd = resLockoutEnd,
+                LastLoginAt = resLastLoginAt,
+                UpdatedAt = resUpdatedAt,
+                RemovedAt = resRemovedAt
             };
 
             if (includeClaims)
             {
-                var claims = newUser.Role?.Split(',');
+                var claims = userResult.Role?.Split(',');
                 if (claims != null)
-                    newAccountData.RoleClaims = new HashSet<string>(claims);
+                    responseObj.RoleClaims = new HashSet<string>(claims);
 
-                claims = newUser.App?.Split(',');
+                claims = userResult.App?.Split(',');
                 if (claims != null)
-                    newAccountData.AppClaims = new HashSet<string>(claims);
+                    responseObj.AppClaims = new HashSet<string>(claims);
 
-                claims = newUser.Scope?.Split(',');
+                claims = userResult.Scope?.Split(',');
                 if (claims != null)
-                    newAccountData.ScopeClaims = new HashSet<string>(claims);
+                    responseObj.ScopeClaims = new HashSet<string>(claims);
 
-                claims = newUser.Identity?.Split(',');
+                claims = userResult.Identity?.Split(',');
                 if (claims != null)
-                    newAccountData.IdentityClaims = new HashSet<string>(claims);
+                    responseObj.IdentityClaims = new HashSet<string>(claims);
 
-                claims = newUser.Profile?.Split(',');
+                claims = userResult.Profile?.Split(',');
                 if (claims != null)
-                    newAccountData.ProfileClaims = new HashSet<string>(claims);
+                    responseObj.ProfileClaims = new HashSet<string>(claims);
             }
 
-            return newAccountData;
+            return responseObj;
         }
         catch (Exception exc)
         {
@@ -256,20 +271,38 @@ public class AccountService : IAccountService
             var dbConnection = new MySqlConnection(_dbConnectionString);
             await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
             var transaction = await dbConnection.BeginTransactionAsync(Program.ShutdownCancellationTokenSource.Token);
-            var newUser = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
+            var userResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
             transaction.Commit();
             await dbConnection.CloseAsync();
 
-            var newAccountData = new IAccountService.AccountData(newUser.Id, newUser.SecurityToken, newUser.CreatedAt)
+            if (userResult == null)
+                throw new NullReferenceException(nameof(userResult));
+
+            // should move to DTO later
+            int resUserID = userResult.Id;
+            string resSecurityToken = userResult.SecurityToken;
+            string? resUsername = userResult.Username;
+            string? resEmail = userResult.Email;
+            bool resEmailVerified = userResult.EmailVerified;
+            bool resTwoFactorEnabled = userResult.TwoFactorEnabled;
+            DateTime resCreatedAt = userResult.CreatedAt;
+            DateTime resUpdatedAt = userResult.UpdatedAt ?? resCreatedAt;
+            DateTime resLastLoginAt = userResult.LastLoginAt ?? resCreatedAt;
+            DateTime? resRemovedAt = userResult.RemovedAt;     // null (just created)
+            DateTime? resLockoutEnd = userResult.LockoutEnd;   // null (just created)
+
+            // NOTE: should never be the same as the DTO (if added)
+            // or the Controller API response model- stay decoupled
+            var responseObj = new IAccountService.AccountData(resUserID, resSecurityToken, resCreatedAt)
             {
-                Username = newUser.Username,
-                Email = newUser.Email,
-                EmailVerified = newUser.EmailVerified,
-                TwoFactorEnabled = newUser.TwoFactorEnabled,
-                LockoutEnd = newUser.LockoutEnd,
-                LastLoginAt = newUser.LastLoginAt,
-                UpdatedAt = newUser.UpdatedAt,
-                RemovedAt = newUser.RemovedAt,
+                Username = resUsername,
+                Email = resEmail,
+                EmailVerified = resEmailVerified,
+                TwoFactorEnabled = resTwoFactorEnabled,
+                LockoutEnd = resLockoutEnd,
+                LastLoginAt = resLastLoginAt,
+                UpdatedAt = resUpdatedAt,
+                RemovedAt = resRemovedAt,
                 RoleClaims = roleClaims?.ToHashSet(),
                 AppClaims = appClaims?.ToHashSet(),
                 ScopeClaims = scopeClaims?.ToHashSet(),
@@ -277,7 +310,7 @@ public class AccountService : IAccountService
                 ProfileClaims = profileClaims?.ToHashSet()
             };
 
-            return newAccountData;
+            return responseObj;
         }
         catch (Exception exc)
         {
