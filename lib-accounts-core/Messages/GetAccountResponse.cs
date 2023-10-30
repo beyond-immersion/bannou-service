@@ -10,10 +10,10 @@ namespace BeyondImmersion.BannouService.Accounts.Messages;
 public class GetAccountResponse : ServiceResponse
 {
     /// <summary>
-    /// The unique internal-only account GUID.
+    /// The unique internal-only account ID.
     /// </summary>
-    [JsonProperty("guid", Required = Required.Always)]
-    public string GUID { get; set; }
+    [JsonProperty("id", Required = Required.Always)]
+    public int ID { get; set; }
 
     /// <summary>
     /// The unique account username (can be null with OAUTH).
@@ -157,9 +157,9 @@ public class GetAccountResponse : ServiceResponse
     [JsonProperty("profile_claims")]
     public HashSet<string>? ProfileClaims { get; set; }
 
-    public GetAccountResponse(string id, string securityToken, DateTime createdAt)
+    public GetAccountResponse(int id, string securityToken, DateTime createdAt)
     {
-        GUID = id;
+        ID = id;
         SecurityToken = securityToken;
         LastLoginAt = createdAt;
         CreatedAt = createdAt;

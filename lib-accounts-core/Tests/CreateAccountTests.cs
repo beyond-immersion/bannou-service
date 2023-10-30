@@ -150,9 +150,6 @@ public static class CreateAccountTests
         if (!responseModel.RequestIDs.TryGetValue("USER_ID", out var userIDValue) || !string.Equals(userID, userIDValue))
             return false;
 
-        if (string.IsNullOrWhiteSpace(responseModel.GUID))
-            return false;
-
         if (!string.Equals(requestModel.Username, responseModel.Username))
             return false;
 

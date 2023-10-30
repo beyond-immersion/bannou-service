@@ -44,7 +44,7 @@ public class AccountController : Controllers.BaseDaprController
             if (accountData == null)
                 return StatusCode(500);
 
-            var response = new CreateAccountResponse(accountData.Guid, accountData.SecurityToken, accountData.CreatedAt)
+            var response = new CreateAccountResponse(accountData.ID, accountData.SecurityToken, accountData.CreatedAt)
             {
                 Username = accountData.Username,
                 Email = accountData.Email,
@@ -91,7 +91,7 @@ public class AccountController : Controllers.BaseDaprController
             if (accountData == null)
                 return NotFound();
 
-            var response = new GetAccountResponse(accountData.Guid, accountData.SecurityToken, accountData.CreatedAt)
+            var response = new GetAccountResponse(accountData.ID, accountData.SecurityToken, accountData.CreatedAt)
             {
                 Username = accountData.Username,
                 Email = accountData.Email,

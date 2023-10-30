@@ -11,7 +11,7 @@ public interface IAccountService : IDaprService
 {
     public sealed class AccountData
     {
-        public string Guid { get; set; }
+        public int ID { get; set; }
         public string? Username { get; set; }
         public string? Email { get; set; }
         public bool EmailVerified { get; set; }
@@ -28,9 +28,9 @@ public interface IAccountService : IDaprService
         public HashSet<string>? IdentityClaims { get; set; }
         public HashSet<string>? ProfileClaims { get; set; }
 
-        public AccountData(string id, string securityToken, DateTime createdAt)
+        public AccountData(int id, string securityToken, DateTime createdAt)
         {
-            Guid = id;
+            ID = id;
             SecurityToken = securityToken;
             LastLoginAt = createdAt;
             CreatedAt = createdAt;

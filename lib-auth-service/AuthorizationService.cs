@@ -70,7 +70,7 @@ public class AuthorizationService : IAuthorizationService
         jwtBuilder.AddHeader("email", responseData.Email);
         jwtBuilder.AddHeader("username", responseData.Username);
 
-        jwtBuilder.Id(responseData.GUID);
+        jwtBuilder.Id(responseData.ID);
         jwtBuilder.Issuer("AUTHORIZATION_SERVICE:" + Program.ServiceGUID);
         jwtBuilder.IssuedAt(DateTime.Now);
         jwtBuilder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
