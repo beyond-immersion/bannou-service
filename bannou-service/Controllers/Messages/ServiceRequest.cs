@@ -21,11 +21,15 @@ public class ServiceRequest<T> : ServiceRequest, IServiceRequest<T>
             if (responseObj == null)
                 return new();
 
-            var requestProps = requestType.GetProperties().Where(t => t.GetCustomAttribute<HeaderArrayAttribute>() != null);
+            var requestProps = requestType.GetProperties(BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                .Where(t => t.GetCustomAttribute<HeaderArrayAttribute>(true) != null);
+
             if (requestProps == null || !requestProps.Any())
                 return responseObj;
 
-            var responseProps = responseType.GetProperties().Where(t => t.GetCustomAttribute<HeaderArrayAttribute>() != null);
+            var responseProps = responseType.GetProperties(BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                .Where(t => t.GetCustomAttribute<HeaderArrayAttribute>(true) != null);
+
             if (responseProps == null || !responseProps.Any())
                 return responseObj;
 
