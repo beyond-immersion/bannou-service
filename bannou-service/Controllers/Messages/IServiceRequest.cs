@@ -11,38 +11,6 @@
 public interface IServiceRequest<T>
     where T : class, IServiceResponse, new()
 {
-    T CreateResponse()
-    {
-        T? responseObj = null;
-        try
-        {
-            responseObj = Activator.CreateInstance(typeof(T), true) as T;
-            if (responseObj == null)
-                return new();
-
-            var requestHeaderProps = IServiceAttribute.GetPropertiesWithAttribute(GetType(), typeof(HeaderArrayAttribute));
-            if (requestHeaderProps == null || requestHeaderProps.Count == 0)
-                return responseObj;
-
-            var responseHeaderProps = IServiceAttribute.GetPropertiesWithAttribute(typeof(T), typeof(HeaderArrayAttribute));
-            if (responseHeaderProps == null || responseHeaderProps.Count == 0)
-                return responseObj;
-
-            foreach (var headerProp in responseHeaderProps.Select(t => t.Item1))
-            {
-                try
-                {
-                    var propertyName = headerProp.Name;
-                    var requestProp = requestHeaderProps.First(t => string.Equals(propertyName, t.Item1.Name)).Item1;
-                    headerProp.SetValue(responseObj, requestProp.GetValue(this));
-                }
-                catch { }
-            }
-        }
-        catch { }
-
-        return responseObj ?? new();
-    }
 }
 
 /// <summary>
