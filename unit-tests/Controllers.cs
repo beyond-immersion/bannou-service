@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Controllers.Messages;
 using Microsoft.AspNetCore.Mvc;
 using Xunit.Abstractions;
 
@@ -34,6 +35,10 @@ public class Controllers : IClassFixture<CollectionFixture>
 
     [DaprController(typeof(ITestService_FromInterface))]
     public class Controller_FromInterface: ControllerBase, IDaprController { }
+
+    public class Request_WithHeaderProperties : ServiceRequest<Response_WithHeaderProperties> { }
+
+    public class Response_WithHeaderProperties : ServiceResponse { }
 
     public Controllers(CollectionFixture collectionContext, ITestOutputHelper output)
     {
@@ -232,5 +237,20 @@ public class Controllers : IClassFixture<CollectionFixture>
         Assert.DoesNotContain(allControllers, t => t.Item1 == typeof(Controller_FromInterface));
         Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
         Assert.Contains(allControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
+    }
+
+    [Fact]
+    public void Messages_TransferHeadersFromRequestToResponse()
+    {
+        var testID = Guid.NewGuid().ToString();
+        var requestModel = new Request_WithHeaderProperties();
+        requestModel.RequestIDs = new Dictionary<string, string>()
+        {
+            ["TEST_ID"] = testID
+        };
+
+        var responseModel = requestModel.CreateResponse();
+        Assert.NotNull(responseModel.RequestIDs);
+        Assert.Equal(testID, responseModel.RequestIDs["TEST_ID"]);
     }
 }
