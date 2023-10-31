@@ -98,6 +98,8 @@ public static class BasicControllerTests
         };
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", dataModel);
+        newRequest.AddPropertyHeaders(dataModel);
+
         if (!newRequest.Headers.TryGetValues("REQUEST_IDS", out var headerValues))
         {
             Program.Logger.Log(LogLevel.Error, "Could not retrieve 'REQUEST_IDS' from request headers.");

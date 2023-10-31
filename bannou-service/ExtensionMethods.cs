@@ -243,4 +243,11 @@ public static partial class ExtensionMethods
                 await serviceInst.OnShutdown();
         }
     }
+
+    public static void AddPropertyHeaders(this HttpRequestMessage message, ServiceRequest request)
+    {
+        foreach (var headerKVP in request.PropertyValuesToHeaders())
+            foreach (var headerValue in headerKVP.Item2)
+                message.Headers.Add(headerKVP.Item1, headerValue);
+    }
 }

@@ -48,14 +48,26 @@ public class HeaderArrayModelBinder : IModelBinder
 
         var headerName = bindingContext.BinderModelName ?? bindingContext.ModelName;
         var headerStrings = bindingContext.HttpContext.Request.Headers[headerName];
+        if (!headerStrings.Any())
+        {
+            bindingContext.Result = ModelBindingResult.Success(null);
+            return;
+        }
 
-        bindingContext.Result = BindPropertyToHeaderArray(bindingContext.ModelType, headerStrings, propertyAttr);
+        var propertyValue = BuildPropertyValueFromHeaders(bindingContext.ModelType, headerStrings, propertyAttr);
+        if (propertyValue == null)
+        {
+            bindingContext.Result = ModelBindingResult.Failed();
+            return;
+        }
+
+        bindingContext.Result = ModelBindingResult.Success(propertyValue);
     }
 
-    public static ModelBindingResult BindPropertyToHeaderArray(Type propertyType, IEnumerable<string> headers, HeaderArrayAttribute propertyAttr)
+    public static object? BuildPropertyValueFromHeaders(Type propertyType, IEnumerable<string> headers, HeaderArrayAttribute propertyAttr)
     {
         if (headers == null || !headers.Any())
-            return ModelBindingResult.Success(null);
+            return null;
 
         try
         {
@@ -71,50 +83,50 @@ public class HeaderArrayModelBinder : IModelBinder
 
                 // treat enumerable KVPs as if they want dictionaries
                 if (DictionaryInterfaces.Contains(propertyType) || isEnumerableKVP)
-                    return BindDictionaryProperty(propertyType, headers, delim);
+                    return BuildDictionaryFromHeaders(propertyType, headers, delim);
 
                 // treat other enumerables as if they want arrays
                 if (ArrayInterfaces.Contains(propertyType) || isEnumerable)
-                    return BindArrayProperty(propertyType, headers, delim);
+                    return BuildArrayFromHeaders(propertyType, headers, delim);
 
                 if (ListInterfaces.Contains(propertyType))
-                    return BindListProperty(propertyType, headers, delim);
+                    return BuildListFromHeaders(propertyType, headers, delim);
 
                 // interface not supported
-                return ModelBindingResult.Failed();
+                return null;
             }
 
             // handle array types
             if (propertyType.IsArray)
-                return BindArrayProperty(propertyType, headers, delim);
+                return BuildArrayFromHeaders(propertyType, headers, delim);
 
             // anything not generic isn't valid past here
             if (!propertyType.IsGenericType)
-                return ModelBindingResult.Failed();
+                return null;
 
             // check if list
             var genericType = propertyType.GetGenericTypeDefinition();
             if (genericType == typeof(List<>))
-                return BindListProperty(propertyType, headers, delim);
+                return BuildListFromHeaders(propertyType, headers, delim);
 
             // check if dictionary
             if (genericType == typeof(Dictionary<,>))
-                return BindDictionaryProperty(propertyType, headers, delim);
+                return BuildDictionaryFromHeaders(propertyType, headers, delim);
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"An exception has occurred trying to bind property model of type {propertyType.Name} to header array.");
         }
 
-        return ModelBindingResult.Failed();
+        return null;
     }
 
-    private static ModelBindingResult BindArrayProperty(Type propertyType, IEnumerable<string> headers, string delim)
+    private static object? BuildArrayFromHeaders(Type propertyType, IEnumerable<string> headers, string delim)
     {
         try
         {
             if (propertyType.IsAssignableFrom(SupportedBindings.Array))
-                return ModelBindingResult.Success(headers.ToArray());
+                return headers.ToArray();
 
             if (propertyType.IsAssignableFrom(SupportedBindings.ArrayTuple))
             {
@@ -134,7 +146,7 @@ public class HeaderArrayModelBinder : IModelBinder
                     headerLookup.Add((headerKey, headerValue));
                 }
 
-                return ModelBindingResult.Success(headerLookup.ToArray());
+                return headerLookup.ToArray();
             }
 
             if (propertyType.IsAssignableFrom(SupportedBindings.ArrayTupleWithArray))
@@ -162,7 +174,7 @@ public class HeaderArrayModelBinder : IModelBinder
                 foreach (var kvp in headerLookup)
                     headerLookupWithTuples.Add((kvp.Key, kvp.Value.ToArray()));
 
-                return ModelBindingResult.Success(headerLookupWithTuples.ToArray());
+                return headerLookupWithTuples.ToArray();
             }
 
             if (propertyType.IsAssignableFrom(SupportedBindings.ArrayTupleWithList))
@@ -186,7 +198,7 @@ public class HeaderArrayModelBinder : IModelBinder
                         headerLookup[headerKey] = (headerKey, new List<string>() { headerValue });
                 }
 
-                return ModelBindingResult.Success(headerLookup.Values.ToArray());
+                return headerLookup.Values.ToArray();
             }
 
             if (propertyType.IsAssignableFrom(SupportedBindings.ArrayTupleWithEnumerable))
@@ -214,7 +226,7 @@ public class HeaderArrayModelBinder : IModelBinder
                 foreach (var kvp in headerLookup)
                     headerLookupWithTuples.Add((kvp.Key, kvp.Value.ToArray()));
 
-                return ModelBindingResult.Success(headerLookupWithTuples.ToArray());
+                return headerLookupWithTuples.ToArray();
             }
         }
         catch (Exception exc)
@@ -222,15 +234,15 @@ public class HeaderArrayModelBinder : IModelBinder
             Program.Logger.Log(LogLevel.Error, exc, $"An exception has occurred trying to bind array property model of type {propertyType.Name} to header array.");
         }
 
-        return ModelBindingResult.Failed();
+        return null;
     }
 
-    private static ModelBindingResult BindListProperty(Type propertyType, IEnumerable<string> headers, string delim)
+    private static object? BuildListFromHeaders(Type propertyType, IEnumerable<string> headers, string delim)
     {
         try
         {
             if (propertyType.IsAssignableFrom(SupportedBindings.List))
-                return ModelBindingResult.Success(headers.ToList());
+                return headers.ToList();
 
             if (propertyType.IsAssignableFrom(SupportedBindings.ListTuple))
             {
@@ -250,7 +262,7 @@ public class HeaderArrayModelBinder : IModelBinder
                     headerLookup.Add((headerKey, headerValue));
                 }
 
-                return ModelBindingResult.Success(headerLookup);
+                return headerLookup;
             }
 
             if (propertyType.IsAssignableFrom(SupportedBindings.ListTupleWithList))
@@ -274,7 +286,7 @@ public class HeaderArrayModelBinder : IModelBinder
                         headerLookup[headerKey] = (headerKey, new List<string>() { headerValue });
                 }
 
-                return ModelBindingResult.Success(headerLookup.Values.ToList());
+                return headerLookup.Values.ToList();
             }
 
             if (propertyType.IsAssignableFrom(SupportedBindings.ListTupleWithArray))
@@ -302,7 +314,7 @@ public class HeaderArrayModelBinder : IModelBinder
                 foreach (var kvp in headerLookup)
                     headerLookupWithTuples.Add((kvp.Key, kvp.Value.ToArray()));
 
-                return ModelBindingResult.Success(headerLookupWithTuples);
+                return headerLookupWithTuples;
             }
 
             if (propertyType.IsAssignableFrom(SupportedBindings.ListTupleWithEnumerable))
@@ -330,7 +342,7 @@ public class HeaderArrayModelBinder : IModelBinder
                 foreach (var kvp in headerLookup)
                     headerLookupWithTuples.Add((kvp.Key, kvp.Value.ToArray()));
 
-                return ModelBindingResult.Success(headerLookupWithTuples);
+                return headerLookupWithTuples;
             }
         }
         catch (Exception exc)
@@ -338,10 +350,10 @@ public class HeaderArrayModelBinder : IModelBinder
             Program.Logger.Log(LogLevel.Error, exc, $"An exception has occurred trying to bind list property model of type {propertyType.Name} to header array.");
         }
 
-        return ModelBindingResult.Failed();
+        return null;
     }
 
-    private static ModelBindingResult BindDictionaryProperty(Type propertyType, IEnumerable<string> headers, string delim)
+    private static object? BuildDictionaryFromHeaders(Type propertyType, IEnumerable<string> headers, string delim)
     {
         try
         {
@@ -363,7 +375,7 @@ public class HeaderArrayModelBinder : IModelBinder
                     headerLookup[headerKey] = headerValue;
                 }
 
-                return ModelBindingResult.Success(headerLookup);
+                return headerLookup;
             }
 
             if (propertyType.IsAssignableFrom(SupportedBindings.DictionaryWithList))
@@ -387,7 +399,7 @@ public class HeaderArrayModelBinder : IModelBinder
                         headerLookup[headerKey] = new List<string>() { headerValue };
                 }
 
-                return ModelBindingResult.Success(headerLookup);
+                return headerLookup;
             }
 
             if (propertyType.IsAssignableFrom(SupportedBindings.DictionaryWithArray))
@@ -415,7 +427,7 @@ public class HeaderArrayModelBinder : IModelBinder
                 foreach (var kvp in headerLookup)
                     headerLookupWithArrays[kvp.Key] = kvp.Value.ToArray();
 
-                return ModelBindingResult.Success(headerLookupWithArrays);
+                return headerLookupWithArrays;
             }
 
             if (propertyType.IsAssignableFrom(SupportedBindings.DictionaryWithEnumerable))
@@ -439,7 +451,7 @@ public class HeaderArrayModelBinder : IModelBinder
                         headerLookup[headerKey] = new List<string>() { headerValue };
                 }
 
-                return ModelBindingResult.Success(headerLookup);
+                return headerLookup;
             }
         }
         catch (Exception exc)
@@ -447,6 +459,6 @@ public class HeaderArrayModelBinder : IModelBinder
             Program.Logger.Log(LogLevel.Error, exc, $"An exception has occurred trying to bind dictionary property model of type {propertyType.Name} to header array.");
         }
 
-        return ModelBindingResult.Failed();
+        return null;
     }
 }
