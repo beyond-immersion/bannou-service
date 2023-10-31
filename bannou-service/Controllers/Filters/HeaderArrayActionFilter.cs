@@ -29,9 +29,16 @@ public class HeaderArrayActionFilter : IActionFilter
                 var parameterName = serviceRequestParamKVP.Key;
                 var requestModel = serviceRequestParamKVP.Value as IServiceRequest;
 
-                if (requestModel == null || context.ModelState[parameterName]?.ValidationState != Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Valid)
+                if (requestModel == null)
                 {
-                    Program.Logger.Log(LogLevel.Error, $"Not a valid state for param {parameterName} in request model {requestModel?.GetType().Name}. " +
+                    Program.Logger.Log(LogLevel.Error, $"Parameter {parameterName} in request model {requestModel?.GetType().Name} is null / missing.");
+                    continue;
+                }
+
+                var modelValidationState = context.ModelState[parameterName]?.ValidationState;
+                if (modelValidationState != Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Valid)
+                {
+                    Program.Logger.Log(LogLevel.Error, $"Model state {modelValidationState} not valid for param {parameterName} in request model {requestModel?.GetType().Name}. " +
                         $"Cannot transfer headers to request model.");
 
                     continue;
