@@ -10,7 +10,60 @@ public class HeaderArrayActionFilter : IActionFilter
     private const string HEADER_ARRAY_PREFIX = "HEADER_ARRAY:";
     private const string PROPERTYINFO_PREFIX = "PROPERTY_INFO:";
 
-    public void OnActionExecuting(ActionExecutingContext context) { }
+    public void OnActionExecuting(ActionExecutingContext context)
+    {
+        try
+        {
+            var serviceRequestParamsKVP = context.ActionArguments.Where(
+                t => t.Value != null &&
+                t.Value.GetType().IsAssignableTo(typeof(IServiceRequest)));
+
+            if (!serviceRequestParamsKVP.Any())
+            {
+                Program.Logger.Log(LogLevel.Warning, $"No service request models found for action.");
+                return;
+            }
+
+            foreach (var serviceRequestParamKVP in serviceRequestParamsKVP)
+            {
+                var parameterName = serviceRequestParamKVP.Key;
+                var requestModel = serviceRequestParamKVP.Value as IServiceRequest;
+
+                if (requestModel == null || context.ModelState[parameterName]?.ValidationState != Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Valid)
+                {
+                    Program.Logger.Log(LogLevel.Error, $"Not a valid state for param {parameterName} in request model {requestModel?.GetType().Name}. " +
+                        $"Cannot transfer headers to request model.");
+
+                    continue;
+                }
+
+                foreach (var propertyInfo in requestModel.GetType().GetProperties())
+                {
+                    var headerAttr = propertyInfo.GetCustomAttributes<HeaderArrayAttribute>(true).FirstOrDefault();
+                    if (headerAttr == null)
+                        continue;
+
+                    var delim = "__";
+                    if (!string.IsNullOrWhiteSpace(headerAttr.Delimeter))
+                        delim = headerAttr.Delimeter;
+
+                    var headerName = headerAttr.Name ?? propertyInfo.Name;
+                    var headerStrings = context.HttpContext.Request.Headers[headerName];
+
+                    var bindingResult = Binders.HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyInfo.PropertyType, headerStrings, headerAttr);
+                    if (!bindingResult.IsModelSet)
+                        continue;
+
+                    propertyInfo.SetValue(requestModel, bindingResult.Model);
+                }
+            }
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "Exception thrown setting header strings to property values.");
+        }
+    }
+
     public void OnActionExecuted(ActionExecutedContext context)
     {
         if (context.Result is ObjectResult objectResult && objectResult?.Value != null)
