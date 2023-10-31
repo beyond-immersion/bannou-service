@@ -42,7 +42,7 @@ public class GetAccountResponse : ServiceResponse
     /// application claim.
     /// </summary>
     [JsonProperty("security_token", Required = Required.Always)]
-    public string SecurityToken { get; set; }
+    public string? SecurityToken { get; set; }
 
     /// <summary>
     /// Whether the user has enabled 2-factor authentication.
@@ -62,19 +62,19 @@ public class GetAccountResponse : ServiceResponse
     /// The date/time of the last login.
     /// </summary>
     [JsonProperty("last_login_at", Required = Required.Always)]
-    public DateTime LastLoginAt { get; set; }
+    public DateTime? LastLoginAt { get; set; }
 
     /// <summary>
     /// The date/time the account was created.
     /// </summary>
     [JsonProperty("created_at", Required = Required.Always)]
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
     /// <summary>
     /// The date/time the account was last updated.
     /// </summary>
     [JsonProperty("updated_at", Required = Required.Always)]
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
     /// The date/time the account was removed (soft delete).
@@ -157,12 +157,5 @@ public class GetAccountResponse : ServiceResponse
     [JsonProperty("profile_claims")]
     public HashSet<string>? ProfileClaims { get; set; }
 
-    public GetAccountResponse(int id, string securityToken, DateTime createdAt)
-    {
-        ID = id;
-        SecurityToken = securityToken;
-        LastLoginAt = createdAt;
-        CreatedAt = createdAt;
-        UpdatedAt = createdAt;
-    }
+    public GetAccountResponse() { }
 }

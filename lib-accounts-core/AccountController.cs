@@ -44,24 +44,23 @@ public class AccountController : Controllers.BaseDaprController
             if (accountData == null)
                 return StatusCode(500);
 
-            var response = new CreateAccountResponse(accountData.ID, accountData.SecurityToken, accountData.CreatedAt)
-            {
-                Username = accountData.Username,
-                Email = accountData.Email,
-                EmailVerified = accountData.EmailVerified,
-                SecurityToken = accountData.SecurityToken,
-                TwoFactorEnabled = accountData.TwoFactorEnabled,
-                LockoutEnd = accountData.LockoutEnd,
-                LastLoginAt = accountData.LastLoginAt,
-                CreatedAt = accountData.CreatedAt,
-                UpdatedAt = accountData.UpdatedAt,
-                RemovedAt = accountData.RemovedAt,
-                AppClaims = accountData.AppClaims,
-                IdentityClaims = accountData.IdentityClaims,
-                ProfileClaims = accountData.ProfileClaims,
-                RoleClaims = accountData.RoleClaims,
-                ScopeClaims = accountData.ScopeClaims
-            };
+            var response = request.CreateResponse();
+            response.ID = accountData.ID;
+            response.Username = accountData.Username;
+            response.Email = accountData.Email;
+            response.EmailVerified = accountData.EmailVerified;
+            response.SecurityToken = accountData.SecurityToken;
+            response.TwoFactorEnabled = accountData.TwoFactorEnabled;
+            response.LockoutEnd = accountData.LockoutEnd;
+            response.LastLoginAt = accountData.LastLoginAt;
+            response.CreatedAt = accountData.CreatedAt;
+            response.UpdatedAt = accountData.UpdatedAt;
+            response.RemovedAt = accountData.RemovedAt;
+            response.AppClaims = accountData.AppClaims;
+            response.IdentityClaims = accountData.IdentityClaims;
+            response.ProfileClaims = accountData.ProfileClaims;
+            response.RoleClaims = accountData.RoleClaims;
+            response.ScopeClaims = accountData.ScopeClaims;
 
             if (request.RequestIDs != null && request.RequestIDs.Count > 0)
                 response.RequestIDs = request.RequestIDs;
@@ -91,24 +90,23 @@ public class AccountController : Controllers.BaseDaprController
             if (accountData == null)
                 return NotFound();
 
-            var response = new GetAccountResponse(accountData.ID, accountData.SecurityToken, accountData.CreatedAt)
-            {
-                Username = accountData.Username,
-                Email = accountData.Email,
-                EmailVerified = accountData.EmailVerified,
-                SecurityToken = accountData.SecurityToken,
-                TwoFactorEnabled = accountData.TwoFactorEnabled,
-                LockoutEnd = accountData.LockoutEnd,
-                LastLoginAt = accountData.LastLoginAt,
-                CreatedAt = accountData.CreatedAt,
-                UpdatedAt = accountData.UpdatedAt,
-                RemovedAt = accountData.RemovedAt,
-                AppClaims = accountData.AppClaims,
-                IdentityClaims = accountData.IdentityClaims,
-                ProfileClaims = accountData.ProfileClaims,
-                RoleClaims = accountData.RoleClaims,
-                ScopeClaims = accountData.ScopeClaims
-            };
+            var response = request.CreateResponse();
+            response.ID = accountData.ID;
+            response.Username = accountData.Username;
+            response.Email = accountData.Email;
+            response.EmailVerified = accountData.EmailVerified;
+            response.SecurityToken = accountData.SecurityToken;
+            response.TwoFactorEnabled = accountData.TwoFactorEnabled;
+            response.LockoutEnd = accountData.LockoutEnd;
+            response.LastLoginAt = accountData.LastLoginAt;
+            response.CreatedAt = accountData.CreatedAt;
+            response.UpdatedAt = accountData.UpdatedAt;
+            response.RemovedAt = accountData.RemovedAt;
+            response.AppClaims = accountData.AppClaims;
+            response.IdentityClaims = accountData.IdentityClaims;
+            response.ProfileClaims = accountData.ProfileClaims;
+            response.RoleClaims = accountData.RoleClaims;
+            response.ScopeClaims = accountData.ScopeClaims;
 
             if (request.RequestIDs != null && request.RequestIDs.Count > 0)
                 response.RequestIDs = request.RequestIDs;
