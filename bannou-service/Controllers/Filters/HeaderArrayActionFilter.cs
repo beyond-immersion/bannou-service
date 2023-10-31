@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Newtonsoft.Json.Linq;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Controllers.Filters;
@@ -53,10 +54,6 @@ public class HeaderArrayActionFilter : IActionFilter
                         continue;
                     }
 
-                    var delim = "__";
-                    if (!string.IsNullOrWhiteSpace(headerAttr.Delimeter))
-                        delim = headerAttr.Delimeter;
-
                     var headerName = headerAttr.Name ?? propertyInfo.Name;
                     var headerStrings = context.HttpContext.Request.Headers[headerName];
 
@@ -67,7 +64,7 @@ public class HeaderArrayActionFilter : IActionFilter
                         continue;
                     }
 
-                    Program.Logger.Log(LogLevel.Warning, "Setting headers to model.");
+                    Program.Logger.Log(LogLevel.Warning, $"Packing headers {JArray.FromObject(headerStrings).ToString(Formatting.None)} into property {propertyInfo.Name}.");
                     propertyInfo.SetValue(requestModel, bindingResult.Model);
                 }
             }
@@ -98,7 +95,10 @@ public class HeaderArrayActionFilter : IActionFilter
                     // generate header array from property value
                     var headersToSet = PropertyValueToHeaderArray(propertyInfo, propertyValue, headerAttr);
                     foreach (var header in headersToSet)
+                    {
+                        Program.Logger.Log(LogLevel.Warning, $"Setting header {header.Item1} to value {JArray.FromObject(header.Item2).ToString(Formatting.None)}.");
                         context.HttpContext.Response.Headers.Add(header.Item1, header.Item2);
+                    }
 
                     var propertyName = propertyInfo.Name;
                     headerPropertiesWithValues.Add(propertyName);
@@ -107,13 +107,16 @@ public class HeaderArrayActionFilter : IActionFilter
                     context.HttpContext.Items[HEADER_ARRAY_PREFIX + propertyName] = propertyValue;
                 }
 
-                if (headerPropertiesWithValues.Count == 0)
+                if (!headerPropertiesWithValues.Any())
                     return;
 
                 // cache array of all cached property names, for efficiency
                 context.HttpContext.Items[HEADER_ARRAY_LIST] = headerPropertiesWithValues.ToArray();
                 foreach (var propName in headerPropertiesWithValues)
+                {
+                    Program.Logger.Log(LogLevel.Warning, $"Removing header property {propName} value while message payload is serialized.");
                     objectResult.Value.GetType().GetProperty(propName)?.SetValue(objectResult.Value, null);
+                }
             }
             catch (Exception exc)
             {
