@@ -36,7 +36,7 @@ public class HeaderArrayActionFilter : IActionFilter
                 }
 
                 var modelValidationState = context.ModelState[parameterName]?.ValidationState;
-                if (modelValidationState != Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Valid)
+                if (modelValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid)
                 {
                     Program.Logger.Log(LogLevel.Error, $"Model state {modelValidationState} not valid for param {parameterName} in request model {requestModel?.GetType().Name}. " +
                         $"Cannot transfer headers to request model.");
@@ -48,7 +48,10 @@ public class HeaderArrayActionFilter : IActionFilter
                 {
                     var headerAttr = propertyInfo.GetCustomAttributes<HeaderArrayAttribute>(true).FirstOrDefault();
                     if (headerAttr == null)
+                    {
+                        Program.Logger.Log(LogLevel.Warning, "Appropriate headers for transfer not found- moving on...");
                         continue;
+                    }
 
                     var delim = "__";
                     if (!string.IsNullOrWhiteSpace(headerAttr.Delimeter))
@@ -59,8 +62,12 @@ public class HeaderArrayActionFilter : IActionFilter
 
                     var bindingResult = Binders.HeaderArrayModelBinder.BindPropertyToHeaderArray(propertyInfo.PropertyType, headerStrings, headerAttr);
                     if (!bindingResult.IsModelSet)
+                    {
+                        Program.Logger.Log(LogLevel.Error, "A problem occurred generating property value from received headers.");
                         continue;
+                    }
 
+                    Program.Logger.Log(LogLevel.Warning, "Setting headers to model.");
                     propertyInfo.SetValue(requestModel, bindingResult.Model);
                 }
             }
