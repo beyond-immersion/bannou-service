@@ -147,8 +147,15 @@ public static class CreateAccountTests
         if (responseModel == null)
             return false;
 
-        if (!responseModel.RequestIDs.TryGetValue("USER_ID", out var userIDValue) || !string.Equals(userID, userIDValue))
-            return false;
+        if (requestModel.RequestIDs != null && requestModel.RequestIDs.Any())
+        {
+            if (responseModel.RequestIDs == null || !responseModel.RequestIDs.Any())
+                return false;
+
+            foreach (var requestKVP in requestModel.RequestIDs)
+                if (!string.Equals(responseModel.RequestIDs[requestKVP.Key], requestKVP.Value))
+                    return false;
+        }
 
         if (!string.Equals(requestModel.Username, responseModel.Username))
             return false;

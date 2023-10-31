@@ -61,10 +61,6 @@ public class AccountController : Controllers.BaseDaprController
             response.ProfileClaims = accountData.ProfileClaims;
             response.RoleClaims = accountData.RoleClaims;
             response.ScopeClaims = accountData.ScopeClaims;
-
-            if (request.RequestIDs != null && request.RequestIDs.Count > 0)
-                response.RequestIDs = request.RequestIDs;
-
             return Ok(response);
         }
         catch (Exception exc)
@@ -107,10 +103,6 @@ public class AccountController : Controllers.BaseDaprController
             response.ProfileClaims = accountData.ProfileClaims;
             response.RoleClaims = accountData.RoleClaims;
             response.ScopeClaims = accountData.ScopeClaims;
-
-            if (request.RequestIDs != null && request.RequestIDs.Count > 0)
-                response.RequestIDs = request.RequestIDs;
-
             return Ok(response);
         }
         catch (Exception exc)
