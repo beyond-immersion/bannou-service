@@ -238,7 +238,7 @@ public class TestingService : IDaprService
     /// <summary>
     /// API to run all tests against all enabled services.
     /// </summary>
-    public async Task<bool> RunAllEnabled(bool defaultIfNotFound = false, bool stopOnFailure = false)
+    public async Task<bool> RunAllEnabled(bool defaultIfNotFound = false, bool stopOnFailure = true)
     {
         var testsFound = false;
         var results = true;

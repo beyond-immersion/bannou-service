@@ -1,4 +1,6 @@
-﻿namespace BeyondImmersion.BannouService.Services.Tests;
+﻿using Newtonsoft.Json.Linq;
+
+namespace BeyondImmersion.BannouService.Services.Tests;
 
 /// <summary>
 /// Tests that only require the testing service itself.
@@ -96,17 +98,49 @@ public static class BasicControllerTests
         };
 
         HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", dataModel);
+        if (!newRequest.Headers.TryGetValues("REQUEST_IDS", out var headerValues))
+        {
+            Program.Logger.Log(LogLevel.Error, "Could not retrieve 'REQUEST_IDS' from request headers.");
+            return false;
+        }
+
+        var headerValueMsg = JArray.FromObject(headerValues).ToString(Formatting.None);
+        if (headerValueMsg == null)
+        {
+            Program.Logger.Log(LogLevel.Error, "Failed to print 'REQUEST_IDS' from request headers.");
+            return false;
+        }
+
+        Program.Logger.Log(LogLevel.Warning, $"Value of 'REQUEST_IDS' headers for test method [{nameof(Post_ObjectModel_HeaderArrays)}]: {headerValueMsg}");
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
 
         if (service.LastTestRequest == null)
+        {
+            Program.Logger.Log(LogLevel.Error, "The cached 'last request' for the testing service is null / missing. " +
+                "Likely the API Controller couldn't be reached.");
+
             return false;
+        }
 
         // ensure ID is still in request object
         var receivedData = (TestingRunTestRequest)service.LastTestRequest;
         if (dataModel?.RequestIDs?["SERVICE_ID"] != serviceID)
+        {
+            Program.Logger.Log(LogLevel.Error, "The original request model is now missing the 'REQUEST_IDS' that were just set. " +
+                "Most likely this indicates an issue with the model binding unsetting the original value.");
+
             return false;
+        }
 
         // ensure ID is in received / serialized+deserialized payload too
-        return receivedData?.RequestIDs?["SERVICE_ID"] == serviceID;
+        if (receivedData?.RequestIDs?["SERVICE_ID"] != serviceID)
+        {
+            Program.Logger.Log(LogLevel.Error, "The cached 'last request' for the testing service has the 'REQUEST_IDS' value missing. " +
+                "Headers for the payload were lost in binding to the model or in executing the action.");
+
+            return false;
+        }
+
+        return true;
     }
 }
