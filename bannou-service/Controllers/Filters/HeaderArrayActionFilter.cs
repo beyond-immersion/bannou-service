@@ -98,7 +98,7 @@ public class HeaderArrayActionFilter : IActionFilter
                     // generate header array from property value
                     var headersToSet = PropertyValueToHeaderArray(propertyInfo, propertyValue, headerAttr);
                     foreach (var header in headersToSet)
-                        context.HttpContext.Request.Headers.Add(header.Item1, header.Item2);
+                        context.HttpContext.Response.Headers.Add(header.Item1, header.Item2);
 
                     var propertyName = propertyInfo.Name;
                     headerPropertiesWithValues.Add(propertyName);
