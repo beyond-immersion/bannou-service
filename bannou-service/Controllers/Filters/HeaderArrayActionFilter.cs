@@ -34,7 +34,7 @@ public class HeaderArrayActionFilter : IActionFilter
 
                 if (requestModel == null)
                 {
-                    Program.Logger.Log(LogLevel.Error, $"Parameter {parameterName} in request model {requestModel?.GetType().Name} is null / missing.");
+                    Program.Logger.Log(LogLevel.Warning, $"Parameter {parameterName} in request model {requestModel?.GetType().Name} is null / missing.");
                     continue;
                 }
 
@@ -60,7 +60,7 @@ public class HeaderArrayActionFilter : IActionFilter
                     var headerStrings = context.HttpContext.Request.Headers[headerName];
                     if (!headerStrings.Any())
                     {
-                        Program.Logger.Log(LogLevel.Error, $"No values were found for header {headerName} bound to property {propertyInfo.Name}.");
+                        Program.Logger.Log(LogLevel.Warning, $"No values were found for header {headerName} bound to property {propertyInfo.Name}.");
                         continue;
                     }
 

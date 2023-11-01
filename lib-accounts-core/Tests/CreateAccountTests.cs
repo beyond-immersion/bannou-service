@@ -54,7 +54,7 @@ public static class CreateAccountTests
 
         var apiResponse = await Program.DaprClient.InvokeMethodAsync<CreateAccountResponse>(apiRequest, Program.ShutdownCancellationTokenSource.Token);
 
-        return ValidateCreateResponse(userID, requestModel, apiResponse);
+        return ValidateCreateResponse(requestModel, apiResponse);
     }
 
     private static async Task<bool> CreateAccount_GoogleOAUTH(TestingService service)
@@ -84,7 +84,7 @@ public static class CreateAccountTests
 
         var apiResponse = await Program.DaprClient.InvokeMethodAsync<CreateAccountResponse>(apiRequest, Program.ShutdownCancellationTokenSource.Token);
 
-        return ValidateCreateResponse(userID, requestModel, apiResponse);
+        return ValidateCreateResponse(requestModel, apiResponse);
     }
 
     private static async Task<bool> CreateAccount_SteamOAUTH(TestingService service)
@@ -114,7 +114,7 @@ public static class CreateAccountTests
 
         var apiResponse = await Program.DaprClient.InvokeMethodAsync<CreateAccountResponse>(apiRequest, Program.ShutdownCancellationTokenSource.Token);
 
-        return ValidateCreateResponse(userID, requestModel, apiResponse);
+        return ValidateCreateResponse(requestModel, apiResponse);
     }
 
     private static async Task<bool> CreateAccount_AllParameters(TestingService service)
@@ -148,60 +148,118 @@ public static class CreateAccountTests
 
         var apiResponse = await Program.DaprClient.InvokeMethodAsync<CreateAccountResponse>(apiRequest, Program.ShutdownCancellationTokenSource.Token);
 
-        return ValidateCreateResponse(userID, requestModel, apiResponse);
+        return ValidateCreateResponse(requestModel, apiResponse);
     }
 
-    private static bool ValidateCreateResponse(string userID, CreateAccountRequest requestModel, CreateAccountResponse responseModel)
+    private static bool ValidateCreateResponse(CreateAccountRequest requestModel, CreateAccountResponse responseModel)
     {
         if (responseModel == null)
+        {
+            Program.Logger.Log(LogLevel.Error, "Test response not received.");
             return false;
+        }
 
         if (requestModel.RequestIDs != null && requestModel.RequestIDs.Any())
         {
             if (responseModel.RequestIDs == null || !responseModel.RequestIDs.Any())
+            {
+                Program.Logger.Log(LogLevel.Error, "Test response missing REQUEST_IDS through headers.");
                 return false;
+            }
 
             foreach (var requestKVP in requestModel.RequestIDs)
+            {
                 if (!string.Equals(responseModel.RequestIDs[requestKVP.Key], requestKVP.Value))
+                {
+                    Program.Logger.Log(LogLevel.Error, "Test response REQUEST_IDS have been transformed through headers.");
                     return false;
+                }
+            }
         }
 
         if (!string.Equals(requestModel.Username, responseModel.Username))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test response Username {responseModel.Username} does not match request Username {requestModel.Username}.");
             return false;
+        }
 
         if (!string.Equals(requestModel.Email, responseModel.Email))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test response Email {responseModel.Email} does not match request Email {requestModel.Email}.");
             return false;
+        }
 
         if (requestModel.EmailVerified != responseModel.EmailVerified)
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test response EmailVerified {responseModel.EmailVerified} does not match request EmailVerified {requestModel.EmailVerified}.");
             return false;
+        }
 
         if (requestModel.TwoFactorEnabled != responseModel.TwoFactorEnabled)
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test response TwoFactorEnabled {responseModel.TwoFactorEnabled} does not match request TwoFactorEnabled {requestModel.TwoFactorEnabled}.");
             return false;
+        }
 
         if (requestModel.RoleClaims != null)
+        {
             foreach (var claimValue in requestModel.RoleClaims)
+            {
                 if (!responseModel.RoleClaims?.Contains(claimValue) ?? false)
+                {
+                    Program.Logger.Log(LogLevel.Error, $"Test response Role claim {claimValue} missing.");
                     return false;
+                }
+            }
+        }
 
         if (requestModel.AppClaims != null)
+        {
             foreach (var claimValue in requestModel.AppClaims)
+            {
                 if (!responseModel.AppClaims?.Contains(claimValue) ?? false)
+                {
+                    Program.Logger.Log(LogLevel.Error, $"Test response App claim {claimValue} missing.");
                     return false;
+                }
+            }
+        }
 
         if (requestModel.ScopeClaims != null)
+        {
             foreach (var claimValue in requestModel.ScopeClaims)
+            {
                 if (!responseModel.ScopeClaims?.Contains(claimValue) ?? false)
+                {
+                    Program.Logger.Log(LogLevel.Error, $"Test response Scope claim {claimValue} missing.");
                     return false;
+                }
+            }
+        }
 
         if (requestModel.IdentityClaims != null)
+        {
             foreach (var claimValue in requestModel.IdentityClaims)
+            {
                 if (!responseModel.IdentityClaims?.Contains(claimValue) ?? false)
+                {
+                    Program.Logger.Log(LogLevel.Error, $"Test response Identity claim {claimValue} missing.");
                     return false;
+                }
+            }
+        }
 
         if (requestModel.ProfileClaims != null)
+        {
             foreach (var claimValue in requestModel.ProfileClaims)
+            {
                 if (!responseModel.ProfileClaims?.Contains(claimValue) ?? false)
+                {
+                    Program.Logger.Log(LogLevel.Error, $"Test response Profile claim {claimValue} missing.");
                     return false;
+                }
+            }
+        }
 
         return true;
     }
