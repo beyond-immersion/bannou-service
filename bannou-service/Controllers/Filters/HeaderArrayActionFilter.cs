@@ -19,7 +19,7 @@ public class HeaderArrayActionFilter : IActionFilter
         {
             var serviceRequestParamsKVP = context.ActionArguments.Where(
                 t => t.Value != null &&
-                t.Value.GetType().IsAssignableTo(typeof(IServiceRequest)));
+                t.Value.GetType().IsAssignableTo(typeof(ServiceRequest)));
 
             if (!serviceRequestParamsKVP.Any())
             {
@@ -30,7 +30,7 @@ public class HeaderArrayActionFilter : IActionFilter
             foreach (var serviceRequestParamKVP in serviceRequestParamsKVP)
             {
                 var parameterName = serviceRequestParamKVP.Key;
-                var requestModel = serviceRequestParamKVP.Value as IServiceRequest;
+                var requestModel = serviceRequestParamKVP.Value as ServiceRequest;
 
                 if (requestModel == null)
                 {
@@ -100,7 +100,7 @@ public class HeaderArrayActionFilter : IActionFilter
                         continue;
 
                     // generate header array from property value
-                    var headersToSet = ServiceRequest.PropertyValueToHeaderArray(propertyInfo, propertyValue, headerAttr);
+                    var headersToSet = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyInfo, propertyValue, headerAttr);
                     foreach (var header in headersToSet)
                     {
                         Program.Logger.Log(LogLevel.Warning, $"Setting header {header.Item1} to value {JArray.FromObject(header.Item2).ToString(Formatting.None)}.");

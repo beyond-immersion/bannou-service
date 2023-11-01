@@ -246,7 +246,7 @@ public static partial class ExtensionMethods
 
     public static void AddPropertyHeaders(this HttpRequestMessage message, ServiceRequest request)
     {
-        foreach (var headerKVP in request.PropertyValuesToHeaders())
+        foreach (var headerKVP in request.SetPropertiesToHeaders())
             foreach (var headerValue in headerKVP.Item2)
                 message.Headers.Add(headerKVP.Item1, headerValue);
     }

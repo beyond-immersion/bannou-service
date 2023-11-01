@@ -9,13 +9,6 @@ public class Messages : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
 
-    public class Request_Interface : IServiceRequest { }
-    public class Request_Interface_Generic : IServiceRequest<Response_Interface> { }
-    public class Request_Interface_Generic_HeaderProperties : IServiceRequest<Response_Interface>
-    {
-        [HeaderArray(Name = "TEST_HEADERS")]
-        public Dictionary<string, string>? RequestIDs { get; set; }
-    }
     public class Request_HeaderProperties_Derived : ServiceRequest { }
     public class Request_HeaderProperties_Generic : ServiceRequest<Response_HeaderProperties> { }
     [JsonObject]
@@ -32,12 +25,6 @@ public class Messages : IClassFixture<CollectionFixture>
     {
         [HeaderArray(Name = "TEST_HEADERS")]
         public Dictionary<string, string>? MoreRequestIDs { get; set; }
-    }
-    public class Response_Interface : IServiceResponse { }
-    public class Response_Interface_HeaderProperties : IServiceResponse
-    {
-        [HeaderArray(Name = "TEST_HEADERS")]
-        public Dictionary<string, string>? RequestIDs { get; set; }
     }
     public class Response_HeaderProperties : ServiceResponse { }
     public class Response_HeaderProperties_Derived : Response_HeaderProperties { }

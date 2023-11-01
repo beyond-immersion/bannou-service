@@ -145,4 +145,56 @@ public static class BasicControllerTests
 
         return true;
     }
+
+    private static async Task<bool> Post_ExecuteApiRequest(TestingService service)
+    {
+        service.ResetTestVars();
+        var testID = "test_id_1";
+        var testService = "inventory";
+        var serviceID = Guid.NewGuid().ToString();
+        var dataModel = new TestingRunTestRequest()
+        {
+            ID = testID,
+            Service = testService,
+            RequestIDs = new()
+            {
+                ["SERVICE_ID"] = serviceID
+            }
+        };
+
+        if (!await dataModel.ExecuteRequestToAPI(CONTROLLER_NAME, ACTION_NAME))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Failure to execute testing API with [{nameof(ServiceRequest.ExecuteRequestToAPI)}] helper method.");
+            return false;
+        }
+
+        if (service.LastTestRequest == null)
+        {
+            Program.Logger.Log(LogLevel.Error, "The cached 'last request' for the testing service is null / missing. " +
+                "Likely the API Controller couldn't be reached.");
+
+            return false;
+        }
+
+        // ensure ID is still in request object
+        var receivedData = (TestingRunTestRequest)service.LastTestRequest;
+        if (dataModel?.RequestIDs?["SERVICE_ID"] != serviceID)
+        {
+            Program.Logger.Log(LogLevel.Error, "The original request model is now missing the 'REQUEST_IDS' that were just set. " +
+                "Most likely this indicates an issue with the model binding unsetting the original value.");
+
+            return false;
+        }
+
+        // ensure ID is in received / serialized+deserialized payload too
+        if (receivedData?.RequestIDs?["SERVICE_ID"] != serviceID)
+        {
+            Program.Logger.Log(LogLevel.Error, "The cached 'last request' for the testing service has the 'REQUEST_IDS' value missing. " +
+                "Headers for the payload were lost in binding to the model or in executing the action.");
+
+            return false;
+        }
+
+        return true;
+    }
 }

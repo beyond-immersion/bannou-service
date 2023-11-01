@@ -2,8 +2,6 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics.CodeAnalysis;
-using System.Net;
 
 namespace BeyondImmersion.BannouService.Accounts.Tests;
 
@@ -49,10 +47,7 @@ public static class CreateAccountTests
             }
         };
 
-        HttpRequestMessage apiRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"account/create", requestModel);
-        apiRequest.AddPropertyHeaders(requestModel);
-
-        var apiResponse = await Program.DaprClient.InvokeMethodAsync<CreateAccountResponse>(apiRequest, Program.ShutdownCancellationTokenSource.Token);
+        var apiResponse = await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create");
 
         return ValidateCreateResponse(requestModel, apiResponse);
     }
@@ -79,10 +74,7 @@ public static class CreateAccountTests
             ProfileClaims = null
         };
 
-        HttpRequestMessage apiRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"account/create", requestModel);
-        apiRequest.AddPropertyHeaders(requestModel);
-
-        var apiResponse = await Program.DaprClient.InvokeMethodAsync<CreateAccountResponse>(apiRequest, Program.ShutdownCancellationTokenSource.Token);
+        var apiResponse = await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create");
 
         return ValidateCreateResponse(requestModel, apiResponse);
     }
@@ -109,10 +101,7 @@ public static class CreateAccountTests
             ProfileClaims = null
         };
 
-        HttpRequestMessage apiRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"account/create", requestModel);
-        apiRequest.AddPropertyHeaders(requestModel);
-
-        var apiResponse = await Program.DaprClient.InvokeMethodAsync<CreateAccountResponse>(apiRequest, Program.ShutdownCancellationTokenSource.Token);
+        var apiResponse = await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create");
 
         return ValidateCreateResponse(requestModel, apiResponse);
     }
@@ -143,15 +132,12 @@ public static class CreateAccountTests
             }
         };
 
-        HttpRequestMessage apiRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"account/create", requestModel);
-        apiRequest.AddPropertyHeaders(requestModel);
-
-        var apiResponse = await Program.DaprClient.InvokeMethodAsync<CreateAccountResponse>(apiRequest, Program.ShutdownCancellationTokenSource.Token);
+        var apiResponse = await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create");
 
         return ValidateCreateResponse(requestModel, apiResponse);
     }
 
-    private static bool ValidateCreateResponse(CreateAccountRequest requestModel, CreateAccountResponse responseModel)
+    private static bool ValidateCreateResponse(CreateAccountRequest requestModel, CreateAccountResponse? responseModel)
     {
         if (responseModel == null)
         {

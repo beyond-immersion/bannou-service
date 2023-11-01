@@ -1,6 +1,7 @@
 ﻿using BeyondImmersion.BannouService.Accounts.Messages;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Accounts.Tests;
 
@@ -16,19 +17,43 @@ public static class GetAccountTests
             {
             });
 
-    private static bool ValidateGetResponse(string userID, GetAccountRequest requestModel, GetAccountResponse responseModel)
+    private static bool ValidateGetResponse(GetAccountRequest requestModel, GetAccountResponse? responseModel)
     {
         if (responseModel == null)
+        {
+            Program.Logger.Log(LogLevel.Error, "Test response not received.");
             return false;
+        }
 
-        if (!responseModel.RequestIDs.TryGetValue("USER_ID", out var userIDValue) || !string.Equals(userID, userIDValue))
-            return false;
+        if (requestModel.RequestIDs != null && requestModel.RequestIDs.Any())
+        {
+            if (responseModel.RequestIDs == null || !responseModel.RequestIDs.Any())
+            {
+                Program.Logger.Log(LogLevel.Error, "Test response missing REQUEST_IDS through headers.");
+                return false;
+            }
 
-        if (!string.Equals(requestModel.Username, responseModel.Username))
-            return false;
+            foreach (var requestKVP in requestModel.RequestIDs)
+            {
+                if (!string.Equals(responseModel.RequestIDs[requestKVP.Key], requestKVP.Value))
+                {
+                    Program.Logger.Log(LogLevel.Error, "Test response REQUEST_IDS have been transformed through headers.");
+                    return false;
+                }
+            }
+        }
 
-        if (!string.Equals(requestModel.Email, responseModel.Email))
+        if (!string.IsNullOrWhiteSpace(requestModel.Username) && !string.Equals(requestModel.Username, responseModel.Username))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test response Username {responseModel.Username} does not match request Username {requestModel.Username}.");
             return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(requestModel.Email) && !string.Equals(requestModel.Email, responseModel.Email))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test response Email {responseModel.Email} does not match request Email {requestModel.Email}.");
+            return false;
+        }
 
         return true;
     }

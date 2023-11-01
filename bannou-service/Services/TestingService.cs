@@ -25,7 +25,7 @@ public class TestingService : IDaprService
 
     public string? LastTestID { get; private set; }
     public string? LastTestService { get; private set; }
-    public IServiceRequest? LastTestRequest { get; private set; }
+    public ServiceRequest? LastTestRequest { get; private set; }
 
     /// <summary>
     /// Resets all testing variables.
@@ -55,7 +55,7 @@ public class TestingService : IDaprService
     /// Set last POST request object to test API.
     /// </summary>
     /// <param name="request"></param>
-    public void SetLastPostRequest(IServiceRequest? request)
+    public void SetLastPostRequest(ServiceRequest? request)
         => LastTestRequest = request;
 
     public TestingService()

@@ -38,7 +38,7 @@ public class HeaderArrayResultFilter : IResultFilter
         }
     }
 
-    private string[]? GetCachedHeaderPropertyNames(ResultExecutedContext context)
+    private static string[]? GetCachedHeaderPropertyNames(ResultExecutedContext context)
     {
         var key = HEADER_ARRAY_LIST;
         var propertyNames = (string[]?)context.HttpContext.Items[key];
@@ -46,7 +46,7 @@ public class HeaderArrayResultFilter : IResultFilter
         return propertyNames;
     }
 
-    private PropertyInfo? GetCachedPropertyInfo(ResultExecutedContext context, string propertyName)
+    private static PropertyInfo? GetCachedPropertyInfo(ResultExecutedContext context, string propertyName)
     {
         var key = PROPERTYINFO_PREFIX + propertyName;
         var propertyInfo = (PropertyInfo?)context.HttpContext.Items[key];
@@ -54,7 +54,7 @@ public class HeaderArrayResultFilter : IResultFilter
         return propertyInfo;
     }
 
-    private object? GetCachedPropertyValue(ResultExecutedContext context, string propertyName)
+    private static object? GetCachedPropertyValue(ResultExecutedContext context, string propertyName)
     {
         var key = HEADER_ARRAY_PREFIX + propertyName;
         var propertyValue = context.HttpContext.Items[key];
