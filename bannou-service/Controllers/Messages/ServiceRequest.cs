@@ -28,7 +28,8 @@ public abstract class ServiceRequest : ServiceMessage
             var headerLookup = SetPropertiesToHeaders();
             foreach (var headerKVP in headerLookup)
                 foreach (var headerValue in headerKVP.Item2)
-                    requestContent.Headers.Add(headerKVP.Item1, headerValue);
+                    if (!string.IsNullOrWhiteSpace(headerKVP.Item1) && !string.IsNullOrWhiteSpace(headerValue))
+                        requestContent.Headers.Add(headerKVP.Item1, headerValue);
 
             var responseMsg = await HttpClient.PostAsync(requestUrl, requestContent, Program.ShutdownCancellationTokenSource.Token);
             if (responseMsg.IsSuccessStatusCode)
