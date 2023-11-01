@@ -91,6 +91,7 @@ public class ServiceRequest<T> : ServiceRequest
             {
                 var responseContent = await responseMsg.Content.ReadAsStringAsync();
                 var responseData = JsonConvert.DeserializeObject<T>(responseContent);
+                responseData?.SetHeadersToProperties(responseMsg.Headers);
                 return responseData;
             }
             else

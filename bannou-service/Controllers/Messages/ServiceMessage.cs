@@ -14,7 +14,7 @@ public abstract class ServiceMessage
     [HeaderArray(Name = "REQUEST_IDS")]
     public Dictionary<string, string>? RequestIDs { get; set; }
 
-    public virtual void SetHeadersToProperties(IDictionary<string, StringValues> headers)
+    public virtual void SetHeadersToProperties(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
     {
         foreach (var propertyInfo in GetType().GetProperties())
         {
@@ -26,7 +26,7 @@ public abstract class ServiceMessage
             }
 
             var headerName = headerAttr.Name ?? propertyInfo.Name;
-            var headerStrings = headers[headerName];
+            var headerStrings = headers.FirstOrDefault(t => t.Key == headerName).Value;
             if (!headerStrings.Any())
             {
                 Program.Logger.Log(LogLevel.Warning, $"No values were found for header {headerName} bound to property {propertyInfo.Name}.");

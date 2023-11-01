@@ -47,33 +47,8 @@ public class HeaderArrayActionFilter : IActionFilter
                     continue;
                 }
 
-                foreach (var propertyInfo in requestModel.GetType().GetProperties())
-                {
-                    var headerAttr = propertyInfo.GetCustomAttributes<HeaderArrayAttribute>(true).FirstOrDefault();
-                    if (headerAttr == null)
-                    {
-                        Program.Logger.Log(LogLevel.Warning, "Appropriate headers for transfer not found- moving on...");
-                        continue;
-                    }
-
-                    var headerName = headerAttr.Name ?? propertyInfo.Name;
-                    var headerStrings = context.HttpContext.Request.Headers[headerName];
-                    if (!headerStrings.Any())
-                    {
-                        Program.Logger.Log(LogLevel.Warning, $"No values were found for header {headerName} bound to property {propertyInfo.Name}.");
-                        continue;
-                    }
-
-                    var bindingResult = Binders.HeaderArrayModelBinder.BuildPropertyValueFromHeaders(propertyInfo.PropertyType, headerStrings, headerAttr);
-                    if (bindingResult == null)
-                    {
-                        Program.Logger.Log(LogLevel.Error, "A problem occurred generating property value from received headers.");
-                        continue;
-                    }
-
-                    Program.Logger.Log(LogLevel.Warning, $"Packing headers {JArray.FromObject(headerStrings).ToString(Formatting.None)} into property {propertyInfo.Name}.");
-                    propertyInfo.SetValue(requestModel, bindingResult);
-                }
+                IEnumerable<KeyValuePair<string, IEnumerable<string>>> headerArray = context.HttpContext.Request.Headers.Select(header => new KeyValuePair<string, IEnumerable<string>>(header.Key, header.Value));
+                requestModel.SetHeadersToProperties(headerArray);
             }
         }
         catch (Exception exc)

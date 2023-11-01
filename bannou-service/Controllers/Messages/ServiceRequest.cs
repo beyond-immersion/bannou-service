@@ -35,6 +35,7 @@ public abstract class ServiceRequest : ServiceMessage
             {
                 var responseContent = await responseMsg.Content.ReadAsStringAsync();
                 var responseData = JsonConvert.DeserializeObject<T>(responseContent);
+                responseData?.SetHeadersToProperties(responseMsg.Headers);
                 return responseData;
             }
             else
