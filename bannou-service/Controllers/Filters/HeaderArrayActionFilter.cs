@@ -47,8 +47,12 @@ public class HeaderArrayActionFilter : IActionFilter
                     continue;
                 }
 
-                IEnumerable<KeyValuePair<string, IEnumerable<string>>> headerArray = context.HttpContext.Request.Headers.Select(header => new KeyValuePair<string, IEnumerable<string>>(header.Key, header.Value));
-                requestModel.SetHeadersToProperties(headerArray);
+                Dictionary<string, IEnumerable<string>> headerLookup = new();
+                foreach (var headerKVP in context.HttpContext.Request.Headers)
+                    if (!string.IsNullOrWhiteSpace(headerKVP.Key) && headerKVP.Value.Any())
+                        headerLookup[headerKVP.Key] = headerKVP.Value;
+
+                requestModel.SetHeadersToProperties(headerLookup);
             }
         }
         catch (Exception exc)
@@ -75,7 +79,7 @@ public class HeaderArrayActionFilter : IActionFilter
                         continue;
 
                     // generate header array from property value
-                    var headersToSet = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyInfo, propertyValue, headerAttr);
+                    var headersToSet = ServiceMessage.SetHeaderArrayPropertyToHeaders(propertyInfo, propertyValue, headerAttr);
                     foreach (var header in headersToSet)
                     {
                         Program.Logger.Log(LogLevel.Warning, $"Setting header {header.Item1} to value {JArray.FromObject(header.Item2).ToString(Formatting.None)}.");

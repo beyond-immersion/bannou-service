@@ -16,6 +16,9 @@ public abstract class ServiceMessage
 
     public virtual void SetHeadersToProperties(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
     {
+        if (headers == null || !headers.Any())
+            return;
+
         foreach (var propertyInfo in GetType().GetProperties())
         {
             var headerAttr = propertyInfo.GetCustomAttributes<HeaderArrayAttribute>(true).FirstOrDefault();
