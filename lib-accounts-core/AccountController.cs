@@ -29,6 +29,8 @@ public class AccountController : Controllers.BaseDaprController
     {
         try
         {
+            Program.Logger.Log(LogLevel.Warning, $"User ID in account/create request: {request.RequestIDs?.GetValueOrDefault("USER_ID")}");
+
             // no identities provided
             if (string.IsNullOrWhiteSpace(request.Username) &&
                 string.IsNullOrWhiteSpace(request.Email) &&
@@ -61,6 +63,8 @@ public class AccountController : Controllers.BaseDaprController
             response.ProfileClaims = accountData.ProfileClaims;
             response.RoleClaims = accountData.RoleClaims;
             response.ScopeClaims = accountData.ScopeClaims;
+
+            Program.Logger.Log(LogLevel.Warning, $"User ID in account/create response: {response.RequestIDs?.GetValueOrDefault("USER_ID")}");
             return Ok(response);
         }
         catch (Exception exc)
