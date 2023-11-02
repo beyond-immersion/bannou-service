@@ -1,9 +1,7 @@
-﻿using Google.Api;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace BeyondImmersion.BannouService.Controllers.Filters;
 
@@ -17,6 +15,12 @@ public class HeaderArrayActionFilter : IActionFilter
     {
         try
         {
+            if (context.HttpContext.Request.Headers == null || !context.HttpContext.Request.Headers.Any())
+            {
+                Program.Logger.Log(LogLevel.Warning, $"No request headers found.");
+                return;
+            }
+
             var serviceRequestParamsKVP = context.ActionArguments.Where(
                 t => t.Value != null &&
                 t.Value.GetType().IsAssignableTo(typeof(ServiceRequest)));

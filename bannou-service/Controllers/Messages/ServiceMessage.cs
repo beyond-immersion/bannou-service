@@ -18,7 +18,7 @@ public abstract class ServiceMessage
         if (headers == null || !headers.Any())
             return;
 
-        foreach (var propertyInfo in GetType().GetProperties())
+        foreach (var propertyInfo in GetType().GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy))
         {
             var headerAttr = propertyInfo.GetCustomAttributes<HeaderArrayAttribute>(true).FirstOrDefault();
             if (headerAttr == null)

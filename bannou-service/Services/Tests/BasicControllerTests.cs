@@ -106,16 +106,7 @@ public static class BasicControllerTests
             return false;
         }
 
-        var headerValueMsg = JArray.FromObject(headerValues).ToString(Formatting.None);
-        if (headerValueMsg == null)
-        {
-            Program.Logger.Log(LogLevel.Error, "Failed to print 'REQUEST_IDS' from request headers.");
-            return false;
-        }
-
-        Program.Logger.Log(LogLevel.Warning, $"Value of 'REQUEST_IDS' headers for test method [{nameof(Post_ObjectModel_HeaderArrays)}]: {headerValueMsg}");
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
-
         if (service.LastTestRequest == null)
         {
             Program.Logger.Log(LogLevel.Error, "The cached 'last request' for the testing service is null / missing. " +
