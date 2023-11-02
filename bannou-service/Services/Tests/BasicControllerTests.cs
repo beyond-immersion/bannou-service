@@ -106,6 +106,7 @@ public static class BasicControllerTests
             return false;
         }
 
+        Program.Logger.Log(LogLevel.Warning, $"'REQUEST_IDS' header values: {JArray.FromObject(headerValues).ToString(Formatting.None)}.");
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
         if (service.LastTestRequest == null)
         {

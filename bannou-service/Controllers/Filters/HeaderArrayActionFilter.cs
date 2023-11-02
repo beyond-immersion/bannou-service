@@ -38,14 +38,14 @@ public class HeaderArrayActionFilter : IActionFilter
 
                 if (requestModel == null)
                 {
-                    Program.Logger.Log(LogLevel.Warning, $"Parameter {parameterName} in request model {requestModel?.GetType().Name} is null / missing.");
+                    Program.Logger.Log(LogLevel.Warning, $"Parameter [{parameterName}] in request model [{requestModel?.GetType().Name}] is null / missing.");
                     continue;
                 }
 
                 var modelValidationState = context.ModelState[parameterName]?.ValidationState;
                 if (modelValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid)
                 {
-                    Program.Logger.Log(LogLevel.Error, $"Model state {modelValidationState} not valid for param {parameterName} in request model {requestModel?.GetType().Name}. " +
+                    Program.Logger.Log(LogLevel.Error, $"Model state [{modelValidationState}] not valid for param [{parameterName}] in request model [{requestModel?.GetType().Name}]. " +
                         $"Cannot transfer headers to request model.");
 
                     continue;
@@ -53,8 +53,16 @@ public class HeaderArrayActionFilter : IActionFilter
 
                 Dictionary<string, IEnumerable<string>> headerLookup = new();
                 foreach (var headerKVP in context.HttpContext.Request.Headers)
+                {
                     if (!string.IsNullOrWhiteSpace(headerKVP.Key) && headerKVP.Value.Any())
+                    {
+                        var headerName = headerKVP.Key;
+                        var headerValues = headerKVP.Value;
+                        Program.Logger.Log(LogLevel.Warning, $"Found header [{headerName}] with value [{JArray.FromObject(headerValues).ToString(Formatting.None)}].");
+
                         headerLookup[headerKVP.Key] = headerKVP.Value;
+                    }
+                }
 
                 requestModel.SetHeadersToProperties(headerLookup);
             }
