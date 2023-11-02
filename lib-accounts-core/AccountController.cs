@@ -39,8 +39,8 @@ public class AccountController : Controllers.BaseDaprController
                 return BadRequest();
 
             IAccountService.AccountData? accountData = await Service.CreateAccount(
-                request.Email, request.EmailVerified, request.TwoFactorEnabled, request.Username, request.Password,
-                request.SteamID, request.SteamToken, request.GoogleID, request.GoogleToken,
+                request.Email, request.EmailVerified, request.TwoFactorEnabled, request.Region,
+                request.Username, request.Password, request.SteamID, request.SteamToken, request.GoogleID, request.GoogleToken,
                 request.RoleClaims, request.AppClaims, request.ScopeClaims, request.IdentityClaims, request.ProfileClaims);
 
             if (accountData == null)
@@ -51,6 +51,7 @@ public class AccountController : Controllers.BaseDaprController
             response.Username = accountData.Username;
             response.Email = accountData.Email;
             response.EmailVerified = accountData.EmailVerified;
+            response.Region = accountData.Region;
             response.SecurityToken = accountData.SecurityToken;
             response.TwoFactorEnabled = accountData.TwoFactorEnabled;
             response.LockoutEnd = accountData.LockoutEnd;
@@ -95,6 +96,7 @@ public class AccountController : Controllers.BaseDaprController
             response.Username = accountData.Username;
             response.Email = accountData.Email;
             response.EmailVerified = accountData.EmailVerified;
+            response.Region = accountData.Region;
             response.SecurityToken = accountData.SecurityToken;
             response.TwoFactorEnabled = accountData.TwoFactorEnabled;
             response.LockoutEnd = accountData.LockoutEnd;

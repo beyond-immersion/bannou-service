@@ -10,6 +10,7 @@ public static class SqlScripts
     /// - @Email                string?
     /// - @EmailVerified        bool?
     /// - @TwoFactorEnabled     bool?
+    /// - @Region               string?
     /// - @Username             string?
     /// - @PasswordData         string?
     /// - @GoogleUserId         string?
@@ -18,8 +19,8 @@ public static class SqlScripts
     /// - @SteamData            string?
     /// </summary>
     public const string AddUser = @"
-INSERT INTO `Users` (`Username`, `SecurityToken`, `Email`, `EmailVerified`, `TwoFactorEnabled`)
-VALUES (@Username, @SecurityToken, @Email, @EmailVerified, @TwoFactorEnabled);
+INSERT INTO `Users` (`Username`, `SecurityToken`, `Email`, `Region`, `EmailVerified`, `TwoFactorEnabled`)
+VALUES (@Username, @SecurityToken, @Email, @Region, @EmailVerified, @TwoFactorEnabled);
 SET @lastUserId := LAST_INSERT_ID();
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
@@ -56,6 +57,7 @@ SELECT * FROM `Users` WHERE `Id` = @lastUserId;";
     /// - @Email                string?
     /// - @EmailVerified        bool?
     /// - @TwoFactorEnabled     bool?
+    /// - @Region               string?
     /// - @Username             string?
     /// - @PasswordData         string?
     /// - @GoogleUserId         string?
@@ -69,12 +71,12 @@ SELECT * FROM `Users` WHERE `Id` = @lastUserId;";
     /// - @ProfileClaims        (string,string,...)?
     /// </summary>
     public const string AddUser_WithClaims = @"
-INSERT INTO `Users` (`Username`, `SecurityToken`, `Email`, `EmailVerified`, `TwoFactorEnabled`)
-VALUES (@Username, @SecurityToken, @Email, @EmailVerified, @TwoFactorEnabled);
+INSERT INTO `Users` (`Username`, `SecurityToken`, `Email`, `Region`, `EmailVerified`, `TwoFactorEnabled`)
+VALUES (@Username, @SecurityToken, @Email, @Region, @EmailVerified, @TwoFactorEnabled);
 SET @lastUserId := LAST_INSERT_ID();
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-SELECT 
+SELECT
     @lastUserId,
     (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password'),
     @Username,
@@ -82,7 +84,7 @@ SELECT
 WHERE @Username IS NOT NULL AND @PasswordData IS NOT NULL;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-SELECT 
+SELECT
     @lastUserId,
     (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google'),
     @GoogleUserId,
@@ -90,7 +92,7 @@ SELECT
 WHERE @GoogleUserId IS NOT NULL AND @GoogleData IS NOT NULL;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-SELECT 
+SELECT
     @lastUserId,
     (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam'),
     @SteamUserId,
@@ -308,7 +310,6 @@ CREATE TABLE IF NOT EXISTS `Users` (
 
     /// <summary>
     /// Create `LoginProviders` reference table.
-
     /// </summary>
     public const string CreateTable_LoginProviders = @"
 CREATE TABLE IF NOT EXISTS `LoginProviders` (
@@ -317,7 +318,7 @@ CREATE TABLE IF NOT EXISTS `LoginProviders` (
 ) ENGINE = InnoDB;";
 
     /// <summary>
-    /// Create `LoginProviders` reference table and initialize it with default supported providers.
+    /// Create `LoginProviders` reference table and initialize it with defaults.
     /// </summary>
     public const string CreateTable_LoginProviders_Initialize = @"
 CREATE TABLE IF NOT EXISTS `LoginProviders` (
@@ -353,7 +354,7 @@ CREATE TABLE IF NOT EXISTS `ClaimTypes` (
 ) ENGINE = InnoDB;";
 
     /// <summary>
-    /// Create `ClaimTypes` reference table and initialize it with default supported claim types.
+    /// Create `ClaimTypes` reference table and initialize it with defaults.
     /// </summary>
     public const string CreateTable_ClaimTypes_Initialize = @"
 CREATE TABLE IF NOT EXISTS `ClaimTypes` (

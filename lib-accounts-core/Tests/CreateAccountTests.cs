@@ -30,6 +30,7 @@ public static class CreateAccountTests
             Email = null,
             EmailVerified = false,
             TwoFactorEnabled = false,
+            Region = null,
             Username = $"TestUser_{userID}",
             Password = "SimpleReadablePassword",
             SteamID = null,
@@ -61,6 +62,7 @@ public static class CreateAccountTests
             Email = $"TestEmail@{userID}",
             EmailVerified = true,
             TwoFactorEnabled = true,
+            Region = null,
             Username = null,
             Password = null,
             SteamID = null,
@@ -88,6 +90,7 @@ public static class CreateAccountTests
             Email = $"TestEmail@{userID}",
             EmailVerified = true,
             TwoFactorEnabled = true,
+            Region = null,
             Username = null,
             Password = null,
             SteamID = $"USER_{userID}",
@@ -115,6 +118,7 @@ public static class CreateAccountTests
             Email = $"TestEmail@{userID}",
             EmailVerified = true,
             TwoFactorEnabled = true,
+            Region = null,
             Username = $"USER_{userID}",
             Password = "SimpleReadablePassword",
             SteamID = $"USER_{userID}",
@@ -184,6 +188,12 @@ public static class CreateAccountTests
         if (requestModel.TwoFactorEnabled != responseModel.TwoFactorEnabled)
         {
             Program.Logger.Log(LogLevel.Error, $"Test response TwoFactorEnabled {responseModel.TwoFactorEnabled} does not match request TwoFactorEnabled {requestModel.TwoFactorEnabled}.");
+            return false;
+        }
+
+        if (!string.Equals(requestModel.Region, responseModel.Region))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test response Email {responseModel.Region} does not match request Email {requestModel.Region}.");
             return false;
         }
 

@@ -52,16 +52,13 @@ public abstract class ServiceMessage
         {
             var headerAttr = propertyInfo.GetCustomAttributes<HeaderArrayAttribute>(true).FirstOrDefault();
             if (headerAttr == null)
-            {
-                Program.Logger.Log(LogLevel.Warning, "Appropriate headers for transfer not found- moving on...");
                 continue;
-            }
 
             var headerName = headerAttr.Name ?? propertyInfo.Name;
             var headerStrings = headers.FirstOrDefault(t => string.Equals(headerName, t.Key, StringComparison.InvariantCultureIgnoreCase)).Value;
             if (headerStrings == null || !headerStrings.Any())
             {
-                Program.Logger.Log(LogLevel.Warning, $"No values were found for header {headerName} bound to property {propertyInfo.Name}.");
+                Program.Logger.Log(LogLevel.Debug, $"No values were found for header {headerName} bound to property {propertyInfo.Name}.");
                 continue;
             }
 
@@ -72,7 +69,6 @@ public abstract class ServiceMessage
                 continue;
             }
 
-            Program.Logger.Log(LogLevel.Warning, $"Packing headers {JArray.FromObject(headerStrings).ToString(Formatting.None)} into property {propertyInfo.Name}.");
             propertyInfo.SetValue(this, bindingResult);
         }
     }

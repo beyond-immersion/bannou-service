@@ -119,7 +119,7 @@ public class AccountService : IAccountService
             await dbConnection.CloseAsync();
 
             // should move to DTO later
-            int resUserID = (int)userResult.Id;
+            var resUserID = (int)userResult.Id;
             string resSecurityToken = userResult.SecurityToken;
             string? resUsername = userResult.Username;
             string? resEmail = userResult.Email;
@@ -177,7 +177,7 @@ public class AccountService : IAccountService
         }
     }
 
-    async Task<IAccountService.AccountData?> IAccountService.CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled,
+    async Task<IAccountService.AccountData?> IAccountService.CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? region,
         string? username, string? password, string? steamID, string? steamToken, string? googleID, string? googleToken,
         HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims)
     {
@@ -255,6 +255,7 @@ public class AccountService : IAccountService
                 Email = email,
                 EmailVerified = emailVerified,
                 TwoFactorEnabled = twoFactorEnabled,
+                Region = region,
                 Username = username,
                 PasswordData = passwordData?.ToString(Newtonsoft.Json.Formatting.None),
                 GoogleUserId = googleID,
@@ -279,12 +280,13 @@ public class AccountService : IAccountService
                 throw new NullReferenceException(nameof(userResult));
 
             // should move to DTO later
-            int resUserID = (int)userResult.Id;
+            var resUserID = (int)userResult.Id;
             string resSecurityToken = userResult.SecurityToken;
             string? resUsername = userResult.Username;
             string? resEmail = userResult.Email;
             bool resEmailVerified = userResult.EmailVerified;
             bool resTwoFactorEnabled = userResult.TwoFactorEnabled;
+            string? resRegion = userResult.Region;
             DateTime resCreatedAt = userResult.CreatedAt;
             DateTime resUpdatedAt = userResult.UpdatedAt ?? resCreatedAt;
             DateTime resLastLoginAt = userResult.LastLoginAt ?? resCreatedAt;
@@ -299,6 +301,7 @@ public class AccountService : IAccountService
                 Email = resEmail,
                 EmailVerified = resEmailVerified,
                 TwoFactorEnabled = resTwoFactorEnabled,
+                Region = resRegion,
                 LockoutEnd = resLockoutEnd,
                 LastLoginAt = resLastLoginAt,
                 UpdatedAt = resUpdatedAt,

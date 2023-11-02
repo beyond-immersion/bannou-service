@@ -14,6 +14,7 @@ public interface IAccountService : IDaprService
         public int ID { get; set; }
         public string? Username { get; set; }
         public string? Email { get; set; }
+        public string? Region { get; set; }
         public bool EmailVerified { get; set; }
         public string SecurityToken { get; set; }
         public bool TwoFactorEnabled { get; set; }
@@ -41,7 +42,7 @@ public interface IAccountService : IDaprService
     Task<AccountData?> GetAccount(bool includeClaims = false, string? guid = null, string? username = null, string? email = null,
         string? steamID = null, string? googleID = null, string? identityClaim = null);
 
-    Task<AccountData?> CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? username, string? password,
+    Task<AccountData?> CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? region, string? username, string? password,
         string? steamID, string? steamToken, string? googleID, string? googleToken,
         HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims);
 

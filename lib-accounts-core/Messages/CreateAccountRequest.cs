@@ -52,6 +52,13 @@ public class CreateAccountRequest : ServiceRequest<CreateAccountResponse>
     public string? Email { get; set; }
 
     /// <summary>
+    /// Account creation region- optional.
+    /// Used in routing + metrics.
+    /// </summary>
+    [JsonProperty("region")]
+    public string? Region { get; set; }
+
+    /// <summary>
     /// Whether the email should be considered verified.
     /// </summary>
     [JsonProperty("email_verified")]

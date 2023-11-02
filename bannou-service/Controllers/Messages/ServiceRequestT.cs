@@ -29,19 +29,13 @@ public class ServiceRequest<T> : ServiceRequest
                 .Where(t => t.GetCustomAttribute<HeaderArrayAttribute>(true) != null);
 
             if (requestProps == null || !requestProps.Any())
-            {
-                Program.Logger.Log(LogLevel.Error, $"A problem occurred attempting to fetch header properties on request type [{requestType.Name}].");
                 return responseObj;
-            }
 
             var responseProps = responseType.GetProperties(BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
                 .Where(t => t.GetCustomAttribute<HeaderArrayAttribute>(true) != null);
 
             if (responseProps == null || !responseProps.Any())
-            {
-                Program.Logger.Log(LogLevel.Error, $"A problem occurred attempting to fetch header properties on response type [{responseType.Name}].");
                 return responseObj;
-            }
 
             foreach (var responseProp in responseProps)
             {

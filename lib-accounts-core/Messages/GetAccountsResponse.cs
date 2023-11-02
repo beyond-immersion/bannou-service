@@ -28,6 +28,13 @@ public class GetAccountsResponse : ServiceResponse
     public string? Email { get; set; }
 
     /// <summary>
+    /// Account creation region.
+    /// Used in routing + metrics.
+    /// </summary>
+    [JsonProperty("region")]
+    public string? Region { get; set; }
+
+    /// <summary>
     /// Whether the email address has been verified by the client
     /// yet.
     /// </summary>
