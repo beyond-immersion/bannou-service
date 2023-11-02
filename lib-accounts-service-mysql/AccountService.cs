@@ -123,6 +123,7 @@ public class AccountService : IAccountService
             string resSecurityToken = userResult.SecurityToken;
             string? resUsername = userResult.Username;
             string? resEmail = userResult.Email;
+            string? resRegion = userResult.Region;
             bool resEmailVerified = userResult.EmailVerified;
             bool resTwoFactorEnabled = userResult.TwoFactorEnabled;
             DateTime resCreatedAt = userResult.CreatedAt;
@@ -139,6 +140,7 @@ public class AccountService : IAccountService
                 Email = resEmail,
                 EmailVerified = resEmailVerified,
                 TwoFactorEnabled = resTwoFactorEnabled,
+                Region = resRegion,
                 LockoutEnd = resLockoutEnd,
                 LastLoginAt = resLastLoginAt,
                 UpdatedAt = resUpdatedAt,
