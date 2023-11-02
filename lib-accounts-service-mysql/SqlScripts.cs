@@ -334,7 +334,7 @@ CREATE TABLE IF NOT EXISTS `UserLogins` (
     `Id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `UserId` INT UNSIGNED NOT NULL,
     `LoginProviderId` INT UNSIGNED NOT NULL,
-    `LoginProviderUserId` VARCHAR(255) UNIQUE NOT NULL,
+    `LoginProviderUserId` VARCHAR(255) NOT NULL,
     `LoginProviderData` VARCHAR(512) NOT NULL,
     INDEX(`LoginProviderUserId`),
     FOREIGN KEY (`UserId`) REFERENCES `Users`(`Id`) ON DELETE CASCADE,
