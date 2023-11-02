@@ -58,7 +58,7 @@ public abstract class ServiceMessage
             }
 
             var headerName = headerAttr.Name ?? propertyInfo.Name;
-            var headerStrings = headers.FirstOrDefault(t => t.Key == headerName).Value;
+            var headerStrings = headers.FirstOrDefault(t => string.Equals(headerName, t.Key, StringComparison.InvariantCultureIgnoreCase)).Value;
             if (headerStrings == null || !headerStrings.Any())
             {
                 Program.Logger.Log(LogLevel.Warning, $"No values were found for header {headerName} bound to property {propertyInfo.Name}.");
