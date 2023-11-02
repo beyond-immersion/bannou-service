@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Primitives;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Controllers.Messages;
@@ -53,7 +52,7 @@ public abstract class ServiceMessage
         var messageType = GetType();
         var headersToSet = new List<(string, string[])>();
 
-        foreach (var propertyInfo in messageType.GetProperties())
+        foreach (PropertyInfo propertyInfo in messageType.GetProperties())
         {
             var headerAttr = propertyInfo.GetCustomAttribute<HeaderArrayAttribute>();
             if (headerAttr == null)

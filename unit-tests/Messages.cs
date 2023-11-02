@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Controllers.Messages;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Xunit.Abstractions;
 
@@ -46,6 +47,127 @@ public class Messages : IClassFixture<CollectionFixture>
     {
         TestCollectionContext = collectionContext;
         Program.Logger = output.BuildLoggerFor<Controllers>();
+    }
+
+    [Fact]
+    public void Messages_SetHeadersToHttpRequest_Derived()
+    {
+        var testID = Guid.NewGuid().ToString();
+        var requestModel = new Request_HeaderProperties_Derived
+        {
+            RequestIDs = new Dictionary<string, string>()
+            {
+                ["TEST_ID"] = testID
+            }
+        };
+
+        HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
+        httpRequest.AddPropertyHeaders(requestModel);
+        Assert.Contains(httpRequest.Headers, t => t.Key == "REQUEST_IDS" && t.Value.Contains($"TEST_ID__{testID}"));
+    }
+
+    [Fact]
+    public void Messages_SetHeadersToHttpRequest_Generic()
+    {
+        var testID = Guid.NewGuid().ToString();
+        var requestModel = new Request_HeaderProperties_Generic
+        {
+            RequestIDs = new Dictionary<string, string>()
+            {
+                ["TEST_ID"] = testID
+            }
+        };
+
+        HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
+        httpRequest.AddPropertyHeaders(requestModel);
+        Assert.Contains(httpRequest.Headers, t => t.Key == "REQUEST_IDS" && t.Value.Contains($"TEST_ID__{testID}"));
+    }
+
+    [Fact]
+    public void Messages_SetHeadersToHttpRequest_GenericDerived()
+    {
+        var testID = Guid.NewGuid().ToString();
+        var requestModel = new Request_HeaderProperties_Generic_Derived
+        {
+            RequestIDs = new Dictionary<string, string>()
+            {
+                ["TEST_ID"] = testID
+            }
+        };
+
+        HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
+        httpRequest.AddPropertyHeaders(requestModel);
+        Assert.Contains(httpRequest.Headers, t => t.Key == "REQUEST_IDS" && t.Value.Contains($"TEST_ID__{testID}"));
+    }
+
+    [Fact]
+    public void Messages_SetHeadersToHttpRequest_Additional()
+    {
+        var testID = Guid.NewGuid().ToString();
+        var requestModel = new Request_HeaderProperties_Additional
+        {
+            RequestIDs = new Dictionary<string, string>()
+            {
+                ["TEST_ID"] = testID
+            }
+        };
+
+        HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
+        httpRequest.AddPropertyHeaders(requestModel);
+        Assert.Contains(httpRequest.Headers, t => t.Key == "REQUEST_IDS" && t.Value.Contains($"TEST_ID__{testID}"));
+    }
+
+    [Fact]
+    public void Messages_SetHeadersToHttpRequest_DerivedResponse()
+    {
+        var testID = Guid.NewGuid().ToString();
+        var requestModel = new Request_HeaderProperties_Generic_Derived_Response
+        {
+            RequestIDs = new Dictionary<string, string>()
+            {
+                ["TEST_ID"] = testID
+            }
+        };
+
+        HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Get, "service/method");
+        httpRequest.AddPropertyHeaders(requestModel);
+        Assert.Contains(httpRequest.Headers, t => t.Key == "REQUEST_IDS" && t.Value.Contains($"TEST_ID__{testID}"));
+    }
+
+    [Fact]
+    public void Messages_GetHeadersFromHttpResponse()
+    {
+        var testID = Guid.NewGuid().ToString();
+        HttpResponseMessage httpResponse = new HttpResponseMessage(statusCode: System.Net.HttpStatusCode.OK);
+        httpResponse.Headers.Add("REQUEST_IDS", $"TEST_ID__{testID}");
+        var responseModel = new Response_HeaderProperties();
+        responseModel.SetHeadersToProperties(httpResponse.Headers);
+        Assert.NotNull(responseModel.RequestIDs);
+        Assert.Contains(responseModel.RequestIDs, t => t.Key == "TEST_ID" && t.Value.Contains(testID));
+    }
+
+    [Fact]
+    public void Messages_GetHeadersFromHttpResponse_Additional()
+    {
+        var testID = Guid.NewGuid().ToString();
+        HttpResponseMessage httpResponse = new HttpResponseMessage(statusCode: System.Net.HttpStatusCode.OK);
+        httpResponse.Headers.Add("REQUEST_IDS", $"TEST_ID__{testID}");
+        var responseModel = new Response_HeaderProperties_Additional();
+        responseModel.SetHeadersToProperties(httpResponse.Headers);
+        Assert.NotNull(responseModel.RequestIDs);
+        Assert.Contains(responseModel.RequestIDs, t => t.Key == "TEST_ID" && t.Value.Contains(testID));
+    }
+
+    [Fact]
+    public void Messages_SetPropertiesToHeaders()
+    {
+        var testID = Guid.NewGuid().ToString();
+        HttpResponseMessage httpResponse = new HttpResponseMessage(statusCode: System.Net.HttpStatusCode.OK);
+        httpResponse.Headers.Add("REQUEST_IDS", $"TEST_ID__{testID}");
+        var responseModel = new Response_HeaderProperties_Additional();
+        responseModel.SetHeadersToProperties(httpResponse.Headers);
+        Assert.NotNull(responseModel.RequestIDs);
+        Assert.Contains(responseModel.RequestIDs, t => t.Key == "TEST_ID" && t.Value.Contains(testID));
     }
 
     [Fact]
