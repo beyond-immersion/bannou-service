@@ -9,21 +9,15 @@ namespace BeyondImmersion.BannouService.Controllers.Messages;
 [JsonObject]
 public abstract class ServiceRequest : ServiceMessage
 {
-    private static HttpClient _httpClient;
     [JsonIgnore]
     protected static HttpClient HttpClient
     {
         get
         {
-            if (_httpClient != null)
-                return _httpClient;
-
-            _httpClient = new HttpClient()
+            return new HttpClient()
             {
                 Timeout = TimeSpan.FromSeconds(1)
             };
-
-            return _httpClient;
         }
     }
 
