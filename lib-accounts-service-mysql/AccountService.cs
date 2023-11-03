@@ -111,26 +111,40 @@ public class AccountService : IAccountService
             if (template == null || parameters == null)
                 throw new ArgumentException("Template or parameters could not be established by the given arguments.");
 
-            var dbConnection = new MySqlConnection(_dbConnectionString);
+            using var dbConnection = new MySqlConnection(_dbConnectionString);
+            dynamic? transactionResult = null;
+
             await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
-            var transaction = await dbConnection.BeginTransactionAsync();
-            var userResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
-            transaction.Commit();
-            await dbConnection.CloseAsync();
+            using (var transaction = await dbConnection.BeginTransactionAsync(Program.ShutdownCancellationTokenSource.Token))
+            {
+                try
+                {
+                    transactionResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
+                    if (transactionResult == null)
+                        throw new NullReferenceException(nameof(transactionResult));
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync(Program.ShutdownCancellationTokenSource.Token);
+                    throw;
+                }
+            }
 
             // should move to DTO later
-            var resUserID = (int)userResult.Id;
-            string resSecurityToken = userResult.SecurityToken;
-            string? resUsername = userResult.Username;
-            string? resEmail = userResult.Email;
-            string? resRegion = userResult.Region;
-            bool resEmailVerified = userResult.EmailVerified;
-            bool resTwoFactorEnabled = userResult.TwoFactorEnabled;
-            DateTime resCreatedAt = userResult.CreatedAt;
-            DateTime resUpdatedAt = userResult.UpdatedAt ?? resCreatedAt;
-            DateTime resLastLoginAt = userResult.LastLoginAt ?? resCreatedAt;
-            DateTime? resRemovedAt = userResult.RemovedAt;
-            DateTime? resLockoutEnd = userResult.LockoutEnd;
+            var resUserID = (int)transactionResult.Id;
+            string resSecurityToken = transactionResult.SecurityToken;
+            string? resUsername = transactionResult.Username;
+            string? resEmail = transactionResult.Email;
+            string? resRegion = transactionResult.Region;
+            bool resEmailVerified = transactionResult.EmailVerified;
+            bool resTwoFactorEnabled = transactionResult.TwoFactorEnabled;
+            DateTime resCreatedAt = transactionResult.CreatedAt;
+            DateTime resUpdatedAt = transactionResult.UpdatedAt ?? resCreatedAt;
+            DateTime resLastLoginAt = transactionResult.LastLoginAt ?? resCreatedAt;
+            DateTime? resRemovedAt = transactionResult.RemovedAt;
+            DateTime? resLockoutEnd = transactionResult.LockoutEnd;
 
             // NOTE: should never be the same as the DTO (if added)
             // or the Controller API response model- stay decoupled
@@ -149,23 +163,23 @@ public class AccountService : IAccountService
 
             if (includeClaims)
             {
-                var claims = userResult.Role?.Split(',');
+                var claims = transactionResult.Role?.Split(',');
                 if (claims != null)
                     responseObj.RoleClaims = new HashSet<string>(claims);
 
-                claims = userResult.App?.Split(',');
+                claims = transactionResult.App?.Split(',');
                 if (claims != null)
                     responseObj.AppClaims = new HashSet<string>(claims);
 
-                claims = userResult.Scope?.Split(',');
+                claims = transactionResult.Scope?.Split(',');
                 if (claims != null)
                     responseObj.ScopeClaims = new HashSet<string>(claims);
 
-                claims = userResult.Identity?.Split(',');
+                claims = transactionResult.Identity?.Split(',');
                 if (claims != null)
                     responseObj.IdentityClaims = new HashSet<string>(claims);
 
-                claims = userResult.Profile?.Split(',');
+                claims = transactionResult.Profile?.Split(',');
                 if (claims != null)
                     responseObj.ProfileClaims = new HashSet<string>(claims);
             }
@@ -271,29 +285,40 @@ public class AccountService : IAccountService
                 ProfileClaims = profileClaims != null ? JArray.FromObject(profileClaims).ToString(Newtonsoft.Json.Formatting.None) : null
             };
 
-            var dbConnection = new MySqlConnection(_dbConnectionString);
-            await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
-            var transaction = await dbConnection.BeginTransactionAsync(Program.ShutdownCancellationTokenSource.Token);
-            var userResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
-            transaction.Commit();
-            await dbConnection.CloseAsync();
+            using var dbConnection = new MySqlConnection(_dbConnectionString);
+            dynamic? transactionResult = null;
 
-            if (userResult == null)
-                throw new NullReferenceException(nameof(userResult));
+            await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
+            using (var transaction = await dbConnection.BeginTransactionAsync(Program.ShutdownCancellationTokenSource.Token))
+            {
+                try
+                {
+                    transactionResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
+                    if (transactionResult == null)
+                        throw new NullReferenceException(nameof(transactionResult));
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync(Program.ShutdownCancellationTokenSource.Token);
+                    throw;
+                }
+            }
 
             // should move to DTO later
-            var resUserID = (int)userResult.Id;
-            string resSecurityToken = userResult.SecurityToken;
-            string? resUsername = userResult.Username;
-            string? resEmail = userResult.Email;
-            bool resEmailVerified = userResult.EmailVerified;
-            bool resTwoFactorEnabled = userResult.TwoFactorEnabled;
-            string? resRegion = userResult.Region;
-            DateTime resCreatedAt = userResult.CreatedAt;
-            DateTime resUpdatedAt = userResult.UpdatedAt ?? resCreatedAt;
-            DateTime resLastLoginAt = userResult.LastLoginAt ?? resCreatedAt;
-            DateTime? resRemovedAt = userResult.RemovedAt;     // null (just created)
-            DateTime? resLockoutEnd = userResult.LockoutEnd;   // null (just created)
+            var resUserID = (int)transactionResult.Id;
+            string resSecurityToken = transactionResult.SecurityToken;
+            string? resUsername = transactionResult.Username;
+            string? resEmail = transactionResult.Email;
+            bool resEmailVerified = transactionResult.EmailVerified;
+            bool resTwoFactorEnabled = transactionResult.TwoFactorEnabled;
+            string? resRegion = transactionResult.Region;
+            DateTime resCreatedAt = transactionResult.CreatedAt;
+            DateTime resUpdatedAt = transactionResult.UpdatedAt ?? resCreatedAt;
+            DateTime resLastLoginAt = transactionResult.LastLoginAt ?? resCreatedAt;
+            DateTime? resRemovedAt = transactionResult.RemovedAt;     // null (just created)
+            DateTime? resLockoutEnd = transactionResult.LockoutEnd;   // null (just created)
 
             // NOTE: should never be the same as the DTO (if added)
             // or the Controller API response model- stay decoupled

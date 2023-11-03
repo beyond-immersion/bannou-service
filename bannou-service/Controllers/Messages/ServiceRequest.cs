@@ -9,22 +9,28 @@ namespace BeyondImmersion.BannouService.Controllers.Messages;
 [JsonObject]
 public abstract class ServiceRequest : ServiceMessage
 {
+    private static HttpClient _httpClient;
     [JsonIgnore]
     protected static HttpClient HttpClient
     {
         get
         {
-            return new HttpClient()
+            if (_httpClient != null)
+                return _httpClient;
+
+            _httpClient = new HttpClient()
             {
                 Timeout = TimeSpan.FromSeconds(1)
             };
+
+            return _httpClient;
         }
     }
 
     [JsonIgnore]
     public ServiceResponse? Response { get; protected set; }
 
-    public virtual async Task<bool> ExecuteRequestToAPI<T>(string? service, string method)
+    public virtual async Task<bool> ExecutePostRequest<T>(string? service, string method)
         where T : ServiceResponse, new()
     {
         if (typeof(ServiceRequest<T>).IsAssignableFrom(GetType()))
@@ -35,16 +41,16 @@ public abstract class ServiceRequest : ServiceMessage
 
             // calling execute on the derived type will also parse and set
             // the more specific Response type that's expected, on success
-            return await derivedRequest.ExecuteRequestToAPI(service, method);
+            return await derivedRequest.ExecutePostRequest(service, method);
         }
 
-        return await ExecuteRequest_INTERNAL<T>(service, method);
+        return await ExecutePostRequest_INTERNAL<T>(service, method);
     }
 
-    public virtual async Task<bool> ExecuteRequestToAPI(string? service, string method)
-        => await ExecuteRequest_INTERNAL(service, method);
+    public virtual async Task<bool> ExecutePostRequest(string? service, string method)
+        => await ExecutePostRequest_INTERNAL(service, method);
 
-    protected async Task<bool> ExecuteRequest_INTERNAL(string? service, string method)
+    protected async Task<bool> ExecutePostRequest_INTERNAL(string? service, string method)
     {
         try
         {
@@ -90,7 +96,7 @@ public abstract class ServiceRequest : ServiceMessage
         return false;
     }
 
-    protected async Task<bool> ExecuteRequest_INTERNAL<T>(string? service, string method)
+    protected async Task<bool> ExecutePostRequest_INTERNAL<T>(string? service, string method)
         where T : ServiceResponse, new()
     {
         try

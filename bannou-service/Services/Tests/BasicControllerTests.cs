@@ -154,9 +154,9 @@ public static class BasicControllerTests
             }
         };
 
-        if (!await dataModel.ExecuteRequestToAPI(CONTROLLER_NAME, ACTION_NAME))
+        if (!await dataModel.ExecutePostRequest(CONTROLLER_NAME, ACTION_NAME))
         {
-            Program.Logger.Log(LogLevel.Error, $"Failure to execute testing API with [{nameof(ServiceRequest.ExecuteRequestToAPI)}] helper method.");
+            Program.Logger.Log(LogLevel.Error, $"Failure to execute testing API with [{nameof(ServiceRequest.ExecutePostRequest)}] helper method.");
             return false;
         }
 

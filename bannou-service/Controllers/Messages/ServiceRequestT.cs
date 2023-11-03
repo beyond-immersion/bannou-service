@@ -11,9 +11,9 @@ public class ServiceRequest<T> : ServiceRequest
 {
     public new T? Response { get; protected set; }
 
-    public new virtual async Task<bool> ExecuteRequestToAPI(string? service, string method)
+    public new virtual async Task<bool> ExecutePostRequest(string? service, string method)
     {
-        var result = await ExecuteRequest_INTERNAL<T>(service, method);
+        var result = await ExecutePostRequest_INTERNAL<T>(service, method);
         if (!result)
         {
             this.Response = null;
