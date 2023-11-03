@@ -156,7 +156,7 @@ WHERE u.`Id` = @UserId
 GROUP BY u.`Id`;";
 
     /// <summary>
-    /// Get user by Guid.
+    /// Get user by Id.
     /// 
     /// Named Parameters:
     /// - @UserId           string

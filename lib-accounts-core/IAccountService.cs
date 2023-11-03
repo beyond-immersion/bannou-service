@@ -1,4 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Services;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -39,10 +40,28 @@ public interface IAccountService : IDaprService
         }
     }
 
-    Task<AccountData?> GetAccount(bool includeClaims = false, string? guid = null, string? username = null, string? email = null,
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns>
+    ///     <see cref="HttpStatusCode.OK"/>
+    ///     <see cref="HttpStatusCode.BadRequest"/>
+    ///     <see cref="HttpStatusCode.NotFound"/>
+    ///     <see cref="HttpStatusCode.InternalServerError"/>
+    /// </returns>
+    Task<(HttpStatusCode, AccountData?)> GetAccount(bool includeClaims = false, int? id = null, string? username = null, string? email = null,
         string? steamID = null, string? googleID = null, string? identityClaim = null);
 
-    Task<AccountData?> CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? region, string? username, string? password,
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns>
+    ///     <see cref="HttpStatusCode.OK"/>,
+    ///     <see cref="HttpStatusCode.BadRequest"/>,
+    ///     <see cref="HttpStatusCode.Conflict"/>,
+    ///     <see cref="HttpStatusCode.InternalServerError"/>
+    /// </returns>
+    Task<(HttpStatusCode, AccountData?)> CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? region, string? username, string? password,
         string? steamID, string? steamToken, string? googleID, string? googleToken,
         HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims);
 

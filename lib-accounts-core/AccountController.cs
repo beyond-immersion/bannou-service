@@ -3,6 +3,7 @@ using System.Net.Mime;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Accounts.Messages;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace BeyondImmersion.BannouService.Accounts;
 
@@ -36,32 +37,44 @@ public class AccountController : Controllers.BaseDaprController
                 request.IdentityClaims.Count == 0))
                 return BadRequest();
 
-            IAccountService.AccountData? accountData = await Service.CreateAccount(
+            (HttpStatusCode, IAccountService.AccountData?) accountData = await Service.CreateAccount(
                 request.Email, request.EmailVerified, request.TwoFactorEnabled, request.Region,
                 request.Username, request.Password, request.SteamID, request.SteamToken, request.GoogleID, request.GoogleToken,
                 request.RoleClaims, request.AppClaims, request.ScopeClaims, request.IdentityClaims, request.ProfileClaims);
 
-            if (accountData == null)
-                return StatusCode(500);
+            switch (accountData.Item1)
+            {
+                case HttpStatusCode.OK:
+                    if (accountData.Item2 == null)
+                        return StatusCode(500);
+                    break;
+                case HttpStatusCode.BadRequest:
+                    return BadRequest();
+                case HttpStatusCode.Conflict:
+                    return Conflict();
+                default:
+                    return StatusCode(500);
+            }
 
+            var userAccount = accountData.Item2;
             var response = request.CreateResponse();
-            response.ID = accountData.ID;
-            response.Username = accountData.Username;
-            response.Email = accountData.Email;
-            response.EmailVerified = accountData.EmailVerified;
-            response.Region = accountData.Region;
-            response.SecurityToken = accountData.SecurityToken;
-            response.TwoFactorEnabled = accountData.TwoFactorEnabled;
-            response.LockoutEnd = accountData.LockoutEnd;
-            response.LastLoginAt = accountData.LastLoginAt;
-            response.CreatedAt = accountData.CreatedAt;
-            response.UpdatedAt = accountData.UpdatedAt;
-            response.RemovedAt = accountData.RemovedAt;
-            response.AppClaims = accountData.AppClaims;
-            response.IdentityClaims = accountData.IdentityClaims;
-            response.ProfileClaims = accountData.ProfileClaims;
-            response.RoleClaims = accountData.RoleClaims;
-            response.ScopeClaims = accountData.ScopeClaims;
+            response.ID = userAccount.ID;
+            response.Username = userAccount.Username;
+            response.Email = userAccount.Email;
+            response.EmailVerified = userAccount.EmailVerified;
+            response.Region = userAccount.Region;
+            response.SecurityToken = userAccount.SecurityToken;
+            response.TwoFactorEnabled = userAccount.TwoFactorEnabled;
+            response.LockoutEnd = userAccount.LockoutEnd;
+            response.LastLoginAt = userAccount.LastLoginAt;
+            response.CreatedAt = userAccount.CreatedAt;
+            response.UpdatedAt = userAccount.UpdatedAt;
+            response.RemovedAt = userAccount.RemovedAt;
+            response.AppClaims = userAccount.AppClaims;
+            response.IdentityClaims = userAccount.IdentityClaims;
+            response.ProfileClaims = userAccount.ProfileClaims;
+            response.RoleClaims = userAccount.RoleClaims;
+            response.ScopeClaims = userAccount.ScopeClaims;
             return Ok(response);
         }
         catch (Exception exc)
@@ -77,34 +90,49 @@ public class AccountController : Controllers.BaseDaprController
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(request.GUID) &&
+            if (request.ID == null &&
                 string.IsNullOrWhiteSpace(request.Username) &&
                 string.IsNullOrWhiteSpace(request.Email) &&
                 string.IsNullOrWhiteSpace(request.IdentityClaim))
                 return BadRequest();
 
-            IAccountService.AccountData? accountData = await Service.GetAccount(false, request.GUID, request.Username, request.Email, request.IdentityClaim);
-            if (accountData == null)
-                return NotFound();
+            (HttpStatusCode, IAccountService.AccountData?) accountData = await Service.GetAccount(
+                includeClaims: false, id: request.ID, username: request.Username, email: request.Email,
+                steamID: request.SteamID, googleID: request.GoogleID, identityClaim: request.IdentityClaim);
 
+            switch (accountData.Item1)
+            {
+                case HttpStatusCode.OK:
+                    if (accountData.Item2 == null)
+                        return NotFound();
+                    break;
+                case HttpStatusCode.BadRequest:
+                    return BadRequest();
+                case HttpStatusCode.NotFound:
+                    return NotFound();
+                default:
+                    return StatusCode(500);
+            }
+
+            var userAccount = accountData.Item2;
             var response = request.CreateResponse();
-            response.ID = accountData.ID;
-            response.Username = accountData.Username;
-            response.Email = accountData.Email;
-            response.EmailVerified = accountData.EmailVerified;
-            response.Region = accountData.Region;
-            response.SecurityToken = accountData.SecurityToken;
-            response.TwoFactorEnabled = accountData.TwoFactorEnabled;
-            response.LockoutEnd = accountData.LockoutEnd;
-            response.LastLoginAt = accountData.LastLoginAt;
-            response.CreatedAt = accountData.CreatedAt;
-            response.UpdatedAt = accountData.UpdatedAt;
-            response.RemovedAt = accountData.RemovedAt;
-            response.AppClaims = accountData.AppClaims;
-            response.IdentityClaims = accountData.IdentityClaims;
-            response.ProfileClaims = accountData.ProfileClaims;
-            response.RoleClaims = accountData.RoleClaims;
-            response.ScopeClaims = accountData.ScopeClaims;
+            response.ID = userAccount.ID;
+            response.Username = userAccount.Username;
+            response.Email = userAccount.Email;
+            response.EmailVerified = userAccount.EmailVerified;
+            response.Region = userAccount.Region;
+            response.SecurityToken = userAccount.SecurityToken;
+            response.TwoFactorEnabled = userAccount.TwoFactorEnabled;
+            response.LockoutEnd = userAccount.LockoutEnd;
+            response.LastLoginAt = userAccount.LastLoginAt;
+            response.CreatedAt = userAccount.CreatedAt;
+            response.UpdatedAt = userAccount.UpdatedAt;
+            response.RemovedAt = userAccount.RemovedAt;
+            response.AppClaims = userAccount.AppClaims;
+            response.IdentityClaims = userAccount.IdentityClaims;
+            response.ProfileClaims = userAccount.ProfileClaims;
+            response.RoleClaims = userAccount.RoleClaims;
+            response.ScopeClaims = userAccount.ScopeClaims;
             return Ok(response);
         }
         catch (Exception exc)

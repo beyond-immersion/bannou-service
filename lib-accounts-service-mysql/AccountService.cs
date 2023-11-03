@@ -6,6 +6,7 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
+using System.Net;
 
 namespace BeyondImmersion.BannouService.Accounts;
 
@@ -61,7 +62,7 @@ public class AccountService : IAccountService
         await dbConnection.CloseAsync();
     }
 
-    async Task<IAccountService.AccountData?> IAccountService.GetAccount(bool includeClaims, string? guid, string? username, string? email,
+    async Task<(HttpStatusCode, IAccountService.AccountData?)> IAccountService.GetAccount(bool includeClaims, int? id, string? username, string? email,
         string? steamID, string? googleID, string? identityClaim)
     {
         try
@@ -69,16 +70,14 @@ public class AccountService : IAccountService
             if (_dbConnectionString == null)
                 throw new SystemException("Database connection string not found.");
 
-            Program.Logger.Log(LogLevel.Warning, $"Executing 'account/get' service function with connection string '{_dbConnectionString}'.");
-
             var builder = new SqlBuilder();
             SqlBuilder.Template? template = null;
             object? parameters = null;
 
-            if (!string.IsNullOrWhiteSpace(guid))
+            if (id != null)
             {
                 template = builder.AddTemplate(includeClaims ? SqlScripts.GetUser_ById_WithClaims : SqlScripts.GetUser_ById);
-                parameters = new { UserId = guid };
+                parameters = new { UserId = id };
             }
             else if (!string.IsNullOrWhiteSpace(email))
             {
@@ -109,7 +108,7 @@ public class AccountService : IAccountService
             { }
 
             if (template == null || parameters == null)
-                throw new ArgumentException("Template or parameters could not be established by the given arguments.");
+                return (HttpStatusCode.BadRequest, null);
 
             using var dbConnection = new MySqlConnection(_dbConnectionString);
             dynamic? transactionResult = null;
@@ -184,16 +183,16 @@ public class AccountService : IAccountService
                     responseObj.ProfileClaims = new HashSet<string>(claims);
             }
 
-            return responseObj;
+            return (HttpStatusCode.OK, responseObj);
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while fetching the user account.");
-            return null;
+            return (HttpStatusCode.InternalServerError, null);
         }
     }
 
-    async Task<IAccountService.AccountData?> IAccountService.CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? region,
+    async Task<(HttpStatusCode, IAccountService.AccountData?)> IAccountService.CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? region,
         string? username, string? password, string? steamID, string? steamToken, string? googleID, string? googleToken,
         HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims)
     {
@@ -201,8 +200,6 @@ public class AccountService : IAccountService
         {
             if (_dbConnectionString == null)
                 throw new SystemException("Database connection string not found.");
-
-            Program.Logger.Log(LogLevel.Warning, $"Executing 'account/create' service function with connection string '{_dbConnectionString}'.");
 
             if (identityClaims != null)
                 identityClaims = new HashSet<string>(identityClaims);
@@ -243,8 +240,7 @@ public class AccountService : IAccountService
 
             // if a third-party identity claim is provided, the account can be accessed through that, but otherwise...
             if ((string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password)) && identityClaims.Count == 0)
-                throw new ArgumentException("No valid identities provided to create account. " +
-                    "Resulting account would have no manner of access than by GUID, and this is disallowed to prevent orphans.");
+                return (HttpStatusCode.BadRequest, null);
 
             string? passwordSalt = null;
             string? hashedPassword = null;
@@ -340,12 +336,17 @@ public class AccountService : IAccountService
                 ProfileClaims = profileClaims?.ToHashSet()
             };
 
-            return responseObj;
+            return (HttpStatusCode.OK, responseObj);
+        }
+        catch (MySqlException exc) when (exc.Number == 1062)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, $"A duplicate user account already exists with the provided keys.");
+            return (HttpStatusCode.Conflict, null);
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while inserting and fetching the new user account.");
-            return null;
+            return (HttpStatusCode.InternalServerError, null);
         }
     }
 

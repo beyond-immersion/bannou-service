@@ -51,12 +51,14 @@ public static class CreateAccountTests
         if (!await requestModel.ExecutePostRequest("account", "create"))
             return false;
 
-        if (!ValidateCreateResponse(requestModel, requestModel.Response))
+        if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        // try again, and should fail for being a duplicate user entry
         if (await requestModel.ExecutePostRequest("account", "create"))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Duplicate entry was able to be created for user account.");
             return false;
+        }
 
         return true;
     }
@@ -87,7 +89,16 @@ public static class CreateAccountTests
         if (!await requestModel.ExecutePostRequest("account", "create"))
             return false;
 
-        return ValidateCreateResponse(requestModel, requestModel.Response);
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        if (await requestModel.ExecutePostRequest("account", "create"))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Duplicate entry was able to be created for user account.");
+            return false;
+        }
+
+        return true;
     }
 
     private static async Task<bool> CreateAccount_SteamOAUTH(TestingService service)
@@ -116,7 +127,16 @@ public static class CreateAccountTests
         if (!await requestModel.ExecutePostRequest("account", "create"))
             return false;
 
-        return ValidateCreateResponse(requestModel, requestModel.Response);
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        if (await requestModel.ExecutePostRequest("account", "create"))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Duplicate entry was able to be created for user account.");
+            return false;
+        }
+
+        return true;
     }
 
     private static async Task<bool> CreateAccount_AllParameters(TestingService service)
@@ -149,10 +169,19 @@ public static class CreateAccountTests
         if (!await requestModel.ExecutePostRequest("account", "create"))
             return false;
 
-        return ValidateCreateResponse(requestModel, requestModel.Response);
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        if (await requestModel.ExecutePostRequest("account", "create"))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Duplicate entry was able to be created for user account.");
+            return false;
+        }
+
+        return true;
     }
 
-    private static bool ValidateCreateResponse(CreateAccountRequest requestModel, CreateAccountResponse? responseModel)
+    private static bool ValidateResponse(CreateAccountRequest requestModel, CreateAccountResponse? responseModel)
     {
         if (responseModel == null)
         {

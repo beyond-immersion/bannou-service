@@ -11,13 +11,194 @@ namespace BeyondImmersion.BannouService.Accounts.Tests;
 /// </summary>
 public static class GetAccountTests
 {
+    private static CreateAccountResponse? _testAccountResponse;
+    private static CreateAccountResponse? TestAccountData
+    {
+        get
+        {
+            if (_testAccountResponse != null)
+                return _testAccountResponse;
+
+            try
+            {
+                var userID = Guid.NewGuid().ToString();
+                var requestModel = new CreateAccountRequest()
+                {
+                    Email = $"Email_{userID}@arcadia.com",
+                    Username = $"Username_{userID}",
+                    Password = "SimpleReadablePassword",
+                    SteamID = $"SteamID_{userID}",
+                    SteamToken = $"SToken_{Guid.NewGuid()}",
+                    GoogleID = $"Email_{userID}@arcadia.com",
+                    GoogleToken = $"GToken_{Guid.NewGuid()}",
+                    IdentityClaims = new() { $"Identity_{userID}" }
+                };
+
+                if (!requestModel.ExecutePostRequest("account", "create").Result)
+                {
+                    Program.Logger.Log(LogLevel.Error, "Failed to set up user account for account/get tests.");
+                    return null;
+                }
+
+                _testAccountResponse = requestModel.Response;
+                return _testAccountResponse;
+            }
+            catch (Exception exc)
+            {
+                Program.Logger.Log(LogLevel.Error, exc, "Failed to set up user account for account/get tests.");
+            }
+
+            return null;
+        }
+    }
+
     [ServiceTest(testName: "account/get", serviceType: typeof(IAccountService))]
     public static async Task<bool> Run(TestingService service)
         => await service.RunDelegates("account/get", new List<Func<TestingService, Task<bool>>>()
             {
+                GetAccount_ID,
+                GetAccount_Username,
+                GetAccount_Email,
+                GetAccount_GoogleID,
+                GetAccount_SteamID,
+                GetAccount_IdentityClaim
             });
 
-    private static bool ValidateGetResponse(GetAccountRequest requestModel, GetAccountResponse? responseModel)
+    private static async Task<bool> GetAccount_ID(TestingService service)
+    {
+        service.ResetTestVars();
+        if (string.IsNullOrWhiteSpace(TestAccountData?.Username))
+            return false;
+
+        var requestModel = new GetAccountRequest()
+        {
+            ID = TestAccountData.ID
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> GetAccount_Username(TestingService service)
+    {
+        service.ResetTestVars();
+        if (string.IsNullOrWhiteSpace(TestAccountData?.Username))
+            return false;
+
+        var requestModel = new GetAccountRequest()
+        {
+            Username = TestAccountData.Username
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> GetAccount_Email(TestingService service)
+    {
+        service.ResetTestVars();
+        if (string.IsNullOrWhiteSpace(TestAccountData?.Email))
+            return false;
+
+        var requestModel = new GetAccountRequest()
+        {
+            Email = TestAccountData.Email
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> GetAccount_SteamID(TestingService service)
+    {
+        service.ResetTestVars();
+
+        var steamID = TestAccountData?.IdentityClaims?
+            .Where(t => t.StartsWith("SteamID:")).FirstOrDefault()?
+            .Remove(0, "SteamID:".Length);
+
+        if (string.IsNullOrWhiteSpace(steamID))
+            return false;
+
+        var requestModel = new GetAccountRequest()
+        {
+            SteamID = steamID
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> GetAccount_GoogleID(TestingService service)
+    {
+        service.ResetTestVars();
+
+        var googleID = TestAccountData?.IdentityClaims?
+            .Where(t => t.StartsWith("GoogleID:")).FirstOrDefault()?
+            .Remove(0, "GoogleID:".Length);
+
+        if (string.IsNullOrWhiteSpace(googleID))
+            return false;
+
+        var requestModel = new GetAccountRequest()
+        {
+            GoogleID = googleID
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> GetAccount_IdentityClaim(TestingService service)
+    {
+        service.ResetTestVars();
+
+        var identityClaim = TestAccountData?.IdentityClaims?
+            .Where(t => !t.StartsWith("GoogleID:") && !t.StartsWith("SteamID:")).FirstOrDefault();
+
+        if (string.IsNullOrWhiteSpace(identityClaim))
+            return false;
+
+        var requestModel = new GetAccountRequest()
+        {
+            IdentityClaim = identityClaim
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static bool ValidateResponse(GetAccountRequest requestModel, GetAccountResponse? responseModel)
     {
         if (responseModel == null)
         {
@@ -43,6 +224,12 @@ public static class GetAccountTests
             }
         }
 
+        if (requestModel.ID != null && requestModel.ID != responseModel.ID)
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test response Id {responseModel.ID} does not match request Id {requestModel.ID}.");
+            return false;
+        }
+
         if (!string.IsNullOrWhiteSpace(requestModel.Username) && !string.Equals(requestModel.Username, responseModel.Username))
         {
             Program.Logger.Log(LogLevel.Error, $"Test response Username {responseModel.Username} does not match request Username {requestModel.Username}.");
@@ -52,6 +239,27 @@ public static class GetAccountTests
         if (!string.IsNullOrWhiteSpace(requestModel.Email) && !string.Equals(requestModel.Email, responseModel.Email))
         {
             Program.Logger.Log(LogLevel.Error, $"Test response Email {responseModel.Email} does not match request Email {requestModel.Email}.");
+            return false;
+        }
+
+        var googleID = responseModel.IdentityClaims?.FirstOrDefault(t => t.StartsWith("GoogleID:"))?.Remove(0, "GoogleID:".Length);
+        if (!string.IsNullOrWhiteSpace(requestModel.GoogleID) && !string.Equals(requestModel.GoogleID, googleID))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test response GoogleID {googleID} does not match request GoogleID {requestModel.GoogleID}.");
+            return false;
+        }
+
+        var steamID = responseModel.IdentityClaims?.FirstOrDefault(t => t.StartsWith("SteamID:"))?.Remove(0, "SteamID:".Length);
+        if (!string.IsNullOrWhiteSpace(requestModel.SteamID) && !string.Equals(requestModel.SteamID, steamID))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test response SteamID {steamID} does not match request SteamID {requestModel.SteamID}.");
+            return false;
+        }
+
+        var identityClaim = responseModel.IdentityClaims?.FirstOrDefault(t => !t.StartsWith("SteamID:") && !t.StartsWith("GoogleID:"));
+        if (!string.IsNullOrWhiteSpace(requestModel.IdentityClaim) && !string.Equals(requestModel.IdentityClaim, identityClaim))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test response IdentityClaim {identityClaim} does not match request IdentityClaim {requestModel.IdentityClaim}.");
             return false;
         }
 

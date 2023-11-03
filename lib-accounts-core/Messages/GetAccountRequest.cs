@@ -10,10 +10,10 @@ namespace BeyondImmersion.BannouService.Accounts.Messages;
 public class GetAccountRequest : ServiceRequest<GetAccountResponse>
 {
     /// <summary>
-    /// Internal GUID of account to retrieve.
+    /// Internal ID of account to retrieve.
     /// </summary>
-    [JsonProperty("guid")]
-    public string? GUID { get; set; }
+    [JsonProperty("id")]
+    public int? ID { get; set; }
 
     /// <summary>
     /// Username of account to retrieve.
@@ -26,6 +26,18 @@ public class GetAccountRequest : ServiceRequest<GetAccountResponse>
     /// </summary>
     [JsonProperty("email")]
     public string? Email { get; set; }
+
+    /// <summary>
+    /// Google ID of account to retrieve.
+    /// </summary>
+    [JsonProperty("google_id")]
+    public string? GoogleID { get; set; }
+
+    /// <summary>
+    /// Steam ID of account to retrieve.
+    /// </summary>
+    [JsonProperty("steam_id")]
+    public string? SteamID { get; set; }
 
     /// <summary>
     /// Identity claim of account to retrieve (OAUTH).
