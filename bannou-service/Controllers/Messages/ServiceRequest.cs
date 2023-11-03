@@ -35,8 +35,7 @@ public abstract class ServiceRequest : ServiceMessage
     {
         if (typeof(ServiceRequest<T>).IsAssignableFrom(GetType()))
         {
-            var derivedRequest = this as ServiceRequest<T>;
-            if (derivedRequest == null)
+            if (this is not ServiceRequest<T> derivedRequest)
                 return false;
 
             // calling execute on the derived type will also parse and set
