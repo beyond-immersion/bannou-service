@@ -1,4 +1,5 @@
 ﻿using System.Net.Mime;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace BeyondImmersion.BannouService.Controllers.Messages;
@@ -16,6 +17,72 @@ public abstract class ServiceRequest : ServiceMessage
     public ServiceResponse? Response { get; protected set; }
 
     public virtual async Task<bool> ExecuteRequestToAPI<T>(string? service, string method)
+        where T : ServiceResponse, new()
+    {
+        if (typeof(ServiceRequest<T>).IsAssignableFrom(GetType()))
+        {
+            var derivedRequest = this as ServiceRequest<T>;
+            if (derivedRequest == null)
+                return false;
+
+            // calling execute on the derived type will also parse and set
+            // the more specific Response type that's expected, on success
+            return await derivedRequest.ExecuteRequestToAPI(service, method);
+        }
+
+        return await ExecuteRequest_INTERNAL<T>(service, method);
+    }
+
+    public virtual async Task<bool> ExecuteRequestToAPI(string? service, string method)
+        => await ExecuteRequest_INTERNAL(service, method);
+
+    protected async Task<bool> ExecuteRequest_INTERNAL(string? service, string method)
+    {
+        try
+        {
+            var coordinatorService = Program.Configuration.Network_Mode ?? "bannou";
+
+            string? requestUrl = null;
+            if (!string.IsNullOrWhiteSpace(service))
+                requestUrl = $"{service}/{method}";
+            else
+                requestUrl = $"{method}";
+
+            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, coordinatorService, requestUrl, this);
+            requestMsg.AddPropertyHeaders(this);
+
+            await Program.DaprClient.InvokeMethodAsync(requestMsg, Program.ShutdownCancellationTokenSource.Token);
+            Response = new()
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Message = "OK"
+            };
+
+            return true;
+        }
+        catch (HttpRequestException exc)
+        {
+            var statusCode = exc.StatusCode ?? System.Net.HttpStatusCode.InternalServerError;
+            Response = new()
+            {
+                StatusCode = statusCode,
+                Message = exc.Message ?? statusCode.ToString()
+            };
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, $"A failure occurred executing API method [{method}] on service [{service}].");
+            Response = new()
+            {
+                StatusCode = System.Net.HttpStatusCode.InternalServerError,
+                Message = "Internal service error"
+            };
+        }
+
+        return false;
+    }
+
+    protected async Task<bool> ExecuteRequest_INTERNAL<T>(string? service, string method)
         where T : ServiceResponse, new()
     {
         try
@@ -96,52 +163,6 @@ public abstract class ServiceRequest : ServiceMessage
             {
                 StatusCode = System.Net.HttpStatusCode.BadRequest,
                 Message = "Bad request"
-            };
-        }
-        catch (Exception exc)
-        {
-            Program.Logger.Log(LogLevel.Error, exc, $"A failure occurred executing API method [{method}] on service [{service}].");
-            Response = new()
-            {
-                StatusCode = System.Net.HttpStatusCode.InternalServerError,
-                Message = "Internal service error"
-            };
-        }
-
-        return false;
-    }
-
-    public virtual async Task<bool> ExecuteRequestToAPI(string? service, string method)
-    {
-        try
-        {
-            var coordinatorService = Program.Configuration.Network_Mode ?? "bannou";
-
-            string? requestUrl = null;
-            if (!string.IsNullOrWhiteSpace(service))
-                requestUrl = $"{service}/{method}";
-            else
-                requestUrl = $"{method}";
-
-            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, coordinatorService, requestUrl, this);
-            requestMsg.AddPropertyHeaders(this);
-
-            await Program.DaprClient.InvokeMethodAsync(requestMsg, Program.ShutdownCancellationTokenSource.Token);
-            Response = new()
-            {
-                StatusCode = System.Net.HttpStatusCode.OK,
-                Message = "OK"
-            };
-
-            return true;
-        }
-        catch (HttpRequestException exc)
-        {
-            var statusCode = exc.StatusCode ?? System.Net.HttpStatusCode.InternalServerError;
-            Response = new()
-            {
-                StatusCode = statusCode,
-                Message = exc.Message ?? statusCode.ToString()
             };
         }
         catch (Exception exc)

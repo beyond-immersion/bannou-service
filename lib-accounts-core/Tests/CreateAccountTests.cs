@@ -48,14 +48,14 @@ public static class CreateAccountTests
             }
         };
 
-        if (!await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create"))
+        if (!await requestModel.ExecuteRequestToAPI("account", "create"))
             return false;
 
         if (!ValidateCreateResponse(requestModel, requestModel.Response))
             return false;
 
         // try again, and should fail for being a duplicate user entry
-        if (await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create"))
+        if (await requestModel.ExecuteRequestToAPI("account", "create"))
             return false;
 
         return true;
@@ -84,7 +84,7 @@ public static class CreateAccountTests
             ProfileClaims = null
         };
 
-        if (!await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create"))
+        if (!await requestModel.ExecuteRequestToAPI("account", "create"))
             return false;
 
         return ValidateCreateResponse(requestModel, requestModel.Response);
@@ -113,7 +113,7 @@ public static class CreateAccountTests
             ProfileClaims = null
         };
 
-        if (!await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create"))
+        if (!await requestModel.ExecuteRequestToAPI("account", "create"))
             return false;
 
         return ValidateCreateResponse(requestModel, requestModel.Response);
@@ -146,7 +146,7 @@ public static class CreateAccountTests
             }
         };
 
-        if (!await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create"))
+        if (!await requestModel.ExecuteRequestToAPI("account", "create"))
             return false;
 
         return ValidateCreateResponse(requestModel, requestModel.Response);

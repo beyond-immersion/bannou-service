@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using System.Text;
 
 namespace BeyondImmersion.BannouService.Controllers.Messages;
 
@@ -14,7 +13,7 @@ public class ServiceRequest<T> : ServiceRequest
 
     public new virtual async Task<bool> ExecuteRequestToAPI(string? service, string method)
     {
-        var result = await ExecuteRequestToAPI<T>(service, method);
+        var result = await ExecuteRequest_INTERNAL<T>(service, method);
         if (!result)
         {
             this.Response = null;
