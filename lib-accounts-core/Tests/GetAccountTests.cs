@@ -72,6 +72,19 @@ public static class GetAccountTests
 
         var requestModel = new GetAccountRequest()
         {
+            IncludeClaims = false,
+            ID = TestAccountData.ID
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        requestModel = new GetAccountRequest()
+        {
+            IncludeClaims = true,
             ID = TestAccountData.ID
         };
 
@@ -92,6 +105,19 @@ public static class GetAccountTests
 
         var requestModel = new GetAccountRequest()
         {
+            IncludeClaims = false,
+            Username = TestAccountData.Username
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        requestModel = new GetAccountRequest()
+        {
+            IncludeClaims = true,
             Username = TestAccountData.Username
         };
 
@@ -112,6 +138,19 @@ public static class GetAccountTests
 
         var requestModel = new GetAccountRequest()
         {
+            IncludeClaims = false,
+            Email = TestAccountData.Email
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        requestModel = new GetAccountRequest()
+        {
+            IncludeClaims = true,
             Email = TestAccountData.Email
         };
 
@@ -137,6 +176,19 @@ public static class GetAccountTests
 
         var requestModel = new GetAccountRequest()
         {
+            IncludeClaims = false,
+            SteamID = steamID
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        requestModel = new GetAccountRequest()
+        {
+            IncludeClaims = true,
             SteamID = steamID
         };
 
@@ -162,6 +214,19 @@ public static class GetAccountTests
 
         var requestModel = new GetAccountRequest()
         {
+            IncludeClaims = false,
+            GoogleID = googleID
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        requestModel = new GetAccountRequest()
+        {
+            IncludeClaims = true,
             GoogleID = googleID
         };
 
@@ -186,6 +251,19 @@ public static class GetAccountTests
 
         var requestModel = new GetAccountRequest()
         {
+            IncludeClaims = false,
+            IdentityClaim = identityClaim
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        requestModel = new GetAccountRequest()
+        {
+            IncludeClaims = true,
             IdentityClaim = identityClaim
         };
 
@@ -242,25 +320,28 @@ public static class GetAccountTests
             return false;
         }
 
-        var googleID = responseModel.IdentityClaims?.FirstOrDefault(t => t.StartsWith("GoogleID:"))?.Remove(0, "GoogleID:".Length);
-        if (!string.IsNullOrWhiteSpace(requestModel.GoogleID) && !string.Equals(requestModel.GoogleID, googleID))
+        if (requestModel.IncludeClaims)
         {
-            Program.Logger.Log(LogLevel.Error, $"Test response GoogleID {googleID} does not match request GoogleID {requestModel.GoogleID}.");
-            return false;
-        }
+            var googleID = responseModel.IdentityClaims?.FirstOrDefault(t => t.StartsWith("GoogleID:"))?.Remove(0, "GoogleID:".Length);
+            if (!string.IsNullOrWhiteSpace(requestModel.GoogleID) && !string.Equals(requestModel.GoogleID, googleID))
+            {
+                Program.Logger.Log(LogLevel.Error, $"Test response GoogleID {googleID} does not match request GoogleID {requestModel.GoogleID}.");
+                return false;
+            }
 
-        var steamID = responseModel.IdentityClaims?.FirstOrDefault(t => t.StartsWith("SteamID:"))?.Remove(0, "SteamID:".Length);
-        if (!string.IsNullOrWhiteSpace(requestModel.SteamID) && !string.Equals(requestModel.SteamID, steamID))
-        {
-            Program.Logger.Log(LogLevel.Error, $"Test response SteamID {steamID} does not match request SteamID {requestModel.SteamID}.");
-            return false;
-        }
+            var steamID = responseModel.IdentityClaims?.FirstOrDefault(t => t.StartsWith("SteamID:"))?.Remove(0, "SteamID:".Length);
+            if (!string.IsNullOrWhiteSpace(requestModel.SteamID) && !string.Equals(requestModel.SteamID, steamID))
+            {
+                Program.Logger.Log(LogLevel.Error, $"Test response SteamID {steamID} does not match request SteamID {requestModel.SteamID}.");
+                return false;
+            }
 
-        var identityClaim = responseModel.IdentityClaims?.FirstOrDefault(t => !t.StartsWith("SteamID:") && !t.StartsWith("GoogleID:"));
-        if (!string.IsNullOrWhiteSpace(requestModel.IdentityClaim) && !string.Equals(requestModel.IdentityClaim, identityClaim))
-        {
-            Program.Logger.Log(LogLevel.Error, $"Test response IdentityClaim {identityClaim} does not match request IdentityClaim {requestModel.IdentityClaim}.");
-            return false;
+            var identityClaim = responseModel.IdentityClaims?.FirstOrDefault(t => !t.StartsWith("SteamID:") && !t.StartsWith("GoogleID:"));
+            if (!string.IsNullOrWhiteSpace(requestModel.IdentityClaim) && !string.Equals(requestModel.IdentityClaim, identityClaim))
+            {
+                Program.Logger.Log(LogLevel.Error, $"Test response IdentityClaim {identityClaim} does not match request IdentityClaim {requestModel.IdentityClaim}.");
+                return false;
+            }
         }
 
         return true;

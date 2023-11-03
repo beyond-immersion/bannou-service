@@ -9,6 +9,9 @@ namespace BeyondImmersion.BannouService.Accounts.Messages;
 [JsonObject]
 public class GetAccountRequest : ServiceRequest<GetAccountResponse>
 {
+    [JsonProperty("include_claims")]
+    public bool IncludeClaims { get; set; }
+
     /// <summary>
     /// Internal ID of account to retrieve.
     /// </summary>

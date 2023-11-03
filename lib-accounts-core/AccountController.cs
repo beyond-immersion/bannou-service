@@ -99,7 +99,7 @@ public class AccountController : Controllers.BaseDaprController
                 return BadRequest();
 
             (HttpStatusCode, IAccountService.AccountData?) accountData = await Service.GetAccount(
-                includeClaims: false, id: request.ID, username: request.Username, email: request.Email,
+                includeClaims: request.IncludeClaims, id: request.ID, username: request.Username, email: request.Email,
                 steamID: request.SteamID, googleID: request.GoogleID, identityClaim: request.IdentityClaim);
 
             switch (accountData.Item1)
