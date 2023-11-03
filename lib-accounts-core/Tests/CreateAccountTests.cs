@@ -48,9 +48,17 @@ public static class CreateAccountTests
             }
         };
 
-        var apiResponse = await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create");
+        if (!await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create"))
+            return false;
 
-        return ValidateCreateResponse(requestModel, apiResponse);
+        if (!ValidateCreateResponse(requestModel, requestModel.Response))
+            return false;
+
+        // try again, and should fail for being a duplicate user entry
+        if (await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create"))
+            return false;
+
+        return true;
     }
 
     private static async Task<bool> CreateAccount_GoogleOAUTH(TestingService service)
@@ -76,9 +84,10 @@ public static class CreateAccountTests
             ProfileClaims = null
         };
 
-        var apiResponse = await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create");
+        if (!await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create"))
+            return false;
 
-        return ValidateCreateResponse(requestModel, apiResponse);
+        return ValidateCreateResponse(requestModel, requestModel.Response);
     }
 
     private static async Task<bool> CreateAccount_SteamOAUTH(TestingService service)
@@ -104,9 +113,10 @@ public static class CreateAccountTests
             ProfileClaims = null
         };
 
-        var apiResponse = await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create");
+        if (!await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create"))
+            return false;
 
-        return ValidateCreateResponse(requestModel, apiResponse);
+        return ValidateCreateResponse(requestModel, requestModel.Response);
     }
 
     private static async Task<bool> CreateAccount_AllParameters(TestingService service)
@@ -118,7 +128,7 @@ public static class CreateAccountTests
             Email = $"TestEmail@{userID}",
             EmailVerified = true,
             TwoFactorEnabled = true,
-            Region = null,
+            Region = "NA",
             Username = $"USER_{userID}",
             Password = "SimpleReadablePassword",
             SteamID = $"USER_{userID}",
@@ -136,9 +146,10 @@ public static class CreateAccountTests
             }
         };
 
-        var apiResponse = await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create");
+        if (!await requestModel.ExecuteRequestToAPI<CreateAccountResponse>("account", "create"))
+            return false;
 
-        return ValidateCreateResponse(requestModel, apiResponse);
+        return ValidateCreateResponse(requestModel, requestModel.Response);
     }
 
     private static bool ValidateCreateResponse(CreateAccountRequest requestModel, CreateAccountResponse? responseModel)

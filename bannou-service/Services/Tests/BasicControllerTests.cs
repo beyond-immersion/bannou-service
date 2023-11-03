@@ -23,7 +23,8 @@ public static class BasicControllerTests
                 Get_StringInRoute,
                 Get_MultipleStringsInRoute,
                 Post_ObjectModel,
-                Post_ObjectModel_HeaderArrays
+                Post_ObjectModel_HeaderArrays,
+                Post_ExecuteApiRequest
             });
 
     private static async Task<bool> Get_Loopback_StringFromRoute(TestingService service)

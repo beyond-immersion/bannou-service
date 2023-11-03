@@ -10,6 +10,25 @@ namespace BeyondImmersion.BannouService.Controllers.Messages;
 public class ServiceRequest<T> : ServiceRequest
     where T : ServiceResponse, new()
 {
+    public new T? Response { get; protected set; }
+
+    public new virtual async Task<bool> ExecuteRequestToAPI(string? service, string method)
+    {
+        var result = await ExecuteRequestToAPI<T>(service, method);
+        if (!result)
+        {
+            this.Response = null;
+            return false;
+        }
+
+        try
+        {
+            this.Response = base.Response as T;
+        }
+        catch { }
+        return true;
+    }
+
     public T CreateResponse()
     {
         var requestType = GetType();
@@ -60,44 +79,5 @@ public class ServiceRequest<T> : ServiceRequest
         }
 
         return responseObj ?? new();
-    }
-
-    public new virtual async Task<T?> ExecuteRequestToAPI(string? service, string method)
-    {
-        try
-        {
-            string? requestUrl = null;
-            if (!string.IsNullOrWhiteSpace(service))
-                requestUrl = $"http://127.0.0.1:3500/v1.0/invoke/{COORDINATOR_APP}/method/{service}/{method}";
-            else
-                requestUrl = $"http://127.0.0.1:3500/v1.0/invoke/{COORDINATOR_APP}/method/{method}";
-
-            var requestData = JsonConvert.SerializeObject(this);
-            var requestContent = new StringContent(requestData, Encoding.UTF8, "application/json");
-
-            var headerLookup = SetPropertiesToHeaders();
-            foreach (var headerKVP in headerLookup)
-                foreach (var headerValue in headerKVP.Item2)
-                    requestContent.Headers.Add(headerKVP.Item1, headerValue);
-
-            var responseMsg = await HttpClient.PostAsync(requestUrl, requestContent, Program.ShutdownCancellationTokenSource.Token);
-            if (responseMsg.IsSuccessStatusCode)
-            {
-                var responseContent = await responseMsg.Content.ReadAsStringAsync();
-                var responseData = JsonConvert.DeserializeObject<T>(responseContent);
-                responseData?.SetHeadersToProperties(responseMsg.Headers);
-                return responseData;
-            }
-            else
-            {
-                Program.Logger.Log(LogLevel.Error, $"Failed to invoke API method [{method}] on service [{service}]. HTTP Status: {responseMsg.StatusCode}");
-            }
-        }
-        catch (Exception exc)
-        {
-            Program.Logger.Log(LogLevel.Error, exc, $"A failure occurred executing API method [{method}] on service [{service}].");
-        }
-
-        return null;
     }
 }
