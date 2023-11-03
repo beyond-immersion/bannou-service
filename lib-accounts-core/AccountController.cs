@@ -93,7 +93,9 @@ public class AccountController : Controllers.BaseDaprController
             if (request.ID == null &&
                 string.IsNullOrWhiteSpace(request.Username) &&
                 string.IsNullOrWhiteSpace(request.Email) &&
-                string.IsNullOrWhiteSpace(request.IdentityClaim))
+                string.IsNullOrWhiteSpace(request.IdentityClaim) &&
+                string.IsNullOrWhiteSpace(request.GoogleID) &&
+                string.IsNullOrWhiteSpace(request.SteamID))
                 return BadRequest();
 
             (HttpStatusCode, IAccountService.AccountData?) accountData = await Service.GetAccount(
