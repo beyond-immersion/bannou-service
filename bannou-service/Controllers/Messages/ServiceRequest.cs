@@ -1,5 +1,4 @@
 ﻿using System.Net.Mime;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace BeyondImmersion.BannouService.Controllers.Messages;
@@ -10,8 +9,23 @@ namespace BeyondImmersion.BannouService.Controllers.Messages;
 [JsonObject]
 public abstract class ServiceRequest : ServiceMessage
 {
+    private static HttpClient _httpClient;
     [JsonIgnore]
-    protected static HttpClient HttpClient { get; } = new();
+    protected static HttpClient HttpClient
+    {
+        get
+        {
+            if (_httpClient != null)
+                return _httpClient;
+
+            _httpClient = new HttpClient()
+            {
+                Timeout = TimeSpan.FromSeconds(1)
+            };
+
+            return _httpClient;
+        }
+    }
 
     [JsonIgnore]
     public ServiceResponse? Response { get; protected set; }
