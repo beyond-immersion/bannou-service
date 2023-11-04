@@ -230,7 +230,7 @@ SELECT * FROM `Users` WHERE `Id` = @UserId;";
     /// </summary>
     public const string UpdateUser_WithClaims = @"
 UPDATE `Users`
-SET 
+SET
     `Username` = IFNULL(@Username, `Username`),
     `Email` = IFNULL(@Email, `Email`),
     `Region` = IFNULL(@Region, `Region`),
@@ -239,39 +239,36 @@ SET
 WHERE `Id` = @UserId;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-VALUES (
-    @UserId,
+SELECT @UserId,
     (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password'),
     @Username,
     @PasswordData
-)
+FROM DUAL
 WHERE @Username IS NOT NULL AND @PasswordData IS NOT NULL
 ON DUPLICATE KEY UPDATE 
-    `LoginProviderData` = VALUES(`LoginProviderData`);
+    `LoginProviderData` = @PasswordData;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-VALUES (
-    @UserId,
+SELECT @UserId,
     (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google'),
     @GoogleUserId,
     @GoogleData
-)
+FROM DUAL
 WHERE @GoogleUserId IS NOT NULL AND @GoogleData IS NOT NULL
 ON DUPLICATE KEY UPDATE 
-    `LoginProviderUserId` = VALUES(`LoginProviderUserId`),
-    `LoginProviderData` = VALUES(`LoginProviderData`);
+    `LoginProviderUserId` = @GoogleUserId,
+    `LoginProviderData` = @GoogleData;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-VALUES (
-    @UserId,
+SELECT @UserId,
     (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam'),
     @SteamUserId,
     @SteamData
-)
+FROM DUAL
 WHERE @SteamUserId IS NOT NULL AND @SteamData IS NOT NULL
 ON DUPLICATE KEY UPDATE 
-    `LoginProviderUserId` = VALUES(`LoginProviderUserId`),
-    `LoginProviderData` = VALUES(`LoginProviderData`);
+    `LoginProviderUserId` = @SteamUserId,
+    `LoginProviderData` = @SteamData;
 
 SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Role');
 DELETE FROM `UserClaims`
