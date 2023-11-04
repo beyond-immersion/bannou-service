@@ -60,16 +60,18 @@ public static class UpdateAccountTests
                 UpdateAccount_Username,
                 UpdateAccount_Email,
                 UpdateAccount_GoogleID,
-                UpdateAccount_SteamID
+                UpdateAccount_SteamID,
+                UpdateAccount_RoleClaims,
+                UpdateAccount_AppClaims,
+                UpdateAccount_ScopeClaims,
+                UpdateAccount_IdentityClaims,
+                UpdateAccount_ProfileClaims
             });
 
     private static async Task<bool> UpdateAccount_Username(TestingService service)
     {
         if (TestAccountData == null)
-        {
-            Program.Logger.Log(LogLevel.Error, $"Test account missing.");
             return false;
-        }
 
         var requestModel = new UpdateAccountRequest()
         {
@@ -89,10 +91,7 @@ public static class UpdateAccountTests
     private static async Task<bool> UpdateAccount_Region(TestingService service)
     {
         if (TestAccountData == null)
-        {
-            Program.Logger.Log(LogLevel.Error, $"Test account missing.");
             return false;
-        }
 
         var requestModel = new UpdateAccountRequest()
         {
@@ -118,10 +117,7 @@ public static class UpdateAccountTests
     private static async Task<bool> UpdateAccount_Email(TestingService service)
     {
         if (TestAccountData == null)
-        {
-            Program.Logger.Log(LogLevel.Error, $"Test account missing.");
             return false;
-        }
 
         var requestModel = new UpdateAccountRequest()
         {
@@ -141,10 +137,7 @@ public static class UpdateAccountTests
     private static async Task<bool> UpdateAccount_SteamID(TestingService service)
     {
         if (TestAccountData == null)
-        {
-            Program.Logger.Log(LogLevel.Error, $"Test account missing.");
             return false;
-        }
 
         var steamID = TestAccountData.IdentityClaims?.Where(t => t.StartsWith("SteamID:")).Select(t => t.Remove(0, "SteamID:".Length)).FirstOrDefault();
         if (steamID == null)
@@ -172,10 +165,7 @@ public static class UpdateAccountTests
     private static async Task<bool> UpdateAccount_GoogleID(TestingService service)
     {
         if (TestAccountData == null)
-        {
-            Program.Logger.Log(LogLevel.Error, $"Test account missing.");
             return false;
-        }
 
         var googleID = TestAccountData.IdentityClaims?.Where(t => t.StartsWith("GoogleID:")).Select(t => t.Remove(0, "GoogleID:".Length)).FirstOrDefault();
         if (googleID == null)
@@ -196,6 +186,286 @@ public static class UpdateAccountTests
 
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
+
+        return true;
+    }
+
+    private static async Task<bool> UpdateAccount_RoleClaims(TestingService service)
+    {
+        if (TestAccountData == null)
+            return false;
+
+        var requestModel = new UpdateAccountRequest()
+        {
+            ID = TestAccountData.ID,
+            RoleClaims = new()
+            {
+                ["SHOULD_NOT_EXIST"] = null,
+                ["BEFORE"] = "AFTER",
+                ["ADD"] = "ADD",
+                [""] = "EXTRA"
+            }
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "update"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        if (requestModel.Response?.RoleClaims?.Contains("SHOULD_NOT_EXIST") ?? true)
+        {
+            Program.Logger.Log(LogLevel.Error, "Role claim exists which shouldn't.");
+            return false;
+        }
+
+        if (requestModel.Response?.RoleClaims?.Contains("BEFORE") ?? true)
+        {
+            Program.Logger.Log(LogLevel.Error, "Role claim 'BEFORE' exists which shouldn't.");
+            return false;
+        }
+
+        if (!requestModel.Response?.RoleClaims?.Contains("AFTER") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Role claim 'AFTER' doesn't exist.");
+            return false;
+        }
+
+        if (!requestModel.Response?.RoleClaims?.Contains("ADD") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Role claim 'ADD' doesn't exist.");
+            return false;
+        }
+
+        if (!requestModel.Response?.RoleClaims?.Contains("EXTRA") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Role claim 'EXTRA' doesn't exist.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static async Task<bool> UpdateAccount_AppClaims(TestingService service)
+    {
+        if (TestAccountData == null)
+            return false;
+
+        var requestModel = new UpdateAccountRequest()
+        {
+            ID = TestAccountData.ID,
+            AppClaims = new()
+            {
+                ["SHOULD_NOT_EXIST"] = null,
+                ["BEFORE"] = "AFTER",
+                ["ADD"] = "ADD",
+                [""] = "EXTRA"
+            }
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "update"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        if (requestModel.Response?.AppClaims?.Contains("SHOULD_NOT_EXIST") ?? true)
+        {
+            Program.Logger.Log(LogLevel.Error, "App claim exists which shouldn't.");
+            return false;
+        }
+
+        if (requestModel.Response?.AppClaims?.Contains("BEFORE") ?? true)
+        {
+            Program.Logger.Log(LogLevel.Error, "App claim 'BEFORE' exists which shouldn't.");
+            return false;
+        }
+
+        if (!requestModel.Response?.AppClaims?.Contains("AFTER") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "App claim 'AFTER' doesn't exist.");
+            return false;
+        }
+
+        if (!requestModel.Response?.AppClaims?.Contains("ADD") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "App claim 'ADD' doesn't exist.");
+            return false;
+        }
+
+        if (!requestModel.Response?.AppClaims?.Contains("EXTRA") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "App claim 'EXTRA' doesn't exist.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static async Task<bool> UpdateAccount_ScopeClaims(TestingService service)
+    {
+        if (TestAccountData == null)
+            return false;
+
+        var requestModel = new UpdateAccountRequest()
+        {
+            ID = TestAccountData.ID,
+            ScopeClaims = new()
+            {
+                ["SHOULD_NOT_EXIST"] = null,
+                ["BEFORE"] = "AFTER",
+                ["ADD"] = "ADD",
+                [""] = "EXTRA"
+            }
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "update"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        if (requestModel.Response?.ScopeClaims?.Contains("SHOULD_NOT_EXIST") ?? true)
+        {
+            Program.Logger.Log(LogLevel.Error, "Scope claim exists which shouldn't.");
+            return false;
+        }
+
+        if (requestModel.Response?.ScopeClaims?.Contains("BEFORE") ?? true)
+        {
+            Program.Logger.Log(LogLevel.Error, "Scope claim 'BEFORE' exists which shouldn't.");
+            return false;
+        }
+
+        if (!requestModel.Response?.ScopeClaims?.Contains("AFTER") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Scope claim 'AFTER' doesn't exist.");
+            return false;
+        }
+
+        if (!requestModel.Response?.ScopeClaims?.Contains("ADD") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Scope claim 'ADD' doesn't exist.");
+            return false;
+        }
+
+        if (!requestModel.Response?.ScopeClaims?.Contains("EXTRA") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Scope claim 'EXTRA' doesn't exist.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static async Task<bool> UpdateAccount_IdentityClaims(TestingService service)
+    {
+        if (TestAccountData == null)
+            return false;
+
+        var requestModel = new UpdateAccountRequest()
+        {
+            ID = TestAccountData.ID,
+            IdentityClaims = new()
+            {
+                ["SHOULD_NOT_EXIST"] = null,
+                ["BEFORE"] = "AFTER",
+                ["ADD"] = "ADD",
+                [""] = "EXTRA"
+            }
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "update"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        if (requestModel.Response?.IdentityClaims?.Contains("SHOULD_NOT_EXIST") ?? true)
+        {
+            Program.Logger.Log(LogLevel.Error, "Identity claim exists which shouldn't.");
+            return false;
+        }
+
+        if (requestModel.Response?.IdentityClaims?.Contains("BEFORE") ?? true)
+        {
+            Program.Logger.Log(LogLevel.Error, "Identity claim 'BEFORE' exists which shouldn't.");
+            return false;
+        }
+
+        if (!requestModel.Response?.IdentityClaims?.Contains("AFTER") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Identity claim 'AFTER' doesn't exist.");
+            return false;
+        }
+
+        if (!requestModel.Response?.IdentityClaims?.Contains("ADD") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Identity claim 'ADD' doesn't exist.");
+            return false;
+        }
+
+        if (!requestModel.Response?.IdentityClaims?.Contains("EXTRA") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Identity claim 'EXTRA' doesn't exist.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static async Task<bool> UpdateAccount_ProfileClaims(TestingService service)
+    {
+        if (TestAccountData == null)
+            return false;
+
+        var requestModel = new UpdateAccountRequest()
+        {
+            ID = TestAccountData.ID,
+            ProfileClaims = new()
+            {
+                ["SHOULD_NOT_EXIST"] = null,
+                ["BEFORE"] = "AFTER",
+                ["ADD"] = "ADD",
+                [""] = "EXTRA"
+            }
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "update"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        if (requestModel.Response?.ProfileClaims?.Contains("SHOULD_NOT_EXIST") ?? true)
+        {
+            Program.Logger.Log(LogLevel.Error, "Profile claim exists which shouldn't.");
+            return false;
+        }
+
+        if (requestModel.Response?.ProfileClaims?.Contains("BEFORE") ?? true)
+        {
+            Program.Logger.Log(LogLevel.Error, "Profile claim 'BEFORE' exists which shouldn't.");
+            return false;
+        }
+
+        if (!requestModel.Response?.ProfileClaims?.Contains("AFTER") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Profile claim 'AFTER' doesn't exist.");
+            return false;
+        }
+
+        if (!requestModel.Response?.ProfileClaims?.Contains("ADD") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Profile claim 'ADD' doesn't exist.");
+            return false;
+        }
+
+        if (!requestModel.Response?.ProfileClaims?.Contains("EXTRA") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Profile claim 'EXTRA' doesn't exist.");
+            return false;
+        }
 
         return true;
     }

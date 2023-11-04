@@ -535,16 +535,19 @@ public class AccountService : IAccountService
             {
                 claimsToRemove = null;
                 claimsToAdd = null;
+
                 if (claims != null)
                 {
-                    claimsToRemove = new JArray();
-                    claimsToAdd = new JArray();
+                    claimsToRemove = new();
+                    claimsToAdd = new();
+
                     foreach (var claim in claims)
                     {
                         if (!string.Equals(claim.Value, claim.Key))
-                            claimsToRemove.Add(claim.Key);
+                            if (!string.IsNullOrWhiteSpace(claim.Key))
+                                claimsToRemove.Add(claim.Key);
 
-                        if (claim.Value != null)
+                        if (!string.IsNullOrWhiteSpace(claim.Value))
                             claimsToAdd.Add(claim.Value);
                     }
                 }
