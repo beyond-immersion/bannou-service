@@ -75,6 +75,7 @@ public class AccountController : Controllers.BaseDaprController
             response.ProfileClaims = userAccount.ProfileClaims;
             response.RoleClaims = userAccount.RoleClaims;
             response.ScopeClaims = userAccount.ScopeClaims;
+
             return Ok(response);
         }
         catch (Exception exc)
@@ -135,6 +136,7 @@ public class AccountController : Controllers.BaseDaprController
             response.ProfileClaims = userAccount.ProfileClaims;
             response.RoleClaims = userAccount.RoleClaims;
             response.ScopeClaims = userAccount.ScopeClaims;
+
             return Ok(response);
         }
         catch (Exception exc)
@@ -193,11 +195,51 @@ public class AccountController : Controllers.BaseDaprController
             response.ProfileClaims = userAccount.ProfileClaims;
             response.RoleClaims = userAccount.RoleClaims;
             response.ScopeClaims = userAccount.ScopeClaims;
+
             return Ok(response);
         }
         catch (Exception exc)
         {
-            Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(GetAccount)}] endpoint on [{nameof(AccountController)}].");
+            Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(UpdateAccount)}] endpoint on [{nameof(AccountController)}].");
+            return StatusCode(500);
+        }
+    }
+
+    [HttpPost]
+    [DaprRoute("delete")]
+    public async Task<IActionResult> DeleteAccount([FromBody] DeleteAccountRequest request)
+    {
+        try
+        {
+            if (request.ID < 0)
+                return BadRequest();
+
+            (HttpStatusCode, DateTime?) accountData = await Service.DeleteAccount(id: request.ID);
+
+            switch (accountData.Item1)
+            {
+                case HttpStatusCode.OK:
+                    if (accountData.Item2 == null)
+                        return NotFound();
+                    break;
+                case HttpStatusCode.BadRequest:
+                    return BadRequest();
+                case HttpStatusCode.Conflict:
+                    return Conflict();
+                case HttpStatusCode.NotFound:
+                    return NotFound();
+                default:
+                    return StatusCode(500);
+            }
+
+            var response = request.CreateResponse();
+            response.RemovedAt = accountData.Item2;
+
+            return Ok(response);
+        }
+        catch (Exception exc)
+        {
+            Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(DeleteAccount)}] endpoint on [{nameof(AccountController)}].");
             return StatusCode(500);
         }
     }

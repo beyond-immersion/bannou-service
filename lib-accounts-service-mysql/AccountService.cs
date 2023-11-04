@@ -571,6 +571,65 @@ public class AccountService : IAccountService
         }
     }
 
+    async Task<(HttpStatusCode, DateTime?)> IAccountService.DeleteAccount(int id)
+    {
+        try
+        {
+            if (id < 0)
+                return (HttpStatusCode.BadRequest, null);
+
+            if (_dbConnectionString == null)
+                throw new SystemException("Database connection string not found.");
+
+            var builder = new SqlBuilder();
+            var template = builder.AddTemplate(SqlScripts.RemoveUser);
+            var parameters = new
+            {
+                UserId = (uint)id
+            };
+
+            using var dbConnection = new MySqlConnection(_dbConnectionString);
+            dynamic? transactionResult = null;
+
+            await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
+            using (var transaction = await dbConnection.BeginTransactionAsync(Program.ShutdownCancellationTokenSource.Token))
+            {
+                try
+                {
+                    transactionResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
+                    if (transactionResult == null)
+                        throw new NullReferenceException(nameof(transactionResult));
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync(Program.ShutdownCancellationTokenSource.Token);
+                    throw;
+                }
+            }
+
+            if (transactionResult == null)
+                return (HttpStatusCode.NotFound, null);
+
+            // should move to DTO later
+            var resUserID = (int)transactionResult.Id;
+            DateTime? resRemovedAt = transactionResult.RemovedAt;
+
+            return (HttpStatusCode.OK, resRemovedAt);
+        }
+        catch (MySqlException exc) when (exc.Number == 1062)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, $"The user account was already removed.");
+            return (HttpStatusCode.Conflict, null);
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while removing the user account.");
+            return (HttpStatusCode.InternalServerError, null);
+        }
+    }
+
     /// <summary>
     /// Create all account database tables, if needed.
     /// Will populate the reference tables as well.

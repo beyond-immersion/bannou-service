@@ -57,7 +57,8 @@ public static class DeleteAccountTests
         => await service.RunDelegates("account/delete", new List<Func<TestingService, Task<bool>>>()
             {
                 DeleteAccount,
-                DeleteAccount_NotFound
+                DeleteAccount_NotFound,
+                DeleteAccount_Conflict
             });
 
     private static async Task<bool> DeleteAccount(TestingService service)
@@ -75,6 +76,30 @@ public static class DeleteAccountTests
 
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Exactly the same as DeleteAccount, but because it runs after, the account
+    /// will already be deleted, and doing so again should return a 'Conflict'
+    /// status codee response.
+    /// </summary>
+    private static async Task<bool> DeleteAccount_Conflict(TestingService service)
+    {
+        if (TestAccountData == null)
+            return false;
+
+        var requestModel = new DeleteAccountRequest()
+        {
+            ID = TestAccountData.ID
+        };
+
+        if (await requestModel.ExecutePostRequest("account", "delete") || requestModel.Response?.StatusCode != System.Net.HttpStatusCode.Conflict)
+        {
+            Program.Logger.Log(LogLevel.Error, "Test response missing or response status not 'Conflict'.");
+            return false;
+        }
 
         return true;
     }

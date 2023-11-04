@@ -163,42 +163,54 @@ SET
 WHERE `Id` = @UserId;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-VALUES (
-    @UserId,
+SELECT @UserId,
     (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password'),
     @Username,
     @PasswordData
-)
-WHERE @Username IS NOT NULL
-    AND @PasswordData IS NOT NULL
-ON DUPLICATE KEY UPDATE 
-    `LoginProviderData` = VALUES(`LoginProviderData`);
+FROM (SELECT 1) AS dummy
+WHERE @Username IS NOT NULL AND @PasswordData IS NOT NULL
+ON DUPLICATE KEY UPDATE
+    `LoginProviderUserId` = CASE WHEN @Username IS NOT NULL THEN @Username ELSE `LoginProviderUserId` END,
+    `LoginProviderData` = CASE WHEN @PasswordData IS NOT NULL THEN @PasswordData ELSE `LoginProviderData` END;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-VALUES (
-    @UserId,
+SELECT @UserId,
     (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google'),
     @GoogleUserId,
     @GoogleData
-)
-WHERE @GoogleUserId IS NOT NULL
-    AND @GoogleData IS NOT NULL
-ON DUPLICATE KEY UPDATE 
-    `LoginProviderUserId` = VALUES(`LoginProviderUserId`),
-    `LoginProviderData` = VALUES(`LoginProviderData`);
+FROM (SELECT 1) AS dummy
+WHERE @GoogleUserId IS NOT NULL AND @GoogleData IS NOT NULL
+ON DUPLICATE KEY UPDATE
+    `LoginProviderUserId` = CASE WHEN @GoogleUserId IS NOT NULL THEN @GoogleUserId ELSE `LoginProviderUserId` END,
+    `LoginProviderData` = CASE WHEN @GoogleData IS NOT NULL THEN @GoogleData ELSE `LoginProviderData` END;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
-VALUES (
-    @UserId,
+SELECT @UserId,
     (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam'),
     @SteamUserId,
     @SteamData
-)
-WHERE @SteamUserId IS NOT NULL
-    AND @SteamData IS NOT NULL
-ON DUPLICATE KEY UPDATE 
-    `LoginProviderUserId` = VALUES(`LoginProviderUserId`),
-    `LoginProviderData` = VALUES(`LoginProviderData`);
+FROM (SELECT 1) AS dummy
+WHERE @SteamUserId IS NOT NULL AND @SteamData IS NOT NULL
+ON DUPLICATE KEY UPDATE
+    `LoginProviderUserId` = CASE WHEN @SteamUserId IS NOT NULL THEN @SteamUserId ELSE `LoginProviderUserId` END,
+    `LoginProviderData` = CASE WHEN @SteamData IS NOT NULL THEN @SteamData ELSE `LoginProviderData` END;
+
+SELECT * FROM `Users` WHERE `Id` = @UserId;";
+
+    /// <summary>
+    /// Set user account to "removed".
+    /// 
+    /// If the "RemovedAt" value is already set, will throw a
+    /// 'key exists' exception, to indicate a conflict.
+    /// Named Parameters:
+    /// - @UserId               int
+    /// </summary>
+    public const string RemoveUser = @"
+UPDATE `Users`
+SET 
+    `RemovedAt` = IF(`RemovedAt` IS NULL, NOW(), `UserId`),
+    `UserId` = IF(`RemovedAt` IS NULL, `UserId`, NULL)
+WHERE `Id` = @UserId;
 
 SELECT * FROM `Users` WHERE `Id` = @UserId;";
 
@@ -598,7 +610,8 @@ CREATE TABLE IF NOT EXISTS `Users` (
     `LastLoginAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `CreatedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `UpdatedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `DeletedAt` TIMESTAMP NULL
+    `DeletedAt` TIMESTAMP NULL,
+    INDEX(`DeletedAt`)
 ) ENGINE = InnoDB;";
 
     /// <summary>

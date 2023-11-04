@@ -80,6 +80,18 @@ public interface IAccountService : IDaprService
         Dictionary<string, string?>? roleClaims, Dictionary<string, string?>? appClaims, Dictionary<string, string?>? scopeClaims,
         Dictionary<string, string?>? identityClaims, Dictionary<string, string?>? profileClaims);
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns>
+    ///     <see cref="HttpStatusCode.OK"/>,
+    ///     <see cref="HttpStatusCode.BadRequest"/>,
+    ///     <see cref="HttpStatusCode.NotFound"/>,
+    ///     <see cref="HttpStatusCode.Conflict"/>,
+    ///     <see cref="HttpStatusCode.InternalServerError"/>
+    /// </returns>
+    Task<(HttpStatusCode, DateTime? removedAt)> DeleteAccount(int id);
+
     public static string GenerateHashedSecret(string secretString, string secretSalt)
     {
         var hashedBytes = SHA512.HashData(Encoding.UTF8.GetBytes(secretString + secretSalt));
