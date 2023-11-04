@@ -616,12 +616,13 @@ public class AccountService : IAccountService
             var resUserID = (int)transactionResult.Id;
             DateTime? resDeletedAt = transactionResult.DeletedAt;
 
+            if (resDeletedAt < (DateTime.Now - TimeSpan.FromSeconds(3)))
+            {
+                Program.Logger.Log(LogLevel.Error, $"The user account was already deleted.");
+                return (HttpStatusCode.Conflict, null);
+            }
+
             return (HttpStatusCode.OK, resDeletedAt);
-        }
-        catch (MySqlException exc) when (exc.Number == 1048)
-        {
-            Program.Logger.Log(LogLevel.Error, exc, $"The user account was already deleted.");
-            return (HttpStatusCode.Conflict, null);
         }
         catch (Exception exc)
         {

@@ -207,11 +207,9 @@ SELECT * FROM `Users` WHERE `Id` = @UserId;";
     /// - @UserId               int
     /// </summary>
     public const string DeleteUser = @"
-SET @deleted = NULL;
 UPDATE `Users`
 SET 
-    `DeletedAt` = IF(`DeletedAt` IS NULL, @deleted := NOW(), `DeletedAt`),
-    `Id` = IF(@deleted IS NULL, `Id`, NULL)
+    `DeletedAt` = IF(`DeletedAt` IS NULL, NOW(), `DeletedAt`)
 WHERE `Id` = @UserId;
 
 SELECT * FROM `Users` WHERE `Id` = @UserId;";
