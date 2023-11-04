@@ -413,7 +413,17 @@ WHERE jt.val IS NOT NULL
     AND @AddProfileClaims IS NOT NULL
 ON DUPLICATE KEY UPDATE `Value` = VALUES(`Value`);
 
-SELECT * FROM `Users` WHERE `Id` = @UserId;";
+SELECT u.*,
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Role' THEN uc.`Value` END) AS 'Role',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'App' THEN uc.`Value` END) AS 'App',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Scope' THEN uc.`Value` END) AS 'Scope',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Identity' THEN uc.`Value` END) AS 'Identity',
+    GROUP_CONCAT(CASE WHEN ct.`Name` = 'Profile' THEN uc.`Value` END) AS 'Profile'
+FROM `Users` u
+LEFT JOIN `UserClaims` uc ON u.`Id` = uc.`UserId`
+LEFT JOIN `ClaimTypes` ct ON uc.`TypeId` = ct.`Id`
+WHERE u.`Id` = @UserId
+GROUP BY u.`Id`;";
 
     /// <summary>
     /// Get user by Guid, and include any claims they have.
