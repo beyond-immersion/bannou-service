@@ -500,28 +500,38 @@ public class AccountService : IAccountService
                 LockoutEnd = resLockoutEnd,
                 LastLoginAt = resLastLoginAt,
                 UpdatedAt = resUpdatedAt,
-                RemovedAt = resRemovedAt
+                RemovedAt = resRemovedAt,
+                RoleClaims = roleClaimsToAdd == null ? new HashSet<string>() : new HashSet<string>(roleClaimsToAdd.ToObject<string[]>() ?? Array.Empty<string>()),
+                AppClaims = appClaimsToAdd == null ? new HashSet<string>() : new HashSet<string>(appClaimsToAdd.ToObject<string[]>() ?? Array.Empty<string>()),
+                ScopeClaims = scopeClaimsToAdd == null ? new HashSet<string>() : new HashSet<string>(scopeClaimsToAdd.ToObject<string[]>() ?? Array.Empty<string>()),
+                IdentityClaims = identityClaimsToAdd == null ? new HashSet<string>() : new HashSet<string>(identityClaimsToAdd.ToObject<string[]>() ?? Array.Empty<string>()),
+                ProfileClaims = profileClaimsToAdd == null ? new HashSet<string>() : new HashSet<string>(profileClaimsToAdd.ToObject<string[]>() ?? Array.Empty<string>())
             };
 
             var claims = transactionResult.Role?.Split(',');
             if (claims != null)
-                responseObj.RoleClaims = new HashSet<string>(claims);
+                foreach (var claim in claims)
+                    responseObj.RoleClaims.Add(claims);
 
             claims = transactionResult.App?.Split(',');
             if (claims != null)
-                responseObj.AppClaims = new HashSet<string>(claims);
+                foreach (var claim in claims)
+                    responseObj.AppClaims.Add(claims);
 
             claims = transactionResult.Scope?.Split(',');
             if (claims != null)
-                responseObj.ScopeClaims = new HashSet<string>(claims);
+                foreach (var claim in claims)
+                    responseObj.ScopeClaims.Add(claims);
 
             claims = transactionResult.Identity?.Split(',');
             if (claims != null)
-                responseObj.IdentityClaims = new HashSet<string>(claims);
+                foreach (var claim in claims)
+                    responseObj.IdentityClaims.Add(claims);
 
             claims = transactionResult.Profile?.Split(',');
             if (claims != null)
-                responseObj.ProfileClaims = new HashSet<string>(claims);
+                foreach (var claim in claims)
+                    responseObj.ProfileClaims.Add(claims);
 
             return (HttpStatusCode.OK, responseObj);
 
