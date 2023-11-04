@@ -511,27 +511,27 @@ public class AccountService : IAccountService
             var claims = transactionResult.Role?.Split(',');
             if (claims != null)
                 foreach (var claim in claims)
-                    responseObj.RoleClaims.Add(claims);
+                    responseObj.RoleClaims.Add(claim);
 
             claims = transactionResult.App?.Split(',');
             if (claims != null)
                 foreach (var claim in claims)
-                    responseObj.AppClaims.Add(claims);
+                    responseObj.AppClaims.Add(claim);
 
             claims = transactionResult.Scope?.Split(',');
             if (claims != null)
                 foreach (var claim in claims)
-                    responseObj.ScopeClaims.Add(claims);
+                    responseObj.ScopeClaims.Add(claim);
 
             claims = transactionResult.Identity?.Split(',');
             if (claims != null)
                 foreach (var claim in claims)
-                    responseObj.IdentityClaims.Add(claims);
+                    responseObj.IdentityClaims.Add(claim);
 
             claims = transactionResult.Profile?.Split(',');
             if (claims != null)
                 foreach (var claim in claims)
-                    responseObj.ProfileClaims.Add(claims);
+                    responseObj.ProfileClaims.Add(claim);
 
             return (HttpStatusCode.OK, responseObj);
 
