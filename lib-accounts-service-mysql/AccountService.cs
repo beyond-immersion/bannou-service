@@ -597,9 +597,6 @@ public class AccountService : IAccountService
                 try
                 {
                     transactionResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
-                    if (transactionResult == null)
-                        throw new NullReferenceException(nameof(transactionResult));
-
                     transaction.Commit();
                 }
                 catch
