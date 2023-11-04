@@ -422,6 +422,8 @@ public class AccountService : IAccountService
             var template = builder.AddTemplate(SqlScripts.UpdateUser_WithClaims);
             var securityToken = Guid.NewGuid().ToString();
 
+            Program.Logger.LogError($"Value of Identity claims being added: {identityClaimsToAdd?.ToString(Newtonsoft.Json.Formatting.None)}");
+
             var parameters = new
             {
                 UserId = (uint)id,
