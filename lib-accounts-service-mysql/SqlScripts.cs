@@ -137,6 +137,287 @@ AND @ProfileClaims IS NOT NULL;
 SELECT * FROM `Users` WHERE `Id` = @lastUserId;";
 
     /// <summary>
+    /// Update existing user account.
+    /// 
+    /// Named Parameters:
+    /// - @UserId               int
+    /// - @Email                string?
+    /// - @EmailVerified        bool?
+    /// - @TwoFactorEnabled     bool?
+    /// - @Region               string?
+    /// - @Username             string?
+    /// - @PasswordData         string?
+    /// - @GoogleUserId         string?
+    /// - @GoogleData           string?
+    /// - @SteamUserId          string?
+    /// - @SteamData            string?
+    /// </summary>
+    public const string UpdateUser = @"
+UPDATE `Users`
+SET 
+    `Username` = IFNULL(@Username, `Username`),
+    `Email` = IFNULL(@Email, `Email`),
+    `Region` = IFNULL(@Region, `Region`),
+    `EmailVerified` = IFNULL(@EmailVerified, `EmailVerified`),
+    `TwoFactorEnabled` = IFNULL(@TwoFactorEnabled, `TwoFactorEnabled`)
+WHERE `Id` = @UserId;
+
+-- Update or Insert Password Login
+INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
+VALUES (
+    @UserId,
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password'),
+    @Username,
+    @PasswordData
+)
+ON DUPLICATE KEY UPDATE 
+    `LoginProviderData` = VALUES(`LoginProviderData`);
+
+-- Update or Insert Google Login
+INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
+VALUES (
+    @UserId,
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google'),
+    @GoogleUserId,
+    @GoogleData
+)
+ON DUPLICATE KEY UPDATE 
+    `LoginProviderUserId` = VALUES(`LoginProviderUserId`),
+    `LoginProviderData` = VALUES(`LoginProviderData`);
+
+-- Update or Insert Steam Login
+INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
+VALUES (
+    @UserId,
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam'),
+    @SteamUserId,
+    @SteamData
+)
+ON DUPLICATE KEY UPDATE 
+    `LoginProviderUserId` = VALUES(`LoginProviderUserId`),
+    `LoginProviderData` = VALUES(`LoginProviderData`);
+
+SELECT * FROM `Users` WHERE `Id` = @UserId;";
+
+    /// <summary>
+    /// Update existing user account.
+    /// 
+    /// Named Parameters:
+    /// - @UserId               int
+    /// - @Email                string?
+    /// - @EmailVerified        bool?
+    /// - @TwoFactorEnabled     bool?
+    /// - @Region               string?
+    /// - @Username             string?
+    /// - @PasswordData         string?
+    /// - @GoogleUserId         string?
+    /// - @GoogleData           string?
+    /// - @SteamUserId          string?
+    /// - @SteamData            string?
+    /// - @RemoveRoleClaims     (string,string,...)?
+    /// - @AddRoleClaims        (string,string,...)?
+    /// - @RemoveAppClaims      (string,string,...)?
+    /// - @AddAppClaims         (string,string,...)?
+    /// - @RemoveScopeClaims    (string,string,...)?
+    /// - @AddScopeClaims       (string,string,...)?
+    /// - @RemoveIdentityClaims (string,string,...)?
+    /// - @AddIdentityClaims    (string,string,...)?
+    /// - @RemoveProfileClaims  (string,string,...)?
+    /// - @AddProfileClaims     (string,string,...)?
+    /// </summary>
+    public const string UpdateUser_WithClaims = @"
+UPDATE `Users`
+SET 
+    `Username` = IFNULL(@Username, `Username`),
+    `Email` = IFNULL(@Email, `Email`),
+    `Region` = IFNULL(@Region, `Region`),
+    `EmailVerified` = IFNULL(@EmailVerified, `EmailVerified`),
+    `TwoFactorEnabled` = IFNULL(@TwoFactorEnabled, `TwoFactorEnabled`)
+WHERE `Id` = @UserId;
+
+-- Update or Insert Password Login
+INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
+VALUES (
+    @UserId,
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password'),
+    @Username,
+    @PasswordData
+)
+ON DUPLICATE KEY UPDATE 
+    `LoginProviderData` = VALUES(`LoginProviderData`);
+
+-- Update or Insert Google Login
+INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
+VALUES (
+    @UserId,
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google'),
+    @GoogleUserId,
+    @GoogleData
+)
+ON DUPLICATE KEY UPDATE 
+    `LoginProviderUserId` = VALUES(`LoginProviderUserId`),
+    `LoginProviderData` = VALUES(`LoginProviderData`);
+
+-- Update or Insert Steam Login
+INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
+VALUES (
+    @UserId,
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam'),
+    @SteamUserId,
+    @SteamData
+)
+ON DUPLICATE KEY UPDATE 
+    `LoginProviderUserId` = VALUES(`LoginProviderUserId`),
+    `LoginProviderData` = VALUES(`LoginProviderData`);
+
+SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Role');
+DELETE FROM `UserClaims`
+WHERE `UserId` = @UserId
+  AND `TypeId` = @ClaimTypeId
+  AND `Value` IN (
+    SELECT JSON_UNQUOTE(JSON_EXTRACT(@RemoveRoleClaims, CONCAT('$[', idx, ']')))
+    FROM JSON_TABLE(
+        JSON_ARRAY(@RemoveRoleClaims),
+        ""$[*]"" COLUMNS(
+            idx FOR ORDINALITY,
+            val JSON PATH '$'
+        )
+    )
+  )
+  AND @RemoveRoleClaims IS NOT NULL;
+
+INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
+SELECT @UserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AddRoleClaims, CONCAT('$[', idx, ']')))
+FROM JSON_TABLE(
+    JSON_ARRAY(@AddRoleClaims),
+    ""$[*]"" COLUMNS(
+        idx FOR ORDINALITY,
+        val JSON PATH '$'
+    )
+)
+WHERE JSON_UNQUOTE(JSON_EXTRACT(@AddRoleClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+  AND @AddRoleClaims IS NOT NULL
+ON DUPLICATE KEY UPDATE `Value` = VALUES(`Value`);
+
+SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'App');
+DELETE FROM `UserClaims`
+WHERE `UserId` = @UserId
+  AND `TypeId` = @ClaimTypeId
+  AND `Value` IN (
+    SELECT JSON_UNQUOTE(JSON_EXTRACT(@RemoveAppClaims, CONCAT('$[', idx, ']')))
+    FROM JSON_TABLE(
+        JSON_ARRAY(@RemoveAppClaims),
+        ""$[*]"" COLUMNS(
+            idx FOR ORDINALITY,
+            val JSON PATH '$'
+        )
+    )
+  )
+  AND @RemoveAppClaims IS NOT NULL;
+
+INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
+SELECT @UserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AddAppClaims, CONCAT('$[', idx, ']')))
+FROM JSON_TABLE(
+    JSON_ARRAY(@AddAppClaims),
+    ""$[*]"" COLUMNS(
+        idx FOR ORDINALITY,
+        val JSON PATH '$'
+    )
+)
+WHERE JSON_UNQUOTE(JSON_EXTRACT(@AddAppClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+  AND @AddAppClaims IS NOT NULL
+ON DUPLICATE KEY UPDATE `Value` = VALUES(`Value`);
+
+SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Scope');
+DELETE FROM `UserClaims`
+WHERE `UserId` = @UserId
+  AND `TypeId` = @ClaimTypeId
+  AND `Value` IN (
+    SELECT JSON_UNQUOTE(JSON_EXTRACT(@RemoveScopeClaims, CONCAT('$[', idx, ']')))
+    FROM JSON_TABLE(
+        JSON_ARRAY(@RemoveScopeClaims),
+        ""$[*]"" COLUMNS(
+            idx FOR ORDINALITY,
+            val JSON PATH '$'
+        )
+    )
+  )
+  AND @RemoveScopeClaims IS NOT NULL;
+
+INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
+SELECT @UserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AddScopeClaims, CONCAT('$[', idx, ']')))
+FROM JSON_TABLE(
+    JSON_ARRAY(@AddScopeClaims),
+    ""$[*]"" COLUMNS(
+        idx FOR ORDINALITY,
+        val JSON PATH '$'
+    )
+)
+WHERE JSON_UNQUOTE(JSON_EXTRACT(@AddScopeClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+  AND @AddScopeClaims IS NOT NULL
+ON DUPLICATE KEY UPDATE `Value` = VALUES(`Value`);
+
+SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Identity');
+DELETE FROM `UserClaims`
+WHERE `UserId` = @UserId
+  AND `TypeId` = @ClaimTypeId
+  AND `Value` IN (
+    SELECT JSON_UNQUOTE(JSON_EXTRACT(@RemoveIdentityClaims, CONCAT('$[', idx, ']')))
+    FROM JSON_TABLE(
+        JSON_ARRAY(@RemoveIdentityClaims),
+        ""$[*]"" COLUMNS(
+            idx FOR ORDINALITY,
+            val JSON PATH '$'
+        )
+    )
+  )
+  AND @RemoveIdentityClaims IS NOT NULL;
+
+INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
+SELECT @UserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AddIdentityClaims, CONCAT('$[', idx, ']')))
+FROM JSON_TABLE(
+    JSON_ARRAY(@AddIdentityClaims),
+    ""$[*]"" COLUMNS(
+        idx FOR ORDINALITY,
+        val JSON PATH '$'
+    )
+)
+WHERE JSON_UNQUOTE(JSON_EXTRACT(@AddIdentityClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+  AND @AddIdentityClaims IS NOT NULL
+ON DUPLICATE KEY UPDATE `Value` = VALUES(`Value`);
+
+SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Profile');
+DELETE FROM `UserClaims`
+WHERE `UserId` = @UserId
+  AND `TypeId` = @ClaimTypeId
+  AND `Value` IN (
+    SELECT JSON_UNQUOTE(JSON_EXTRACT(@RemoveProfileClaims, CONCAT('$[', idx, ']')))
+    FROM JSON_TABLE(
+        JSON_ARRAY(@RemoveProfileClaims),
+        ""$[*]"" COLUMNS(
+            idx FOR ORDINALITY,
+            val JSON PATH '$'
+        )
+    )
+  )
+  AND @RemoveProfileClaims IS NOT NULL;
+
+INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
+SELECT @UserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AddProfileClaims, CONCAT('$[', idx, ']')))
+FROM JSON_TABLE(
+    JSON_ARRAY(@AddProfileClaims),
+    ""$[*]"" COLUMNS(
+        idx FOR ORDINALITY,
+        val JSON PATH '$'
+    )
+)
+WHERE JSON_UNQUOTE(JSON_EXTRACT(@AddProfileClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+  AND @AddProfileClaims IS NOT NULL
+ON DUPLICATE KEY UPDATE `Value` = VALUES(`Value`);
+
+SELECT * FROM `Users` WHERE `Id` = @UserId;";
+
+    /// <summary>
     /// Get user by Guid, and include any claims they have.
     /// 
     /// Named Parameters:
@@ -374,8 +655,11 @@ CREATE TABLE IF NOT EXISTS `UserClaims` (
     `TypeId` INT UNSIGNED NOT NULL,
     `Value` VARCHAR(512) NOT NULL,
     INDEX (`UserId`),
+    INDEX (`Value`),
+    INDEX (`UserId`, `TypeId`),
     FOREIGN KEY (`UserId`) REFERENCES `Users`(`Id`) ON DELETE CASCADE,
     FOREIGN KEY (`TypeId`) REFERENCES `ClaimTypes`(`Id`) ON DELETE CASCADE,
     UNIQUE (`UserId`, `TypeId`, `Value`)
 ) ENGINE = InnoDB;";
+
 }

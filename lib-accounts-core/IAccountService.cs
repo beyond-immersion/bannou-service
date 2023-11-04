@@ -61,9 +61,24 @@ public interface IAccountService : IDaprService
     ///     <see cref="HttpStatusCode.Conflict"/>,
     ///     <see cref="HttpStatusCode.InternalServerError"/>
     /// </returns>
-    Task<(HttpStatusCode, AccountData?)> CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? region, string? username, string? password,
-        string? steamID, string? steamToken, string? googleID, string? googleToken,
+    Task<(HttpStatusCode, AccountData?)> CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? region,
+        string? username, string? password, string? steamID, string? steamToken, string? googleID, string? googleToken,
         HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns>
+    ///     <see cref="HttpStatusCode.OK"/>,
+    ///     <see cref="HttpStatusCode.BadRequest"/>,
+    ///     <see cref="HttpStatusCode.NotFound"/>,
+    ///     <see cref="HttpStatusCode.Conflict"/>,
+    ///     <see cref="HttpStatusCode.InternalServerError"/>
+    /// </returns>
+    Task<(HttpStatusCode, AccountData?)> UpdateAccount(int id, string? email, bool emailVerified, bool twoFactorEnabled, string? region,
+        string? username, string? password, string? steamID, string? steamToken, string? googleID, string? googleToken,
+        Dictionary<string, string>? roleClaims, Dictionary<string, string>? appClaims, Dictionary<string, string>? scopeClaims,
+        Dictionary<string, string>? identityClaims, Dictionary<string, string>? profileClaims);
 
     public static string GenerateHashedSecret(string secretString, string secretSalt)
     {

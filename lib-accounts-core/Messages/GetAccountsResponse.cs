@@ -163,13 +163,4 @@ public class GetAccountsResponse : ServiceResponse
     /// </summary>
     [JsonProperty("profile_claims")]
     public HashSet<string>? ProfileClaims { get; set; }
-
-    public GetAccountsResponse(int id, string securityToken, DateTime createdAt)
-    {
-        ID = id;
-        SecurityToken = securityToken;
-        LastLoginAt = createdAt;
-        CreatedAt = createdAt;
-        UpdatedAt = createdAt;
-    }
 }

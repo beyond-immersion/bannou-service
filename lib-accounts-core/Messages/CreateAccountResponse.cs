@@ -163,6 +163,4 @@ public class CreateAccountResponse : ServiceResponse
     /// </summary>
     [JsonProperty("profile_claims")]
     public HashSet<string>? ProfileClaims { get; set; }
-
-    public CreateAccountResponse() { }
 }

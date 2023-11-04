@@ -4,10 +4,10 @@ using Newtonsoft.Json;
 namespace BeyondImmersion.BannouService.Accounts.Messages;
 
 /// <summary>
-/// The response model for service API calls to `/account/get`.
+/// The response model for service API calls to `/account/update`.
 /// </summary>
 [JsonObject]
-public class GetAccountResponse : ServiceResponse
+public class UpdateAccountResponse : ServiceResponse
 {
     /// <summary>
     /// The unique internal-only account ID.

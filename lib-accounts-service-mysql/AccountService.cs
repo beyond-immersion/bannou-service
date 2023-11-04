@@ -3,10 +3,12 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using Dapper;
+using Google.Rpc;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
 using System.Net;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BeyondImmersion.BannouService.Accounts;
 
@@ -337,6 +339,214 @@ public class AccountService : IAccountService
             };
 
             return (HttpStatusCode.OK, responseObj);
+        }
+        catch (MySqlException exc) when (exc.Number == 1062)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, $"A duplicate user account already exists with the provided keys.");
+            return (HttpStatusCode.Conflict, null);
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while inserting and fetching the new user account.");
+            return (HttpStatusCode.InternalServerError, null);
+        }
+    }
+
+    async Task<(HttpStatusCode, IAccountService.AccountData?)> IAccountService.UpdateAccount(int id, string? email, bool emailVerified, bool twoFactorEnabled, string? region,
+    string? username, string? password, string? steamID, string? steamToken, string? googleID, string? googleToken,
+    Dictionary<string, string>? roleClaims, Dictionary<string, string>? appClaims, Dictionary<string, string>? scopeClaims, Dictionary<string, string>? identityClaims, Dictionary<string, string>? profileClaims)
+    {
+        try
+        {
+            if (id < 0)
+                return (HttpStatusCode.BadRequest, null);
+
+            if (_dbConnectionString == null)
+                throw new SystemException("Database connection string not found.");
+
+            SplitClaims(roleClaims, out var roleClaimsToRemove, out var roleClaimsToAdd);
+            SplitClaims(appClaims, out var appClaimsToRemove, out var appClaimsToAdd);
+            SplitClaims(scopeClaims, out var scopeClaimsToRemove, out var scopeClaimsToAdd);
+            SplitClaims(identityClaims, out var identityClaimsToRemove, out var identityClaimsToAdd);
+            SplitClaims(profileClaims, out var profileClaimsToRemove, out var profileClaimsToAdd);
+
+            // handle steam OAUTH
+            if (!string.IsNullOrWhiteSpace(steamID))
+            {
+                identityClaimsToAdd ??= new JArray();
+                identityClaimsToAdd.Add($"SteamID:{steamID}");
+            }
+
+            string? steamData = null;
+            if (!string.IsNullOrWhiteSpace(steamToken))
+            {
+                steamData = new JObject()
+                {
+                    ["Token"] = steamToken
+                }.ToString(Newtonsoft.Json.Formatting.None);
+            }
+
+            // handle Google OAUTH
+            if (!string.IsNullOrWhiteSpace(googleID))
+            {
+                identityClaimsToAdd ??= new JArray();
+                identityClaimsToAdd.Add($"GoogleID:{googleID}");
+            }
+
+            string? googleData = null;
+            if (!string.IsNullOrWhiteSpace(googleToken))
+            {
+                googleData = new JObject()
+                {
+                    ["Token"] = googleToken
+                }.ToString(Newtonsoft.Json.Formatting.None);
+            }
+
+            string? passwordSalt = null;
+            string? hashedPassword = null;
+            JObject? passwordData = null;
+
+            // handle traditional username/password logins
+            if (!string.IsNullOrWhiteSpace(password))
+            {
+                passwordSalt = Guid.NewGuid().ToString();
+                hashedPassword = IAccountService.GenerateHashedSecret(password, passwordSalt);
+                passwordData = new JObject() { ["Hash"] = hashedPassword, ["Salt"] = passwordSalt };
+
+                identityClaimsToAdd ??= new JArray();
+                identityClaimsToAdd.Add($"SecretHash:{hashedPassword}");
+                identityClaimsToAdd.Add($"SecretSalt:{passwordSalt}");
+            }
+
+            var builder = new SqlBuilder();
+            var template = builder.AddTemplate(SqlScripts.UpdateUser_WithClaims);
+            var securityToken = Guid.NewGuid().ToString();
+
+            var parameters = new
+            {
+                Id = (uint)id,
+                SecurityToken = securityToken,
+                Email = email,
+                EmailVerified = emailVerified,
+                TwoFactorEnabled = twoFactorEnabled,
+                Region = region,
+                Username = username,
+                PasswordData = passwordData?.ToString(Newtonsoft.Json.Formatting.None),
+                GoogleUserId = googleID,
+                GoogleData = googleData,
+                SteamUserId = steamID,
+                SteamData = steamData,
+                AddRoleClaims = roleClaimsToAdd?.ToString(Newtonsoft.Json.Formatting.None),
+                AddAppClaims = appClaimsToAdd?.ToString(Newtonsoft.Json.Formatting.None),
+                AddScopeClaims = scopeClaimsToAdd?.ToString(Newtonsoft.Json.Formatting.None),
+                AddIdentityClaims = identityClaimsToAdd?.ToString(Newtonsoft.Json.Formatting.None),
+                AddProfileClaims = profileClaimsToAdd?.ToString(Newtonsoft.Json.Formatting.None),
+                RemoveRoleClaims = roleClaimsToRemove?.ToString(Newtonsoft.Json.Formatting.None),
+                RemoveAppClaims = appClaimsToRemove?.ToString(Newtonsoft.Json.Formatting.None),
+                RemoveScopeClaims = scopeClaimsToRemove?.ToString(Newtonsoft.Json.Formatting.None),
+                RemoveIdentityClaims = identityClaimsToRemove?.ToString(Newtonsoft.Json.Formatting.None),
+                RemoveProfileClaims = profileClaimsToRemove?.ToString(Newtonsoft.Json.Formatting.None)
+            };
+
+            using var dbConnection = new MySqlConnection(_dbConnectionString);
+            dynamic? transactionResult = null;
+
+            await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
+            using (var transaction = await dbConnection.BeginTransactionAsync(Program.ShutdownCancellationTokenSource.Token))
+            {
+                try
+                {
+                    transactionResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
+                    if (transactionResult == null)
+                        throw new NullReferenceException(nameof(transactionResult));
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync(Program.ShutdownCancellationTokenSource.Token);
+                    throw;
+                }
+            }
+
+            if (transactionResult == null)
+                return (HttpStatusCode.NotFound, null);
+
+            // should move to DTO later
+            var resUserID = (int)transactionResult.Id;
+            string resSecurityToken = transactionResult.SecurityToken;
+            string? resUsername = transactionResult.Username;
+            string? resEmail = transactionResult.Email;
+            bool resEmailVerified = transactionResult.EmailVerified;
+            bool resTwoFactorEnabled = transactionResult.TwoFactorEnabled;
+            string? resRegion = transactionResult.Region;
+            DateTime resCreatedAt = transactionResult.CreatedAt;
+            DateTime resUpdatedAt = transactionResult.UpdatedAt ?? resCreatedAt;
+            DateTime resLastLoginAt = transactionResult.LastLoginAt ?? resCreatedAt;
+            DateTime? resRemovedAt = transactionResult.RemovedAt;
+            DateTime? resLockoutEnd = transactionResult.LockoutEnd;
+
+            // NOTE: should never be the same as the DTO (if added)
+            // or the Controller API response model- stay decoupled
+            var responseObj = new IAccountService.AccountData(resUserID, resSecurityToken, resCreatedAt)
+            {
+                Username = resUsername,
+                Email = resEmail,
+                EmailVerified = resEmailVerified,
+                TwoFactorEnabled = resTwoFactorEnabled,
+                Region = resRegion,
+                LockoutEnd = resLockoutEnd,
+                LastLoginAt = resLastLoginAt,
+                UpdatedAt = resUpdatedAt,
+                RemovedAt = resRemovedAt
+            };
+
+            var claims = transactionResult.Role?.Split(',');
+            if (claims != null)
+                responseObj.RoleClaims = new HashSet<string>(claims);
+
+            claims = transactionResult.App?.Split(',');
+            if (claims != null)
+                responseObj.AppClaims = new HashSet<string>(claims);
+
+            claims = transactionResult.Scope?.Split(',');
+            if (claims != null)
+                responseObj.ScopeClaims = new HashSet<string>(claims);
+
+            claims = transactionResult.Identity?.Split(',');
+            if (claims != null)
+                responseObj.IdentityClaims = new HashSet<string>(claims);
+
+            claims = transactionResult.Profile?.Split(',');
+            if (claims != null)
+                responseObj.ProfileClaims = new HashSet<string>(claims);
+
+            return (HttpStatusCode.OK, responseObj);
+
+            void SplitClaims(Dictionary<string, string>? claims, out JArray? claimsToRemove, out JArray? claimsToAdd)
+            {
+                claimsToRemove = null;
+                claimsToAdd = null;
+                if (claims != null)
+                {
+                    claimsToRemove = new JArray();
+                    claimsToAdd = new JArray();
+                    foreach (var claim in claims)
+                    {
+                        if (!string.Equals(claim.Value, claim.Key))
+                            claimsToRemove.Add(claim.Key);
+
+                        if (claim.Value != null)
+                            claimsToAdd.Add(claim.Value);
+                    }
+                }
+
+                if (claimsToRemove?.Count == 0)
+                    claimsToRemove = null;
+
+                if (claimsToAdd?.Count == 0)
+                    claimsToAdd = null;
+            }
         }
         catch (MySqlException exc) when (exc.Number == 1062)
         {
