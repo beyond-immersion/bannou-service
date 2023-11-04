@@ -56,6 +56,7 @@ public static class UpdateAccountTests
     public static async Task<bool> Run(TestingService service)
         => await service.RunDelegates("account/update", new List<Func<TestingService, Task<bool>>>()
             {
+                UpdateAccount_Region,
                 UpdateAccount_Username,
                 UpdateAccount_Email,
                 UpdateAccount_GoogleID,
@@ -66,7 +67,10 @@ public static class UpdateAccountTests
     {
         service.ResetTestVars();
         if (TestAccountData == null)
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test account missing.");
             return false;
+        }
 
         var requestModel = new UpdateAccountRequest()
         {
@@ -83,11 +87,44 @@ public static class UpdateAccountTests
         return true;
     }
 
+    private static async Task<bool> UpdateAccount_Region(TestingService service)
+    {
+        service.ResetTestVars();
+        if (TestAccountData == null)
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test account missing.");
+            return false;
+        }
+
+        var requestModel = new UpdateAccountRequest()
+        {
+            ID = TestAccountData.ID,
+            Region = "Asia"
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "update"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        if (!string.Equals(requestModel.Region, requestModel.Response?.Region))
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test response Region {requestModel.Response?.Region} does not match request Region {requestModel.Region}.");
+            return false;
+        }
+
+        return true;
+    }
+
     private static async Task<bool> UpdateAccount_Email(TestingService service)
     {
         service.ResetTestVars();
         if (TestAccountData == null)
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test account missing.");
             return false;
+        }
 
         var requestModel = new UpdateAccountRequest()
         {
@@ -108,12 +145,23 @@ public static class UpdateAccountTests
     {
         service.ResetTestVars();
         if (TestAccountData == null)
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test account missing.");
             return false;
+        }
+
+        var steamID = TestAccountData.IdentityClaims?.Where(t => t.StartsWith("SteamID:")).Select(t => t.Remove(0, "SteamID:".Length)).FirstOrDefault();
+        if (steamID == null)
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test account missing required property {nameof(steamID)}.");
+            return false;
+        }
 
         var requestModel = new UpdateAccountRequest()
         {
             ID = TestAccountData.ID,
-            SteamID = $"SteamID_{Guid.NewGuid()}"
+            SteamID = $"SteamID_{Guid.NewGuid()}",
+            IdentityClaims = new() { [steamID] = null }
         };
 
         if (!await requestModel.ExecutePostRequest("account", "update"))
@@ -129,12 +177,23 @@ public static class UpdateAccountTests
     {
         service.ResetTestVars();
         if (TestAccountData == null)
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test account missing.");
             return false;
+        }
+
+        var googleID = TestAccountData.IdentityClaims?.Where(t => t.StartsWith("GoogleID:")).Select(t => t.Remove(0, "GoogleID:".Length)).FirstOrDefault();
+        if (googleID == null)
+        {
+            Program.Logger.Log(LogLevel.Error, $"Test account missing required property {nameof(googleID)}.");
+            return false;
+        }
 
         var requestModel = new UpdateAccountRequest()
         {
             ID = TestAccountData.ID,
-            GoogleID = $"Email_{Guid.NewGuid()}@arcadia.com"
+            GoogleID = $"Email_{Guid.NewGuid()}@arcadia.com",
+            IdentityClaims = new() { [googleID] = null }
         };
 
         if (!await requestModel.ExecutePostRequest("account", "update"))

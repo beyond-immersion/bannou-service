@@ -3,12 +3,10 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using Dapper;
-using Google.Rpc;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
 using System.Net;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BeyondImmersion.BannouService.Accounts;
 
@@ -421,8 +419,6 @@ public class AccountService : IAccountService
             var builder = new SqlBuilder();
             var template = builder.AddTemplate(SqlScripts.UpdateUser_WithClaims);
             var securityToken = Guid.NewGuid().ToString();
-
-            Program.Logger.LogError($"Value of Identity claims being added: {identityClaimsToAdd?.ToString(Newtonsoft.Json.Formatting.None)}");
 
             var parameters = new
             {

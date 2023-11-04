@@ -86,7 +86,7 @@ public class UpdateAccountRequest : ServiceRequest<UpdateAccountResponse>
     ///     User
     /// </summary>
     [JsonProperty("role_claims")]
-    public Dictionary<string, string>? RoleClaims { get; set; }
+    public Dictionary<string, string?>? RoleClaims { get; set; }
 
     /// <summary>
     /// Set initial app claims. Apps are largely given access
@@ -100,14 +100,14 @@ public class UpdateAccountRequest : ServiceRequest<UpdateAccountResponse>
     ///     ArcadiaGame:LICENSE_!2109u13894y2t52390u-
     /// </summary>
     [JsonProperty("app_claims")]
-    public Dictionary<string, string>? AppClaims { get; set; }
+    public Dictionary<string, string?>? AppClaims { get; set; }
 
     /// <summary>
     /// Claims to set specific permissions within an
     /// app.
     /// </summary>
     [JsonProperty("scope_claims")]
-    public Dictionary<string, string>? ScopeClaims { get; set; }
+    public Dictionary<string, string?>? ScopeClaims { get; set; }
 
     /// <summary>
     /// Claims to add for identity (mostly OAUTH).
@@ -122,7 +122,7 @@ public class UpdateAccountRequest : ServiceRequest<UpdateAccountResponse>
     ///     GoogleIDToken:m1093wf8f09n30f765h9j09k204y619k
     /// </summary>
     [JsonProperty("identity_claims")]
-    public Dictionary<string, string>? IdentityClaims { get; set; }
+    public Dictionary<string, string?>? IdentityClaims { get; set; }
 
     /// <summary>
     /// Claims to add generic profile information for the account.
@@ -133,5 +133,5 @@ public class UpdateAccountRequest : ServiceRequest<UpdateAccountResponse>
     ///     PictureUri:link-to-photo/gravatar
     /// </summary>
     [JsonProperty("profile_claims")]
-    public Dictionary<string, string>? ProfileClaims { get; set; }
+    public Dictionary<string, string?>? ProfileClaims { get; set; }
 }
