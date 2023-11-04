@@ -172,6 +172,8 @@ public class TestingService : IDaprService
             try
             {
                 ResetTestVars();
+                Program.Logger.Log(LogLevel.Information, $"Running test [{testMethod.Method.Name}] in '{testLabel}' tests.");
+
                 if (!await testMethod.Invoke(this))
                 {
                     Program.Logger.Log(LogLevel.Error, $"Test failure for [{testMethod.Method.Name}] in '{testLabel}' tests.");
