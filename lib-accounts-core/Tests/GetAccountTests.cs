@@ -76,7 +76,7 @@ public static class GetAccountTests
 
     private static async Task<bool> GetAccount_ByID(TestingService service)
     {
-        if (string.IsNullOrWhiteSpace(TestAccountData?.Username))
+        if (TestAccountData == null)
             return false;
 
         var requestModel = new GetAccountRequest()
@@ -207,7 +207,7 @@ public static class GetAccountTests
 
     private static async Task<bool> GetAccount_ByID_IncludeeClaims(TestingService service)
     {
-        if (string.IsNullOrWhiteSpace(TestAccountData?.Username))
+        if (TestAccountData == null)
             return false;
 
         var requestModel = new GetAccountRequest()
