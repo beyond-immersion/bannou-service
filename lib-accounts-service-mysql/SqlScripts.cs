@@ -273,27 +273,27 @@ DELETE FROM `UserClaims`
 WHERE `UserId` = @UserId
     AND `TypeId` = @ClaimTypeId
     AND `Value` IN (
-        SELECT JSON_UNQUOTE(JSON_EXTRACT(@RemoveRoleClaims, CONCAT('$[', idx, ']')))
+        SELECT val
         FROM JSON_TABLE(
             JSON_ARRAY(@RemoveRoleClaims),
             ""$[*]"" COLUMNS(
                 idx FOR ORDINALITY,
                 val JSON PATH '$'
             )
-        )
+        ) AS jt
     )
     AND @RemoveRoleClaims IS NOT NULL;
 
 INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-SELECT @UserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AddRoleClaims, CONCAT('$[', idx, ']')))
+SELECT @UserId, @ClaimTypeId, jt.val
 FROM JSON_TABLE(
     JSON_ARRAY(@AddRoleClaims),
     ""$[*]"" COLUMNS(
         idx FOR ORDINALITY,
         val JSON PATH '$'
     )
-)
-WHERE JSON_UNQUOTE(JSON_EXTRACT(@AddRoleClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+) AS jt
+WHERE jt.val IS NOT NULL
     AND @AddRoleClaims IS NOT NULL
 ON DUPLICATE KEY UPDATE `Value` = VALUES(`Value`);
 
@@ -302,27 +302,27 @@ DELETE FROM `UserClaims`
 WHERE `UserId` = @UserId
     AND `TypeId` = @ClaimTypeId
     AND `Value` IN (
-        SELECT JSON_UNQUOTE(JSON_EXTRACT(@RemoveAppClaims, CONCAT('$[', idx, ']')))
+        SELECT val
         FROM JSON_TABLE(
             JSON_ARRAY(@RemoveAppClaims),
             ""$[*]"" COLUMNS(
                 idx FOR ORDINALITY,
                 val JSON PATH '$'
             )
-        )
+        ) AS jt
     )
     AND @RemoveAppClaims IS NOT NULL;
 
 INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-SELECT @UserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AddAppClaims, CONCAT('$[', idx, ']')))
+SELECT @UserId, @ClaimTypeId, jt.val
 FROM JSON_TABLE(
     JSON_ARRAY(@AddAppClaims),
     ""$[*]"" COLUMNS(
         idx FOR ORDINALITY,
         val JSON PATH '$'
     )
-)
-WHERE JSON_UNQUOTE(JSON_EXTRACT(@AddAppClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+) AS jt
+WHERE jt.val IS NOT NULL
     AND @AddAppClaims IS NOT NULL
 ON DUPLICATE KEY UPDATE `Value` = VALUES(`Value`);
 
@@ -331,27 +331,27 @@ DELETE FROM `UserClaims`
 WHERE `UserId` = @UserId
     AND `TypeId` = @ClaimTypeId
     AND `Value` IN (
-        SELECT JSON_UNQUOTE(JSON_EXTRACT(@RemoveScopeClaims, CONCAT('$[', idx, ']')))
+        SELECT val
         FROM JSON_TABLE(
             JSON_ARRAY(@RemoveScopeClaims),
             ""$[*]"" COLUMNS(
                 idx FOR ORDINALITY,
                 val JSON PATH '$'
             )
-        )
+        ) AS jt
     )
     AND @RemoveScopeClaims IS NOT NULL;
 
 INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-SELECT @UserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AddScopeClaims, CONCAT('$[', idx, ']')))
+SELECT @UserId, @ClaimTypeId, jt.val
 FROM JSON_TABLE(
     JSON_ARRAY(@AddScopeClaims),
     ""$[*]"" COLUMNS(
         idx FOR ORDINALITY,
         val JSON PATH '$'
     )
-)
-WHERE JSON_UNQUOTE(JSON_EXTRACT(@AddScopeClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+) AS jt
+WHERE jt.val IS NOT NULL
     AND @AddScopeClaims IS NOT NULL
 ON DUPLICATE KEY UPDATE `Value` = VALUES(`Value`);
 
@@ -360,27 +360,27 @@ DELETE FROM `UserClaims`
 WHERE `UserId` = @UserId
     AND `TypeId` = @ClaimTypeId
     AND `Value` IN (
-        SELECT JSON_UNQUOTE(JSON_EXTRACT(@RemoveIdentityClaims, CONCAT('$[', idx, ']')))
+        SELECT val
         FROM JSON_TABLE(
             JSON_ARRAY(@RemoveIdentityClaims),
             ""$[*]"" COLUMNS(
                 idx FOR ORDINALITY,
                 val JSON PATH '$'
             )
-        )
+        ) AS jt
     )
     AND @RemoveIdentityClaims IS NOT NULL;
 
 INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-SELECT @UserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AddIdentityClaims, CONCAT('$[', idx, ']')))
+SELECT @UserId, @ClaimTypeId, jt.val
 FROM JSON_TABLE(
     JSON_ARRAY(@AddIdentityClaims),
     ""$[*]"" COLUMNS(
         idx FOR ORDINALITY,
         val JSON PATH '$'
     )
-)
-WHERE JSON_UNQUOTE(JSON_EXTRACT(@AddIdentityClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+) AS jt
+WHERE jt.val IS NOT NULL
     AND @AddIdentityClaims IS NOT NULL
 ON DUPLICATE KEY UPDATE `Value` = VALUES(`Value`);
 
@@ -389,27 +389,27 @@ DELETE FROM `UserClaims`
 WHERE `UserId` = @UserId
     AND `TypeId` = @ClaimTypeId
     AND `Value` IN (
-        SELECT JSON_UNQUOTE(JSON_EXTRACT(@RemoveProfileClaims, CONCAT('$[', idx, ']')))
+        SELECT val
         FROM JSON_TABLE(
             JSON_ARRAY(@RemoveProfileClaims),
             ""$[*]"" COLUMNS(
                 idx FOR ORDINALITY,
                 val JSON PATH '$'
             )
-        )
+        ) AS jt
     )
     AND @RemoveProfileClaims IS NOT NULL;
 
 INSERT INTO `UserClaims` (`UserId`, `TypeId`, `Value`)
-SELECT @UserId, @ClaimTypeId, JSON_UNQUOTE(JSON_EXTRACT(@AddProfileClaims, CONCAT('$[', idx, ']')))
+SELECT @UserId, @ClaimTypeId, jt.val
 FROM JSON_TABLE(
     JSON_ARRAY(@AddProfileClaims),
     ""$[*]"" COLUMNS(
         idx FOR ORDINALITY,
         val JSON PATH '$'
     )
-)
-WHERE JSON_UNQUOTE(JSON_EXTRACT(@AddProfileClaims, CONCAT('$[', idx, ']'))) IS NOT NULL
+) AS jt
+WHERE jt.val IS NOT NULL
     AND @AddProfileClaims IS NOT NULL
 ON DUPLICATE KEY UPDATE `Value` = VALUES(`Value`);
 
