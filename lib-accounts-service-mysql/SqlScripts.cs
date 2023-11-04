@@ -245,8 +245,7 @@ VALUES (
     @Username,
     @PasswordData
 )
-WHERE @Username IS NOT NULL
-    AND @PasswordData IS NOT NULL
+WHERE @Username IS NOT NULL AND @PasswordData IS NOT NULL
 ON DUPLICATE KEY UPDATE 
     `LoginProviderData` = VALUES(`LoginProviderData`);
 
@@ -257,8 +256,7 @@ VALUES (
     @GoogleUserId,
     @GoogleData
 )
-WHERE @GoogleUserId IS NOT NULL
-    AND @GoogleData IS NOT NULL
+WHERE @GoogleUserId IS NOT NULL AND @GoogleData IS NOT NULL
 ON DUPLICATE KEY UPDATE 
     `LoginProviderUserId` = VALUES(`LoginProviderUserId`),
     `LoginProviderData` = VALUES(`LoginProviderData`);
@@ -270,8 +268,7 @@ VALUES (
     @SteamUserId,
     @SteamData
 )
-WHERE @SteamUserId IS NOT NULL
-    AND @SteamData IS NOT NULL
+WHERE @SteamUserId IS NOT NULL AND @SteamData IS NOT NULL
 ON DUPLICATE KEY UPDATE 
     `LoginProviderUserId` = VALUES(`LoginProviderUserId`),
     `LoginProviderData` = VALUES(`LoginProviderData`);
