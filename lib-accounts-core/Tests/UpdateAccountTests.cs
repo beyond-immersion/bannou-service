@@ -190,17 +190,17 @@ public static class UpdateAccountTests
             return false;
         }
 
-        var googleID = responseModel.IdentityClaims?.FirstOrDefault(t => t.StartsWith("GoogleID:"))?.Remove(0, "GoogleID:".Length);
-        if (!string.IsNullOrWhiteSpace(requestModel.GoogleID) && !string.Equals(requestModel.GoogleID, googleID))
+        var googleIDs = responseModel.IdentityClaims?.Where(t => t.StartsWith("GoogleID:"))?.Select(t => t.Remove(0, "GoogleID:".Length));
+        if (!string.IsNullOrWhiteSpace(requestModel.GoogleID) && !(googleIDs?.Contains(requestModel.GoogleID) ?? false))
         {
-            Program.Logger.Log(LogLevel.Error, $"Test response GoogleID {googleID} does not match request GoogleID {requestModel.GoogleID}.");
+            Program.Logger.Log(LogLevel.Error, $"Test response GoogleIDs do not contain request SteamID {requestModel.GoogleID}.");
             return false;
         }
 
-        var steamID = responseModel.IdentityClaims?.FirstOrDefault(t => t.StartsWith("SteamID:"))?.Remove(0, "SteamID:".Length);
-        if (!string.IsNullOrWhiteSpace(requestModel.SteamID) && !string.Equals(requestModel.SteamID, steamID))
+        var steamIDs = responseModel.IdentityClaims?.Where(t => t.StartsWith("SteamID:"))?.Select(t => t.Remove(0, "SteamID:".Length));
+        if (!string.IsNullOrWhiteSpace(requestModel.SteamID) && !(steamIDs?.Contains(requestModel.SteamID) ?? false))
         {
-            Program.Logger.Log(LogLevel.Error, $"Test response SteamID {steamID} does not match request SteamID {requestModel.SteamID}.");
+            Program.Logger.Log(LogLevel.Error, $"Test response SteamIDs do not contain request SteamID {requestModel.SteamID}.");
             return false;
         }
 
