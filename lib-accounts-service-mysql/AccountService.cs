@@ -424,7 +424,7 @@ public class AccountService : IAccountService
 
             var parameters = new
             {
-                Id = (uint)id,
+                UserId = (uint)id,
                 SecurityToken = securityToken,
                 Email = email,
                 EmailVerified = emailVerified,
