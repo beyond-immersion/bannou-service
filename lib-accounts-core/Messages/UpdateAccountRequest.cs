@@ -68,13 +68,13 @@ public class UpdateAccountRequest : ServiceRequest<UpdateAccountResponse>
     /// Whether the email should be considered verified.
     /// </summary>
     [JsonProperty("email_verified")]
-    public bool EmailVerified { get; set; }
+    public bool? EmailVerified { get; set; }
 
     /// <summary>
     /// Whether 2-factor authentication has been enabled.
     /// </summary>
     [JsonProperty("two_factor_enabled")]
-    public bool TwoFactorEnabled { get; set; }
+    public bool? TwoFactorEnabled { get; set; }
 
     /// <summary>
     /// Set initial roles. Applies system-wide- if you want

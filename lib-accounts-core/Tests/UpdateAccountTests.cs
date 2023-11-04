@@ -65,7 +65,8 @@ public static class UpdateAccountTests
                 UpdateAccount_AppClaims,
                 UpdateAccount_ScopeClaims,
                 UpdateAccount_IdentityClaims,
-                UpdateAccount_ProfileClaims
+                UpdateAccount_ProfileClaims,
+                UpdateAccount_AllParameters
             });
 
     private static async Task<bool> UpdateAccount_Username(TestingService service)
@@ -213,35 +214,8 @@ public static class UpdateAccountTests
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        if (requestModel.Response?.RoleClaims?.Contains("SHOULD_NOT_EXIST") ?? true)
-        {
-            Program.Logger.Log(LogLevel.Error, "Role claim exists which shouldn't.");
+        if (!ValidateClaimsTable(requestModel.Response?.RoleClaims))
             return false;
-        }
-
-        if (requestModel.Response?.RoleClaims?.Contains("BEFORE") ?? true)
-        {
-            Program.Logger.Log(LogLevel.Error, "Role claim 'BEFORE' exists which shouldn't.");
-            return false;
-        }
-
-        if (!requestModel.Response?.RoleClaims?.Contains("AFTER") ?? false)
-        {
-            Program.Logger.Log(LogLevel.Error, "Role claim 'AFTER' doesn't exist.");
-            return false;
-        }
-
-        if (!requestModel.Response?.RoleClaims?.Contains("ADD") ?? false)
-        {
-            Program.Logger.Log(LogLevel.Error, "Role claim 'ADD' doesn't exist.");
-            return false;
-        }
-
-        if (!requestModel.Response?.RoleClaims?.Contains("EXTRA") ?? false)
-        {
-            Program.Logger.Log(LogLevel.Error, "Role claim 'EXTRA' doesn't exist.");
-            return false;
-        }
 
         return true;
     }
@@ -269,35 +243,8 @@ public static class UpdateAccountTests
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        if (requestModel.Response?.AppClaims?.Contains("SHOULD_NOT_EXIST") ?? true)
-        {
-            Program.Logger.Log(LogLevel.Error, "App claim exists which shouldn't.");
+        if (!ValidateClaimsTable(requestModel.Response?.AppClaims))
             return false;
-        }
-
-        if (requestModel.Response?.AppClaims?.Contains("BEFORE") ?? true)
-        {
-            Program.Logger.Log(LogLevel.Error, "App claim 'BEFORE' exists which shouldn't.");
-            return false;
-        }
-
-        if (!requestModel.Response?.AppClaims?.Contains("AFTER") ?? false)
-        {
-            Program.Logger.Log(LogLevel.Error, "App claim 'AFTER' doesn't exist.");
-            return false;
-        }
-
-        if (!requestModel.Response?.AppClaims?.Contains("ADD") ?? false)
-        {
-            Program.Logger.Log(LogLevel.Error, "App claim 'ADD' doesn't exist.");
-            return false;
-        }
-
-        if (!requestModel.Response?.AppClaims?.Contains("EXTRA") ?? false)
-        {
-            Program.Logger.Log(LogLevel.Error, "App claim 'EXTRA' doesn't exist.");
-            return false;
-        }
 
         return true;
     }
@@ -325,35 +272,8 @@ public static class UpdateAccountTests
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        if (requestModel.Response?.ScopeClaims?.Contains("SHOULD_NOT_EXIST") ?? true)
-        {
-            Program.Logger.Log(LogLevel.Error, "Scope claim exists which shouldn't.");
+        if (!ValidateClaimsTable(requestModel.Response?.ScopeClaims))
             return false;
-        }
-
-        if (requestModel.Response?.ScopeClaims?.Contains("BEFORE") ?? true)
-        {
-            Program.Logger.Log(LogLevel.Error, "Scope claim 'BEFORE' exists which shouldn't.");
-            return false;
-        }
-
-        if (!requestModel.Response?.ScopeClaims?.Contains("AFTER") ?? false)
-        {
-            Program.Logger.Log(LogLevel.Error, "Scope claim 'AFTER' doesn't exist.");
-            return false;
-        }
-
-        if (!requestModel.Response?.ScopeClaims?.Contains("ADD") ?? false)
-        {
-            Program.Logger.Log(LogLevel.Error, "Scope claim 'ADD' doesn't exist.");
-            return false;
-        }
-
-        if (!requestModel.Response?.ScopeClaims?.Contains("EXTRA") ?? false)
-        {
-            Program.Logger.Log(LogLevel.Error, "Scope claim 'EXTRA' doesn't exist.");
-            return false;
-        }
 
         return true;
     }
@@ -381,35 +301,8 @@ public static class UpdateAccountTests
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        if (requestModel.Response?.IdentityClaims?.Contains("SHOULD_NOT_EXIST") ?? true)
-        {
-            Program.Logger.Log(LogLevel.Error, "Identity claim exists which shouldn't.");
+        if (!ValidateClaimsTable(requestModel.Response?.IdentityClaims))
             return false;
-        }
-
-        if (requestModel.Response?.IdentityClaims?.Contains("BEFORE") ?? true)
-        {
-            Program.Logger.Log(LogLevel.Error, "Identity claim 'BEFORE' exists which shouldn't.");
-            return false;
-        }
-
-        if (!requestModel.Response?.IdentityClaims?.Contains("AFTER") ?? false)
-        {
-            Program.Logger.Log(LogLevel.Error, "Identity claim 'AFTER' doesn't exist.");
-            return false;
-        }
-
-        if (!requestModel.Response?.IdentityClaims?.Contains("ADD") ?? false)
-        {
-            Program.Logger.Log(LogLevel.Error, "Identity claim 'ADD' doesn't exist.");
-            return false;
-        }
-
-        if (!requestModel.Response?.IdentityClaims?.Contains("EXTRA") ?? false)
-        {
-            Program.Logger.Log(LogLevel.Error, "Identity claim 'EXTRA' doesn't exist.");
-            return false;
-        }
 
         return true;
     }
@@ -437,33 +330,127 @@ public static class UpdateAccountTests
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        if (requestModel.Response?.ProfileClaims?.Contains("SHOULD_NOT_EXIST") ?? true)
+        if (!ValidateClaimsTable(requestModel.Response?.ProfileClaims))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> UpdateAccount_AllParameters(TestingService service)
+    {
+        if (TestAccountData == null)
+            return false;
+
+        var newUserID = Guid.NewGuid().ToString();
+        var requestModel = new UpdateAccountRequest()
         {
-            Program.Logger.Log(LogLevel.Error, "Profile claim exists which shouldn't.");
+            ID = TestAccountData.ID,
+            Email = $"NewEmail_{newUserID}@arcadia.com",
+            EmailVerified = true,
+            TwoFactorEnabled = true,
+            Username = $"NewUsername_{newUserID}",
+            Password = "NewSimplePassword",
+            GoogleID = $"NewEmail_{newUserID}@arcadia.com",
+            GoogleToken = Guid.NewGuid().ToString(),
+            SteamID = $"NewSteamID_{Guid.NewGuid()}",
+            SteamToken = Guid.NewGuid().ToString(),
+            Region = "Europe",
+            RoleClaims = new()
+            {
+                ["SHOULD_NOT_EXIST"] = null,
+                ["BEFORE"] = "AFTER",
+                ["ADD"] = "ADD",
+                [""] = "EXTRA"
+            },
+            AppClaims = new()
+            {
+                ["SHOULD_NOT_EXIST"] = null,
+                ["BEFORE"] = "AFTER",
+                ["ADD"] = "ADD",
+                [""] = "EXTRA"
+            },
+            ScopeClaims = new()
+            {
+                ["SHOULD_NOT_EXIST"] = null,
+                ["BEFORE"] = "AFTER",
+                ["ADD"] = "ADD",
+                [""] = "EXTRA"
+            },
+            IdentityClaims = new()
+            {
+                ["SHOULD_NOT_EXIST"] = null,
+                ["BEFORE"] = "AFTER",
+                ["ADD"] = "ADD",
+                [""] = "EXTRA"
+            },
+            ProfileClaims = new()
+            {
+                ["SHOULD_NOT_EXIST"] = null,
+                ["BEFORE"] = "AFTER",
+                ["ADD"] = "ADD",
+                [""] = "EXTRA"
+            },
+            RequestIDs = new()
+            {
+                ["USER_ID"] = newUserID
+            }
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "update"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        foreach (var claimsTable in new[]
+        {
+            requestModel.Response?.RoleClaims,
+            requestModel.Response?.AppClaims,
+            requestModel.Response?.ScopeClaims,
+            requestModel.Response?.IdentityClaims,
+            requestModel.Response?.ProfileClaims
+        })
+            if (!ValidateClaimsTable(claimsTable))
+                return false;
+
+        if (!string.Equals(newUserID, requestModel.Response?.RequestIDs?["USER_ID"]))
+        {
+            Program.Logger.Log(LogLevel.Error, "USER_ID in request_ids was not included in the response.");
             return false;
         }
 
-        if (requestModel.Response?.ProfileClaims?.Contains("BEFORE") ?? true)
+        return true;
+    }
+
+    private static bool ValidateClaimsTable(HashSet<string>? claimsTable)
+    {
+        if (claimsTable?.Contains("SHOULD_NOT_EXIST") ?? true)
         {
-            Program.Logger.Log(LogLevel.Error, "Profile claim 'BEFORE' exists which shouldn't.");
+            Program.Logger.Log(LogLevel.Error, "Claim 'SHOULD_NOT_EXIST' exists which shouldn't.");
             return false;
         }
 
-        if (!requestModel.Response?.ProfileClaims?.Contains("AFTER") ?? false)
+        if (claimsTable?.Contains("BEFORE") ?? true)
         {
-            Program.Logger.Log(LogLevel.Error, "Profile claim 'AFTER' doesn't exist.");
+            Program.Logger.Log(LogLevel.Error, "Claim 'BEFORE' exists and shouldn't.");
             return false;
         }
 
-        if (!requestModel.Response?.ProfileClaims?.Contains("ADD") ?? false)
+        if (!claimsTable?.Contains("AFTER") ?? false)
         {
-            Program.Logger.Log(LogLevel.Error, "Profile claim 'ADD' doesn't exist.");
+            Program.Logger.Log(LogLevel.Error, "Claim 'AFTER' doesn't exist.");
             return false;
         }
 
-        if (!requestModel.Response?.ProfileClaims?.Contains("EXTRA") ?? false)
+        if (!claimsTable?.Contains("ADD") ?? false)
         {
-            Program.Logger.Log(LogLevel.Error, "Profile claim 'EXTRA' doesn't exist.");
+            Program.Logger.Log(LogLevel.Error, "Claim 'ADD' doesn't exist.");
+            return false;
+        }
+
+        if (!claimsTable?.Contains("EXTRA") ?? false)
+        {
+            Program.Logger.Log(LogLevel.Error, "Claim 'EXTRA' doesn't exist.");
             return false;
         }
 

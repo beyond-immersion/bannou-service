@@ -75,7 +75,7 @@ public interface IAccountService : IDaprService
     ///     <see cref="HttpStatusCode.Conflict"/>,
     ///     <see cref="HttpStatusCode.InternalServerError"/>
     /// </returns>
-    Task<(HttpStatusCode, AccountData?)> UpdateAccount(int id, string? email, bool emailVerified, bool twoFactorEnabled, string? region,
+    Task<(HttpStatusCode, AccountData?)> UpdateAccount(int id, string? email, bool? emailVerified, bool? twoFactorEnabled, string? region,
         string? username, string? password, string? steamID, string? steamToken, string? googleID, string? googleToken,
         Dictionary<string, string?>? roleClaims, Dictionary<string, string?>? appClaims, Dictionary<string, string?>? scopeClaims,
         Dictionary<string, string?>? identityClaims, Dictionary<string, string?>? profileClaims);
