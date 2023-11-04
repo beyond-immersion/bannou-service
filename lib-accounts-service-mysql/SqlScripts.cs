@@ -201,7 +201,8 @@ SELECT * FROM `Users` WHERE `Id` = @UserId;";
     /// Set user account to "deleted".
     /// 
     /// If the "DeletedAt" value is already set, will throw a
-    /// 'key exists' exception, to indicate a conflict.
+    /// 'can't set to null' exception, to indicate a conflict.
+    /// Bit unusual but the best way to get a specific error.
     /// Named Parameters:
     /// - @UserId               int
     /// </summary>

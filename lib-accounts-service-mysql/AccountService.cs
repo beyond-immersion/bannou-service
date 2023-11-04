@@ -618,7 +618,7 @@ public class AccountService : IAccountService
 
             return (HttpStatusCode.OK, resDeletedAt);
         }
-        catch (MySqlException exc) when (exc.Number == 1062)
+        catch (MySqlException exc) when (exc.Number == 1048)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"The user account was already deleted.");
             return (HttpStatusCode.Conflict, null);
