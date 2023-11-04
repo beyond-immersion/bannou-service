@@ -14,19 +14,17 @@ public class ServiceRequest<T> : ServiceRequest
     public new virtual async Task<bool> ExecutePostRequest(string? service, string method)
     {
         var result = await ExecutePostRequest_INTERNAL<T>(service, method);
-        if (!result)
+
+        if (base.Response != null)
         {
-            this.Response = null;
-            return false;
+            try
+            {
+                this.Response = base.Response as T;
+            }
+            catch { }
         }
 
-        try
-        {
-            this.Response = base.Response as T;
-        }
-        catch { }
-
-        return true;
+        return result;
     }
 
     public T CreateResponse()

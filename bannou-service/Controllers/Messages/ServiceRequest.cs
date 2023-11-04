@@ -122,7 +122,7 @@ public abstract class ServiceRequest : ServiceMessage
             {
                 if (typeof(T) == typeof(ServiceResponse))
                 {
-                    Response = new()
+                    Response = new T()
                     {
                         StatusCode = System.Net.HttpStatusCode.OK,
                         Message = "OK"
@@ -144,7 +144,7 @@ public abstract class ServiceRequest : ServiceMessage
             else
             {
                 Program.Logger.Log(LogLevel.Error, $"Failed to invoke API method [{method}] on service [{service}]. HTTP Status: {responseMsg.StatusCode}");
-                Response = new()
+                Response = new T()
                 {
                     StatusCode = responseMsg.StatusCode,
                     Message = responseMsg.ReasonPhrase ?? responseMsg.StatusCode.ToString()
@@ -154,7 +154,7 @@ public abstract class ServiceRequest : ServiceMessage
         catch (HttpRequestException exc)
         {
             var statusCode = exc.StatusCode ?? System.Net.HttpStatusCode.InternalServerError;
-            Response = new()
+            Response = new T()
             {
                 StatusCode = statusCode,
                 Message = exc.Message ?? statusCode.ToString()
@@ -163,7 +163,7 @@ public abstract class ServiceRequest : ServiceMessage
         catch (UriFormatException)
         {
             Program.Logger.Log(LogLevel.Error, $"Failed to invoke API method [{method}] on service [{service}]: Bad URI format.");
-            Response = new()
+            Response = new T()
             {
                 StatusCode = System.Net.HttpStatusCode.BadRequest,
                 Message = "Bad request"
@@ -172,7 +172,7 @@ public abstract class ServiceRequest : ServiceMessage
         catch (InvalidOperationException)
         {
             Program.Logger.Log(LogLevel.Error, $"Failed to invoke API method [{method}] on service [{service}]: Invalid operation.");
-            Response = new()
+            Response = new T()
             {
                 StatusCode = System.Net.HttpStatusCode.BadRequest,
                 Message = "Bad request"
@@ -181,7 +181,7 @@ public abstract class ServiceRequest : ServiceMessage
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"A failure occurred executing API method [{method}] on service [{service}].");
-            Response = new()
+            Response = new T()
             {
                 StatusCode = System.Net.HttpStatusCode.InternalServerError,
                 Message = "Internal service error"
