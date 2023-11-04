@@ -240,20 +240,22 @@ WHERE `Id` = @UserId;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
 SELECT @UserId,
-    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password'),
+    LP.`Id`,
     @Username,
     @PasswordData
-FROM DUAL
+FROM (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password') AS LP
+CROSS JOIN DUAL AS D
 WHERE @Username IS NOT NULL AND @PasswordData IS NOT NULL
 ON DUPLICATE KEY UPDATE 
     `LoginProviderData` = @PasswordData;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
 SELECT @UserId,
-    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google'),
+    LP.`Id`,
     @GoogleUserId,
     @GoogleData
-FROM DUAL
+FROM (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google') AS LP
+CROSS JOIN DUAL AS D
 WHERE @GoogleUserId IS NOT NULL AND @GoogleData IS NOT NULL
 ON DUPLICATE KEY UPDATE 
     `LoginProviderUserId` = @GoogleUserId,
@@ -261,10 +263,11 @@ ON DUPLICATE KEY UPDATE
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
 SELECT @UserId,
-    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam'),
+    LP.`Id`,
     @SteamUserId,
     @SteamData
-FROM DUAL
+FROM (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam') AS LP
+CROSS JOIN DUAL AS D
 WHERE @SteamUserId IS NOT NULL AND @SteamData IS NOT NULL
 ON DUPLICATE KEY UPDATE 
     `LoginProviderUserId` = @SteamUserId,
