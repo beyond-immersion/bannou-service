@@ -616,7 +616,7 @@ public class AccountService : IAccountService
             var resUserID = (int)transactionResult.Id;
             DateTime? resDeletedAt = transactionResult.DeletedAt;
 
-            if (resDeletedAt < (DateTime.Now - TimeSpan.FromSeconds(3)))
+            if (resDeletedAt < (DateTime.Now - TimeSpan.FromSeconds(5)))
             {
                 Program.Logger.Log(LogLevel.Error, $"The user account was already deleted.");
                 return (HttpStatusCode.Conflict, null);

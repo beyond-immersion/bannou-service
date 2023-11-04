@@ -90,6 +90,9 @@ public static class DeleteAccountTests
         if (TestAccountData == null)
             return false;
 
+        // ensure the time for leeway has passed in detecting account deletion
+        await Task.Delay(TimeSpan.FromSeconds(5));
+
         var requestModel = new DeleteAccountRequest()
         {
             ID = TestAccountData.ID
