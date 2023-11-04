@@ -555,7 +555,7 @@ public class AccountService : IAccountService
         }
         catch (Exception exc)
         {
-            Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while inserting and fetching the new user account.");
+            Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while updating the user account.");
             return (HttpStatusCode.InternalServerError, null);
         }
     }
