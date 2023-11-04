@@ -5,7 +5,7 @@ services:
 
   bannou-dapr:
     volumes:
-      - "./components/swarm/:/components"
+      - "./dapr/components/swarm/:/components"
 
 networks:
   celestial_network:

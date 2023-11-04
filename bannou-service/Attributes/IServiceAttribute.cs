@@ -309,9 +309,12 @@ public interface IServiceAttribute
     public static List<(PropertyInfo, IServiceAttribute)> GetPropertiesWithAttribute(Type classType, Type attributeType)
     {
         List<(PropertyInfo, IServiceAttribute)> results = new();
-        PropertyInfo[] retrievedProps = classType.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        PropertyInfo[] retrievedProps = classType.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
         if (retrievedProps == null || retrievedProps.Length == 0)
+        {
+            Program.Logger.Log(LogLevel.Error, "!@");
             return results;
+        }
 
         foreach (PropertyInfo propInfo in retrievedProps)
         {
@@ -319,10 +322,16 @@ public interface IServiceAttribute
             {
                 var attrs = propInfo.GetCustomAttributes(attributeType, inherit: true);
                 if (attrs == null || !attrs.Any())
+                {
+                    Program.Logger.Log(LogLevel.Error, "!!@");
                     continue;
+                }
 
                 foreach (var attr in attrs)
+                {
+                    Program.Logger.Log(LogLevel.Error, "!!!@");
                     results.Add((propInfo, (IServiceAttribute)attr));
+                }
             }
             catch { }
         }
@@ -337,7 +346,7 @@ public interface IServiceAttribute
         where T : Attribute, IServiceAttribute
     {
         List<(PropertyInfo, T)> results = new();
-        PropertyInfo[] retrievedProps = classType.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        PropertyInfo[] retrievedProps = classType.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
         if (retrievedProps == null || retrievedProps.Length == 0)
             return results;
 
@@ -365,7 +374,7 @@ public interface IServiceAttribute
         where T : Attribute, IServiceAttribute
     {
         List<(FieldInfo, T)> results = new();
-        FieldInfo[] retrievedFields = classType.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        FieldInfo[] retrievedFields = classType.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
         if (retrievedFields == null || retrievedFields.Length == 0)
             return results;
 
@@ -392,7 +401,7 @@ public interface IServiceAttribute
     public static List<(FieldInfo, IServiceAttribute)> GetFieldsWithAttribute(Type classType, Type attributeType)
     {
         List<(FieldInfo, IServiceAttribute)> results = new();
-        FieldInfo[] retrievedFields = classType.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        FieldInfo[] retrievedFields = classType.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
         if (retrievedFields == null || retrievedFields.Length == 0)
             return results;
 
@@ -422,7 +431,7 @@ public interface IServiceAttribute
         if (!typeof(IServiceAttribute).IsAssignableFrom(attributeType))
             return results;
 
-        MethodInfo[] retrievedMethods = classType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        MethodInfo[] retrievedMethods = classType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
         if (retrievedMethods == null || retrievedMethods.Length == 0)
             return results;
 
@@ -450,7 +459,7 @@ public interface IServiceAttribute
         where T : Attribute, IServiceAttribute
     {
         List<(MethodInfo, T)> results = new();
-        MethodInfo[] retrievedMethods = classType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        MethodInfo[] retrievedMethods = classType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
         if (retrievedMethods == null || retrievedMethods.Length == 0)
             return results;
 

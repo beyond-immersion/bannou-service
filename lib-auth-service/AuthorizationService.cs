@@ -1,4 +1,6 @@
-﻿using BeyondImmersion.BannouService.Configuration;
+﻿using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Accounts.Messages;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using JWT;
 using JWT.Algorithms;
@@ -14,16 +16,9 @@ namespace BeyondImmersion.BannouService.Authorization;
 /// Service component responsible for authorization handling.
 /// </summary>
 [DaprService("authorization", typeof(IAuthorizationService))]
-public class AuthorizationService : IAuthorizationService
+public class AuthorizationService : DaprService<AuthorizationServiceConfiguration>, IAuthorizationService
 {
-    private AuthorizationServiceConfiguration? _configuration;
-    public AuthorizationServiceConfiguration Configuration
-    {
-        get => _configuration ??= IServiceConfiguration.BuildConfiguration<AuthorizationServiceConfiguration>();
-        internal set => _configuration = value;
-    }
-
-    async Task IDaprService.OnStart()
+    async Task IDaprService.OnStart(CancellationToken cancellationToken)
     {
         // override sensitive configuration Dapr secret store
         await TryLoadFromDaprSecrets();
@@ -40,35 +35,42 @@ public class AuthorizationService : IAuthorizationService
         if (Configuration.Token_Public_Key == null || Configuration.Token_Private_Key == null)
             return null;
 
-        var dataModel = new GetAccountRequest()
-        {
-            Email = email
-        };
+        // retrieve stored account data
+        var dataModel = new GetAccountRequest() { Email = email };
 
         HttpRequestMessage daprRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, IDaprService.GetAppByServiceName("account"), $"account/get", dataModel);
         var daprResponse = await Program.DaprClient.InvokeMethodWithResponseAsync(daprRequest, Program.ShutdownCancellationTokenSource.Token);
-
         if (daprResponse == null || !daprResponse.IsSuccessStatusCode)
             return null;
 
         GetAccountResponse? responseData = await daprResponse.Content.ReadFromJsonAsync<GetAccountResponse>();
-        if (responseData == null || responseData.SecretSalt == null)
+        if (responseData == null || responseData.IdentityClaims == null)
             return null;
 
-        var hashedSecret = IAccountService.GenerateHashedSecret(responseData.SecretSalt, password);
-        if (!string.Equals(responseData.HashedSecret, hashedSecret))
+        var secretSalt = responseData.IdentityClaims.Where(t => t.StartsWith("SecretSalt:")).Select(t => t.Remove(0, "SecretSalt:".Length)).FirstOrDefault();
+        var secretHash = responseData.IdentityClaims.Where(t => t.StartsWith("SecretHash:")).Select(t => t.Remove(0, "SecretHash:".Length)).FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(secretSalt) || string.IsNullOrWhiteSpace(secretHash))
             return null;
 
+        // validate password
+        var hashedPassword = IAccountService.GenerateHashedSecret(password, secretSalt);
+        if (!string.Equals(secretHash, hashedPassword))
+            return null;
+
+        // create JWT
         var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
         jwtBuilder.AddHeader("email", responseData.Email);
-        jwtBuilder.AddHeader("display-name", responseData.DisplayName);
+        jwtBuilder.AddHeader("username", responseData.Username);
 
         jwtBuilder.Id(responseData.ID);
         jwtBuilder.Issuer("AUTHORIZATION_SERVICE:" + Program.ServiceGUID);
         jwtBuilder.IssuedAt(DateTime.Now);
         jwtBuilder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
         jwtBuilder.MustVerifySignature();
-        jwtBuilder.AddClaim("role", responseData.Role);
+
+        if (responseData.RoleClaims != null)
+            foreach (var roleClaim in responseData.RoleClaims)
+                jwtBuilder.AddClaim("role", roleClaim);
 
         var newJWT = jwtBuilder.Encode();
         return newJWT;

@@ -31,8 +31,14 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
 
     public ServiceConfigurationAttribute(Type? serviceImplementation = null, string? envPrefix = null)
     {
-        if (serviceImplementation != null && !typeof(IDaprService).IsAssignableFrom(serviceImplementation))
-            throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
+        if (serviceImplementation != null)
+        {
+            if (!typeof(IDaprService).IsAssignableFrom(serviceImplementation))
+                throw new InvalidCastException($"Service implementation type provided does not implement {nameof(IDaprService)}");
+
+            if (serviceImplementation.IsAbstract || serviceImplementation.IsInterface)
+                throw new InvalidCastException($"Service implementation type provided to config must be a concrete class.");
+        }
 
         ServiceImplementationType = serviceImplementation;
         if (serviceImplementation != null)

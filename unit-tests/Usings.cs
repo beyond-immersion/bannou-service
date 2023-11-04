@@ -1,4 +1,3 @@
-global using BeyondImmersion.BannouService.Application;
 global using BeyondImmersion.BannouService.Attributes;
 global using BeyondImmersion.BannouService.Controllers;
 global using BeyondImmersion.BannouService.Services;

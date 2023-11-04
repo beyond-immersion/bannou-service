@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Authorization.Messages;
 /// Does not use JRPC, as it's exposed directly to clients.
 /// </summary>
 [JsonObject]
-public class GetTokenResponse : ServiceResponse<GetTokenRequest>
+public class GetTokenResponse : ServiceResponse
 {
     [JsonObject]
     public class ErrorData

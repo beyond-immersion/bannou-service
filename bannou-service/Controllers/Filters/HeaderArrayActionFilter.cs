@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Newtonsoft.Json.Linq;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Controllers.Filters;
@@ -10,7 +11,45 @@ public class HeaderArrayActionFilter : IActionFilter
     private const string HEADER_ARRAY_PREFIX = "HEADER_ARRAY:";
     private const string PROPERTYINFO_PREFIX = "PROPERTY_INFO:";
 
-    public void OnActionExecuting(ActionExecutingContext context) { }
+    public void OnActionExecuting(ActionExecutingContext context)
+    {
+        try
+        {
+            if (context.HttpContext.Request.Headers == null || !context.HttpContext.Request.Headers.Any())
+                return;
+
+            var serviceRequestParamsKVP = context.ActionArguments.Where(
+                t => t.Value != null &&
+                t.Value.GetType().IsAssignableTo(typeof(ServiceRequest)));
+
+            if (!serviceRequestParamsKVP.Any())
+                return;
+
+            foreach (var serviceRequestParamKVP in serviceRequestParamsKVP)
+            {
+                var parameterName = serviceRequestParamKVP.Key;
+                var requestModel = serviceRequestParamKVP.Value as ServiceRequest;
+                if (requestModel == null)
+                    continue;
+
+                var modelValidationState = context.ModelState[parameterName]?.ValidationState;
+                if (modelValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid)
+                    continue;
+
+                Dictionary<string, IEnumerable<string>> headerLookup = new();
+                foreach (var headerKVP in context.HttpContext.Request.Headers)
+                    if (!string.IsNullOrWhiteSpace(headerKVP.Key) && headerKVP.Value.Any())
+                        headerLookup[headerKVP.Key] = headerKVP.Value;
+
+                requestModel.SetHeadersToProperties(headerLookup);
+            }
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "Exception thrown setting header strings to property values.");
+        }
+    }
+
     public void OnActionExecuted(ActionExecutedContext context)
     {
         if (context.Result is ObjectResult objectResult && objectResult?.Value != null)
@@ -29,9 +68,9 @@ public class HeaderArrayActionFilter : IActionFilter
                         continue;
 
                     // generate header array from property value
-                    var headersToSet = PropertyValueToHeaderArray(propertyInfo, propertyValue, headerAttr);
+                    var headersToSet = ServiceMessage.SetHeaderArrayPropertyToHeaders(propertyInfo, propertyValue, headerAttr);
                     foreach (var header in headersToSet)
-                        context.HttpContext.Request.Headers.Add(header.Item1, header.Item2);
+                        context.HttpContext.Response.Headers.Add(header.Item1, header.Item2);
 
                     var propertyName = propertyInfo.Name;
                     headerPropertiesWithValues.Add(propertyName);
@@ -40,7 +79,7 @@ public class HeaderArrayActionFilter : IActionFilter
                     context.HttpContext.Items[HEADER_ARRAY_PREFIX + propertyName] = propertyValue;
                 }
 
-                if (headerPropertiesWithValues.Count == 0)
+                if (!headerPropertiesWithValues.Any())
                     return;
 
                 // cache array of all cached property names, for efficiency
@@ -53,107 +92,5 @@ public class HeaderArrayActionFilter : IActionFilter
                 Program.Logger.Log(LogLevel.Error, exc, "Exception thrown setting header array property values to header strings.");
             }
         }
-    }
-
-    public static (string, string[])[] PropertyValueToHeaderArray(PropertyInfo propertyInfo, object value, HeaderArrayAttribute headerAttr)
-    {
-        var headersToSet = new List<(string, string[])>();
-
-        try
-        {
-            var headerKVPs = new List<(string, string?)>();
-            switch (value)
-            {
-                case IEnumerable<KeyValuePair<string, IEnumerable<string>>> propVal:
-                    foreach (var kvp in propVal)
-                        foreach (var stringVal in kvp.Value)
-                            headerKVPs.Add((kvp.Key, stringVal));
-
-                    break;
-
-                case IEnumerable<KeyValuePair<string, string[]>> propVal:
-                    foreach (var kvp in propVal)
-                        foreach (var stringVal in kvp.Value)
-                            headerKVPs.Add((kvp.Key, stringVal));
-
-                    break;
-
-                case IEnumerable<KeyValuePair<string, List<string>>> propVal:
-                    foreach (var kvp in propVal)
-                        foreach (var stringVal in kvp.Value)
-                            headerKVPs.Add((kvp.Key, stringVal));
-
-                    break;
-
-                case IEnumerable<KeyValuePair<string, string>> propVal:
-                    foreach (var kvp in propVal)
-                        headerKVPs.Add((kvp.Key, kvp.Value));
-
-                    break;
-
-                case IEnumerable<(string, IEnumerable<string>)> propVal:
-                    foreach (var kvp in propVal)
-                        foreach (var stringVal in kvp.Item2)
-                            headerKVPs.Add((kvp.Item1, stringVal));
-
-                    break;
-
-                case IEnumerable<(string, string[])> propVal:
-                    foreach (var kvp in propVal)
-                        foreach (var stringVal in kvp.Item2)
-                            headerKVPs.Add((kvp.Item1, stringVal));
-
-                    break;
-
-                case IEnumerable<(string, List<string>)> propVal:
-                    foreach (var kvp in propVal)
-                        foreach (var stringVal in kvp.Item2)
-                            headerKVPs.Add((kvp.Item1, stringVal));
-
-                    break;
-
-                case IEnumerable<(string, string)> propVal:
-                    foreach (var kvp in propVal)
-                        headerKVPs.Add((kvp.Item1, kvp.Item2));
-
-                    break;
-
-                case IEnumerable<string> propVal:
-                    foreach (var stringVal in propVal)
-                        headerKVPs.Add((stringVal, null));
-
-                    break;
-
-                default:
-                    break;
-            }
-
-            if (headerKVPs.Count == 0)
-                return headersToSet.ToArray();
-
-            var delim = "__";
-            if (!string.IsNullOrWhiteSpace(headerAttr.Delimeter))
-                delim = headerAttr.Delimeter;
-
-            var headerName = headerAttr.Name ?? propertyInfo.Name;
-            var headerValues = new List<string>();
-            foreach (var headerKVP in headerKVPs)
-            {
-                var headerValue = headerKVP.Item1;
-                if (!string.IsNullOrWhiteSpace(headerKVP.Item2))
-                    headerValue = headerValue + delim + headerKVP.Item2;
-
-                headerValues.Add(headerValue);
-            }
-
-            if (headerValues.Count > 0)
-                headersToSet.Add((headerName, headerValues.ToArray()));
-        }
-        catch (Exception exc)
-        {
-            Program.Logger.Log(LogLevel.Error, exc, $"Could not set property values for '{propertyInfo.Name}' of type '{propertyInfo.PropertyType.Name}' to header array.");
-        }
-
-        return headersToSet.ToArray();
     }
 }

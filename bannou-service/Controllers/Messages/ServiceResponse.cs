@@ -1,19 +1,16 @@
-﻿namespace BeyondImmersion.BannouService.Controllers.Messages;
+﻿using System.Net;
 
-[JsonObject]
-public class ServiceResponse<T> : ServiceResponse
-where T : class, IServiceRequest
-{
-    public Type GetRequestType()
-        => typeof(T);
-}
+namespace BeyondImmersion.BannouService.Controllers.Messages;
 
 /// <summary>
 /// The base class for service responses.
 /// </summary>
 [JsonObject]
-public class ServiceResponse : IServiceResponse
+public class ServiceResponse : ServiceMessage
 {
-    [HeaderArray(Name = "REQUEST_IDS")]
-    public Dictionary<string, string> RequestIDs { get; set; }
+    [JsonIgnore]
+    public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.OK;
+
+    [JsonIgnore]
+    public string? Message { get; set; }
 }

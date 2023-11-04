@@ -1,4 +1,5 @@
 ﻿using BeyondImmersion.BannouService.Services;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -9,16 +10,98 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// </summary>
 public interface IAccountService : IDaprService
 {
-    Task<AccountData?> GetAccount(string email);
+    public sealed class AccountData
+    {
+        public int ID { get; set; }
+        public string? Username { get; set; }
+        public string? Email { get; set; }
+        public string? Region { get; set; }
+        public bool EmailVerified { get; set; }
+        public string SecurityToken { get; set; }
+        public bool TwoFactorEnabled { get; set; }
+        public DateTime? LockoutEnd { get; set; }
+        public DateTime LastLoginAt { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+        public DateTime? DeletedAt { get; set; }
+        public HashSet<string>? RoleClaims { get; set; }
+        public HashSet<string>? AppClaims { get; set; }
+        public HashSet<string>? ScopeClaims { get; set; }
+        public HashSet<string>? IdentityClaims { get; set; }
+        public HashSet<string>? ProfileClaims { get; set; }
+
+        public AccountData(int id, string securityToken, DateTime createdAt)
+        {
+            ID = id;
+            SecurityToken = securityToken;
+            LastLoginAt = createdAt;
+            CreatedAt = createdAt;
+            UpdatedAt = createdAt;
+        }
+    }
+
+    /// <summary>
+    /// Retrieve a user account by any identifier.
+    /// </summary>
+    /// <returns>
+    ///     <see cref="HttpStatusCode.OK"/>
+    ///     <see cref="HttpStatusCode.BadRequest"/>
+    ///     <see cref="HttpStatusCode.NotFound"/>
+    ///     <see cref="HttpStatusCode.InternalServerError"/>
+    /// </returns>
+    Task<(HttpStatusCode, AccountData?)> GetAccount(bool includeClaims = false, int? id = null, string? username = null, string? email = null,
+        string? steamID = null, string? googleID = null, string? identityClaim = null);
+
+    /// <summary>
+    /// Create a new user account.
+    /// </summary>
+    /// <returns>
+    ///     <see cref="HttpStatusCode.OK"/>,
+    ///     <see cref="HttpStatusCode.BadRequest"/>,
+    ///     <see cref="HttpStatusCode.Conflict"/>,
+    ///     <see cref="HttpStatusCode.InternalServerError"/>
+    /// </returns>
+    Task<(HttpStatusCode, AccountData?)> CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? region,
+        string? username, string? password, string? steamID, string? steamToken, string? googleID, string? googleToken,
+        HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims);
+
+    /// <summary>
+    /// Update an existing user account.
+    /// </summary>
+    /// <returns>
+    ///     <see cref="HttpStatusCode.OK"/>,
+    ///     <see cref="HttpStatusCode.BadRequest"/>,
+    ///     <see cref="HttpStatusCode.NotFound"/>,
+    ///     <see cref="HttpStatusCode.Conflict"/>,
+    ///     <see cref="HttpStatusCode.InternalServerError"/>
+    /// </returns>
+    Task<(HttpStatusCode, AccountData?)> UpdateAccount(int id, string? email, bool? emailVerified, bool? twoFactorEnabled, string? region,
+        string? username, string? password, string? steamID, string? steamToken, string? googleID, string? googleToken,
+        Dictionary<string, string?>? roleClaims, Dictionary<string, string?>? appClaims, Dictionary<string, string?>? scopeClaims,
+        Dictionary<string, string?>? identityClaims, Dictionary<string, string?>? profileClaims);
+
+    /// <summary>
+    /// Delete a user account.
+    /// 
+    /// Soft-delete, so record still exists- check DeleteAt
+    /// for deletion status. Deleted user accounts will be
+    /// permanently cleaned up on demand or at intervals.
+    /// </summary>
+    /// <returns>
+    ///     <see cref="HttpStatusCode.OK"/>,
+    ///     <see cref="HttpStatusCode.BadRequest"/>,
+    ///     <see cref="HttpStatusCode.NotFound"/>,
+    ///     <see cref="HttpStatusCode.Conflict"/>,
+    ///     <see cref="HttpStatusCode.InternalServerError"/>
+    /// </returns>
+    Task<(HttpStatusCode, DateTime? removedAt)> DeleteAccount(int id);
 
     public static string GenerateHashedSecret(string secretString, string secretSalt)
     {
         var hashedBytes = SHA512.HashData(Encoding.UTF8.GetBytes(secretString + secretSalt));
         var builder = new StringBuilder();
         for (var i = 0; i < hashedBytes.Length; i++)
-        {
             builder.Append(hashedBytes[i].ToString("x2"));
-        }
 
         var hashedSecret = builder.ToString();
         return hashedSecret;

@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Controllers.Messages;
 using Microsoft.AspNetCore.Mvc;
 using Xunit.Abstractions;
 
@@ -34,8 +35,6 @@ public class Controllers : IClassFixture<CollectionFixture>
 
     [DaprController(typeof(ITestService_FromInterface))]
     public class Controller_FromInterface: ControllerBase, IDaprController { }
-
-    private Controllers(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
 
     public Controllers(CollectionFixture collectionContext, ITestOutputHelper output)
     {

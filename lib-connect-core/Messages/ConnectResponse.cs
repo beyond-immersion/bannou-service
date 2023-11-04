@@ -8,6 +8,6 @@ namespace BeyondImmersion.BannouService.Connect.Messages;
 /// Does not use JRPC, as it's exposed directly to clients.
 /// </summary>
 [JsonObject]
-public class ConnectResponse : ServiceResponse<ConnectRequest>
+public class ConnectResponse : ServiceResponse
 {
 }

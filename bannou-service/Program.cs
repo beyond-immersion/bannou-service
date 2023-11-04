@@ -13,6 +13,16 @@ namespace BeyondImmersion.BannouService;
 
 public static class Program
 {
+    private static AppRunningStates _appRunningState = AppRunningStates.Stopped;
+    /// <summary>
+    /// Current startup/run state for the application.
+    /// </summary>
+    public static AppRunningStates AppRunningState
+    {
+        get => _appRunningState;
+        private set => _appRunningState = value;
+    }
+
     private static IConfigurationRoot _configurationRoot;
     /// <summary>
     /// Shared service configuration root.
@@ -69,6 +79,7 @@ public static class Program
     private static async Task Main()
     {
         Logger.Log(LogLevel.Information, null, "Service starting.");
+        AppRunningState = AppRunningStates.Starting;
 
         // configuration is auto-created on first get, so this call creates the config too
         if (Configuration == null)
@@ -88,9 +99,9 @@ public static class Program
         }
 
         // ensure dapr services have their required configuration
-        if (!IDaprService.EnabledServicesHaveRequiredConfiguration())
+        if (!EnabledServicesHaveRequiredConfiguration())
         {
-            Logger.Log(LogLevel.Error, null, "Required configuration not set for enabled services- exiting application.");
+            Logger.Log(LogLevel.Error, null, "Required configuration missing for enabled services- exiting application.");
             return;
         }
 
@@ -114,13 +125,23 @@ public static class Program
             // configure services
             _ = webAppBuilder.Services.AddAuthentication();
 
+            // get all loaded assemblies hosting enabled DaprController types
+            IEnumerable<Assembly>? daprControllerAssemblies = IDaprController.EnabledServiceControllers
+                .Where(t => t.Item1.Assembly != Assembly.GetEntryAssembly())
+                .Select(t => t.Item1.Assembly);
+
             _ = webAppBuilder.Services
                 .AddControllers(mvcOptions =>
                 {
                     mvcOptions.Filters.Add(typeof(HeaderArrayActionFilter));
                     mvcOptions.Filters.Add(typeof(HeaderArrayResultFilter));
-                }).
-                AddNewtonsoftJson(jsonSettings =>
+                })
+                .AddApplicationParts(daprControllerAssemblies)
+                .ConfigureApplicationPartManager(manager =>
+                {
+                    manager.FeatureProviders.Add(new DaprControllersFeatureProvider());
+                })
+                .AddNewtonsoftJson(jsonSettings =>
                 {
                     jsonSettings.SerializerSettings.ConstructorHandling = ConstructorHandling.Default;
                     jsonSettings.SerializerSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
@@ -175,9 +196,11 @@ public static class Program
         WebApplication webApp = webAppBuilder.Build();
         try
         {
-            // add controllers / configure navigation
-            _ = webApp.MapNonServiceControllers();
-            _ = webApp.MapDaprServiceControllers();
+            // map controller routes
+            _ = webApp.UseRouting().UseEndpoints(endpointOptions =>
+            {
+                endpointOptions.MapDefaultControllerRoute();
+            });
 
             // enable websocket connections
             webApp.UseWebSockets(new WebSocketOptions()
@@ -186,7 +209,11 @@ public static class Program
             });
 
             // invoke all Service.Start() methods on enabled service handlers
-            await webApp.InvokeAllServiceStartMethods();
+            if (!await webApp.InvokeAllServiceStartMethods())
+            {
+                Logger.Log(LogLevel.Error, "An enabled service handler has failed to start- exiting application.");
+                return;
+            }
 
             Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- WebHost starting.");
 
@@ -200,12 +227,15 @@ public static class Program
             Logger.Log(LogLevel.Information, null, "WebHost started successfully and services running- settling in.");
 
             // !!! block here until token cancelled or webhost crashes
+            AppRunningState = AppRunningStates.Running;
             await webHostTask;
+            AppRunningState = AppRunningStates.Stopped;
 
             Logger.Log(LogLevel.Information, null, "WebHost stopped- starting controlled application shutdown.");
 
             // invoke all Service.Shutdown() methods on enabled service handlers
-            await webApp.InvokeAllServiceShutdownMethods();
+            if (webApp != null)
+                await webApp.InvokeAllServiceShutdownMethods();
         }
         catch (Exception exc)
         {
@@ -214,6 +244,7 @@ public static class Program
         }
         finally
         {
+            AppRunningState = AppRunningStates.Stopped;
             // perform cleanup
             if (webApp != null)
                 await webApp.DisposeAsync();
@@ -224,6 +255,35 @@ public static class Program
         Logger.Log(LogLevel.Debug, null, "Application shutdown complete.");
     }
 
+    /// <summary>
+    /// Returns whether all enabled services have their required configuration set.
+    /// </summary>
+    private static bool EnabledServicesHaveRequiredConfiguration()
+    {
+        foreach (var serviceInfo in IDaprService.EnabledServices)
+        {
+            Type interfaceType = serviceInfo.Item1;
+            Type implementationType = serviceInfo.Item2;
+            Type serviceConfig = IDaprService.GetConfigurationType(implementationType);
+            if (serviceConfig == null)
+                continue;
+
+            if (!IServiceConfiguration.HasRequiredForType(serviceConfig))
+            {
+                Logger.Log(LogLevel.Error, null, $"Required configuration is missing for the '{serviceInfo.Item3.Name}' service.");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Load appropriate sets of libs in /libs/ and subdirectories
+    /// based on current application configuration.
+    /// 
+    /// <seealso cref="AppConfiguration.Include_Assemblies"/>
+    /// </summary>
     private static void LoadAssemblies()
     {
         AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
@@ -231,17 +291,26 @@ public static class Program
         if (string.Equals("none", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
             return;
 
-        var libsRootDirectory = Path.Combine(Directory.GetCurrentDirectory(), "libs");
+        // load root app assemblies (probably already loaded anyways)
+        var appDirectory = Directory.GetCurrentDirectory();
+        foreach (var assemblyPath in Directory.GetFiles(appDirectory, "*.dll"))
+            TryLoadAssembly(assemblyPath, out _);
+
+        var libsRootDirectory = Path.Combine(appDirectory, "libs");
         if (libsRootDirectory == null || !Directory.Exists(libsRootDirectory))
         {
             Logger.Log(LogLevel.Warning, null, $"Failed to load additional assemblies- libs directory does not exist.");
             return;
         }
 
+        // load root lib assemblies (should be loaded if `none` isn't selected)
+        foreach (var assemblyPath in Directory.GetFiles(libsRootDirectory, "*.dll"))
+            TryLoadAssembly(assemblyPath, out _);
+
         var libDirectories = Directory.GetDirectories(libsRootDirectory);
         if (libDirectories == null || libDirectories.Length == 0)
         {
-            Logger.Log(LogLevel.Warning, null, $"Failed to load additional assemblies- nothing found in libs directory.");
+            Logger.Log(LogLevel.Warning, null, $"Failed to load non-root assemblies- no subdirectories found in libs.");
             return;
         }
 
@@ -251,44 +320,24 @@ public static class Program
             {
                 var assemblyPaths = Directory.GetFiles(libDirectory, "*.dll", SearchOption.AllDirectories);
                 foreach (var assemblyPath in assemblyPaths)
-                {
-                    try
-                    {
-                        Assembly.LoadFrom(assemblyPath);
-                        Logger.Log(LogLevel.Information, null, $"Successfully loaded assembly at path: {assemblyPath}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Log(LogLevel.Error, ex, $"Failed to load assembly at path: {assemblyPath}.");
-                    }
-                }
+                    TryLoadAssembly(assemblyPath, out _);
             }
 
             return;
         }
 
-        // common libs should always be loaded, if `none` isn't specified
+        // load common lib assemblies (should be loaded if `none` isn't selected and the directory exists)
         {
             var libDirectory = Directory.GetDirectories(libsRootDirectory, "common", SearchOption.TopDirectoryOnly).FirstOrDefault();
             if (libDirectory != null)
             {
                 var assemblyPaths = Directory.GetFiles(libDirectory, "*.dll", SearchOption.AllDirectories);
                 foreach (var assemblyPath in assemblyPaths)
-                {
-                    try
-                    {
-                        var loadedAssembly = Assembly.LoadFile(assemblyPath);
-                        Logger.Log(LogLevel.Information, null, $"Successfully loaded assembly at path: {assemblyPath}.");
-                    }
-                    catch (Exception exc)
-                    {
-                        Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");
-                    }
-                }
+                    TryLoadAssembly(assemblyPath, out _);
             }
         }
 
-        // if no configuration, or common, then that's all we're going to load
+        // if no configuration, or common, then that's all we need
         if (Configuration.Include_Assemblies == null || string.Equals("common", Configuration.Include_Assemblies))
             return;
 
@@ -306,54 +355,71 @@ public static class Program
                 continue;
             }
 
+            // load all files from subdirectories, if assembly directory is there
             var assemblyPaths = Directory.GetFiles(libDirectory, "*.dll", SearchOption.AllDirectories);
             foreach (var assemblyPath in assemblyPaths)
-            {
-                try
-                {
-                    var loadedAssembly = Assembly.LoadFile(assemblyPath);
-                    Logger.Log(LogLevel.Information, null, $"Successfully loaded assembly at path: {assemblyPath}.");
-                }
-                catch (Exception exc)
-                {
-                    Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");
-                }
-            }
+                TryLoadAssembly(assemblyPath, out _);
         }
 
         return;
     }
 
+    /// <summary>
+    /// Include /libs/ and subdirectories in resolving .dll dependencies.
+    /// </summary>
     private static Assembly? OnAssemblyResolve(object? sender, ResolveEventArgs args)
     {
         if (string.IsNullOrWhiteSpace(args?.Name))
             return null;
 
         var assemblyName = new AssemblyName(args.Name).Name;
-        var libsRootDirectory = Path.Combine(Directory.GetCurrentDirectory(), "libs");
-        var libDirectories = Directory.GetDirectories(libsRootDirectory);
 
-        foreach (var libDirectory in libDirectories)
+        // try in app directory
+        var appDirectory = Directory.GetCurrentDirectory();
         {
-            var potentialAssemblyPath = Path.Combine(libDirectory, $"{assemblyName}.dll");
-            if (File.Exists(potentialAssemblyPath))
-            {
-                try
-                {
-                    var loadedAssembly = Assembly.LoadFile(potentialAssemblyPath);
-                    Logger.Log(LogLevel.Error, null, $"Successfully loaded assembly {assemblyName} at path: {potentialAssemblyPath}.");
+            var assemblyPath = Path.Combine(appDirectory, $"{assemblyName}.dll");
+            if (TryLoadAssembly(assemblyPath, out var assemblyFound))
+                return assemblyFound;
+        }
 
-                    return loadedAssembly;
-                }
-                catch (Exception exc)
-                {
-                    Logger.Log(LogLevel.Error, exc, $"Failed to load assembly {assemblyName} at path: {potentialAssemblyPath}.");
-                    return null;
-                }
-            }
+        // try in root libs directory
+        var libsRootDirectory = Path.Combine(appDirectory, "libs");
+        {
+            var assemblyPath = Path.Combine(libsRootDirectory, $"{assemblyName}.dll");
+            if (TryLoadAssembly(assemblyPath, out var assemblyFound))
+                return assemblyFound;
+        }
+
+        // try sub-lib directories
+        var libSubdirectories = Directory.GetDirectories(libsRootDirectory, "*", searchOption: SearchOption.AllDirectories);
+        foreach (var libSubdirectory in libSubdirectories)
+        {
+            var assemblyPath = Path.Combine(libSubdirectory, $"{assemblyName}.dll");
+            if (TryLoadAssembly(assemblyPath, out var assemblyFound))
+                return assemblyFound;
         }
 
         return null;
+    }
+
+    private static bool TryLoadAssembly(string assemblyPath, out Assembly? assembly)
+    {
+        if (File.Exists(assemblyPath))
+        {
+            try
+            {
+                assembly = Assembly.LoadFile(assemblyPath);
+                return true;
+            }
+            catch (BadImageFormatException) { }
+            catch (Exception exc)
+            {
+                Logger.Log(LogLevel.Error, exc, $"Failed to load assembly at path: {assemblyPath}.");
+            }
+        }
+
+        assembly = null;
+        return false;
     }
 
     /// <summary>

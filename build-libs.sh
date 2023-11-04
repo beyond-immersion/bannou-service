@@ -1,15 +1,18 @@
 #!/bin/bash
 
-# Check if xmllint is installed
-if ! command -v xmllint &> /dev/null; then
-    echo "xmllint could not be found, and is required for building service libs. Skipping..."
-    exit 1
-fi
+# Check if required commands are installed
+commands=("xmllint" "rsync")
+for cmd in "${commands[@]}"; do
+    if ! command -v $cmd &> /dev/null; then
+        echo "$cmd could not be found, and is required for building service libs. Skipping..."
+        exit 1
+    fi
+done
 
 LIBS_DIR="libs"
 TARGET_FRAMEWORK="net7.0"
-rm -rf $LIBS_DIR
-mkdir $LIBS_DIR
+
+mkdir -p $LIBS_DIR
 
 projects=($(find . -name '*.csproj'))
 for proj in "${projects[@]}"
@@ -24,14 +27,14 @@ do
 
     elif [[ ! -z "$namespace" ]]; then
 
-        source_dir="$project_name/bin/Release/$TARGET_FRAMEWORK"
-        target_dir="$LIBS_DIR/$namespace"
+        source_dir="$project_name/bin/Release/$TARGET_FRAMEWORK/publish"
 
         echo "Building libs for project '$project_name'."
-        dotnet build $proj --configuration Release -nologo --verbosity quiet
+        dotnet publish $proj --configuration Release --no-self-contained -nologo --verbosity quiet
 
-        echo "Moving project libs to '$target_dir' directory."
-        mkdir -p "$target_dir"
-        cp -r "$source_dir/"* "$target_dir/"
+        #echo "Files in '$source_dir' to be copied to '$LIBS_DIR' directory:"
+        #ls "$source_dir"
+
+        rsync -a "$source_dir/" "$LIBS_DIR/"
     fi
 done

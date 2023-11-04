@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace BeyondImmersion.BannouService;
 
@@ -141,7 +142,7 @@ public static partial class ExtensionMethods
             Type interfaceType = serviceInfo.Item1;
             Type implementationType = serviceInfo.Item2;
             ServiceLifetime serviceLifetime = serviceInfo.Item3.Lifetime;
-            var serviceName = implementationType.GetServiceName();
+            var serviceName = serviceInfo.Item3.Name;
 
             Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} has been enabled to handle type {interfaceType}.");
 
@@ -150,89 +151,16 @@ public static partial class ExtensionMethods
     }
 
     /// <summary>
-    /// Returns whether the configuration is provided for a given service type to run properly.
+    /// Add all of the given assemblies to the application.
+    /// This will make their services and controllers discoverable.
     /// </summary>
-    public static bool HasRequiredConfiguration(this Type implementationType)
-        => IDaprService.HasRequiredConfiguration(implementationType);
-
-    /// <summary>
-    /// Returns the best service configuration type for the given service type.
-    /// Returned type is based on DaprServiceAttribute service target type.
-    /// </summary>
-    public static Type GetConfigurationType(this Type implementationType)
-        => IDaprService.GetConfigurationType(implementationType);
-
-    /// <summary>
-    /// Binds HTTP endpoints for admin commands.
-    /// </summary>
-    public static IEndpointRouteBuilder MapNonServiceControllers(this IEndpointRouteBuilder builder)
+    public static IMvcBuilder AddApplicationParts(this IMvcBuilder builder, IEnumerable<Assembly>? assemblies)
     {
-        foreach (var controllerInfo in IDaprController.NonServiceControllers)
-        {
-            Type controllerType = controllerInfo.Item1;
-            var controllerAttr = controllerInfo.Item2;
+        if (assemblies == null)
+            return builder;
 
-            var controllerName = controllerAttr?.Name ?? controllerAttr?.Template;
-            if (string.IsNullOrWhiteSpace(controllerName))
-                controllerName = controllerType.Name;
-
-            if (string.IsNullOrWhiteSpace(controllerName))
-            {
-                Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {{action}}/{{id}}.");
-                _ = builder.MapControllerRoute(
-                    name: "ActionIdApi",
-                    pattern: "{action}/{id}");
-
-                Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {{action}}.");
-                _ = builder.MapControllerRoute(
-                    name: "ActionApi",
-                    pattern: "{action}");
-
-                continue;
-            }
-
-            Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {controllerName}/{{action}}/{{id}}.");
-            _ = builder.MapControllerRoute(
-                name: "ControllerActionIdApi",
-                pattern: controllerName + "/{action}/{id}");
-
-            Program.Logger?.Log(LogLevel.Trace, null, $"Activating controller route {controllerName}/{{action}}.");
-            _ = builder.MapControllerRoute(
-                name: "ControllerActionApi",
-                pattern: controllerName + "/{action}");
-        }
-
-        return builder;
-    }
-
-    /// <summary>
-    /// Binds HTTP endpoints for all registered dapr service handlers.
-    /// </summary>
-    public static IEndpointRouteBuilder MapDaprServiceControllers(this IEndpointRouteBuilder builder)
-    {
-        foreach (var serviceInfo in IDaprService.EnabledServices)
-        {
-            Type interfaceType = serviceInfo.Item1;
-            Type implementationType = serviceInfo.Item2;
-            var serviceName = implementationType.GetServiceName();
-
-            foreach ((Type, DaprControllerAttribute) controllerClassInfo in IDaprController.FindForImplementation(implementationType))
-            {
-                var controllerName = controllerClassInfo.Item2?.Template ?? controllerClassInfo.Item2?.Name ?? serviceName;
-                if (string.IsNullOrWhiteSpace(controllerName))
-                    continue;
-
-                Program.Logger?.Log(LogLevel.Trace, null, $"Activating service controller route {controllerName}/{{action}}/{{id}}.");
-                _ = builder.MapControllerRoute(
-                    name: "ServiceControllerActionIdApi",
-                    pattern: controllerName + "/{action}/{id}");
-
-                Program.Logger?.Log(LogLevel.Trace, null, $"Activating service controller route {controllerName}/{{action}}.");
-                _ = builder.MapControllerRoute(
-                    name: "ServiceControllerActionApi",
-                    pattern: controllerName + "/{action}");
-            }
-        }
+        foreach (var assembly in assemblies)
+            builder.AddApplicationPart(assembly);
 
         return builder;
     }
@@ -240,14 +168,52 @@ public static partial class ExtensionMethods
     /// <summary>
     /// Iterates through and invokes the Start() method on all loaded service handlers.
     /// </summary>
-    public static async Task InvokeAllServiceStartMethods(this WebApplication webApp)
+    public static async Task<bool> InvokeAllServiceStartMethods(this WebApplication webApp)
     {
-        foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
+        var timeoutTime = Program.Configuration.Service_Start_Timeout;
+        var cancellationToken = Program.ShutdownCancellationTokenSource.Token;
+
+        foreach (var serviceData in IDaprService.EnabledServices)
         {
-            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
-            if (serviceInst != null)
-                await serviceInst.OnStart();
+            var serviceInst = (IDaprService?)webApp.Services.GetService(serviceData.Item1);
+            if (serviceInst == null)
+                continue;
+
+            if (timeoutTime < 1)
+            {
+                await serviceInst.OnStart(cancellationToken);
+                continue;
+            }
+
+            try
+            {
+                var startTask = serviceInst.OnStart(cancellationToken);
+                var timeoutTask = Task.Delay(timeoutTime);
+
+                if (await Task.WhenAny(startTask, timeoutTask) == startTask)
+                {
+                    if (startTask.IsFaulted)
+                    {
+                        Program.Logger.Log(LogLevel.Error, startTask.Exception, $"An exception was thrown starting service '{serviceData.Item2.Name}'.");
+                        return false;
+                    }
+
+                    Program.Logger.Log(LogLevel.Information, $"Service startup successful for '{serviceData.Item2.Name}'.");
+                }
+                else
+                {
+                    Program.Logger.Log(LogLevel.Error, $"Service startup has timed out for '{serviceData.Item2.Name}'.");
+                    return false;
+                }
+            }
+            catch (Exception exc)
+            {
+                Program.Logger.Log(LogLevel.Error, exc, $"Service startup has failed for '{serviceData.Item2.Name}'.");
+                return false;
+            }
         }
+
+        return true;
     }
 
     /// <summary>
@@ -255,11 +221,13 @@ public static partial class ExtensionMethods
     /// </summary>
     public static async Task InvokeAllServiceRunningMethods(this WebApplication webApp)
     {
-        foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
+        var cancellationToken = Program.ShutdownCancellationTokenSource.Token;
+
+        foreach (var serviceInfo in IDaprService.EnabledServices)
         {
-            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            var serviceInst = (IDaprService?)webApp.Services.GetService(serviceInfo.Item1);
             if (serviceInst != null)
-                await serviceInst.OnRunning();
+                await serviceInst.OnRunning(cancellationToken);
         }
     }
 
@@ -268,14 +236,18 @@ public static partial class ExtensionMethods
     /// </summary>
     public static async Task InvokeAllServiceShutdownMethods(this WebApplication webApp)
     {
-        foreach (var implType in IDaprService.EnabledServices.Select(t => t.Item2))
+        foreach (var serviceInfo in IDaprService.EnabledServices)
         {
-            if (webApp == null)
-                continue;
-
-            var serviceInst = (IDaprService?)webApp.Services.GetService(implType);
+            var serviceInst = (IDaprService?)webApp.Services.GetService(serviceInfo.Item1);
             if (serviceInst != null)
                 await serviceInst.OnShutdown();
         }
+    }
+
+    public static void AddPropertyHeaders(this HttpRequestMessage message, ServiceRequest request)
+    {
+        foreach (var headerKVP in request.SetPropertiesToHeaders())
+            foreach (var headerValue in headerKVP.Item2)
+                message.Headers.Add(headerKVP.Item1, headerValue);
     }
 }

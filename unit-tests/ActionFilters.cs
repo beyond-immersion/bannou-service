@@ -1,4 +1,6 @@
 ﻿using BeyondImmersion.BannouService.Controllers.Filters;
+using BeyondImmersion.BannouService.Controllers.Messages;
+using Google.Api;
 using System.Reflection;
 using Xunit.Abstractions;
 
@@ -9,7 +11,6 @@ public class ActionFilters : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
 
-    private ActionFilters(CollectionFixture collectionContext) => TestCollectionContext = collectionContext;
     public ActionFilters(CollectionFixture collectionContext, ITestOutputHelper output)
     {
         TestCollectionContext = collectionContext;
@@ -111,7 +112,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.DoesNotContain(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => string.Equals("Different", t.Item1));
@@ -124,7 +125,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.DoesNotContain(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => string.Equals("Different", t.Item1));
@@ -139,7 +140,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.DoesNotContain(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -155,7 +156,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.DoesNotContain(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => string.Equals("Different", t.Item1));
@@ -186,7 +187,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.DoesNotContain(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => string.Equals("NotTheSame", t.Item1));
@@ -199,7 +200,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.DoesNotContain(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => string.Equals("NotTheSame", t.Item1));
@@ -214,7 +215,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.DoesNotContain(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -230,7 +231,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.DoesNotContain(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => string.Equals("NotTheSame", t.Item1));
@@ -261,7 +262,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1;;TEST_VALUE_1"));
@@ -273,7 +274,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1;;TEST_VALUE_1"));
@@ -287,7 +288,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -302,7 +303,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1;;TEST_VALUE_1"));
@@ -332,7 +333,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -346,7 +347,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -361,7 +362,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -378,7 +379,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -409,7 +410,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -423,7 +424,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -438,7 +439,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -455,7 +456,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -486,7 +487,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -500,7 +501,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -515,7 +516,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -532,7 +533,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -563,7 +564,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -579,7 +580,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -610,7 +611,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -624,7 +625,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -639,7 +640,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -656,7 +657,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -687,7 +688,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -701,7 +702,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -716,7 +717,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -733,7 +734,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -764,7 +765,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -778,7 +779,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -793,7 +794,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -810,7 +811,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -841,7 +842,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -857,7 +858,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -888,7 +889,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -902,7 +903,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -917,7 +918,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -934,7 +935,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -965,7 +966,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -979,7 +980,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -994,7 +995,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -1011,7 +1012,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1042,7 +1043,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1056,7 +1057,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1071,7 +1072,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -1088,7 +1089,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1119,7 +1120,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1133,7 +1134,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1148,7 +1149,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -1165,7 +1166,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1196,7 +1197,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1210,7 +1211,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1225,7 +1226,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -1242,7 +1243,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1273,7 +1274,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1287,7 +1288,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1302,7 +1303,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -1319,7 +1320,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1350,7 +1351,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1364,7 +1365,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1379,7 +1380,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -1396,7 +1397,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1427,7 +1428,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1441,7 +1442,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1456,7 +1457,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -1473,7 +1474,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1504,7 +1505,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1518,7 +1519,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1533,7 +1534,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
 
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
@@ -1550,7 +1551,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1581,7 +1582,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1597,7 +1598,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1628,7 +1629,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1644,7 +1645,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1675,7 +1676,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1691,7 +1692,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__TEST_VALUE_1"));
@@ -1722,7 +1723,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__:__TEST_VALUE_1"));
@@ -1738,7 +1739,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__:__TEST_VALUE_1"));
@@ -1769,7 +1770,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__:__TEST_VALUE_1"));
@@ -1785,7 +1786,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__:__TEST_VALUE_1"));
@@ -1816,7 +1817,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        var headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        var headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__:__TEST_VALUE_1"));
@@ -1832,7 +1833,7 @@ public class ActionFilters : IClassFixture<CollectionFixture>
         };
         propertyData = GetPropertyData(propertyName);
         Assert.NotNull(propertyData);
-        headerArray = HeaderArrayActionFilter.PropertyValueToHeaderArray(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
+        headerArray = ServiceRequest.SetHeaderArrayPropertyToHeaders(propertyData.Value.Item1, propertyData.Value.Item2, propertyData.Value.Item3);
         Assert.NotNull(headerArray);
         Assert.Contains(headerArray, t => string.Equals(propertyName, t.Item1));
         Assert.Contains(headerArray, t => t.Item2.Contains("TEST_KEY_1__:__TEST_VALUE_1"));

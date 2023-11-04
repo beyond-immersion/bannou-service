@@ -7,7 +7,7 @@ services:
       - elasticsearch
       - logstash
     volumes:
-      - ./filebeat.elk.yml:/usr/share/filebeat/filebeat.yml
+      - ./filebeat/filebeat.elk.yml:/usr/share/filebeat/filebeat.yml
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.10.4
@@ -17,7 +17,7 @@ services:
     ports:
       - 5044:5044
     volumes:
-      - ./logstash.elk.conf:/etc/logstash/conf.d
+      - ./logstash/logstash.elk.conf:/etc/logstash/conf.d
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:

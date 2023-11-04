@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BeyondImmersion.BannouService.Attributes;
 
@@ -8,6 +9,6 @@ namespace BeyondImmersion.BannouService.Attributes;
 [AttributeUsage(validOn: AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
 public sealed class DaprRouteAttribute : RouteAttribute, IServiceAttribute
 {
-    public DaprRouteAttribute(string template)
+    public DaprRouteAttribute([StringSyntax("Route")] string template)
         : base(template) { }
 }

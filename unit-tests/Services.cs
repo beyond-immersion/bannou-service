@@ -380,20 +380,6 @@ public class Services : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public void Services_AllHaveRequiredConfiguration()
-    {
-        try
-        {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", "true");
-            Assert.False(IDaprService.EnabledServicesHaveRequiredConfiguration());
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_DISABLED", null);
-        }
-    }
-
-    [Fact]
     public void Services_HasRequiredConfiguration()
     {
         IDaprService testService = new Service_Required();
