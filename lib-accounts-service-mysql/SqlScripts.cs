@@ -240,7 +240,7 @@ WHERE `Id` = @UserId;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
 SELECT @UserId,
-    SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password',
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password'),
     @Username,
     @PasswordData
 WHERE @Username IS NOT NULL AND @PasswordData IS NOT NULL
@@ -250,7 +250,7 @@ ON DUPLICATE KEY UPDATE
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
 SELECT @UserId,
-    SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google',
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google'),
     @GoogleUserId,
     @GoogleData
 WHERE @GoogleUserId IS NOT NULL AND @GoogleData IS NOT NULL
@@ -260,7 +260,7 @@ ON DUPLICATE KEY UPDATE
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
 SELECT @UserId,
-    SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam',
+    (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam'),
     @SteamUserId,
     @SteamData
 WHERE @SteamUserId IS NOT NULL AND @SteamData IS NOT NULL
