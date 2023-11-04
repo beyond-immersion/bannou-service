@@ -23,7 +23,7 @@ public interface IAccountService : IDaprService
         public DateTime LastLoginAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public DateTime? RemovedAt { get; set; }
+        public DateTime? DeletedAt { get; set; }
         public HashSet<string>? RoleClaims { get; set; }
         public HashSet<string>? AppClaims { get; set; }
         public HashSet<string>? ScopeClaims { get; set; }

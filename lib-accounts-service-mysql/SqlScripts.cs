@@ -198,18 +198,18 @@ ON DUPLICATE KEY UPDATE
 SELECT * FROM `Users` WHERE `Id` = @UserId;";
 
     /// <summary>
-    /// Set user account to "removed".
+    /// Set user account to "deleted".
     /// 
-    /// If the "RemovedAt" value is already set, will throw a
+    /// If the "DeletedAt" value is already set, will throw a
     /// 'key exists' exception, to indicate a conflict.
     /// Named Parameters:
     /// - @UserId               int
     /// </summary>
-    public const string RemoveUser = @"
+    public const string DeleteUser = @"
 UPDATE `Users`
 SET 
-    `RemovedAt` = IF(`RemovedAt` IS NULL, NOW(), `UserId`),
-    `UserId` = IF(`RemovedAt` IS NULL, `UserId`, NULL)
+    `DeletedAt` = IF(`DeletedAt` IS NULL, NOW(), `UserId`),
+    `UserId` = IF(`DeletedAt` IS NULL, `UserId`, NULL)
 WHERE `Id` = @UserId;
 
 SELECT * FROM `Users` WHERE `Id` = @UserId;";

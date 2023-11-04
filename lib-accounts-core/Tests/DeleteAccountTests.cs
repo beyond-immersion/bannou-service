@@ -149,7 +149,7 @@ public static class DeleteAccountTests
             }
         }
 
-        if (responseModel.RemovedAt == null)
+        if (responseModel.DeletedAt == null)
         {
             Program.Logger.Log(LogLevel.Error, $"Test response removed_at time is missing.");
             return false;

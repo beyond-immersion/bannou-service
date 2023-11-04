@@ -84,10 +84,10 @@ public class CreateAccountResponse : ServiceResponse
     public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
-    /// The date/time the account was removed (soft delete).
+    /// The date/time the account was deleted (soft delete).
     /// </summary>
-    [JsonProperty("removed_at")]
-    public DateTime? RemovedAt { get; set; }
+    [JsonProperty("deleted_at")]
+    public DateTime? DeletedAt { get; set; }
 
     /// <summary>
     /// Role claims are system-wide, affecting more or less

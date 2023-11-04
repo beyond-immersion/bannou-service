@@ -157,7 +157,7 @@ public class AccountService : IAccountService
                 LockoutEnd = resLockoutEnd,
                 LastLoginAt = resLastLoginAt,
                 UpdatedAt = resUpdatedAt,
-                RemovedAt = resRemovedAt
+                DeletedAt = resRemovedAt
             };
 
             if (includeClaims)
@@ -328,7 +328,7 @@ public class AccountService : IAccountService
                 LockoutEnd = resLockoutEnd,
                 LastLoginAt = resLastLoginAt,
                 UpdatedAt = resUpdatedAt,
-                RemovedAt = resRemovedAt,
+                DeletedAt = resRemovedAt,
                 RoleClaims = roleClaims?.ToHashSet(),
                 AppClaims = appClaims?.ToHashSet(),
                 ScopeClaims = scopeClaims?.ToHashSet(),
@@ -496,7 +496,7 @@ public class AccountService : IAccountService
                 LockoutEnd = resLockoutEnd,
                 LastLoginAt = resLastLoginAt,
                 UpdatedAt = resUpdatedAt,
-                RemovedAt = resRemovedAt,
+                DeletedAt = resRemovedAt,
                 RoleClaims = roleClaimsToAdd == null ? new HashSet<string>() : new HashSet<string>(roleClaimsToAdd.ToObject<string[]>() ?? Array.Empty<string>()),
                 AppClaims = appClaimsToAdd == null ? new HashSet<string>() : new HashSet<string>(appClaimsToAdd.ToObject<string[]>() ?? Array.Empty<string>()),
                 ScopeClaims = scopeClaimsToAdd == null ? new HashSet<string>() : new HashSet<string>(scopeClaimsToAdd.ToObject<string[]>() ?? Array.Empty<string>()),
@@ -561,7 +561,7 @@ public class AccountService : IAccountService
         }
         catch (MySqlException exc) when (exc.Number == 1062)
         {
-            Program.Logger.Log(LogLevel.Error, exc, $"A duplicate user account already exists with the provided keys.");
+            Program.Logger.Log(LogLevel.Error, exc, $"A duplicate user account already exists with one of the provided IDs.");
             return (HttpStatusCode.Conflict, null);
         }
         catch (Exception exc)
@@ -582,7 +582,7 @@ public class AccountService : IAccountService
                 throw new SystemException("Database connection string not found.");
 
             var builder = new SqlBuilder();
-            var template = builder.AddTemplate(SqlScripts.RemoveUser);
+            var template = builder.AddTemplate(SqlScripts.DeleteUser);
             var parameters = new
             {
                 UserId = (uint)id
@@ -614,18 +614,18 @@ public class AccountService : IAccountService
 
             // should move to DTO later
             var resUserID = (int)transactionResult.Id;
-            DateTime? resRemovedAt = transactionResult.RemovedAt;
+            DateTime? resDeletedAt = transactionResult.DeletedAt;
 
-            return (HttpStatusCode.OK, resRemovedAt);
+            return (HttpStatusCode.OK, resDeletedAt);
         }
         catch (MySqlException exc) when (exc.Number == 1062)
         {
-            Program.Logger.Log(LogLevel.Error, exc, $"The user account was already removed.");
+            Program.Logger.Log(LogLevel.Error, exc, $"The user account was already deleted.");
             return (HttpStatusCode.Conflict, null);
         }
         catch (Exception exc)
         {
-            Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while removing the user account.");
+            Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while deleting the user account.");
             return (HttpStatusCode.InternalServerError, null);
         }
     }

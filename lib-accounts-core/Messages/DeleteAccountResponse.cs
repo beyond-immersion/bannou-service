@@ -10,8 +10,8 @@ namespace BeyondImmersion.BannouService.Accounts.Messages;
 public class DeleteAccountResponse : ServiceResponse
 {
     /// <summary>
-    /// The date/time the account was removed (soft delete).
+    /// The date/time the account was deleted (soft delete).
     /// </summary>
-    [JsonProperty("removed_at")]
-    public DateTime? RemovedAt { get; set; }
+    [JsonProperty("deleted_at")]
+    public DateTime? DeletedAt { get; set; }
 }

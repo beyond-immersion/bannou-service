@@ -69,7 +69,7 @@ public class AccountController : Controllers.BaseDaprController
             response.LastLoginAt = userAccount.LastLoginAt;
             response.CreatedAt = userAccount.CreatedAt;
             response.UpdatedAt = userAccount.UpdatedAt;
-            response.RemovedAt = userAccount.RemovedAt;
+            response.DeletedAt = userAccount.DeletedAt;
             response.AppClaims = userAccount.AppClaims;
             response.IdentityClaims = userAccount.IdentityClaims;
             response.ProfileClaims = userAccount.ProfileClaims;
@@ -130,7 +130,7 @@ public class AccountController : Controllers.BaseDaprController
             response.LastLoginAt = userAccount.LastLoginAt;
             response.CreatedAt = userAccount.CreatedAt;
             response.UpdatedAt = userAccount.UpdatedAt;
-            response.RemovedAt = userAccount.RemovedAt;
+            response.DeletedAt = userAccount.DeletedAt;
             response.AppClaims = userAccount.AppClaims;
             response.IdentityClaims = userAccount.IdentityClaims;
             response.ProfileClaims = userAccount.ProfileClaims;
@@ -189,7 +189,7 @@ public class AccountController : Controllers.BaseDaprController
             response.LastLoginAt = userAccount.LastLoginAt;
             response.CreatedAt = userAccount.CreatedAt;
             response.UpdatedAt = userAccount.UpdatedAt;
-            response.RemovedAt = userAccount.RemovedAt;
+            response.DeletedAt = userAccount.DeletedAt;
             response.AppClaims = userAccount.AppClaims;
             response.IdentityClaims = userAccount.IdentityClaims;
             response.ProfileClaims = userAccount.ProfileClaims;
@@ -233,7 +233,7 @@ public class AccountController : Controllers.BaseDaprController
             }
 
             var response = request.CreateResponse();
-            response.RemovedAt = accountData.Item2;
+            response.DeletedAt = accountData.Item2;
 
             return Ok(response);
         }
