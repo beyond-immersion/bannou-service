@@ -352,7 +352,7 @@ public class AccountService : IAccountService
 
     async Task<(HttpStatusCode, IAccountService.AccountData?)> IAccountService.UpdateAccount(int id, string? email, bool emailVerified, bool twoFactorEnabled, string? region,
     string? username, string? password, string? steamID, string? steamToken, string? googleID, string? googleToken,
-    Dictionary<string, string>? roleClaims, Dictionary<string, string>? appClaims, Dictionary<string, string>? scopeClaims, Dictionary<string, string>? identityClaims, Dictionary<string, string>? profileClaims)
+    Dictionary<string, string?>? roleClaims, Dictionary<string, string?>? appClaims, Dictionary<string, string?>? scopeClaims, Dictionary<string, string?>? identityClaims, Dictionary<string, string?>? profileClaims)
     {
         try
         {
@@ -531,7 +531,7 @@ public class AccountService : IAccountService
 
             return (HttpStatusCode.OK, responseObj);
 
-            void SplitClaims(Dictionary<string, string>? claims, out JArray? claimsToRemove, out JArray? claimsToAdd)
+            static void SplitClaims(Dictionary<string, string?>? claims, out JArray? claimsToRemove, out JArray? claimsToAdd)
             {
                 claimsToRemove = null;
                 claimsToAdd = null;

@@ -65,7 +65,6 @@ public static class UpdateAccountTests
 
     private static async Task<bool> UpdateAccount_Username(TestingService service)
     {
-        service.ResetTestVars();
         if (TestAccountData == null)
         {
             Program.Logger.Log(LogLevel.Error, $"Test account missing.");
@@ -89,7 +88,6 @@ public static class UpdateAccountTests
 
     private static async Task<bool> UpdateAccount_Region(TestingService service)
     {
-        service.ResetTestVars();
         if (TestAccountData == null)
         {
             Program.Logger.Log(LogLevel.Error, $"Test account missing.");
@@ -119,7 +117,6 @@ public static class UpdateAccountTests
 
     private static async Task<bool> UpdateAccount_Email(TestingService service)
     {
-        service.ResetTestVars();
         if (TestAccountData == null)
         {
             Program.Logger.Log(LogLevel.Error, $"Test account missing.");
@@ -143,7 +140,6 @@ public static class UpdateAccountTests
 
     private static async Task<bool> UpdateAccount_SteamID(TestingService service)
     {
-        service.ResetTestVars();
         if (TestAccountData == null)
         {
             Program.Logger.Log(LogLevel.Error, $"Test account missing.");
@@ -175,7 +171,6 @@ public static class UpdateAccountTests
 
     private static async Task<bool> UpdateAccount_GoogleID(TestingService service)
     {
-        service.ResetTestVars();
         if (TestAccountData == null)
         {
             Program.Logger.Log(LogLevel.Error, $"Test account missing.");

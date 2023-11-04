@@ -23,7 +23,6 @@ public static class CreateAccountTests
 
     private static async Task<bool> CreateAccount_UsernamePassword(TestingService service)
     {
-        service.ResetTestVars();
         var userID = Guid.NewGuid().ToString();
         var requestModel = new CreateAccountRequest()
         {
@@ -65,7 +64,6 @@ public static class CreateAccountTests
 
     private static async Task<bool> CreateAccount_GoogleOAUTH(TestingService service)
     {
-        service.ResetTestVars();
         var userID = Guid.NewGuid().ToString();
         var requestModel = new CreateAccountRequest()
         {
@@ -103,7 +101,6 @@ public static class CreateAccountTests
 
     private static async Task<bool> CreateAccount_SteamOAUTH(TestingService service)
     {
-        service.ResetTestVars();
         var userID = Guid.NewGuid().ToString();
         var requestModel = new CreateAccountRequest()
         {
@@ -141,7 +138,6 @@ public static class CreateAccountTests
 
     private static async Task<bool> CreateAccount_AllParameters(TestingService service)
     {
-        service.ResetTestVars();
         var userID = Guid.NewGuid().ToString();
         var requestModel = new CreateAccountRequest()
         {

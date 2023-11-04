@@ -49,7 +49,7 @@ public class GetAccountsResponse : ServiceResponse
     /// application claim.
     /// </summary>
     [JsonProperty("security_token", Required = Required.Always)]
-    public string SecurityToken { get; set; }
+    public string? SecurityToken { get; set; }
 
     /// <summary>
     /// Whether the user has enabled 2-factor authentication.

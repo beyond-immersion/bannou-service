@@ -29,7 +29,6 @@ public static class BasicControllerTests
 
     private static async Task<bool> Get_Loopback_StringFromRoute(TestingService service)
     {
-        service.ResetTestVars();
         var testID = "test_id_1";
 
         var request = new HttpRequestMessage(HttpMethod.Get, LOOPBACK_URI_PREFIX + $"/{testID}");
@@ -40,7 +39,6 @@ public static class BasicControllerTests
 
     private static async Task<bool> Get_StringInRoute(TestingService service)
     {
-        service.ResetTestVars();
         var testID = "test_id_1";
 
         HttpRequestMessage request = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Get, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}/{testID}");
@@ -51,7 +49,6 @@ public static class BasicControllerTests
 
     private static async Task<bool> Get_MultipleStringsInRoute(TestingService service)
     {
-        service.ResetTestVars();
         var testID = "test_id_1";
         var testService = "inventory";
 
@@ -63,7 +60,6 @@ public static class BasicControllerTests
 
     private static async Task<bool> Post_ObjectModel(TestingService service)
     {
-        service.ResetTestVars();
         var testID = "test_id_1";
         var testService = "inventory";
         var dataModel = new TestingRunTestRequest()
@@ -84,7 +80,6 @@ public static class BasicControllerTests
 
     private static async Task<bool> Post_ObjectModel_HeaderArrays(TestingService service)
     {
-        service.ResetTestVars();
         var testID = "test_id_1";
         var testService = "inventory";
         var serviceID = Guid.NewGuid().ToString();
@@ -140,7 +135,6 @@ public static class BasicControllerTests
 
     private static async Task<bool> Post_ExecuteApiRequest(TestingService service)
     {
-        service.ResetTestVars();
         var testID = "test_id_1";
         var testService = "inventory";
         var serviceID = Guid.NewGuid().ToString();

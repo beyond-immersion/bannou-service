@@ -103,6 +103,7 @@ public class TestingService : IDaprService
     /// </summary>
     public async Task<bool> Run(string testName, string? serviceName = null, bool defaultIfNotFound = false)
     {
+        ResetTestVars();
         testName = testName.ToLower();
         Func<TestingService, Task<bool>>? testDelegate = null;
 
@@ -137,6 +138,7 @@ public class TestingService : IDaprService
         }
 
         Program.Logger?.Log(LogLevel.Information, $"Running test '{testName}' against service '{serviceName}'.");
+
         if (!await testDelegate.Invoke(this))
         {
             Program.Logger?.Log(LogLevel.Error, $"Test '{testName}' against service '{serviceName}' failed!");
@@ -169,6 +171,7 @@ public class TestingService : IDaprService
         {
             try
             {
+                ResetTestVars();
                 if (!await testMethod.Invoke(this))
                 {
                     Program.Logger.Log(LogLevel.Error, $"Test failure for [{testMethod.Method.Name}] in '{testLabel}' tests.");
@@ -210,6 +213,7 @@ public class TestingService : IDaprService
         {
             foreach (var testMethods in serviceTests)
             {
+                ResetTestVars();
                 var testName = testMethods.Key;
                 testsFound = true;
 
@@ -254,6 +258,7 @@ public class TestingService : IDaprService
 
             foreach (var serviceTest in serviceTests)
             {
+                ResetTestVars();
                 var testName = serviceTest.Key;
                 testsFound = true;
 
@@ -293,6 +298,7 @@ public class TestingService : IDaprService
 
             foreach (var testMethods in serviceTestData.Value)
             {
+                ResetTestVars();
                 var testName = testMethods.Key;
                 testsFound = true;
 

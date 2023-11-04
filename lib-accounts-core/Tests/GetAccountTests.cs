@@ -66,7 +66,6 @@ public static class GetAccountTests
 
     private static async Task<bool> GetAccount_ID(TestingService service)
     {
-        service.ResetTestVars();
         if (string.IsNullOrWhiteSpace(TestAccountData?.Username))
             return false;
 
@@ -99,7 +98,6 @@ public static class GetAccountTests
 
     private static async Task<bool> GetAccount_Username(TestingService service)
     {
-        service.ResetTestVars();
         if (string.IsNullOrWhiteSpace(TestAccountData?.Username))
             return false;
 
@@ -132,7 +130,6 @@ public static class GetAccountTests
 
     private static async Task<bool> GetAccount_Email(TestingService service)
     {
-        service.ResetTestVars();
         if (string.IsNullOrWhiteSpace(TestAccountData?.Email))
             return false;
 
@@ -165,8 +162,6 @@ public static class GetAccountTests
 
     private static async Task<bool> GetAccount_SteamID(TestingService service)
     {
-        service.ResetTestVars();
-
         var steamID = TestAccountData?.IdentityClaims?
             .Where(t => t.StartsWith("SteamID:")).FirstOrDefault()?
             .Remove(0, "SteamID:".Length);
@@ -203,8 +198,6 @@ public static class GetAccountTests
 
     private static async Task<bool> GetAccount_GoogleID(TestingService service)
     {
-        service.ResetTestVars();
-
         var googleID = TestAccountData?.IdentityClaims?
             .Where(t => t.StartsWith("GoogleID:")).FirstOrDefault()?
             .Remove(0, "GoogleID:".Length);
@@ -241,8 +234,6 @@ public static class GetAccountTests
 
     private static async Task<bool> GetAccount_IdentityClaim(TestingService service)
     {
-        service.ResetTestVars();
-
         var identityClaim = TestAccountData?.IdentityClaims?
             .Where(t => !t.StartsWith("GoogleID:") && !t.StartsWith("SteamID:")).FirstOrDefault();
 
