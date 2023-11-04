@@ -134,7 +134,7 @@ public static class UpdateAccountTests
         var requestModel = new UpdateAccountRequest()
         {
             ID = TestAccountData.ID,
-            GoogleID = $"Email_{Guid.NewGuid()}"
+            GoogleID = $"Email_{Guid.NewGuid()}@arcadia.com"
         };
 
         if (!await requestModel.ExecutePostRequest("account", "update"))

@@ -243,30 +243,33 @@ SELECT @UserId,
     (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Password'),
     @Username,
     @PasswordData
+FROM (SELECT 1) AS dummy
 WHERE @Username IS NOT NULL AND @PasswordData IS NOT NULL
 ON DUPLICATE KEY UPDATE
-    `LoginProviderUserId` = @Username,
-    `LoginProviderData` = @PasswordData;
+    `LoginProviderUserId` = CASE WHEN @Username IS NOT NULL THEN @Username ELSE `LoginProviderUserId` END,
+    `LoginProviderData` = CASE WHEN @PasswordData IS NOT NULL THEN @PasswordData ELSE `LoginProviderData` END;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
 SELECT @UserId,
     (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Google'),
     @GoogleUserId,
     @GoogleData
+FROM (SELECT 1) AS dummy
 WHERE @GoogleUserId IS NOT NULL AND @GoogleData IS NOT NULL
 ON DUPLICATE KEY UPDATE
-    `LoginProviderUserId` = @GoogleUserId,
-    `LoginProviderData` = @GoogleData;
+    `LoginProviderUserId` = CASE WHEN @GoogleUserId IS NOT NULL THEN @GoogleUserId ELSE `LoginProviderUserId` END,
+    `LoginProviderData` = CASE WHEN @GoogleData IS NOT NULL THEN @GoogleData ELSE `LoginProviderData` END;
 
 INSERT INTO `UserLogins` (`UserId`, `LoginProviderId`, `LoginProviderUserId`, `LoginProviderData`)
 SELECT @UserId,
     (SELECT `Id` FROM `LoginProviders` WHERE `Name` = 'Steam'),
     @SteamUserId,
     @SteamData
+FROM (SELECT 1) AS dummy
 WHERE @SteamUserId IS NOT NULL AND @SteamData IS NOT NULL
 ON DUPLICATE KEY UPDATE
-    `LoginProviderUserId` = @SteamUserId,
-    `LoginProviderData` = @SteamData;
+    `LoginProviderUserId` = CASE WHEN @SteamUserId IS NOT NULL THEN @SteamUserId ELSE `LoginProviderUserId` END,
+    `LoginProviderData` = CASE WHEN @SteamData IS NOT NULL THEN @SteamData ELSE `LoginProviderData` END;
 
 SET @ClaimTypeId = (SELECT `Id` FROM `ClaimTypes` WHERE `Name` = 'Role');
 DELETE FROM `UserClaims`
