@@ -6,21 +6,9 @@ namespace BeyondImmersion.BannouService.Services;
 /// <summary>
 /// Service handler responsible for testing service APIs.
 /// </summary>
-[DaprService("testing", priority: false)]
-public class TestingService : IDaprService
+[DaprService("testing")]
+public class TestingService : DaprService<TestingServiceConfiguration>
 {
-    private TestingServiceConfiguration? _configuration;
-    public TestingServiceConfiguration Configuration
-    {
-        get
-        {
-            _configuration ??= IServiceConfiguration.BuildConfiguration<TestingServiceConfiguration>();
-            return _configuration;
-        }
-
-        internal set => _configuration = value;
-    }
-
     private IDictionary<string, IDictionary<string, Func<TestingService, Task<bool>>>> ServiceTests { get; set; }
 
     public string? LastTestID { get; private set; }

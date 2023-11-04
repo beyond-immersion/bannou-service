@@ -1,6 +1,5 @@
 ﻿using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using Dapper;
 using Microsoft.Extensions.Logging;
@@ -17,15 +16,8 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// account data.
 /// </summary>
 [DaprService("account", typeof(IAccountService))]
-public class AccountService : IAccountService
+public class AccountService : DaprService<AccountServiceConfiguration>, IAccountService
 {
-    private AccountServiceConfiguration? _configuration;
-    public AccountServiceConfiguration Configuration
-    {
-        get => _configuration ??= IServiceConfiguration.BuildConfiguration<AccountServiceConfiguration>();
-        internal set => _configuration = value;
-    }
-
     private string? _dbConnectionString;
 
     async Task IDaprService.OnStart(CancellationToken cancellationToken)

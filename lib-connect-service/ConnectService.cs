@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// Service component responsible for login/connection handling.
 /// </summary>
 [DaprService("connect", typeof(IConnectService))]
-public sealed class ConnectService : IConnectService
+public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, IConnectService
 {
     async Task IDaprService.OnStart(CancellationToken cancellationToken)
     {

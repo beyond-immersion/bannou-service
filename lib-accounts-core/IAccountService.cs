@@ -41,7 +41,7 @@ public interface IAccountService : IDaprService
     }
 
     /// <summary>
-    /// 
+    /// Retrieve a user account by any identifier.
     /// </summary>
     /// <returns>
     ///     <see cref="HttpStatusCode.OK"/>
@@ -53,7 +53,7 @@ public interface IAccountService : IDaprService
         string? steamID = null, string? googleID = null, string? identityClaim = null);
 
     /// <summary>
-    /// 
+    /// Create a new user account.
     /// </summary>
     /// <returns>
     ///     <see cref="HttpStatusCode.OK"/>,
@@ -66,7 +66,7 @@ public interface IAccountService : IDaprService
         HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims);
 
     /// <summary>
-    /// 
+    /// Update an existing user account.
     /// </summary>
     /// <returns>
     ///     <see cref="HttpStatusCode.OK"/>,
@@ -81,7 +81,11 @@ public interface IAccountService : IDaprService
         Dictionary<string, string?>? identityClaims, Dictionary<string, string?>? profileClaims);
 
     /// <summary>
+    /// Delete a user account.
     /// 
+    /// Soft-delete, so record still exists- check DeleteAt
+    /// for deletion status. Deleted user accounts will be
+    /// permanently cleaned up on demand or at intervals.
     /// </summary>
     /// <returns>
     ///     <see cref="HttpStatusCode.OK"/>,

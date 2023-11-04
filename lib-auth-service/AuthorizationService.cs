@@ -1,7 +1,6 @@
 ﻿using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Accounts.Messages;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using JWT;
 using JWT.Algorithms;
@@ -17,15 +16,8 @@ namespace BeyondImmersion.BannouService.Authorization;
 /// Service component responsible for authorization handling.
 /// </summary>
 [DaprService("authorization", typeof(IAuthorizationService))]
-public class AuthorizationService : IAuthorizationService
+public class AuthorizationService : DaprService<AuthorizationServiceConfiguration>, IAuthorizationService
 {
-    private AuthorizationServiceConfiguration? _configuration;
-    public AuthorizationServiceConfiguration Configuration
-    {
-        get => _configuration ??= IServiceConfiguration.BuildConfiguration<AuthorizationServiceConfiguration>();
-        internal set => _configuration = value;
-    }
-
     async Task IDaprService.OnStart(CancellationToken cancellationToken)
     {
         // override sensitive configuration Dapr secret store
