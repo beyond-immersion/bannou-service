@@ -17,8 +17,9 @@ public static class ServiceLogging
     {
         var logFilepath = Path.Combine(Directory.GetCurrentDirectory(), $"logs/app.log");
         Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Is((Serilog.Events.LogEventLevel)Program.Configuration.App_Logging_Level)
             .WriteToFile(logFilepath).WriteToConsole().WriteToCloud()
-            .ReadFrom.Configuration(Configuration.IServiceConfiguration.BuildConfigurationRoot())
+            .ReadFrom.Configuration(IServiceConfiguration.BuildConfigurationRoot())
             .CreateLogger();
 
         ILoggerFactory factory = new LoggerFactory().AddSerilog(Log.Logger);
@@ -36,10 +37,10 @@ public static class ServiceLogging
         var logFilepath = Path.Combine(Directory.GetCurrentDirectory(), $"logs/{serviceName.ToLower()}.log");
         var logger = new LoggerConfiguration()
             .WriteToFile(logFilepath).WriteToConsole().WriteToCloud()
-            .ReadFrom.Configuration(Configuration.IServiceConfiguration.BuildConfigurationRoot())
+            .ReadFrom.Configuration(IServiceConfiguration.BuildConfigurationRoot())
             .CreateLogger();
 
-        ILoggerFactory factory = new LoggerFactory().AddSerilog(Log.Logger);
+        ILoggerFactory factory = new LoggerFactory().AddSerilog(logger);
         return factory.CreateLogger(serviceName.ToLower());
     }
 
