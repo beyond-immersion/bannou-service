@@ -31,7 +31,11 @@ public static class GetAccountTests
                     SteamToken = $"SToken_{Guid.NewGuid()}",
                     GoogleID = $"Email_{userID}@arcadia.com",
                     GoogleToken = $"GToken_{Guid.NewGuid()}",
-                    IdentityClaims = new() { $"Identity_{userID}" }
+                    RoleClaims = new() { "Doesn't matteer" },
+                    AppClaims = new() { "Game:Arcadia" },
+                    ScopeClaims = new() { "Arcadia:CanCreateServer" },
+                    IdentityClaims = new() { $"Identity_{userID}" },
+                    ProfileClaims = new() { "Age:38" }
                 };
 
                 if (!requestModel.ExecutePostRequest("account", "create").Result)
@@ -56,15 +60,21 @@ public static class GetAccountTests
     public static async Task<bool> Run(TestingService service)
         => await service.RunDelegates("account/get", new List<Func<TestingService, Task<bool>>>()
             {
-                GetAccount_ID,
-                GetAccount_Username,
-                GetAccount_Email,
-                GetAccount_GoogleID,
-                GetAccount_SteamID,
-                GetAccount_IdentityClaim
+                GetAccount_ByID,
+                GetAccount_ByID_IncludeeClaims,
+                GetAccount_ByUsername,
+                GetAccount_ByUsername_IncludeClaims,
+                GetAccount_ByEmail,
+                GetAccount_ByEmail_IncludeClaims,
+                GetAccount_ByGoogleID,
+                GetAccount_ByGoogleID_IncludeClaims,
+                GetAccount_BySteamID,
+                GetAccount_BySteamID_IncludeClaims,
+                GetAccount_ByIdentityClaim,
+                GetAccount_ByIdentityClaim_IncludeClaims
             });
 
-    private static async Task<bool> GetAccount_ID(TestingService service)
+    private static async Task<bool> GetAccount_ByID(TestingService service)
     {
         if (string.IsNullOrWhiteSpace(TestAccountData?.Username))
             return false;
@@ -81,22 +91,10 @@ public static class GetAccountTests
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        requestModel = new GetAccountRequest()
-        {
-            IncludeClaims = true,
-            ID = TestAccountData.ID
-        };
-
-        if (!await requestModel.ExecutePostRequest("account", "get"))
-            return false;
-
-        if (!ValidateResponse(requestModel, requestModel.Response))
-            return false;
-
         return true;
     }
 
-    private static async Task<bool> GetAccount_Username(TestingService service)
+    private static async Task<bool> GetAccount_ByUsername(TestingService service)
     {
         if (string.IsNullOrWhiteSpace(TestAccountData?.Username))
             return false;
@@ -113,22 +111,10 @@ public static class GetAccountTests
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        requestModel = new GetAccountRequest()
-        {
-            IncludeClaims = true,
-            Username = TestAccountData.Username
-        };
-
-        if (!await requestModel.ExecutePostRequest("account", "get"))
-            return false;
-
-        if (!ValidateResponse(requestModel, requestModel.Response))
-            return false;
-
         return true;
     }
 
-    private static async Task<bool> GetAccount_Email(TestingService service)
+    private static async Task<bool> GetAccount_ByEmail(TestingService service)
     {
         if (string.IsNullOrWhiteSpace(TestAccountData?.Email))
             return false;
@@ -145,22 +131,10 @@ public static class GetAccountTests
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        requestModel = new GetAccountRequest()
-        {
-            IncludeClaims = true,
-            Email = TestAccountData.Email
-        };
-
-        if (!await requestModel.ExecutePostRequest("account", "get"))
-            return false;
-
-        if (!ValidateResponse(requestModel, requestModel.Response))
-            return false;
-
         return true;
     }
 
-    private static async Task<bool> GetAccount_SteamID(TestingService service)
+    private static async Task<bool> GetAccount_BySteamID(TestingService service)
     {
         var steamID = TestAccountData?.IdentityClaims?
             .Where(t => t.StartsWith("SteamID:")).FirstOrDefault()?
@@ -181,22 +155,10 @@ public static class GetAccountTests
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        requestModel = new GetAccountRequest()
-        {
-            IncludeClaims = true,
-            SteamID = steamID
-        };
-
-        if (!await requestModel.ExecutePostRequest("account", "get"))
-            return false;
-
-        if (!ValidateResponse(requestModel, requestModel.Response))
-            return false;
-
         return true;
     }
 
-    private static async Task<bool> GetAccount_GoogleID(TestingService service)
+    private static async Task<bool> GetAccount_ByGoogleID(TestingService service)
     {
         var googleID = TestAccountData?.IdentityClaims?
             .Where(t => t.StartsWith("GoogleID:")).FirstOrDefault()?
@@ -217,22 +179,10 @@ public static class GetAccountTests
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        requestModel = new GetAccountRequest()
-        {
-            IncludeClaims = true,
-            GoogleID = googleID
-        };
-
-        if (!await requestModel.ExecutePostRequest("account", "get"))
-            return false;
-
-        if (!ValidateResponse(requestModel, requestModel.Response))
-            return false;
-
         return true;
     }
 
-    private static async Task<bool> GetAccount_IdentityClaim(TestingService service)
+    private static async Task<bool> GetAccount_ByIdentityClaim(TestingService service)
     {
         var identityClaim = TestAccountData?.IdentityClaims?
             .Where(t => !t.StartsWith("GoogleID:") && !t.StartsWith("SteamID:")).FirstOrDefault();
@@ -252,7 +202,126 @@ public static class GetAccountTests
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        requestModel = new GetAccountRequest()
+        return true;
+    }
+
+    private static async Task<bool> GetAccount_ByID_IncludeeClaims(TestingService service)
+    {
+        if (string.IsNullOrWhiteSpace(TestAccountData?.Username))
+            return false;
+
+        var requestModel = new GetAccountRequest()
+        {
+            IncludeClaims = true,
+            ID = TestAccountData.ID
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> GetAccount_ByUsername_IncludeClaims(TestingService service)
+    {
+        if (string.IsNullOrWhiteSpace(TestAccountData?.Username))
+            return false;
+
+        var requestModel = new GetAccountRequest()
+        {
+            IncludeClaims = true,
+            Username = TestAccountData.Username
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> GetAccount_ByEmail_IncludeClaims(TestingService service)
+    {
+        if (string.IsNullOrWhiteSpace(TestAccountData?.Email))
+            return false;
+
+        var requestModel = new GetAccountRequest()
+        {
+            IncludeClaims = true,
+            Email = TestAccountData.Email
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> GetAccount_BySteamID_IncludeClaims(TestingService service)
+    {
+        var steamID = TestAccountData?.IdentityClaims?
+            .Where(t => t.StartsWith("SteamID:")).FirstOrDefault()?
+            .Remove(0, "SteamID:".Length);
+
+        if (string.IsNullOrWhiteSpace(steamID))
+            return false;
+
+        var requestModel = new GetAccountRequest()
+        {
+            IncludeClaims = true,
+            SteamID = steamID
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> GetAccount_ByGoogleID_IncludeClaims(TestingService service)
+    {
+        var googleID = TestAccountData?.IdentityClaims?
+            .Where(t => t.StartsWith("GoogleID:")).FirstOrDefault()?
+            .Remove(0, "GoogleID:".Length);
+
+        if (string.IsNullOrWhiteSpace(googleID))
+            return false;
+
+        var requestModel = new GetAccountRequest()
+        {
+            IncludeClaims = true,
+            GoogleID = googleID
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "get"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> GetAccount_ByIdentityClaim_IncludeClaims(TestingService service)
+    {
+        var identityClaim = TestAccountData?.IdentityClaims?
+            .Where(t => !t.StartsWith("GoogleID:") && !t.StartsWith("SteamID:")).FirstOrDefault();
+
+        if (string.IsNullOrWhiteSpace(identityClaim))
+            return false;
+
+        var requestModel = new GetAccountRequest()
         {
             IncludeClaims = true,
             IdentityClaim = identityClaim

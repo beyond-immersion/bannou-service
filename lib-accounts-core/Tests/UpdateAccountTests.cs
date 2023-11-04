@@ -59,6 +59,8 @@ public static class UpdateAccountTests
                 UpdateAccount_Region,
                 UpdateAccount_Username,
                 UpdateAccount_Email,
+                UpdateAccount_EmailVerified,
+                UpdateAccount_TwoFactorEnabled,
                 UpdateAccount_GoogleID,
                 UpdateAccount_SteamID,
                 UpdateAccount_RoleClaims,
@@ -124,6 +126,46 @@ public static class UpdateAccountTests
         {
             ID = TestAccountData.ID,
             Email = $"Email_{Guid.NewGuid()}@arcadia.com"
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "update"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> UpdateAccount_EmailVerified(TestingService service)
+    {
+        if (TestAccountData == null)
+            return false;
+
+        var requestModel = new UpdateAccountRequest()
+        {
+            ID = TestAccountData.ID,
+            EmailVerified = true
+        };
+
+        if (!await requestModel.ExecutePostRequest("account", "update"))
+            return false;
+
+        if (!ValidateResponse(requestModel, requestModel.Response))
+            return false;
+
+        return true;
+    }
+
+    private static async Task<bool> UpdateAccount_TwoFactorEnabled(TestingService service)
+    {
+        if (TestAccountData == null)
+            return false;
+
+        var requestModel = new UpdateAccountRequest()
+        {
+            ID = TestAccountData.ID,
+            TwoFactorEnabled = true
         };
 
         if (!await requestModel.ExecutePostRequest("account", "update"))

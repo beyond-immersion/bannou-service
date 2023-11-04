@@ -5,6 +5,11 @@ namespace BeyondImmersion.BannouService.Accounts.Messages;
 
 /// <summary>
 /// The request model for service API calls to `/account/get`.
+/// 
+/// Provide any identifier you have, and the lookup will be done
+/// based on it. The internal ID is the only absolutely required
+/// identifier for accounts to possess, so don't assume that all
+/// accounts have a username or email associated.
 /// </summary>
 [JsonObject]
 public class GetAccountRequest : ServiceRequest<GetAccountResponse>
