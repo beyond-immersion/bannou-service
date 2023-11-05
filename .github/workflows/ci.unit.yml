@@ -36,7 +36,7 @@ jobs:
           username: ${{ github.actor }}
           text: 'Unit Tests Succeeded'
           description: 'The unit tests have passed successfully.'
-          color: '65280' # Green
+          severity: info
 
       - name: Notify Failure
         if: failure() && env.DISCORD_WEBHOOK != ''
@@ -47,4 +47,4 @@ jobs:
           username: ${{ github.actor }}
           text: 'Unit Tests Failed'
           description: 'The unit tests have failed. Check the Actions log for more details.'
-          color: '16711680' # Red
+          severity: error

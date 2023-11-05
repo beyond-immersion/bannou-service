@@ -35,7 +35,7 @@ jobs:
           username: ${{ github.actor }}
           text: 'Lint Tests Succeeded'
           description: 'The lint tests have passed successfully.'
-          color: '65280' # Green
+          severity: info
 
       - name: Notify Failure
         if: failure() && env.DISCORD_WEBHOOK != ''
@@ -46,4 +46,4 @@ jobs:
           username: ${{ github.actor }}
           text: 'Lint Tests Failed'
           description: 'The lint tests have failed. Check the Actions log for more details.'
-          color: '16711680' # Red
+          severity: error
