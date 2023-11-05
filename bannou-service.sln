@@ -21,8 +21,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisionin
 		provisioning\docker-compose.ci.yml = provisioning\docker-compose.ci.yml
 		provisioning\docker-compose.ek.yml = provisioning\docker-compose.ek.yml
 		provisioning\docker-compose.elk.yml = provisioning\docker-compose.elk.yml
-		provisioning\docker-compose.swarm.yml = provisioning\docker-compose.swarm.yml
+		provisioning\docker-compose.ingress.yml = provisioning\docker-compose.ingress.yml
+		provisioning\docker-compose.local.ingress.yml = provisioning\docker-compose.local.ingress.yml
 		provisioning\docker-compose.yml = provisioning\docker-compose.yml
+		provisioning\docker-compose.local.yml = provisioning\docker-compose.local.yml
 		provisioning\Dockerfile = provisioning\Dockerfile
 	EndProjectSection
 EndProject
@@ -92,7 +94,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "filebeat", "filebeat", "{5D
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ci", "ci", "{0ABDF843-F200-4438-AA37-E5E9380F4978}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "swarm", "swarm", "{BDF5F17E-AD78-4107-9E13-C09878032E0D}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "local", "local", "{BDF5F17E-AD78-4107-9E13-C09878032E0D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "run-init", "run-init", "{FD9DCE8B-2D61-48A1-B215-EC10C5AFA54A}"
 	ProjectSection(SolutionItems) = preProject

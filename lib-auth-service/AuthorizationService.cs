@@ -173,10 +173,10 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
 
         var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
         if (!string.IsNullOrWhiteSpace(email))
-           jwtBuilder.AddHeader("email", email);
+            jwtBuilder.AddHeader("email", email);
 
         if (!string.IsNullOrWhiteSpace(username))
-           jwtBuilder.AddHeader("username", username);
+            jwtBuilder.AddHeader("username", username);
 
         if (ID != null)
             jwtBuilder.Id(ID.Value);
