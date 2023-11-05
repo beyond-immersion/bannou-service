@@ -43,7 +43,7 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
         try
         {
             var request = new CreateAccountRequest() { Username = username, Password = password, Email = email };
-            await request.ExecutePostRequest("account", "create");
+            await request.ExecuteRequest("account", "create");
 
             if (request.Response == null)
                 return (HttpStatusCode.InternalServerError, null);
@@ -77,7 +77,7 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
 
             // retrieve stored account data
             var request = new GetAccountRequest() { Username = username };
-            await request.ExecutePostRequest("account", "get");
+            await request.ExecuteRequest("account", "get");
 
             if (request.Response == null)
                 return (HttpStatusCode.NotFound, null);

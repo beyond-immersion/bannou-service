@@ -34,7 +34,7 @@ public static class DeleteAccountTests
                     IdentityClaims = new() { $"Identity_{userID}" }
                 };
 
-                if (!requestModel.ExecutePostRequest("account", "create").Result)
+                if (!requestModel.ExecuteRequest("account", "create").Result)
                 {
                     Program.Logger.Log(LogLevel.Error, "Failed to set up user account for account/get tests.");
                     return null;
@@ -71,7 +71,7 @@ public static class DeleteAccountTests
             ID = TestAccountData.ID
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "delete"))
+        if (!await requestModel.ExecuteRequest("account", "delete"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -98,7 +98,7 @@ public static class DeleteAccountTests
             ID = TestAccountData.ID
         };
 
-        if (await requestModel.ExecutePostRequest("account", "delete") || requestModel.Response?.StatusCode != System.Net.HttpStatusCode.Conflict)
+        if (await requestModel.ExecuteRequest("account", "delete") || requestModel.Response?.StatusCode != System.Net.HttpStatusCode.Conflict)
         {
             Program.Logger.Log(LogLevel.Error, "Test response missing or response status not 'Conflict'.");
             return false;
@@ -117,7 +117,7 @@ public static class DeleteAccountTests
             ID = TestAccountData.ID + 1
         };
 
-        if (await requestModel.ExecutePostRequest("account", "delete") || requestModel.Response?.StatusCode != System.Net.HttpStatusCode.NotFound)
+        if (await requestModel.ExecuteRequest("account", "delete") || requestModel.Response?.StatusCode != System.Net.HttpStatusCode.NotFound)
         {
             Program.Logger.Log(LogLevel.Error, "Test response missing or response status not 'Not Found'.");
             return false;

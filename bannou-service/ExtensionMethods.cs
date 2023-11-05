@@ -28,6 +28,18 @@ public static partial class ExtensionMethods
     [GeneratedRegex("\\s+")]
     public static partial Regex REGEX_MultipleSpaces();
 
+    public static HttpMethod ToObject(this HttpMethodTypes httpMethod)
+        => httpMethod switch
+        {
+            HttpMethodTypes.PUT => HttpMethod.Put,
+            HttpMethodTypes.DELETE => HttpMethod.Delete,
+            HttpMethodTypes.HEAD => HttpMethod.Head,
+            HttpMethodTypes.OPTIONS => HttpMethod.Options,
+            HttpMethodTypes.PATCH => HttpMethod.Patch,
+            HttpMethodTypes.GET => HttpMethod.Get,
+            _ => HttpMethod.Post,
+        };
+
     /// <summary>
     /// Logging extension/helper methods, for including additional context as JSON.
     /// </summary>

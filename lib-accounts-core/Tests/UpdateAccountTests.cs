@@ -34,7 +34,7 @@ public static class UpdateAccountTests
                     IdentityClaims = new() { $"Identity_{userID}" }
                 };
 
-                if (!requestModel.ExecutePostRequest("account", "create").Result)
+                if (!requestModel.ExecuteRequest("account", "create").Result)
                 {
                     Program.Logger.Log(LogLevel.Error, "Failed to set up user account for account/get tests.");
                     return null;
@@ -82,7 +82,7 @@ public static class UpdateAccountTests
             Username = $"Username_{Guid.NewGuid()}"
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -102,7 +102,7 @@ public static class UpdateAccountTests
             Region = "Asia"
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -128,7 +128,7 @@ public static class UpdateAccountTests
             Email = $"Email_{Guid.NewGuid()}@arcadia.com"
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -148,7 +148,7 @@ public static class UpdateAccountTests
             EmailVerified = true
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -168,7 +168,7 @@ public static class UpdateAccountTests
             TwoFactorEnabled = true
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -196,7 +196,7 @@ public static class UpdateAccountTests
             IdentityClaims = new() { [steamID] = null }
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -224,7 +224,7 @@ public static class UpdateAccountTests
             IdentityClaims = new() { [googleID] = null }
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -250,7 +250,7 @@ public static class UpdateAccountTests
             }
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -279,7 +279,7 @@ public static class UpdateAccountTests
             }
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -308,7 +308,7 @@ public static class UpdateAccountTests
             }
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -337,7 +337,7 @@ public static class UpdateAccountTests
             }
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -366,7 +366,7 @@ public static class UpdateAccountTests
             }
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -438,7 +438,7 @@ public static class UpdateAccountTests
             }
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "update"))
+        if (!await requestModel.ExecuteRequest("account", "update"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))

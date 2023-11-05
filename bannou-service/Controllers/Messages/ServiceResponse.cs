@@ -13,4 +13,7 @@ public class ServiceResponse : ServiceMessage
 
     [JsonIgnore]
     public string? Message { get; set; }
+
+    [JsonIgnore]
+    public string? Content { get; set; }
 }

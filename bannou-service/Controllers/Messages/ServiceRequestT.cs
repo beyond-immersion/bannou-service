@@ -11,9 +11,9 @@ public class ServiceRequest<T> : ServiceRequest
 {
     public new T? Response { get; protected set; }
 
-    public new virtual async Task<bool> ExecutePostRequest(string? service, string method)
+    public new virtual async Task<bool> ExecuteRequest(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
     {
-        var result = await ExecutePostRequest_INTERNAL<T>(service, method);
+        var result = await ServiceRequest.ExecuteRequest<T>(service, method, additionalHeaders, httpMethod: httpMethod);
 
         if (base.Response != null)
         {

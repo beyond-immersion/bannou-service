@@ -47,13 +47,13 @@ public static class CreateAccountTests
             }
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "create"))
+        if (!await requestModel.ExecuteRequest("account", "create"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        if (await requestModel.ExecutePostRequest("account", "create"))
+        if (await requestModel.ExecuteRequest("account", "create"))
         {
             Program.Logger.Log(LogLevel.Error, $"Duplicate entry was able to be created for user account.");
             return false;
@@ -84,13 +84,13 @@ public static class CreateAccountTests
             ProfileClaims = null
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "create"))
+        if (!await requestModel.ExecuteRequest("account", "create"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        if (await requestModel.ExecutePostRequest("account", "create"))
+        if (await requestModel.ExecuteRequest("account", "create"))
         {
             Program.Logger.Log(LogLevel.Error, $"Duplicate entry was able to be created for user account.");
             return false;
@@ -121,13 +121,13 @@ public static class CreateAccountTests
             ProfileClaims = null
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "create"))
+        if (!await requestModel.ExecuteRequest("account", "create"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        if (await requestModel.ExecutePostRequest("account", "create"))
+        if (await requestModel.ExecuteRequest("account", "create"))
         {
             Program.Logger.Log(LogLevel.Error, $"Duplicate entry was able to be created for user account.");
             return false;
@@ -162,13 +162,13 @@ public static class CreateAccountTests
             }
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "create"))
+        if (!await requestModel.ExecuteRequest("account", "create"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
             return false;
 
-        if (await requestModel.ExecutePostRequest("account", "create"))
+        if (await requestModel.ExecuteRequest("account", "create"))
         {
             Program.Logger.Log(LogLevel.Error, $"Duplicate entry was able to be created for user account.");
             return false;

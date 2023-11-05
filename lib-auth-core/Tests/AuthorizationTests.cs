@@ -2,6 +2,7 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using BeyondImmersion.BannouService.Controllers.Messages;
 
 namespace BeyondImmersion.BannouService.Authorization.Tests;
 
@@ -15,7 +16,9 @@ public static class AuthorizationTests
         => await service.RunDelegates("authorization/register", new List<Func<TestingService, Task<bool>>>()
             {
                 RegisterAccount_UsernamePassword,
-                RegisterAccount_AllParameters
+                RegisterAccount_Duplicate,
+                RegisterAccount_AllParameters,
+                Login_UsernamePassword
             });
 
     private static async Task<bool> RegisterAccount_UsernamePassword(TestingService service)
@@ -32,8 +35,46 @@ public static class AuthorizationTests
             }
         };
 
-        if (!await requestModel.ExecutePostRequest("authorization", "register"))
+        if (!await requestModel.ExecuteRequest("authorization", "register"))
             return false;
+
+        if (string.IsNullOrWhiteSpace(requestModel.Response?.AccessToken))
+        {
+            Program.Logger.Log(LogLevel.Error, "Registration response missing the access token.");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(requestModel.Response?.RefreshToken))
+        {
+            Program.Logger.Log(LogLevel.Error, "Registration response missing the refresh token.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static async Task<bool> RegisterAccount_Duplicate(TestingService service)
+    {
+        var userID = Guid.NewGuid().ToString();
+        var requestModel = new RegisterRequest()
+        {
+            Email = null,
+            Username = $"TestUser_{userID}",
+            Password = "SimpleReadablePassword",
+            RequestIDs = new()
+            {
+                ["USER_ID"] = userID
+            }
+        };
+
+        if (!await requestModel.ExecuteRequest("authorization", "register"))
+            return false;
+
+        if (await requestModel.ExecuteRequest("authorization", "register") || requestModel.Response?.StatusCode != System.Net.HttpStatusCode.Forbidden)
+        {
+            Program.Logger.Log(LogLevel.Error, "Duplicate user registration didn't fail as expected.");
+            return false;
+        }
 
         return true;
     }
@@ -52,8 +93,62 @@ public static class AuthorizationTests
             }
         };
 
-        if (!await requestModel.ExecutePostRequest("authorization", "register"))
+        if (!await requestModel.ExecuteRequest("authorization", "register"))
             return false;
+
+        if (string.IsNullOrWhiteSpace(requestModel.Response?.AccessToken))
+        {
+            Program.Logger.Log(LogLevel.Error, "Registration response missing the access token.");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(requestModel.Response?.RefreshToken))
+        {
+            Program.Logger.Log(LogLevel.Error, "Registration response missing the refresh token.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static async Task<bool> Login_UsernamePassword(TestingService service)
+    {
+        var userID = Guid.NewGuid().ToString();
+        var username = $"TestUser_{userID}";
+        var password = "SimpleReadablePassword";
+
+        var requestModel = new RegisterRequest()
+        {
+            Email = null,
+            Username = username,
+            Password = password,
+            RequestIDs = new()
+            {
+                ["USER_ID"] = userID
+            }
+        };
+
+        if (!await requestModel.ExecuteRequest("authorization", "register"))
+            return false;
+
+        var loginRequest = new LoginRequest() { };
+        if (!await loginRequest.ExecuteRequest<LoginResponse>("authorization", "login", additionalHeaders: new Dictionary<string, string>() { ["username"] = username, ["password"] = password }, httpMethod: HttpMethodTypes.GET))
+        {
+            Program.Logger.Log(LogLevel.Error, "Login with registered username and password failed.");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(loginRequest.Response?.AccessToken))
+        {
+            Program.Logger.Log(LogLevel.Error, "Registration response missing the access token.");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(loginRequest.Response?.RefreshToken))
+        {
+            Program.Logger.Log(LogLevel.Error, "Registration response missing the refresh token.");
+            return false;
+        }
 
         return true;
     }
