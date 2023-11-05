@@ -6,7 +6,8 @@ using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
-using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -30,50 +31,92 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
             throw new NullReferenceException("Shared private key for encoding/decoding authorizaton tokens not set.");
     }
 
-    public async Task<string?> GetJWT(string email, string password)
+    /// <summary>
+    /// Register a new user to the system.
+    /// Returns the user's security token, which
+    /// can be used in place of their password for
+    /// logging in.
+    /// </summary>
+    public async Task<(HttpStatusCode, string?)> Register(string username, string password, string? email)
     {
-        if (Configuration.Token_Public_Key == null || Configuration.Token_Private_Key == null)
-            return null;
+        try
+        {
+            var request = new CreateAccountRequest() { Username = username, Password = password, Email = email };
+            await request.ExecutePostRequest("account", "create");
 
-        // retrieve stored account data
-        var dataModel = new GetAccountRequest() { Email = email };
+            if (request.Response == null)
+                return (HttpStatusCode.InternalServerError, null);
 
-        HttpRequestMessage daprRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, IDaprService.GetAppByServiceName("account"), $"account/get", dataModel);
-        var daprResponse = await Program.DaprClient.InvokeMethodWithResponseAsync(daprRequest, Program.ShutdownCancellationTokenSource.Token);
-        if (daprResponse == null || !daprResponse.IsSuccessStatusCode)
-            return null;
+            if (request.Response.StatusCode != HttpStatusCode.OK)
+                return (request.Response.StatusCode, null);
 
-        GetAccountResponse? responseData = await daprResponse.Content.ReadFromJsonAsync<GetAccountResponse>();
-        if (responseData == null || responseData.IdentityClaims == null)
-            return null;
+            return (HttpStatusCode.OK, request.Response.SecurityToken);
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client registration.");
+            return (HttpStatusCode.InternalServerError, null);
+        }
+    }
 
-        var secretSalt = responseData.IdentityClaims.Where(t => t.StartsWith("SecretSalt:")).Select(t => t.Remove(0, "SecretSalt:".Length)).FirstOrDefault();
-        var secretHash = responseData.IdentityClaims.Where(t => t.StartsWith("SecretHash:")).Select(t => t.Remove(0, "SecretHash:".Length)).FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(secretSalt) || string.IsNullOrWhiteSpace(secretHash))
-            return null;
+    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> Login(string username, string password)
+    {
+        try
+        {
+            if (Configuration.Token_Public_Key == null || Configuration.Token_Private_Key == null)
+                throw new NullReferenceException("Public and Private key tokens are required configuration for handling client auth.");
 
-        // validate password
-        var hashedPassword = IAccountService.GenerateHashedSecret(password, secretSalt);
-        if (!string.Equals(secretHash, hashedPassword))
-            return null;
+            // retrieve stored account data
+            var request = new GetAccountRequest() { Username = username };
+            await request.ExecutePostRequest("account", "get");
 
-        // create JWT
-        var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
-        jwtBuilder.AddHeader("email", responseData.Email);
-        jwtBuilder.AddHeader("username", responseData.Username);
+            if (request.Response == null)
+                return (HttpStatusCode.NotFound, null);
 
-        jwtBuilder.Id(responseData.ID);
-        jwtBuilder.Issuer("AUTHORIZATION_SERVICE:" + Program.ServiceGUID);
-        jwtBuilder.IssuedAt(DateTime.Now);
-        jwtBuilder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
-        jwtBuilder.MustVerifySignature();
+            if (request.Response.StatusCode != HttpStatusCode.OK)
+                return (request.Response.StatusCode, null);
 
-        if (responseData.RoleClaims != null)
-            foreach (var roleClaim in responseData.RoleClaims)
-                jwtBuilder.AddClaim("role", roleClaim);
+            // if password matches the token, no need to do any hashing
+            if (!string.Equals(request.Response.SecurityToken, password))
+            {
+                // didn't match token- hash and compare
+                if (request.Response.IdentityClaims == null)
+                    return (HttpStatusCode.Forbidden, null);
 
-        var newJWT = jwtBuilder.Encode();
-        return newJWT;
+                var secretSalt = request.Response.IdentityClaims.Where(t => t.StartsWith("SecretSalt:")).Select(t => t.Remove(0, "SecretSalt:".Length)).FirstOrDefault();
+                var secretHash = request.Response.IdentityClaims.Where(t => t.StartsWith("SecretHash:")).Select(t => t.Remove(0, "SecretHash:".Length)).FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(secretSalt) || string.IsNullOrWhiteSpace(secretHash))
+                    return (HttpStatusCode.Forbidden, null);
+
+                var hashedPassword = IAccountService.GenerateHashedSecret(password, secretSalt);
+                if (!string.Equals(secretHash, hashedPassword))
+                    return (HttpStatusCode.Forbidden, null);
+            }
+
+            // create JWT
+            var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
+            jwtBuilder.AddHeader("email", request.Response.Email);
+            jwtBuilder.AddHeader("username", request.Response.Username);
+
+            jwtBuilder.Id(request.Response.ID);
+            jwtBuilder.Issuer("AUTHORIZATION_SERVICE:" + Program.ServiceGUID);
+            jwtBuilder.IssuedAt(DateTime.Now);
+            jwtBuilder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
+            jwtBuilder.MustVerifySignature();
+
+            if (request.Response.RoleClaims != null)
+                foreach (var roleClaim in request.Response.RoleClaims)
+                    jwtBuilder.AddClaim("role", roleClaim);
+
+            var newJWT = jwtBuilder.Encode();
+
+            return (HttpStatusCode.OK, new() { AccessToken = newJWT });
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client login.");
+            return (HttpStatusCode.InternalServerError, null);
+        }
     }
 
     private static JwtBuilder CreateJWTBuilder(string publicKey, string privateKey)

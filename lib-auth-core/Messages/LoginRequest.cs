@@ -4,9 +4,9 @@ using Newtonsoft.Json;
 namespace BeyondImmersion.BannouService.Authorization.Messages;
 
 /// <summary>
-/// The request model for service API calls to `/authorization/token`.
+/// The request model for service API calls to `/authorization/login`.
 /// </summary>
 [JsonObject]
-public class GetTokenRequest : ServiceRequest
+public class LoginRequest : ServiceRequest
 {
 }
