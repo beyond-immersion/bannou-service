@@ -48,3 +48,14 @@ jobs:
           text: 'Unit Tests Failed'
           description: 'The unit tests have failed. Check the Actions log for more details.'
           severity: error
+
+      - name: Notify Cancelled
+        if: cancelled() && env.DISCORD_WEBHOOK != ''
+        uses: rjstone/discord-webhook-notify@v1
+        continue-on-error: true
+        with:
+          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
+          username: ${{ github.actor }}
+          text: 'Unit Tests Cancelled'
+          description: 'The unit tests have been cancelled.'
+          severity: warn
