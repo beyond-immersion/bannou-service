@@ -30,7 +30,8 @@ jobs:
         if: success() && env.DISCORD_WEBHOOK != ''
         uses: rjstone/discord-webhook-notify@v1
         with:
-          webhook_url: ${{ env.DISCORD_WEBHOOK }}
+          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
+          username: ${{ github.actor }}
           title: 'Lint Tests Succeeded'
           description: 'The lint tests have passed successfully.'
           color: '65280' # Green
@@ -39,7 +40,8 @@ jobs:
         if: failure() && env.DISCORD_WEBHOOK != ''
         uses: rjstone/discord-webhook-notify@v1
         with:
-          webhook_url: ${{ env.DISCORD_WEBHOOK }}
+          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
+          username: ${{ github.actor }}
           title: 'Lint Tests Failed'
           description: 'The lint tests have failed. Check the Actions log for more details.'
           color: '16711680' # Red
