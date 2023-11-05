@@ -30,19 +30,21 @@ jobs:
       - name: Notify Success
         if: success() && env.DISCORD_WEBHOOK != ''
         uses: rjstone/discord-webhook-notify@v1
+        continue-on-error: true
         with:
           webhookUrl: ${{ env.DISCORD_WEBHOOK }}
           username: ${{ github.actor }}
-          title: 'Unit Tests Succeeded'
+          text: 'Unit Tests Succeeded'
           description: 'The unit tests have passed successfully.'
           color: '65280' # Green
 
       - name: Notify Failure
         if: failure() && env.DISCORD_WEBHOOK != ''
         uses: rjstone/discord-webhook-notify@v1
+        continue-on-error: true
         with:
           webhookUrl: ${{ env.DISCORD_WEBHOOK }}
           username: ${{ github.actor }}
-          title: 'Unit Tests Failed'
+          text: 'Unit Tests Failed'
           description: 'The unit tests have failed. Check the Actions log for more details.'
           color: '16711680' # Red
