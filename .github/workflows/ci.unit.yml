@@ -33,9 +33,7 @@ jobs:
         continue-on-error: true
         with:
           webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          username: ${{ github.actor }}
-          text: 'Unit Tests Succeeded'
-          description: 'The unit tests have passed successfully.'
+          details: 'The unit tests have passed successfully.'
           severity: info
 
       - name: Notify Failure
@@ -44,9 +42,7 @@ jobs:
         continue-on-error: true
         with:
           webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          username: ${{ github.actor }}
-          text: 'Unit Tests Failed'
-          description: 'The unit tests have failed. Check the Actions log for more details.'
+          details: 'The unit tests have failed. Check the Actions log for more details.'
           severity: error
 
       - name: Notify Cancelled
@@ -55,7 +51,5 @@ jobs:
         continue-on-error: true
         with:
           webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          username: ${{ github.actor }}
-          text: 'Unit Tests Cancelled'
-          description: 'The unit tests have been cancelled.'
+          details: 'The unit tests have been cancelled.'
           severity: warn

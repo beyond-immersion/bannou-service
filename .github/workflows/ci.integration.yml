@@ -52,9 +52,7 @@ jobs:
         continue-on-error: true
         with:
           webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          username: ${{ github.actor }}
-          text: 'Integration Tests Succeeded'
-          description: 'The integration tests have passed successfully.'
+          details: 'The integration tests have passed successfully.'
           severity: info
 
       - name: Notify Failure
@@ -63,9 +61,7 @@ jobs:
         continue-on-error: true
         with:
           webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          username: ${{ github.actor }}
-          text: 'Integration Tests Failed'
-          description: 'The integration tests have failed. Check the Actions log for more details.'
+          details: 'The integration tests have failed. Check the Actions log for more details.'
           severity: error
 
       - name: Notify Cancelled
@@ -74,7 +70,5 @@ jobs:
         continue-on-error: true
         with:
           webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          username: ${{ github.actor }}
-          text: 'Integration Tests Cancelled'
-          description: 'The integration tests have been cancelled.'
+          details: 'The integration tests have been cancelled.'
           severity: warn
