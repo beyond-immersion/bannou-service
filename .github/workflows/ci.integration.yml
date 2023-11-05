@@ -13,6 +13,7 @@ jobs:
     name: Integration Tests
     runs-on: [self-hosted, bannou]
     env:
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       ACCOUNT_DB_USER: ${{ secrets.ACCOUNT_DB_USER }}
       ACCOUNT_DB_PASSWORD: ${{ secrets.ACCOUNT_DB_PASSWORD }}
       AUTH_TOKEN_PUBLIC_KEY: ${{ secrets.AUTH_TOKEN_PUBLIC_KEY }}
@@ -44,3 +45,21 @@ jobs:
             docker container prune -f &&
             docker image prune -f &&
             docker volume prune -f
+
+      - name: Notify Success
+        if: success() && env.DISCORD_WEBHOOK != ''
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+          webhook_url: ${{ env.DISCORD_WEBHOOK }}
+          title: 'Integration Tests Succeeded'
+          description: 'The integration tests have passed successfully.'
+          color: '65280' # Green
+
+      - name: Notify Failure
+        if: failure() && env.DISCORD_WEBHOOK != ''
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+          webhook_url: ${{ env.DISCORD_WEBHOOK }}
+          title: 'Integration Tests Failed'
+          description: 'The integration tests have failed. Check the Actions log for more details.'
+          color: '16711680' # Red
