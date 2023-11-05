@@ -35,11 +35,6 @@ public class AppConfiguration : BaseServiceConfiguration
     public string? Dapr_Secret_Store { get; set; }
 
     /// <summary>
-    /// Whether we're integration testing, or running normally.
-    /// </summary>
-    public bool Integration_Testing { get; set; } = false;
-
-    /// <summary>
     /// Whether services are enabled by default.
     /// </summary>
     public bool Services_Enabled { get; set; } = true;

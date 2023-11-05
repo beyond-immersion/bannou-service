@@ -9,12 +9,9 @@ namespace BeyondImmersion.BannouService.Authorization.Messages;
 [JsonObject]
 public class RegisterResponse : ServiceResponse
 {
-    /// <summary>
-    /// The security token- can be used in place of a raw password
-    /// for logins, until its reset. If 403 is returned from login,
-    /// try the real password instead, or check for a new token to
-    /// use from the portal.
-    /// </summary>
-    [JsonProperty("token")]
-    public string? Token { get; set; }
+    [JsonProperty("access_token")]
+    public string? AccessToken { get; set; }
+
+    [JsonProperty("refresh_token")]
+    public string? RefreshToken { get; set; }
 }

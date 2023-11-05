@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using BeyondImmersion.BannouService.Controllers;
 using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.Logging;
@@ -35,7 +34,7 @@ public class AuthorizationController : BaseDaprController
             if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
                 return BadRequest();
 
-            (System.Net.HttpStatusCode, string?) registerResult = await Service.Register(request.Username, request.Password, request.Email);
+            (System.Net.HttpStatusCode, IAuthorizationService.LoginResult?) registerResult = await Service.Register(request.Username, request.Password, request.Email);
             if (registerResult.Item1 != System.Net.HttpStatusCode.OK)
             {
                 if (registerResult.Item1 == System.Net.HttpStatusCode.InternalServerError)
@@ -44,10 +43,12 @@ public class AuthorizationController : BaseDaprController
                 return Forbid();
             }
 
-            var response = new RegisterResponse()
-            {
-                Token = registerResult.Item2
-            };
+            if (string.IsNullOrWhiteSpace(registerResult.Item2?.AccessToken))
+                return Forbid();
+
+            var response = request.CreateResponse();
+            response.AccessToken = registerResult.Item2.AccessToken;
+            response.RefreshToken = registerResult.Item2.RefreshToken;
             return Ok(response);
         }
         catch (Exception exc)
@@ -60,12 +61,10 @@ public class AuthorizationController : BaseDaprController
     /// <summary>
     /// Returns forbidden if no user found, to avoid leaking to avoid even leaking usernames.
     /// </summary>
+    [HttpGet]
     [HttpPost]
     [DaprRoute("login")]
-    public async Task<IActionResult> Login(
-        [FromHeader(Name = "username")] string username,
-        [FromHeader(Name = "password")] string password,
-        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LoginRequest? request)
+    public async Task<IActionResult> Login([FromHeader(Name = "username")] string username, [FromHeader(Name = "password")] string password)
     {
         try
         {
@@ -81,7 +80,46 @@ public class AuthorizationController : BaseDaprController
                 return Forbid();
             }
 
-            if (loginResult.Item2?.AccessToken == null)
+            if (string.IsNullOrWhiteSpace(loginResult.Item2?.AccessToken))
+                return Forbid();
+
+            var response = new LoginResponse()
+            {
+                AccessToken = loginResult.Item2.AccessToken,
+                RefreshToken = loginResult.Item2.RefreshToken
+            };
+            return Ok(response);
+        }
+        catch (Exception exc)
+        {
+            Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(Login)}] endpoint on [{nameof(AuthorizationController)}].");
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Returns forbidden if no user found, to avoid leaking to avoid even leaking usernames.
+    /// </summary>
+    [HttpGet]
+    [HttpPost]
+    [DaprRoute("login")]
+    public async Task<IActionResult> Login([FromHeader(Name = "token")] string token)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(token))
+                return BadRequest();
+
+            (System.Net.HttpStatusCode, IAuthorizationService.LoginResult?) loginResult = await Service.Login(token);
+            if (loginResult.Item1 != System.Net.HttpStatusCode.OK)
+            {
+                if (loginResult.Item1 == System.Net.HttpStatusCode.InternalServerError)
+                    return StatusCode(500);
+
+                return Forbid();
+            }
+
+            if (string.IsNullOrWhiteSpace(loginResult.Item2?.AccessToken))
                 return Forbid();
 
             var response = new LoginResponse()

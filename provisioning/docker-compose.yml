@@ -13,6 +13,13 @@ services:
       - "logs-volume:/app/logs/"
     depends_on:
       - placement
+      - account-db
+    environment:
+      - ACCOUNT_DATABASE_USER=${ACCOUNT_DB_USER}
+      - ACCOUNT_DATABASE_PASSWORD=${ACCOUNT_DB_PASSWORD}
+      - AUTHORIZATION_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
+      - AUTHORIZATION_TOKEN_PRIVATE_KEY=${AUTH_TOKEN_PRIVATE_KEY}
+      - CONNECT_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
     networks:
       - celestial_network
 
@@ -56,8 +63,26 @@ services:
     environment:
       - "FILEBEAT_INPUTS_PATHS=/app/logs/*"
 
+  account-db:
+    image: mysql:8.1.0
+    networks:
+      - celestial_network
+    environment:
+      - MYSQL_DATABASE=accounts
+      - MYSQL_USER=${ACCOUNT_DB_USER}
+      - MYSQL_PASSWORD=${ACCOUNT_DB_PASSWORD}
+      - MYSQL_RANDOM_ROOT_PASSWORD=true
+    volumes:
+      - account-volume:/var/lib/mysql
+      - ./provisioning/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./provisioning/mysql/run-init/:/docker-entrypoint-initdb.d
+
 networks:
   celestial_network:
+    driver: bridge
+    internal: true
 
 volumes:
   logs-volume:
+  account-volume:
+  

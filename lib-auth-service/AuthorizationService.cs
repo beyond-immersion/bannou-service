@@ -7,6 +7,7 @@ using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -37,7 +38,7 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
     /// can be used in place of their password for
     /// logging in.
     /// </summary>
-    public async Task<(HttpStatusCode, string?)> Register(string username, string password, string? email)
+    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> Register(string username, string password, string? email)
     {
         try
         {
@@ -50,7 +51,15 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
             if (request.Response.StatusCode != HttpStatusCode.OK)
                 return (request.Response.StatusCode, null);
 
-            return (HttpStatusCode.OK, request.Response.SecurityToken);
+            var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var newRefreshToken = CreateRefreshToken(request.Response.SecurityToken);
+
+            if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newRefreshToken))
+                throw new NullReferenceException("JWT or token were not created successfully.");
+
+            // store refresh token in Redis
+
+            return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newRefreshToken });
         }
         catch (Exception exc)
         {
@@ -93,30 +102,96 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
                     return (HttpStatusCode.Forbidden, null);
             }
 
-            // create JWT
-            var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
-            jwtBuilder.AddHeader("email", request.Response.Email);
-            jwtBuilder.AddHeader("username", request.Response.Username);
+            var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var newRefreshToken = CreateRefreshToken(request.Response.SecurityToken);
 
-            jwtBuilder.Id(request.Response.ID);
-            jwtBuilder.Issuer("AUTHORIZATION_SERVICE:" + Program.ServiceGUID);
-            jwtBuilder.IssuedAt(DateTime.Now);
-            jwtBuilder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
-            jwtBuilder.MustVerifySignature();
+            if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newRefreshToken))
+                throw new NullReferenceException("JWT or token were not created successfully.");
 
-            if (request.Response.RoleClaims != null)
-                foreach (var roleClaim in request.Response.RoleClaims)
-                    jwtBuilder.AddClaim("role", roleClaim);
+            // store refresh token in Redis
 
-            var newJWT = jwtBuilder.Encode();
-
-            return (HttpStatusCode.OK, new() { AccessToken = newJWT });
+            return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newRefreshToken });
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client login.");
             return (HttpStatusCode.InternalServerError, null);
         }
+    }
+
+    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> Login(string token)
+    {
+        await Task.CompletedTask;
+
+        try
+        {
+            // get cached account data from Redis, by token
+            var accountData = new JObject();
+            if (accountData == null)
+                return (HttpStatusCode.Forbidden, null);
+
+            var id = (int?)accountData["id"];
+            var username = (string?)accountData["username"];
+            var email = (string?)accountData["email"];
+            var roleClaimsStr = (string?)accountData["role_claims"];
+            var roleClaims = !string.IsNullOrWhiteSpace(roleClaimsStr) ? JArray.Parse(roleClaimsStr).ToObject<HashSet<string>>() : null;
+
+            var separatorIndex = token.IndexOf('_');
+            if (separatorIndex == -1)
+                return (HttpStatusCode.Forbidden, null);
+
+            var newJWT = CreateJWT(id, username, email, roleClaims);
+            var securityToken = token[..separatorIndex];
+            var newRefreshToken = CreateRefreshToken(securityToken);
+
+            if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newRefreshToken))
+                throw new NullReferenceException("JWT or token were not created successfully.");
+
+            // store fresh refresh token in Redis
+
+            return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newRefreshToken });
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client login.");
+            return (HttpStatusCode.InternalServerError, null);
+        }
+    }
+
+    private static string? CreateRefreshToken(string? securityToken)
+    {
+        if (string.IsNullOrWhiteSpace(securityToken))
+            return null;
+
+        return $"{securityToken}_{Guid.NewGuid()}";
+    }
+
+    private string? CreateJWT(int? ID, string? username, string? email, HashSet<string>? roleClaims)
+    {
+        if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key) || string.IsNullOrWhiteSpace(Configuration.Token_Private_Key))
+            return null;
+
+        var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
+        if (!string.IsNullOrWhiteSpace(email))
+           jwtBuilder.AddHeader("email", email);
+
+        if (!string.IsNullOrWhiteSpace(username))
+           jwtBuilder.AddHeader("username", username);
+
+        if (ID != null)
+            jwtBuilder.Id(ID.Value);
+
+        jwtBuilder.Issuer("AUTHORIZATION_SERVICE:" + Program.ServiceGUID);
+        jwtBuilder.IssuedAt(DateTime.Now);
+        jwtBuilder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
+        jwtBuilder.MustVerifySignature();
+
+        if (roleClaims != null)
+            foreach (var roleClaim in roleClaims)
+                jwtBuilder.AddClaim("role", roleClaim);
+
+        var newJWT = jwtBuilder.Encode();
+        return newJWT;
     }
 
     private static JwtBuilder CreateJWTBuilder(string publicKey, string privateKey)
