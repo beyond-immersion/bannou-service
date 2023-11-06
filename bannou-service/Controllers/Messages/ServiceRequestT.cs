@@ -13,7 +13,7 @@ public class ServiceRequest<T> : ServiceRequest
 
     public new virtual async Task<bool> ExecuteRequest(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
     {
-        var result = await ExecuteRequest_INTERNAL<T>(service: service, method: method, additionalHeaders: additionalHeaders, httpMethod: httpMethod);
+        var result = await ExecuteRequest_INTERNAL<T>(service, method, additionalHeaders, httpMethod);
 
         if (base.Response != null)
         {
