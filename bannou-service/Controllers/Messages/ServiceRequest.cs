@@ -28,7 +28,7 @@ public class ServiceRequest : ServiceMessage
     public ServiceResponse? Response { get; protected set; }
 
     public virtual async Task<bool> ExecuteRequest(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
-        => await ExecuteRequest<ServiceResponse>(service: service, method: method, additionalHeaders: additionalHeaders, httpMethod: httpMethod, data: this);
+        => await ExecuteRequest_INTERNAL<ServiceResponse>(service: service, method: method, additionalHeaders: additionalHeaders, httpMethod: httpMethod);
 
     public virtual async Task<bool> ExecuteRequest<T>(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
         where T : ServiceResponse, new()
@@ -43,19 +43,13 @@ public class ServiceRequest : ServiceMessage
             return await derivedRequest.ExecuteRequest(service: service, method: method, additionalHeaders: additionalHeaders, httpMethod: httpMethod);
         }
 
-        return await ExecuteRequest<T>(service:service, method: method, additionalHeaders: additionalHeaders, httpMethod: httpMethod, data: this);
+        return await ExecuteRequest_INTERNAL<T>(service: service, method: method, additionalHeaders: additionalHeaders, httpMethod: httpMethod);
     }
 
-    public virtual async Task<bool> ExecuteGetRequest(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null)
-    => await ExecuteRequest(service: service, method: method, additionalHeaders: additionalHeaders, httpMethod: HttpMethodTypes.GET, data: this);
+    protected async Task<bool> ExecuteRequest_INTERNAL(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
+        => await ExecuteRequest_INTERNAL<ServiceResponse>(service: service, method: method, httpMethod: httpMethod, additionalHeaders: additionalHeaders);
 
-    public virtual async Task<bool> ExecutePostRequest(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null)
-        => await ExecuteRequest(service: service, method: method, additionalHeaders: additionalHeaders, httpMethod: HttpMethodTypes.POST, data: this);
-
-    public static async Task<bool> ExecuteRequest(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST, ServiceRequest? data = null)
-        => await ExecuteRequest<ServiceResponse>(service: service, method: method, httpMethod: httpMethod, additionalHeaders: additionalHeaders, data: data);
-
-    public static async Task<bool> ExecuteRequest<T>(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST, ServiceRequest? data = null)
+    protected async Task<bool> ExecuteRequest_INTERNAL<T>(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
         where T : ServiceResponse, new()
     {
         try
@@ -68,9 +62,8 @@ public class ServiceRequest : ServiceMessage
             else
                 requestUrl = $"{method}";
 
-            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(httpMethod.ToObject(), coordinatorService, requestUrl, data);
-            if (data != null)
-                requestMsg.AddPropertyHeaders(data);
+            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(httpMethod.ToObject(), coordinatorService, requestUrl, this);
+            requestMsg.AddPropertyHeaders(this);
 
             if (additionalHeaders != null)
                 foreach (var headerKVP in additionalHeaders)
@@ -79,13 +72,10 @@ public class ServiceRequest : ServiceMessage
             var responseMsg = await HttpClient.SendAsync(requestMsg, Program.ShutdownCancellationTokenSource.Token);
             if (responseMsg.IsSuccessStatusCode)
             {
-                if (data == null)
-                    return true;
-
                 var responseContent = await responseMsg.Content.ReadAsStringAsync();
                 if (typeof(T) == typeof(ServiceResponse))
                 {
-                    data.Response = new T()
+                    Response = new T()
                     {
                         StatusCode = System.Net.HttpStatusCode.OK,
                         Message = "OK",
@@ -101,70 +91,55 @@ public class ServiceRequest : ServiceMessage
                 responseData.StatusCode = responseMsg.StatusCode;
                 responseData.Message = responseMsg.ReasonPhrase ?? responseMsg.StatusCode.ToString();
                 responseData.Content = responseContent;
-                data.Response = responseData;
+                Response = responseData;
 
                 return true;
             }
             else
             {
                 Program.Logger.Log(LogLevel.Error, $"Failed to invoke API method [{method}] on service [{service}]. HTTP Status: {responseMsg.StatusCode}");
-                if (data != null)
+                Response = new T()
                 {
-                    data.Response = new T()
-                    {
-                        StatusCode = responseMsg.StatusCode,
-                        Message = responseMsg.ReasonPhrase ?? responseMsg.StatusCode.ToString()
-                    };
-                }
+                    StatusCode = responseMsg.StatusCode,
+                    Message = responseMsg.ReasonPhrase ?? responseMsg.StatusCode.ToString()
+                };
             }
         }
         catch (HttpRequestException exc)
         {
             var statusCode = exc.StatusCode ?? System.Net.HttpStatusCode.InternalServerError;
-            if (data != null)
+            Response = new T()
             {
-                data.Response = new T()
-                {
-                    StatusCode = statusCode,
-                    Message = exc.Message ?? statusCode.ToString()
-                };
-            }
+                StatusCode = statusCode,
+                Message = exc.Message ?? statusCode.ToString()
+            };
         }
         catch (UriFormatException)
         {
             Program.Logger.Log(LogLevel.Error, $"Failed to invoke API method [{method}] on service [{service}]: Bad URI format.");
-            if (data != null)
+            Response = new T()
             {
-                data.Response = new T()
-                {
-                    StatusCode = System.Net.HttpStatusCode.BadRequest,
-                    Message = "Bad request"
-                };
-            }
+                StatusCode = System.Net.HttpStatusCode.BadRequest,
+                Message = "Bad request"
+            };
         }
         catch (InvalidOperationException)
         {
             Program.Logger.Log(LogLevel.Error, $"Failed to invoke API method [{method}] on service [{service}]: Invalid operation.");
-            if (data != null)
+            Response = new T()
             {
-                data.Response = new T()
-                {
-                    StatusCode = System.Net.HttpStatusCode.BadRequest,
-                    Message = "Bad request"
-                };
-            }
+                StatusCode = System.Net.HttpStatusCode.BadRequest,
+                Message = "Bad request"
+            };
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"A failure occurred executing API method [{method}] on service [{service}].");
-            if (data != null)
+            Response = new T()
             {
-                data.Response = new T()
-                {
-                    StatusCode = System.Net.HttpStatusCode.InternalServerError,
-                    Message = "Internal service error"
-                };
-            }
+                StatusCode = System.Net.HttpStatusCode.InternalServerError,
+                Message = "Internal service error"
+            };
         }
 
         return false;
