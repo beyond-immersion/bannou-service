@@ -8,6 +8,7 @@ using JWT.Builder;
 using JWT.Serializers;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using System.Data;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -47,7 +48,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             var request = new CreateAccountRequest() { Username = username, Password = password, Email = email };
             await request.ExecuteRequest("account", "create");
 
-            if (request.Response == null)
+            if (string.IsNullOrWhiteSpace(request.Response?.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
                 throw new NullReferenceException();
 
             if (request.Response.StatusCode != HttpStatusCode.OK)
@@ -56,16 +57,16 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
                 return (request.Response.StatusCode, null);
             }
 
-            var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
-            var newToken = CreateRefreshToken(request.Response.SecurityToken);
+            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var refreshToken = CreateRefreshToken(request.Response.SecurityToken);
 
-            if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newToken))
+            if (string.IsNullOrWhiteSpace(jwt) || string.IsNullOrWhiteSpace(refreshToken))
                 throw new NullReferenceException();
 
-            if (!await StoreTokensInDatabase(username, newToken))
+            if (!await StoreTokensInDatabase(request.Response.Username, request.Response.SecurityToken, refreshToken))
                 return (HttpStatusCode.InternalServerError, null);
 
-            return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newToken });
+            return (HttpStatusCode.OK, new() { AccessToken = jwt, RefreshToken = refreshToken });
         }
         catch (Exception exc)
         {
@@ -89,11 +90,8 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             var request = new GetAccountRequest() { IncludeClaims = true, Username = username };
             await request.ExecuteRequest("account", "get");
 
-            if (request.Response == null)
-            {
-                Program.Logger.Log(LogLevel.Warning, "Login failed- null response to fetching user account.");
-                return (HttpStatusCode.NotFound, null);
-            }
+            if (string.IsNullOrWhiteSpace(request.Response?.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
+                throw new NullReferenceException();
 
             if (request.Response.StatusCode != HttpStatusCode.OK)
             {
@@ -125,16 +123,16 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
                 return (HttpStatusCode.Forbidden, null);
             }
 
-            var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
-            var newToken = CreateRefreshToken(request.Response.SecurityToken);
+            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var refreshToken = CreateRefreshToken(request.Response.SecurityToken);
 
-            if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newToken))
+            if (string.IsNullOrWhiteSpace(jwt) || string.IsNullOrWhiteSpace(refreshToken))
                 throw new NullReferenceException();
 
-            if (!await StoreTokensInDatabase(username, newToken))
+            if (!await StoreTokensInDatabase(request.Response.Username, request.Response.SecurityToken, refreshToken))
                 return (HttpStatusCode.InternalServerError, null);
 
-            return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newToken });
+            return (HttpStatusCode.OK, new() { AccessToken = jwt, RefreshToken = refreshToken });
         }
         catch (Exception exc)
         {
@@ -147,14 +145,14 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
     /// Client login using a refresh token.
     /// </summary>
     /// <exception cref="NullReferenceException"></exception>
-    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithToken(string token)
+    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithToken(string refreshToken)
     {
         try
         {
             if (Configuration.Token_Public_Key == null || Configuration.Token_Private_Key == null)
                 throw new NullReferenceException();
 
-            var username = await GetUsernameFromRefreshToken(token);
+            var username = await GetUsernameFromRefreshToken(refreshToken);
             if (string.IsNullOrWhiteSpace(username))
             {
                 Program.Logger.Log(LogLevel.Warning, "Login failed- client token didn't match stored token.");
@@ -164,11 +162,8 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             var request = new GetAccountRequest() { IncludeClaims = true, Username = username };
             await request.ExecuteRequest("account", "get");
 
-            if (request.Response == null)
-            {
-                Program.Logger.Log(LogLevel.Warning, "Login failed- null response to fetching user account.");
-                return (HttpStatusCode.NotFound, null);
-            }
+            if (string.IsNullOrWhiteSpace(request.Response?.Username) || string.IsNullOrWhiteSpace(request.Response?.SecurityToken))
+                throw new NullReferenceException();
 
             if (request.Response.StatusCode != HttpStatusCode.OK)
             {
@@ -176,16 +171,16 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
                 return (request.Response.StatusCode, null);
             }
 
-            var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
-            var newToken = CreateRefreshToken(request.Response.SecurityToken);
+            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var newRefreshToken = CreateRefreshToken(request.Response.SecurityToken);
 
-            if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newToken))
+            if (string.IsNullOrWhiteSpace(jwt) || string.IsNullOrWhiteSpace(newRefreshToken))
                 throw new NullReferenceException();
 
-            if (!await StoreTokensInDatabase(username, newToken))
+            if (!await StoreTokensInDatabase(request.Response.Username, request.Response.SecurityToken, newRefreshToken))
                 return (HttpStatusCode.InternalServerError, null);
 
-            return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newToken });
+            return (HttpStatusCode.OK, new() { AccessToken = jwt, RefreshToken = newRefreshToken });
         }
         catch (Exception exc)
         {
@@ -198,21 +193,91 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
     /// Stores the refresh token in Redis.
     /// </summary>
     /// <exception cref="NullReferenceException"></exception>
-    private async Task<bool> StoreTokensInDatabase(string username, string refreshToken)
+    private async Task<bool> StoreTokensInDatabase(string username, string securityToken, string refreshToken)
     {
         if (_redisConnection == null)
             throw new NullReferenceException();
 
         try
         {
-            var setTokenTransaction = _redisConnection.GetDatabase().CreateTransaction();
-            _ = setTokenTransaction.StringSetAsync($"USER_TOKEN_{username}", refreshToken, expiry: TimeSpan.FromHours(12), when: When.Always, flags: CommandFlags.FireAndForget);
-            _ = setTokenTransaction.StringSetAsync($"REFRESH_TOKEN_{refreshToken}", username, expiry: TimeSpan.FromHours(12), when: When.Always, flags: CommandFlags.FireAndForget);
-            return await setTokenTransaction.ExecuteAsync();
+            var dbTransaction = _redisConnection.GetDatabase().CreateTransaction();
+            _ = dbTransaction.StringSetAsync($"REFRESH_TOKEN_FROM_USERNAME__{username}", refreshToken, expiry: TimeSpan.FromHours(12), when: When.Always);
+            _ = dbTransaction.StringSetAsync($"USERNAME_FROM_REFRESH_TOKEN__{refreshToken}", username, expiry: TimeSpan.FromHours(12), when: When.Always);
+            _ = dbTransaction.StringSetAsync($"REFRESH_TOKEN_FROM_SECURITY_TOKEN__{securityToken}", refreshToken, expiry: TimeSpan.FromHours(12), when: When.Always);
+            return await dbTransaction.ExecuteAsync();
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, "An error occured while setting refresh tokens to redis.");
+            return false;
+        }
+    }
+
+    private readonly string ClearBySecurityToken = @"
+local securityToken = KEYS[1]
+local refreshToken = redis.call('GET', 'REFRESH_TOKEN_FROM_SECURITY_TOKEN__' .. securityToken)
+local username = nil
+
+if refreshToken then
+    username = redis.call('GET', 'USERNAME_FROM_REFRESH_TOKEN__' .. refreshToken)
+end
+
+if username then
+    redis.call('DEL', 'REFRESH_TOKEN_FROM_USERNAME__' .. username)
+end
+
+if refreshToken then
+    redis.call('DEL', 'USERNAME_FROM_REFRESH_TOKEN__' .. refreshToken)
+end
+
+if securityToken then
+    redis.call('DEL', 'REFRESH_TOKEN_FROM_SECURITY_TOKEN__' .. securityToken)
+end
+
+return 1
+";
+
+    /// <summary>
+    /// Stores the stored security and refresh tokens in Redis.
+    /// </summary>
+    /// <exception cref="NullReferenceException"></exception>
+    private async Task<bool> ClearTokensFromDatabase(string? username, string? securityToken, string? refreshToken)
+    {
+        if (_redisConnection == null)
+            throw new NullReferenceException();
+
+        if (string.IsNullOrWhiteSpace(username) && string.IsNullOrWhiteSpace(securityToken) && string.IsNullOrWhiteSpace(refreshToken))
+            return false;
+
+        try
+        {
+            var db = _redisConnection.GetDatabase();
+
+            // if all we have is the security token, clear all from just that-
+            // easier to do in Lua, instead of requiring 3 separate requests
+            if (!string.IsNullOrWhiteSpace(securityToken) && (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(refreshToken)))
+                return (bool)await db.ScriptEvaluateAsync(ClearBySecurityToken, new RedisKey[] { securityToken });
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                refreshToken = await db.StringGetAsync($"REFRESH_TOKEN_FROM_USERNAME__{username}");
+            else if (string.IsNullOrWhiteSpace(username))
+                username = await db.StringGetAsync($"USERNAME_FROM_REFRESH_TOKEN__{refreshToken}");
+
+            var dbTransaction = db.CreateTransaction();
+            if (!string.IsNullOrWhiteSpace(username))
+                _ = dbTransaction.KeyDeleteAsync($"REFRESH_TOKEN_FROM_USERNAME__{username}");
+
+            if (!string.IsNullOrWhiteSpace(refreshToken))
+                _ = dbTransaction.KeyDeleteAsync($"USERNAME_FROM_REFRESH_TOKEN__{refreshToken}");
+
+            if (!string.IsNullOrWhiteSpace(securityToken))
+                _ = dbTransaction.KeyDeleteAsync($"REFRESH_TOKEN_FROM_SECURITY_TOKEN__{securityToken}");
+
+            return await dbTransaction.ExecuteAsync();
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An error occured while clearing tokens from redis.");
             return false;
         }
     }
@@ -228,7 +293,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
 
         try
         {
-            return await _redisConnection.GetDatabase().StringGetAsync($"REFRESH_TOKEN_{refreshToken}");
+            return await _redisConnection.GetDatabase().StringGetAsync($"USERNAME_FROM_REFRESH_TOKEN__{refreshToken}");
         }
         catch (Exception exc)
         {
