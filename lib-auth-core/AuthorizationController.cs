@@ -65,14 +65,14 @@ public class AuthorizationController : BaseDaprController
     [HttpGet]
     [HttpPost]
     [DaprRoute("login/credentials")]
-    public async Task<IActionResult> Login([FromHeader(Name = "username")] string username, [FromHeader(Name = "password")] string password)
+    public async Task<IActionResult> LoginWithCredentials([FromHeader(Name = "username")] string username, [FromHeader(Name = "password")] string? password)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return StatusCodes.BadRequest.ToActionResult();
 
-            (HttpStatusCode, IAuthorizationService.LoginResult?) loginResult = await Service.Login(username, password);
+            (HttpStatusCode, IAuthorizationService.LoginResult?) loginResult = await Service.LoginWithCredentials(username, password);
             if (loginResult.Item1 != HttpStatusCode.OK)
             {
                 if (loginResult.Item1 == HttpStatusCode.InternalServerError)
@@ -94,7 +94,7 @@ public class AuthorizationController : BaseDaprController
         }
         catch (Exception exc)
         {
-            Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(Login)}] endpoint on [{nameof(AuthorizationController)}].");
+            Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(LoginWithToken)}] endpoint on [{nameof(AuthorizationController)}].");
             return StatusCodes.ServerError.ToActionResult();
         }
     }
@@ -105,14 +105,14 @@ public class AuthorizationController : BaseDaprController
     [HttpGet]
     [HttpPost]
     [DaprRoute("login/token")]
-    public async Task<IActionResult> Login([FromHeader(Name = "token")] string token)
+    public async Task<IActionResult> LoginWithToken([FromHeader(Name = "username")] string username, [FromHeader(Name = "token")] string? token)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(token))
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(token))
                 return StatusCodes.BadRequest.ToActionResult();
 
-            (HttpStatusCode, IAuthorizationService.LoginResult?) loginResult = await Service.Login(token);
+            (HttpStatusCode, IAuthorizationService.LoginResult?) loginResult = await Service.LoginWithToken(username, token);
             if (loginResult.Item1 != HttpStatusCode.OK)
             {
                 if (loginResult.Item1 == HttpStatusCode.InternalServerError)
@@ -129,11 +129,12 @@ public class AuthorizationController : BaseDaprController
                 AccessToken = loginResult.Item2.AccessToken,
                 RefreshToken = loginResult.Item2.RefreshToken
             };
+
             return StatusCodes.Ok.ToActionResult(response);
         }
         catch (Exception exc)
         {
-            Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(Login)}] endpoint on [{nameof(AuthorizationController)}].");
+            Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(LoginWithToken)}] endpoint on [{nameof(AuthorizationController)}].");
             return StatusCodes.ServerError.ToActionResult();
         }
     }

@@ -7,9 +7,9 @@ namespace BeyondImmersion.BannouService.Services;
 /// Service handler responsible for testing service APIs.
 /// </summary>
 [DaprService("testing")]
-public class TestingService : DaprService<TestingServiceConfiguration>
+public sealed class TestingService : DaprService<TestingServiceConfiguration>
 {
-    private IDictionary<string, IDictionary<string, Func<TestingService, Task<bool>>>> ServiceTests { get; set; }
+    private Dictionary<string, Dictionary<string, Func<TestingService, Task<bool>>>> ServiceTests { get; set; }
 
     public string? LastTestID { get; private set; }
     public string? LastTestService { get; private set; }
@@ -48,7 +48,7 @@ public class TestingService : DaprService<TestingServiceConfiguration>
 
     public TestingService()
     {
-        ServiceTests = new Dictionary<string, IDictionary<string, Func<TestingService, Task<bool>>>>();
+        ServiceTests = new Dictionary<string, Dictionary<string, Func<TestingService, Task<bool>>>>();
         foreach ((Type, MethodInfo, ServiceTestAttribute) methodInfo in IServiceAttribute.GetMethodsWithAttribute<ServiceTestAttribute>())
         {
             var testName = methodInfo.Item3?.TestName?.ToLower();

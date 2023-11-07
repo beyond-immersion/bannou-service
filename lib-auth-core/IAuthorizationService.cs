@@ -20,14 +20,14 @@ public interface IAuthorizationService : IDaprService
     Task<(HttpStatusCode, LoginResult?)> Register(string username, string password, string? email);
 
     /// <summary>
-    /// Login to the system using a username/password or username/security token combination.
+    /// Login to the system using a username/password.
     /// Returns at least an access token (JWT) on success, and potentially a refresh token.
     /// </summary>
-    Task<(HttpStatusCode, LoginResult?)> Login(string username, string password);
+    Task<(HttpStatusCode, LoginResult?)> LoginWithCredentials(string username, string password);
 
     /// <summary>
     /// Login to the system using a refresh token.
     /// Returns at least an access token (JWT) on success, and potentially another refresh token.
     /// </summary>
-    Task<(HttpStatusCode, LoginResult?)> Login(string token);
+    Task<(HttpStatusCode, LoginResult?)> LoginWithToken(string username, string token);
 }

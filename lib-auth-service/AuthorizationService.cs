@@ -7,7 +7,6 @@ using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -20,6 +19,8 @@ namespace BeyondImmersion.BannouService.Authorization;
 [DaprService("authorization", typeof(IAuthorizationService))]
 public class AuthorizationService : DaprService<AuthorizationServiceConfiguration>, IAuthorizationService
 {
+    private Dictionary<string, string> LocalRefreshTokens = new();
+
     async Task IDaprService.OnStart(CancellationToken cancellationToken)
     {
         // override sensitive configuration Dapr secret store
@@ -58,6 +59,7 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
                 throw new NullReferenceException("JWT or token were not created successfully.");
 
             // store refresh token in Redis
+            LocalRefreshTokens[username] = newRefreshToken;
 
             return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newRefreshToken });
         }
@@ -68,7 +70,7 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
         }
     }
 
-    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> Login(string username, string password)
+    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithCredentials(string username, string password)
     {
         try
         {
@@ -85,22 +87,21 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
             if (request.Response.StatusCode != HttpStatusCode.OK)
                 return (request.Response.StatusCode, null);
 
-            // if password matches the token, no need to do any hashing
-            if (!string.Equals(request.Response.SecurityToken, password))
-            {
-                // didn't match token- hash and compare
-                if (request.Response.IdentityClaims == null)
-                    return (HttpStatusCode.Forbidden, null);
+            // didn't match token- hash and compare
+            if (request.Response.IdentityClaims == null)
+                return (HttpStatusCode.Forbidden, null);
 
-                var secretSalt = request.Response.IdentityClaims.Where(t => t.StartsWith("SecretSalt:")).Select(t => t.Remove(0, "SecretSalt:".Length)).FirstOrDefault();
-                var secretHash = request.Response.IdentityClaims.Where(t => t.StartsWith("SecretHash:")).Select(t => t.Remove(0, "SecretHash:".Length)).FirstOrDefault();
-                if (string.IsNullOrWhiteSpace(secretSalt) || string.IsNullOrWhiteSpace(secretHash))
-                    return (HttpStatusCode.Forbidden, null);
+            var secretSalt = request.Response.IdentityClaims.Where(t => t.StartsWith("SecretSalt:")).FirstOrDefault();
+            var secretHash = request.Response.IdentityClaims.Where(t => t.StartsWith("SecretHash:")).FirstOrDefault();
+            secretSalt = secretSalt?["SecretSalt:".Length..];
+            secretHash = secretHash?["SecretHash:".Length..];
 
-                var hashedPassword = IAccountService.GenerateHashedSecret(password, secretSalt);
-                if (!string.Equals(secretHash, hashedPassword))
-                    return (HttpStatusCode.Forbidden, null);
-            }
+            if (string.IsNullOrWhiteSpace(secretSalt) || string.IsNullOrWhiteSpace(secretHash))
+                return (HttpStatusCode.Forbidden, null);
+
+            var hashedPassword = IAccountService.GenerateHashedSecret(password, secretSalt);
+            if (!string.Equals(secretHash, hashedPassword))
+                return (HttpStatusCode.Forbidden, null);
 
             var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
             var newRefreshToken = CreateRefreshToken(request.Response.SecurityToken);
@@ -109,6 +110,7 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
                 throw new NullReferenceException("JWT or token were not created successfully.");
 
             // store refresh token in Redis
+            LocalRefreshTokens[username] = newRefreshToken;
 
             return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newRefreshToken });
         }
@@ -119,37 +121,37 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
         }
     }
 
-    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> Login(string token)
+    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithToken(string username, string token)
     {
-        await Task.CompletedTask;
-
         try
         {
-            // get cached account data from Redis, by token
-            var accountData = new JObject();
-            if (accountData == null)
+            if (Configuration.Token_Public_Key == null || Configuration.Token_Private_Key == null)
+                throw new NullReferenceException("Public and Private key tokens are required configuration for handling client auth.");
+
+            // retrieve stored account data
+            var request = new GetAccountRequest() { Username = username };
+            await request.ExecuteRequest("account", "get");
+
+            if (request.Response == null)
+                return (HttpStatusCode.NotFound, null);
+
+            if (request.Response.StatusCode != HttpStatusCode.OK)
+                return (request.Response.StatusCode, null);
+
+            // if password matches the refresh token, no need to do any hashing
+            if (!LocalRefreshTokens.TryGetValue(username, out var storedToken) || !string.Equals(storedToken, token))
                 return (HttpStatusCode.Forbidden, null);
 
-            var id = (int?)accountData["id"];
-            var username = (string?)accountData["username"];
-            var email = (string?)accountData["email"];
-            var roleClaimsStr = (string?)accountData["role_claims"];
-            var roleClaims = !string.IsNullOrWhiteSpace(roleClaimsStr) ? JArray.Parse(roleClaimsStr).ToObject<HashSet<string>>() : null;
+            var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var newToken = CreateRefreshToken(request.Response.SecurityToken);
 
-            var separatorIndex = token.IndexOf('_');
-            if (separatorIndex == -1)
-                return (HttpStatusCode.Forbidden, null);
+            if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newToken))
+                throw new NullReferenceException("JWT or refresh token were not created successfully.");
 
-            var newJWT = CreateJWT(id, username, email, roleClaims);
-            var securityToken = token[..separatorIndex];
-            var newRefreshToken = CreateRefreshToken(securityToken);
+            // store refresh token in Redis
+            LocalRefreshTokens[username] = newToken;
 
-            if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newRefreshToken))
-                throw new NullReferenceException("JWT or token were not created successfully.");
-
-            // store fresh refresh token in Redis
-
-            return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newRefreshToken });
+            return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newToken });
         }
         catch (Exception exc)
         {
