@@ -5,6 +5,7 @@ using System.Net.Mime;
 using System.Net.WebSockets;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Connect.Messages;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -23,19 +24,23 @@ public sealed class ConnectController : BaseDaprController
         Service = service;
     }
 
-    [DaprRoute("")]
+    [DaprRoute("connect")]
     public async Task<IActionResult> Post(
-        [FromHeader(Name = "token")] string? authorizationToken,
+        [FromHeader(Name = "token")] string? accessToken,
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ConnectRequest? request)
     {
         await Task.CompletedTask;
 
-        if (string.IsNullOrWhiteSpace(authorizationToken))
+        Program.Logger.Log(LogLevel.Warning, "Connection request received from client.");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
             return new BadRequestResult();
 
         // use service handler to obtain JWT
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
+            Program.Logger.Log(LogLevel.Warning, "Websocket connection request received from client.");
+
             //using var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
             //await EchoMessage(websocket);
         }
@@ -44,7 +49,8 @@ public sealed class ConnectController : BaseDaprController
         {
 
         };
-        return new OkObjectResult(result);
+
+        return StatusCodes.Ok.ToActionResult(result);
     }
 
     private static async Task EchoMessage(WebSocket webSocket)
