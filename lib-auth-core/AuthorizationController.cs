@@ -40,11 +40,11 @@ public class AuthorizationController : BaseDaprController
                 if (registerResult.Item1 == System.Net.HttpStatusCode.InternalServerError)
                     return StatusCode(500);
 
-                return Forbid();
+                return new ForbidResult();
             }
 
             if (string.IsNullOrWhiteSpace(registerResult.Item2?.AccessToken))
-                return Forbid();
+                return new ForbidResult();
 
             var response = request.CreateResponse();
             response.AccessToken = registerResult.Item2.AccessToken;
@@ -77,11 +77,11 @@ public class AuthorizationController : BaseDaprController
                 if (loginResult.Item1 == System.Net.HttpStatusCode.InternalServerError)
                     return StatusCode(500);
 
-                return Forbid();
+                return new ForbidResult();
             }
 
             if (string.IsNullOrWhiteSpace(loginResult.Item2?.AccessToken))
-                return Forbid();
+                return new ForbidResult();
 
             var response = new LoginResponse()
             {
@@ -116,11 +116,11 @@ public class AuthorizationController : BaseDaprController
                 if (loginResult.Item1 == System.Net.HttpStatusCode.InternalServerError)
                     return StatusCode(500);
 
-                return Forbid();
+                return new ForbidResult();
             }
 
             if (string.IsNullOrWhiteSpace(loginResult.Item2?.AccessToken))
-                return Forbid();
+                return new ForbidResult();
 
             var response = new LoginResponse()
             {

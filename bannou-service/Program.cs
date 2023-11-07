@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Controllers.Filters;
 using BeyondImmersion.BannouService.Logging;
 using Dapr.Client;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System.Reflection;
