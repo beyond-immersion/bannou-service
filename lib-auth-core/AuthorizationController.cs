@@ -105,14 +105,14 @@ public class AuthorizationController : BaseDaprController
     [HttpGet]
     [HttpPost]
     [DaprRoute("login/token")]
-    public async Task<IActionResult> LoginWithToken([FromHeader(Name = "username")] string username, [FromHeader(Name = "token")] string? token)
+    public async Task<IActionResult> LoginWithToken([FromHeader(Name = "token")] string? token)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(token))
+            if (string.IsNullOrWhiteSpace(token))
                 return StatusCodes.BadRequest.ToActionResult();
 
-            (HttpStatusCode, IAuthorizationService.LoginResult?) loginResult = await Service.LoginWithToken(username, token);
+            (HttpStatusCode, IAuthorizationService.LoginResult?) loginResult = await Service.LoginWithToken(token);
             if (loginResult.Item1 != HttpStatusCode.OK)
             {
                 if (loginResult.Item1 == HttpStatusCode.InternalServerError)

@@ -7,6 +7,7 @@ using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -17,20 +18,20 @@ namespace BeyondImmersion.BannouService.Authorization;
 /// Service component responsible for authorization handling.
 /// </summary>
 [DaprService("authorization", typeof(IAuthorizationService))]
-public class AuthorizationService : DaprService<AuthorizationServiceConfiguration>, IAuthorizationService
+public sealed class AuthorizationService : DaprService<AuthorizationServiceConfiguration>, IAuthorizationService
 {
-    private Dictionary<string, string> LocalRefreshTokens = new();
+    private IConnectionMultiplexer? _redisConnection;
 
     async Task IDaprService.OnStart(CancellationToken cancellationToken)
     {
-        // override sensitive configuration Dapr secret store
+        if (Configuration.Redis_Connection_String == null)
+            throw new NullReferenceException();
+
         await TryLoadFromDaprSecrets();
 
-        if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key))
-            throw new NullReferenceException("Shared public key for encoding/decoding authorizaton tokens not set.");
-
-        if (string.IsNullOrWhiteSpace(Configuration.Token_Private_Key))
-            throw new NullReferenceException("Shared private key for encoding/decoding authorizaton tokens not set.");
+        _redisConnection = await ConnectionMultiplexer.ConnectAsync(Configuration.Redis_Connection_String);
+        if (!_redisConnection.IsConnected)
+            throw new RedisConnectionException(ConnectionFailureType.UnableToConnect, "Could not connect to Redis.");
     }
 
     /// <summary>
@@ -47,7 +48,7 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
             await request.ExecuteRequest("account", "create");
 
             if (request.Response == null)
-                throw new NullReferenceException("Null response to account create endpoint.");
+                throw new NullReferenceException();
 
             if (request.Response.StatusCode != HttpStatusCode.OK)
             {
@@ -56,15 +57,15 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
             }
 
             var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
-            var newRefreshToken = CreateRefreshToken(request.Response.SecurityToken);
+            var newToken = CreateRefreshToken(request.Response.SecurityToken);
 
-            if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newRefreshToken))
-                throw new NullReferenceException("JWT or token were not created successfully.");
+            if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newToken))
+                throw new NullReferenceException();
 
-            // store refresh token in Redis
-            LocalRefreshTokens[username] = newRefreshToken;
+            if (!await StoreTokensInDatabase(username, newToken))
+                return (HttpStatusCode.InternalServerError, null);
 
-            return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newRefreshToken });
+            return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newToken });
         }
         catch (Exception exc)
         {
@@ -73,12 +74,16 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
         }
     }
 
+    /// <summary>
+    /// Client login with username and password.
+    /// </summary>
+    /// <exception cref="NullReferenceException"></exception>
     public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithCredentials(string username, string password)
     {
         try
         {
             if (Configuration.Token_Public_Key == null || Configuration.Token_Private_Key == null)
-                throw new NullReferenceException("Public and Private key tokens are required configuration for handling client auth.");
+                throw new NullReferenceException();
 
             // retrieve stored account data
             var request = new GetAccountRequest() { IncludeClaims = true, Username = username };
@@ -96,7 +101,6 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
                 return (request.Response.StatusCode, null);
             }
 
-            // didn't match token- hash and compare
             if (request.Response.IdentityClaims == null)
             {
                 Program.Logger.Log(LogLevel.Warning, "Login failed- user account identity claims are missing.");
@@ -122,15 +126,15 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
             }
 
             var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
-            var newRefreshToken = CreateRefreshToken(request.Response.SecurityToken);
+            var newToken = CreateRefreshToken(request.Response.SecurityToken);
 
-            if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newRefreshToken))
-                throw new NullReferenceException("JWT or token were not created successfully.");
+            if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newToken))
+                throw new NullReferenceException();
 
-            // store refresh token in Redis
-            LocalRefreshTokens[username] = newRefreshToken;
+            if (!await StoreTokensInDatabase(username, newToken))
+                return (HttpStatusCode.InternalServerError, null);
 
-            return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newRefreshToken });
+            return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newToken });
         }
         catch (Exception exc)
         {
@@ -139,14 +143,24 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
         }
     }
 
-    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithToken(string username, string token)
+    /// <summary>
+    /// Client login using a refresh token.
+    /// </summary>
+    /// <exception cref="NullReferenceException"></exception>
+    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithToken(string token)
     {
         try
         {
             if (Configuration.Token_Public_Key == null || Configuration.Token_Private_Key == null)
-                throw new NullReferenceException("Public and Private key tokens are required configuration for handling client auth.");
+                throw new NullReferenceException();
 
-            // retrieve stored account data
+            var username = await GetUsernameFromRefreshToken(token);
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                Program.Logger.Log(LogLevel.Warning, "Login failed- client token didn't match stored token.");
+                return (HttpStatusCode.Forbidden, null);
+            }
+
             var request = new GetAccountRequest() { IncludeClaims = true, Username = username };
             await request.ExecuteRequest("account", "get");
 
@@ -162,21 +176,14 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
                 return (request.Response.StatusCode, null);
             }
 
-            // if password matches the refresh token, no need to do any hashing
-            if (!LocalRefreshTokens.TryGetValue(username, out var storedToken) || !string.Equals(storedToken, token))
-            {
-                Program.Logger.Log(LogLevel.Warning, "Login failed- client token didn't match stored token.");
-                return (HttpStatusCode.Forbidden, null);
-            }
-
             var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
             var newToken = CreateRefreshToken(request.Response.SecurityToken);
 
             if (string.IsNullOrWhiteSpace(newJWT) || string.IsNullOrWhiteSpace(newToken))
-                throw new NullReferenceException("JWT or refresh token were not created successfully.");
+                throw new NullReferenceException();
 
-            // store refresh token in Redis
-            LocalRefreshTokens[username] = newToken;
+            if (!await StoreTokensInDatabase(username, newToken))
+                return (HttpStatusCode.InternalServerError, null);
 
             return (HttpStatusCode.OK, new() { AccessToken = newJWT, RefreshToken = newToken });
         }
@@ -187,6 +194,52 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
         }
     }
 
+    /// <summary>
+    /// Stores the refresh token in Redis.
+    /// </summary>
+    /// <exception cref="NullReferenceException"></exception>
+    private async Task<bool> StoreTokensInDatabase(string username, string refreshToken)
+    {
+        if (_redisConnection == null)
+            throw new NullReferenceException();
+
+        try
+        {
+            var setTokenTransaction = _redisConnection.GetDatabase().CreateTransaction();
+            _ = setTokenTransaction.StringSetAsync($"USER_TOKEN_{username}", refreshToken, expiry: TimeSpan.FromHours(12), when: When.Always, flags: CommandFlags.FireAndForget);
+            _ = setTokenTransaction.StringSetAsync($"REFRESH_TOKEN_{refreshToken}", username, expiry: TimeSpan.FromHours(12), when: When.Always, flags: CommandFlags.FireAndForget);
+            return await setTokenTransaction.ExecuteAsync();
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An error occured while setting refresh tokens to redis.");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Retrieves the username for the given refresh token from Redis.
+    /// </summary>
+    /// <exception cref="NullReferenceException"></exception>
+    private async Task<string?> GetUsernameFromRefreshToken(string refreshToken)
+    {
+        if (_redisConnection == null)
+            throw new NullReferenceException();
+
+        try
+        {
+            return await _redisConnection.GetDatabase().StringGetAsync($"REFRESH_TOKEN_{refreshToken}");
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An error occured while verifying a refresh tokens in redis.");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Create the refresh token format from a given security token (retrieved from user account data).
+    /// </summary>
     private static string? CreateRefreshToken(string? securityToken)
     {
         if (string.IsNullOrWhiteSpace(securityToken))
@@ -195,10 +248,14 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
         return $"{securityToken}_{Guid.NewGuid()}";
     }
 
+    /// <summary>
+    /// Creates a JWT from the given user account data.
+    /// </summary>
+    /// <exception cref="NullReferenceException"></exception>
     private string? CreateJWT(int? ID, string? username, string? email, HashSet<string>? roleClaims)
     {
         if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key) || string.IsNullOrWhiteSpace(Configuration.Token_Private_Key))
-            return null;
+            throw new NullReferenceException();
 
         var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
         if (!string.IsNullOrWhiteSpace(email))
@@ -223,6 +280,10 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
         return newJWT;
     }
 
+    /// <summary>
+    /// Creates a JWT builder with the appropriate settings for the access
+    /// token we want to make.
+    /// </summary>
     private static JwtBuilder CreateJWTBuilder(string publicKey, string privateKey)
     {
         var jwtBuilder = new JwtBuilder();
@@ -255,6 +316,11 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
         return jwtBuilder;
     }
 
+    /// <summary>
+    /// If configured, will attempt to set overrides from Dapr Secrets into the service configuration.
+    /// It's really better to just restart the service when configuration changes, unless there's a
+    /// compelling reason not to.
+    /// </summary>
     private async Task TryLoadFromDaprSecrets()
     {
         try

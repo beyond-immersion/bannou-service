@@ -29,5 +29,5 @@ public interface IAuthorizationService : IDaprService
     /// Login to the system using a refresh token.
     /// Returns at least an access token (JWT) on success, and potentially another refresh token.
     /// </summary>
-    Task<(HttpStatusCode, LoginResult?)> LoginWithToken(string username, string token);
+    Task<(HttpStatusCode, LoginResult?)> LoginWithToken(string token);
 }
