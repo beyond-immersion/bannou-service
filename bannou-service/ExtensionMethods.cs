@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -37,8 +39,34 @@ public static partial class ExtensionMethods
             HttpMethodTypes.OPTIONS => HttpMethod.Options,
             HttpMethodTypes.PATCH => HttpMethod.Patch,
             HttpMethodTypes.GET => HttpMethod.Get,
-            _ => HttpMethod.Post,
+            _ => HttpMethod.Post
         };
+
+    public static IStatusCodeActionResult ToActionResult(this StatusCodes httpStatusCode, object? value = null)
+    {
+        if (value == null)
+        {
+            return httpStatusCode switch
+            {
+                StatusCodes.Ok => new StatusCodeResult(200),
+                StatusCodes.Accepted => new StatusCodeResult(202),
+                StatusCodes.BadRequest => new StatusCodeResult(400),
+                StatusCodes.Unauthorized => new StatusCodeResult(403),
+                StatusCodes.NotFound => new StatusCodeResult(404),
+                _ => new StatusCodeResult(500)
+            };
+        }
+
+        return httpStatusCode switch
+        {
+            StatusCodes.Ok => new ObjectResult(value) { StatusCode = 200 },
+            StatusCodes.Accepted => new ObjectResult(value) { StatusCode = 202 },
+            StatusCodes.BadRequest => new ObjectResult(value) { StatusCode = 400 },
+            StatusCodes.Unauthorized => new ObjectResult(value) { StatusCode = 403 },
+            StatusCodes.NotFound => new ObjectResult(value) { StatusCode = 404 },
+            _ => new ObjectResult(value) { StatusCode = 500 }
+        };
+    }
 
     /// <summary>
     /// Logging extension/helper methods, for including additional context as JSON.

@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Controllers;
 using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.Logging;
 using BeyondImmersion.BannouService.Authorization.Messages;
+using System.Net;
 
 namespace BeyondImmersion.BannouService.Authorization;
 
@@ -32,29 +33,29 @@ public class AuthorizationController : BaseDaprController
         try
         {
             if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
-                return BadRequest();
+                return StatusCodes.BadRequest.ToActionResult();
 
-            (System.Net.HttpStatusCode, IAuthorizationService.LoginResult?) registerResult = await Service.Register(request.Username, request.Password, request.Email);
-            if (registerResult.Item1 != System.Net.HttpStatusCode.OK)
+            (HttpStatusCode, IAuthorizationService.LoginResult?) registerResult = await Service.Register(request.Username, request.Password, request.Email);
+            if (registerResult.Item1 != HttpStatusCode.OK)
             {
-                if (registerResult.Item1 == System.Net.HttpStatusCode.InternalServerError)
-                    return StatusCode(500);
+                if (registerResult.Item1 == HttpStatusCode.InternalServerError)
+                    return StatusCodes.ServerError.ToActionResult();
 
-                return new ForbidResult();
+                return StatusCodes.Unauthorized.ToActionResult();
             }
 
             if (string.IsNullOrWhiteSpace(registerResult.Item2?.AccessToken))
-                return new ForbidResult();
+                return StatusCodes.Unauthorized.ToActionResult();
 
             var response = request.CreateResponse();
             response.AccessToken = registerResult.Item2.AccessToken;
             response.RefreshToken = registerResult.Item2.RefreshToken;
-            return Ok(response);
+            return StatusCodes.Ok.ToActionResult(response);
         }
         catch (Exception exc)
         {
             Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(Register)}] endpoint on [{nameof(AuthorizationController)}].");
-            return StatusCode(500);
+            return StatusCodes.ServerError.ToActionResult();
         }
     }
 
@@ -69,31 +70,32 @@ public class AuthorizationController : BaseDaprController
         try
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-                return BadRequest();
+                return StatusCodes.BadRequest.ToActionResult();
 
-            (System.Net.HttpStatusCode, IAuthorizationService.LoginResult?) loginResult = await Service.Login(username, password);
-            if (loginResult.Item1 != System.Net.HttpStatusCode.OK)
+            (HttpStatusCode, IAuthorizationService.LoginResult?) loginResult = await Service.Login(username, password);
+            if (loginResult.Item1 != HttpStatusCode.OK)
             {
-                if (loginResult.Item1 == System.Net.HttpStatusCode.InternalServerError)
-                    return StatusCode(500);
+                if (loginResult.Item1 == HttpStatusCode.InternalServerError)
+                    return StatusCodes.ServerError.ToActionResult();
 
-                return new ForbidResult();
+                return StatusCodes.Unauthorized.ToActionResult();
             }
 
             if (string.IsNullOrWhiteSpace(loginResult.Item2?.AccessToken))
-                return new ForbidResult();
+                return StatusCodes.Unauthorized.ToActionResult();
 
             var response = new LoginResponse()
             {
                 AccessToken = loginResult.Item2.AccessToken,
                 RefreshToken = loginResult.Item2.RefreshToken
             };
-            return Ok(response);
+
+            return StatusCodes.Ok.ToActionResult(response);
         }
         catch (Exception exc)
         {
             Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(Login)}] endpoint on [{nameof(AuthorizationController)}].");
-            return StatusCode(500);
+            return StatusCodes.ServerError.ToActionResult();
         }
     }
 
@@ -108,31 +110,31 @@ public class AuthorizationController : BaseDaprController
         try
         {
             if (string.IsNullOrWhiteSpace(token))
-                return BadRequest();
+                return StatusCodes.BadRequest.ToActionResult();
 
-            (System.Net.HttpStatusCode, IAuthorizationService.LoginResult?) loginResult = await Service.Login(token);
-            if (loginResult.Item1 != System.Net.HttpStatusCode.OK)
+            (HttpStatusCode, IAuthorizationService.LoginResult?) loginResult = await Service.Login(token);
+            if (loginResult.Item1 != HttpStatusCode.OK)
             {
-                if (loginResult.Item1 == System.Net.HttpStatusCode.InternalServerError)
-                    return StatusCode(500);
+                if (loginResult.Item1 == HttpStatusCode.InternalServerError)
+                    return StatusCodes.ServerError.ToActionResult();
 
-                return new ForbidResult();
+                return StatusCodes.Unauthorized.ToActionResult();
             }
 
             if (string.IsNullOrWhiteSpace(loginResult.Item2?.AccessToken))
-                return new ForbidResult();
+                return StatusCodes.Unauthorized.ToActionResult();
 
             var response = new LoginResponse()
             {
                 AccessToken = loginResult.Item2.AccessToken,
                 RefreshToken = loginResult.Item2.RefreshToken
             };
-            return Ok(response);
+            return StatusCodes.Ok.ToActionResult(response);
         }
         catch (Exception exc)
         {
             Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(Login)}] endpoint on [{nameof(AuthorizationController)}].");
-            return StatusCode(500);
+            return StatusCodes.ServerError.ToActionResult();
         }
     }
 
@@ -149,12 +151,12 @@ public class AuthorizationController : BaseDaprController
             {
 
             };
-            return Ok(response);
+            return StatusCodes.Ok.ToActionResult(response);
         }
         catch (Exception exc)
         {
             Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(ValidateToken)}] endpoint on [{nameof(AuthorizationController)}].");
-            return StatusCode(500);
+            return StatusCodes.ServerError.ToActionResult();
         }
     }
 }
