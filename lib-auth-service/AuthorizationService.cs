@@ -47,10 +47,13 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
             await request.ExecuteRequest("account", "create");
 
             if (request.Response == null)
-                return (HttpStatusCode.InternalServerError, null);
+                throw new NullReferenceException("Null response to account create endpoint.");
 
             if (request.Response.StatusCode != HttpStatusCode.OK)
+            {
+                Program.Logger.Log(LogLevel.Warning, $"Registration failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
                 return (request.Response.StatusCode, null);
+            }
 
             var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
             var newRefreshToken = CreateRefreshToken(request.Response.SecurityToken);
@@ -82,14 +85,23 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
             await request.ExecuteRequest("account", "get");
 
             if (request.Response == null)
+            {
+                Program.Logger.Log(LogLevel.Warning, "Login failed- null response to fetching user account.");
                 return (HttpStatusCode.NotFound, null);
+            }
 
             if (request.Response.StatusCode != HttpStatusCode.OK)
+            {
+                Program.Logger.Log(LogLevel.Warning, $"Login failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
                 return (request.Response.StatusCode, null);
+            }
 
             // didn't match token- hash and compare
             if (request.Response.IdentityClaims == null)
+            {
+                Program.Logger.Log(LogLevel.Warning, "Login failed- user account identity claims are missing.");
                 return (HttpStatusCode.Forbidden, null);
+            }
 
             var secretSalt = request.Response.IdentityClaims.Where(t => t.StartsWith("SecretSalt:")).FirstOrDefault();
             var secretHash = request.Response.IdentityClaims.Where(t => t.StartsWith("SecretHash:")).FirstOrDefault();
@@ -97,11 +109,17 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
             secretHash = secretHash?["SecretHash:".Length..];
 
             if (string.IsNullOrWhiteSpace(secretSalt) || string.IsNullOrWhiteSpace(secretHash))
+            {
+                Program.Logger.Log(LogLevel.Warning, "Login failed- couldn't find stored salt/hashed secret.");
                 return (HttpStatusCode.Forbidden, null);
+            }
 
             var hashedPassword = IAccountService.GenerateHashedSecret(password, secretSalt);
             if (!string.Equals(secretHash, hashedPassword))
+            {
+                Program.Logger.Log(LogLevel.Warning, "Login failed- secret didn't match stored hash.");
                 return (HttpStatusCode.Forbidden, null);
+            }
 
             var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
             var newRefreshToken = CreateRefreshToken(request.Response.SecurityToken);
@@ -133,14 +151,23 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
             await request.ExecuteRequest("account", "get");
 
             if (request.Response == null)
+            {
+                Program.Logger.Log(LogLevel.Warning, "Login failed- null response to fetching user account.");
                 return (HttpStatusCode.NotFound, null);
+            }
 
             if (request.Response.StatusCode != HttpStatusCode.OK)
+            {
+                Program.Logger.Log(LogLevel.Warning, $"Login failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
                 return (request.Response.StatusCode, null);
+            }
 
             // if password matches the refresh token, no need to do any hashing
             if (!LocalRefreshTokens.TryGetValue(username, out var storedToken) || !string.Equals(storedToken, token))
+            {
+                Program.Logger.Log(LogLevel.Warning, "Login failed- client token didn't match stored token.");
                 return (HttpStatusCode.Forbidden, null);
+            }
 
             var newJWT = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
             var newToken = CreateRefreshToken(request.Response.SecurityToken);
