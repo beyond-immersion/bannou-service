@@ -81,7 +81,7 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
                 throw new NullReferenceException("Public and Private key tokens are required configuration for handling client auth.");
 
             // retrieve stored account data
-            var request = new GetAccountRequest() { Username = username };
+            var request = new GetAccountRequest() { IncludeClaims = true, Username = username };
             await request.ExecuteRequest("account", "get");
 
             if (request.Response == null)
@@ -147,7 +147,7 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
                 throw new NullReferenceException("Public and Private key tokens are required configuration for handling client auth.");
 
             // retrieve stored account data
-            var request = new GetAccountRequest() { Username = username };
+            var request = new GetAccountRequest() { IncludeClaims = true, Username = username };
             await request.ExecuteRequest("account", "get");
 
             if (request.Response == null)
