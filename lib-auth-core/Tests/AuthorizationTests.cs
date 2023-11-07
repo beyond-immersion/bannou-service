@@ -132,7 +132,7 @@ public static class AuthorizationTests
             return false;
 
         var loginRequest = new LoginRequest() { };
-        if (!await loginRequest.ExecuteRequest<LoginResponse>("authorization", "login", additionalHeaders: new Dictionary<string, string>() { ["username"] = username, ["password"] = password }, HttpMethodTypes.GET))
+        if (!await loginRequest.ExecuteRequest<LoginResponse>("authorization", "login/credentials", additionalHeaders: new Dictionary<string, string>() { ["username"] = username, ["password"] = password }, HttpMethodTypes.GET))
         {
             Program.Logger.Log(LogLevel.Error, "Login with registered username and password failed.");
             return false;
@@ -180,7 +180,7 @@ public static class AuthorizationTests
         }
 
         var loginRequest = new LoginRequest() { };
-        if (!await loginRequest.ExecuteRequest<LoginResponse>("authorization", "login", additionalHeaders: new Dictionary<string, string>() { ["token"] = requestModel.Response.RefreshToken }, HttpMethodTypes.GET))
+        if (!await loginRequest.ExecuteRequest<LoginResponse>("authorization", "login/token", additionalHeaders: new Dictionary<string, string>() { ["token"] = requestModel.Response.RefreshToken }, HttpMethodTypes.GET))
         {
             Program.Logger.Log(LogLevel.Error, "Login with registered username and password failed.");
             return false;

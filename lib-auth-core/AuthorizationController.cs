@@ -64,7 +64,7 @@ public class AuthorizationController : BaseDaprController
     /// </summary>
     [HttpGet]
     [HttpPost]
-    [DaprRoute("login")]
+    [DaprRoute("login/credentials")]
     public async Task<IActionResult> Login([FromHeader(Name = "username")] string username, [FromHeader(Name = "password")] string password)
     {
         try
@@ -104,7 +104,7 @@ public class AuthorizationController : BaseDaprController
     /// </summary>
     [HttpGet]
     [HttpPost]
-    [DaprRoute("login")]
+    [DaprRoute("login/token")]
     public async Task<IActionResult> Login([FromHeader(Name = "token")] string token)
     {
         try
