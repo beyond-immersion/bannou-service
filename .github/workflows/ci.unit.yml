@@ -3,13 +3,13 @@ name: 'Unit Tests'
 on:
   push:
 
-env:
-  DOTNET_VERSION: '7.0.202'
-
 jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    env:
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      DOTNET_VERSION: '7.0.202'
 
     steps:
       - uses: actions/checkout@v3
@@ -26,3 +26,30 @@ jobs:
 
       - name: Run Unit Tests
         run: dotnet test --configuration Development --no-restore --verbosity normal
+
+      - name: Notify Success
+        if: success() && env.DISCORD_WEBHOOK != ''
+        uses: rjstone/discord-webhook-notify@v1
+        continue-on-error: true
+        with:
+          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
+          details: 'The unit tests have passed successfully.'
+          severity: info
+
+      - name: Notify Failure
+        if: failure() && env.DISCORD_WEBHOOK != ''
+        uses: rjstone/discord-webhook-notify@v1
+        continue-on-error: true
+        with:
+          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
+          details: 'The unit tests have failed. Check the Actions log for more details.'
+          severity: error
+
+      - name: Notify Cancelled
+        if: cancelled() && env.DISCORD_WEBHOOK != ''
+        uses: rjstone/discord-webhook-notify@v1
+        continue-on-error: true
+        with:
+          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
+          details: 'The unit tests have been cancelled.'
+          severity: warn

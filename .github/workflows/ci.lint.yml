@@ -7,6 +7,9 @@ jobs:
   build:
     name: Lint Tests
     runs-on: ubuntu-latest
+    env:
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -22,3 +25,30 @@ jobs:
           VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           ENABLE: EDITORCONFIG
           EDITORCONFIG_EDITORCONFIG_CHECKER_ARGUMENTS: -disable-end-of-line -disable-insert-final-newline -v
+
+      - name: Notify Success
+        if: success() && env.DISCORD_WEBHOOK != ''
+        uses: rjstone/discord-webhook-notify@v1
+        continue-on-error: true
+        with:
+          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
+          details: 'The lint tests have passed successfully.'
+          severity: info
+
+      - name: Notify Failure
+        if: failure() && env.DISCORD_WEBHOOK != ''
+        uses: rjstone/discord-webhook-notify@v1
+        continue-on-error: true
+        with:
+          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
+          details: 'The lint tests have failed. Check the Actions log for more details.'
+          severity: error
+
+      - name: Notify Cancelled
+        if: cancelled() && env.DISCORD_WEBHOOK != ''
+        uses: rjstone/discord-webhook-notify@v1
+        continue-on-error: true
+        with:
+          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
+          details: 'The lint tests have been cancelled.'
+          severity: warn

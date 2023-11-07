@@ -7,6 +7,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="Google.Apis.Auth" Version="1.63.0" />
+	  <PackageReference Include="StackExchange.Redis" Version="2.7.4" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\lib-accounts-core\lib-accounts-core.csproj" />
 		<ProjectReference Include="..\lib-auth-core\lib-auth-core.csproj" />
 	</ItemGroup>

@@ -29,13 +29,12 @@ public enum HttpMethodTypes
 /// An enumeration of possible API response codes
 /// returned by this service.
 /// </summary>
-public enum ResponseCodes
+public enum StatusCodes
 {
     Ok = 200,
     Accepted = 202,
     BadRequest = 400,
     Unauthorized = 403,
     NotFound = 404,
-    ServerError = 500,
-    ServerBusy = 503
+    ServerError = 500
 }

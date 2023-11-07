@@ -38,7 +38,7 @@ public static class GetAccountTests
                     ProfileClaims = new() { "Age:38" }
                 };
 
-                if (!requestModel.ExecutePostRequest("account", "create").Result)
+                if (!requestModel.ExecuteRequest("account", "create").Result)
                 {
                     Program.Logger.Log(LogLevel.Error, "Failed to set up user account for account/get tests.");
                     return null;
@@ -85,7 +85,7 @@ public static class GetAccountTests
             ID = TestAccountData.ID
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "get"))
+        if (!await requestModel.ExecuteRequest("account", "get"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -105,7 +105,7 @@ public static class GetAccountTests
             Username = TestAccountData.Username
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "get"))
+        if (!await requestModel.ExecuteRequest("account", "get"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -125,7 +125,7 @@ public static class GetAccountTests
             Email = TestAccountData.Email
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "get"))
+        if (!await requestModel.ExecuteRequest("account", "get"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -149,7 +149,7 @@ public static class GetAccountTests
             SteamID = steamID
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "get"))
+        if (!await requestModel.ExecuteRequest("account", "get"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -173,7 +173,7 @@ public static class GetAccountTests
             GoogleID = googleID
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "get"))
+        if (!await requestModel.ExecuteRequest("account", "get"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -196,7 +196,7 @@ public static class GetAccountTests
             IdentityClaim = identityClaim
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "get"))
+        if (!await requestModel.ExecuteRequest("account", "get"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -216,7 +216,7 @@ public static class GetAccountTests
             ID = TestAccountData.ID
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "get"))
+        if (!await requestModel.ExecuteRequest("account", "get"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -236,7 +236,7 @@ public static class GetAccountTests
             Username = TestAccountData.Username
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "get"))
+        if (!await requestModel.ExecuteRequest("account", "get"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -256,7 +256,7 @@ public static class GetAccountTests
             Email = TestAccountData.Email
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "get"))
+        if (!await requestModel.ExecuteRequest("account", "get"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -280,7 +280,7 @@ public static class GetAccountTests
             SteamID = steamID
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "get"))
+        if (!await requestModel.ExecuteRequest("account", "get"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -304,7 +304,7 @@ public static class GetAccountTests
             GoogleID = googleID
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "get"))
+        if (!await requestModel.ExecuteRequest("account", "get"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))
@@ -327,7 +327,7 @@ public static class GetAccountTests
             IdentityClaim = identityClaim
         };
 
-        if (!await requestModel.ExecutePostRequest("account", "get"))
+        if (!await requestModel.ExecuteRequest("account", "get"))
             return false;
 
         if (!ValidateResponse(requestModel, requestModel.Response))

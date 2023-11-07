@@ -13,8 +13,22 @@ services:
       - "logs-volume:/app/logs/"
     depends_on:
       - placement
+      - account-db
+      - auth-redis
+      - connect-redis
+    environment:
+      - ACCOUNT_DATABASE_USER=${ACCOUNT_DB_USER}
+      - ACCOUNT_DATABASE_PASSWORD=${ACCOUNT_DB_PASSWORD}
+      - AUTHORIZATION_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
+      - AUTHORIZATION_TOKEN_PRIVATE_KEY=${AUTH_TOKEN_PRIVATE_KEY}
+      - AUTHORIZATION_REDIS_CONNECTION_STRING=auth-redis:6379
+      - CONNECT_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
+      - CONNECT_REDIS_CONNECTION_STRING=connect-redis:6379
+
     networks:
       - celestial_network
+      - auth_network
+      - connect_network
 
   # attach the dapr sidecar to the monoservice
   bannou-dapr:
@@ -56,8 +70,42 @@ services:
     environment:
       - "FILEBEAT_INPUTS_PATHS=/app/logs/*"
 
+  account-db:
+    image: mysql:8.1.0
+    networks:
+      - celestial_network
+    environment:
+      - MYSQL_DATABASE=accounts
+      - MYSQL_USER=${ACCOUNT_DB_USER}
+      - MYSQL_PASSWORD=${ACCOUNT_DB_PASSWORD}
+      - MYSQL_RANDOM_ROOT_PASSWORD=true
+    volumes:
+      - account-volume:/var/lib/mysql
+      - ./provisioning/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./provisioning/mysql/run-init/:/docker-entrypoint-initdb.d
+
+  auth-redis:
+    image: redis:latest
+    networks:
+      - auth_network
+
+  connect-redis:
+    image: redis:latest
+    networks:
+      - connect_network
+
 networks:
   celestial_network:
+    driver: bridge
+    internal: true
+  auth_network:
+    driver: bridge
+    internal: true
+  connect_network:
+    driver: bridge
+    internal: true
 
 volumes:
   logs-volume:
+  account-volume:
+  

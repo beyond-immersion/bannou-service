@@ -6,7 +6,10 @@ using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
-using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
+using System.Data;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -16,66 +19,345 @@ namespace BeyondImmersion.BannouService.Authorization;
 /// Service component responsible for authorization handling.
 /// </summary>
 [DaprService("authorization", typeof(IAuthorizationService))]
-public class AuthorizationService : DaprService<AuthorizationServiceConfiguration>, IAuthorizationService
+public sealed class AuthorizationService : DaprService<AuthorizationServiceConfiguration>, IAuthorizationService
 {
+    private IConnectionMultiplexer? _redisConnection;
+
     async Task IDaprService.OnStart(CancellationToken cancellationToken)
     {
-        // override sensitive configuration Dapr secret store
+        if (Configuration.Redis_Connection_String == null)
+            throw new NullReferenceException();
+
         await TryLoadFromDaprSecrets();
 
-        if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key))
-            throw new NullReferenceException("Shared public key for encoding/decoding authorizaton tokens not set.");
-
-        if (string.IsNullOrWhiteSpace(Configuration.Token_Private_Key))
-            throw new NullReferenceException("Shared private key for encoding/decoding authorizaton tokens not set.");
+        _redisConnection = await ConnectionMultiplexer.ConnectAsync(Configuration.Redis_Connection_String);
+        if (!_redisConnection.IsConnected)
+            throw new RedisConnectionException(ConnectionFailureType.UnableToConnect, "Could not connect to Redis.");
     }
 
-    public async Task<string?> GetJWT(string email, string password)
+    /// <summary>
+    /// Register a new user to the system.
+    /// Returns the user's security token, which
+    /// can be used in place of their password for
+    /// logging in.
+    /// </summary>
+    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> Register(string username, string password, string? email)
     {
-        if (Configuration.Token_Public_Key == null || Configuration.Token_Private_Key == null)
+        try
+        {
+            var request = new CreateAccountRequest() { Username = username, Password = password, Email = email };
+            await request.ExecuteRequest("account", "create");
+
+            if (request.Response == null)
+                throw new NullReferenceException();
+
+            if (request.Response.StatusCode != HttpStatusCode.OK)
+            {
+                Program.Logger.Log(LogLevel.Warning, $"Registration failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
+                return (request.Response.StatusCode, null);
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
+                throw new NullReferenceException();
+
+            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var refreshToken = CreateRefreshToken(request.Response.SecurityToken);
+
+            if (string.IsNullOrWhiteSpace(jwt) || string.IsNullOrWhiteSpace(refreshToken))
+                throw new NullReferenceException();
+
+            if (!await StoreTokensInDatabase(request.Response.Username, request.Response.SecurityToken, refreshToken))
+                return (HttpStatusCode.InternalServerError, null);
+
+            return (HttpStatusCode.OK, new() { AccessToken = jwt, RefreshToken = refreshToken });
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client registration.");
+            return (HttpStatusCode.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Client login with username and password.
+    /// </summary>
+    /// <exception cref="NullReferenceException"></exception>
+    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithCredentials(string username, string password)
+    {
+        try
+        {
+            if (Configuration.Token_Public_Key == null || Configuration.Token_Private_Key == null)
+                throw new NullReferenceException();
+
+            // retrieve stored account data
+            var request = new GetAccountRequest() { IncludeClaims = true, Username = username };
+            await request.ExecuteRequest("account", "get");
+
+            if (request.Response == null)
+                throw new NullReferenceException();
+
+            if (request.Response.StatusCode != HttpStatusCode.OK)
+            {
+                Program.Logger.Log(LogLevel.Warning, $"Login failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
+                return (request.Response.StatusCode, null);
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
+                throw new NullReferenceException();
+
+            if (request.Response.IdentityClaims == null)
+            {
+                Program.Logger.Log(LogLevel.Warning, "Login failed- user account identity claims are missing.");
+                return (HttpStatusCode.Forbidden, null);
+            }
+
+            var secretSalt = request.Response.IdentityClaims.Where(t => t.StartsWith("SecretSalt:")).FirstOrDefault();
+            var secretHash = request.Response.IdentityClaims.Where(t => t.StartsWith("SecretHash:")).FirstOrDefault();
+            secretSalt = secretSalt?["SecretSalt:".Length..];
+            secretHash = secretHash?["SecretHash:".Length..];
+
+            if (string.IsNullOrWhiteSpace(secretSalt) || string.IsNullOrWhiteSpace(secretHash))
+            {
+                Program.Logger.Log(LogLevel.Warning, "Login failed- couldn't find stored salt/hashed secret.");
+                return (HttpStatusCode.Forbidden, null);
+            }
+
+            var hashedPassword = IAccountService.GenerateHashedSecret(password, secretSalt);
+            if (!string.Equals(secretHash, hashedPassword))
+            {
+                Program.Logger.Log(LogLevel.Warning, "Login failed- secret didn't match stored hash.");
+                return (HttpStatusCode.Forbidden, null);
+            }
+
+            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var refreshToken = CreateRefreshToken(request.Response.SecurityToken);
+
+            if (string.IsNullOrWhiteSpace(jwt) || string.IsNullOrWhiteSpace(refreshToken))
+                throw new NullReferenceException();
+
+            if (!await StoreTokensInDatabase(request.Response.Username, request.Response.SecurityToken, refreshToken))
+                return (HttpStatusCode.InternalServerError, null);
+
+            return (HttpStatusCode.OK, new() { AccessToken = jwt, RefreshToken = refreshToken });
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client login.");
+            return (HttpStatusCode.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Client login using a refresh token.
+    /// </summary>
+    /// <exception cref="NullReferenceException"></exception>
+    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithToken(string refreshToken)
+    {
+        try
+        {
+            if (Configuration.Token_Public_Key == null || Configuration.Token_Private_Key == null)
+                throw new NullReferenceException();
+
+            var username = await GetUsernameFromRefreshToken(refreshToken);
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                Program.Logger.Log(LogLevel.Warning, "Login failed- client token didn't match stored token.");
+                return (HttpStatusCode.Forbidden, null);
+            }
+
+            var request = new GetAccountRequest() { IncludeClaims = true, Username = username };
+            await request.ExecuteRequest("account", "get");
+
+            if (request.Response == null)
+                throw new NullReferenceException();
+
+            if (request.Response.StatusCode != HttpStatusCode.OK)
+            {
+                Program.Logger.Log(LogLevel.Warning, $"Login failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
+                return (request.Response.StatusCode, null);
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
+                throw new NullReferenceException();
+
+            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var newRefreshToken = CreateRefreshToken(request.Response.SecurityToken);
+
+            if (string.IsNullOrWhiteSpace(jwt) || string.IsNullOrWhiteSpace(newRefreshToken))
+                throw new NullReferenceException();
+
+            if (!await StoreTokensInDatabase(request.Response.Username, request.Response.SecurityToken, newRefreshToken))
+                return (HttpStatusCode.InternalServerError, null);
+
+            return (HttpStatusCode.OK, new() { AccessToken = jwt, RefreshToken = newRefreshToken });
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client login.");
+            return (HttpStatusCode.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Stores the refresh token in Redis.
+    /// </summary>
+    /// <exception cref="NullReferenceException"></exception>
+    private async Task<bool> StoreTokensInDatabase(string username, string securityToken, string refreshToken)
+    {
+        if (_redisConnection == null)
+            throw new NullReferenceException();
+
+        try
+        {
+            var dbTransaction = _redisConnection.GetDatabase().CreateTransaction();
+            _ = dbTransaction.StringSetAsync($"REFRESH_TOKEN_FROM_USERNAME__{username}", refreshToken, expiry: TimeSpan.FromHours(12), when: When.Always);
+            _ = dbTransaction.StringSetAsync($"USERNAME_FROM_REFRESH_TOKEN__{refreshToken}", username, expiry: TimeSpan.FromHours(12), when: When.Always);
+            _ = dbTransaction.StringSetAsync($"REFRESH_TOKEN_FROM_SECURITY_TOKEN__{securityToken}", refreshToken, expiry: TimeSpan.FromHours(12), when: When.Always);
+            return await dbTransaction.ExecuteAsync();
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An error occured while setting refresh tokens to redis.");
+            return false;
+        }
+    }
+
+    private readonly string ClearBySecurityToken = @"
+local securityToken = KEYS[1]
+local refreshToken = redis.call('GET', 'REFRESH_TOKEN_FROM_SECURITY_TOKEN__' .. securityToken)
+local username = nil
+
+if refreshToken then
+    username = redis.call('GET', 'USERNAME_FROM_REFRESH_TOKEN__' .. refreshToken)
+end
+
+if username then
+    redis.call('DEL', 'REFRESH_TOKEN_FROM_USERNAME__' .. username)
+end
+
+if refreshToken then
+    redis.call('DEL', 'USERNAME_FROM_REFRESH_TOKEN__' .. refreshToken)
+end
+
+if securityToken then
+    redis.call('DEL', 'REFRESH_TOKEN_FROM_SECURITY_TOKEN__' .. securityToken)
+end
+
+return 1
+";
+
+    /// <summary>
+    /// Stores the stored security and refresh tokens in Redis.
+    /// </summary>
+    /// <exception cref="NullReferenceException"></exception>
+    private async Task<bool> ClearTokensFromDatabase(string? username, string? securityToken, string? refreshToken)
+    {
+        if (_redisConnection == null)
+            throw new NullReferenceException();
+
+        if (string.IsNullOrWhiteSpace(username) && string.IsNullOrWhiteSpace(securityToken) && string.IsNullOrWhiteSpace(refreshToken))
+            return false;
+
+        try
+        {
+            var db = _redisConnection.GetDatabase();
+
+            // if all we have is the security token, clear all from just that-
+            // easier to do in Lua, instead of requiring 3 separate requests
+            if (!string.IsNullOrWhiteSpace(securityToken) && (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(refreshToken)))
+                return (bool)await db.ScriptEvaluateAsync(ClearBySecurityToken, new RedisKey[] { securityToken });
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                refreshToken = await db.StringGetAsync($"REFRESH_TOKEN_FROM_USERNAME__{username}");
+            else if (string.IsNullOrWhiteSpace(username))
+                username = await db.StringGetAsync($"USERNAME_FROM_REFRESH_TOKEN__{refreshToken}");
+
+            var dbTransaction = db.CreateTransaction();
+            if (!string.IsNullOrWhiteSpace(username))
+                _ = dbTransaction.KeyDeleteAsync($"REFRESH_TOKEN_FROM_USERNAME__{username}");
+
+            if (!string.IsNullOrWhiteSpace(refreshToken))
+                _ = dbTransaction.KeyDeleteAsync($"USERNAME_FROM_REFRESH_TOKEN__{refreshToken}");
+
+            if (!string.IsNullOrWhiteSpace(securityToken))
+                _ = dbTransaction.KeyDeleteAsync($"REFRESH_TOKEN_FROM_SECURITY_TOKEN__{securityToken}");
+
+            return await dbTransaction.ExecuteAsync();
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An error occured while clearing tokens from redis.");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Retrieves the username for the given refresh token from Redis.
+    /// </summary>
+    /// <exception cref="NullReferenceException"></exception>
+    private async Task<string?> GetUsernameFromRefreshToken(string refreshToken)
+    {
+        if (_redisConnection == null)
+            throw new NullReferenceException();
+
+        try
+        {
+            return await _redisConnection.GetDatabase().StringGetAsync($"USERNAME_FROM_REFRESH_TOKEN__{refreshToken}");
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An error occured while verifying a refresh tokens in redis.");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Create the refresh token format from a given security token (retrieved from user account data).
+    /// </summary>
+    private static string? CreateRefreshToken(string? securityToken)
+    {
+        if (string.IsNullOrWhiteSpace(securityToken))
             return null;
 
-        // retrieve stored account data
-        var dataModel = new GetAccountRequest() { Email = email };
+        return $"{securityToken}_{Guid.NewGuid()}";
+    }
 
-        HttpRequestMessage daprRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, IDaprService.GetAppByServiceName("account"), $"account/get", dataModel);
-        var daprResponse = await Program.DaprClient.InvokeMethodWithResponseAsync(daprRequest, Program.ShutdownCancellationTokenSource.Token);
-        if (daprResponse == null || !daprResponse.IsSuccessStatusCode)
-            return null;
+    /// <summary>
+    /// Creates a JWT from the given user account data.
+    /// </summary>
+    /// <exception cref="NullReferenceException"></exception>
+    private string? CreateJWT(int? ID, string? username, string? email, HashSet<string>? roleClaims)
+    {
+        if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key) || string.IsNullOrWhiteSpace(Configuration.Token_Private_Key))
+            throw new NullReferenceException();
 
-        GetAccountResponse? responseData = await daprResponse.Content.ReadFromJsonAsync<GetAccountResponse>();
-        if (responseData == null || responseData.IdentityClaims == null)
-            return null;
-
-        var secretSalt = responseData.IdentityClaims.Where(t => t.StartsWith("SecretSalt:")).Select(t => t.Remove(0, "SecretSalt:".Length)).FirstOrDefault();
-        var secretHash = responseData.IdentityClaims.Where(t => t.StartsWith("SecretHash:")).Select(t => t.Remove(0, "SecretHash:".Length)).FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(secretSalt) || string.IsNullOrWhiteSpace(secretHash))
-            return null;
-
-        // validate password
-        var hashedPassword = IAccountService.GenerateHashedSecret(password, secretSalt);
-        if (!string.Equals(secretHash, hashedPassword))
-            return null;
-
-        // create JWT
         var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
-        jwtBuilder.AddHeader("email", responseData.Email);
-        jwtBuilder.AddHeader("username", responseData.Username);
+        if (!string.IsNullOrWhiteSpace(email))
+            jwtBuilder.AddHeader("email", email);
 
-        jwtBuilder.Id(responseData.ID);
+        if (!string.IsNullOrWhiteSpace(username))
+            jwtBuilder.AddHeader("username", username);
+
+        if (ID != null)
+            jwtBuilder.Id(ID.Value);
+
         jwtBuilder.Issuer("AUTHORIZATION_SERVICE:" + Program.ServiceGUID);
         jwtBuilder.IssuedAt(DateTime.Now);
         jwtBuilder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
         jwtBuilder.MustVerifySignature();
 
-        if (responseData.RoleClaims != null)
-            foreach (var roleClaim in responseData.RoleClaims)
+        if (roleClaims != null)
+            foreach (var roleClaim in roleClaims)
                 jwtBuilder.AddClaim("role", roleClaim);
 
         var newJWT = jwtBuilder.Encode();
         return newJWT;
     }
 
+    /// <summary>
+    /// Creates a JWT builder with the appropriate settings for the access
+    /// token we want to make.
+    /// </summary>
     private static JwtBuilder CreateJWTBuilder(string publicKey, string privateKey)
     {
         var jwtBuilder = new JwtBuilder();
@@ -108,6 +390,11 @@ public class AuthorizationService : DaprService<AuthorizationServiceConfiguratio
         return jwtBuilder;
     }
 
+    /// <summary>
+    /// If configured, will attempt to set overrides from Dapr Secrets into the service configuration.
+    /// It's really better to just restart the service when configuration changes, unless there's a
+    /// compelling reason not to.
+    /// </summary>
     private async Task TryLoadFromDaprSecrets()
     {
         try

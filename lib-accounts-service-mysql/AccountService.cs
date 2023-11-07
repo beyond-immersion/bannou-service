@@ -16,7 +16,7 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// account data.
 /// </summary>
 [DaprService("account", typeof(IAccountService))]
-public class AccountService : DaprService<AccountServiceConfiguration>, IAccountService
+public sealed class AccountService : DaprService<AccountServiceConfiguration>, IAccountService
 {
     private string? _dbConnectionString;
 

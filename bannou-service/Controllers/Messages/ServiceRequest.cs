@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Controllers.Messages;
 /// The basic service request payload model.
 /// </summary>
 [JsonObject]
-public abstract class ServiceRequest : ServiceMessage
+public class ServiceRequest : ServiceMessage
 {
     private static HttpClient _httpClient;
     [JsonIgnore]
@@ -30,7 +30,7 @@ public abstract class ServiceRequest : ServiceMessage
     [JsonIgnore]
     public ServiceResponse? Response { get; protected set; }
 
-    public virtual async Task<bool> ExecutePostRequest<T>(string? service, string method)
+    public virtual async Task<bool> ExecuteRequest<T>(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
         where T : ServiceResponse, new()
     {
         if (typeof(ServiceRequest<T>).IsAssignableFrom(GetType()))
@@ -40,16 +40,16 @@ public abstract class ServiceRequest : ServiceMessage
 
             // calling execute on the derived type will also parse and set
             // the more specific Response type that's expected, on success
-            return await derivedRequest.ExecutePostRequest(service, method);
+            return await derivedRequest.ExecuteRequest(service, method, additionalHeaders, httpMethod);
         }
 
-        return await ExecutePostRequest_INTERNAL<T>(service, method);
+        return await ExecuteRequest_INTERNAL<T>(service, method, additionalHeaders, httpMethod);
     }
 
-    public virtual async Task<bool> ExecutePostRequest(string? service, string method)
-        => await ExecutePostRequest_INTERNAL(service, method);
+    public virtual async Task<bool> ExecuteRequest(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
+        => await ExecuteRequest_INTERNAL(service, method, additionalHeaders, httpMethod);
 
-    protected async Task<bool> ExecutePostRequest_INTERNAL(string? service, string method)
+    protected async Task<bool> ExecuteRequest_INTERNAL(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
     {
         try
         {
@@ -61,8 +61,12 @@ public abstract class ServiceRequest : ServiceMessage
             else
                 requestUrl = $"{method}";
 
-            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, coordinatorService, requestUrl, this);
+            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(httpMethod.ToObject(), coordinatorService, requestUrl, this);
             requestMsg.AddPropertyHeaders(this);
+
+            if (additionalHeaders != null)
+                foreach (var headerKVP in additionalHeaders)
+                    requestMsg.Headers.Add(headerKVP.Key, headerKVP.Value);
 
             await Program.DaprClient.InvokeMethodAsync(requestMsg, Program.ShutdownCancellationTokenSource.Token);
             Response = new()
@@ -95,7 +99,7 @@ public abstract class ServiceRequest : ServiceMessage
         return false;
     }
 
-    protected async Task<bool> ExecutePostRequest_INTERNAL<T>(string? service, string method)
+    protected async Task<bool> ExecuteRequest_INTERNAL<T>(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
         where T : ServiceResponse, new()
     {
         try
@@ -108,16 +112,24 @@ public abstract class ServiceRequest : ServiceMessage
             else
                 requestUrl = $"http://127.0.0.1:3500/v1.0/invoke/{coordinatorService}/method/{method}";
 
-            var requestData = JsonConvert.SerializeObject(this);
-            var requestContent = new StringContent(requestData, Encoding.UTF8, MediaTypeNames.Application.Json);
+            StringContent? requestContent = null;
+            if (httpMethod == HttpMethodTypes.POST)
+            {
+                var requestData = JsonConvert.SerializeObject(this);
+                requestContent = new StringContent(requestData, Encoding.UTF8, MediaTypeNames.Application.Json);
+            }
 
-            var headerLookup = SetPropertiesToHeaders();
-            foreach (var headerKVP in headerLookup)
-                foreach (var headerValue in headerKVP.Item2)
-                    if (!string.IsNullOrWhiteSpace(headerKVP.Item1) && !string.IsNullOrWhiteSpace(headerValue))
-                        requestContent.Headers.Add(headerKVP.Item1, headerValue);
+            var newRequest = new HttpRequestMessage(httpMethod.ToObject(), requestUrl);
+            if (requestContent != null)
+                newRequest.Content = requestContent;
 
-            var responseMsg = await HttpClient.PostAsync(requestUrl, requestContent, Program.ShutdownCancellationTokenSource.Token);
+            newRequest.AddPropertyHeaders(this);
+
+            if (additionalHeaders != null)
+                foreach (var headerKVP in additionalHeaders)
+                    newRequest.Headers.Add(headerKVP.Key, headerKVP.Value);
+
+            var responseMsg = await HttpClient.SendAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
             if (responseMsg.IsSuccessStatusCode)
             {
                 if (typeof(T) == typeof(ServiceResponse))

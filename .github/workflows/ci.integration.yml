@@ -13,6 +13,7 @@ jobs:
     name: Integration Tests
     runs-on: [self-hosted, bannou]
     env:
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       ACCOUNT_DB_USER: ${{ secrets.ACCOUNT_DB_USER }}
       ACCOUNT_DB_PASSWORD: ${{ secrets.ACCOUNT_DB_PASSWORD }}
       AUTH_TOKEN_PUBLIC_KEY: ${{ secrets.AUTH_TOKEN_PUBLIC_KEY }}
@@ -44,3 +45,30 @@ jobs:
             docker container prune -f &&
             docker image prune -f &&
             docker volume prune -f
+
+      - name: Notify Success
+        if: success() && env.DISCORD_WEBHOOK != ''
+        uses: rjstone/discord-webhook-notify@v1
+        continue-on-error: true
+        with:
+          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
+          details: 'The integration tests have passed successfully.'
+          severity: info
+
+      - name: Notify Failure
+        if: failure() && env.DISCORD_WEBHOOK != ''
+        uses: rjstone/discord-webhook-notify@v1
+        continue-on-error: true
+        with:
+          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
+          details: 'The integration tests have failed. Check the Actions log for more details.'
+          severity: error
+
+      - name: Notify Cancelled
+        if: cancelled() && env.DISCORD_WEBHOOK != ''
+        uses: rjstone/discord-webhook-notify@v1
+        continue-on-error: true
+        with:
+          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
+          details: 'The integration tests have been cancelled.'
+          severity: warn
