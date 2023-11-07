@@ -48,7 +48,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             var request = new CreateAccountRequest() { Username = username, Password = password, Email = email };
             await request.ExecuteRequest("account", "create");
 
-            if (string.IsNullOrWhiteSpace(request.Response?.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
+            if (request.Response == null)
                 throw new NullReferenceException();
 
             if (request.Response.StatusCode != HttpStatusCode.OK)
@@ -56,6 +56,9 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
                 Program.Logger.Log(LogLevel.Warning, $"Registration failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
                 return (request.Response.StatusCode, null);
             }
+
+            if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
+                throw new NullReferenceException();
 
             var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
             var refreshToken = CreateRefreshToken(request.Response.SecurityToken);
@@ -90,7 +93,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             var request = new GetAccountRequest() { IncludeClaims = true, Username = username };
             await request.ExecuteRequest("account", "get");
 
-            if (string.IsNullOrWhiteSpace(request.Response?.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
+            if (request.Response == null)
                 throw new NullReferenceException();
 
             if (request.Response.StatusCode != HttpStatusCode.OK)
@@ -98,6 +101,9 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
                 Program.Logger.Log(LogLevel.Warning, $"Login failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
                 return (request.Response.StatusCode, null);
             }
+
+            if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
+                throw new NullReferenceException();
 
             if (request.Response.IdentityClaims == null)
             {
@@ -162,7 +168,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             var request = new GetAccountRequest() { IncludeClaims = true, Username = username };
             await request.ExecuteRequest("account", "get");
 
-            if (string.IsNullOrWhiteSpace(request.Response?.Username) || string.IsNullOrWhiteSpace(request.Response?.SecurityToken))
+            if (request.Response == null)
                 throw new NullReferenceException();
 
             if (request.Response.StatusCode != HttpStatusCode.OK)
@@ -170,6 +176,9 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
                 Program.Logger.Log(LogLevel.Warning, $"Login failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
                 return (request.Response.StatusCode, null);
             }
+
+            if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
+                throw new NullReferenceException();
 
             var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
             var newRefreshToken = CreateRefreshToken(request.Response.SecurityToken);
