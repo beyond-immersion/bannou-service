@@ -39,8 +39,12 @@ jobs:
               docker:dind
           fi
 
+      - name: Get DinD IP address
+        id: dind_ip
+        run: echo "::set-output name=ip::$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' dind)"
+
       - name: Set DOCKER_HOST Environment Variable
-        run: echo "DOCKER_HOST=tcp://localhost:2375" >> $GITHUB_ENV
+        run: echo "DOCKER_HOST=tcp://${{ steps.dind_ip.outputs.ip }}:2375" >> $GITHUB_ENV
 
       - name: Rebuild Services
         run: docker-compose -H tcp://localhost:2375 -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
