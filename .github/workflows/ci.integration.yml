@@ -28,20 +28,31 @@ jobs:
           echo "UID=$(id -u)" >> $GITHUB_ENV
           echo "GID=$(id -g)" >> $GITHUB_ENV
 
+      - name: Start Docker-in-Docker
+        run: |
+          docker run --privileged --name dind --detach \
+            --volume dind-vol:/var/lib/docker \
+            docker:dind
+        env:
+          DOCKER_DRIVER: overlay2
+
+      - name: Set DOCKER_HOST Environment Variable
+        run: echo "DOCKER_HOST=tcp://localhost:2375" >> $GITHUB_ENV
+
       - name: Rebuild Services
-        run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
+        run: docker-compose -H tcp://localhost:2375 -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
 
       - name: Run Integration Tests
-        run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
+        run: docker-compose -H tcp://localhost:2375 -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
 
-      - name: Reset Permissions
-        if: always()
-        run: sudo /usr/bin/chown -R $(id -u):$(id -g) ./provisioning/
+      #- name: Reset Permissions
+      #  if: always()
+      #  run: sudo /usr/bin/chown -R $(id -u):$(id -g) ./provisioning/
 
       - name: Cleanup
         if: always()
         continue-on-error: true
-        run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v &&
+        run: docker-compose -H tcp://localhost:2375 -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v &&
             docker container prune -f &&
             docker image prune -f &&
             docker volume prune -f
