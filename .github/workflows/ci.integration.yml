@@ -28,13 +28,16 @@ jobs:
           echo "UID=$(id -u)" >> $GITHUB_ENV
           echo "GID=$(id -g)" >> $GITHUB_ENV
 
-      - name: Start Docker-in-Docker
+      - name: Try to create docker-in-docker CI environment
         run: |
-          docker run --privileged --name dind --detach \
-            --volume dind-vol:/var/lib/docker \
-            docker:dind
-        env:
-          DOCKER_DRIVER: overlay2
+          if [ ! "$(docker ps -q -f name=dind)" ]; then
+            if [ "$(docker ps -aq -f status=exited -f name=dind)" ]; then
+              docker rm dind
+            fi
+            docker run --privileged --name dind --detach \
+              --volume dind-vol:/var/lib/docker \
+              docker:dind
+          fi
 
       - name: Set DOCKER_HOST Environment Variable
         run: echo "DOCKER_HOST=tcp://localhost:2375" >> $GITHUB_ENV
@@ -44,10 +47,6 @@ jobs:
 
       - name: Run Integration Tests
         run: docker-compose -H tcp://localhost:2375 -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
-
-      #- name: Reset Permissions
-      #  if: always()
-      #  run: sudo /usr/bin/chown -R $(id -u):$(id -g) ./provisioning/
 
       - name: Cleanup
         if: always()
