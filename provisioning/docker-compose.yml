@@ -24,7 +24,6 @@ services:
       - AUTHORIZATION_REDIS_CONNECTION_STRING=auth-redis:6379
       - CONNECT_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
       - CONNECT_REDIS_CONNECTION_STRING=connect-redis:6379
-
     networks:
       - celestial_network
       - auth_network

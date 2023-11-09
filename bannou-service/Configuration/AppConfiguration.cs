@@ -57,15 +57,15 @@ public class AppConfiguration : BaseServiceConfiguration
     /// <summary>
     /// The log destination.
     /// </summary>
-    public LogModes Log_Mode { get; set; } = LogModes.Console;
+    public virtual LogModes Log_Mode { get; set; } = LogModes.Console;
 
     /// <summary>
     /// The minimum level of logs for the application code to write to the console.
     /// </summary>
-    public LogLevel App_Logging_Level { get; set; } = LogLevel.Warning;
+    public virtual LogLevel App_Logging_Level { get; set; } = LogLevel.Warning;
 
     /// <summary>
     /// The minimum level of logs for kestrel to write to the console.
     /// </summary>
-    public LogLevel Web_Host_Logging_Level { get; set; } = LogLevel.Warning;
+    public virtual LogLevel Web_Host_Logging_Level { get; set; } = LogLevel.Warning;
 }
