@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Controllers.Filters;
 using BeyondImmersion.BannouService.Logging;
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebSockets;
 using Serilog;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -160,8 +161,10 @@ public static class Program
                     jsonSettings.SerializerSettings.TypeNameHandling = TypeNameHandling.None;
                 });
 
-            webAppBuilder.Services.AddDaprClient();
-            webAppBuilder.Services.AddDaprServices();
+            webAppBuilder.Services
+                .AddWebSockets((websocketOptions) => { })
+                .AddDaprServices()
+                .AddDaprClient();
 
             // configure webhost
             webAppBuilder.WebHost
@@ -196,16 +199,16 @@ public static class Program
         WebApplication webApp = webAppBuilder.Build();
         try
         {
-            // map controller routes
-            _ = webApp.UseRouting().UseEndpoints(endpointOptions =>
-            {
-                endpointOptions.MapDefaultControllerRoute();
-            });
-
             // enable websocket connections
             webApp.UseWebSockets(new WebSocketOptions()
             {
                 KeepAliveInterval = TimeSpan.FromMinutes(2)
+            });
+
+            // map controller routes
+            _ = webApp.UseRouting().UseEndpoints(endpointOptions =>
+            {
+                endpointOptions.MapDefaultControllerRoute();
             });
 
             // invoke all Service.Start() methods on enabled service handlers

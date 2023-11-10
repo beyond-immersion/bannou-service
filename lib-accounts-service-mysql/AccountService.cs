@@ -28,7 +28,6 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
         var dbPassword = Uri.EscapeDataString(Configuration.Database_Password);
 
         _dbConnectionString = $"Host={dbHost}; Port={dbPort}; UserID={dbUsername}; Password={dbPassword}; Database={dbName}; AllowUserVariables=True";
-        Program.Logger.Log(LogLevel.Warning, $"Connecting to MySQL with connection string '{_dbConnectionString}'.");
 
         MySqlConnection? dbConnection = null;
         while (dbConnection == null)
@@ -46,8 +45,6 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
                     return;
             }
         }
-
-        Program.Logger.Log(LogLevel.Warning, $"Creating MySQL tables with connection string '{_dbConnectionString}'.");
 
         await InitializeDatabase(dbConnection);
         await dbConnection.CloseAsync();
@@ -101,40 +98,27 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
             if (template == null || parameters == null)
                 return new(StatusCodes.BadRequest, null);
 
+            dynamic? queryResult = null;
             using var dbConnection = new MySqlConnection(_dbConnectionString);
-            dynamic? transactionResult = null;
-
             await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
-            using (var transaction = await dbConnection.BeginTransactionAsync(Program.ShutdownCancellationTokenSource.Token))
-            {
-                try
-                {
-                    transactionResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
-                    if (transactionResult == null)
-                        throw new NullReferenceException(nameof(transactionResult));
 
-                    transaction.Commit();
-                }
-                catch
-                {
-                    await transaction.RollbackAsync(Program.ShutdownCancellationTokenSource.Token);
-                    throw;
-                }
-            }
+            queryResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters);
+            if (queryResult == null)
+                return new(StatusCodes.NotFound, null);
 
             // should move to DTO later
-            var resUserID = (int)transactionResult.Id;
-            string resSecurityToken = transactionResult.SecurityToken;
-            string? resUsername = transactionResult.Username;
-            string? resEmail = transactionResult.Email;
-            string? resRegion = transactionResult.Region;
-            bool resEmailVerified = transactionResult.EmailVerified;
-            bool resTwoFactorEnabled = transactionResult.TwoFactorEnabled;
-            DateTime resCreatedAt = transactionResult.CreatedAt;
-            DateTime resUpdatedAt = transactionResult.UpdatedAt ?? resCreatedAt;
-            DateTime resLastLoginAt = transactionResult.LastLoginAt ?? resCreatedAt;
-            DateTime? resRemovedAt = transactionResult.RemovedAt;
-            DateTime? resLockoutEnd = transactionResult.LockoutEnd;
+            var resUserID = (int)queryResult.Id;
+            string resSecurityToken = queryResult.SecurityToken;
+            string? resUsername = queryResult.Username;
+            string? resEmail = queryResult.Email;
+            string? resRegion = queryResult.Region;
+            bool resEmailVerified = queryResult.EmailVerified;
+            bool resTwoFactorEnabled = queryResult.TwoFactorEnabled;
+            DateTime resCreatedAt = queryResult.CreatedAt;
+            DateTime resUpdatedAt = queryResult.UpdatedAt ?? resCreatedAt;
+            DateTime resLastLoginAt = queryResult.LastLoginAt ?? resCreatedAt;
+            DateTime? resRemovedAt = queryResult.RemovedAt;
+            DateTime? resLockoutEnd = queryResult.LockoutEnd;
 
             // NOTE: should never be the same as the DTO (if added)
             // or the Controller API response model- stay decoupled
@@ -153,23 +137,23 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
 
             if (includeClaims)
             {
-                var claims = transactionResult.Role?.Split(',');
+                var claims = queryResult.Role?.Split(',');
                 if (claims != null)
                     responseObj.RoleClaims = new HashSet<string>(claims);
 
-                claims = transactionResult.App?.Split(',');
+                claims = queryResult.App?.Split(',');
                 if (claims != null)
                     responseObj.AppClaims = new HashSet<string>(claims);
 
-                claims = transactionResult.Scope?.Split(',');
+                claims = queryResult.Scope?.Split(',');
                 if (claims != null)
                     responseObj.ScopeClaims = new HashSet<string>(claims);
 
-                claims = transactionResult.Identity?.Split(',');
+                claims = queryResult.Identity?.Split(',');
                 if (claims != null)
                     responseObj.IdentityClaims = new HashSet<string>(claims);
 
-                claims = transactionResult.Profile?.Split(',');
+                claims = queryResult.Profile?.Split(',');
                 if (claims != null)
                     responseObj.ProfileClaims = new HashSet<string>(claims);
             }

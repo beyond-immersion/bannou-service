@@ -201,21 +201,16 @@ public class Program
 
     private static async Task<bool> EstablishWebsocketAndSendMessage()
     {
-        var serverUri = new Uri($"wss://{Configuration.Connect_Endpoint}");
+        var serverUri = new Uri($"ws://{Configuration.Connect_Endpoint}");
 
-        // Initialize the client web socket instance
         using var webSocket = new ClientWebSocket();
-
-        // Adding the Authorization header
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + sAccessToken);
 
         try
         {
-            // Connect to the WebSocket server
             await webSocket.ConnectAsync(serverUri, CancellationToken.None);
             Console.WriteLine("Connected to the server");
 
-            // Send a test message
             var message = "Test message";
             var encoded = Encoding.UTF8.GetBytes(message);
             var buffer = new ArraySegment<byte>(encoded, 0, encoded.Length);
@@ -223,7 +218,6 @@ public class Program
             await webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
             Console.WriteLine("Sent message: " + message);
 
-            // Receive response
             var receivedBuffer = new ArraySegment<byte>(new byte[1024]);
             var result = await webSocket.ReceiveAsync(receivedBuffer, CancellationToken.None);
 

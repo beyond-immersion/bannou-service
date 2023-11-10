@@ -1,10 +1,8 @@
 ﻿using BeyondImmersion.BannouService.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Net.Mime;
 using System.Net.WebSockets;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Connect.Messages;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Connect;
@@ -24,33 +22,27 @@ public sealed class ConnectController : BaseDaprController
         Service = service;
     }
 
+    [HttpGet]
+    [HttpPost]
     [DaprRoute("connect")]
-    public async Task<IActionResult> Post(
-        [FromHeader(Name = "token")] string? accessToken,
-        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ConnectRequest? request)
+    public async Task Post()
     {
-        await Task.CompletedTask;
-
         Program.Logger.Log(LogLevel.Warning, "Connection request received from client.");
 
-        if (string.IsNullOrWhiteSpace(accessToken))
-            return new BadRequestResult();
-
-        // use service handler to obtain JWT
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
             Program.Logger.Log(LogLevel.Warning, "Websocket connection request received from client.");
 
-            //using var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            //await EchoMessage(websocket);
+            var authorization = HttpContext.Request.Headers.Authorization.FirstOrDefault();
+            var accessToken = authorization?.Remove(0, "Bearer ".Length);
+            if (string.IsNullOrWhiteSpace(accessToken))
+                HttpContext.Response.StatusCode = 400;
+
+            using var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+            await EchoMessage(websocket);
         }
 
-        var result = new ConnectResponse()
-        {
-
-        };
-
-        return StatusCodes.OK.ToActionResult(result);
+        HttpContext.Response.StatusCode = 400;
     }
 
     private static async Task EchoMessage(WebSocket webSocket)

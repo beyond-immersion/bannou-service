@@ -60,6 +60,11 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
                 throw new NullReferenceException();
 
+            var secretSalt = request.Response.IdentityClaims?.Where(t => t.StartsWith("SecretSalt:")).FirstOrDefault();
+            var secretHash = request.Response.IdentityClaims?.Where(t => t.StartsWith("SecretHash:")).FirstOrDefault();
+            secretSalt = secretSalt?["SecretSalt:".Length..];
+            secretHash = secretHash?["SecretHash:".Length..];
+
             var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
             var refreshToken = CreateRefreshToken(request.Response.SecurityToken);
 
@@ -123,7 +128,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             }
 
             var hashedPassword = IAccountService.GenerateHashedSecret(password, secretSalt);
-            if (!string.Equals(secretHash, hashedPassword))
+            if (!string.Equals(secretHash, hashedPassword, StringComparison.Ordinal))
             {
                 Program.Logger.Log(LogLevel.Warning, "Login failed- secret didn't match stored hash.");
                 return new(StatusCodes.Forbidden, null);

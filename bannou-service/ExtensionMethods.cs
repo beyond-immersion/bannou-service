@@ -174,7 +174,7 @@ public static partial class ExtensionMethods
     /// <summary>
     /// Binds HTTP endpoints for all registered dapr services.
     /// </summary>
-    public static void AddDaprServices(this IServiceCollection builder)
+    public static IServiceCollection AddDaprServices(this IServiceCollection builder)
     {
         foreach (var serviceInfo in IDaprService.EnabledServices)
         {
@@ -187,6 +187,8 @@ public static partial class ExtensionMethods
 
             builder.Add(new ServiceDescriptor(interfaceType, implementationType, serviceLifetime));
         }
+
+        return builder;
     }
 
     /// <summary>
