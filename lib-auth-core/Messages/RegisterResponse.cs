@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Authorization.Messages;
 /// The response model for service API calls to `/authorization/register`.
 /// </summary>
 [JsonObject]
-public class RegisterResponse : ServiceResponse
+public class RegisterResponse : ApiResponse
 {
     [JsonProperty("access_token")]
     public string? AccessToken { get; set; }

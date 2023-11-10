@@ -1,6 +1,6 @@
 ﻿using BeyondImmersion.BannouService.Accounts.Messages;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Accounts.Tests;

@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Accounts.Messages;
 /// The request model for service API calls to `/accounts/get`.
 /// </summary>
 [JsonObject]
-public class GetAccountsRequest : ServiceRequest
+public class GetAccountsRequest : ApiRequest
 {
     /// <summary>
     /// Internal GUID of account to retrieve.

@@ -1,7 +1,6 @@
-﻿using BeyondImmersion.BannouService.Configuration;
-using System.Reflection;
+﻿using System.Reflection;
 
-namespace BeyondImmersion.BannouService.Services;
+namespace BeyondImmersion.BannouService.Testing;
 
 /// <summary>
 /// Service handler responsible for testing service APIs.
@@ -13,7 +12,7 @@ public sealed class TestingService : DaprService<TestingServiceConfiguration>
 
     public string? LastTestID { get; private set; }
     public string? LastTestService { get; private set; }
-    public ServiceRequest? LastTestRequest { get; private set; }
+    public ApiRequest? LastTestRequest { get; private set; }
 
     /// <summary>
     /// Resets all testing variables.
@@ -43,7 +42,7 @@ public sealed class TestingService : DaprService<TestingServiceConfiguration>
     /// Set last POST request object to test API.
     /// </summary>
     /// <param name="request"></param>
-    public void SetLastPostRequest(ServiceRequest? request)
+    public void SetLastPostRequest(ApiRequest? request)
         => LastTestRequest = request;
 
     public TestingService()

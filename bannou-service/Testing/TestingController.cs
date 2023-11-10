@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Collections;
+﻿using BeyondImmersion.BannouService.Testing.Messages;
+using Microsoft.AspNetCore.Mvc;
 
-namespace BeyondImmersion.BannouService.Controllers;
+namespace BeyondImmersion.BannouService.Testing;
 
 /// <summary>
 /// Test APIs- backed by the Testing service.
@@ -141,7 +141,7 @@ public class TestingController : BaseDaprController
             }).ToList();
 
             foreach (var errorMsg in errors)
-                Program.Logger.LogError($"MODEL VALIDATION ERROR! : {errorMsg}");
+                Program.Logger.LogError($"Model validation error: {errorMsg}");
 
             return BadRequest(new { Errors = errors });
         }

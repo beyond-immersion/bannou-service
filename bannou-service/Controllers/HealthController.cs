@@ -12,30 +12,22 @@ public class HealthController : ControllerBase
     [HttpGet]
     public Task<IActionResult> Get()
     {
-        switch (Program.AppRunningState)
+        return Program.AppRunningState switch
         {
-            case AppRunningStates.Running:
-                return Task.FromResult<IActionResult>(Ok("Healthy"));
-            case AppRunningStates.Starting:
-                return Task.FromResult<IActionResult>(StatusCode(503, "Service unavailable"));
-            default:
-            case AppRunningStates.Stopped:
-                return Task.FromResult<IActionResult>(StatusCode(500, "Service error"));
-        }
+            AppRunningStates.Running => Task.FromResult<IActionResult>(Ok("Healthy")),
+            AppRunningStates.Starting => Task.FromResult<IActionResult>(StatusCode(503, "Service unavailable")),
+            _ => Task.FromResult<IActionResult>(StatusCode(500, "Service error")),
+        };
     }
 
     [HttpPost]
     public Task<IActionResult> Post()
     {
-        switch (Program.AppRunningState)
+        return Program.AppRunningState switch
         {
-            case AppRunningStates.Running:
-                return Task.FromResult<IActionResult>(Ok("Healthy"));
-            case AppRunningStates.Starting:
-                return Task.FromResult<IActionResult>(StatusCode(503, "Service unavailable"));
-            default:
-            case AppRunningStates.Stopped:
-                return Task.FromResult<IActionResult>(StatusCode(500, "Service error"));
-        }
+            AppRunningStates.Running => Task.FromResult<IActionResult>(Ok("Healthy")),
+            AppRunningStates.Starting => Task.FromResult<IActionResult>(StatusCode(503, "Service unavailable")),
+            _ => Task.FromResult<IActionResult>(StatusCode(500, "Service error")),
+        };
     }
 }

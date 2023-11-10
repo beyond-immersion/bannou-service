@@ -4,10 +4,10 @@ using System.Text;
 namespace BeyondImmersion.BannouService.Controllers.Messages;
 
 /// <summary>
-/// The basic service request payload model.
+/// The basic API controller request payload model.
 /// </summary>
 [JsonObject]
-public class ServiceRequest : ServiceMessage
+public class ApiRequest : ApiMessage
 {
     private static HttpClient _httpClient;
     [JsonIgnore]
@@ -28,14 +28,14 @@ public class ServiceRequest : ServiceMessage
     }
 
     [JsonIgnore]
-    public ServiceResponse? Response { get; protected set; }
+    public ApiResponse? Response { get; protected set; }
 
     public virtual async Task<bool> ExecuteRequest<T>(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
-        where T : ServiceResponse, new()
+        where T : ApiResponse, new()
     {
-        if (typeof(ServiceRequest<T>).IsAssignableFrom(GetType()))
+        if (typeof(ApiRequest<T>).IsAssignableFrom(GetType()))
         {
-            if (this is not ServiceRequest<T> derivedRequest)
+            if (this is not ApiRequest<T> derivedRequest)
                 return false;
 
             // calling execute on the derived type will also parse and set
@@ -100,7 +100,7 @@ public class ServiceRequest : ServiceMessage
     }
 
     protected async Task<bool> ExecuteRequest_INTERNAL<T>(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
-        where T : ServiceResponse, new()
+        where T : ApiResponse, new()
     {
         try
         {
@@ -132,7 +132,7 @@ public class ServiceRequest : ServiceMessage
             var responseMsg = await HttpClient.SendAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
             if (responseMsg.IsSuccessStatusCode)
             {
-                if (typeof(T) == typeof(ServiceResponse))
+                if (typeof(T) == typeof(ApiResponse))
                 {
                     Response = new T()
                     {

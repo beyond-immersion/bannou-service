@@ -1,5 +1,4 @@
 ﻿using BeyondImmersion.BannouService.Services;
-using System.Net;
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -8,10 +7,5 @@ namespace BeyondImmersion.BannouService.Connect;
 /// </summary>
 public interface IConnectService : IDaprService
 {
-    public sealed class ConnectResult
-    {
-
-    }
-
-    (StatusCodes, ConnectResult?) Connect();
+    ServiceResponse<ConnectionData?> Connect();
 }

@@ -76,7 +76,6 @@ public class Program
 
             Console.WriteLine("Attempting to log in.");
 
-
             JObject? accessTokens = await LoginWithCredentials();
             if (accessTokens == null)
             {
@@ -205,48 +204,47 @@ public class Program
         var serverUri = new Uri($"wss://{Configuration.Connect_Endpoint}");
 
         // Initialize the client web socket instance
-        using (var webSocket = new ClientWebSocket())
+        using var webSocket = new ClientWebSocket();
+
+        // Adding the Authorization header
+        webSocket.Options.SetRequestHeader("Authorization", "Bearer " + sAccessToken);
+
+        try
         {
-            // Adding the Authorization header
-            webSocket.Options.SetRequestHeader("Authorization", "Bearer " + sAccessToken);
+            // Connect to the WebSocket server
+            await webSocket.ConnectAsync(serverUri, CancellationToken.None);
+            Console.WriteLine("Connected to the server");
 
-            try
-            {
-                // Connect to the WebSocket server
-                await webSocket.ConnectAsync(serverUri, CancellationToken.None);
-                Console.WriteLine("Connected to the server");
+            // Send a test message
+            var message = "Test message";
+            var encoded = Encoding.UTF8.GetBytes(message);
+            var buffer = new ArraySegment<byte>(encoded, 0, encoded.Length);
 
-                // Send a test message
-                var message = "Test message";
-                var encoded = Encoding.UTF8.GetBytes(message);
-                var buffer = new ArraySegment<byte>(encoded, 0, encoded.Length);
+            await webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+            Console.WriteLine("Sent message: " + message);
 
-                await webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
-                Console.WriteLine("Sent message: " + message);
+            // Receive response
+            var receivedBuffer = new ArraySegment<byte>(new byte[1024]);
+            var result = await webSocket.ReceiveAsync(receivedBuffer, CancellationToken.None);
 
-                // Receive response
-                var receivedBuffer = new ArraySegment<byte>(new byte[1024]);
-                var result = await webSocket.ReceiveAsync(receivedBuffer, CancellationToken.None);
+            if (receivedBuffer.Array == null)
+                throw new NullReferenceException();
 
-                if (receivedBuffer.Array == null)
-                    throw new NullReferenceException();
+            var receivedMessage = Encoding.UTF8.GetString(receivedBuffer.Array, 0, result.Count);
+            Console.WriteLine("Received message: " + receivedMessage);
 
-                var receivedMessage = Encoding.UTF8.GetString(receivedBuffer.Array, 0, result.Count);
-                Console.WriteLine("Received message: " + receivedMessage);
-
-                return true;
-            }
-            catch (WebSocketException wse)
-            {
-                Console.WriteLine("WebSocket exception: " + wse.Message);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Exception: " + ex.Message);
-            }
-
-            return false;
+            return true;
         }
+        catch (WebSocketException wse)
+        {
+            Console.WriteLine("WebSocket exception: " + wse.Message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Exception: " + ex.Message);
+        }
+
+        return false;
     }
 
     private static void GiveControlToTestConsole()

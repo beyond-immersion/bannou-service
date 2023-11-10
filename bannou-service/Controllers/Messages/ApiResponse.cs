@@ -3,17 +3,14 @@
 namespace BeyondImmersion.BannouService.Controllers.Messages;
 
 /// <summary>
-/// The base class for service responses.
+/// The base API controller response model.
 /// </summary>
 [JsonObject]
-public class ServiceResponse : ServiceMessage
+public class ApiResponse : ApiMessage
 {
     [JsonIgnore]
     public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.OK;
 
     [JsonIgnore]
     public string? Message { get; set; }
-
-    [JsonIgnore]
-    public string? Content { get; set; }
 }

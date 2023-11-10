@@ -22,10 +22,8 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
             throw new RedisConnectionException(ConnectionFailureType.UnableToConnect, "Could not connect to Redis.");
     }
 
-    public (StatusCodes, IConnectService.ConnectResult?) Connect()
+    public ServiceResponse<ConnectionData?> Connect()
     {
-        return (StatusCodes.Ok, null);
+        return new(StatusCodes.OK, null);
     }
-
-
 }

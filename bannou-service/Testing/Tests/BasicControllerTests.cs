@@ -1,6 +1,7 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using BeyondImmersion.BannouService.Testing.Messages;
+using Newtonsoft.Json.Linq;
 
-namespace BeyondImmersion.BannouService.Services.Tests;
+namespace BeyondImmersion.BannouService.Testing.Tests;
 
 /// <summary>
 /// Tests that only require the testing service itself.
@@ -150,7 +151,7 @@ public static class BasicControllerTests
 
         if (!await dataModel.ExecuteRequest(CONTROLLER_NAME, ACTION_NAME))
         {
-            Program.Logger.Log(LogLevel.Error, $"Failure to execute testing API with [{nameof(ServiceRequest.ExecuteRequest)}] helper method.");
+            Program.Logger.Log(LogLevel.Error, $"Failure to execute testing API with [{nameof(ApiRequest.ExecuteRequest)}] helper method.");
             return false;
         }
 

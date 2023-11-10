@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Accounts.Messages;
 /// The request model for service API calls to `/account/update`.
 /// </summary>
 [JsonObject]
-public class UpdateAccountRequest : ServiceRequest<UpdateAccountResponse>
+public class UpdateAccountRequest : ApiRequest<UpdateAccountResponse>
 {
     /// <summary>
     /// Unique internal-only account ID.

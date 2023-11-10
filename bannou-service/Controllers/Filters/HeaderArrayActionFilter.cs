@@ -20,7 +20,7 @@ public class HeaderArrayActionFilter : IActionFilter
 
             var serviceRequestParamsKVP = context.ActionArguments.Where(
                 t => t.Value != null &&
-                t.Value.GetType().IsAssignableTo(typeof(ServiceRequest)));
+                t.Value.GetType().IsAssignableTo(typeof(ApiRequest)));
 
             if (!serviceRequestParamsKVP.Any())
                 return;
@@ -28,7 +28,7 @@ public class HeaderArrayActionFilter : IActionFilter
             foreach (var serviceRequestParamKVP in serviceRequestParamsKVP)
             {
                 var parameterName = serviceRequestParamKVP.Key;
-                var requestModel = serviceRequestParamKVP.Value as ServiceRequest;
+                var requestModel = serviceRequestParamKVP.Value as ApiRequest;
                 if (requestModel == null)
                     continue;
 
@@ -68,7 +68,7 @@ public class HeaderArrayActionFilter : IActionFilter
                         continue;
 
                     // generate header array from property value
-                    var headersToSet = ServiceMessage.SetHeaderArrayPropertyToHeaders(propertyInfo, propertyValue, headerAttr);
+                    var headersToSet = ApiMessage.SetHeaderArrayPropertyToHeaders(propertyInfo, propertyValue, headerAttr);
                     foreach (var header in headersToSet)
                         context.HttpContext.Response.Headers.Add(header.Item1, header.Item2);
 

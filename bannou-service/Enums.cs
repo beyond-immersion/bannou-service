@@ -31,10 +31,11 @@ public enum HttpMethodTypes
 /// </summary>
 public enum StatusCodes
 {
-    Ok = 200,
+    OK = 200,
     Accepted = 202,
     BadRequest = 400,
-    Unauthorized = 403,
+    Forbidden = 403,
     NotFound = 404,
-    ServerError = 500
+    Conflict = 409,
+    InternalServerError = 500
 }

@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Authorization.Messages;
 /// The request model for service API calls to `/authorization/validate`.
 /// </summary>
 [JsonObject]
-public class ValidateTokenRequest : ServiceRequest
+public class ValidateTokenRequest : ApiRequest
 {
     [JsonProperty("token")]
     public string? Token { get; set; }

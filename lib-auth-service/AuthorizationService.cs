@@ -41,7 +41,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
     /// can be used in place of their password for
     /// logging in.
     /// </summary>
-    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> Register(string username, string password, string? email)
+    public async Task<ServiceResponse<AccessData?>> Register(string username, string password, string? email)
     {
         try
         {
@@ -54,7 +54,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (request.Response.StatusCode != HttpStatusCode.OK)
             {
                 Program.Logger.Log(LogLevel.Warning, $"Registration failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
-                return (request.Response.StatusCode, null);
+                return new(StatusCodes.Forbidden, null);
             }
 
             if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
@@ -67,14 +67,14 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
                 throw new NullReferenceException();
 
             if (!await StoreTokensInDatabase(request.Response.Username, request.Response.SecurityToken, refreshToken))
-                return (HttpStatusCode.InternalServerError, null);
+                return new(StatusCodes.InternalServerError, null);
 
-            return (HttpStatusCode.OK, new() { AccessToken = jwt, RefreshToken = refreshToken });
+            return new(StatusCodes.OK, new() { AccessToken = jwt, RefreshToken = refreshToken });
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client registration.");
-            return (HttpStatusCode.InternalServerError, null);
+            return new(StatusCodes.InternalServerError, null);
         }
     }
 
@@ -82,7 +82,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
     /// Client login with username and password.
     /// </summary>
     /// <exception cref="NullReferenceException"></exception>
-    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithCredentials(string username, string password)
+    public async Task<ServiceResponse<AccessData?>> LoginWithCredentials(string username, string password)
     {
         try
         {
@@ -99,7 +99,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (request.Response.StatusCode != HttpStatusCode.OK)
             {
                 Program.Logger.Log(LogLevel.Warning, $"Login failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
-                return (request.Response.StatusCode, null);
+                return new(StatusCodes.OK, null);
             }
 
             if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
@@ -108,7 +108,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (request.Response.IdentityClaims == null)
             {
                 Program.Logger.Log(LogLevel.Warning, "Login failed- user account identity claims are missing.");
-                return (HttpStatusCode.Forbidden, null);
+                return new(StatusCodes.Forbidden, null);
             }
 
             var secretSalt = request.Response.IdentityClaims.Where(t => t.StartsWith("SecretSalt:")).FirstOrDefault();
@@ -119,14 +119,14 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (string.IsNullOrWhiteSpace(secretSalt) || string.IsNullOrWhiteSpace(secretHash))
             {
                 Program.Logger.Log(LogLevel.Warning, "Login failed- couldn't find stored salt/hashed secret.");
-                return (HttpStatusCode.Forbidden, null);
+                return new(StatusCodes.Forbidden, null);
             }
 
             var hashedPassword = IAccountService.GenerateHashedSecret(password, secretSalt);
             if (!string.Equals(secretHash, hashedPassword))
             {
                 Program.Logger.Log(LogLevel.Warning, "Login failed- secret didn't match stored hash.");
-                return (HttpStatusCode.Forbidden, null);
+                return new(StatusCodes.Forbidden, null);
             }
 
             var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
@@ -136,14 +136,14 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
                 throw new NullReferenceException();
 
             if (!await StoreTokensInDatabase(request.Response.Username, request.Response.SecurityToken, refreshToken))
-                return (HttpStatusCode.InternalServerError, null);
+                return new(StatusCodes.InternalServerError, null);
 
-            return (HttpStatusCode.OK, new() { AccessToken = jwt, RefreshToken = refreshToken });
+            return new(StatusCodes.OK, new() { AccessToken = jwt, RefreshToken = refreshToken });
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client login.");
-            return (HttpStatusCode.InternalServerError, null);
+            return new(StatusCodes.InternalServerError, null);
         }
     }
 
@@ -151,7 +151,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
     /// Client login using a refresh token.
     /// </summary>
     /// <exception cref="NullReferenceException"></exception>
-    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithToken(string refreshToken)
+    public async Task<ServiceResponse<AccessData?>> LoginWithToken(string refreshToken)
     {
         try
         {
@@ -162,7 +162,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (string.IsNullOrWhiteSpace(username))
             {
                 Program.Logger.Log(LogLevel.Warning, "Login failed- client token didn't match stored token.");
-                return (HttpStatusCode.Forbidden, null);
+                return new(StatusCodes.Forbidden, null);
             }
 
             var request = new GetAccountRequest() { IncludeClaims = true, Username = username };
@@ -174,7 +174,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (request.Response.StatusCode != HttpStatusCode.OK)
             {
                 Program.Logger.Log(LogLevel.Warning, $"Login failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
-                return (request.Response.StatusCode, null);
+                return new(StatusCodes.Forbidden, null);
             }
 
             if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
@@ -187,14 +187,14 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
                 throw new NullReferenceException();
 
             if (!await StoreTokensInDatabase(request.Response.Username, request.Response.SecurityToken, newRefreshToken))
-                return (HttpStatusCode.InternalServerError, null);
+                return new(StatusCodes.InternalServerError, null);
 
-            return (HttpStatusCode.OK, new() { AccessToken = jwt, RefreshToken = newRefreshToken });
+            return new(StatusCodes.OK, new() { AccessToken = jwt, RefreshToken = newRefreshToken });
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client login.");
-            return (HttpStatusCode.InternalServerError, null);
+            return new(StatusCodes.InternalServerError, null);
         }
     }
 

@@ -1,13 +1,12 @@
-﻿using Newtonsoft.Json.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Controllers.Messages;
 
 /// <summary>
-/// The basic service message payload model.
+/// The basic API controller message payload model.
 /// </summary>
 [JsonObject]
-public abstract class ServiceMessage
+public abstract class ApiMessage
 {
     private static class SupportedBindings
     {

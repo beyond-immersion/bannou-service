@@ -50,7 +50,7 @@ public sealed class ConnectController : BaseDaprController
 
         };
 
-        return StatusCodes.Ok.ToActionResult(result);
+        return StatusCodes.OK.ToActionResult(result);
     }
 
     private static async Task EchoMessage(WebSocket webSocket)
