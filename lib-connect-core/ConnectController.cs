@@ -1,7 +1,6 @@
 ﻿using BeyondImmersion.BannouService.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
-using System.Net.WebSockets;
 using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -29,43 +28,23 @@ public sealed class ConnectController : BaseDaprController
     {
         Program.Logger.Log(LogLevel.Warning, "Connection request received from client.");
 
-        if (HttpContext.WebSockets.IsWebSocketRequest)
+        // hand off to service without processing-
+        // we don't know if it's doing websockets or TCP/UDP/whatever
+        var response = await Service.Connect(HttpContext);
+        switch (response.StatusCode)
         {
-            Program.Logger.Log(LogLevel.Warning, "Websocket connection request received from client.");
-
-            var authorization = HttpContext.Request.Headers.Authorization.FirstOrDefault();
-            var accessToken = authorization?.Remove(0, "Bearer ".Length);
-            if (string.IsNullOrWhiteSpace(accessToken))
+            case StatusCodes.OK:
+                HttpContext.Response.StatusCode = 200;
+                return;
+            case StatusCodes.BadRequest:
                 HttpContext.Response.StatusCode = 400;
-
-            using var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            await EchoMessage(websocket);
+                return;
+            case StatusCodes.Forbidden:
+                HttpContext.Response.StatusCode = 403;
+                return;
+            default:
+                HttpContext.Response.StatusCode = 500;
+                break;
         }
-
-        HttpContext.Response.StatusCode = 400;
-    }
-
-    private static async Task EchoMessage(WebSocket webSocket)
-    {
-        var buffer = new byte[1024 * 4];
-        var receiveResult = await webSocket.ReceiveAsync(
-            new ArraySegment<byte>(buffer), CancellationToken.None);
-
-        while (!receiveResult.CloseStatus.HasValue)
-        {
-            await webSocket.SendAsync(
-                new ArraySegment<byte>(buffer, 0, receiveResult.Count),
-                receiveResult.MessageType,
-                receiveResult.EndOfMessage,
-                CancellationToken.None);
-
-            receiveResult = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer), CancellationToken.None);
-        }
-
-        await webSocket.CloseAsync(
-            receiveResult.CloseStatus.Value,
-            receiveResult.CloseStatusDescription,
-            CancellationToken.None);
     }
 }

@@ -65,7 +65,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             secretSalt = secretSalt?["SecretSalt:".Length..];
             secretHash = secretHash?["SecretHash:".Length..];
 
-            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims, request.Response.AppClaims, request.Response.ScopeClaims);
             var refreshToken = CreateRefreshToken(request.Response.SecurityToken);
 
             if (string.IsNullOrWhiteSpace(jwt) || string.IsNullOrWhiteSpace(refreshToken))
@@ -134,7 +134,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
                 return new(StatusCodes.Forbidden, null);
             }
 
-            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims, request.Response.AppClaims, request.Response.ScopeClaims);
             var refreshToken = CreateRefreshToken(request.Response.SecurityToken);
 
             if (string.IsNullOrWhiteSpace(jwt) || string.IsNullOrWhiteSpace(refreshToken))
@@ -185,7 +185,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
                 throw new NullReferenceException();
 
-            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims, request.Response.AppClaims, request.Response.ScopeClaims);
             var newRefreshToken = CreateRefreshToken(request.Response.SecurityToken);
 
             if (string.IsNullOrWhiteSpace(jwt) || string.IsNullOrWhiteSpace(newRefreshToken))
@@ -331,7 +331,7 @@ return 1
     /// Creates a JWT from the given user account data.
     /// </summary>
     /// <exception cref="NullReferenceException"></exception>
-    private string? CreateJWT(int? ID, string? username, string? email, HashSet<string>? roleClaims)
+    private string? CreateJWT(int? ID, string? username, string? email, HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims)
     {
         if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key) || string.IsNullOrWhiteSpace(Configuration.Token_Private_Key))
             throw new NullReferenceException();
@@ -346,14 +346,19 @@ return 1
         if (ID != null)
             jwtBuilder.Id(ID.Value);
 
-        jwtBuilder.Issuer("AUTHORIZATION_SERVICE:" + Program.ServiceGUID);
+        jwtBuilder.Issuer("AUTHSERVICE:" + Program.ServiceGUID);
         jwtBuilder.IssuedAt(DateTime.Now);
         jwtBuilder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
         jwtBuilder.MustVerifySignature();
 
-        if (roleClaims != null)
-            foreach (var roleClaim in roleClaims)
-                jwtBuilder.AddClaim("role", roleClaim);
+        if (roleClaims != null && roleClaims.Any())
+            jwtBuilder.AddClaim("roles", roleClaims);
+
+        if (appClaims != null && appClaims.Any())
+            jwtBuilder.AddClaim("services", appClaims);
+
+        if (scopeClaims != null && scopeClaims.Any())
+            jwtBuilder.AddClaim("scopes", scopeClaims);
 
         var newJWT = jwtBuilder.Encode();
         return newJWT;

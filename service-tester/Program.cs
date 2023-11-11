@@ -1,6 +1,5 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Net.Http.Json;
 using System.Net.WebSockets;
 using System.Text;
 
@@ -8,17 +7,6 @@ namespace BeyondImmersion.ServiceTester;
 
 public class Program
 {
-    private static IConfigurationRoot _configurationRoot;
-    /// <summary>
-    /// Shared service configuration root.
-    /// Includes command line args.
-    /// </summary>
-    public static IConfigurationRoot ConfigurationRoot
-    {
-        get => _configurationRoot ??= IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
-        internal set => _configurationRoot = value;
-    }
-
     private static ClientConfiguration _configuration;
     /// <summary>
     /// Client configuration.
@@ -26,7 +14,18 @@ public class Program
     /// </summary>
     public static ClientConfiguration Configuration
     {
-        get => _configuration ??= ConfigurationRoot.Get<ClientConfiguration>() ?? new ClientConfiguration();
+        get
+        {
+            if (_configuration != null)
+                return _configuration;
+
+            var configBuilder = new ConfigurationBuilder().AddJsonFile("Config.json").AddEnvironmentVariables().AddCommandLine(Environment.GetCommandLineArgs());
+            var configRoot = configBuilder.Build();
+            _configuration = configRoot.Get<ClientConfiguration>() ?? new ClientConfiguration();
+
+            return _configuration;
+        }
+
         internal set => _configuration = value;
     }
 
@@ -71,8 +70,8 @@ public class Program
         try
         {
             // configuration is auto-created on first get, so this call creates the config too
-            if (Configuration == null || !(Configuration as IServiceConfiguration).HasRequired())
-                throw new InvalidOperationException("Client configuration missing.");
+            if (Configuration == null || !Configuration.HasRequired())
+                throw new InvalidOperationException("Required client configuration missing.");
 
             Console.WriteLine("Attempting to log in.");
 

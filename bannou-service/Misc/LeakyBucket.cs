@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace BeyondImmersion.BannouService.Collections;
+namespace BeyondImmersion.BannouService.Misc;
 
 public class LeakyBucket : ConcurrentQueue<DateTime>, IDisposable
 {
