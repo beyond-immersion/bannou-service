@@ -8,5 +8,5 @@ namespace BeyondImmersion.BannouService.Connect;
 /// </summary>
 public interface IConnectService : IDaprService
 {
-    Task<ServiceResponse> Connect(HttpContext requestContext);
+    Task<ServiceResponse> ConnectAsync(HttpContext requestContext);
 }

@@ -198,6 +198,20 @@ public class Program
         return responseObj;
     }
 
+    [Flags]
+    public enum MessageFlags : byte
+    {
+        None = 0,
+        AckRequested = 1 << 0,
+        HighPriority = 1 << 1,
+        Async = 1 << 2,
+        Encrypted = 1 << 3,
+        Compressed = 1 << 4,
+    };
+
+    private static List<string> ServiceNames { get; } = new List<string> { "accounts", "authorization", "connect", "leaderboards" };
+    private static Dictionary<uint, string> ServiceLookup { get; } = ServiceNames.ToDictionary(name => Crc32.ComputeCRC32(name), name => name);
+
     private static async Task<bool> EstablishWebsocketAndSendMessage()
     {
         var serverUri = new Uri($"ws://{Configuration.Connect_Endpoint}");

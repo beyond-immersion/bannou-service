@@ -19,7 +19,7 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
 {
     private string? _dbConnectionString;
 
-    async Task IDaprService.OnStart(CancellationToken cancellationToken)
+    async Task IDaprService.OnStartAsync(CancellationToken cancellationToken)
     {
         var dbHost = Configuration.Database_Host;
         var dbName = "accounts";

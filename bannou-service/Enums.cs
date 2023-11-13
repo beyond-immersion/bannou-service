@@ -37,5 +37,6 @@ public enum StatusCodes
     Forbidden = 403,
     NotFound = 404,
     Conflict = 409,
+    MessageTooLarge = 413,
     InternalServerError = 500
 }

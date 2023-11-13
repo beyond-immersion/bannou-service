@@ -30,7 +30,7 @@ public sealed class ConnectController : BaseDaprController
 
         // hand off to service without processing-
         // we don't know if it's doing websockets or TCP/UDP/whatever
-        var response = await Service.Connect(HttpContext);
+        var response = await Service.ConnectAsync(HttpContext);
         switch (response.StatusCode)
         {
             case StatusCodes.OK:

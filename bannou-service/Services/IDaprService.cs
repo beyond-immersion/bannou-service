@@ -207,17 +207,17 @@ public interface IDaprService
         private set => _networkModePresets = value;
     }
 
-    async Task OnStart(CancellationToken token)
+    async Task OnStartAsync(CancellationToken token)
     {
         await Task.CompletedTask;
     }
 
-    async Task OnRunning(CancellationToken token)
+    async Task OnRunningAsync(CancellationToken token)
     {
         await Task.CompletedTask;
     }
 
-    async Task OnShutdown()
+    async Task OnShutdownAsync()
     {
         await Task.CompletedTask;
     }

@@ -23,7 +23,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
 {
     private IConnectionMultiplexer? _redisConnection;
 
-    async Task IDaprService.OnStart(CancellationToken cancellationToken)
+    async Task IDaprService.OnStartAsync(CancellationToken cancellationToken)
     {
         if (Configuration.Redis_Connection_String == null)
             throw new NullReferenceException();
@@ -337,19 +337,20 @@ return 1
             throw new NullReferenceException();
 
         var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
-        if (!string.IsNullOrWhiteSpace(email))
-            jwtBuilder.AddHeader("email", email);
-
-        if (!string.IsNullOrWhiteSpace(username))
-            jwtBuilder.AddHeader("username", username);
+        jwtBuilder
+            .Issuer("AUTHSERVICE:" + Program.ServiceGUID)
+            .IssuedAt(DateTime.Now)
+            .ExpirationTime(DateTime.Now + TimeSpan.FromDays(1))
+            .MustVerifySignature();
 
         if (ID != null)
             jwtBuilder.Id(ID.Value);
 
-        jwtBuilder.Issuer("AUTHSERVICE:" + Program.ServiceGUID);
-        jwtBuilder.IssuedAt(DateTime.Now);
-        jwtBuilder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
-        jwtBuilder.MustVerifySignature();
+        if (!string.IsNullOrWhiteSpace(username))
+            jwtBuilder.AddHeader("username", username);
+
+        if (!string.IsNullOrWhiteSpace(email))
+            jwtBuilder.AddHeader("email", email);
 
         if (roleClaims != null && roleClaims.Any())
             jwtBuilder.AddClaim("roles", roleClaims);

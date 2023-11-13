@@ -222,13 +222,13 @@ public static partial class ExtensionMethods
 
             if (timeoutTime < 1)
             {
-                await serviceInst.OnStart(cancellationToken);
+                await serviceInst.OnStartAsync(cancellationToken);
                 continue;
             }
 
             try
             {
-                var startTask = serviceInst.OnStart(cancellationToken);
+                var startTask = serviceInst.OnStartAsync(cancellationToken);
                 var timeoutTask = Task.Delay(timeoutTime);
 
                 if (await Task.WhenAny(startTask, timeoutTask) == startTask)
@@ -268,7 +268,7 @@ public static partial class ExtensionMethods
         {
             var serviceInst = (IDaprService?)webApp.Services.GetService(serviceInfo.Item1);
             if (serviceInst != null)
-                await serviceInst.OnRunning(cancellationToken);
+                await serviceInst.OnRunningAsync(cancellationToken);
         }
     }
 
@@ -281,7 +281,7 @@ public static partial class ExtensionMethods
         {
             var serviceInst = (IDaprService?)webApp.Services.GetService(serviceInfo.Item1);
             if (serviceInst != null)
-                await serviceInst.OnShutdown();
+                await serviceInst.OnShutdownAsync();
         }
     }
 
