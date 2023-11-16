@@ -47,7 +47,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// then turned into an HTTP request to invoke
     /// on a given service via Dapr.
     /// </summary>
-    public struct RequestQueueItem
+    public struct ServiceRequestItem
     {
         public MessageFlags Flags { get; set; }
         public bool IsBinary { get; set; }
@@ -64,8 +64,9 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// responses (ushort values as data) can occur
     /// even to text-formatted requests, on failures.
     /// </summary>
-    public struct ResponseQueueItem
+    public struct ServiceResponseItem
     {
+        public bool IsEvent { get; set; }
         public bool IsBinary { get; set; }
         public uint MessageID { get; set; }
         public byte[] Data { get; set; }
@@ -77,7 +78,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// +1-2 for MessageChannel
     /// +4 for ServiceCode
     /// </summary>
-    private const uint MAX_PREFIX_BYTES = 11;
+    private const uint MAX_REQUEST_HEADER_BYTES = 11;
     private const byte RLE_FLAG = 0x80; // 1000 0000 in binary
 
     private HttpClient? _httpClient = null;
@@ -95,7 +96,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
 
             _httpClient = new HttpClient();
             _httpClient.Timeout = TimeSpan.FromSeconds(5);
-            _httpClient.BaseAddress = new Uri(GenerateServiceRequestUrl("bannou"));
+            _httpClient.BaseAddress = GenerateServiceRequestUrl("bannou");
 
             ClientDataLock.EnterReadLock();
             try
@@ -133,7 +134,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
 
             _fireAndForgetHttpClient = new HttpClient();
             _fireAndForgetHttpClient.Timeout = TimeSpan.FromMicroseconds(1);
-            _fireAndForgetHttpClient.BaseAddress = new Uri(GenerateServiceRequestUrl("bannou"));
+            _fireAndForgetHttpClient.BaseAddress = GenerateServiceRequestUrl("bannou");
 
             ClientDataLock.EnterReadLock();
             try
@@ -151,6 +152,29 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
         }
 
         private set { _fireAndForgetHttpClient = value; }
+    }
+
+    private static byte[]? _okMsgBytes = null;
+    /// <summary>
+    /// The binary payload (2 byte ushort) for a 200 OK.
+    /// 
+    /// Can be returned to the client via EnqueueResponse,
+    /// even if the original request wasn't binary.
+    /// </summary>
+    public static byte[] OKMsgBytes
+    {
+        get
+        {
+            if (_okMsgBytes != null)
+                return _okMsgBytes;
+
+            var tmp = BitConverter.GetBytes((ushort)200);
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(tmp);
+
+            _okMsgBytes = tmp;
+            return _okMsgBytes;
+        }
     }
 
     private static byte[]? _badRequestMsgBytes = null;
@@ -275,10 +299,10 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
 
     private static List<string> ServiceNames { get; set; } = new List<string> { "accounts", "authorization", "connect", "leaderboards" };
     private static Dictionary<uint, string> ServiceLookup { get; } = ServiceNames.ToDictionary(name => Misc.Crc32.ComputeCRC32(name), name => name);
-    private ConcurrentQueue<RequestQueueItem> PriorityMessageQueue { get; } = new();
-    private ConcurrentQueue<RequestQueueItem> MessageQueue { get; } = new();
-    private ConcurrentQueue<ResponseQueueItem> ResponseQueue { get; } = new();
-    private ConcurrentDictionary<ushort, ConcurrentQueue<RequestQueueItem>> ChannelMessageQueue { get; } = new();
+    private ConcurrentQueue<ServiceRequestItem> PriorityMessageQueue { get; } = new();
+    private ConcurrentQueue<ServiceRequestItem> MessageQueue { get; } = new();
+    private ConcurrentQueue<ServiceResponseItem> ResponseQueue { get; } = new();
+    private ConcurrentDictionary<ushort, ConcurrentQueue<ServiceRequestItem>> ChannelMessageQueue { get; } = new();
 
     private Task? ClientSendTask;
     private Task? ClientReceiveTask;
@@ -394,9 +418,25 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// Points to the Dapr sidecar endpoint, to forward on to other
     /// services in the network.
     /// </summary>
-    private static string GenerateServiceRequestUrl(string applicationName)
-        => $"http://127.0.0.1:80/v1.0/invoke/{applicationName}/method/";
+    private static Uri? GenerateServiceRequestUrl(string applicationName)
+    {
+        if (Uri.TryCreate($"http://127.0.0.1:80/v1.0/invoke/{applicationName}/method/", UriKind.Absolute, out var rootUri))
+            return rootUri;
 
+        return null;
+    }
+
+    /// <summary>
+    /// Validate JWT / access token, decode and return a lookup of all
+    /// claims that were in the token. Even if the original claim was
+    /// a single string value, it will be given back here as a single
+    /// item string list in the lookup, for uniformity.
+    /// 
+    /// jti = client ID
+    /// scopes = JSON array of client scope claims, if any exist
+    /// roles = JSON array of client role claims, if any exist
+    /// services = JSON array of client service access claims
+    /// </summary>
     private Dictionary<string, List<string>?>? ValidateAndDecodeToken(string token)
     {
         try
@@ -520,7 +560,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     private async Task ClientSendConnectionTask(WebSocket webSocket)
     {
         // configurable max message size
-        byte[] buffer = new byte[MAX_PREFIX_BYTES + Configuration.Max_Client_Request_Bytes];
+        byte[] buffer = new byte[MAX_REQUEST_HEADER_BYTES + Configuration.Max_Client_Request_Bytes];
         var offset = 0;
 
         WebSocketReceiveResult? receiveResult = null;
@@ -544,10 +584,10 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
                     Program.Logger.Log(LogLevel.Error, $"A message was received that was too large to process.");
 
                     var byteCounter = 0;
-                    var messageFlags = GetMessageFlags(buffer, ref byteCounter);
+                    MessageFlags messageFlags = GetMessageFlags(buffer, ref byteCounter);
                     var messageID = GetMessageID(buffer, ref byteCounter);
                     await WaitUntilEndOfMessage(receiveResult);
-                    EnqueueResponseToClient(true, messageID, TooLargeMsgBytes);
+                    EnqueueResponse(messageID, TooLargeMsgBytes);
                 }
                 else
                 {
@@ -558,7 +598,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
                     var messageChannel = GetMessageChannel(buffer, ref byteCounter);
                     var serviceCode = GetServiceCode(buffer, ref byteCounter);
                     var messageContent = new ByteArrayContent(buffer, byteCounter, offset - byteCounter);
-                    EnqueueRequestFromClient(messageFlags, messageID, serviceCode, messageChannel, receiveResult.MessageType == WebSocketMessageType.Binary, messageContent);
+                    EnqueueServiceRequest(messageFlags, messageID, serviceCode, messageChannel, messageContent, receiveResult.MessageType == WebSocketMessageType.Binary);
                 }
 
                 offset = 0;
@@ -573,7 +613,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
                     var messageFlags = GetMessageFlags(buffer, ref byteCounter);
                     var messageID = GetMessageID(buffer, ref byteCounter);
                     await WaitUntilEndOfMessage(receiveResult);
-                    EnqueueResponseToClient(true, messageID, BadRequestMsgBytes);
+                    EnqueueResponse(messageID, BadRequestMsgBytes);
                 }
                 catch (Exception innerExc)
                 {
@@ -731,11 +771,11 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// </summary>
     private async Task ChannelQueueProcessingTask(ushort channelKey)
     {
-        while (ChannelMessageQueue.TryGetValue(channelKey, out ConcurrentQueue<RequestQueueItem>? channelQueue) && channelQueue.TryDequeue(out var nextRequest))
+        while (ChannelMessageQueue.TryGetValue(channelKey, out ConcurrentQueue<ServiceRequestItem>? channelQueue) && channelQueue.TryDequeue(out var nextRequest))
         {
             if (!ServiceLookup.TryGetValue(nextRequest.ServiceCode, out var serviceName))
             {
-                EnqueueResponseToClient(true, nextRequest, ForbiddenMsgBytes);
+                EnqueueResponse(nextRequest, ForbiddenMsgBytes);
                 continue;
             }
 
@@ -752,20 +792,20 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
 
             if (!hasServiceAccess)
             {
-                EnqueueResponseToClient(true, nextRequest, ForbiddenMsgBytes);
+                EnqueueResponse(nextRequest, ForbiddenMsgBytes);
                 continue;
             }
 
             var fireAndForget = nextRequest.Flags.HasFlag(MessageFlags.FireAndForget);
             if (fireAndForget)
             {
-                await OutgoingFireAndForgetServiceRequestTask(serviceName, nextRequest.MessageID, nextRequest.Content);
+                await FireAndForgetServiceRequestTask(serviceName, nextRequest);
                 continue;
             }
 
             // channel queues are processed sequentially
             // we wait for each response before continuing
-            await OutgoingServiceRequestTask(serviceName, nextRequest.Flags, nextRequest.MessageID, nextRequest.Content);
+            await ServiceRequestTask(serviceName, nextRequest);
         }
     }
 
@@ -776,21 +816,23 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// </summary>
     private async Task RequestQueueProcessingTask()
     {
+        await Task.CompletedTask;
+
         while (true)
         {
-            while (PriorityMessageQueue.TryDequeue(out RequestQueueItem priorityRequest))
+            while (PriorityMessageQueue.TryDequeue(out ServiceRequestItem priorityRequest))
                 HandleNextRequest(priorityRequest);
 
-            if (!MessageQueue.TryDequeue(out RequestQueueItem normalRequest))
+            if (!MessageQueue.TryDequeue(out ServiceRequestItem normalRequest))
                 break;
 
             HandleNextRequest(normalRequest);
 
-            void HandleNextRequest(RequestQueueItem nextRequest)
+            void HandleNextRequest(ServiceRequestItem nextRequest)
             {
                 if (!ServiceLookup.TryGetValue(nextRequest.ServiceCode, out var serviceName))
                 {
-                    EnqueueResponseToClient(true, nextRequest, ForbiddenMsgBytes);
+                    EnqueueResponse(nextRequest, ForbiddenMsgBytes);
                     return;
                 }
 
@@ -807,21 +849,21 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
 
                 if (!hasServiceAccess)
                 {
-                    EnqueueResponseToClient(true, nextRequest, ForbiddenMsgBytes);
+                    EnqueueResponse(nextRequest, ForbiddenMsgBytes);
                     return;
                 }
 
                 var fireAndForget = nextRequest.Flags.HasFlag(MessageFlags.FireAndForget);
                 if (fireAndForget)
                 {
-                    _ = Task.Run(() => OutgoingFireAndForgetServiceRequestTask(serviceName, nextRequest.MessageID, nextRequest.Content),
+                    _ = Task.Run(() => FireAndForgetServiceRequestTask(serviceName, nextRequest),
                         Program.ShutdownCancellationTokenSource.Token);
 
                     return;
                 }
 
                 // implement maximum number of outgoing requests/tasks?
-                _ = Task.Run(() => OutgoingServiceRequestTask(serviceName, nextRequest.Flags, nextRequest.MessageID, nextRequest.Content),
+                _ = Task.Run(() => ServiceRequestTask(serviceName, nextRequest),
                     Program.ShutdownCancellationTokenSource.Token);
             }
         }
@@ -832,19 +874,31 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// and then enqueue that response into the ResponseQueue appropriately, to be handled by the
     /// ClientReceiveConnectionTask when it's timely to send it down to the client.
     /// </summary>
-    private async Task OutgoingServiceRequestTask(string serviceName, MessageFlags messageFlags, uint messageID, HttpContent content)
+    private async Task ServiceRequestTask(string serviceName, ServiceRequestItem request)
     {
         try
         {
-            var coordinatorService = Program.Configuration.Network_Mode ?? "bannou";
-            var requestUrl = $"{serviceName}/action";
+            var serviceAction = new Uri($"/{serviceName}/action", UriKind.Relative);
+            var requestMsg = new HttpRequestMessage(HttpMethod.Post, serviceAction);
+            if (!request.IsBinary)
+                requestMsg.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
-            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, coordinatorService, requestUrl, content);
+            requestMsg.Content = request.Content;
 
             var serviceResponse = await HttpClient.SendAsync(requestMsg, Program.ShutdownCancellationTokenSource.Token);
             if (serviceResponse.IsSuccessStatusCode)
             {
+                if (serviceResponse.Content != null)
+                {
+                    var response = await serviceResponse.Content.ReadAsByteArrayAsync();
+                    if (response != null)
+                    {
+                        EnqueueResponse(request, response);
+                        return;
+                    }
+                }
 
+                EnqueueResponse(request, OKMsgBytes, true);
             }
         }
         catch (HttpRequestException exc)
@@ -854,27 +908,27 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
             {
                 case System.Net.HttpStatusCode.Unauthorized:
                 case System.Net.HttpStatusCode.Forbidden:
-                    ResponseQueue.EnqueueForbiddenResponse(messageID);
+                    EnqueueResponse(request.MessageID, ForbiddenMsgBytes);
                     break;
                 case System.Net.HttpStatusCode.NotFound:
                     if (Configuration.Obfuscate_Not_Found_Response)
-                        ResponseQueue.EnqueueForbiddenResponse(messageID);
+                        EnqueueResponse(request.MessageID, ForbiddenMsgBytes);
                     else
-                        ResponseQueue.EnqueueNotFoundResponse(messageID);
+                        EnqueueResponse(request.MessageID, NotFoundMsgBytes);
                     break;
                 case System.Net.HttpStatusCode.BadRequest:
-                    ResponseQueue.EnqueueBadRequestResponse(messageID);
+                    EnqueueResponse(request.MessageID, BadRequestMsgBytes);
                     break;
                 case System.Net.HttpStatusCode.InternalServerError:
                 default:
-                    ResponseQueue.EnqueueServerErrorResponse(messageID);
+                    EnqueueResponse(request.MessageID, ServerErrorMsgBytes);
                     break;
             }
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred executing action API method on service [{serviceName}].");
-            ResponseQueue.EnqueueServerErrorResponse(messageID);
+            EnqueueResponse(request.MessageID, ServerErrorMsgBytes);
         }
     }
 
@@ -886,14 +940,16 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// the task normally here, catch all exceptions, and avoid wasting any resources on the
     /// task being in the background and eventually timing out anyways.
     /// </summary>
-    private async Task OutgoingFireAndForgetServiceRequestTask(string serviceName, uint messageID, HttpContent content)
+    private async Task FireAndForgetServiceRequestTask(string serviceName, ServiceRequestItem request)
     {
         try
         {
-            var coordinatorService = Program.Configuration.Network_Mode ?? "bannou";
-            var requestUrl = $"{serviceName}/action";
+            var serviceAction = new Uri($"/{serviceName}/action", UriKind.Relative);
+            var requestMsg = new HttpRequestMessage(HttpMethod.Post, serviceAction);
+            if (!request.IsBinary)
+                requestMsg.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
-            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, coordinatorService, requestUrl, content);
+            requestMsg.Content = request.Content;
 
             _ = await FireAndForgetHttpClient.SendAsync(requestMsg, Program.ShutdownCancellationTokenSource.Token);
         }
@@ -912,10 +968,10 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// All requests can receive binary status code responses, even
     /// if the original request was text.
     /// </summary>
-    private void EnqueueRequestFromClient(MessageFlags messageFlags, uint messageID, uint serviceCode, ushort messageChannel, bool isBinary, ByteArrayContent messageContent)
+    private void EnqueueServiceRequest(MessageFlags messageFlags, uint messageID, uint serviceCode, ushort messageChannel, ByteArrayContent messageContent, bool isBinary)
     {
         var queueWasEmpty = false;
-        var newRequestQueueItem = new RequestQueueItem()
+        var newRequestQueueItem = new ServiceRequestItem()
         {
             IsBinary = isBinary,
             Flags = messageFlags,
@@ -930,7 +986,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
             _ = ChannelMessageQueue.AddOrUpdate(messageChannel,
                 (channel) =>
                 {
-                    var newRequestQueue = new ConcurrentQueue<RequestQueueItem>();
+                    var newRequestQueue = new ConcurrentQueue<ServiceRequestItem>();
                     newRequestQueue.Enqueue(newRequestQueueItem);
 
                     // start processing task
@@ -979,12 +1035,13 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// Any more information will require deserializing the event on the client side,
     /// which will depend on if it's binary or text, etc.
     /// </summary>
-    private bool EnqueueEventToClient(bool isBinary, byte[] content)
+    private bool EnqueueEvent(byte[] content, bool isBinary = true)
     {
         try
         {
             ResponseQueue.Enqueue(new()
             {
+                IsEvent = true,
                 IsBinary = isBinary,
                 MessageID = uint.MaxValue,
                 Data = content,
@@ -1004,10 +1061,11 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// Enqueue a response that should be fed back to the client for a given message.
     /// Uses the messageID, and requires specifying the binary/text content type.
     /// 
-    /// This allows for responses where the original request is lost for some reason-
-    /// otherwise, use the version that takes the request object as a parameter.
+    /// This method allows for responses where the original request is lost, or before
+    /// the request item is create, otherwise, use the version that takes the request
+    /// as a parameter.
     /// </summary>
-    private bool EnqueueResponseToClient(bool isBinary, uint messageID, byte[] content)
+    private bool EnqueueResponse(uint messageID, byte[] content, bool isBinary = true)
     {
         try
         {
@@ -1034,7 +1092,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// 
     /// Can override the IsBinary of the request, if sending back a binary error code.
     /// </summary>
-    private bool EnqueueResponseToClient(bool? isBinary, RequestQueueItem requestItem, byte[] content)
+    private bool EnqueueResponse(ServiceRequestItem requestItem, byte[] content, bool? isBinary = null)
     {
         try
         {
@@ -1050,45 +1108,6 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred enqueuing a response to be sent back to the client.");
-        }
-
-        return false;
-    }
-}
-
-internal static class ExtensionMethods
-{
-    public static bool EnqueueBadRequestResponse(this ConcurrentQueue<ConnectService.ResponseQueueItem> responseQueue, uint messageID)
-        => EnqueueResponse(responseQueue, messageID, "Bad Request", ConnectService.BadRequestMsgBytes);
-
-    public static bool EnqueueForbiddenResponse(this ConcurrentQueue<ConnectService.ResponseQueueItem> responseQueue, uint messageID)
-        => EnqueueResponse(responseQueue, messageID, "Forbidden", ConnectService.ForbiddenMsgBytes);
-
-    public static bool EnqueueNotFoundResponse(this ConcurrentQueue<ConnectService.ResponseQueueItem> responseQueue, uint messageID)
-        => EnqueueResponse(responseQueue, messageID, "Not Found", ConnectService.NotFoundMsgBytes);
-
-    public static bool EnqueueTooLargeResponse(this ConcurrentQueue<ConnectService.ResponseQueueItem> responseQueue, uint messageID)
-        => EnqueueResponse(responseQueue, messageID, "Message Too Large", ConnectService.TooLargeMsgBytes);
-
-    public static bool EnqueueServerErrorResponse(this ConcurrentQueue<ConnectService.ResponseQueueItem> responseQueue, uint messageID)
-        => EnqueueResponse(responseQueue, messageID, "Internal Server Error", ConnectService.ServerErrorMsgBytes);
-
-    private static bool EnqueueResponse(ConcurrentQueue<ConnectService.ResponseQueueItem> responseQueue, uint messageID, string responseLabel, byte[] responseContent)
-    {
-        try
-        {
-            responseQueue.Enqueue(new()
-            {
-                IsBinary = true,
-                Data = responseContent,
-                MessageID = messageID
-            });
-
-            return true;
-        }
-        catch (Exception exc)
-        {
-            Program.Logger.Log(LogLevel.Error, exc, $"An exception has occurred enqueuing a [{responseLabel}] response.");
         }
 
         return false;
