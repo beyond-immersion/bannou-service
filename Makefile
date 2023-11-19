@@ -6,6 +6,10 @@ up:
 	if [ ! -f .env ]; then touch .env; fi
 	docker-compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.ingress.yml --project-name cl up -d
 
+ci_up:
+	if [ ! -f .env ]; then touch .env; fi
+	docker-compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.ci.yml -f provisioning/docker-compose.ingress.yml --project-name cl up -d
+
 elk_up:
 	if [ ! -f .env ]; then touch .env; fi
 	docker-compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.elk.yml --project-name cl up -d

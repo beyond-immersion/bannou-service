@@ -1,12 +1,5 @@
 #!/bin/bash
 
-set -e
-
-for i in {1..5}; do
-    apt-get update && apt-get install -y curl && break || sleep 15
-done
-echo "tools installed"
-
 ENDPOINT="https://127.0.0.1/health"
 MAX_RETRIES=60
 RETRY_TIME=5
