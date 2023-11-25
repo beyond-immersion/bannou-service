@@ -113,7 +113,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     {
         public MessageFlags Flags { get; set; }
         public Guid MessageID { get; set; }
-        public uint MessageChannel { get; set; }
+        public ushort MessageChannel { get; set; }
         public Guid ServiceID { get; set; }
 
         public byte[] Content { get; set; }
@@ -215,13 +215,13 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     private ConcurrentQueue<ServiceRequestItem> Inbox { get; } = new();
     private ConcurrentQueue<ServiceRequestItem> Outbox { get; } = new();
     private ConcurrentQueue<ServiceRequestItem> PriorityOutbox { get; } = new();
-    private ConcurrentDictionary<uint, ConcurrentQueue<ServiceRequestItem>> ChannelInbox { get; } = new();
-    private ConcurrentDictionary<uint, ConcurrentQueue<ServiceRequestItem>> ChannelOutbox { get; } = new();
+    private ConcurrentDictionary<ushort, ConcurrentQueue<ServiceRequestItem>> ChannelInbox { get; } = new();
+    private ConcurrentDictionary<ushort, ConcurrentQueue<ServiceRequestItem>> ChannelOutbox { get; } = new();
     private ConcurrentDictionary<Guid, Action<ServiceResponseItem>> NotifyResponse { get; } = new();
     private ConcurrentQueue<ServiceResponseItem> ResponseInbox { get; } = new();
     private ConcurrentQueue<ServiceResponseItem> ResponseOutbox { get; } = new();
 
-    private uint? ClientID;
+    private Guid? ClientID;
     private List<string>? ClientRoleClaims;
     private List<string>? ClientServiceClaims;
     private List<string>? ClientScopeClaims;
@@ -293,7 +293,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
             {
                 // get client ID
                 if (clientClaims.TryGetValue("jti", out var ClientIDStr))
-                    if (uint.TryParse(ClientIDStr?.FirstOrDefault(), out var parsedClientID))
+                    if (Guid.TryParse(ClientIDStr?.FirstOrDefault(), out var parsedClientID))
                         ClientID = parsedClientID;
 
                 // the roles and scopes the client has access to
@@ -432,9 +432,9 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// Points to the Dapr sidecar endpoint, to forward on to other
     /// services in the network.
     /// </summary>
-    internal static Uri? GenerateServiceRequestUrl(string applicationName)
+    internal static Uri? GenerateServiceRequestUrl(string appName)
     {
-        if (Uri.TryCreate($"http://127.0.0.1:80/v1.0/invoke/{applicationName}/method/", UriKind.Absolute, out var rootUri))
+        if (Uri.TryCreate($"http://127.0.0.1:80/v1.0/invoke/{appName}/method/", UriKind.Absolute, out var rootUri))
             return rootUri;
 
         return null;
@@ -443,10 +443,10 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// <summary>
     /// Converts a byte from the provided byte array into MessageFlags.
     /// </summary>
-    internal static MessageFlags GetMessageFlags(byte[] bytes, ref int byteCounter)
+    internal static MessageFlags GetMessageFlags(byte[] buffer, ref int byteOffset)
     {
-        var messageFlags = (MessageFlags)bytes[byteCounter];
-        byteCounter += 1;
+        var messageFlags = (MessageFlags)buffer[byteOffset];
+        byteOffset += 1;
 
         return messageFlags;
     }
@@ -454,10 +454,10 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// <summary>
     /// Converts a byte from the provided byte array into a ResponseCode.
     /// </summary>
-    internal static ResponseCodes GetMessageResponseCode(byte[] bytes, ref int byteCounter)
+    internal static ResponseCodes GetMessageResponseCode(byte[] buffer, ref int byteOffset)
     {
-        var responseCode = (ResponseCodes)bytes[byteCounter];
-        byteCounter += 1;
+        var responseCode = (ResponseCodes)buffer[byteOffset];
+        byteOffset += 1;
 
         return responseCode;
     }
@@ -466,14 +466,14 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// Converts the next 16 bytes from the provided byte array into a GUID.
     /// Will reverse the byte order for little-endian systems, for consistency.
     /// </summary>
-    internal static Guid GetServiceID(byte[] bytes, ref int byteCounter)
+    internal static Guid GetServiceID(byte[] buffer, ref int byteOffset)
     {
         if (BitConverter.IsLittleEndian)
-            Array.Reverse(bytes, byteCounter, 16);
+            Array.Reverse(buffer, byteOffset, 16);
 
-        var guidSpan = new Span<byte>(bytes, byteCounter, 16);
+        var guidSpan = new Span<byte>(buffer, byteOffset, 16);
         Guid serviceID = System.Runtime.InteropServices.MemoryMarshal.Read<Guid>(guidSpan);
-        byteCounter += 16;
+        byteOffset += 16;
 
         return serviceID;
     }
@@ -482,14 +482,14 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// Converts the next 16 bytes from the provided byte array into a GUID.
     /// Will reverse the byte order for little-endian systems, for consistency.
     /// </summary>
-    internal static Guid GetMessageID(byte[] bytes, ref int byteCounter)
+    internal static Guid GetMessageID(byte[] buffer, ref int byteOffset)
     {
         if (BitConverter.IsLittleEndian)
-            Array.Reverse(bytes, byteCounter, 16);
+            Array.Reverse(buffer, byteOffset, 16);
 
-        var guidSpan = new Span<byte>(bytes, byteCounter, 16);
+        var guidSpan = new Span<byte>(buffer, byteOffset, 16);
         Guid resultGuid = System.Runtime.InteropServices.MemoryMarshal.Read<Guid>(guidSpan);
-        byteCounter += 16;
+        byteOffset += 16;
 
         return resultGuid;
     }
@@ -498,13 +498,13 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// Converts the next 1-2 bytes from the provided byte array into a ushort.
     /// Will reverse the byte order for little-endian systems, for consistency.
     /// </summary>
-    internal static ushort GetMessageChannel(byte[] bytes, ref int byteCounter)
+    internal static ushort GetMessageChannel(byte[] buffer, ref int byteOffset)
     {
         if (BitConverter.IsLittleEndian)
-            Array.Reverse(bytes, byteCounter, 2);
+            Array.Reverse(buffer, byteOffset, 2);
 
-        var messageChannel = BitConverter.ToUInt16(bytes, byteCounter);
-        byteCounter += 2;
+        var messageChannel = BitConverter.ToUInt16(buffer, byteOffset);
+        byteOffset += 2;
 
         return messageChannel;
     }
@@ -512,13 +512,13 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// <summary>
     /// Returns the remaining bytes as a new byte array.
     /// </summary>
-    internal static byte[]? GetMessageContent(byte[] bytes, ref int byteCounter, int totalBytes)
+    internal static byte[]? GetMessageContent(byte[] buffer, ref int byteOffset, int contentByteCount)
     {
-        if (totalBytes - byteCounter == 0)
+        if (contentByteCount == 0)
             return null;
 
-        var contentSpan = new Span<byte>(bytes, byteCounter, totalBytes - byteCounter);
-        byteCounter = totalBytes;
+        var contentSpan = new Span<byte>(buffer, byteOffset, contentByteCount);
+        byteOffset += contentByteCount;
 
         return contentSpan.ToArray();
     }
@@ -579,7 +579,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
                     {
                         // message is an RPC response
                         var responseCode = GetMessageResponseCode(buffer, ref byteCounter);
-                        var messageContent = GetMessageContent(buffer, ref byteCounter, offset);
+                        var messageContent = GetMessageContent(buffer, ref byteCounter, offset - byteCounter);
                         EnqueueResponseFromClient(messageFlags, messageID, responseCode, messageContent);
                     }
                     else
@@ -587,7 +587,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
                         // message is an RPC request or event
                         var messageChannel = GetMessageChannel(buffer, ref byteCounter);
                         var serviceID = GetServiceID(buffer, ref byteCounter);
-                        var messageContent = GetMessageContent(buffer, ref byteCounter, offset) ?? throw new NullReferenceException();
+                        var messageContent = GetMessageContent(buffer, ref byteCounter, offset - byteCounter) ?? throw new NullReferenceException();
                         EnqueueRequestFromClient(messageFlags, messageID, messageChannel, serviceID, messageContent);
                     }
                 }
@@ -716,7 +716,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// <summary>
     /// 
     /// </summary>
-    internal static byte[] CreateRPCMessageBytes(MessageFlags flags, Guid messageID, uint channel, Guid serviceID, byte[] messageContent)
+    internal static byte[] CreateRPCMessageBytes(MessageFlags flags, Guid messageID, ushort channel, Guid serviceID, byte[] messageContent)
     {
         var messageIDBytes = messageID.ToByteArray();
         var channelBytes = BitConverter.GetBytes(channel);
