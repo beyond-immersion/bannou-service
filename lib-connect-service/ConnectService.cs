@@ -518,6 +518,8 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
             return null;
 
         var contentSpan = new Span<byte>(bytes, byteCounter, totalBytes - byteCounter);
+        byteCounter = totalBytes;
+
         return contentSpan.ToArray();
     }
 
@@ -701,11 +703,12 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
         messageHeader[^1] = (byte)responseCode;
         Buffer.BlockCopy(messageIDBytes, 0, messageHeader, 1, messageIDBytes.Length);
 
-        var messageBytes = new byte[messageHeader.Length + responseContent?.Length ?? 0];
-        Buffer.BlockCopy(messageHeader, 0, messageBytes, 0, messageHeader.Length);
+        if (responseContent == null || responseContent.Length == 0)
+            return messageHeader;
 
-        if (responseContent != null)
-            Buffer.BlockCopy(responseContent, 0, messageBytes, messageHeader.Length, responseContent.Length);
+        var messageBytes = new byte[messageHeader.Length + responseContent.Length];
+        Buffer.BlockCopy(messageHeader, 0, messageBytes, 0, messageHeader.Length);
+        Buffer.BlockCopy(responseContent, 0, messageBytes, messageHeader.Length, responseContent.Length);
 
         return messageBytes;
     }

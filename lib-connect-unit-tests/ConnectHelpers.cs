@@ -5,6 +5,8 @@ using JWT;
 using System.Security.Cryptography;
 using System.Text;
 using Xunit.Abstractions;
+using Newtonsoft.Json.Linq;
+using System;
 
 namespace BeyondImmersion.BannouService.Connect.UnitTests;
 
@@ -168,7 +170,38 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
     [Fact]
     public void GetMessageContent()
     {
-        //ConnectService.GetMessageContent();
+        var contentObj = new JObject() { ["Test"] = true };
+        var contentStr = contentObj.ToString(Newtonsoft.Json.Formatting.None);
+        var contentBytes = Encoding.UTF8.GetBytes(contentStr);
+
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(contentBytes);
+
+        var messageBytes = new byte[200];
+
+        var byteCounter = 50;
+        contentBytes.CopyTo(messageBytes, 50);
+        var messageContent = ConnectService.GetMessageContent(messageBytes, ref byteCounter, 50 + contentBytes.Length);
+        Assert.NotNull(messageContent);
+
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(messageContent);
+
+        var messageContentStr = Encoding.UTF8.GetString(messageContent);
+        Assert.Equal(messageContentStr, contentStr);
+        Assert.Equal(50 + contentBytes.Length, byteCounter);
+
+        byteCounter = 10;
+        contentBytes.CopyTo(messageBytes, 10);
+        messageContent = ConnectService.GetMessageContent(messageBytes, ref byteCounter, 10 + contentBytes.Length);
+        Assert.NotNull(messageContent);
+
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(messageContent);
+
+        messageContentStr = Encoding.UTF8.GetString(messageContent);
+        Assert.Equal(messageContentStr, contentStr);
+        Assert.Equal(10 + contentBytes.Length, byteCounter);
     }
 
     [Fact]
@@ -199,7 +232,62 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
     [Fact]
     public void CreateResponseMessageBytes()
     {
-        //ConnectService.CreateResponseMessageBytes();
+        var messageFlags = ConnectService.MessageFlags.None;
+        var messageID = Guid.NewGuid();
+        var responseCode = ConnectService.ResponseCodes.OK;
+        var responseMessage = ConnectService.CreateResponseMessageBytes(messageFlags, messageID, responseCode);
+        Assert.NotNull(responseMessage);
+        Assert.Equal(18, responseMessage.Length);
+
+        var parsedMessageFlags = (ConnectService.MessageFlags)responseMessage[0];
+        Assert.Equal(messageFlags, parsedMessageFlags);
+
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(responseMessage, 1, 16);
+
+        var parsedMessageID = new Guid(new Span<byte>(responseMessage, 1, 16));
+        Assert.Equal(messageID, parsedMessageID);
+
+        var parsedResponseCode = (ConnectService.ResponseCodes)responseMessage[17];
+        Assert.Equal(responseCode, parsedResponseCode);
+    }
+
+    [Fact]
+    public void CreateResponseMessageBytes_WithContent()
+    {
+        var contentObj = new JObject() { ["Test"] = true };
+        var contentStr = contentObj.ToString(Newtonsoft.Json.Formatting.None);
+        var contentBytes = Encoding.UTF8.GetBytes(contentStr);
+
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(contentBytes);
+
+        var messageFlags = ConnectService.MessageFlags.None;
+        var messageID = Guid.NewGuid();
+        var responseCode = ConnectService.ResponseCodes.OK;
+        var responseMessage = ConnectService.CreateResponseMessageBytes(messageFlags, messageID, responseCode, contentBytes);
+        Assert.NotNull(responseMessage);
+        Assert.Equal(contentBytes.Length + 18, responseMessage.Length);
+
+        var parsedMessageFlags = (ConnectService.MessageFlags)responseMessage[0];
+        Assert.Equal(messageFlags, parsedMessageFlags);
+
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(responseMessage, 1, 16);
+
+        var parsedMessageID = new Guid(new Span<byte>(responseMessage, 1, 16));
+        Assert.Equal(messageID, parsedMessageID);
+
+        var parsedResponseCode = (ConnectService.ResponseCodes)responseMessage[17];
+        Assert.Equal(responseCode, parsedResponseCode);
+
+        var parsedContentBytes = new Span<byte>(responseMessage, 18, responseMessage.Length - 18).ToArray();
+
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(parsedContentBytes);
+
+        var messageContentStr = Encoding.UTF8.GetString(parsedContentBytes);
+        Assert.Equal(contentStr, messageContentStr);
     }
 
     [Fact]
