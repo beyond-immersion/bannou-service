@@ -4,9 +4,10 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<RootNamespace>BeyondImmersion.BannouService.UnitTests</RootNamespace>
-	<IsPackable>false</IsPackable>
-	<Configurations>Debug;Release;Development</Configurations>
+    <RootNamespace>BeyondImmersion.BannouService.UnitTests</RootNamespace>
+
+    <IsPackable>false</IsPackable>
+    <Configurations>Debug;Release;Development</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

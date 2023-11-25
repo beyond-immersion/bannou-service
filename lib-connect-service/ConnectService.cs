@@ -10,9 +10,11 @@ using Newtonsoft.Json.Linq;
 using StackExchange.Redis;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 
+[assembly: InternalsVisibleTo("lib-connect-unit-tests")]
 namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
@@ -21,102 +23,142 @@ namespace BeyondImmersion.BannouService.Connect;
 [DaprService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Transient)]
 public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, IConnectService
 {
-    private static IConnectionMultiplexer? _redisConnection;
-
     /// <summary>
-    /// The very first byte of any request from the client.
-    /// Indicates how the message content should be treated.
+    /// The very first byte of any request or response message.
+    /// Indicates how the message content should be treated, and
+    /// how the message itself should be routed through the system.
     /// </summary>
     [Flags]
     public enum MessageFlags : byte
     {
+        /// <summary>
+        /// The "default message type" is a text/JSON request, being
+        /// made to a service endpoint (rather than to another client),
+        /// unencrypted, uncompressed, standard priority, and expecting
+        /// a response from the service.
+        /// 
+        /// With these flags, the next "ServiceID" section of the header
+        /// would be referring to the Dapr service app to pass the message
+        /// along to, after converting it to an HTTP request.
+        /// 
+        /// The "MessageID" section will also be enterring the system for
+        /// the first time- the same ID will need to be handed back to the
+        /// client for the response, so they can associate it back to the
+        /// request themselves if needed.
+        /// </summary>
         None = 0,
-        FireAndForget = 1 << 0,
-        HighPriority = 1 << 1,
-        Encrypted = 1 << 2,
-        Compressed = 1 << 3,
-        // unused = 1 << 4,
-        // unused = 1 << 5,
-        // unused = 1 << 6,
-        // unused = 1 << 7
+        /// <summary>
+        /// Message payload is binary data.
+        /// Default/off indicates Text/JSON.
+        /// </summary>
+        Binary = 1 << 0,
+        /// <summary>
+        /// Message payload is encrypted.
+        /// </summary>
+        Encrypted = 1 << 1,
+        /// <summary>
+        /// Message payload is compressed.
+        /// </summary>
+        Compressed = 1 << 2,
+        /// <summary>
+        /// Delivery at high priority- skip to the front of queues.
+        /// </summary>
+        HighPriority = 1 << 3,
+        /// <summary>
+        /// Message is an event- fire-and-forget.
+        /// Default/off indicates an RPC- expects a response.
+        /// </summary>
+        Event = 1 << 4,
+        /// <summary>
+        /// Message should be handed off to another WebSocket connection.
+        /// Default/off will direct the message to a Dapr service (HTTP).
+        /// </summary>
+        Client = 1 << 5,
+        /// <summary>
+        /// Message is the response to an RPC.
+        /// Default/off indicates a request (or event).
+        /// </summary>
+        Response = 1 << 6
     };
 
     /// <summary>
-    /// A queued outgoing API request from the client.
-    /// Will be consumed by a queue processing task,
-    /// then turned into an HTTP request to invoke
-    /// on a given service via Dapr.
+    /// 
+    /// </summary>
+    public enum ResponseCodes : byte
+    {
+        OK = 0,
+
+        RequestError = 10,
+        RequestTooLarge,
+        TooManyRequests,
+        InvalidRequestChannel,
+
+        Unauthorized = 20,
+
+        ServiceNotFound = 30,
+        ClientNotFound,
+        MessageNotFound,
+
+        Service_BadRequest = 50,
+        Service_NotFound,
+        Service_Unauthorized,
+        Service_InternalServerError = 60
+    };
+
+    /// <summary>
+    /// A request- either outgoing from the client to a service, or
+    /// incoming from a service to the client (as an RPC- cool!).
     /// </summary>
     public struct ServiceRequestItem
     {
         public MessageFlags Flags { get; set; }
-        public bool IsBinary { get; set; }
-        public uint MessageID { get; set; }
-        public uint ServiceCode { get; set; }
-        public ByteArrayContent Content { get; set; }
+        public Guid MessageID { get; set; }
+        public uint MessageChannel { get; set; }
+        public Guid ServiceID { get; set; }
+
+        public byte[] Content { get; set; }
     }
 
     /// <summary>
-    /// A queued incoming event or response to an
-    /// earlier request from the client. A messageID
-    /// of uint.MaxValue indicates an event with no
-    /// originating request. Binary status code
-    /// responses (ushort values as data) can occur
-    /// even to text-formatted requests, on failures.
+    /// A response to an RPC, whether made by the client to a service,
+    /// or from a service to the client, depending on where the request
+    /// originated.
     /// </summary>
     public struct ServiceResponseItem
     {
-        public bool IsEvent { get; set; }
-        public bool IsBinary { get; set; }
-        public uint MessageID { get; set; }
-        public byte[] Data { get; set; }
+        public MessageFlags Flags { get; set; }
+        public Guid MessageID { get; set; }
+        public ResponseCodes ResponseCode { get; set; }
+
+        public byte[]? Content { get; set; }
     }
 
-    /// <summary>
-    /// +1 for MessageFlags
-    /// +4 for MessageID
-    /// +1-2 for MessageChannel
-    /// +4 for ServiceCode
-    /// </summary>
-    private const uint MAX_REQUEST_HEADER_BYTES = 11;
-    private const byte RLE_FLAG = 0x80; // 1000 0000 in binary
-
-    private HttpClient? _httpClient = null;
+    private static HttpClient? _httpClient = null;
     /// <summary>
     /// The HttpClient used for all client requests which expect acknowledgement.
     /// 
     /// Defaults to JSON
     /// </summary>
-    public HttpClient HttpClient
+    public static HttpClient HttpClient
     {
         get
         {
             if (_httpClient != null)
                 return _httpClient;
 
-            _httpClient = new HttpClient();
-            _httpClient.Timeout = TimeSpan.FromSeconds(5);
-            _httpClient.BaseAddress = GenerateServiceRequestUrl("bannou");
-
-            ClientDataLock.EnterReadLock();
-            try
+            _httpClient = new HttpClient
             {
-                _httpClient.DefaultRequestHeaders.Add("REQUEST_IDS", $"USER_ID__{ClientID}");
-                _httpClient.DefaultRequestHeaders.Add("roles", ClientRoleClaimsStr);
-                _httpClient.DefaultRequestHeaders.Add("scopes", ClientScopeClaimsStr);
-            }
-            finally
-            {
-                ClientDataLock.ExitReadLock();
-            }
+                Timeout = TimeSpan.FromSeconds(5),
+                BaseAddress = GenerateServiceRequestUrl("bannou")
+            };
 
             return _httpClient;
         }
 
-        private set { _httpClient = value; }
+        internal set { _httpClient = value; }
     }
 
-    private HttpClient? _fireAndForgetHttpClient = null;
+    private static HttpClient? _fireAndForgetHttpClient = null;
     /// <summary>
     /// This Http Client has an exceptionally small timeout, so it can be awaited
     /// in a typical try/catch, but the catch not logged, in order to handle Fire
@@ -125,203 +167,78 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// Most other approaches leave a lingering task in the background waiting for
     /// a response, even though one will never come. Better to clean up quickly.
     /// </summary>
-    public HttpClient FireAndForgetHttpClient
+    public static HttpClient FireAndForgetHttpClient
     {
         get
         {
             if (_fireAndForgetHttpClient != null)
                 return _fireAndForgetHttpClient;
 
-            _fireAndForgetHttpClient = new HttpClient();
-            _fireAndForgetHttpClient.Timeout = TimeSpan.FromMicroseconds(1);
-            _fireAndForgetHttpClient.BaseAddress = GenerateServiceRequestUrl("bannou");
-
-            ClientDataLock.EnterReadLock();
-            try
+            _fireAndForgetHttpClient = new HttpClient
             {
-                _fireAndForgetHttpClient.DefaultRequestHeaders.Add("REQUEST_IDS", $"USER_ID__{ClientID}");
-                _fireAndForgetHttpClient.DefaultRequestHeaders.Add("roles", ClientRoleClaimsStr);
-                _fireAndForgetHttpClient.DefaultRequestHeaders.Add("scopes", ClientScopeClaimsStr);
-            }
-            finally
-            {
-                ClientDataLock.ExitReadLock(); 
-            }
+                Timeout = TimeSpan.FromMicroseconds(1),
+                BaseAddress = GenerateServiceRequestUrl("bannou")
+            };
 
             return _fireAndForgetHttpClient;
         }
 
-        private set { _fireAndForgetHttpClient = value; }
+        internal set { _fireAndForgetHttpClient = value; }
     }
 
-    private static byte[]? _okMsgBytes = null;
+    private Guid? _clientUUID;
     /// <summary>
-    /// The binary payload (2 byte ushort) for a 200 OK.
-    /// 
-    /// Can be returned to the client via EnqueueResponse,
-    /// even if the original request wasn't binary.
+    /// The client's unique GUID.
+    /// Is created automatically per connection.
     /// </summary>
-    public static byte[] OKMsgBytes
+    public Guid? ClientGUID
     {
         get
         {
-            if (_okMsgBytes != null)
-                return _okMsgBytes;
+            if (_clientUUID != null)
+                return _clientUUID;
 
-            var tmp = BitConverter.GetBytes((ushort)200);
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(tmp);
-
-            _okMsgBytes = tmp;
-            return _okMsgBytes;
+            _clientUUID = Guid.NewGuid();
+            return _clientUUID;
         }
+
+        internal set { _clientUUID = value; }
     }
 
-    private static byte[]? _badRequestMsgBytes = null;
-    /// <summary>
-    /// The binary payload (2 byte ushort) for a 400 failure:
-    /// Bad Request.
-    /// 
-    /// Can be returned to the client via EnqueueResponse,
-    /// even if the original request wasn't binary.
-    /// </summary>
-    public static byte[] BadRequestMsgBytes
-    {
-        get
-        {
-            if (_badRequestMsgBytes != null)
-                return _badRequestMsgBytes;
+    private const byte RLE_FLAG = 0x80; // 1000 0000 in binary
+    private static IConnectionMultiplexer? RedisConnection { get; set; }
 
-            var tmp = BitConverter.GetBytes((ushort)400);
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(tmp);
+    private static ConcurrentDictionary<string, ConnectService> ActiveSessions { get; set; } = new();
+    private static List<string> ServiceNames { get; set; } = new() { "accounts", "authorization", "connect", "leaderboards" };
+    private static Dictionary<Guid, string> ServiceLookup { get; } = ServiceNames.ToDictionary(name => Guid.NewGuid(), name => name);
 
-            _badRequestMsgBytes = tmp;
-            return _badRequestMsgBytes;
-        }
-    }
+    private ConcurrentQueue<ServiceRequestItem> Inbox { get; } = new();
+    private ConcurrentQueue<ServiceRequestItem> Outbox { get; } = new();
+    private ConcurrentQueue<ServiceRequestItem> PriorityOutbox { get; } = new();
+    private ConcurrentDictionary<uint, ConcurrentQueue<ServiceRequestItem>> ChannelInbox { get; } = new();
+    private ConcurrentDictionary<uint, ConcurrentQueue<ServiceRequestItem>> ChannelOutbox { get; } = new();
+    private ConcurrentDictionary<Guid, Action<ServiceResponseItem>> NotifyResponse { get; } = new();
+    private ConcurrentQueue<ServiceResponseItem> ResponseInbox { get; } = new();
+    private ConcurrentQueue<ServiceResponseItem> ResponseOutbox { get; } = new();
 
-    private static byte[]? _forbiddenMsgBytes = null;
-    /// <summary>
-    /// The binary payload (2 byte ushort) for a 404 failure:
-    /// Forbidden.
-    /// 
-    /// Can be returned to the client via EnqueueResponse,
-    /// even if the original request wasn't binary.
-    /// </summary>
-    public static byte[] ForbiddenMsgBytes
-    {
-        get
-        {
-            if (_forbiddenMsgBytes != null)
-                return _forbiddenMsgBytes;
-
-            var tmp = BitConverter.GetBytes((ushort)403);
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(tmp);
-
-            _forbiddenMsgBytes = tmp;
-            return _forbiddenMsgBytes;
-        }
-    }
-
-    private static byte[]? _notFoundMsgBytes = null;
-    /// <summary>
-    /// The binary payload (2 byte ushort) for a 404 failure:
-    /// Not Found.
-    /// 
-    /// Can be returned to the client via EnqueueResponse,
-    /// even if the original request wasn't binary.
-    /// </summary>
-    public static byte[] NotFoundMsgBytes
-    {
-        get
-        {
-            if (_notFoundMsgBytes != null)
-                return _notFoundMsgBytes;
-
-            var tmp = BitConverter.GetBytes((ushort)404);
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(tmp);
-
-            _notFoundMsgBytes = tmp;
-            return _notFoundMsgBytes;
-        }
-    }
-
-    private static byte[]? _tooLargeMsgBytes = null;
-    /// <summary>
-    /// The binary payload (2 byte ushort) for a 413 failure:
-    /// Message Too Large.
-    /// 
-    /// Can be returned to the client via EnqueueResponse,
-    /// even if the original request wasn't binary.
-    /// </summary>
-    public static byte[] TooLargeMsgBytes
-    {
-        get
-        {
-            if (_tooLargeMsgBytes != null)
-                return _tooLargeMsgBytes;
-
-            var tmp = BitConverter.GetBytes((ushort)413);
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(tmp);
-
-            _tooLargeMsgBytes = tmp;
-            return _tooLargeMsgBytes;
-        }
-    }
-
-    private static byte[]? _serverErrorMsgBytes = null;
-    /// <summary>
-    /// The binary payload (2 byte ushort) for a 500 failure:
-    /// Internal Server Error.
-    /// 
-    /// Can be returned to the client via EnqueueResponse,
-    /// even if the original request wasn't binary.
-    /// </summary>
-    public static byte[] ServerErrorMsgBytes
-    {
-        get
-        {
-            if (_serverErrorMsgBytes != null)
-                return _serverErrorMsgBytes;
-
-            var tmp = BitConverter.GetBytes((ushort)500);
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(tmp);
-
-            _serverErrorMsgBytes = tmp;
-            return _serverErrorMsgBytes;
-        }
-    }
-
-    private static List<string> ServiceNames { get; set; } = new List<string> { "accounts", "authorization", "connect", "leaderboards" };
-    private static Dictionary<uint, string> ServiceLookup { get; } = ServiceNames.ToDictionary(name => Misc.Crc32.ComputeCRC32(name), name => name);
-    private ConcurrentQueue<ServiceRequestItem> PriorityMessageQueue { get; } = new();
-    private ConcurrentQueue<ServiceRequestItem> MessageQueue { get; } = new();
-    private ConcurrentQueue<ServiceResponseItem> ResponseQueue { get; } = new();
-    private ConcurrentDictionary<ushort, ConcurrentQueue<ServiceRequestItem>> ChannelMessageQueue { get; } = new();
-
-    private Task? ClientSendTask;
-    private Task? ClientReceiveTask;
-
-    private int? ClientID;
+    private uint? ClientID;
     private List<string>? ClientRoleClaims;
     private List<string>? ClientServiceClaims;
     private List<string>? ClientScopeClaims;
     private string? ClientRoleClaimsStr;
     private string? ClientScopeClaimsStr;
-    private ReaderWriterLockSlim ClientDataLock { get; } = new ReaderWriterLockSlim();
+    private readonly ReaderWriterLockSlim ClientDataLock = new();
+
+    private CancellationTokenSource? ConnectionClosingCancellationToken;
+    private bool ConnectionClosed;
 
     async Task IDaprService.OnStartAsync(CancellationToken cancellationToken)
     {
         if (Configuration.Redis_Connection_String == null)
             throw new NullReferenceException();
 
-        _redisConnection = await ConnectionMultiplexer.ConnectAsync(Configuration.Redis_Connection_String);
-        if (!_redisConnection.IsConnected)
+        RedisConnection = await ConnectionMultiplexer.ConnectAsync(Configuration.Redis_Connection_String);
+        if (!RedisConnection.IsConnected)
             throw new RedisConnectionException(ConnectionFailureType.UnableToConnect, "Could not connect to Redis for connection service.");
     }
 
@@ -332,9 +249,8 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// on the implementation, we just take the whole requestContext instead of
     /// specifying parameters.
     /// </summary>
-    public async Task<ServiceResponse> ConnectAsync(HttpContext requestContext)
+    async Task<ServiceResponse> IConnectService.ConnectAsync(HttpContext requestContext)
     {
-        // process connection request
         try
         {
             Program.Logger.Log(LogLevel.Warning, "Connection request received from client.");
@@ -345,31 +261,48 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
 
             Program.Logger.Log(LogLevel.Warning, "Websocket connection request received from client.");
 
+            if (Configuration.Token_Public_Key == null)
+                throw new NullReferenceException("Public token key required configuration is missing.");
+
             var authorization = requestContext.Request.Headers.Authorization.FirstOrDefault();
-            var accessToken = authorization?.Remove(0, "Bearer ".Length);
+            if (string.IsNullOrWhiteSpace(authorization))
+                return new(StatusCodes.BadRequest);
+
+            // handle reconnect request
+            if (authorization.StartsWith("Reconnect "))
+            {
+                var reconnectToken = authorization.Remove(0, "Reconnect ".Length);
+                if (ActiveSessions.TryGetValue(reconnectToken, out var activeSession))
+                    return await activeSession.ReconnectAsync(requestContext.WebSockets);
+
+                return new(StatusCodes.Forbidden);
+            }
+
+            // handle first connections
+            var accessToken = authorization.Remove(0, "Bearer ".Length);
             if (string.IsNullOrWhiteSpace(accessToken))
                 return new(StatusCodes.BadRequest);
 
-            var clientClaims = ValidateAndDecodeToken(accessToken);
+            var clientClaims = ValidateAndDecodeToken(accessToken, Configuration.Token_Public_Key);
             if (clientClaims == null)
                 return new(StatusCodes.Forbidden);
 
-            // initialize client data
+            // initialize client data from JWT
             ClientDataLock.EnterWriteLock();
             try
             {
-                // set client ID
+                // get client ID
                 if (clientClaims.TryGetValue("jti", out var ClientIDStr))
-                    if (int.TryParse(ClientIDStr?.FirstOrDefault(), out var parsedClientID))
+                    if (uint.TryParse(ClientIDStr?.FirstOrDefault(), out var parsedClientID))
                         ClientID = parsedClientID;
 
-                // the roles and scopes the client has access to are forwarded
-                // to every action endpoint, so the service handler has them too
+                // the roles and scopes the client has access to
                 if (clientClaims.TryGetValue("roles", out var roleClaims) && roleClaims != null && roleClaims.Any())
                 {
                     ClientRoleClaims = roleClaims;
                     ClientRoleClaimsStr = JArray.FromObject(roleClaims).ToString(Newtonsoft.Json.Formatting.None);
                 }
+
                 if (clientClaims.TryGetValue("scopes", out var scopeClaims) && scopeClaims != null && scopeClaims.Any())
                 {
                     ClientScopeClaims = scopeClaims;
@@ -400,8 +333,8 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
             var websocket = await requestContext.WebSockets.AcceptWebSocketAsync();
 
             // create tasks to handle data to and from the client through the WebSocket
-            ClientSendTask = Task.Run(() => ClientSendConnectionTask(websocket));
-            ClientReceiveTask = Task.Run(() => ClientReceiveConnectionTask(websocket));
+            _ = Task.Run(() => ClientWebSocketReceiveTask(websocket), Program.ShutdownCancellationTokenSource.Token);
+            _ = Task.Run(() => ClientWebSocketSendTask(websocket), Program.ShutdownCancellationTokenSource.Token);
 
             return new(StatusCodes.OK);
         }
@@ -412,18 +345,33 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
         }
     }
 
-    /// <summary>
-    /// Generates the base url for service invocations via Dapr.
-    /// 
-    /// Points to the Dapr sidecar endpoint, to forward on to other
-    /// services in the network.
-    /// </summary>
-    private static Uri? GenerateServiceRequestUrl(string applicationName)
+    public async Task<ServiceResponse> ReconnectAsync(WebSocketManager socketManager)
     {
-        if (Uri.TryCreate($"http://127.0.0.1:80/v1.0/invoke/{applicationName}/method/", UriKind.Absolute, out var rootUri))
-            return rootUri;
+        // accept reconnection only if reconnection is still pending
+        // - eliminate all race conditions
+        try
+        {
+            if (ConnectionClosingCancellationToken == null)
+                return new(StatusCodes.Forbidden);
 
-        return null;
+            ConnectionClosingCancellationToken.Cancel();
+            ConnectionClosingCancellationToken = null;
+
+            if (ConnectionClosed)
+                return new(StatusCodes.Forbidden);
+
+            var websocket = await socketManager.AcceptWebSocketAsync();
+
+            _ = Task.Run(() => ClientWebSocketReceiveTask(websocket), Program.ShutdownCancellationTokenSource.Token);
+            _ = Task.Run(() => ClientWebSocketSendTask(websocket), Program.ShutdownCancellationTokenSource.Token);
+
+            return new(StatusCodes.OK);
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, "An exception occurred creating client connection task on reconnect.");
+            return new(StatusCodes.InternalServerError);
+        }
     }
 
     /// <summary>
@@ -437,14 +385,11 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// roles = JSON array of client role claims, if any exist
     /// services = JSON array of client service access claims
     /// </summary>
-    private Dictionary<string, List<string>?>? ValidateAndDecodeToken(string token)
+    internal static Dictionary<string, List<string>?>? ValidateAndDecodeToken(string token, string key)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key))
-                throw new NullReferenceException();
-
-            var publicKeyByes = Convert.FromBase64String(Configuration.Token_Public_Key);
+            var publicKeyByes = Convert.FromBase64String(key);
             var publicKeyDecoded = Encoding.UTF8.GetString(publicKeyByes);
 
             var publicRSA = RSA.Create();
@@ -482,66 +427,110 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     }
 
     /// <summary>
+    /// Generates the base url for service invocations via Dapr.
+    /// 
+    /// Points to the Dapr sidecar endpoint, to forward on to other
+    /// services in the network.
+    /// </summary>
+    internal static Uri? GenerateServiceRequestUrl(string applicationName)
+    {
+        if (Uri.TryCreate($"http://127.0.0.1:80/v1.0/invoke/{applicationName}/method/", UriKind.Absolute, out var rootUri))
+            return rootUri;
+
+        return null;
+    }
+
+    /// <summary>
     /// Converts a byte from the provided byte array into MessageFlags.
     /// </summary>
-    private static MessageFlags GetMessageFlags(byte[] bytes, ref int byteCounter)
+    internal static MessageFlags GetMessageFlags(byte[] bytes, ref int byteCounter)
     {
-        var messageFlags = (MessageFlags)bytes[0];
+        var messageFlags = (MessageFlags)bytes[byteCounter];
         byteCounter += 1;
 
         return messageFlags;
     }
 
     /// <summary>
-    /// Converts the next 4 bytes from the provided byte array into a uint.
-    /// Will reverse the byte order for little-endian systems, for consistency.
+    /// Converts a byte from the provided byte array into a ResponseCode.
     /// </summary>
-    private static uint GetServiceCode(byte[] bytes, ref int byteCounter)
+    internal static ResponseCodes GetMessageResponseCode(byte[] bytes, ref int byteCounter)
     {
-        if (BitConverter.IsLittleEndian)
-            Array.Reverse(bytes, byteCounter, 4);
+        var responseCode = (ResponseCodes)bytes[byteCounter];
+        byteCounter += 1;
 
-        var serviceCode = BitConverter.ToUInt32(bytes, byteCounter);
-        byteCounter += 4;
-
-        return serviceCode;
+        return responseCode;
     }
 
     /// <summary>
-    /// Converts the next 4 bytes from the provided byte array into a uint.
+    /// Converts the next 16 bytes from the provided byte array into a GUID.
     /// Will reverse the byte order for little-endian systems, for consistency.
     /// </summary>
-    private static uint GetMessageID(byte[] bytes, ref int byteCounter)
+    internal static Guid GetServiceCode(byte[] bytes, ref int byteCounter)
     {
         if (BitConverter.IsLittleEndian)
-            Array.Reverse(bytes, byteCounter, 4);
+            Array.Reverse(bytes, byteCounter, 16);
 
-        var messageID = BitConverter.ToUInt32(bytes, byteCounter);
-        byteCounter += 4;
+        var guidSpan = new Span<byte>(bytes, byteCounter, 16);
+        Guid resultGuid = System.Runtime.InteropServices.MemoryMarshal.Read<Guid>(guidSpan);
+        return resultGuid;
+    }
 
-        return messageID;
+    /// <summary>
+    /// Converts the next 16 bytes from the provided byte array into a GUID.
+    /// Will reverse the byte order for little-endian systems, for consistency.
+    /// </summary>
+    internal static Guid GetMessageID(byte[] bytes, ref int byteCounter)
+    {
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(bytes, byteCounter, 16);
+
+        var guidSpan = new Span<byte>(bytes, byteCounter, 16);
+        Guid resultGuid = System.Runtime.InteropServices.MemoryMarshal.Read<Guid>(guidSpan);
+        return resultGuid;
     }
 
     /// <summary>
     /// Converts the next 1-2 bytes from the provided byte array into a ushort.
     /// Will reverse the byte order for little-endian systems, for consistency.
     /// </summary>
-    private static ushort GetMessageChannel(byte[] bytes, ref int byteCounter)
+    internal static ushort GetMessageChannel(byte[] bytes, ref int byteCounter)
     {
         if ((bytes[byteCounter] & RLE_FLAG) == RLE_FLAG)
         {
-            // If RLE flag is set, combine both bytes to get the channel
-            var messageChannel = (ushort)(((bytes[byteCounter] & 0x7F) << 8) | bytes[byteCounter + 1]);
+            // Clear the RLE_FLAG bit
+            unchecked
+            {
+                bytes[byteCounter] &= (byte)~RLE_FLAG;
+            }
+
+            // Combine the bytes into a ushort, considering endianness
+            var messageChannel = BitConverter.IsLittleEndian
+                ? (ushort)((bytes[byteCounter + 1] << 8) | bytes[byteCounter])
+                : (ushort)((bytes[byteCounter] << 8) | bytes[byteCounter + 1]);
+
             byteCounter += 2;
             return messageChannel;
         }
         else
         {
-            // Only the first byte is used for the channel
+            // Use the byte as-is for the channel, as RLE_FLAG is not set
             var messageChannel = (ushort)bytes[byteCounter];
             byteCounter += 1;
             return messageChannel;
         }
+    }
+
+    /// <summary>
+    /// Returns the remaining bytes as a new byte array.
+    /// </summary>
+    internal static byte[]? GetMessageContent(byte[] bytes, ref int byteCounter, int totalBytes)
+    {
+        if (totalBytes - byteCounter == 0)
+            return null;
+
+        var contentSpan = new Span<byte>(bytes, byteCounter, totalBytes - byteCounter);
+        return contentSpan.ToArray();
     }
 
     /// <summary>
@@ -557,10 +546,9 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// long-running, to start multiple threads/tasks just to handle those requests,
     /// etc, as needs demand.
     /// </summary>
-    private async Task ClientSendConnectionTask(WebSocket webSocket)
+    private async Task ClientWebSocketReceiveTask(WebSocket webSocket)
     {
-        // configurable max message size
-        byte[] buffer = new byte[MAX_REQUEST_HEADER_BYTES + Configuration.Max_Client_Request_Bytes];
+        var buffer = new byte[Configuration.Client_Request_Max_Size];
         var offset = 0;
 
         WebSocketReceiveResult? receiveResult = null;
@@ -577,17 +565,18 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
 
                 if (!receiveResult.EndOfMessage)
                 {
-                    // check if the buffer is full- if not, then loop/read more
                     if (offset < buffer.Length)
                         continue;
 
-                    Program.Logger.Log(LogLevel.Error, $"A message was received that was too large to process.");
-
+                    // if the buffer is full, generate 'message too large' response before disconnecting
+                    // will not allow a reconnection
                     var byteCounter = 0;
                     MessageFlags messageFlags = GetMessageFlags(buffer, ref byteCounter);
                     var messageID = GetMessageID(buffer, ref byteCounter);
-                    await WaitUntilEndOfMessage(receiveResult);
-                    EnqueueResponse(messageID, TooLargeMsgBytes);
+
+                    var messageBytes = CreateResponseMessageBytes(messageFlags, messageID, ResponseCodes.RequestTooLarge);
+                    await webSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Binary, true, Program.ShutdownCancellationTokenSource.Token);
+                    break;
                 }
                 else
                 {
@@ -595,32 +584,53 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
                     var byteCounter = 0;
                     var messageFlags = GetMessageFlags(buffer, ref byteCounter);
                     var messageID = GetMessageID(buffer, ref byteCounter);
-                    var messageChannel = GetMessageChannel(buffer, ref byteCounter);
-                    var serviceCode = GetServiceCode(buffer, ref byteCounter);
-                    var messageContent = new ByteArrayContent(buffer, byteCounter, offset - byteCounter);
-                    EnqueueServiceRequest(messageFlags, messageID, serviceCode, messageChannel, messageContent, receiveResult.MessageType == WebSocketMessageType.Binary);
+
+                    if (messageFlags.HasFlag(MessageFlags.Response))
+                    {
+                        // message is an RPC response
+                        var responseCode = GetMessageResponseCode(buffer, ref byteCounter);
+                        var messageContent = GetMessageContent(buffer, ref byteCounter, offset);
+                        EnqueueResponseFromClient(messageFlags, messageID, responseCode, messageContent);
+                    }
+                    else
+                    {
+                        // message is an RPC request or event
+                        var messageChannel = GetMessageChannel(buffer, ref byteCounter);
+                        var serviceID = GetServiceCode(buffer, ref byteCounter);
+                        var messageContent = GetMessageContent(buffer, ref byteCounter, offset) ?? throw new NullReferenceException();
+                        EnqueueRequestFromClient(messageFlags, messageID, messageChannel, serviceID, messageContent);
+                    }
                 }
 
                 offset = 0;
             }
+            catch (WebSocketException exc)
+            {
+                Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred with client WebSocket connection.");
+
+                // on websocket errors, allow client reconnection for a configurable amount of time
+                if (Configuration.Client_Reconnection_Time > 0)
+                {
+                    ConnectionClosingCancellationToken ??= new CancellationTokenSource();
+                    _ = Task.Run(async () =>
+                        {
+                            await Task.Delay(TimeSpan.FromSeconds(Configuration.Client_Reconnection_Time));
+                            if (!ConnectionClosingCancellationToken.IsCancellationRequested)
+                                ConnectionClosed = true;
+                        }, ConnectionClosingCancellationToken.Token);
+                }
+            }
             catch (Exception exc)
             {
-                Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred handling client request. Attempting to send BadRequest response back.");
+                Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred handling client request.");
 
-                try
+                // on any error that isn't the WebSocket itself, assume a bad actor
+                // send back a request error before disconnecting- no reconnection
+                if (webSocket.CloseStatus == null)
                 {
-                    var byteCounter = 0;
-                    var messageFlags = GetMessageFlags(buffer, ref byteCounter);
-                    var messageID = GetMessageID(buffer, ref byteCounter);
-                    await WaitUntilEndOfMessage(receiveResult);
-                    EnqueueResponse(messageID, BadRequestMsgBytes);
+                    var messageBytes = CreateResponseMessageBytes(MessageFlags.Response, Guid.Empty, ResponseCodes.RequestError);
+                    await webSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Binary, true, Program.ShutdownCancellationTokenSource.Token);
                 }
-                catch (Exception innerExc)
-                {
-                    Program.Logger.Log(LogLevel.Error, innerExc, $"A critical exception occurred returning a BadRequest response to the client.");
-                }
-
-                offset = 0;
             }
         }
 
@@ -630,19 +640,6 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
                 receiveResult.CloseStatus.Value,
                 receiveResult.CloseStatusDescription,
                 CancellationToken.None);
-        }
-
-        async Task WaitUntilEndOfMessage(WebSocketReceiveResult? received)
-        {
-            while (!received?.EndOfMessage ?? false)
-            {
-                received = await webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer, 0, buffer.Length),
-                    Program.ShutdownCancellationTokenSource.Token);
-
-                if (received.CloseStatus.HasValue)
-                    return;
-            }
         }
     }
 
@@ -654,24 +651,41 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// should do absolutely nothing else, loop until the WebSocket is
     /// closed, with no artificial delays.
     /// </summary>
-    private async Task ClientReceiveConnectionTask(WebSocket webSocket)
+    private async Task ClientWebSocketSendTask(WebSocket webSocket)
     {
         WebSocketReceiveResult? receiveResult = null;
-        while (receiveResult == null || receiveResult.CloseStatus == null)
+        while (receiveResult?.CloseStatus == null)
         {
-            // try send event(s)/response(s) to client from services
-            uint messageID = 0;
+            Guid? messageID = null;
             try
             {
-                if (ResponseQueue.TryDequeue(out var nextResponse))
+                while (ResponseInbox.TryDequeue(out var nextResponse))
                 {
                     messageID = nextResponse.MessageID;
-                    await SendDataAsync(webSocket, nextResponse.IsBinary, nextResponse.MessageID, nextResponse.Data);
+                    var messageBytes = CreateResponseMessageBytes(nextResponse.Flags, nextResponse.MessageID, nextResponse.ResponseCode, nextResponse.Content);
+                    await webSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Binary, true, Program.ShutdownCancellationTokenSource.Token);
+
+                    if (NotifyResponse.TryRemove(messageID.Value, out Action<ServiceResponseItem>? notifyResponse))
+                        _ = Task.Run(() => notifyResponse?.Invoke(nextResponse));
                 }
             }
             catch (Exception exc)
             {
-                Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred passing down event/response with ID [{messageID}] to client.");
+                Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred sending RPC response with ID [{messageID}] to client.");
+            }
+
+            try
+            {
+                if (Inbox.TryDequeue(out var nextRPC))
+                {
+                    messageID = nextRPC.MessageID;
+                    var messageBytes = CreateRPCMessageBytes(nextRPC.Flags, nextRPC.MessageID, nextRPC.MessageChannel, nextRPC.ServiceID, nextRPC.Content);
+                    await webSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Binary, true, Program.ShutdownCancellationTokenSource.Token);
+                }
+            }
+            catch (Exception exc)
+            {
+                Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred sending RPC with ID [{messageID}] to client.");
             }
         }
 
@@ -682,131 +696,59 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
                 receiveResult.CloseStatusDescription,
                 CancellationToken.None);
         }
-
-        /// <summary>
-        /// Local methods to prevent anything being able to get
-        /// around the response/event queue system.
-        /// 
-        /// Send a payload over the websocket back to the client.
-        /// Events not originating with the client should use the
-        /// service ID as the message ID, by convention.
-        /// </summary>
-        async Task SendDataAsync(WebSocket webSocket, bool isBinary, uint messageID, byte[] responseBody)
-        {
-            if (responseBody.Length > Configuration.Max_Client_Response_Bytes)
-            {
-                await SendFragmentedDataAsync(webSocket, isBinary, messageID, responseBody);
-                return;
-            }
-
-            var messageIDBytes = BitConverter.GetBytes(messageID);
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(messageIDBytes);
-
-            // we effectively skip 2 bytes in the header, because
-            // the message wasn't large enough to need fragmenting
-            var responseHeader = new byte[2 + messageIDBytes.Length];
-            Buffer.BlockCopy(messageIDBytes, 0, responseHeader, 2, messageIDBytes.Length);
-
-            var responseBytes = new byte[responseHeader.Length + responseBody.Length];
-            Buffer.BlockCopy(responseHeader, 0, responseBytes, 0, responseHeader.Length);
-            Buffer.BlockCopy(responseBody, 0, responseBytes, responseHeader.Length, responseBody.Length);
-
-            await webSocket.SendAsync(new ArraySegment<byte>(responseBytes), isBinary ? WebSocketMessageType.Binary : WebSocketMessageType.Text, true, Program.ShutdownCancellationTokenSource.Token);
-        }
-
-        /// <summary>
-        /// Send many messages worth of data over the websocket
-        /// back to the client. Includes a byte for the current
-        /// fragment ID, and another for the total fragments.
-        /// </summary>
-        async Task SendFragmentedDataAsync(WebSocket webSocket, bool isBinary, uint messageID, byte[] responseBody)
-        {
-            if (responseBody.Length >= Configuration.Max_Client_Response_Bytes * (int)byte.MaxValue)
-            {
-                Program.Logger.Log(LogLevel.Error, $"The event or response for message/service ID [{messageID}] was too large for fragmenting.");
-                await SendDataAsync(webSocket, true, messageID, ServerErrorMsgBytes);
-
-                return;
-            }
-
-            var totalMessages = (int)MathF.Ceiling((float)responseBody.Length / (float)Configuration.Max_Client_Response_Bytes);
-
-            var messageIDBytes = BitConverter.GetBytes(messageID);
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(messageIDBytes);
-
-            // the header byte array to include in each message
-            var responseHeader = new byte[2 + messageIDBytes.Length];
-
-            // copy the fragment total into the second array index
-            responseHeader[1] = (byte)totalMessages;
-
-            // copy the message ID in first
-            Buffer.BlockCopy(messageIDBytes, 0, responseHeader, 2, messageIDBytes.Length);
-
-            for (var i = 0; i < totalMessages; i++)
-            {
-                // on each message, replace the current fragment number byte in the response header
-                responseHeader[0] = (byte)i;
-
-                // create the full message from the header + body
-                var responseBytes = new byte[responseHeader.Length + responseBody.Length];
-                Buffer.BlockCopy(responseHeader, 0, responseBytes, 0, responseHeader.Length);
-                Buffer.BlockCopy(responseBody, 0, responseBytes, responseHeader.Length, responseBody.Length);
-
-                // forward message fragment on to client
-                await webSocket.SendAsync(new ArraySegment<byte>(responseBytes), isBinary ? WebSocketMessageType.Binary : WebSocketMessageType.Text, true, Program.ShutdownCancellationTokenSource.Token);
-            }
-        }
     }
 
     /// <summary>
-    /// Short-running task that processes all queued items in a given ChannelMessageQueue.
-    /// These requests/responses need to be handled sequentially, and each responses needs
-    /// to be waited on before continuing to the next.
     /// 
-    /// Once the queue is empty, the task just exits- the service will create more tasks
-    /// as needed if any items are added to an empty queue.
     /// </summary>
-    private async Task ChannelQueueProcessingTask(ushort channelKey)
+    internal static byte[] CreateResponseMessageBytes(MessageFlags flags, Guid messageID, ResponseCodes responseCode, byte[]? responseContent = null)
     {
-        while (ChannelMessageQueue.TryGetValue(channelKey, out ConcurrentQueue<ServiceRequestItem>? channelQueue) && channelQueue.TryDequeue(out var nextRequest))
+        var messageIDBytes = messageID.ToByteArray();
+
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(messageIDBytes);
+
+        var messageHeader = new byte[1 + messageIDBytes.Length + 1];
+        messageHeader[0] = (byte)flags;
+        messageHeader[^1] = (byte)responseCode;
+        Buffer.BlockCopy(messageIDBytes, 0, messageHeader, 1, messageIDBytes.Length);
+
+        var messageBytes = new byte[messageHeader.Length + responseContent?.Length ?? 0];
+        Buffer.BlockCopy(messageHeader, 0, messageBytes, 0, messageHeader.Length);
+
+        if (responseContent != null)
+            Buffer.BlockCopy(responseContent, 0, messageBytes, messageHeader.Length, responseContent.Length);
+
+        return messageBytes;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    internal static byte[] CreateRPCMessageBytes(MessageFlags flags, Guid messageID, uint channel, Guid serviceID, byte[] messageContent)
+    {
+        var messageIDBytes = messageID.ToByteArray();
+        var channelBytes = BitConverter.GetBytes(channel);
+        var serviceIDBytes = serviceID.ToByteArray();
+
+        if (BitConverter.IsLittleEndian)
         {
-            if (!ServiceLookup.TryGetValue(nextRequest.ServiceCode, out var serviceName))
-            {
-                EnqueueResponse(nextRequest, ForbiddenMsgBytes);
-                continue;
-            }
-
-            var hasServiceAccess = false;
-            ClientDataLock.EnterReadLock();
-            try
-            {
-                hasServiceAccess = ClientServiceClaims?.Contains(serviceName) ?? false;
-            }
-            finally
-            {
-                ClientDataLock.ExitReadLock();
-            }
-
-            if (!hasServiceAccess)
-            {
-                EnqueueResponse(nextRequest, ForbiddenMsgBytes);
-                continue;
-            }
-
-            var fireAndForget = nextRequest.Flags.HasFlag(MessageFlags.FireAndForget);
-            if (fireAndForget)
-            {
-                await FireAndForgetServiceRequestTask(serviceName, nextRequest);
-                continue;
-            }
-
-            // channel queues are processed sequentially
-            // we wait for each response before continuing
-            await ServiceRequestTask(serviceName, nextRequest);
+            Array.Reverse(messageIDBytes);
+            Array.Reverse(channelBytes);
+            Array.Reverse(serviceIDBytes);
         }
+
+        var messageHeader = new byte[1 + messageIDBytes.Length + channelBytes.Length + serviceIDBytes.Length];
+        messageHeader[0] = (byte)flags;
+        Buffer.BlockCopy(messageIDBytes, 0, messageHeader, 1, messageIDBytes.Length);
+        Buffer.BlockCopy(channelBytes, 0, messageHeader, 1 + messageIDBytes.Length, channelBytes.Length);
+        Buffer.BlockCopy(serviceIDBytes, 0, messageHeader, 1 + messageIDBytes.Length + channelBytes.Length, serviceIDBytes.Length);
+
+        var messageBytes = new byte[messageHeader.Length + messageContent.Length];
+        Buffer.BlockCopy(messageHeader, 0, messageBytes, 0, messageHeader.Length);
+        Buffer.BlockCopy(messageContent, 0, messageBytes, messageHeader.Length, messageContent.Length);
+
+        return messageBytes;
     }
 
     /// <summary>
@@ -814,25 +756,29 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// in other words, those not in a channel queue. Will process high priority
     /// items first.
     /// </summary>
-    private async Task RequestQueueProcessingTask()
+    private async Task OutboxProcessingTask()
     {
         await Task.CompletedTask;
 
         while (true)
         {
-            while (PriorityMessageQueue.TryDequeue(out ServiceRequestItem priorityRequest))
+            while (PriorityOutbox.TryDequeue(out ServiceRequestItem priorityRequest))
                 HandleNextRequest(priorityRequest);
 
-            if (!MessageQueue.TryDequeue(out ServiceRequestItem normalRequest))
+            if (!Outbox.TryDequeue(out ServiceRequestItem normalRequest))
                 break;
 
             HandleNextRequest(normalRequest);
 
             void HandleNextRequest(ServiceRequestItem nextRequest)
             {
-                if (!ServiceLookup.TryGetValue(nextRequest.ServiceCode, out var serviceName))
+                if (!ServiceLookup.TryGetValue(nextRequest.ServiceID, out var serviceName))
                 {
-                    EnqueueResponse(nextRequest, ForbiddenMsgBytes);
+                    ResponseCodes notFoundResponse = ResponseCodes.ServiceNotFound;
+                    if (Configuration.Obfuscate_Not_Found_Response)
+                        notFoundResponse = ResponseCodes.Unauthorized;
+
+                    _ = EnqueueResponseToClient(nextRequest.Flags, nextRequest.MessageID, notFoundResponse);
                     return;
                 }
 
@@ -849,11 +795,11 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
 
                 if (!hasServiceAccess)
                 {
-                    EnqueueResponse(nextRequest, ForbiddenMsgBytes);
+                    _ = EnqueueResponseToClient(nextRequest.Flags, nextRequest.MessageID, ResponseCodes.Unauthorized);
                     return;
                 }
 
-                var fireAndForget = nextRequest.Flags.HasFlag(MessageFlags.FireAndForget);
+                var fireAndForget = nextRequest.Flags.HasFlag(MessageFlags.Event);
                 if (fireAndForget)
                 {
                     _ = Task.Run(() => FireAndForgetServiceRequestTask(serviceName, nextRequest),
@@ -870,6 +816,58 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     }
 
     /// <summary>
+    /// Short-running task that processes all queued items in a given ChannelMessageQueue.
+    /// These requests/responses need to be handled sequentially, and each responses needs
+    /// to be waited on before continuing to the next.
+    /// 
+    /// Once the queue is empty, the task just exits- the service will create more tasks
+    /// as needed if any items are added to an empty queue.
+    /// </summary>
+    private async Task ChannelOutboxProcessingTask(ushort channelKey)
+    {
+        while (ChannelOutbox.TryGetValue(channelKey, out ConcurrentQueue<ServiceRequestItem>? channelQueue) && channelQueue.TryDequeue(out var nextRequest))
+        {
+            if (!ServiceLookup.TryGetValue(nextRequest.ServiceID, out var serviceName))
+            {
+                ResponseCodes notFoundResponse = ResponseCodes.ServiceNotFound;
+                if (Configuration.Obfuscate_Not_Found_Response)
+                    notFoundResponse = ResponseCodes.Unauthorized;
+
+                _ = EnqueueResponseToClient(nextRequest.Flags, nextRequest.MessageID, notFoundResponse);
+                continue;
+            }
+
+            var hasServiceAccess = false;
+            ClientDataLock.EnterReadLock();
+            try
+            {
+                hasServiceAccess = ClientServiceClaims?.Contains(serviceName) ?? false;
+            }
+            finally
+            {
+                ClientDataLock.ExitReadLock();
+            }
+
+            if (!hasServiceAccess)
+            {
+                _ = EnqueueResponseToClient(nextRequest.Flags, nextRequest.MessageID, ResponseCodes.Unauthorized);
+                continue;
+            }
+
+            var fireAndForget = nextRequest.Flags.HasFlag(MessageFlags.Event);
+            if (fireAndForget)
+            {
+                await FireAndForgetServiceRequestTask(serviceName, nextRequest);
+                continue;
+            }
+
+            // channel queues are processed sequentially
+            // we wait for each response before continuing
+            await ServiceRequestTask(serviceName, nextRequest);
+        }
+    }
+
+    /// <summary>
     /// Short-lived task to handle an outgoing API request to a service, wait for the response,
     /// and then enqueue that response into the ResponseQueue appropriately, to be handled by the
     /// ClientReceiveConnectionTask when it's timely to send it down to the client.
@@ -880,10 +878,22 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
         {
             var serviceAction = new Uri($"/{serviceName}/action", UriKind.Relative);
             var requestMsg = new HttpRequestMessage(HttpMethod.Post, serviceAction);
-            if (!request.IsBinary)
+            if (!request.Flags.HasFlag(MessageFlags.Binary))
                 requestMsg.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
-            requestMsg.Content = request.Content;
+            ClientDataLock.EnterReadLock();
+            try
+            {
+                requestMsg.Headers.Add("REQUEST_IDS", $"USER_ID__{ClientID}");
+                requestMsg.Headers.Add("roles", ClientRoleClaimsStr);
+                requestMsg.Headers.Add("scopes", ClientScopeClaimsStr);
+            }
+            finally
+            {
+                ClientDataLock.ExitReadLock();
+            }
+
+            requestMsg.Content = new ByteArrayContent(request.Content);
 
             var serviceResponse = await HttpClient.SendAsync(requestMsg, Program.ShutdownCancellationTokenSource.Token);
             if (serviceResponse.IsSuccessStatusCode)
@@ -893,12 +903,12 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
                     var response = await serviceResponse.Content.ReadAsByteArrayAsync();
                     if (response != null)
                     {
-                        EnqueueResponse(request, response);
+                        _ = EnqueueResponseToClient(request.Flags, request.MessageID, ResponseCodes.OK, response);
                         return;
                     }
                 }
 
-                EnqueueResponse(request, OKMsgBytes, true);
+                _ = EnqueueResponseToClient(request.Flags, request.MessageID, ResponseCodes.OK);
             }
         }
         catch (HttpRequestException exc)
@@ -908,27 +918,27 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
             {
                 case System.Net.HttpStatusCode.Unauthorized:
                 case System.Net.HttpStatusCode.Forbidden:
-                    EnqueueResponse(request.MessageID, ForbiddenMsgBytes);
+                    _ = EnqueueResponseToClient(request.Flags, request.MessageID, ResponseCodes.Service_Unauthorized);
                     break;
                 case System.Net.HttpStatusCode.NotFound:
                     if (Configuration.Obfuscate_Not_Found_Response)
-                        EnqueueResponse(request.MessageID, ForbiddenMsgBytes);
+                        _ = EnqueueResponseToClient(request.Flags, request.MessageID, ResponseCodes.Service_Unauthorized);
                     else
-                        EnqueueResponse(request.MessageID, NotFoundMsgBytes);
+                        _ = EnqueueResponseToClient(request.Flags, request.MessageID, ResponseCodes.Service_NotFound);
                     break;
                 case System.Net.HttpStatusCode.BadRequest:
-                    EnqueueResponse(request.MessageID, BadRequestMsgBytes);
+                    _ = EnqueueResponseToClient(request.Flags, request.MessageID, ResponseCodes.Service_BadRequest);
                     break;
                 case System.Net.HttpStatusCode.InternalServerError:
                 default:
-                    EnqueueResponse(request.MessageID, ServerErrorMsgBytes);
+                    _ = EnqueueResponseToClient(request.Flags, request.MessageID, ResponseCodes.Service_InternalServerError);
                     break;
             }
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred executing action API method on service [{serviceName}].");
-            EnqueueResponse(request.MessageID, ServerErrorMsgBytes);
+            _ = EnqueueResponseToClient(request.Flags, request.MessageID, ResponseCodes.RequestError);
         }
     }
 
@@ -946,11 +956,22 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
         {
             var serviceAction = new Uri($"/{serviceName}/action", UriKind.Relative);
             var requestMsg = new HttpRequestMessage(HttpMethod.Post, serviceAction);
-            if (!request.IsBinary)
+            if (!request.Flags.HasFlag(MessageFlags.Binary))
                 requestMsg.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
-            requestMsg.Content = request.Content;
+            ClientDataLock.EnterReadLock();
+            try
+            {
+                requestMsg.Headers.Add("REQUEST_IDS", $"USER_ID__{ClientID}");
+                requestMsg.Headers.Add("roles", ClientRoleClaimsStr);
+                requestMsg.Headers.Add("scopes", ClientScopeClaimsStr);
+            }
+            finally
+            {
+                ClientDataLock.ExitReadLock();
+            }
 
+            requestMsg.Content = new ByteArrayContent(request.Content);
             _ = await FireAndForgetHttpClient.SendAsync(requestMsg, Program.ShutdownCancellationTokenSource.Token);
         }
         catch { }
@@ -968,14 +989,13 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// All requests can receive binary status code responses, even
     /// if the original request was text.
     /// </summary>
-    private void EnqueueServiceRequest(MessageFlags messageFlags, uint messageID, uint serviceCode, ushort messageChannel, ByteArrayContent messageContent, bool isBinary)
+    private void EnqueueRequestFromClient(MessageFlags messageFlags, Guid messageID, ushort messageChannel, Guid serviceID, byte[] messageContent)
     {
         var queueWasEmpty = false;
         var newRequestQueueItem = new ServiceRequestItem()
         {
-            IsBinary = isBinary,
             Flags = messageFlags,
-            ServiceCode = serviceCode,
+            ServiceID = serviceID,
             MessageID = messageID,
             Content = messageContent
         };
@@ -983,14 +1003,14 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
         if (messageChannel != 0)
         {
             // enqueue to appropriate channel queue
-            _ = ChannelMessageQueue.AddOrUpdate(messageChannel,
+            _ = ChannelOutbox.AddOrUpdate(messageChannel,
                 (channel) =>
                 {
                     var newRequestQueue = new ConcurrentQueue<ServiceRequestItem>();
                     newRequestQueue.Enqueue(newRequestQueueItem);
 
                     // start processing task
-                    _ = Task.Run(() => ChannelQueueProcessingTask(messageChannel));
+                    _ = Task.Run(() => ChannelOutboxProcessingTask(messageChannel));
 
                     return newRequestQueue;
                 },
@@ -1001,7 +1021,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
 
                     // start new processing task, if needed
                     if (queueWasEmpty)
-                        _ = Task.Run(() => ChannelQueueProcessingTask(messageChannel));
+                        _ = Task.Run(() => ChannelOutboxProcessingTask(messageChannel));
 
                     return channelQueue;
                 });
@@ -1012,102 +1032,64 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
         // enqueue as high-priority request
         if (messageFlags.HasFlag(MessageFlags.HighPriority))
         {
-            queueWasEmpty = PriorityMessageQueue.IsEmpty;
-            PriorityMessageQueue.Enqueue(newRequestQueueItem);
+            queueWasEmpty = PriorityOutbox.IsEmpty;
+            PriorityOutbox.Enqueue(newRequestQueueItem);
             if (queueWasEmpty)
-                _ = Task.Run(RequestQueueProcessingTask);
+                _ = Task.Run(OutboxProcessingTask);
         }
 
         // enqueue as typical request
-        queueWasEmpty = MessageQueue.IsEmpty;
-        MessageQueue.Enqueue(newRequestQueueItem);
+        queueWasEmpty = Outbox.IsEmpty;
+        Outbox.Enqueue(newRequestQueueItem);
         if (queueWasEmpty)
-            _ = Task.Run(RequestQueueProcessingTask);
+            _ = Task.Run(OutboxProcessingTask);
     }
 
     /// <summary>
-    /// Enqueues an event to be fired down to the client.
-    /// 
-    /// This is effectively the same as a response to a client-originating request,
-    /// but uses a messageID of the uint/4-byte max value.
-    /// 
-    /// This indicates to the client that this is an event, and not an API response.
-    /// Any more information will require deserializing the event on the client side,
-    /// which will depend on if it's binary or text, etc.
+    /// Enqueue a response given by the client for a given RPC.
     /// </summary>
-    private bool EnqueueEvent(byte[] content, bool isBinary = true)
+    private bool EnqueueResponseFromClient(MessageFlags flags, Guid messageID, ResponseCodes responseCode, byte[]? content = null)
     {
         try
         {
-            ResponseQueue.Enqueue(new()
+            ResponseOutbox.Enqueue(new()
             {
-                IsEvent = true,
-                IsBinary = isBinary,
-                MessageID = uint.MaxValue,
-                Data = content,
-            });
-
-            return true;
-        }
-        catch (Exception exc)
-        {
-            Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred enqueuing an event to be sent to the client.");
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Enqueue a response that should be fed back to the client for a given message.
-    /// Uses the messageID, and requires specifying the binary/text content type.
-    /// 
-    /// This method allows for responses where the original request is lost, or before
-    /// the request item is create, otherwise, use the version that takes the request
-    /// as a parameter.
-    /// </summary>
-    private bool EnqueueResponse(uint messageID, byte[] content, bool isBinary = true)
-    {
-        try
-        {
-            ResponseQueue.Enqueue(new()
-            {
-                IsBinary = isBinary,
+                Flags = flags,
                 MessageID = messageID,
-                Data = content,
+                ResponseCode = responseCode,
+                Content = content
             });
 
             return true;
         }
         catch (Exception exc)
         {
-            Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred enqueuing a response to be sent back to the client.");
+            Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred enqueuing an RPC response from the client.");
         }
 
         return false;
     }
 
     /// <summary>
-    /// Enqueue a response that should be fed back to the client for a given message.
-    /// Uses the message object itself to simplify things.
-    /// 
-    /// Can override the IsBinary of the request, if sending back a binary error code.
+    /// Enqueue a response that should be fed back to the client for a given RPC.
     /// </summary>
-    private bool EnqueueResponse(ServiceRequestItem requestItem, byte[] content, bool? isBinary = null)
+    private bool EnqueueResponseToClient(MessageFlags flags, Guid messageID, ResponseCodes responseCode, byte[]? content = null)
     {
         try
         {
-            ResponseQueue.Enqueue(new()
+            ResponseInbox.Enqueue(new()
             {
-                IsBinary = isBinary != null ? isBinary.Value : requestItem.IsBinary,
-                MessageID = requestItem.MessageID,
-                Data = content,
+                Flags = flags,
+                MessageID = messageID,
+                ResponseCode = responseCode,
+                Content = content
             });
 
             return true;
         }
         catch (Exception exc)
         {
-            Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred enqueuing a response to be sent back to the client.");
+            Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred enqueuing an RPC response to the client.");
         }
 
         return false;

@@ -64,7 +64,7 @@ public static class Program
     public static Microsoft.Extensions.Logging.ILogger Logger
     {
         get => _logger ??= ServiceLogging.CreateApplicationLogger();
-        internal set => _logger = value;
+        set => _logger = value;
     }
 
     /// <summary>
