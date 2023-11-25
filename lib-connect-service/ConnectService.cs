@@ -385,24 +385,24 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// roles = JSON array of client role claims, if any exist
     /// services = JSON array of client service access claims
     /// </summary>
-    internal static Dictionary<string, List<string>?>? ValidateAndDecodeToken(string token, string key)
+    internal static Dictionary<string, List<string>?>? ValidateAndDecodeToken(string token, string publicKey)
     {
         try
         {
-            var publicKeyByes = Convert.FromBase64String(key);
+            var publicKeyByes = Convert.FromBase64String(publicKey);
             var publicKeyDecoded = Encoding.UTF8.GetString(publicKeyByes);
 
             var publicRSA = RSA.Create();
             publicRSA.ImportFromPem(publicKeyDecoded);
 
             var json = new JwtBuilder()
-                .WithAlgorithm(new RS512Algorithm(publicRSA, null))
+                .WithAlgorithm(new RS512Algorithm(publicRSA, RSA.Create()))
                 .MustVerifySignature()
                 .Decode(token);
 
             var payload = JObject.Parse(json);
             return payload?.Properties()
-                .Where(prop => prop.Value != null && prop.Value.Type != JTokenType.Null && prop.Value.HasValues)
+                .Where(prop => prop.Value != null && prop.Value.Type != JTokenType.Null)
                 .ToDictionary(
                     prop => prop.Name,
                     prop => prop.Value.Type == JTokenType.Array
@@ -473,6 +473,8 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
 
         var guidSpan = new Span<byte>(bytes, byteCounter, 16);
         Guid serviceID = System.Runtime.InteropServices.MemoryMarshal.Read<Guid>(guidSpan);
+        byteCounter += 16;
+
         return serviceID;
     }
 
@@ -487,6 +489,8 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
 
         var guidSpan = new Span<byte>(bytes, byteCounter, 16);
         Guid resultGuid = System.Runtime.InteropServices.MemoryMarshal.Read<Guid>(guidSpan);
+        byteCounter += 16;
+
         return resultGuid;
     }
 
@@ -496,29 +500,13 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// </summary>
     internal static ushort GetMessageChannel(byte[] bytes, ref int byteCounter)
     {
-        if ((bytes[byteCounter] & RLE_FLAG) == RLE_FLAG)
-        {
-            // Clear the RLE_FLAG bit
-            unchecked
-            {
-                bytes[byteCounter] &= (byte)~RLE_FLAG;
-            }
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(bytes, byteCounter, 2);
 
-            // Combine the bytes into a ushort, considering endianness
-            var messageChannel = BitConverter.IsLittleEndian
-                ? (ushort)((bytes[byteCounter + 1] << 8) | bytes[byteCounter])
-                : (ushort)((bytes[byteCounter] << 8) | bytes[byteCounter + 1]);
+        var messageChannel = BitConverter.ToUInt16(bytes, byteCounter);
+        byteCounter += 2;
 
-            byteCounter += 2;
-            return messageChannel;
-        }
-        else
-        {
-            // Use the byte as-is for the channel, as RLE_FLAG is not set
-            var messageChannel = (ushort)bytes[byteCounter];
-            byteCounter += 1;
-            return messageChannel;
-        }
+        return messageChannel;
     }
 
     /// <summary>

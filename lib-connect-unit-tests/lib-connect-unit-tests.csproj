@@ -22,6 +22,7 @@
   </ItemGroup>
 
 	<ItemGroup>
+      <ProjectReference Include="..\bannou-service\bannou-service.csproj" />
       <ProjectReference Include="..\lib-connect-service\lib-connect-service.csproj" />
 	</ItemGroup>
 
