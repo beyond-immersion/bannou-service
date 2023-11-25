@@ -1,9 +1,8 @@
-using BeyondImmersion.BannouService.UnitTests;
 using Xunit.Abstractions;
 
 namespace BeyondImmersion.BannouService.Connect.UnitTests;
 
-[Collection("unit tests")]
+[Collection("connect unit tests")]
 public class ConnectHelpers : IClassFixture<CollectionFixture>
 {
     private CollectionFixture TestCollectionContext { get; }
@@ -23,6 +22,55 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
         Assert.True(serviceUri?.IsAbsoluteUri ?? false);
         Assert.Equal(80, serviceUri.Port);
         Assert.True(serviceUri.IsLoopback);
-        Assert.Equal("bannou/method/", serviceUri.MakeRelativeUri(baseDaprUri).PathAndQuery);
+        Assert.Equal("bannou/method/", baseDaprUri.MakeRelativeUri(serviceUri).ToString());
+        Assert.Equal("../../", serviceUri.MakeRelativeUri(baseDaprUri).ToString());
+    }
+
+    [Fact]
+    public void ValidateAndDecodeToken()
+    {
+        ConnectService.ValidateAndDecodeToken();
+    }
+
+    [Fact]
+    public void GetMessageID()
+    {
+        ConnectService.GetMessageID();
+    }
+
+    [Fact]
+    public void GetMessageChannel()
+    {
+        ConnectService.GetMessageChannel();
+    }
+
+    [Fact]
+    public void GetServiceID()
+    {
+        ConnectService.GetServiceID();
+    }
+
+    [Fact]
+    public void GetMessageContent()
+    {
+        ConnectService.GetMessageContent();
+    }
+
+    [Fact]
+    public void GetMessageResponseCode()
+    {
+        ConnectService.GetMessageResponseCode();
+    }
+
+    [Fact]
+    public void CreateResponseMessageBytes()
+    {
+        ConnectService.CreateResponseMessageBytes();
+    }
+
+    [Fact]
+    public void CreateRPCMessageBytes()
+    {
+        ConnectService.CreateRPCMessageBytes();
     }
 }

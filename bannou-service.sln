@@ -51,14 +51,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-auth-service", "lib-aut
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-connect-core", "lib-connect-core\lib-connect-core.csproj", "{661E2C58-157C-4B7F-9D8F-3BBBF58B01F9}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-connect-service", "lib-connect-service\lib-connect-service.csproj", "{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-connect-unit-tests", "lib-connect-unit-tests\lib-connect-unit-tests.csproj", "{FC14A966-8D29-4B76-BCB8-EAFAF7B86355}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{4F07AA77-C49C-498D-BFA1-B47D0139E021}"
 	ProjectSection(SolutionItems) = preProject
 		build-libs.sh = build-libs.sh
 		service-tests.sh = service-tests.sh
 		wait-for-health.sh = wait-for-health.sh
 	EndProjectSection
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-connect-service", "lib-connect-service\lib-connect-service.csproj", "{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{9DF51A7F-2307-41EC-97DD-EBC30BF8B859}"
 	ProjectSection(SolutionItems) = preProject
@@ -100,8 +102,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "run-init", "run-init", "{FD
 	ProjectSection(SolutionItems) = preProject
 		provisioning\mysql\run-init\grant-permissions.sql = provisioning\mysql\run-init\grant-permissions.sql
 	EndProjectSection
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-connect-unit-tests", "lib-connect-unit-tests\lib-connect-unit-tests.csproj", "{FC14A966-8D29-4B76-BCB8-EAFAF7B86355}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

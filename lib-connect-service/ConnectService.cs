@@ -466,14 +466,14 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// Converts the next 16 bytes from the provided byte array into a GUID.
     /// Will reverse the byte order for little-endian systems, for consistency.
     /// </summary>
-    internal static Guid GetServiceCode(byte[] bytes, ref int byteCounter)
+    internal static Guid GetServiceID(byte[] bytes, ref int byteCounter)
     {
         if (BitConverter.IsLittleEndian)
             Array.Reverse(bytes, byteCounter, 16);
 
         var guidSpan = new Span<byte>(bytes, byteCounter, 16);
-        Guid resultGuid = System.Runtime.InteropServices.MemoryMarshal.Read<Guid>(guidSpan);
-        return resultGuid;
+        Guid serviceID = System.Runtime.InteropServices.MemoryMarshal.Read<Guid>(guidSpan);
+        return serviceID;
     }
 
     /// <summary>
@@ -596,7 +596,7 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
                     {
                         // message is an RPC request or event
                         var messageChannel = GetMessageChannel(buffer, ref byteCounter);
-                        var serviceID = GetServiceCode(buffer, ref byteCounter);
+                        var serviceID = GetServiceID(buffer, ref byteCounter);
                         var messageContent = GetMessageContent(buffer, ref byteCounter, offset) ?? throw new NullReferenceException();
                         EnqueueRequestFromClient(messageFlags, messageID, messageChannel, serviceID, messageContent);
                     }
