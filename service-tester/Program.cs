@@ -7,6 +7,116 @@ namespace BeyondImmersion.ServiceTester;
 
 public class Program
 {
+    /// <summary>
+    /// The very first byte of any request or response message.
+    /// Indicates how the message content should be treated, and
+    /// how the message itself should be routed through the system.
+    /// </summary>
+    [Flags]
+    public enum MessageFlags : byte
+    {
+        /// <summary>
+        /// The "default message type" is a text/JSON request, being
+        /// made to a service endpoint (rather than to another client),
+        /// unencrypted, uncompressed, standard priority, and expecting
+        /// a response from the service.
+        /// 
+        /// With these flags, the next "ServiceID" section of the header
+        /// would be referring to the Dapr service app to pass the message
+        /// along to, after converting it to an HTTP request.
+        /// 
+        /// The "MessageID" section will also be enterring the system for
+        /// the first time- the same ID will need to be handed back to the
+        /// client for the response, so they can associate it back to the
+        /// request themselves if needed.
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// Message payload is binary data.
+        /// Default/off indicates Text/JSON.
+        /// </summary>
+        Binary = 1 << 0,
+        /// <summary>
+        /// Message payload is encrypted.
+        /// </summary>
+        Encrypted = 1 << 1,
+        /// <summary>
+        /// Message payload is compressed.
+        /// </summary>
+        Compressed = 1 << 2,
+        /// <summary>
+        /// Delivery at high priority- skip to the front of queues.
+        /// </summary>
+        HighPriority = 1 << 3,
+        /// <summary>
+        /// Message is an event- fire-and-forget.
+        /// Default/off indicates an RPC- expects a response.
+        /// </summary>
+        Event = 1 << 4,
+        /// <summary>
+        /// Message should be handed off to another WebSocket connection.
+        /// Default/off will direct the message to a Dapr service (HTTP).
+        /// </summary>
+        Client = 1 << 5,
+        /// <summary>
+        /// Message is the response to an RPC.
+        /// Default/off indicates a request (or event).
+        /// </summary>
+        Response = 1 << 6
+    };
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public enum ResponseCodes : byte
+    {
+        OK = 0,
+
+        RequestError = 10,
+        RequestTooLarge,
+        TooManyRequests,
+        InvalidRequestChannel,
+
+        Unauthorized = 20,
+
+        ServiceNotFound = 30,
+        ClientNotFound,
+        MessageNotFound,
+
+        Service_BadRequest = 50,
+        Service_NotFound,
+        Service_Unauthorized,
+        Service_InternalServerError = 60
+    };
+
+    /// <summary>
+    /// A request- either outgoing from the client to a service, or
+    /// incoming from a service to the client (as an RPC- cool!).
+    /// </summary>
+    public struct ServiceRequestItem
+    {
+        public MessageFlags Flags { get; set; }
+        public Guid MessageID { get; set; }
+        public ushort MessageChannel { get; set; }
+        public Guid ServiceID { get; set; }
+
+        public byte[] Content { get; set; }
+    }
+
+    /// <summary>
+    /// A response to an RPC, whether made by the client to a service,
+    /// or from a service to the client, depending on where the request
+    /// originated.
+    /// </summary>
+    public struct ServiceResponseItem
+    {
+        public MessageFlags Flags { get; set; }
+        public Guid MessageID { get; set; }
+        public ResponseCodes ResponseCode { get; set; }
+
+        public byte[]? Content { get; set; }
+    }
+
     private static ClientConfiguration _configuration;
     /// <summary>
     /// Client configuration.
@@ -50,6 +160,10 @@ public class Program
             return _httpClient;
         }
     }
+
+    private static List<string> ServiceNames { get; } = new List<string> { "accounts", "authorization", "connect", "leaderboards" };
+    private static Dictionary<string, Guid>? ServiceLookup { get; set; }
+    private static Dictionary<Guid, string>? ServiceReverseLookup { get; set; }
 
     /// <summary>
     /// Token source for initiating a clean shutdown.
@@ -197,20 +311,6 @@ public class Program
 
         return responseObj;
     }
-
-    [Flags]
-    public enum MessageFlags : byte
-    {
-        None = 0,
-        AckRequested = 1 << 0,
-        HighPriority = 1 << 1,
-        Async = 1 << 2,
-        Encrypted = 1 << 3,
-        Compressed = 1 << 4,
-    };
-
-    private static List<string> ServiceNames { get; } = new List<string> { "accounts", "authorization", "connect", "leaderboards" };
-    private static Dictionary<uint, string> ServiceLookup { get; } = ServiceNames.ToDictionary(name => Crc32.ComputeCRC32(name), name => name);
 
     private static async Task<bool> EstablishWebsocketAndSendMessage()
     {

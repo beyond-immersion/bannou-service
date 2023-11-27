@@ -205,7 +205,6 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
         internal set { _clientUUID = value; }
     }
 
-    private const byte RLE_FLAG = 0x80; // 1000 0000 in binary
     private static IConnectionMultiplexer? RedisConnection { get; set; }
 
     private static ConcurrentDictionary<string, ConnectService> ActiveSessions { get; set; } = new();
@@ -330,11 +329,12 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
         // accept and create WebSocket connection
         try
         {
-            var websocket = await requestContext.WebSockets.AcceptWebSocketAsync();
+            var webSocket = await requestContext.WebSockets.AcceptWebSocketAsync();
 
             // create tasks to handle data to and from the client through the WebSocket
-            _ = Task.Run(() => ClientWebSocketReceiveTask(websocket), Program.ShutdownCancellationTokenSource.Token);
-            _ = Task.Run(() => ClientWebSocketSendTask(websocket), Program.ShutdownCancellationTokenSource.Token);
+            _ = Task.Run(() => ClientWebSocketReceiveTask(webSocket), Program.ShutdownCancellationTokenSource.Token);
+            _ = Task.Run(() => ClientWebSocketSendTask(webSocket), Program.ShutdownCancellationTokenSource.Token);
+            _ = Task.Run(() => OutboxProcessingTask(webSocket), Program.ShutdownCancellationTokenSource.Token);
 
             return new(StatusCodes.OK);
         }
@@ -644,39 +644,46 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     private async Task ClientWebSocketSendTask(WebSocket webSocket)
     {
         WebSocketReceiveResult? receiveResult = null;
-        while (receiveResult?.CloseStatus == null)
+        try
         {
-            Guid? messageID = null;
-            try
+            while (receiveResult?.CloseStatus == null)
             {
-                while (ResponseInbox.TryDequeue(out var nextResponse))
+                Guid? messageID = null;
+                try
                 {
-                    messageID = nextResponse.MessageID;
-                    var messageBytes = CreateResponseMessageBytes(nextResponse.Flags, nextResponse.MessageID, nextResponse.ResponseCode, nextResponse.Content);
-                    await webSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Binary, true, Program.ShutdownCancellationTokenSource.Token);
+                    while (ResponseInbox.TryDequeue(out var nextResponse))
+                    {
+                        messageID = nextResponse.MessageID;
+                        var messageBytes = CreateResponseMessageBytes(nextResponse.Flags, nextResponse.MessageID, nextResponse.ResponseCode, nextResponse.Content);
+                        await webSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Binary, true, Program.ShutdownCancellationTokenSource.Token);
 
-                    if (NotifyResponse.TryRemove(messageID.Value, out Action<ServiceResponseItem>? notifyResponse))
-                        _ = Task.Run(() => notifyResponse?.Invoke(nextResponse));
+                        if (NotifyResponse.TryRemove(messageID.Value, out Action<ServiceResponseItem>? notifyResponse))
+                            _ = Task.Run(() => notifyResponse?.Invoke(nextResponse));
+                    }
+                }
+                catch (Exception exc)
+                {
+                    Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred sending RPC response with ID [{messageID}] to client.");
+                }
+
+                try
+                {
+                    if (Inbox.TryDequeue(out var nextRPC))
+                    {
+                        messageID = nextRPC.MessageID;
+                        var messageBytes = CreateRPCMessageBytes(nextRPC.Flags, nextRPC.MessageID, nextRPC.MessageChannel, nextRPC.ServiceID, nextRPC.Content);
+                        await webSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Binary, true, Program.ShutdownCancellationTokenSource.Token);
+                    }
+                }
+                catch (Exception exc)
+                {
+                    Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred sending RPC with ID [{messageID}] to client.");
                 }
             }
-            catch (Exception exc)
-            {
-                Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred sending RPC response with ID [{messageID}] to client.");
-            }
-
-            try
-            {
-                if (Inbox.TryDequeue(out var nextRPC))
-                {
-                    messageID = nextRPC.MessageID;
-                    var messageBytes = CreateRPCMessageBytes(nextRPC.Flags, nextRPC.MessageID, nextRPC.MessageChannel, nextRPC.ServiceID, nextRPC.Content);
-                    await webSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Binary, true, Program.ShutdownCancellationTokenSource.Token);
-                }
-            }
-            catch (Exception exc)
-            {
-                Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred sending RPC with ID [{messageID}] to client.");
-            }
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred in the client WebSocket send task.");
         }
 
         if (receiveResult != null && receiveResult.CloseStatus != null)
@@ -747,63 +754,74 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// in other words, those not in a channel queue. Will process high priority
     /// items first.
     /// </summary>
-    private async Task OutboxProcessingTask()
+    private async Task OutboxProcessingTask(WebSocket webSocket)
     {
-        await Task.CompletedTask;
-
-        while (true)
+        while (webSocket?.CloseStatus == null)
         {
-            while (PriorityOutbox.TryDequeue(out ServiceRequestItem priorityRequest))
-                HandleNextRequest(priorityRequest);
+            while (ResponseOutbox.TryDequeue(out ServiceResponseItem responseItem))
+                ExecuteServiceResponse(responseItem);
 
-            if (!Outbox.TryDequeue(out ServiceRequestItem normalRequest))
-                break;
+            while (PriorityOutbox.TryDequeue(out ServiceRequestItem priorityRequestItem))
+                ExecuteServiceRequest(priorityRequestItem);
 
-            HandleNextRequest(normalRequest);
-
-            void HandleNextRequest(ServiceRequestItem nextRequest)
-            {
-                if (!ServiceLookup.TryGetValue(nextRequest.ServiceID, out var serviceName))
-                {
-                    ResponseCodes notFoundResponse = ResponseCodes.ServiceNotFound;
-                    if (Configuration.Obfuscate_Not_Found_Response)
-                        notFoundResponse = ResponseCodes.Unauthorized;
-
-                    _ = EnqueueResponseToClient(nextRequest.Flags, nextRequest.MessageID, notFoundResponse);
-                    return;
-                }
-
-                var hasServiceAccess = false;
-                ClientDataLock.EnterReadLock();
-                try
-                {
-                    hasServiceAccess = ClientServiceClaims?.Contains(serviceName) ?? false;
-                }
-                finally
-                {
-                    ClientDataLock.ExitReadLock();
-                }
-
-                if (!hasServiceAccess)
-                {
-                    _ = EnqueueResponseToClient(nextRequest.Flags, nextRequest.MessageID, ResponseCodes.Unauthorized);
-                    return;
-                }
-
-                var fireAndForget = nextRequest.Flags.HasFlag(MessageFlags.Event);
-                if (fireAndForget)
-                {
-                    _ = Task.Run(() => FireAndForgetServiceRequestTask(serviceName, nextRequest),
-                        Program.ShutdownCancellationTokenSource.Token);
-
-                    return;
-                }
-
-                // implement maximum number of outgoing requests/tasks?
-                _ = Task.Run(() => ServiceRequestTask(serviceName, nextRequest),
-                    Program.ShutdownCancellationTokenSource.Token);
-            }
+            if (Outbox.TryDequeue(out ServiceRequestItem requestItem))
+                ExecuteServiceRequest(requestItem);
         }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    private void ExecuteServiceRequest(ServiceRequestItem request)
+    {
+        if (!ServiceLookup.TryGetValue(request.ServiceID, out var serviceName))
+        {
+            ResponseCodes notFoundResponse = ResponseCodes.ServiceNotFound;
+            if (Configuration.Obfuscate_Not_Found_Response)
+                notFoundResponse = ResponseCodes.Unauthorized;
+
+            _ = EnqueueResponseToClient(request.Flags, request.MessageID, notFoundResponse);
+            return;
+        }
+
+        var hasServiceAccess = false;
+        ClientDataLock.EnterReadLock();
+        try
+        {
+            hasServiceAccess = ClientServiceClaims?.Contains(serviceName) ?? false;
+        }
+        finally
+        {
+            ClientDataLock.ExitReadLock();
+        }
+
+        if (!hasServiceAccess)
+        {
+            _ = EnqueueResponseToClient(request.Flags, request.MessageID, ResponseCodes.Unauthorized);
+            return;
+        }
+
+        var fireAndForget = request.Flags.HasFlag(MessageFlags.Event);
+        if (fireAndForget)
+        {
+            _ = Task.Run(() => FireAndForgetServiceRequestTask(serviceName, request),
+                Program.ShutdownCancellationTokenSource.Token);
+
+            return;
+        }
+
+        // implement maximum number of outgoing requests/tasks?
+        _ = Task.Run(() => ServiceRequestTask(serviceName, request),
+            Program.ShutdownCancellationTokenSource.Token);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    private void ExecuteServiceResponse(ServiceResponseItem response)
+    {
+        if (NotifyResponse.TryRemove(response.MessageID, out Action<ServiceResponseItem>? notifyResponse))
+            _ = Task.Run(() => notifyResponse?.Invoke(response));
     }
 
     /// <summary>
@@ -980,39 +998,32 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// All requests can receive binary status code responses, even
     /// if the original request was text.
     /// </summary>
-    private void EnqueueRequestFromClient(MessageFlags messageFlags, Guid messageID, ushort messageChannel, Guid serviceID, byte[] messageContent)
+    private void EnqueueRequestFromClient(MessageFlags messageFlags, Guid messageID, ushort channel, Guid serviceID, byte[] content)
     {
-        var queueWasEmpty = false;
         var newRequestQueueItem = new ServiceRequestItem()
         {
             Flags = messageFlags,
             ServiceID = serviceID,
             MessageID = messageID,
-            Content = messageContent
+            Content = content
         };
 
-        if (messageChannel != 0)
+        if (channel != 0)
         {
             // enqueue to appropriate channel queue
-            _ = ChannelOutbox.AddOrUpdate(messageChannel,
-                (channel) =>
+            _ = ChannelOutbox.AddOrUpdate(channel,
+                (channel) =>                // add
                 {
                     var newRequestQueue = new ConcurrentQueue<ServiceRequestItem>();
                     newRequestQueue.Enqueue(newRequestQueueItem);
 
-                    // start processing task
-                    _ = Task.Run(() => ChannelOutboxProcessingTask(messageChannel));
+                    _ = Task.Run(() => ChannelOutboxProcessingTask(channel));
 
                     return newRequestQueue;
                 },
-                (channel, channelQueue) => // update
+                (channel, channelQueue) =>  // update
                 {
-                    queueWasEmpty = channelQueue.IsEmpty;
                     channelQueue.Enqueue(newRequestQueueItem);
-
-                    // start new processing task, if needed
-                    if (queueWasEmpty)
-                        _ = Task.Run(() => ChannelOutboxProcessingTask(messageChannel));
 
                     return channelQueue;
                 });
@@ -1023,17 +1034,12 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
         // enqueue as high-priority request
         if (messageFlags.HasFlag(MessageFlags.HighPriority))
         {
-            queueWasEmpty = PriorityOutbox.IsEmpty;
             PriorityOutbox.Enqueue(newRequestQueueItem);
-            if (queueWasEmpty)
-                _ = Task.Run(OutboxProcessingTask);
+            return;
         }
 
         // enqueue as typical request
-        queueWasEmpty = Outbox.IsEmpty;
         Outbox.Enqueue(newRequestQueueItem);
-        if (queueWasEmpty)
-            _ = Task.Run(OutboxProcessingTask);
     }
 
     /// <summary>
@@ -1056,6 +1062,32 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred enqueuing an RPC response from the client.");
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Enqueue an RPC to the client, which requires a response.
+    /// </summary>
+    private bool EnqueueRequestToClient(MessageFlags flags, Guid messageID, ushort channel, Guid serviceID, byte[] content)
+    {
+        try
+        {
+            Inbox.Enqueue(new()
+            {
+                Flags = flags,
+                MessageID = messageID,
+                MessageChannel = channel,
+                ServiceID = serviceID,
+                Content = content
+            });
+
+            return true;
+        }
+        catch (Exception exc)
+        {
+            Program.Logger.Log(LogLevel.Error, exc, $"An exception occurred enqueuing an RPC to the client.");
         }
 
         return false;

@@ -6,7 +6,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Xunit.Abstractions;
 using Newtonsoft.Json.Linq;
-using static BeyondImmersion.BannouService.Connect.ConnectService;
 
 namespace BeyondImmersion.BannouService.Connect.UnitTests;
 
@@ -27,7 +26,7 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
     [Fact]
     public void GenerateServiceRequestUri()
     {
-        var serviceUri = GenerateServiceRequestUrl("bannou");
+        var serviceUri = ConnectService.GenerateServiceRequestUrl("bannou");
         var baseDaprUri = new Uri("http://127.0.0.1:80/v1.0/invoke/", UriKind.Absolute);
 
         Assert.True(serviceUri?.IsAbsoluteUri ?? false);
@@ -207,9 +206,9 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
     [Fact]
     public void GetMessageResponseCode()
     {
-        var responseCode1 = ResponseCodes.OK;
-        var responseCode2 = ResponseCodes.ServiceNotFound;
-        var responseCode3 = ResponseCodes.Service_BadRequest;
+        var responseCode1 = ConnectService.ResponseCodes.OK;
+        var responseCode2 = ConnectService.ResponseCodes.ServiceNotFound;
+        var responseCode3 = ConnectService.ResponseCodes.Service_BadRequest;
         var responseBytes1 = new byte[] { (byte)responseCode1 };
         var responseBytes2 = new byte[] { (byte)responseCode2 };
         var responseBytes3 = new byte[] { default, (byte)responseCode3 };
@@ -232,14 +231,14 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
     [Fact]
     public void CreateResponseMessageBytes()
     {
-        var messageFlags = MessageFlags.None;
+        var messageFlags = ConnectService.MessageFlags.None;
         var messageID = Guid.NewGuid();
-        var responseCode = ResponseCodes.OK;
+        var responseCode = ConnectService.ResponseCodes.OK;
         var responseMessage = ConnectService.CreateResponseMessageBytes(messageFlags, messageID, responseCode);
         Assert.NotNull(responseMessage);
         Assert.Equal(18, responseMessage.Length);
 
-        var parsedMessageFlags = (MessageFlags)responseMessage[0];
+        var parsedMessageFlags = (ConnectService.MessageFlags)responseMessage[0];
         Assert.Equal(messageFlags, parsedMessageFlags);
 
         if (BitConverter.IsLittleEndian)
@@ -248,7 +247,7 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
         var parsedMessageID = new Guid(new Span<byte>(responseMessage, 1, 16));
         Assert.Equal(messageID, parsedMessageID);
 
-        var parsedResponseCode = (ResponseCodes)responseMessage[17];
+        var parsedResponseCode = (ConnectService.ResponseCodes)responseMessage[17];
         Assert.Equal(responseCode, parsedResponseCode);
     }
 
@@ -262,14 +261,14 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
         if (BitConverter.IsLittleEndian)
             Array.Reverse(contentBytes);
 
-        var messageFlags = MessageFlags.None;
+        var messageFlags = ConnectService.MessageFlags.None;
         var messageID = Guid.NewGuid();
-        var responseCode = ResponseCodes.OK;
+        var responseCode = ConnectService.ResponseCodes.OK;
         var responseMessageBytes = ConnectService.CreateResponseMessageBytes(messageFlags, messageID, responseCode, contentBytes);
         Assert.NotNull(responseMessageBytes);
         Assert.Equal(contentBytes.Length + 18, responseMessageBytes.Length);
 
-        var responseMessageFlags = (MessageFlags)responseMessageBytes[0];
+        var responseMessageFlags = (ConnectService.MessageFlags)responseMessageBytes[0];
         Assert.Equal(messageFlags, responseMessageFlags);
 
         if (BitConverter.IsLittleEndian)
@@ -278,7 +277,7 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
         var responseMessageID = new Guid(new Span<byte>(responseMessageBytes, 1, 16));
         Assert.Equal(messageID, responseMessageID);
 
-        var responseResponseCode = (ResponseCodes)responseMessageBytes[17];
+        var responseResponseCode = (ConnectService.ResponseCodes)responseMessageBytes[17];
         Assert.Equal(responseCode, responseResponseCode);
 
         var responseContentBytes = new Span<byte>(responseMessageBytes, 18, responseMessageBytes.Length - 18).ToArray();
@@ -291,6 +290,35 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
     }
 
     [Fact]
+    public void CreateResponseMessageBytes_GetFromBuffer()
+    {
+        var contentObj = new JObject() { ["Test"] = true };
+        var contentStr = contentObj.ToString(Newtonsoft.Json.Formatting.None);
+        var contentBytes = Encoding.UTF8.GetBytes(contentStr);
+
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(contentBytes);
+
+        var messageFlags = ConnectService.MessageFlags.None;
+        var messageID = Guid.NewGuid();
+        var responseCode = ConnectService.ResponseCodes.OK;
+        var responseMessageBytes = ConnectService.CreateResponseMessageBytes(messageFlags, messageID, responseCode, contentBytes);
+        Assert.NotNull(responseMessageBytes);
+        Assert.Equal(contentBytes.Length + 18, responseMessageBytes.Length);
+
+        var byteOffset = 0;
+        var rpcMessageFlags = ConnectService.GetMessageFlags(responseMessageBytes, ref byteOffset);
+        var rpcMessageID = ConnectService.GetMessageID(responseMessageBytes, ref byteOffset);
+        var rpcResponseCode = ConnectService.GetMessageResponseCode(responseMessageBytes, ref byteOffset);
+        var rpcContentBytes = ConnectService.GetMessageContent(responseMessageBytes, ref byteOffset, contentBytes.Length);
+
+        Assert.Equal(messageFlags, rpcMessageFlags);
+        Assert.Equal(messageID, rpcMessageID);
+        Assert.Equal(responseCode, rpcResponseCode);
+        Assert.Equal(contentBytes, rpcContentBytes);
+    }
+
+    [Fact]
     public void CreateRPCMessageBytes()
     {
         var contentObj = new JObject() { ["Test"] = true };
@@ -300,7 +328,7 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
         if (BitConverter.IsLittleEndian)
             Array.Reverse(contentBytes);
 
-        var messageFlags = MessageFlags.None;
+        var messageFlags = ConnectService.MessageFlags.None;
         var messageID = Guid.NewGuid();
         var messageChannel = (ushort)10;
         var serviceID = Guid.NewGuid();
@@ -308,7 +336,7 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
         Assert.NotNull(rpcMessageBytes);
         Assert.Equal(contentBytes.Length + 35, rpcMessageBytes.Length);
 
-        var responseMessageFlags = (MessageFlags)rpcMessageBytes[0];
+        var responseMessageFlags = (ConnectService.MessageFlags)rpcMessageBytes[0];
         Assert.Equal(messageFlags, responseMessageFlags);
 
         if (BitConverter.IsLittleEndian)
@@ -334,6 +362,38 @@ public class ConnectHelpers : IClassFixture<CollectionFixture>
 
         var responseMessageContentStr = Encoding.UTF8.GetString(responseContentBytes);
         Assert.Equal(contentStr, responseMessageContentStr);
+    }
+
+    [Fact]
+    public void CreateRPCMessageBytes_GetFromBuffer()
+    {
+        var contentObj = new JObject() { ["Test"] = true };
+        var contentStr = contentObj.ToString(Newtonsoft.Json.Formatting.None);
+        var contentBytes = Encoding.UTF8.GetBytes(contentStr);
+
+        if (BitConverter.IsLittleEndian)
+            Array.Reverse(contentBytes);
+
+        var messageFlags = ConnectService.MessageFlags.None;
+        var messageID = Guid.NewGuid();
+        var messageChannel = (ushort)10;
+        var serviceID = Guid.NewGuid();
+        var rpcMessageBytes = ConnectService.CreateRPCMessageBytes(messageFlags, messageID, messageChannel, serviceID, contentBytes);
+        Assert.NotNull(rpcMessageBytes);
+        Assert.Equal(contentBytes.Length + 35, rpcMessageBytes.Length);
+
+        var byteOffset = 0;
+        var rpcMessageFlags = ConnectService.GetMessageFlags(rpcMessageBytes, ref byteOffset);
+        var rpcMessageID = ConnectService.GetMessageID(rpcMessageBytes, ref byteOffset);
+        var rpcMessageChannel = ConnectService.GetMessageChannel(rpcMessageBytes, ref byteOffset);
+        var rpcServiceID = ConnectService.GetServiceID(rpcMessageBytes, ref byteOffset);
+        var rpcContentBytes = ConnectService.GetMessageContent(rpcMessageBytes, ref byteOffset, contentBytes.Length);
+
+        Assert.Equal(messageFlags, rpcMessageFlags);
+        Assert.Equal(messageID, rpcMessageID);
+        Assert.Equal(messageChannel, rpcMessageChannel);
+        Assert.Equal(serviceID, rpcServiceID);
+        Assert.Equal(contentBytes, rpcContentBytes);
     }
 
     private JwtBuilder CreateJWTBuilder()
