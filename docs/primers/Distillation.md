@@ -25,6 +25,11 @@ Involves heating a liquid to create vapor and then cooling the vapor to create a
 
 In a primitive/pre-industrial society, distillation would often be a rudimentary process, focused on practical outcomes like creating spirits for consumption or medicine, and purifying water. The sophistication of the distillation process and the quality of the final product would depend heavily on the skill and knowledge of the distiller, as well as the available equipment.
 
+**Related Topics**:
+
+- [Dehydration](Dehydration.md#dehydration)
+- [Extraction](Extraction.md#extraction)
+
 1. **Basic Components of a Still**:
    - **Boiling Vessel**: This is where the liquid mixture is heated. It can be made from various heat-resistant materials and can have different shapes, but it needs to be able to withstand the heat source and contain the liquid as it heats.
    - **Condensation Path** (Arm): This is the part where vapor is cooled and condensed back into liquid. While more complex designs might use coils or specialized condensers, the basic requirement is a surface or space where the vapor can cool and condense. The shape and material can vary, but it should encourage efficient condensation and collection of the distilled liquid.

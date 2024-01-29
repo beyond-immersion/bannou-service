@@ -21,7 +21,13 @@
 
 Reduction is a chemical process that involves the removal of oxygen or the addition of electrons to a substance. In pre-industrial societies, reduction was primarily applied in metallurgy, glassmaking, and ceramics, playing a crucial role in material transformation and production.
 
-**Common Applications Overview**:
+**Related Topics**:
+
+- [Ceramics](Ceramics.md#ceramics)
+- [Crystallization](Crystallization.md#crystallization)
+- [Dehydration](Dehydration.md#dehydration)
+
+**Common Applications**:
 
 1. **Iron Smelting in Bloomery Furnaces**:
     - Involves the reduction of iron ore to produce a spongy mass of iron called a bloom.

@@ -12,6 +12,12 @@
 
 Saponification is the chemical process through which fats or oils react with an alkali to produce soap and glycerol. This age-old process has been utilized for centuries to produce soaps for cleaning and hygiene. The reaction fundamentally transforms the fat or oil, turning it into a substance that has the unique ability to clean and emulsify oils with water.
 
+**Related Topics**:
+
+- [Candlemaking](Candlemaking.md#candlemaking)
+- [Potash and Lime](Potash%20and%20Lime.md#potash-and-lime)
+- [Soapmaking](Soapmaking.md#soapmaking)
+
 **Methods and Processes of Saponification**:
 
 1. **Cold Process**:

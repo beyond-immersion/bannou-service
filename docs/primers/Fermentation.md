@@ -37,6 +37,11 @@ Fermentation is the process of converting carbohydrates to alcohol or organic ac
 
 When fermented, materials become more acidic. When later broken down into fertilizer (by machine/slime), the resulting fertilizer will restore nutrients based on the base materials used (fish -> nitrogen, vegetables -> carbon), but will also increase acidity in the soil (pH adjustment more toward acidic). This is beneficial if the soil is more alkiline, but can be damaging if the soil is already acidic.
 
+**Related Topics**:
+
+- [Cheesemaking](Cheesemaking.md#cheesemaking)
+- [Distillation](Distillation.md#distillation)
+
 **Produces**: Fermented milk is used to make lassi, cheese, and yogurt. Fermented beans are used to make soy sauce and miso. Fermented fruit is used to make wine. Yeast is used to ferment grains to leavened bread, as well as to beer. Vegetables, fish, and meat can be fermented to simply have a longer shelf life.
 
 **Produced in**: Basically any sealed container, or even open containers in an otherwise sealed or stable environment, such as a basement. Earthenware pots and jugs, wooden barrels, and stone vats are all common fermentation containers, depending on the scale needed. Animal skins (as bladders for storing liquids) have also been used for fermenting milk and other materials.

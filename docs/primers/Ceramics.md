@@ -17,6 +17,11 @@
 
 Ceramics/pottery is one of the oldest human inventions, usually involving the shaping of clay into desired forms and then subjecting it to high temperatures to harden it into durable objects. This transformative process marries art and functionality, allowing the creation of a wide array of items from basic cooking vessels to intricate decorative pieces.
 
+**Related Topics**:
+
+- [Dehydration](Dehydration.md#dehydration)
+- [Reduction](Reduction.md#reduction)
+
 **Methods and Processes**:
 
 1. **Hand-Building**:

@@ -5,7 +5,7 @@
     - [Common Tools](#common-tools)
     - [Common Metals](#common-metals)
     - [Doping](#doping)
-    - [Alloys](#alloys)
+  - [Alloys](#alloys)
   - [Products and Advancements](#products-and-advancements)
   - [Creating a Bloomery](#creating-a-bloomery)
   - [From the Mine to the Furnace](#from-the-mine-to-the-furnace)
@@ -14,6 +14,12 @@
 ## The Basics
 
 Smelting is a metallurgical process used to extract pure metals from their ores. It involves heating the ore in the presence of a reducing agent (like carbon) to remove non-metallic elements and impurities. The process typically takes place in a furnace, where the ore is subjected to high temperatures. The resultant liquid metal can then be poured into molds to solidify and form various shapes. Smelting is a foundational process in metalworking, enabling the production of tools, weapons, and construction materials, and has been instrumental in the development of civilizations.
+
+**Related Topics**:
+
+- [Alloy Production](Alloy%20Production.md#alloy-production)
+- [Charcoal](Charcoal.md#charcoal)
+- [Ironworking](Ironworking.md#ironworking)
 
 ### Common Tools
 
@@ -77,7 +83,7 @@ Smelting is a key process in the field of metallurgy, transforming raw ores into
 
 Doping in metallurgy refers to the intentional addition of impurities or foreign elements into a metal to alter its properties. This process is used to enhance characteristics such as strength, hardness, or electrical conductivity. For example, carbon is introduced into iron to make steel, which is much stronger and more versatile than pure iron.
 
-### Alloys
+## Alloys
 
 Alloys are created by melting and mixing two or more metals or a metal with a non-metal. This process results in a material with properties different from those of the individual components. Alloys are often stronger, more durable, or more resistant to corrosion than pure metals. For instance, bronze is an alloy of copper and tin, known for its hardness and durability, making it ideal for tools and weapons.
 

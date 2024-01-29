@@ -17,6 +17,11 @@
 
 Tanning is the process of treating animal hides to produce leather, a durable and versatile material. The primary goal of tanning is to alter the protein structure of the hide, making it more durable, less prone to decomposition, and suitable for various uses. Tanning involves several steps, including preparing the hides, tanning them with specific chemicals or natural substances, and finishing the leather for its intended use.
 
+**Related Topics**:
+
+- [Leatherworking](Leatherworking.md#leatherworking)
+- [Textiles](Textiles.md#textiles)
+
 ### Significance
 
 The products resulting from these tanning methods have had a profound impact on societies throughout history:

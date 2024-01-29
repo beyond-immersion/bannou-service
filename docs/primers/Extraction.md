@@ -7,6 +7,7 @@
     - [Value of Raw Materials vs. Processed Products](#value-of-raw-materials-vs-processed-products)
   - [Methods](#methods)
     - [Mechanical Pressing (Cold Pressing)](#mechanical-pressing-cold-pressing)
+    - [Hot Pressing](#hot-pressing)
     - [Infusion and Maceration](#infusion-and-maceration)
     - [Steam Distillation](#steam-distillation)
     - [Solvent Extraction](#solvent-extraction)
@@ -19,6 +20,11 @@
 
 Extraction is the process of separating a substance from a mixture or compound. In pre-industrial societies, extraction was primarily used to obtain essential oils, herbal extracts, and certain minerals. The methods used often relied on simple equipment and natural forces like heat, pressure, and solubility differences.
 
+**Related Topics**:
+
+- [Distillation](Distillation.md#distillation)
+- [Grinding and Milling](./Grinding%20and%20Milling.md#grinding-and-milling)
+
 1. **Mechanical Pressing (Cold Pressing)**:
    - **Process**: Used to extract oils from nuts, seeds, or fruit by applying mechanical pressure. This method preserves the purity and nutritional value of the oil.
    - **Equipment/Steps**:
@@ -26,21 +32,28 @@ Extraction is the process of separating a substance from a mixture or compound. 
      - Seeds or nuts are ground and then pressed to extract the oil.
    - **Products**: Olive oil, coconut oil, sesame oil.
 
-2. **Infusion and Maceration**:
+2. **Hot Pressing**:
+   - **Process**: Involves extracting oils from seeds, nuts, or fruits by applying heat and mechanical pressure. This method generally yields more oil than cold pressing but may affect the flavor, nutritional value, and color of the oil.
+   - **Equipment/Steps**:
+     - Heating mechanism to warm the seeds or nuts before pressing.
+     - Mechanical press to extract the oil.
+   - **Products**: Oils with higher yield but possibly altered characteristics compared to cold-pressed oils. Commonly used for cooking oils and industrial oils.
+
+3. **Infusion and Maceration**:
    - **Process**: Involves soaking plant material in a solvent (water, oil, or alcohol) to extract active compounds. Infusion is typically done with warm solvents, while maceration is done at room temperature.
    - **Equipment/Steps**:
      - Jars or vessels for soaking plant material.
      - Strainers or cloth for separating the solid material from the liquid extract.
    - **Products**: Herbal teas, infused oils, tinctures.
 
-3. **Steam Distillation**:
+4. **Steam Distillation**:
    - **Process**: Used to extract essential oils from plant material. Steam passes through the plant material, vaporizing the oil, which is then condensed back into a liquid.
    - **Equipment/Steps**:
      - Distillation apparatus with a steam source, plant chamber, condenser, and collection vessel.
      - The process involves heating, vaporizing, condensing, and separating the essential oil from water.
    - **Products**: Essential oils, hydrosols.
 
-4. **Solvent Extraction**:
+5. **Solvent Extraction**:
    - **Process**: Separates compounds based on their solubility in two different immiscible liquids. It's particularly useful for extracting valuable compounds from plants when the compounds are delicate or when a more concentrated product is desired.
    - **Equipment/Steps**:
      - Extraction vessels for mixing plant material with the solvent.
@@ -48,7 +61,7 @@ Extraction is the process of separating a substance from a mixture or compound. 
      - Distillation setup for solvent recovery (in larger or more advanced setups).
    - **Products**: Concentrated plant extracts, essential oils, and various chemical compounds used in perfumery, medicine, and as flavorings.
 
-5. **Decoction (Water Extraction)**:
+6. **Decoction (Water Extraction)**:
    - **Process**: Involves boiling hard or woody plant materials in water to extract soluble compounds, commonly used in traditional medicine.
    - **Equipment/Steps**:
      - Pots or kettles for boiling.
@@ -56,7 +69,7 @@ Extraction is the process of separating a substance from a mixture or compound. 
      - Strainer or cloth for separating plant material from the liquid after boiling.
    - **Products**: Herbal remedies, medicinal teas, broths.
 
-6. **Enfleurage**:
+7. **Enfleurage**:
    - **Process**: Extracts fragrances from delicate flowers using fat or oil to absorb the fragrant compounds, used in traditional perfumery.
    - **Equipment/Steps**:
      - Frames or trays to spread out the fat or oil.
@@ -64,7 +77,7 @@ Extraction is the process of separating a substance from a mixture or compound. 
      - Strainer or press to extract the fragrant oil from the fat after absorption.
    - **Products**: Fragrant oils, pomades.
 
-7. **Dry Sifting or Sieving**:
+8. **Dry Sifting or Sieving**:
    - **Process**: Separates particles based on size by passing material through sieves or screens, used for seeds, grains, powdered herbs, or minerals.
    - **Equipment/Steps**:
      - Sieves or screens with varying mesh sizes.
@@ -143,6 +156,41 @@ Mechanical or cold pressing is a traditional and straightforward method of extra
 - **Storage**: Store the oil in a cool, dark place to preserve its quality and prevent rancidity.
 
 Mechanical pressing is one of the most natural and least invasive methods of extraction, making it ideal for producing high-quality, unrefined oils. Its simplicity and the high value of its products have made it a staple extraction method throughout history.
+
+### Hot Pressing
+
+Hot Pressing is a method of oil extraction that involves the application of heat in addition to mechanical pressure. This process typically yields more oil than cold pressing but can alter the characteristics of the oil due to the heat involved. The process is commonly used for oils intended for cooking and industrial applications where the subtle flavors and nutrients present in cold-pressed oils are less critical.
+
+**Equipment and Steps**:
+
+1. **Materials Required**:
+   - **Seeds or Nuts**: Common sources include olives, sunflower seeds, and peanuts.
+   - **Heat Source**: For warming the seeds or nuts before pressing.
+   - **Oil Press**: Mechanical press for extracting the oil.
+
+2. **Process Steps**:
+
+   **a. Preparation**:
+   - **Cleaning and Sorting**: Ensure the seeds or nuts are clean and free from impurities.
+   - **Heating**: Gently warm the seeds or nuts to a specific temperature to increase oil yield and facilitate extraction.
+
+   **b. Pressing**:
+   - **Feeding into Press**: Introduce the warmed seeds or nuts into the press.
+   - **Extraction**: Apply mechanical pressure to extract the oil. The heat and pressure cause the oil to separate from the solid parts.
+
+   **c. Collection and Refinement**:
+   - **Collecting Oil**: Collect the oil as it flows out of the press.
+   - **Refining (if necessary)**: Depending on the intended use, the oil may be refined to remove impurities and improve stability.
+
+3. **Products and Applications**:
+   - **Cooking Oils**: Hot-pressed oils are commonly used in cooking, offering a higher smoke point than cold-pressed oils.
+   - **Industrial Oils**: Used in various industrial applications where the extraction efficiency is more critical than the oil's subtle properties.
+
+4. **Environmental and Safety Notes**:
+   - **Waste Management**: Properly manage the leftover seed or nut meal, which can be used as animal feed or fertilizer.
+   - **Heat Control**: Monitor the temperature closely to prevent burning or degradation of the oil.
+
+Hot Pressing offers a balance between efficiency and quality, making it a versatile method in the oil extraction industry, especially in scenarios where the volume of production is a priority.
 
 ### Infusion and Maceration
 

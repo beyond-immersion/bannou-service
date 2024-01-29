@@ -23,6 +23,12 @@
 
 Crystallization is the process of forming solid crystals from a homogeneous solution. It's a method widely used to purify substances, isolate compounds, and form materials with specific properties. In nature, crystallization results in the formation of minerals and gemstones, while in human industries, it's essential in the production of salts, sugars, and various chemical compounds.
 
+**Related Topics**:
+
+- [Dehydration](Dehydration.md#dehydration)
+- [Reduction](Reduction.md#reduction)
+- [Precipitation](Precipitation.md#precipitation)
+
 ## Methods
 
 ### Evaporation Crystallization

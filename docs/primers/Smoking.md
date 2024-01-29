@@ -11,6 +11,10 @@
 
 Smoking is a traditional method of preserving and flavoring food by exposing it to smoke from burning or smoldering material, usually wood. Beyond preservation, smoking imparts a unique taste and aroma to the food, which varies based on the type of wood used, the smoking technique, and the duration of exposure. The process also contributes to food safety by reducing moisture content and inhibiting the growth of bacteria and mold through the antimicrobial properties of certain components in the smoke.
 
+**Related Topics**:
+
+- [Dehydration](Dehydration.md#dehydration)
+
 **Methods of Smoking**:
 
 1. **Cold Smoking**:
