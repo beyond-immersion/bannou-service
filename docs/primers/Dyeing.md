@@ -7,8 +7,8 @@
     - [Vat Dyeing](#vat-dyeing)
     - [Resist Dyeing](#resist-dyeing)
     - [Ikat Dyeing](#ikat-dyeing)
-    - [Primitive Hair Dyeing Techniques](#primitive-hair-dyeing-techniques)
-  - [Common Mordants in Pre-Industrial Society](#common-mordants-in-pre-industrial-society)
+    - [Hair Dyeing](#hair-dyeing)
+  - [Common Mordants](#common-mordants)
   - [Impact of Elemental Magic](#impact-of-elemental-magic)
 
 ## The Basics
@@ -252,7 +252,7 @@ Ikat dyeing is a unique process where the threads are dyed before they are woven
 
 Ikat dyeing is a testament to the intricate craftsmanship and cultural heritage of pre-industrial societies. It involves a complex interplay of dyeing and weaving, resulting in textiles that are not only visually striking but also deeply embedded in the cultural fabric of the communities that create them.
 
-### Primitive Hair Dyeing Techniques
+### Hair Dyeing
 
 Hair dyeing in pre-industrial societies was not only a means of changing appearance but also held cultural, social, and sometimes medicinal significance. Natural substances were used to impart color to hair, with techniques varying across different cultures and regions.
 
@@ -287,7 +287,7 @@ Hair dyeing in pre-industrial societies was not only a means of changing appeara
 
 Primitive hair dyeing techniques reflect a harmonious blend of nature and culture, with each ingredient and method carrying its own story and significance. The process, deeply rooted in tradition, offers a gentle and holistic approach to hair coloring.
 
-## Common Mordants in Pre-Industrial Society
+## Common Mordants
 
 In pre-industrial dyeing, mordants are crucial substances that help fix dyes to the fabric, impacting the color's intensity, shade, and fastness. These substances often come from natural sources and can significantly influence the dyeing process and the final color of the textile.
 
