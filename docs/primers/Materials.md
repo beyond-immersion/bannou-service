@@ -1,0 +1,1886 @@
+# Materials
+
+- [Materials](#materials)
+  - [Materials List](#materials-list)
+  - [Misc List](#misc-list)
+  - [Products List](#products-list)
+
+## Materials List
+
+- Abscess Root (Polemonium reptans)
+- Acacia Catechu/Black Catechu/Pallidum Catechu/Pale Catechu (Acacia catechu)
+- Acai (Euterpe oleracea)
+- Aconite/Monk's Hood (Aconitum napellus)
+- Adonis (Adonis spp.)
+- Adrue (Cyperus articulatus)
+- Agar-Agar (Gelidium spp.)
+- Agaric (Fomitopsis officinalis)
+- Agave (Agave americana)
+- Agrimony/Agrimonia (Agrimonia spp.)
+- Ajuga/Common Bugle (Ajuga reptans)
+- Albizia (Albizia julibrissin)
+- Alder Buckthorn (Rhamnus frangula)
+- Alecost/Costmary (Tanacetum balsamita)
+- Alexanders/Black Lovage (Smyrnium olusatrum)
+- Alfalfa/Lucerne (Medicago sativa)
+- Alfilaria (Erodium cicutarium)
+- Alkanet (Alkanna tinctoria)
+- All Heal/Self-Heal (Prunella vulgaris)
+- Allspice (Pimenta dioica)
+- Almond (Prunus dulcis)
+- Aloe Vera (Aloe barbadensis)
+- Alstona (Alstonia scholaris)
+- Amalaki (Emblica officinalis)
+- Amaranth (Amaranthus spp.)
+- Amarga Cascara (Picramnia antidesma)
+- American Adder's Tongue (Ophioglossum vulgatum)
+- American Bearsfoot (Smallanthus uvedalia)
+- American Boxwood/Box (Buxus sempervirens)
+- American Club Moss/Club Moss (Lycopodium clavatum)
+- American Columbo (Frasera caroliniensis)
+- American Cranesbill/Cranesbill (Geranium maculatum)
+- American Ginseng (Panax quinquefolius)
+- American Ground Pine (Lycopodium dendroideum)
+- American Ivy/Virginia Creeper (Parthenocissus quinquefolia)
+- American Liverwort/Liverwort/Hepatica (Hepatica nobilis)
+- American Mandrake/Mayapple (Podophyllum peltatum)
+- American Poke/Poke Root/Pokeroot (Phytolacca americana)
+- American Sarsaparilla/Caracao Sarsaparilla (Smilax aristolochiifolia)
+- American Sea Lavender (Limonium carolinianum)
+- American Spikenard/Spikenard (Aralia racemosa)
+- American Valerian (Valeriana officinalis)
+- American Wake Robin/Bethroot (Trillium erectum)
+- American Wormseed (Chenopodium ambrosioides)
+- Amla/Indian Gooseberry (Phyllanthus emblica)
+- Ammoniacum (Dorema ammoniacum)
+- Anachusa (Anchusa officinalis)
+- Anamu (Petiveria alliacea)
+- Andean Raspberry (Rubus glaucus)
+- Andiroba (Carapa guianensis)
+- Andrographis/Kalmegh (Andrographis paniculata)
+- Anemone (Anemone pulsatilla)
+- Angel's Trumpet (Brugmansia spp.)
+- Angelica Tree (Aralia spinosa)
+- Angelica/Garden Angelica (Angelica archangelica)
+- Anise (Pimpinella anisum)
+- Anise Hyssop (Agastache foeniculum)
+- Annatto (Bixa orellana)
+- Annual Mallow (Malva verticillata)
+- Annual Mercury (Mercurialis annua)
+- Annual Sea Blite/Sea Blite (Suæda maritima)
+- Antirrhinum/Snapdragon (Antirrhinum majus)
+- Aploppas (no scientific name found)
+- Apocyrum (no scientific name found)
+- Apple (Malus domestica)
+- Apricot (Prunus Armeniaca)
+- Aralia/Wild Sarsaparilla (Aralia nudicaulis)
+- Araroba (Andira araroba)
+- Arctic Root (Rhodiola spp.)
+- Areca Nut (Areca catechu)
+- Arenaria Rubra (Arenaria rubra)
+- Argan (arginia spinosa)
+- Arjuna (Terminalia arjuna)
+- Arnica (Arnica spp.)
+- Arrowhead (Sagittaria spp.)
+- Arrowleaf Balsamroot (Balsamorhiza sagittata)
+- Arrowroot (Maranta arundinacea)
+- Arrowwood (Viburnum dentatum)
+- Artichoke (Cynara scolymus)
+- Arum (Arum spp.)
+- Asafoetida/Asafetida (Ferula asafoetida)
+- Ashitaba (Angelica keiskei)
+- Ashoka (Saraca asoca)
+- Ashoka Tree (Saraca indica)
+- Ashwagandha/Winter Cherry (Withania somnifera)
+- Asian Ginseng/Korean Ginseng (Panax ginseng)
+- Asparagus (Asparagus officinalis)
+- Astragalus (Astragalus membranaceus)
+- Aubergine/Egg Plant (Solanum melongena)
+- Auricula (Primula auricula)
+- Autumnal Hawkbit (Leontodon autumnalis)
+- Avens (Geum spp.)
+- Avocado (Persia Americana)
+- Azadirachta/Neem (Azadirachta indica)
+- Baccharis (Baccharis trimera)
+- Bacopa/Brahmi (Bacopa monnieri)
+- Bael (Aegle marmelos)
+- Baikal Skullcap/Chinese Skullcap (Scutellaria baicalensis)
+- Balloon Flower (Platycodon grandiflorus)
+- Balloon Vine (Cardiospermum halicacabum)
+- Balmony (Chelone glabra)
+- Balsam Apple/Musk Seed (Abelmoschus moschatus)
+- Balsam Fir (Abies balsamea)
+- Balsam of Gilead/Balm of Gilead (Commiphora gileadensis)
+- Bamboo (Bambusa vulgaris)
+- Bamboo Brier (Smilax laurifolia)
+- Banana (Musa spp.)
+- Baneberry (Actaea spp.)
+- Barberry (Berberis vulgaris)
+- Barley (Hordeum vulgare)
+- Basil (Ocimum basilcum)
+- Basil Thyme (Acinos arvensis)
+- Bastard Lovage/Scotch Lovage (Ligusticum scoticum)
+- Bay Laurel (Laurus nobilis)
+- Bayberry (Myrica cerifera)
+- Bee Balm (Monarda didyma)
+- Beetroots (Beta vulgaris)
+- Belladonna/Deadly Nightshade (Atropa belladonna)
+- Benne/Sesame (Sesamum indicum)
+- Benzoin (Styrax benzoin)
+- Bergamot (Citrus bergamia)
+- Bergenia (Bergenia crassifolia)
+- Betel (Piper betle)
+- Betony/Wood Betony (Betonica officinalis)
+- Bhringraj (Eclipta prostrata)
+- Bilberry (Viccinium myrtillus)
+- Bilimbi (Averrhoa bilimbi)
+- Bindweeds (Convolvulus spp.)
+- Birch (Betula alba)
+- Birch Polypore (Fomitopsis betulina)
+- Birthwort (Aristolochia clematitis)
+- Bistort (Polygonum bistorta)
+- Bitter Apple (Malus sylvestris)
+- Bitter Candytuft/Candytuft (Iberis amara)
+- Bitter Melon/Bitter Gourd/Momordica (Momordica charantia)
+- Bitterleaf (Vernonia amygdalina)
+- Black American Alder (Alnus rugosa)
+- Black American Willow (Salix nigra)
+- Black Bryony (Bryonia dioica)
+- Black Cohosh (Actaea racemosa)
+- Black Cohosh/Bugbane (Cimicifuga racemosa)
+- Black Currant (Ribes nigrum)
+- Black Haw (Viburnum prunifolium)
+- Black Horehound (Ballota nigra)
+- Black Seed/Black Cumin/Fennel Flower (Nigella sativa)
+- Black Spruce (Picea mariana)
+- Black Walnut (Juglans nigra)
+- Blackberry Leaf (Rubus fruticosus)
+- Blackthorn (Prunus spinosa)
+- Bladder Senna (Colutea arborescens)
+- Bladderwrack (Fucus vesiculosus)
+- Blazing Star (Liatris spicata)
+- Blessed Thistle (Cnicus benedictus)
+- Blites/Oraches (Atriplex spp.)
+- Blood Flower (Asclepias curassavica)
+- Blood Lime (Citrus australasica)
+- Bloodroot (Sanguinaria canadensis)
+- Blue Flag/Versicolor Iris (Iris versicolor)
+- Blue Lotus (Nymphaea caerulea)
+- Blue Mallow (Malva sylvestris)
+- Blue Vervain (Verbena hastata)
+- Bluebell (Hyacinthoides non-scripta)
+- Blueberry (Vaccinium myrtillus)
+- Bog Myrtle/Sweet Gale (Myrica gale)
+- Bogbean/Buckbean (Menyanthes trifoliata)
+- Boldo (Peumus boldus)
+- Bolivian Coca (Erythroxylum coca)
+- Bolivian Coriander (Porophyllum ruderale)
+- Boneset (Eupatorium perfoliatum)
+- Borage (Borago officinalis)
+- Brazil Nut (Bertholletia excelsa)
+- British Bearsfoot (Heracleum sphondylium)
+- Brooklime (Veronica beccabunga)
+- Broom-Corn (Sorghum vulgare)
+- Broom/Scotch Broom (Cytisus scoparius)
+- Bryony/White Bryony/European White Bryony (Bryonia alba)
+- Buchu (Agathosma betulina)
+- Buchu (Barosma betulina)
+- Buck's Horn Plantain (Plantago coronopus)
+- Buckthorns (Rhamnus spp.)
+- Buckwheat (Fagopyrum esculentum)
+- Buffalo Berry (Shepherdia argentea)
+- Bugleweed (Lycopus virginicus)
+- Bulbous Buttercup (Ranunculus bulbosus)
+- Bullace (Prunus domestica subsp. insititia)
+- Bupleurum (Bupleurum chinense)
+- Burdock/Greater Burdock (Arctium lappa)
+- Burnet Saxifrage/Saxifage Burnet (Pimpinella saxifraga)
+- Burnet/Great Burnet/Greater Burnet Saxifrage (Sanguisorba officinalis)
+- Burning Bush (Dictamnus albus)
+- Burr Marigold/Bur Marigold (Bidens tripartita)
+- Burra Gookeroo (no scientific name found)
+- Bush Basil (Ocimum minimum)
+- Butcher's Broom (Ruscus aculeatus)
+- Butter Snakeroot (no scientific name found)
+- Butterbur (Petasites hybridus)
+- Buttercup (Ranunculus spp.)
+- Butterfly Pea (Clitoria ternatea)
+- Buttern/White Walnut (Juglans cinerea)
+- Button Snakeroot (Eryngium yuccifolium)
+- Cabbage Palm (Cordyline australis)
+- Cacao/Cocoa (Theobroma cacao)
+- Cactus (Cactaceae spp.)
+- Cajuput (Melaleuca spp.)
+- Calabar Bean (Physostigma venenosum)
+- Calabash Tree (Crescentia cujete)
+- Calamint (Calamintha nepeta)
+- Calamus/Aromatic Calamus/Sweet Flag/Sweet Sedge (Acorus calamus)
+- Calendula/Marigold (Calendula officinalis)
+- California Poppy (Eschscholzia californica)
+- Californian Spikenard (Aralia californica)
+- Calisaya (Cinchona calisaya)
+- Calotropis (Calotropis procera)
+- Calumba (Jateorhiza palmata)
+- Camellia (Camellia oleifera)
+- Campanula (Campanula spp.)
+- Camphor (Cinnamomum camphora)
+- Campion (Silene spp.)
+- Camu Camu (Myrciaria dubia)
+- Canadian Fleabane (Conyza canadensis)
+- Canadian Goldenrod (Solidago canadensis)
+- Canadian Hemp (Apocynum cannabinum)
+- Canchalagua (Schkuhria pinnata)
+- Canella/White Cinnamon (Canella winterana)
+- Canola/Rape Seed (Brassica napus)
+- Caper (Capparis spinosa)
+- Capsicum (Capsicum spp.)
+- Caraway (Carum carvi)
+- Cardamom (Elettaria cardamomum)
+- Cardoon Artichoke/Globe Artichoke (Cynara cardunculus)
+- Carob/John's Bread (Ceratonia siliqua)
+- Caroba (Jacaranda caroba)
+- Carrot/Queen Anne's Lace/Wild Carrot (Daucus carota)
+- Cascara/Cascara Sagrada (Rhamnus purshiana)
+- Cascarilla (Croton eluteria)
+- Cashew Nut (Anacardium occidentale)
+- Cassava/Mandioca/Tapioca (Manihot esculenta)
+- Castor (Ricinus communis)
+- Cat Thyme (Teucrium marum)
+- Cat's Claw (Uncaria tomentosa)
+- Cat's Foot/Catsfoot (Antennaria dioica)
+- Cat's Whiskers (Orthosiphon aristatus)
+- Catmint/Catnip/Catnep (Nepeta cataria)
+- Catuaba (Erythroxylum catuaba)
+- Caulophyllum/Blue Cohosh (Caulophyllum thalictroides)
+- Cayenne (Capsicum annuum)
+- Cedar (Cedrus spp.)
+- Cedron (Simaba cedron)
+- Celandine/Greater Celandine (Chelidonium majus)
+- Celery-Leaved Crowfoot (Ranunculus sceleratus)
+- Celery/Wild Celery (Apium graveolens)
+- Celosia (Celosia spp.)
+- Centaury/Chilian Centaury (Centaurium erythraea)
+- Chaga mushroom (Inonotus obliquus)
+- Chameleon Plant (Houttuynia cordata)
+- Chaparral/Creosote Bush (Larrea tridentata)
+- Chaparro Amargoso (Castela tortuosa)
+- Chaste Tree/Vitex (Vitex agnus-castus)
+- Chaulmoogra/Hydnocarpus (Hydnocarpus wightianus)
+- Cheken (Luma chequen)
+- Chenopodium/Goosefoot (Chenopodium spp.)
+- Cherry Laurel (Prunus laurocerasus)
+- Cherry Stalks/Wild Cherry (Prunus spp.)
+- Chervil (Anthriscus cerefolium)
+- Chickpea (Cicer arietinum)
+- Chickweed (Stellaria media)
+- Chicory (Cichorium intybus)
+- China Smilax (Smilax china)
+- Chinese Artichoke (Stachys affinis)
+- Chinese Cucumber (Trichosanthes kirilowii)
+- Chirayata (Swertia chirata)
+- Chives (Allium schoenoprasum)
+- Chlorella (Chlorella vulgaris)
+- Chrysanthemum (Chrysanthemum spp.)
+- Cineraria Maritima (Senecio cineraria)
+- Cinnamon (Cinnamomum spp.)
+- Cinquefoil (Potentilla spp.)
+- Cistus (Cistus ladaniferus)
+- Citronella (Cymbopogon nardus)
+- Clary/Common Clary (Salvia sclarea)
+- Cleavers/Clivers (Galium aparine)
+- Clematis (Clematis spp.)
+- Clove (Syzygium aromaticum)
+- Cnidium (Cnidium monnieri)
+- Cocillana Bark (Guarea rusbyi)
+- Cocklebur (Xanthium strumarium)
+- Coconut (Cocos nucifera)
+- Codonopsis (Codonopsis pilosula)
+- Coffee (Coffea spp.)
+- Colocynth (Citrullus colocynthis)
+- Coltsfoot (Tussilago farfara)
+- Columbine (Aquilegia spp.)
+- Combretum (Combretum spp.)
+- Comfrey (Symphytum spp.)
+- Common Alder (Alnus glutinosa)
+- Common Birch (Betula pendula)
+- Common Daisy (Bellis perennis)
+- Common Fleabane (Pulicaria dysenterica)
+- Common Fritillary (Fritillaria meleagris)
+- Common Gipsyweed (Lycopus europaeus)
+- Common Groundsel (Senecio vulgaris)
+- Common Moschatel (Adoxa moschatellina)
+- Common Mulberry (Morus nigra)
+- Common Oak (Quercus robur)
+- Common Plantain/Greater Plantain (Plantago major)
+- Common Sandspurry (Spergularia rubra)
+- Compass Plant (Silphium laciniatum)
+- Condurango (Gonolobus condurango)
+- Contrayerva (Dorstenia contrayerva)
+- Coolwort (Tiarella cordifolia)
+- Copaiba (Copaifera officinalis)
+- Copal Tree (Bursera spp.)
+- Coral Tree (Erythrina variegata)
+- Cordyceps (Cordyceps sinensis)
+- Coriander (Coriandrum sativum)
+- Corkwood Tree (Leitneria floridana)
+- Corn Cockle (Agrostemma githago)
+- Corn Feverfew (Chrysanthemum parthenium)
+- Corn Salad (Valerianella locusta)
+- Corn Silk/Indian Corn (Zea mays)
+- Cornflower (Centaurea cyanus)
+- Corsican Moss (Homalothecium sericeum)
+- Corsican Moss (no scientific name found)
+- Costus (Saussurea costus)
+- Coto (Coto bark)
+- Cotton Root (Gossypium hirsutum)
+- Couchgrass (Elymus repens)
+- Cow Parsnip (Heracleum maximum)
+- Cow-Wheat (Melampyrum pratense)
+- Cowhage/Kapikacchu (Mucuna pruriens)
+- Cowslip (Primula veris)
+- Cranberry (Vaccinium macrocarpon)
+- Crawley Root (Corallorhiza odontorhiza)
+- Crosswort (Cruciata laevipes)
+- Croton (Codiaeum variegatum)
+- Croton (Croton tiglium)
+- Crowberry (Empetrum nigrum)
+- Crown Imperial Lily (Fritillaria imperialis)
+- Cuban Oregano/Mexican Mint (Plectranthus amboinicus)
+- Cubebs (Piper cubeba)
+- Cuckoo-pint (Arum maculatum)
+- Cucumber (Cucumis sativus)
+- Cudbear (Ochrolechia tartarea)
+- Cudweed/Gnaphalium (Gnaphalium spp.)
+- Cumin (Cuminum cyminum)
+- Cup Moss (Cladonia spp.)
+- Cup Plant (Silphium perfoliatum)
+- Curare/Pareira (Chondrodendron tomentosum)
+- Curry Leaf (Murraya koenigii)
+- Curry Plant/Immortelle (Helichrysum italicum)
+- Custard Apple (Annona reticulata)
+- Cypress (Cupressus sempervirens)
+- Daffodil (Narcissus pseudonarcissus)
+- Dahlias (Dahlia spp.)
+- Dalmatian Pellitory (Anacyclus pyrethrum)
+- Damask Rose (Rosa × damascena)
+- Damiana (Turnera diffusa)
+- Dandelion (Taraxacum officinale)
+- Datura/Stramonium/Thornapple (Datura stramonium)
+- Dead Nettle (Lamium album)
+- Deer Tongue (Carphephorus odoratissimus)
+- Desert Tea (Ephedra nevadensis)
+- Devil's Bit Scabious (Succisa pratensis)
+- Devil's Claw (Harpagophytum procumbens)
+- Devil's Club (Oplopanax horridus)
+- Dewberry (Rubus caesius)
+- Dhatura (Datura metel)
+- Dill (Anethum graveolens)
+- Dodder (Cuscuta europaea)
+- Dog Fennel (Eupatorium capillifolium)
+- Dog Rose (Rosa canina)
+- Dog Violet (Viola canina)
+- Dog's Mercury (Mercurialis perennis)
+- Dogwood/Green Osier (Cornus spp.)
+- Dong Quai (Angelica sinensis)
+- Dragon Tree (Dracaena draco)
+- Dragon's Blood (Croton lechleri)
+- Dragon's Blood (Daemonorops draco)
+- Dryer's Broom/Greenwood (Genista tinctoria)
+- Dutchman's Pipe (Aristolochia)
+- Dwarf American Elder (Sambucus canadensis)
+- Dwarf Elder (Sambucus ebulus)
+- Dwarf Palm (Sabal minor)
+- Echinacea (Echinacea spp.)
+- Egyptian Soapwort Root (Gypsophila struthium)
+- Elaterium/Squirting Cucumber (Ecballium elaterium)
+- Elder (Sambucus spp.)
+- Elderberry/Elderflower (Sambucus nigra)
+- Elecampane (Inula helenium)
+- Eleuthero/Siberian Ginseng (Eleutherococcus senticosus)
+- Elm Common (Ulmus minor)
+- Embelia (Embelia ribes)
+- English Adder's Tongue (Ophioglossum engelmannii)
+- English Liverwort (Marchantia polymorpha)
+- Ephedra/Ma Huang (Ephedra sinica)
+- Epimedium (Epimedium spp.)
+- Ergot (Claviceps purpurea)
+- Eryngo (Eryngium spp.)
+- Eucalyptus (Eucalyptus globulus)
+- Euonymus (Euonymus spp.)
+- Eupatoriums (Eupatorium spp.)
+- Euphorbium (Euphorbia resinifera)
+- Evening Primrose (Oenothera biennis)
+- Everlasting Flowers (Helichrysum spp.)
+- Eyebright (Euphrasia officinalis)
+- False Hellebore (Veratrum viride)
+- False Unicorn/False Unicorn Root (Chamaelirium luteum)
+- Fennel (Foeniculum vulgare)
+- Fenugreek (Trigonella foenum-graecum)
+- Ferns (Pteridophyta spp.)
+- Fever Bush (Lindera benzoin)
+- Fever Tree (Acacia xanthophloea)
+- Feverfew (Tanacetum parthenium)
+- Field Convolvulus (Convolvulus arvensis)
+- Field Larkspur (Delphinium consolida)
+- Field Scabious (Knautia arvensis)
+- Field Southernwood (Artemisia campestris)
+- Fig/Common Fig (Ficus carica)
+- Firethorn (Pyracantha coccinea)
+- Fireweed (Chamerion angustifolium)
+- Firs (Abies spp.)
+- Five-Leaf Grass (Potentilla reptans)
+- Flax/Linseed (Linum usitatissimum)
+- Fleabane (Erigeron annuus)
+- Florence Fennel (Foeniculum vulgare var. azoricum)
+- Fluellin (Kickxia spp.)
+- Fo-ti/He Shou Wu (Polygonum multiflorum)
+- Fool's Parsley (Aethusa cynapium)
+- Forget-Me-Not (Myosotis spp.)
+- Forsythia (Forsythia suspensa)
+- Foxglove (Digitalis purpurea)
+- Frankincense (Boswellia spp.)
+- French Sorrel (Rumex scutatus)
+- Fringe Tree (Chionanthus virginicus)
+- Frostwort (Helianthemum canadense)
+- Fuchsia (Fuchsia spp.)
+- Fumitory (Fumaria officinalis)
+- Galangal (Alpinia galanga)
+- Galbanum (Ferula gummosa)
+- Gamboge (Garcinia morella)
+- Garden Arrach (Atriplex hortensis)
+- Garden Rocket (Eruca vesicaria)
+- Gardenia (Gardenia jasminoides)
+- Garlic (Allium sativum)
+- Garlic Mustard (Alliaria petiolata)
+- Gelsemium (Gelsemium sempervirens)
+- Gentian/Yellow Gentian (Gentiana spp.)
+- Geranium (Pelargonium graveolens)
+- German Chamomile (Matricaria recutita)
+- Germander Speedwell (Veronica chamaedrys)
+- Germander/Wall Germander (Teucrium chamaedrys)
+- Giant Hyssop (Agastache spp.)
+- Ginger (Zingiber officinale)
+- Ginkgo/Gingko (Gingko biloba)
+- Ginseng (Panax spp.)
+- Glasswort (Salicornia spp.)
+- Gleditschia (Gleditsia triacanthos)
+- Globe Flower (Trollius europaeus)
+- Goat's Beard (Tragopogon spp.)
+- Goat's Rue (Galega officinalis)
+- Goji/Lycium/Wolfberry (Lycium barbarum)
+- Gold Thread (Coptis trifolia)
+- Golden Gorse (Ulex europaeus)
+- Golden Samphire (Inula crithmoides)
+- Goldenrod/Golden Rod (Solidago spp.)
+- Goldenseal/Golden Seal (Hydrastis canadensis)
+- Goldthread (Coptis chinensis)
+- Good King Henry (Chenopodium bonus-henricus)
+- Gotu Kola (Centella asiatica)
+- Goutweed (Aegopodium podagraria)
+- Grains of Paradise (Aframomum melegueta)
+- Grape Hyacinth (Muscari spp.)
+- Grape seed (Vitus vinifera)
+- Grapefruit (Citrus paradisii)
+- Gravelroot (Eupatorium purpureum)
+- Graviola/Soursop (Annona muricata)
+- Great Fleabane (Inula dysenterica)
+- Great Mullein (Verbascum thapsus)
+- Greater Bindweed (Calystegia sepium)
+- Greater Knapweed (Centaurea scabiosa)
+- Green Hellebore (Helleborus viridis)
+- Green Tea (Camellia sinensis)
+- Grindelia (Grindelia spp.)
+- Ground Ivy/Creeping Charlie (Glechoma hederacea)
+- Ground Pine/European Ground Pine/Yellow Bugle (Ajuga chamaepitys)
+- Guaiacum (Guaiacum officinale)
+- Guarana (Paullinia cupana)
+- Guava (Psidium guajava)
+- Guayusa (Ilex guayusa)
+- Guduchi (Tinospora cordifolia)
+- Guelder Rose/Cramp Bark (Viburnum opulus)
+- Guggul (Commiphora wightii)
+- Gum Acacia/Acacis/False Acacia (Acacia spp.)
+- Gymnema (Gymnema sylvestre)
+- Hair Cap Moss (Polytrichum commune)
+- Hairy Violet (Viola hirta)
+- Halberd-Leaved Arrach (Atriplex halimus)
+- Hardhack (Spiraea tomentosa)
+- Haritaki/Chebulic Myrobalan (Terminalia chebula)
+- Harshweed Knapwort (Centaurea aspera)
+- Hart's Tongue (Asplenium scolopendrium)
+- Hawthorn (Crataegus spp.)
+- Hazel (Corylus avellana)
+- Heather (Calluna vulgaris)
+- Hedge Bedstraw (Galium mollugo)
+- Hedge Hyssop (Gratiola officinalis)
+- Hedge Mustard (Sisymbrium officinale)
+- Hedge Woundwort (Stachys sylvatica)
+- Helichrysum (Helichrysum angustifolium)
+- Heliotrope (Heliotropium spp.)
+- Hellebore/Black Hellebore (Helleborus niger)
+- Hemlock (Conium maculatum)
+- Hemp Agrimony (Eupatorium cannabinum)
+- Hemp/Marijuana (Cannabis sativa)
+- Henbane (Hyoscyamus niger)
+- Henna (Lawsonia inermis)
+- Herb Paris (Paris quadrifolia)
+- Hibiscus (Hibiscus sabdariffa)
+- Hoary Plantain (Plantago media)
+- Hog's Fennel (Peucedanum officinale)
+- Holly (Ilex aquifolium)
+- Hollyhock (Alcea rosea)
+- Holy Basil/Tulsi (Ocimum spp.)
+- Holy Thorn (Crataegus monogyna)
+- Honeysuckle (Lonicera spp.)
+- Hops (Humulus lupulus)
+- Horehound/White Horehound (Marrubium vulgare)
+- Horse Chestnut (Aesculus hippocastanum)
+- Horsemint (Monarda punctata)
+- Horsenettle (Solanum carolinense)
+- Horseradish (Armoracia rusticana)
+- Horsetail (Equisetum spp.)
+- Hound's Tongue (Cynoglossum officinale)
+- Houseleek (Sempervivum tectorum)
+- Hyacinth Bean (Lablab purpureus)
+- Hydrangea (Hydrangea macrophylla)
+- Hydrangea Root (Hydrangea arborescens)
+- Hydrocotyle (Hydrocotyle asiatica)
+- Hyssop (Hyssopus officinalis)
+- Hysteronica (no scientific name found)
+- Iceland Moss (Cetraria islandica)
+- Ignatius Beans (Strychnos ignatii)
+- Indian Barberry/Nepal Barberry (Berberis aristata)
+- Indian Frankincense (Boswellia serrata)
+- Indian Hemp (Cannabis indica)
+- Indian Physic (Porteranthus stipulatus)
+- Indian Sarsaparilla (Hemidesmus indicus)
+- Indian Snakeroot (Rauwolfia serpentina)
+- Indian Valerian (Valeriana wallichii)
+- Indicus Cocculus (Anamirta cocculus)
+- Indigo (Indigofera tinctoria)
+- Ipecac/Ipecacuanha (Carapichea ipecacuanha)
+- Iris/Jezebel Root/Flag (Iris spp.)
+- Irish Moss (Chondrus crispus)
+- Ironweed (Vernonia altissima)
+- Ispaghul/Ispaghul Plantain (Plantago ovata)
+- Ivy-Leafed Cyclamen (Cyclamen hederifolium)
+- Ivy-Leaved Toadflax (Cymbalaria muralis)
+- Ivy/Common Ivy (Hedera helix)
+- Jaborandi (Pilocarpus spp.)
+- Jaboticaba (Plinia cauliflora)
+- Jacob's Ladder (Polemonium caeruleum)
+- Jalap/Jalap Bindweed (Ipomoea purga)
+- Jamaica Dogwood (Piscidia piscipula)
+- Jamaica Sarsaparilla (Smilax regelii)
+- Jambul/Java Plum (Syzygium cumini)
+- Japanese Honeysuckle (Lonicera japonica)
+- Japanese Knotweed (Polygonum cuspidatum)
+- Japanese Mint (Mentha arvensis var. piperascens)
+- Japanese Quince (Chaenomeles japonica)
+- Jasmine (Jasminum officinale)
+- Jasmines (Jasminum spp.)
+- Jequirity (Abrus precatorius)
+- Jerusalem Artichoke (Helianthus tuberosus)
+- Jewelweed (Impatiens capensis)
+- Jiaogulan (Gynostemma pentaphyllum)
+- Job's Tears (Coix lacryma-jobi)
+- Joe-Pye Weed (Eutrochium purpureum)
+- Jojoba (Simmondsia chinensis)
+- Jujube/Jujube Berries (Ziziphus jujuba)
+- Juniper/Juniper Berries (Juniperus communis)
+- Kaffir Lime (Citrus hystrix)
+- Kamala (Mallotus philippensis)
+- Kanna (Sceletium tortuosum)
+- Karpooravalli (Coleus amboinicus)
+- Kava/Kava Kava (Piper methysticum)
+- Kelp (Laminaria spp.)
+- Khat (Catha edulis)
+- Khella (Ammi visnaga)
+- Kidney Bean (Phaseolus vulgaris)
+- Kidney Vetch (Anthyllis vulneraria)
+- Kidneywort (Cotyledon umbilicus)
+- Kinkeliba (Combretum micranthum)
+- Kinos (Pterocarpus marsupium)
+- Kiwifruit (Actinidia deliciosa)
+- Knapweed/Black Knapweed (Centaurea nigra)
+- Knotgrass/Russian Knotgrass (Polygonum aviculare)
+- Knotted Figwort/Water Betony (Scrophularia nodosa)
+- Kola Nut (Cola acuminata)
+- Kousso (Hagenia abyssinica)
+- Kratom (Mitragyna speciosa)
+- Kudzu (Pueraria montana var. lobata)
+- Labrador Tea (Rhododendron groenlandicum)
+- Laburnum (Laburnum anagyroides)
+- Lady's Bedstraw/Ladies's Bedstraw (Galium verum)
+- Lady's Mantle (Alchemilla vulgaris)
+- Lady's Slipper/Cypripedium (Cypripedium spp.)
+- Lady's Trusses (Spiranthes spiralis)
+- Lamb's Ears (Stachys byzantina)
+- Lamb's Quarters (Chenopodium album)
+- Lantana (Lantana camara)
+- Larch/Larch Pine (Larix decidua)
+- Lavender (Lavandula spp.)
+- Lavender Cotton (Santolina chamaecyparissus)
+- Lemon (Citrus limon)
+- Lemon Balm (Melissa officinalis)
+- Lemon Verbena/Lippia Citriodora (Aloysia citrodora)
+- Lemongrass (Cymbopogon spp.)
+- Lesser Burnet (Poterium sanguisorba)
+- Lesser Celandine (Ficaria verna)
+- Lesser Scabious (Scabiosa columbaria)
+- Lesser Spearwort (Ranunculus flammula)
+- Levant Wormseed (Artemisia cina)
+- Licorice/Indian Liquorice/Liquorice (Glycyrrhiza glabra)
+- Life Everlasting (Helichrysum stoechas)
+- Life Root (Senecio aureus)
+- Lilac (Syringa spp.)
+- Lily of the Valley (Convallaria majalis)
+- Lime (Citrus aurantifolia)
+- Lime Fruit (Citrus aurantiifolia)
+- Lime Tree (Tilia spp.)
+- Linden/Lime Flower (Tilia × europaea)
+- Lion's Mane Mushroom (Hericium erinaceus)
+- Lippia (Lippia spp.)
+- Litmus (Roccella tinctoria)
+- Lobelia (Lobelia inflata)
+- Logwood (Haematoxylum campechianum)
+- Long Pepper/Hungarian Pepper (Piper longum)
+- Loquat (Eriobotrya japonica)
+- Lotus (Nelumbo nucifera)
+- Lovage/Water Lovage (Levisticum officinale)
+- Love Lies Bleeding (Amaranthus caudatus)
+- Lungwort (Pulmonaria officinalis)
+- Lupine (Lupinus spp.)
+- Lycium (Lycium chinense)
+- Maca (Lepidium mayenil)
+- Madder (Rubia tinctorum)
+- Magnolia (Magnolia spp.)
+- Maidenhair (Adiantum spp.)
+- Maidenhair Fern (Adiantum capillus-veneris)
+- Maitake Mushroom (Grifola frondosa)
+- Malabar Nut (Justicia adhatoda)
+- Malabar Spinach (Basella alba)
+- Male Fern (Dryopteris filix-mas)
+- Mallow (Malva spp.)
+- Manaca (Brunfelsia uniflora)
+- Mandarin (Citrus reticulata)
+- Mandrake (Mandragora officinarum)
+- Mango (Mangifera indica)
+- Manjistha (Rubia cordifolia)
+- Manna (Fraxinus ornus)
+- Manuka (Leptospermum scoparium)
+- Manzanillo (Hippomane mancinella)
+- Maples (Acer spp.)
+- Maral Root (Rhaponticum carthamoides)
+- Mare's Tail (Hippuris vulgaris)
+- Marigold (Tagetes patula)
+- Marjoram (Origanum majoran)
+- Marsh Marigold (Caltha palustris)
+- Marsh Woundwort/Water Betony (Stachys palustris)
+- Marshmallow (Althaea officinalis)
+- Marula (Sclerocarya birrea)
+- Masterwort (Peucedanum ostruthium)
+- Mastic (Pistacia lentiscus)
+- Mate/Yerba Mate/Matte Tea/Paraguay Tea (Ilex paraguariensis)
+- Matico (Piper aduncum)
+- Mayweed (Matricaria chamomilla)
+- Meadow Saffron (Colchicum autumnale)
+- Meadowfoam (Limnanthas alba)
+- Meadowsweet/Queen of the Meadow (Filipendula ulmaria)
+- Melilot (Melilotus officinalis)
+- Melons (Cucumis melo)
+- Mescal Buttons (Lophophora williamsii)
+- Mezereon (Daphne mezereum)
+- Milk Thistle/Blessed Milkthistle/St. Mary's Thistle (Silybum marianum)
+- Milkweed (Asclepias spp.)
+- Mimosas (Mimosa spp.)
+- Mint (Mentha spp.)
+- Mistletoe/European Mistletoe (Viscum album)
+- Modonna Lily (Lilium candidum)
+- Moneywort (Lysimachia nummularia)
+- Monkfruit (Siraitia grosvenorii)
+- Monsonia (Monsonia spp.)
+- Monstera (Monstera deliciosa)
+- Morchella/Morel Mushroom (Morchella spp.)
+- Moringa (Moringa oleifera)
+- Morning Glory (Ipomoea spp.)
+- Mosquito Plant (Agastache cana)
+- Mother of Thyme/Wild Thyme (Thymus serpyllum)
+- Motherwort (Leonurus cardiaca)
+- Mountain Ash (Sorbus aucuparia)
+- Mountain Avens (Geum montanum)
+- Mountain Flax (Linum lewisii)
+- Mountain Grape/Oregon Grape (Mahonia aquifolium)
+- Mountain Laurel (Kalmia latifolia)
+- Mountain Sorrel (Oxyria digyna)
+- Mouse-Ear (Cerastium fontanum)
+- Mouse-Ear Hawkweed (Hieracium pilosella)
+- Mugwort (Artemisia vulgaris)
+- Mulberry (Morus spp.)
+- Mullein (Verbascum spp.)
+- Mustard/Cole Seed (Brassica spp.)
+- Myrrh (Commiphora spp.)
+- Myrtle (Myrtus communis)
+- Narcissus (Narcissus spp.)
+- Nasturtium (Tropaeolum majus)
+- Nettle (Urtica dioica)
+- New Zealand Spinach (Tetragonia tetragonoides)
+- Night Blooming Cereus (Selenicereus grandiflorus)
+- Nightshade/Black Nightshade (Solanum nigrum)
+- Noni (Morinda citrifolia)
+- Nutmeg/Mace (Myristica fragrans)
+- Nux Vomica (Strychnos nux-vomica)
+- Oak (Quercus spp.)
+- Oats/Oat Straw (Avena sativa)
+- Ocotillo (Fouquieria splendens)
+- Oleander (Nerium oleander)
+- Olibanum (Boswellia sacra)
+- Olive (Olea europaea)
+- Onion (Allium cepa)
+- Opoponax (Commiphora guidottii)
+- Orange/Sweet Orange (Citrus sinensis)
+- Orchids (Orchidaceae spp.)
+- Oregano/Wild Marjoram (Origanum vulgare)
+- Orris Root (Iris germanica)
+- Osage Orange (Maclura pomifera)
+- Osha/Osha Root (Ligusticum porteri)
+- Ox-eye Daisy (Leucanthemum vulgare)
+- Ox-tongue (Picris echioides)
+- Paeony (Paeonia spp.)
+- Palmarosa (Cymbopogon martini)
+- Pansy/Heartsease (Viola tricolor)
+- Papaw/Pawpaw (Asimina triloba)
+- Papaya (Carica papaya)
+- Papyrus (Cyperus papyrus)
+- Parsley (Petroselinum crispum)
+- Parsley Piert (Aphanes arvensis)
+- Parsnip (Pastinaca sativa)
+- Partridge Berry/Squaw Vine (Mitchella repens)
+- Passionflower/Passion Flower (Passiflora incarnata)
+- Patchouli (Pogostemon cablin)
+- Pau D'Arco (Tabebuia impetiginosa)
+- Peach (Prunus persica)
+- Pearl-Flowered Life Everlasting (Anaphalis margaritacea)
+- Pelargoniums (Pelargonium spp.)
+- Pellitory (Parietaria officinalis)
+- Pellitory-of-the-Wall (Parietaria judaica)
+- Pennyroyal (Mentha pulegium)
+- Peony (Paeonia lactiflora)
+- Pepper/Black Pepper (Piper nigrum)
+- Peppermint (Mentha × piperita)
+- Peppermint (Mentha piperita)
+- Perennial Flax (Linum perenne)
+- Perilla (Perilla frutescens)
+- Periwinkle (Vinca minor)
+- Periwinkles (Vinca spp.)
+- Persian Pellitory (Pyrus boissieriana)
+- Peruvian Balsam (Myroxylon pereirae)
+- Peruvian Bark (Cinchona spp.)
+- Petitgrain/Bitter Orange/Neroli (Citrus aurantium)
+- Pheasant's Eye (Adonis vernalis)
+- Pichi (Fabiana imbricata)
+- Pilewort (Ranunculus ficaria)
+- Pine/Hemlock Spruce Pinus Bark (Pinus spp.)
+- Pineapple (Ananas comosus)
+- Pink Root (Spigelia marilandica)
+- Pipsissewa (Chimaphila umbellata)
+- Pitcher Plant (Sarracenia spp.)
+- Plantain (Plantago spp.)
+- Plantain Fruit (Musa paradisiaca)
+- Pleurisy Root (Asclepias tuberosa)
+- Ploughman's Spikenard (Inula conyza)
+- Plumbago (Plumbago europaea)
+- Plume Poppy (Macleaya cordata)
+- Plumeria/Frangipani (Plumeria spp.)
+- Poison Ivy (Toxicodendron radicans)
+- Poison Oak (Toxicodendron diversilobum)
+- Polypody Root/Polpody of Oak (Polypodium vulgare)
+- Polyporus of Larch (Polyporus officinalis)
+- Pomegranate (Punica granatum)
+- Poplar (Populus spp.)
+- Poppy/White Poppy (Papaver somniferum)
+- Potato (Solanum tuberosum)
+- Prairie Potato (Psoralea esculenta)
+- Prickly Ash (Zanthoxylum americanum)
+- Prickly Pear (Opuntia spp.)
+- Primrose/Primulas (Primula spp.)
+- Prune (Prunus domestica)
+- Psyllium/Psyllium Plantain/Psyllium Seed (Plantago psyllium)
+- Pulsatilla (Pulsatilla vulgaris)
+- Pumpkin (Cucurbita pepo)
+- Purple Loosestrife (Lythrum salicaria)
+- Purslane/Golden Purslane/Green Purslane (Portulaca oleracea)
+- Pygeum (Prunus africana)
+- Pyrolas (Pyrola spp.)
+- Quassia (Quassia amara)
+- Quebracho (Aspidosperma quebracho-blanco)
+- Queen's Delight (Stillingia sylvatica)
+- Quince (Cydonia oblonga)
+- Quinoa (Chenopodium quinoa)
+- Quinsy-Wort (Asperula cynanchica)
+- Radish (Raphanus sativus)
+- Ragwort (Senecio jacobaea)
+- Rampion (Campanula rapunculus)
+- Raspberry/Red Raspberry Leaf (Rubus idaeus)
+- Ravensara (Ravensara aromatica)
+- Red American Osier (Cornus sericea)
+- Red Bartsia (Odontites vernus)
+- Red Clover (Trifolium pratense)
+- Red Currant (Ribes rubrum)
+- Red Poppy/Corn Poppy (Papaver rhoeas)
+- Red Root (Ceanothus americanus)
+- Red Sage (Salvia miltiorrhiza)
+- Red Saunders (Pterocarpus santalinus)
+- Red-Spur Valerian (Centranthus ruber)
+- Rehmannia (Rehmannia glutinosa)
+- Reishi Mushroom/Lingzhi Mushroom (Ganoderma lucidum)
+- Rest-Harrow (Ononis spinosa)
+- Rhatany (Krameria triandra)
+- Rhodiola (Rhodiola rosea)
+- Rhubarb (Rheum rhabarbarum)
+- Rhubarbs (Rheum spp.)
+- Ribwort/Ribwort Plantain (Plantago lanceolata)
+- Rice (Oryza sativa)
+- Roman Chamomile (Chamaemelum nobile)
+- Rooibos (Aspalathus linearis)
+- Rose (Rosa spp.)
+- Rosemary (Rosmarinus officinalis)
+- Rosin-Weed (Silphium spp.)
+- Rough Hawkbit (Leontodon hispidus)
+- Rue/Common Rue (Ruta graveolens)
+- Rupturewort (Herniaria glabra)
+- Rush (Juncus spp.)
+- Sabadilla (Schoenocaulon officinale)
+- Safflower (Carthamus tinctorius)
+- Saffron (Crocus sativus)
+- Sage/Salvia (Salvia spp.)
+- Salep (Orchis mascula)
+- Salsify (Tragopogon porrifolius)
+- Samphire (Salicornia europaea)
+- Sandalwood (Santalum album)
+- Sarsaparilla (Smilax spp.)
+- Sassafras (Sassafras albidum)
+- Sassy Bark (Erythrophleum guineense)
+- Savine (Juniperus sabina)
+- Saw Palmetto (Serenoa repens)
+- Scarlet Pimpernel (Anagallis arvensis)
+- Scentless Mayweed (Tripleurospermum inodorum)
+- Schisandra (Schisandra chinensis)
+- Scopolia (Scopolia carniolica)
+- Scullcaps (Scutellaria spp.)
+- Scurvy Grass (Cochlearia officinalis)
+- Sea Bindweed (Calystegia soldanella)
+- Sea Buckthorn (Hippophae rhamnoides)
+- Sea Fennel (Crithmum maritimum)
+- Sea Holly (Eryngium maritimum)
+- Sea Lavender (Limonium spp.)
+- Sea Plantain (Plantago maritima)
+- Seaweed (Algae spp.)
+- Senega (Polygala senega)
+- Senna (Cassia angustifolia)
+- Senna (Senna alexandrina)
+- Sensitive Plant (Mimosa pudica)
+- Shallot/Potato Onion (Allium cepa var. aggregatum)
+- Sheep's Sorrel (Rumex acetosella)
+- Shepherd's Purse (Capsella bursa-pastoris)
+- Shilajit (Asphaltum punjabianum)
+- Shitake Mushroom (Lentinus edodes)
+- Siegesbeckia (Siegesbeckia orientalis)
+- Silverweed (Potentilla anserina)
+- Simaruba (Simarouba amara)
+- Skirret (Sium sisarum)
+- Skullcap/Virginia Skullcap (Scutellaria lateriflora)
+- Skunk Cabbage (Symplocarpus foetidus)
+- Slippery Elm (Ulmus rubra)
+- Smartweed (Polygonum hydropiper)
+- Snakeroot (Rauvolfia serpentina)
+- Snowdrop (Galanthus nivalis)
+- Soap Tree (Quillaja saponaria)
+- Soapberry/Soapnut (Sapindus mukorossi)
+- Soapwort (Saponaria officinalis)
+- Solomon's Seal (Polygonatum biflorum)
+- Sorrel/Common Sorrel (Rumex acetosa)
+- Southern Ginseng (Jiaogulan, Gynostemma pentaphyllum)
+- Southernwood (Artemisia abrotanum)
+- Soybean (Glycine max)
+- Spanish Broom (Spartium junceum)
+- Spanish Needle (Bidens pilosa)
+- Spearmint (Mentha spicata)
+- Speedwell/Common Speedwell (Veronica officinalis)
+- Spergularia (Spergularia spp.)
+- Sphagnum Moss (Sphagnum spp.)
+- Spikenard/Jatamansi (Nardostachys jatamansi)
+- Spinach (Spinacia oleracea)
+- Spindle Tree (Euonymus europaeus)
+- Spirulina (Arthrospira platensis)
+- Spurge (Euphorbia spp.)
+- Squill (Drimia maritima)
+- St. John's Wort (Hypericum perforatum)
+- Star Anise (Illicium verum)
+- Star of Bethlehem (Ornithogalum umbellatum)
+- Stavasacre (Delphinium staphisagria)
+- Stevia (Stevia rebaudiana)
+- Stinking Gladwyn (Iris foetidissima)
+- Stone Root (Collinsonia canadensis)
+- Stonecrop (Sedum spp.)
+- Storax (Liquidambar orientalis)
+- Strawberry (Fragaria spp.)
+- Strawberry Blite (Chenopodium capitatum)
+- Strophanthus (Strophanthus spp.)
+- Suma/Brazilian Ginseng (Pfaffia paniculata)
+- Sumach (Rhus spp.)
+- Sumbul (Ferula sumbul)
+- Summer Savory (Satureja hortensis)
+- Sundew (Drosera spp.)
+- Sunflower (Helianthus annuus)
+- Swamp Milkweed (Asclepias incarnata)
+- Sweet Annie (Artemisia annua)
+- Sweet Basil (Ocimum basilicum)
+- Sweet Chestnut (Castanea sativa)
+- Sweet Cicely (Myrrhis odorata)
+- Sweet Marjoram (Origanum majorana)
+- Sweet Vernal Grass (Anthoxanthum odoratum)
+- Sweet Violet (Viola odorata)
+- Sweet Woodruff (Galium odoratum)
+- Syrian Bindweed/Scammony (Convolvulus scammonia)
+- Tag Alder (Alnus serrulata)
+- Tallow Tree (Triadica sebifera)
+- Tamanu (Calophyllum inophyllum)
+- Tamarac (Larix laricina)
+- Tamarind (Tamarindus indica)
+- Tangerine (Citrus nobilis)
+- Tansy (Tanacetum vulgare)
+- Tarragon (Artemisia dracunculus)
+- Tea Tree/Australian Tea Tree (Melaleuca alternifolia)
+- Teasel (Dipsacus fullonum)
+- Teazles (Dipsacus spp.)
+- Tenax Iris (Iris tenax)
+- Thapsia (Thapsia garganica)
+- Thistle (Cirsium spp.)
+- Thuja (Thuja occidentalis)
+- Thyme/Garden Thyme (Thymus vulgaris)
+- Tienchi Ginseng (Panax notoginseng)
+- Tiger Lily (Lilium lancifolium)
+- Tiger's Milk Mushroom (Lignosus rhinocerotis)
+- Toadflax (Linaria vulgaris)
+- Tobacco (Nicotiana tabacum)
+- Tolu Balsam (Myroxylon balsamum)
+- Tomatillo (Physalis philadelphica)
+- Tonka Bean/Tonquin Bean (Dipteryx odorata)
+- Tormentil (Potentilla erecta)
+- Tragacanth (Astragalus gummifer)
+- Traveller's Joy (Clematis vitalba)
+- Tree of Heaven (Ailanthus altissima)
+- Tree Onion (Allium proliferum)
+- Trembling Poplar (Populus tremula)
+- Tribulus (Tribulus terrestris)
+- True Angostura (Galipea officinalis)
+- True Unicorn Root (Aletris farinosa)
+- Tulsi/Holy Basil (Ocimum sanctum)
+- Turkey Corn (Dicentra cucullaria)
+- Turkey Rhubarb (Rheum palmatum)
+- Turkey Tail Mushroom (Trametes versicolor)
+- Turmeric (Curcuma longa)
+- Turpeth (Operculina turpethum)
+- Twinflower (Linnaea borealis)
+- Upright Medow Crowfoot (Ranunculus acris)
+- Usnea (Usnea barbata)
+- Uva Ursi/Kinnikinnick/Bearberry (Arctostaphylos uva-ursi)
+- Valerian (Valeriana spp.)
+- Vanilla (Vanilla planifolia)
+- Veronica (Veronica spp.)
+- Vervain (Verbena officinalis)
+- Vetiver (Chrysopogon zizanioides)
+- Vine (Vitis spp.)
+- Violet (Viola spp.)
+- Viper's Bugloss (Echium vulgare)
+- Wafer Ash (Ptelea trifoliata)
+- Wahoo (Euonymus atropurpureus)
+- Wall Hawkweed (Hieracium murorum)
+- Wall Rue (Asplenium ruta-muraria)
+- Wallflower (Erysimum cheiri)
+- Walnut (Juglans regia)
+- Water Agrimony (Limosella aquatica)
+- Water Avens (Geum rivale)
+- Water Dock (Rumex aquaticus)
+- Water Dropwort (Oenanthe crocata)
+- Water Fennel (Oenanthe aquatica)
+- Water Figwort (Scrophularia auriculata)
+- Water Germander (Teucrium scordium)
+- Water Hemlock (Cicuta spp.)
+- Water Lily/White Pond Lily (Nymphaea odorata)
+- Water Milfoil (Myriophyllum spicatum)
+- Water Parsnip (Sium suave)
+- Water Plantain (Alisma plantago-aquatica)
+- Water Soldier (Stratiotes aloides)
+- Water Violet (Hottonia palustris)
+- Watercress (Nasturtium officinale)
+- Wax Myrtle (Morella cerifera)
+- West Indian Bay (Pimenta racemosa)
+- Wheatgrass (Triticum aestivum)
+- White Balsam (Impatiens balsamina)
+- White Hellebore (Veratrum album)
+- White Pine (Pinus strobus)
+- White Willow (Salix alba)
+- Wild Amaranth (Amaranthus retroflexus)
+- Wild Arrach (Atriplex patula)
+- Wild Basil (Clinopodium vulgare)
+- Wild Ginger (Asarum canadense)
+- Wild Hyacinth (Camassia spp.)
+- Wild Indigo (Baptisia tinctoria)
+- Wild Lettuce (Lactuca virosa)
+- Wild Liquorice (Glycyrrhiza lepidota)
+- Wild Mint (Mentha arvensis)
+- Wild Potato (Ipomoea pandurata)
+- Wild Strawberry (Fragaria vesca)
+- Wild Yam (Dioscorea villosa)
+- Willow (Salix spp.)
+- Willow-Herb (Epilobium spp.)
+- Winter Cherry (Prunus avium)
+- Winter Savory (Satureja montana)
+- Winter's Bark/False Winter's Bark (Drimys winteri)
+- Wintergreen (Gaultheria procumbens)
+- Witch Hazel (Hamamelis virginiana)
+- Woad (Isatis tinctoria)
+- Wood Anemone (Anemone nemorosa)
+- Wood Betony (Stachys officinalis)
+- Wood Hawkweed (Hieracium sylvaticum)
+- Wood Sage/Sage-Leaved Germander (Teucrium scorodonia)
+- Wood Sanicle (Sanicula europaea)
+- Wood Sorrel (Oxalis acetosella)
+- Woody Nightshade (Solanum dulcamara)
+- Wormwood (Artemisia absinthium)
+- Yarrow/Milfoil (Achillea millefolium)
+- Yellow Cedar (Cedrela odorata)
+- Yellow Dock (Rumex crispus)
+- Yellow Flag/Yellow Iris/Fleur De Luce (Iris pseudacorus)
+- Yellow Loosestrife (Lysimachia vulgaris)
+- Yellow Parillia (Menispermum canadense)
+- Yellow Rattle/Dwarf Red Rattle (Rhinanthus minor)
+- Yellow Rhododendron (Rhododendron luteum)
+- Yerba Buena (Clinopodium douglasii)
+- Yerba Reuma (Frankenia grandifolia)
+- Yerba Santa (Eriodictyon californicum)
+- Yew (Taxus baccata)
+- Ylang Ylang (Cananga odorata)
+- Yohimbe (Pausinystalia yohimbe)
+- Yucca (Yucca spp.)
+- Zedoary (Curcuma zedoaria)
+
+## Misc List
+
+- Apple Cider Vinegar
+- Bentonite Clay
+- Berberine
+- Fractionated coconut oil (Capric triglycerides)
+- French Green Clay
+- Kaolin clay
+- Rhassoul clay
+- Sesame
+- Shea (Butyrospermum parkii)
+- Squalane (oil)
+- Zinc oxide
+
+## Products List
+
+- **Agrimony Herb Infusion**: (Infusion) - Agrimony herb, water. *Aids digestion, reduces inflammation, and has astringent properties.*
+- **Alfalfa Leaf Decoction**: (Decoction) - Alfalfa leaves, water. *Rich in nutrients, supports digestion, and has anti-inflammatory properties.*
+- **Alfalfa Leaf Infusion**: (Infusion) - Alfalfa leaves, water. *Rich in nutrients and supports digestion.*
+- **Alfalfa Leaf Tincture**: (Tincture) - Alfalfa leaves, alcohol. *Rich in nutrients, supports digestion, and has anti-inflammatory properties.*
+- **Alkanet Root Infusion**: (Infusion) - Alkanet root, water. *Used as a dye and for its mild antimicrobial properties.*
+- **Alkanet Root Tincture**: (Tincture) - Alkanet root, alcohol. *Used as a dye and for its mild antimicrobial properties.*
+- **Aloe Vera Gel**: (Gel) - Aloe vera, water. *Heals skin wounds, moisturizes skin, and has anti-inflammatory properties.*
+- **Aloe Vera Infusion**: (Infusion) - Aloe vera, water. *Soothes digestive issues, promotes skin health, and has anti-inflammatory properties.*
+- **Aloe Vera Tincture**: (Tincture) - Aloe vera, alcohol. *Promotes skin health, has anti-inflammatory properties, and supports digestive health.*
+- **Angel's Trumpet Flower Infusion**: (Infusion) - Angel's trumpet flowers, water. *Relieves spasms, induces sleep, and has sedative properties (use with caution).*
+- **Angelica Root Decoction**: (Decoction) - Angelica root, water. *Relieves digestive disorders and supports respiratory health.*
+- **Angelica Root Infusion**: (Infusion) - Angelica root, water. *Relieves digestive disorders and supports respiratory health.*
+- **Angelica Root Tincture**: (Tincture) - Angelica root, alcohol. *Relieves digestive disorders and supports respiratory health.*
+- **Angelica Seed Decoction**: (Decoction) - Angelica seeds, water. *Relieves digestive disorders and supports respiratory health.*
+- **Angelica Seed Infusion**: (Infusion) - Angelica seeds, water. *Relieves digestive disorders and supports respiratory health.*
+- **Angelica Seed Tincture**: (Tincture) - Angelica seeds, alcohol. *Relieves digestive disorders and supports respiratory health.*
+- **Anise Hyssop Leaf Decoction**: (Decoction) - Anise hyssop leaves, water. *Aids digestion, reduces cough, and soothes sore throats.*
+- **Anise Hyssop Leaf Infusion**: (Infusion) - Anise hyssop leaves, water. *Aids digestion, reduces cough, and soothes sore throats.*
+- **Anise Hyssop Leaf Tincture**: (Tincture) - Anise hyssop leaves, alcohol. *Aids digestion, reduces cough, and soothes sore throats.*
+- **Anise Seed Decoction**: (Decoction) - Anise seeds, water. *Relieves coughs and supports digestion.*
+- **Anise Seed Infusion**: (Infusion) - Anise seeds, water. *Aids digestion, relieves cough, and freshens breath.*
+- **Anise Seed Tincture**: (Tincture) - Anise seeds, alcohol. *Relieves coughs, aids digestion, and freshens breath.*
+- **Anise Star Pod Decoction**: (Decoction) - Anise star pods, water. *Relieves coughs, supports digestion, and has a soothing flavor.*
+- **Anise Star Pod Infusion**: (Infusion) - Anise star pods, water. *Relieves coughs, supports digestion, and has a soothing flavor.*
+- **Anise Star Pod Tincture**: (Tincture) - Anise star pods, alcohol. *Relieves coughs, supports digestion, and has a soothing flavor.*
+- **Apple Mint Leaf Decoction**: (Decoction) - Apple mint leaves, water. *Soothes digestive issues, freshens breath, and has a calming effect.*
+- **Apple Mint Leaf Infusion**: (Infusion) - Apple mint leaves, water. *Soothes digestive issues, freshens breath, and has a calming effect.*
+- **Apple Mint Leaf Tincture**: (Tincture) - Apple mint leaves, alcohol. *Soothes digestive issues, freshens breath, and has a calming effect.*
+- **Apricot Kernel Oil**: (Maceration) - Apricot kernels, oil. *Nourishes skin, supports hair health, and has anti-inflammatory properties.*
+- **Arnica Flower Decoction**: (Decoction) - Arnica flowers, water. *Treats bruises, sprains, and muscle pain (external use only).*
+- **Arnica Flower Infusion**: (Infusion) - Arnica flowers, water. *Treats bruises, sprains, and muscle pain (external use only).*
+- **Arnica Flower Tincture**: (Tincture) - Arnica flowers, alcohol. *Treats bruises, sprains, and muscle pain (external use only).*
+- **Arnica Oil**: (Maceration) - Arnica flowers, oil. *Used topically for bruises, sprains, and muscle pain.*
+- **Arrowroot Rhizome Powder Decoction**: (Decoction) - Arrowroot rhizome powder, water. *Soothes digestive issues, aids in nutrient absorption, and has a calming effect.*
+- **Arrowroot Rhizome Powder Tincture**: (Tincture) - Arrowroot rhizome powder, alcohol. *Soothes digestive issues, aids in nutrient absorption, and has a calming effect.*
+- **Arrowroot Rhizome Powder**: (Infusion) - Arrowroot rhizome powder, water. *Soothes digestive issues, aids in nutrient absorption, and has a calming effect.*
+- **Artichoke Leaf Tincture**: (Tincture) - Artichoke leaves, alcohol. *Supports liver health, aids digestion, and has antioxidant properties.*
+- **Ash Bark Decoction**: (Decoction) - Ash bark, water. *Acts as a diuretic and supports joint health.*
+- **Ash Bark Infusion**: (Infusion) - Ash bark, water. *Acts as a diuretic and supports joint health.*
+- **Ash Bark Tincture**: (Tincture) - Ash bark, alcohol. *Acts as a diuretic and supports joint health.*
+- **Ashwagandha Leaf Decoction**: (Decoction) - Ashwagandha leaves, water. *Reduces stress, improves cognitive function, and has anti-inflammatory properties.*
+- **Ashwagandha Leaf Infusion**: (Infusion) - Ashwagandha leaves, water. *Reduces stress, improves cognitive function, and has anti-inflammatory properties.*
+- **Ashwagandha Leaf Tincture**: (Tincture) - Ashwagandha leaves, alcohol. *Reduces stress, improves cognitive function, and has anti-inflammatory properties.*
+- **Ashwagandha Root Infusion**: (Infusion) - Ashwagandha root, water. *Reduces stress, supports vitality, and has anti-inflammatory properties.*
+- **Ashwagandha Root Tincture**: (Tincture) - Ashwagandha root, alcohol. *Reduces stress, supports vitality, and has anti-inflammatory properties.*
+- **Asian Ginseng Root Decoction**: (Decoction) - Asian ginseng root, water. *Boosts energy, enhances mental performance, and supports overall well-being.*
+- **Asian Ginseng Root Infusion**: (Infusion) - Asian ginseng root, water. *Boosts energy, enhances mental performance, and supports overall well-being.*
+- **Asian Ginseng Root Tincture**: (Tincture) - Asian ginseng root, alcohol. *Boosts energy, enhances mental performance, and supports overall well-being.*
+- **Astragalus Leaf Decoction**: (Decoction) - Astragalus leaves, water. *Boosts the immune system, has antioxidant properties, and supports heart health.*
+- **Astragalus Leaf Infusion**: (Infusion) - Astragalus leaves, water. *Boosts the immune system, has antioxidant properties, and supports heart health.*
+- **Astragalus Leaf Tincture**: (Tincture) - Astragalus leaves, alcohol. *Boosts the immune system, has antioxidant properties, and supports heart health.*
+- **Astragalus Root Decoction**: (Decoction) - Astragalus root, water. *Boosts immune system and supports cardiovascular health.*
+- **Astragalus Root Infusion**: (Infusion) - Astragalus root, water. *Boosts the immune system, supports cardiovascular health, and has anti-aging properties.*
+- **Astragalus Root Tincture**: (Tincture) - Astragalus root, alcohol. *Boosts the immune system, supports cardiovascular health, and has anti-aging properties.*
+- **Bacopa Herb Infusion**: (Infusion) - Bacopa herb, water. *Enhances cognitive function, reduces stress, and has antioxidant properties.*
+- **Bael Fruit Decoction**: (Decoction) - Bael fruit, water. *Aids digestion, relieves diarrhea, and has antiviral properties.*
+- **Balm of Gilead Bud Infusion**: (Infusion) - Balm of Gilead buds, water. *Soothes skin irritations and reduces pain and inflammation.*
+- **Balm of Gilead Bud Tincture**: (Tincture) - Balm of Gilead buds, alcohol. *Soothes skin irritations, reduces pain, and has anti-inflammatory properties.*
+- **Bamboo Leaf Infusion**: (Infusion) - Bamboo leaves, water. *Supports joint health, aids digestion, and has antioxidant properties.*
+- **Barberry Bark Infusion**: (Infusion) - Barberry bark, water. *Stimulates liver function, fights infections, and has antimicrobial properties.*
+- **Barberry Root Decoction**: (Decoction) - Barberry root, water. *Stimulates liver function and fights infections.*
+- **Barrenwort Leaf Tincture**: (Tincture) - Barrenwort leaves, alcohol. *Enhances libido, supports kidney health, and has anti-inflammatory properties.*
+- **Basil Leaf Tincture**: (Tincture) - Basil leaves, alcohol. *Anti-inflammatory and antibacterial, also aids digestion.*
+- **Bay Leaf Decoction**: (Decoction) - Bay leaves, water. *Improves digestion, reduces joint pain, and has antimicrobial properties.*
+- **Bay Leaf Infusion**: (Infusion) - Bay leaves, water. *Improves digestion, reduces joint pain, and has antimicrobial properties.*
+- **Bayberry Bark Decoction**: (Decoction) - Bayberry bark, water. *Treats colds, boosts circulation, and has astringent properties.*
+- **Bearberry Leaf Infusion**: (Infusion) - Bearberry leaves, water. *Treats urinary tract infections, supports kidney health, and has antimicrobial properties.*
+- **Bearberry Leaf Tincture**: (Tincture) - Bearberry leaves, alcohol. *Treats urinary tract infections and supports kidney health.*
+- **Bee Pollen Infusion**: (Infusion) - Bee pollen, water. *Boosts energy, supports immune health, and has anti-inflammatory properties.*
+- **Beet Root Decoction**: (Decoction) - Beet root, water. *Detoxifies the liver, improves circulation, and supports heart health.*
+- **Bergamot Leaf Tincture**: (Tincture) - Bergamot leaves, alcohol. *Reduces stress and skin conditions.*
+- **Beth Root Tincture**: (Tincture) - Beth root, alcohol. *Reduces menstrual bleeding, supports uterine health, and has astringent properties.*
+- **Bilberry Fruit Tincture**: (Tincture) - Bilberry fruit, alcohol. *Supports eye health and circulation.*
+- **Bilberry Fruit Tincture**: (Tincture) - Bilberry fruit, alcohol. *Supports eye health, improves circulation, and has antioxidant properties.*
+- **Bilberry Leaf Infusion**: (Infusion) - Bilberry leaves, water. *Supports eye health, improves circulation, and has antioxidant properties.*
+- **Bilberry Leaf Tincture**: (Tincture) - Bilberry leaves, alcohol. *Supports blood sugar regulation, eye health, and has antioxidant properties.*
+- **Birch Bark Tincture**: (Tincture) - Birch bark, alcohol. *Reduces inflammation, supports joint health, and has diuretic properties.*
+- **Birch Leaf Infusion**: (Infusion) - Birch leaves, water. *Acts as a diuretic, supports joint health, and detoxifies the body.*
+- **Birch Leaf Tincture**: (Tincture) - Birch leaves, alcohol. *Acts as a diuretic, supports joint health, and detoxifies the body.*
+- **Bistort Root Decoction**: (Decoction) - Bistort root, water. *Treats diarrhea, supports oral health, and has astringent properties.*
+- **Black Cohosh Root Decoction**: (Decoction) - Black cohosh root, water. *Alleviates menopausal symptoms and menstrual discomfort.*
+- **Black Cohosh Root Infusion**: (Infusion) - Black cohosh root, water. *Alleviates menopausal symptoms, supports menstrual health, and reduces inflammation.*
+- **Black Cohosh Root Tincture**: (Tincture) - Black cohosh root, alcohol. *Alleviates menopausal symptoms, supports menstrual health, and reduces inflammation.*
+- **Black Currant Leaf Infusion**: (Infusion) - Black currant leaves, water. *Reduces joint pain, supports immune health, and has anti-inflammatory properties.*
+- **Black Currant Leaf Tincture**: (Tincture) - Black currant leaves, alcohol. *Reduces joint pain, supports immune health, and has anti-inflammatory properties.*
+- **Black Elderberry Infusion**: (Infusion) - Black elderberry, water. *Boosts immune system and treats colds and flu.*
+- **Black Haw Bark Decoction**: (Decoction) - Black haw bark, water. *Relieves muscle spasms, supports uterine health, and has astringent properties.*
+- **Black Seed Oil**: (Maceration) - Black seeds, oil. *Boosts immune health, supports respiratory health, and has anti-inflammatory properties.*
+- **Black Walnut Hull Tincture**: (Tincture) - Black walnut hulls, alcohol. *Acts as a natural anti-parasitic and supports skin health.*
+- **Blackberry Leaf Infusion**: (Infusion) - Blackberry leaves, water. *Treats diarrhea and soothes sore throats.*
+- **Blackberry Leaf Infusion**: (Infusion) - Blackberry leaves, water. *Treats diarrhea, soothes sore throats, and has anti-inflammatory properties.*
+- **Blackcurrant Leaf Tincture**: (Tincture) - Blackcurrant leaves, alcohol. *Reduces joint pain, supports immune health, and has anti-inflammatory properties.*
+- **Bladderwrack Seaweed Decoction**: (Decoction) - Bladderwrack seaweed, water. *Supports thyroid health and aids weight loss.*
+- **Bladderwrack Seaweed Infusion**: (Infusion) - Bladderwrack seaweed, water. *Supports thyroid health, aids weight loss, and provides essential minerals.*
+- **Bladderwrack Seaweed Tincture**: (Tincture) - Bladderwrack seaweed, alcohol. *Supports thyroid health, aids weight loss, and provides essential minerals.*
+- **Blessed Thistle Herb Infusion**: (Infusion) - Blessed thistle herb, water. *Supports digestive health, stimulates appetite, and has antimicrobial properties.*
+- **Bloodroot Tincture**: (Tincture) - Bloodroot, alcohol. *Treats skin conditions, supports respiratory health, and has antimicrobial properties.*
+- **Blue Cohosh Root Infusion**: (Infusion) - Blue cohosh root, water. *Eases labor, regulates menstrual cycle, and has anti-inflammatory properties.*
+- **Blue Cohosh Root Tincture**: (Tincture) - Blue cohosh root, alcohol. *Eases labor and regulates menstrual cycle.*
+- **Blue Vervain Herb Infusion**: (Infusion) - Blue vervain herb, water. *Relieves anxiety, supports digestion, and has anti-inflammatory properties.*
+- **Blue Vervain Leaf Infusion**: (Infusion) - Blue vervain leaves, water. *Relieves anxiety and supports liver health.*
+- **Blueberry Leaf Infusion**: (Infusion) - Blueberry leaves, water. *Supports blood sugar levels, improves circulation, and has antioxidant properties.*
+- **Boldo Leaf Infusion**: (Infusion) - Boldo leaves, water. *Supports liver health and aids digestion.*
+- **Boneset Herb Decoction**: (Decoction) - Boneset herb, water. *Reduces fever, supports immune health, and relieves body aches.*
+- **Boneset Herb Tincture**: (Tincture) - Boneset herb, alcohol. *Reduces fever, supports immune health, and relieves body aches.*
+- **Borage Leaf Infusion**: (Infusion) - Borage leaves, water. *Reduces stress, supports adrenal health, and has anti-inflammatory properties.*
+- **Borage Seed Oil**: (Maceration) - Borage seeds, oil. *Reduces inflammation, supports skin health, and has hormone-balancing properties.*
+- **Boswellia Resin Tincture**: (Tincture) - Boswellia resin, alcohol. *Reduces inflammation, supports joint health, and has pain-relieving properties.*
+- **Brahmi Leaf Infusion**: (Infusion) - Brahmi leaves, water. *Enhances cognitive function, reduces stress, and has antioxidant properties.*
+- **Broom Tops Infusion**: (Infusion) - Broom tops, water. *Acts as a diuretic and supports cardiovascular health.*
+- **Buchu Leaf Infusion**: (Infusion) - Buchu leaves, water. *Treats urinary tract infections, supports kidney health, and has anti-inflammatory properties.*
+- **Buchu Leaf Tincture**: (Tincture) - Buchu leaves, alcohol. *Treats urinary tract infections, supports kidney health, and has anti-inflammatory properties.*
+- **Buckthorn Bark Decoction**: (Decoction) - Buckthorn bark, water. *Acts as a natural laxative and supports digestive health.*
+- **Buckthorn Bark Infusion**: (Infusion) - Buckthorn bark, water. *Acts as a natural laxative and supports digestive health.*
+- **Bupleurum Root Decoction**: (Decoction) - Bupleurum root, water. *Harmonizes liver and digestive function.*
+- **Burdock Root Decoction**: (Decoction) - Burdock root, water. *Used for skin conditions like eczema, detoxification, and as a blood purifier.*
+- **Burdock Root Infusion**: (Infusion) - Burdock root, water. *Detoxifies blood, supports skin health, and aids digestion.*
+- **Burdock Root Tincture**: (Tincture) - Burdock root, alcohol. *Detoxifies blood, supports skin health, and aids digestion.*
+- **Burdock Seed Tincture**: (Tincture) - Burdock seeds, alcohol. *Detoxifies blood, supports skin health, and aids digestion.*
+- **Butcher's Broom Root Decoction**: (Decoction) - Butcher's broom root, water. *Improves circulation, reduces inflammation, and supports vein health.*
+- **Butterbur Root Decoction**: (Decoction) - Butterbur root, water. *Reduces migraines, supports respiratory health, and relieves allergies.*
+- **Butterbur Root Infusion**: (Infusion) - Butterbur root, water. *Reduces migraines, supports respiratory health, and relieves allergies.*
+- **Cacao Bean Infusion**: (Infusion) - Cacao beans, water. *Boosts mood, supports heart health, and is rich in antioxidants.*
+- **Calamus Root Decoction**: (Decoction) - Calamus root, water. *Improves digestion and has a calming effect.*
+- **Calamus Root Tincture**: (Tincture) - Calamus root, alcohol. *Improves digestion, has a calming effect, and supports oral health.*
+- **Calendula Flower Infusion**: (Infusion) - Calendula flowers, water. *Heals skin wounds, reduces inflammation, and soothes irritations.*
+- **Calendula Flower Tincture**: (Tincture) - Calendula flowers, alcohol. *Heals skin wounds, reduces inflammation, and soothes irritations.*
+- **Calendula Oil**: (Maceration) - Calendula flowers, oil. *Used for skin healing, anti-inflammatory properties, and soothing irritations.*
+- **California Poppy Herb Infusion**: (Infusion) - California poppy herb, water. *Relieves pain, induces sleep, and has mild sedative properties.*
+- **California Poppy Herb Tincture**: (Tincture) - California poppy herb, alcohol. *Relieves pain, induces sleep, and has mild sedative properties.*
+- **Cannabis Leaf Infusion**: (Infusion) - Cannabis leaves, water. *Relieves pain, reduces anxiety, and supports sleep (use in regions where legal).*
+- **Caraway Seed Decoction**: (Decoction) - Caraway seeds, water. *Relieves digestive issues and reduces gas.*
+- **Caraway Seed Infusion**: (Infusion) - Caraway seeds, water. *Relieves digestive issues, reduces gas, and has antimicrobial properties.*
+- **Cardamom Pod Tincture**: (Tincture) - Cardamom pods, alcohol. *Aids digestion, freshens breath, and has antioxidant properties.*
+- **Cardamom Seed Infusion**: (Infusion) - Cardamom seeds, water. *Aids digestion and freshens breath.*
+- **Carob Pod Infusion**: (Infusion) - Carob pods, water. *Improves digestion, rich in nutrients, and serves as a chocolate substitute.*
+- **Cascara Bark Decoction**: (Decoction) - Cascara bark, water. *Acts as a natural laxative and cleanses the colon.*
+- **Cascara Sagrada Bark Decoction**: (Decoction) - Cascara Sagrada bark, water. *Acts as a strong natural laxative and cleanses the colon.*
+- **Cassia Bark Decoction**: (Decoction) - Cassia bark, water. *Stimulates digestion, relieves nausea, and has antimicrobial properties.*
+- **Cat's Claw Bark Tincture**: (Tincture) - Cat's claw bark, alcohol. *Boosts immune system and fights inflammation.*
+- **Cat's Claw Bark Tincture**: (Tincture) - Cat's claw bark, alcohol. *Boosts the immune system, fights inflammation, and supports joint health.*
+- **Catnip Herb Infusion**: (Infusion) - Catnip herb, water. *Relieves digestive discomfort, reduces stress, and induces sleep.*
+- **Catnip Herb Tincture**: (Tincture) - Catnip herb, alcohol. *Relieves digestive discomfort, reduces stress, and induces sleep.*
+- **Catnip Leaf Infusion**: (Infusion) - Catnip leaves, water. *Relieves digestive discomfort and mild anxiety.*
+- **Catuaba Bark Infusion**: (Infusion) - Catuaba bark, water. *Boosts libido, improves mood, and supports nervous system health.*
+- **Cayenne Pepper Infusion**: (Infusion) - Cayenne pepper, water. *Improves circulation and aids digestion.*
+- **Cayenne Pepper Tincture**: (Tincture) - Cayenne pepper, alcohol. *Improves circulation, aids digestion, and has pain-relieving properties.*
+- **Cedar Leaf Infusion**: (Infusion) - Cedar leaves, water. *Supports respiratory health, has antimicrobial properties, and repels insects.*
+- **Cedar Leaf Tincture**: (Tincture) - Cedar leaves, alcohol. *Supports respiratory health, has antimicrobial properties, and repels insects.*
+- **Celandine Herb Decoction**: (Decoction) - Celandine herb, water. *Treats skin conditions and supports liver health.*
+- **Celery Root Decoction**: (Decoction) - Celery root, water. *Supports urinary health, reduces inflammation, and aids digestion.*
+- **Celery Root Infusion**: (Infusion) - Celery root, water. *Supports urinary health, reduces inflammation, and aids digestion.*
+- **Celery Seed Decoction**: (Decoction) - Celery seeds, water. *Reduces inflammation, supports urinary health, and aids digestion.*
+- **Celery Seed Tincture**: (Tincture) - Celery seeds, alcohol. *Reduces inflammation, supports urinary health, and aids digestion.*
+- **Centella Leaf Infusion**: (Infusion) - Centella leaves, water. *Improves cognitive function, supports wound healing, and has anti-inflammatory properties.*
+- **Centella Leaf Tincture**: (Tincture) - Centella leaves, alcohol. *Improves cognitive function, supports wound healing, and has anti-inflammatory properties.*
+- **Chaga Mushroom Decoction**: (Decoction) - Chaga mushrooms, water. *Boosts immunity, supports digestive health, and is rich in antioxidants.*
+- **Chaga Mushroom Infusion**: (Infusion) - Chaga mushrooms, water. *Boosts immunity, supports digestive health, and is rich in antioxidants.*
+- **Chaga Mushroom Tincture**: (Tincture) - Chaga mushrooms, alcohol. *Boosts immunity, supports digestive health, and is rich in antioxidants.*
+- **Chamomile Flower Infusion**: (Infusion) - Chamomile flowers, water. *Calms nerves, aids digestion, and has anti-inflammatory properties.*
+- **Chamomile Flower Tincture**: (Tincture) - Chamomile flowers, alcohol. *Calms nerves, aids digestion, and has anti-inflammatory properties.*
+- **Chaparral Leaf Decoction**: (Decoction) - Chaparral leaves, water. *Detoxifies the liver and treats skin conditions.*
+- **Chaparral Leaf Tincture**: (Tincture) - Chaparral leaves, alcohol. *Detoxifies the liver, treats skin conditions, and has antimicrobial properties.*
+- **Chaste Tree Berry Infusion**: (Infusion) - Chaste tree berries, water. *Regulates female hormones, supports menstrual health, and reduces inflammation.*
+- **Chaste Tree Berry Tincture**: (Tincture) - Chaste tree berries, alcohol. *Regulates female hormones, supports menstrual health, and reduces inflammation.*
+- **Cherry Bark Decoction**: (Decoction) - Cherry bark, water. *Relieves cough, supports respiratory health, and has astringent properties.*
+- **Cherry Bark Infusion**: (Infusion) - Cherry bark, water. *Relieves cough, supports respiratory health, and has astringent properties.*
+- **Chickweed Herb Infusion**: (Infusion) - Chickweed herb, water. *Soothes skin irritations, supports weight loss, and has anti-inflammatory properties.*
+- **Chicory Root Decoction**: (Decoction) - Chicory root, water. *Detoxifies the liver and supports digestive health.*
+- **Chicory Root Infusion**: (Infusion) - Chicory root, water. *Detoxifies the liver, supports digestive health, and has prebiotic properties.*
+- **Chili Pepper Infusion**: (Infusion) - Chili peppers, water. *Used for pain relief, improving circulation, and as a decongestant.*
+- **Chinese Rhubarb Root Decoction**: (Decoction) - Chinese rhubarb root, water. *Acts as a natural laxative, supports liver health, and has astringent properties.*
+- **Chlorella Algae Infusion**: (Infusion) - Chlorella algae, water. *Detoxifies the body, supports immune health, and is rich in nutrients.*
+- **Chlorella Algae Tincture**: (Tincture) - Chlorella algae, alcohol. *Detoxifies the body, supports immune health, and is rich in nutrients.*
+- **Chlorella Powder Infusion**: (Infusion) - Chlorella powder, water. *Detoxifies the body, supports immune health, and is rich in nutrients.*
+- **Cinchona Bark Decoction**: (Decoction) - Cinchona bark, water. *Treats malaria, stimulates digestion, and relieves leg cramps.*
+- **Cinnamon Bark Infusion**: (Infusion) - Cinnamon bark, water. *Stimulates digestion and has antimicrobial properties.*
+- **Cinnamon Bark Infusion**: (Infusion) - Cinnamon bark, water. *Stimulates digestion, has antimicrobial properties, and supports blood sugar regulation.*
+- **Cinnamon Bark Tincture**: (Tincture) - Cinnamon bark, alcohol. *Stimulates digestion, has antimicrobial properties, and supports blood sugar regulation.*
+- **Cinnamon Leaf Tincture**: (Tincture) - Cinnamon leaves, alcohol. *Stimulates digestion, has antimicrobial properties, and supports blood sugar regulation.*
+- **Citrus Peel Infusion**: (Infusion) - Citrus peel, water. *Improves digestion, boosts mood, and is rich in antioxidants.*
+- **Clary Sage Leaf Infusion**: (Infusion) - Clary sage leaves, water. *Reduces menstrual discomfort, supports hormonal balance, and relieves stress.*
+- **Clary Sage Leaf Tincture**: (Tincture) - Clary sage leaves, alcohol. *Reduces menstrual discomfort, supports hormonal balance, and relieves stress.*
+- **Cleavers Herb Infusion**: (Infusion) - Cleavers herb, water. *Supports lymphatic drainage and urinary health.*
+- **Cleavers Herb Infusion**: (Infusion) - Cleavers herb, water. *Supports lymphatic drainage, urinary health, and has anti-inflammatory properties.*
+- **Clivers Herb Infusion**: (Infusion) - Clivers herb, water. *Supports lymphatic drainage, urinary health, and has anti-inflammatory properties.*
+- **Clove Bud Infusion**: (Infusion) - Clove buds, water. *Relieves toothache, has antiseptic properties, and aids digestion.*
+- **Clove Bud Tincture**: (Tincture) - Clove buds, alcohol. *Relieves toothache, has antiseptic properties, and aids digestion.*
+- **Cnidium Seed Tincture**: (Tincture) - Cnidium seeds, alcohol. *Improves sexual health, supports skin health, and has antifungal properties.*
+- **Codonopsis Root Decoction**: (Decoction) - Codonopsis root, water. *Boosts energy and supports respiratory health.*
+- **Cola Nut Infusion**: (Infusion) - Cola nuts, water. *Boosts energy, supports metabolism, and improves mental focus.*
+- **Coltsfoot Flower Infusion**: (Infusion) - Coltsfoot flowers, water. *Relieves cough, supports respiratory health, and acts as an expectorant.*
+- **Coltsfoot Leaf Infusion**: (Infusion) - Coltsfoot leaves, water. *Relieves cough and aids respiratory health.*
+- **Coltsfoot Leaf Tincture**: (Tincture) - Coltsfoot leaves, alcohol. *Relieves cough, supports respiratory health, and acts as an expectorant.*
+- **Comfrey Leaf Decoction**: (Decoction) - Comfrey leaves, water. *Heals wounds, supports bone health, and reduces inflammation (external use only).*
+- **Comfrey Leaf Maceration**: (Maceration) - Comfrey leaves, oil. *Heals wounds, bruises, and broken bones (external use only).*
+- **Comfrey Leaf Tincture**: (Tincture) - Comfrey leaves, alcohol. *Heals wounds, supports bone health, and reduces inflammation (external use only).*
+- **Comfrey Root Decoction**: (Decoction) - Comfrey root, water. *Heals broken bones, wounds, and reduces inflammation (external use only).*
+- **Comfrey Root Infusion**: (Infusion) - Comfrey root, water. *Heals broken bones, wounds, and reduces inflammation (external use only).*
+- **Copal Resin Tincture**: (Tincture) - Copal resin, alcohol. *Reduces inflammation, supports skin health, and has antimicrobial properties.*
+- **Cordyceps Mushroom Infusion**: (Infusion) - Cordyceps mushrooms, water. *Boosts energy, supports respiratory health, and has adaptogenic properties.*
+- **Coriander Seed Infusion**: (Infusion) - Coriander seeds, water. *Aids digestion, supports liver health, and has anti-inflammatory properties.*
+- **Coriander Seed Tincture**: (Tincture) - Coriander seeds, alcohol. *Supports digestive health and relieves anxiety.*
+- **Corn Silk Infusion**: (Infusion) - Corn silk, water. *Supports urinary health, reduces inflammation, and helps control blood sugar.*
+- **Cornflower Petal Infusion**: (Infusion) - Cornflower petals, water. *Supports eye health, relieves anxiety, and has anti-inflammatory properties.*
+- **Corydalis Root Decoction**: (Decoction) - Corydalis root, water. *Relieves pain, supports heart health, and has sedative properties.*
+- **Cotton Root Bark Decoction**: (Decoction) - Cotton root bark, water. *Supports female reproductive health, induces labor, and has antispasmodic properties.*
+- **Cramp Bark Infusion**: (Infusion) - Cramp bark, water. *Relieves muscle spasms, supports menstrual health, and reduces inflammation.*
+- **Cramp Bark Tincture**: (Tincture) - Cramp bark, alcohol. *Relieves muscle spasms, supports menstrual health, and reduces inflammation.*
+- **Cranberry Fruit Tincture**: (Tincture) - Cranberry fruit, alcohol. *Prevents urinary tract infections, supports kidney health, and has antioxidant properties.*
+- **Cranberry Tincture**: (Tincture) - Cranberries, alcohol. *Prevents urinary tract infections and supports kidney health.*
+- **Cranesbill Root Decoction**: (Decoction) - Cranesbill root, water. *Treats diarrhea, supports urinary health, and has astringent properties.*
+- **Cumin Seed Infusion**: (Infusion) - Cumin seeds, water. *Aids digestion, supports immune health, and has antioxidant properties.*
+- **Curry Leaf Infusion**: (Infusion) - Curry leaves, water. *Supports hair health, aids digestion, and has antioxidant properties.*
+- **Damiana Leaf Infusion**: (Infusion) - Damiana leaves, water. *Enhances libido, supports mood, and has diuretic properties.*
+- **Damiana Leaf Tincture**: (Tincture) - Damiana leaves, alcohol. *Enhances mood and supports reproductive health.*
+- **Dandelion Decoction**: (Decoction) - Dandelion roots or leaves, water. *Used for liver detoxification, digestive aid, and skin conditions.*
+- **Dandelion Flower Infusion**: (Infusion) - Dandelion flowers, water. *Improves skin health, supports digestion, and acts as a mild diuretic.*
+- **Dandelion Leaf Tincture**: (Tincture) - Dandelion leaves, alcohol. *Detoxifies the liver, supports digestive health, and has diuretic properties.*
+- **Dandelion Root Tincture**: (Tincture) - Dandelion root, alcohol. *Detoxifies the liver, supports digestive health, and has diuretic properties.*
+- **Dang Gui Root Decoction**: (Decoction) - Dang Gui root, water. *Supports female reproductive health, improves circulation, and has anti-inflammatory properties.*
+- **Datura Leaf Infusion**: (Infusion) - Datura leaves, water. *Relieves spasms, induces sleep, and has sedative properties (use with caution).*
+- **Devil's Claw Root Infusion**: (Infusion) - Devil's claw root, water. *Relieves joint pain and supports digestive health.*
+- **Devil's Claw Root Infusion**: (Infusion) - Devil's claw root, water. *Relieves joint pain, supports digestive health, and reduces inflammation.*
+- **Devil's Claw Root Tincture**: (Tincture) - Devil's claw root, alcohol. *Relieves joint pain, supports digestive health, and reduces inflammation.*
+- **Devil's Claw Tincture**: (Tincture) - Devil's claw, alcohol. *Relieves joint pain, supports digestive health, and reduces inflammation.*
+- **Dill Seed Decoction**: (Decoction) - Dill seeds, water. *Relieves gas, supports digestion, and has antimicrobial properties.*
+- **Dill Weed Infusion**: (Infusion) - Dill weed, water. *Calms the stomach and freshens breath.*
+- **Dog Rose Hip Infusion**: (Infusion) - Dog rose hips, water. *Rich in Vitamin C, supports immune health, and aids digestion.*
+- **Dog Rose Hip Tincture**: (Tincture) - Dog rose hips, alcohol. *Rich in Vitamin C, supports immune health, and aids digestion.*
+- **Dong Quai Root Infusion**: (Infusion) - Dong quai root, water. *Supports women's reproductive health and relieves menstrual discomfort.*
+- **Dong Quai Root Tincture**: (Tincture) - Dong Quai root, alcohol. *Supports female reproductive health, improves circulation, and has anti-inflammatory properties.*
+- **Echinacea Flower Tincture**: (Tincture) - Echinacea flowers, alcohol. *Boosts the immune system, fights infections, and reduces inflammation.*
+- **Echinacea Leaf Infusion**: (Infusion) - Echinacea leaves, water. *Boosts the immune system, fights infections, and reduces inflammation.*
+- **Echinacea Root Decoction**: (Decoction) - Echinacea root, water. *Boosts the immune system and fights infections.*
+- **Echinacea Root Tincture**: (Tincture) - Echinacea root, alcohol. *Boosts the immune system, fights infections, and reduces inflammation.*
+- **Elderberry Fruit Infusion**: (Infusion) - Elderberry fruit, water. *Supports immune health, treats colds and flu, and has antioxidant properties.*
+- **Elderberry Fruit Tincture**: (Tincture) - Elderberry fruit, alcohol. *Supports immune health, treats colds and flu, and has antioxidant properties.*
+- **Elderberry Tincture**: (Tincture) - Elderberries, alcohol. *Used for immune support and treating colds and flu.*
+- **Elderflower Infusion**: (Infusion) - Elderflower, water. *Reduces fever, supports respiratory health, and has diuretic properties.*
+- **Elderflower Tincture**: (Tincture) - Elderflower, alcohol. *Reduces fever, supports respiratory health, and has diuretic properties.*
+- **Elecampane Flower Infusion**: (Infusion) - Elecampane flowers, water. *Supports respiratory health, aids digestion, and has antimicrobial properties.*
+- **Elecampane Flower Tincture**: (Tincture) - Elecampane flowers, alcohol. *Supports respiratory health, aids digestion, and has antimicrobial properties.*
+- **Elecampane Root Decoction**: (Decoction) - Elecampane root, water. *Treats respiratory conditions and aids digestion.*
+- **Eleuthero Root Decoction**: (Decoction) - Eleuthero root, water. *Improves stamina, reduces stress, and supports overall vitality.*
+- **Eleuthero Root Infusion**: (Infusion) - Eleuthero root, water. *Improves stamina, reduces stress, and supports overall vitality.*
+- **Eleuthero Root Tincture**: (Tincture) - Eleuthero root, alcohol. *Improves stamina, reduces stress, and supports overall vitality.*
+- **Epazote Leaf Infusion**: (Infusion) - Epazote leaves, water. *Relieves digestive issues, eliminates parasites, and has antioxidant properties.*
+- **Epazote Leaf Tincture**: (Tincture) - Epazote leaves, alcohol. *Relieves digestive issues, eliminates parasites, and has antioxidant properties.*
+- **Eucalyptus Leaf Infusion**: (Infusion) - Eucalyptus leaves, water. *Clears respiratory congestion and has antimicrobial effects.*
+- **Eucalyptus Leaf Infusion**: (Infusion) - Eucalyptus leaves, water. *Clears respiratory congestion, has antimicrobial effects, and supports oral health.*
+- **Eucalyptus Leaf Tincture**: (Tincture) - Eucalyptus leaves, alcohol. *Clears respiratory congestion, has antimicrobial effects, and supports oral health.*
+- **Evening Primrose Oil**: (Maceration) - Evening primrose seeds, oil. *Supports hormonal balance, improves skin health, and reduces inflammation.*
+- **Eyebright Herb Decoction**: (Decoction) - Eyebright herb, water. *Improves eye health and relieves eye irritation.*
+- **Eyebright Herb Infusion**: (Infusion) - Eyebright herb, water. *Improves eye health, relieves eye irritation, and supports respiratory health.*
+- **Eyebright Herb Tincture**: (Tincture) - Eyebright herb, alcohol. *Improves eye health, relieves eye irritation, and supports respiratory health.*
+- **False Unicorn Root Decoction**: (Decoction) - False unicorn root, water. *Supports female reproductive health, aids digestion, and has diuretic properties.*
+- **False Unicorn Root Infusion**: (Infusion) - False unicorn root, water. *Supports female reproductive health, aids digestion, and has diuretic properties.*
+- **Fennel Seed Infusion**: (Infusion) - Fennel seeds, water. *Used for digestive aid, reducing gas, and promoting milk production in breastfeeding mothers.*
+- **Fennel Seed Tincture**: (Tincture) - Fennel seeds, alcohol. *Aids digestion, reduces gas, and supports respiratory health.*
+- **Fenugreek Leaf Infusion**: (Infusion) - Fenugreek leaves, water. *Supports lactation, aids digestion, and has anti-inflammatory properties.*
+- **Fenugreek Leaf Tincture**: (Tincture) - Fenugreek leaves, alcohol. *Supports lactation, aids digestion, and has anti-inflammatory properties.*
+- **Fenugreek Seed Infusion**: (Infusion) - Fenugreek seeds, water. *Supports lactation and aids digestion.*
+- **Fever Tree Bark Decoction**: (Decoction) - Fever tree bark, water. *Reduces fever, supports immune health, and has antimalarial properties.*
+- **Fever Tree Bark Infusion**: (Infusion) - Fever tree bark, water. *Reduces fever, supports immune health, and has antimalarial properties.*
+- **Feverfew Leaf Infusion**: (Infusion) - Feverfew leaves, water. *Prevents migraines and reduces fever.*
+- **Feverfew Leaf Tincture**: (Tincture) - Feverfew leaves, alcohol. *Prevents migraines, reduces fever, and has anti-inflammatory properties.*
+- **Feverfew Tincture**: (Tincture) - Feverfew, alcohol. *Prevents migraines, reduces fever, and has anti-inflammatory properties.*
+- **Fig Leaf Infusion**: (Infusion) - Fig leaves, water. *Lowers blood sugar levels, supports digestive health, and has anti-inflammatory properties.*
+- **Figwort Herb Infusion**: (Infusion) - Figwort herb, water. *Detoxifies the body, supports skin health, and has diuretic properties.*
+- **Figwort Herb Tincture**: (Tincture) - Figwort herb, alcohol. *Detoxifies the body, supports skin health, and has diuretic properties.*
+- **Flax Seed Infusion**: (Infusion) - Flax seeds, water. *Supports digestive health, reduces inflammation, and is rich in Omega-3 fatty acids.*
+- **Fo-ti Root Decoction**: (Decoction) - Fo-ti root, water. *Rejuvenates the body, supports hair health, and improves vitality.*
+- **Fo-ti Root Infusion**: (Infusion) - Fo-ti root, water. *Rejuvenates the body, supports hair health, and improves vitality.*
+- **Frankincense Resin Infusion**: (Infusion) - Frankincense resin, water. *Reduces inflammation, supports skin health, and has calming properties.*
+- **Frankincense Resin Tincture**: (Tincture) - Frankincense resin, alcohol. *Reduces inflammation, supports skin health, and has calming properties.*
+- **French Lavender Flower Infusion**: (Infusion) - French lavender flowers, water. *Calms nerves, aids sleep, and has anti-inflammatory properties.*
+- **French Lavender Flower Tincture**: (Tincture) - French lavender flowers, alcohol. *Calms nerves, aids sleep, and has anti-inflammatory properties.*
+- **Fringe Tree Bark Decoction**: (Decoction) - Fringe tree bark, water. *Stimulates liver and gallbladder function.*
+- **Galangal Root Decoction**: (Decoction) - Galangal root, water. *Stimulates digestion, relieves nausea, and has antimicrobial properties.*
+- **Galangal Root Infusion**: (Infusion) - Galangal root, water. *Stimulates digestion, relieves nausea, and has antimicrobial properties.*
+- **Garcinia Fruit Infusion**: (Infusion) - Garcinia fruit, water. *Aids weight loss, suppresses appetite, and supports digestive health.*
+- **Garlic Clove Decoction**: (Decoction) - Garlic cloves, water. *Has antibacterial properties, supports cardiovascular health, and boosts immunity.*
+- **Garlic Clove Tincture**: (Tincture) - Garlic cloves, alcohol. *Has antibacterial properties, supports cardiovascular health, and boosts immunity.*
+- **Garlic Oil**: (Maceration) - Garlic cloves, oil. *Used for its antibacterial, antiviral properties, and boosting immunity.*
+- **Gentian Flower Tincture**: (Tincture) - Gentian flowers, alcohol. *Stimulates appetite, aids digestion, and has anti-inflammatory properties.*
+- **Gentian Root Infusion**: (Infusion) - Gentian root, water. *Stimulates appetite and aids digestion.*
+- **Gentian Root Tincture**: (Tincture) - Gentian root, alcohol. *Stimulates appetite, aids digestion, and has anti-inflammatory properties.*
+- **Geranium Leaf Infusion**: (Infusion) - Geranium leaves, water. *Supports skin health, reduces inflammation, and has antimicrobial properties.*
+- **Ginger Root Infusion**: (Infusion) - Ginger root, water. *Relieves nausea, aids digestion, and reduces inflammation.*
+- **Ginger Root Tincture**: (Tincture) - Ginger root, alcohol. *Relieves nausea, aids digestion, and reduces inflammation.*
+- **Ginkgo Leaf Infusion**: (Infusion) - Ginkgo leaves, water. *Improves cognitive function, supports circulation, and has antioxidant properties.*
+- **Ginkgo Leaf Tincture**: (Tincture) - Ginkgo leaves, alcohol. *Improves cognitive function, supports circulation, and has antioxidant properties.*
+- **Ginseng Root Tincture**: (Tincture) - Ginseng root, alcohol. *Boosts energy, enhances mental performance, and supports overall well-being.*
+- **Golden Seal Root Decoction**: (Decoction) - Golden seal root, water. *Has antimicrobial properties, supports digestive health, and boosts immune health.*
+- **Golden Seal Root Tincture**: (Tincture) - Golden seal root, alcohol. *Has antimicrobial properties, supports digestive health, and boosts immune health.*
+- **Goldenrod Flower Infusion**: (Infusion) - Goldenrod flowers, water. *Supports urinary health, reduces inflammation, and aids in wound healing.*
+- **Goldenrod Flower Tincture**: (Tincture) - Goldenrod flowers, alcohol. *Supports urinary health, reduces inflammation, and aids in wound healing.*
+- **Goldenseal Tincture**: (Tincture) - Goldenseal root, alcohol. *Known for its antimicrobial properties and used to treat skin infections and digestive issues.*
+- **Gotu Kola Herb Decoction**: (Decoction) - Gotu Kola herb, water. *Improves cognitive function, supports wound healing, and has anti-inflammatory properties.*
+- **Gotu Kola Herb Infusion**: (Infusion) - Gotu kola herb, water. *Improves cognitive function, supports wound healing, and has anti-inflammatory properties.*
+- **Gotu Kola Herb Tincture**: (Tincture) - Gotu kola herb, alcohol. *Improves cognitive function, supports wound healing, and has anti-inflammatory properties.*
+- **Gotu Kola Leaf Infusion**: (Infusion) - Gotu kola leaves, water. *Improves cognitive function and supports wound healing.*
+- **Grape Seed Tincture**: (Tincture) - Grape seeds, alcohol. *Rich in antioxidants, supports cardiovascular health, and has anti-inflammatory properties.*
+- **Grapefruit Seed Extract**: (Extract) - Grapefruit seeds, alcohol. *Has antimicrobial properties, supports immune health, and aids detoxification.*
+- **Gravel Root Decoction**: (Decoction) - Gravel root, water. *Supports urinary health and treats kidney stones.*
+- **Gravel Root Tincture**: (Tincture) - Gravel root, alcohol. *Supports urinary health, treats kidney stones, and reduces inflammation.*
+- **Greater Celandine Herb Tincture**: (Tincture) - Greater celandine herb, alcohol. *Supports liver function and treats skin conditions.*
+- **Green Coffee Bean Infusion**: (Infusion) - Green coffee beans, water. *Boosts metabolism, supports weight loss, and is rich in antioxidants.*
+- **Green Tea Leaf Infusion**: (Infusion) - Green tea leaves, water. *Rich in antioxidants and boosts metabolism.*
+- **Green Tea Leaf Infusion**: (Infusion) - Green tea leaves, water. *Rich in antioxidants, supports metabolism, and has anti-inflammatory properties.*
+- **Green Tea Leaf Tincture**: (Tincture) - Green tea leaves, alcohol. *Rich in antioxidants, supports metabolism, and has anti-inflammatory properties.*
+- **Ground Ivy Herb Infusion**: (Infusion) - Ground ivy herb, water. *Supports respiratory health, relieves congestion, and has anti-inflammatory properties.*
+- **Guarana Seed Tincture**: (Tincture) - Guarana seeds, alcohol. *Boosts energy, supports mental focus, and aids weight loss.*
+- **Gymnema Leaf Decoction**: (Decoction) - Gymnema leaves, water. *Reduces sugar cravings and supports healthy blood sugar levels.*
+- **Gymnema Leaf Tincture**: (Tincture) - Gymnema leaves, alcohol. *Reduces sugar cravings, supports healthy blood sugar levels, and aids weight loss.*
+- **Hawthorn Berry Infusion**: (Infusion) - Hawthorn berries, water. *Supports heart health, improves circulation, and has antioxidant properties.*
+- **Hawthorn Berry Tincture**: (Tincture) - Hawthorn berries, alcohol. *Supports heart health and circulation.*
+- **Hawthorn Berry Tincture**: (Tincture) - Hawthorn berries, alcohol. *Supports heart health, improves circulation, and has antioxidant properties.*
+- **Hawthorn Leaf Tincture**: (Tincture) - Hawthorn leaves, alcohol. *Supports heart health, reduces anxiety, and has anti-inflammatory properties.*
+- **He Shou Wu Root Decoction**: (Decoction) - He Shou Wu root, water. *Rejuvenates the body, supports hair health, and improves vitality.*
+- **Heather Flower Infusion**: (Infusion) - Heather flowers, water. *Supports urinary health, aids sleep, and has anti-inflammatory properties.*
+- **Hemp Leaf Tincture**: (Tincture) - Hemp leaves, alcohol. *Relieves pain, reduces anxiety, and supports sleep (use in regions where legal).*
+- **Hemp Seed Oil**: (Maceration) - Hemp seeds, oil. *Nourishes skin, supports heart health, and is rich in essential fatty acids.*
+- **Henbane Leaf Tincture**: (Tincture) - Henbane leaves, alcohol. *Relieves pain, induces sleep, and has sedative properties (use with caution).*
+- **Henna Leaf Infusion**: (Infusion) - Henna leaves, water. *Conditions hair, treats skin conditions, and has cooling properties.*
+- **Hibiscus Flower Infusion**: (Infusion) - Hibiscus flowers, water. *Lowers blood pressure and improves cardiovascular health.*
+- **Hibiscus Flower Infusion**: (Infusion) - Hibiscus flowers, water. *Lowers blood pressure, supports liver health, and has antioxidant properties.*
+- **Hibiscus Flower Tincture**: (Tincture) - Hibiscus flowers, alcohol. *Lowers blood pressure, supports liver health, and has antioxidant properties.*
+- **Hibiscus Leaf Infusion**: (Infusion) - Hibiscus leaves, water. *Lowers blood pressure, supports liver health, and has antioxidant properties.*
+- **Hibiscus Petal Decoction**: (Decoction) - Hibiscus petals, water. *Lowers blood pressure, supports liver health, and has antioxidant properties.*
+- **Holy Basil Leaf Infusion**: (Infusion) - Holy basil leaves, water. *Reduces stress, supports respiratory health, and has antimicrobial properties.*
+- **Holy Basil Leaf Tincture**: (Tincture) - Holy basil leaves, alcohol. *Reduces stress, supports respiratory health, and has antimicrobial properties.*
+- **Holy Thistle Herb Infusion**: (Infusion) - Holy thistle herb, water. *Supports liver health, aids digestion, and has anti-inflammatory properties.*
+- **Honeybush Leaf Infusion**: (Infusion) - Honeybush leaves, water. *Rich in antioxidants, supports immune health, and has anti-inflammatory properties.*
+- **Honeysuckle Flower Infusion**: (Infusion) - Honeysuckle flowers, water. *Treats colds, flu, and inflammation.*
+- **Honeysuckle Stem Decoction**: (Decoction) - Honeysuckle stems, water. *Treats colds, reduces inflammation, and has antiviral properties.*
+- **Hoodia Plant Tincture**: (Tincture) - Hoodia plant, alcohol. *Suppresses appetite, aids weight loss, and has energy-boosting properties.*
+- **Hops Cone Tincture**: (Tincture) - Hops cones, alcohol. *Promotes relaxation, aids sleep, and has anti-inflammatory properties.*
+- **Hops Flower Tincture**: (Tincture) - Hops flowers, alcohol. *Promotes relaxation, aids sleep, and has anti-inflammatory properties.*
+- **Hops Strobile Infusion**: (Infusion) - Hops strobiles, water. *Promotes relaxation, aids sleep, and has anti-inflammatory properties.*
+- **Horehound Herb Decoction**: (Decoction) - Horehound herb, water. *Supports respiratory health, aids digestion, and has expectorant properties.*
+- **Horehound Herb Infusion**: (Infusion) - Horehound herb, water. *Supports respiratory health, aids digestion, and has expectorant properties.*
+- **Horehound Leaf Decoction**: (Decoction) - Horehound leaves, water. *Treats respiratory conditions and aids digestion.*
+- **Horny Goat Weed Leaf Tincture**: (Tincture) - Horny goat weed leaves, alcohol. *Improves sexual health and supports bone health.*
+- **Horse Chestnut Seed Tincture**: (Tincture) - Horse chestnut seeds, alcohol. *Improves vein health, reduces inflammation, and supports circulation.*
+- **Horseradish Root Decoction**: (Decoction) - Horseradish root, water. *Treats respiratory issues and acts as a natural antibiotic.*
+- **Horsetail Decoction**: (Decoction) - Horsetail, water. *Supports bone and connective tissue health.*
+- **Horsetail Herb Infusion**: (Infusion) - Horsetail herb, water. *Supports bone and connective tissue health, has diuretic properties, and aids wound healing.*
+- **Horsetail Herb Tincture**: (Tincture) - Horsetail herb, alcohol. *Supports bone and connective tissue health, has diuretic properties, and aids wound healing.*
+- **Hyacinth Bean Decoction**: (Decoction) - Hyacinth beans, water. *Aids digestion, supports cardiovascular health, and has antioxidant properties.*
+- **Hydrangea Root Decoction**: (Decoction) - Hydrangea root, water. *Supports kidney health, treats urinary conditions, and has anti-inflammatory properties.*
+- **Hydrangea Root Tincture**: (Tincture) - Hydrangea root, alcohol. *Supports kidney health, treats urinary conditions, and has anti-inflammatory properties.*
+- **Hydrocotyle Leaf Infusion**: (Infusion) - Hydrocotyle leaves, water. *Improves skin health, supports wound healing, and has diuretic properties.*
+- **Hydrocotyle Leaf Tincture**: (Tincture) - Hydrocotyle leaves, alcohol. *Improves skin health, supports wound healing, and has diuretic properties.*
+- **Hyssop Flower Infusion**: (Infusion) - Hyssop flowers, water. *Supports respiratory health, aids digestion, and has antimicrobial properties.*
+- **Hyssop Leaf Infusion**: (Infusion) - Hyssop leaves, water. *Relieves respiratory conditions and supports digestion.*
+- **Hyssop Leaf Tincture**: (Tincture) - Hyssop leaves, alcohol. *Supports respiratory health, aids digestion, and has antimicrobial properties.*
+- **Iceland Moss Decoction**: (Decoction) - Iceland moss, water. *Soothes sore throats, aids digestion, and has antimicrobial properties.*
+- **Iceland Moss Tincture**: (Tincture) - Iceland moss, alcohol. *Soothes sore throats, aids digestion, and has antimicrobial properties.*
+- **Indian Ginseng Root Tincture**: (Tincture) - Indian ginseng root, alcohol. *Reduces stress, supports vitality, and has anti-inflammatory properties.*
+- **Indian Gooseberry Infusion**: (Infusion) - Indian gooseberry, water. *Rich in Vitamin C, supports immune health, and has antioxidant properties.*
+- **Indian Tobacco Leaf Infusion**: (Infusion) - Indian tobacco leaves, water. *Relieves respiratory issues, acts as a sedative, and has expectorant properties.*
+- **Indian Tobacco Leaf Tincture**: (Tincture) - Indian tobacco leaves, alcohol. *Relieves respiratory issues, acts as a sedative, and has expectorant properties.*
+- **Indigo Leaf Decoction**: (Decoction) - Indigo leaves, water. *Treats skin conditions, reduces fever, and has anti-inflammatory properties.*
+- **Indigo Leaf Tincture**: (Tincture) - Indigo leaves, alcohol. *Treats skin conditions, reduces fever, and has anti-inflammatory properties.*
+- **Ipecac Root Tincture**: (Tincture) - Ipecac root, alcohol. *Induces vomiting, clears respiratory congestion, and has expectorant properties.*
+- **Iris Root Infusion**: (Infusion) - Iris root, water. *Supports skin health, detoxifies the body, and has lymphatic properties.*
+- **Irish Moss Gel**: (Gel) - Irish moss, water. *Nourishes the body, supports thyroid health, and has antiviral properties.*
+- **Irish Moss Infusion**: (Infusion) - Irish moss, water. *Nourishes the body, supports thyroid health, and has antiviral properties.*
+- **Jaborandi Leaf Infusion**: (Infusion) - Jaborandi leaves, water. *Stimulates sweating, supports detoxification, and aids in fever reduction.*
+- **Jamaican Dogwood Bark Tincture**: (Tincture) - Jamaican dogwood bark, alcohol. *Relieves pain, reduces anxiety, and has sedative properties.*
+- **Japanese Knotweed Root Decoction**: (Decoction) - Japanese knotweed root, water. *Supports cardiovascular health, has antioxidant properties, and supports joint health.*
+- **Japanese Knotweed Root Tincture**: (Tincture) - Japanese knotweed root, alcohol. *Supports cardiovascular health, has antioxidant properties, and supports joint health.*
+- **Jasmine Flower Infusion**: (Infusion) - Jasmine flowers, water. *Relieves stress and improves digestive health.*
+- **Jasmine Flower Tincture**: (Tincture) - Jasmine flowers, alcohol. *Relieves stress, improves mood, and supports healthy skin.*
+- **Jerusalem Artichoke Tuber Infusion**: (Infusion) - Jerusalem artichoke tuber, water. *Supports digestive health, has prebiotic properties, and regulates blood sugar.*
+- **Jiaogulan Herb Infusion**: (Infusion) - Jiaogulan herb, water. *Boosts immunity, reduces stress, and has antioxidant properties.*
+- **Jiaogulan Herb Tincture**: (Tincture) - Jiaogulan herb, alcohol. *Boosts immunity, reduces stress, and has antioxidant properties.*
+- **Job's Tears Seed Decoction**: (Decoction) - Job's tears seeds, water. *Supports digestive health, has anti-inflammatory properties, and aids joint health.*
+- **Job's Tears Seed Infusion**: (Infusion) - Job's tears seeds, water. *Supports digestive health, has anti-inflammatory properties, and aids joint health.*
+- **Joe Pye Weed Root Decoction**: (Decoction) - Joe Pye weed root, water. *Supports urinary health, reduces inflammation, and has diuretic properties.*
+- **Joe Pye Weed Root Infusion**: (Infusion) - Joe Pye weed root, water. *Supports urinary health, reduces inflammation, and has diuretic properties.*
+- **Juniper Berry Infusion**: (Infusion) - Juniper berries, water. *Detoxifies the body, supports urinary health, and has anti-inflammatory properties.*
+- **Juniper Berry Tincture**: (Tincture) - Juniper berries, alcohol. *Detoxifies the body and supports urinary health.*
+- **Juniper Berry Tincture**: (Tincture) - Juniper berries, alcohol. *Detoxifies the body, supports urinary health, and has anti-inflammatory properties.*
+- **Kava Kava Root Infusion**: (Infusion) - Kava kava root, water. *Relieves anxiety, promotes relaxation, and has muscle relaxant properties.*
+- **Kava Kava Root Tincture**: (Tincture) - Kava kava root, alcohol. *Relieves anxiety, promotes relaxation, and has muscle relaxant properties.*
+- **Kava Root Decoction**: (Decoction) - Kava root, water. *Relieves anxiety and promotes relaxation.*
+- **Kelp Seaweed Decoction**: (Decoction) - Kelp seaweed, water. *Supports thyroid health, aids digestion, and provides essential minerals.*
+- **Kelp Seaweed Infusion**: (Infusion) - Kelp seaweed, water. *Supports thyroid health, aids weight loss, and provides essential minerals.*
+- **Kelp Seaweed Tincture**: (Tincture) - Kelp seaweed, alcohol. *Supports thyroid health, aids weight loss, and provides essential minerals.*
+- **Knotgrass Herb Infusion**: (Infusion) - Knotgrass herb, water. *Supports urinary health, aids digestion, and has anti-inflammatory properties.*
+- **Kudzu Root Infusion**: (Infusion) - Kudzu root, water. *Reduces cravings for alcohol, supports heart health, and relieves headaches.*
+- **Kudzu Root Tincture**: (Tincture) - Kudzu root, alcohol. *Reduces cravings for alcohol, supports heart health, and relieves headaches.*
+- **Lady's Mantle Herb Infusion**: (Infusion) - Lady's mantle herb, water. *Supports female health, aids digestion, and has anti-inflammatory properties.*
+- **Lady's Mantle Leaf Infusion**: (Infusion) - Lady's mantle leaves, water. *Regulates menstrual cycle and supports female reproductive health.*
+- **Lady's Slipper Root Tincture**: (Tincture) - Lady's slipper root, alcohol. *Relieves anxiety, supports nervous system health, and has sedative properties.*
+- **Lavender Flower Infusion**: (Infusion) - Lavender flowers, water. *Calms nerves, aids sleep, and has anti-inflammatory properties.*
+- **Lavender Flower Tincture**: (Tincture) - Lavender flowers, alcohol. *Calms nerves and aids sleep.*
+- **Lavender Flower Tincture**: (Tincture) - Lavender flowers, alcohol. *Calms nerves, aids sleep, and has anti-inflammatory properties.*
+- **Lavender Infusion**: (Infusion) - Lavender flowers, water. *Used for relaxation, sleep aid, and stress relief.*
+- **Lemon Balm Herb Tincture**: (Tincture) - Lemon balm herb, alcohol. *Reduces anxiety, supports sleep, and improves cognitive function.*
+- **Lemon Balm Leaf Decoction**: (Decoction) - Lemon balm leaves, water. *Reduces anxiety and aids digestion.*
+- **Lemon Balm Leaf Infusion**: (Infusion) - Lemon balm leaves, water. *Reduces anxiety, supports sleep, and improves cognitive function.*
+- **Lemon Balm Leaf Tincture**: (Tincture) - Lemon balm leaves, alcohol. *Reduces anxiety, supports sleep, and improves cognitive function.*
+- **Lemon Balm Tincture**: (Tincture) - Lemon balm leaves, alcohol. *Used for anxiety, sleep disorders, and improving cognitive function.*
+- **Lemon Peel Tincture**: (Tincture) - Lemon peel, alcohol. *Improves digestion, boosts mood, and is rich in antioxidants.*
+- **Lemon Verbena Infusion**: (Infusion) - Lemon verbena leaves, water. *Relieves stress and aids digestion.*
+- **Lemon Verbena Leaf Infusion**: (Infusion) - Lemon verbena leaves, water. *Relieves stress, aids digestion, and has antioxidant properties.*
+- **Lemongrass Herb Infusion**: (Infusion) - Lemongrass herb, water. *Relieves anxiety, supports digestive health, and has antimicrobial properties.*
+- **Lemongrass Leaf Infusion**: (Infusion) - Lemongrass leaves, water. *Relieves anxiety and supports digestive health.*
+- **Licorice Root Decoction**: (Decoction) - Licorice root, water. *Soothes gastrointestinal issues and supports adrenal function.*
+- **Licorice Root Infusion**: (Infusion) - Licorice root, water. *Soothes gastrointestinal issues, supports adrenal function, and has anti-inflammatory properties.*
+- **Licorice Root Tincture**: (Tincture) - Licorice root, alcohol. *Soothes gastrointestinal issues, supports adrenal function, and has anti-inflammatory properties.*
+- **Linden Blossom Infusion**: (Infusion) - Linden blossoms, water. *Relieves anxiety, supports cardiovascular health, and reduces inflammation.*
+- **Linden Flower Infusion**: (Infusion) - Linden flowers, water. *Relieves anxiety and promotes relaxation.*
+- **Linden Flower Infusion**: (Infusion) - Linden flowers, water. *Relieves anxiety, supports cardiovascular health, and reduces inflammation.*
+- **Linden Leaf Infusion**: (Infusion) - Linden leaves, water. *Relieves anxiety, supports cardiovascular health, and reduces inflammation.*
+- **Lion's Mane Mushroom Infusion**: (Infusion) - Lion's mane mushroom, water. *Improves cognitive function, supports nerve health, and has antioxidant properties.*
+- **Lion's Mane Mushroom Tincture**: (Tincture) - Lion's mane mushroom, alcohol. *Improves cognitive function, supports nerve health, and has antioxidant properties.*
+- **Lobelia Herb Infusion**: (Infusion) - Lobelia herb, water. *Supports respiratory health, acts as a muscle relaxant, and has expectorant properties.*
+- **Lobelia Herb Tincture**: (Tincture) - Lobelia herb, alcohol. *Supports respiratory health, acts as a muscle relaxant, and has expectorant properties.*
+- **Lotus Flower Infusion**: (Infusion) - Lotus flowers, water. *Promotes relaxation, supports cardiovascular health, and aids meditation.*
+- **Lotus Seed Infusion**: (Infusion) - Lotus seeds, water. *Promotes relaxation, supports kidney health, and aids digestion.*
+- **Lovage Root Decoction**: (Decoction) - Lovage root, water. *Aids digestion, supports urinary health, and has anti-inflammatory properties.*
+- **Lovage Root Tincture**: (Tincture) - Lovage root, alcohol. *Aids digestion, supports urinary health, and has anti-inflammatory properties.*
+- **Lucerne Herb Infusion**: (Infusion) - Lucerne herb, water. *Rich in nutrients, supports digestion, and has antioxidant properties.*
+- **Lungwort Herb Infusion**: (Infusion) - Lungwort herb, water. *Supports respiratory health, reduces inflammation, and has antimicrobial properties.*
+- **Lungwort Herb Tincture**: (Tincture) - Lungwort herb, alcohol. *Supports respiratory health, reduces inflammation, and has antimicrobial properties.*
+- **Lycium Berry Infusion**: (Infusion) - Lycium berries, water. *Boosts immune health, supports eye health, and is rich in antioxidants.*
+- **Maca Root Infusion**: (Infusion) - Maca root, water. *Boosts energy, supports hormonal balance, and increases libido.*
+- **Maca Root Tincture**: (Tincture) - Maca root, alcohol. *Boosts energy, supports hormonal balance, and increases libido.*
+- **Madder Root Decoction**: (Decoction) - Madder root, water. *Improves skin health, supports kidney health, and has anti-inflammatory properties.*
+- **Madder Root Tincture**: (Tincture) - Madder root, alcohol. *Improves skin health, supports kidney health, and has anti-inflammatory properties.*
+- **Magnolia Bark Decoction**: (Decoction) - Magnolia bark, water. *Relieves anxiety, supports digestive health, and has anti-inflammatory properties.*
+- **Magnolia Bark Tincture**: (Tincture) - Magnolia bark, alcohol. *Relieves anxiety, supports digestive health, and has anti-inflammatory properties.*
+- **Maidenhair Fern Infusion**: (Infusion) - Maidenhair fern, water. *Supports respiratory health, aids in cough relief, and has anti-inflammatory properties.*
+- **Maidenhair Tree Leaf Infusion**: (Infusion) - Maidenhair tree leaves, water. *Improves cognitive function, supports circulation, and has antioxidant properties.*
+- **Maidenhair Tree Leaf Tincture**: (Tincture) - Maidenhair tree leaves, alcohol. *Improves cognitive function, supports circulation, and has antioxidant properties.*
+- **Maitake Mushroom Decoction**: (Decoction) - Maitake mushroom, water. *Boosts the immune system and supports overall health.*
+- **Maitake Mushroom Tincture**: (Tincture) - Maitake mushroom, alcohol. *Boosts the immune system, supports overall health, and has adaptogenic properties.*
+- **Mallow Flower Infusion**: (Infusion) - Mallow flowers, water. *Soothes skin irritations, supports respiratory health, and has anti-inflammatory properties.*
+- **Manjistha Root Infusion**: (Infusion) - Manjistha root, water. *Detoxifies blood, improves complexion, and supports liver health.*
+- **Manuka Leaf Tincture**: (Tincture) - Manuka leaves, alcohol. *Has antimicrobial properties, supports skin health, and aids digestion.*
+- **Maral Root Decoction**: (Decoction) - Maral root, water. *Boosts energy, supports muscle growth, and has adaptogenic properties.*
+- **Maral Root Tincture**: (Tincture) - Maral root, alcohol. *Boosts energy, supports muscle growth, and has adaptogenic properties.*
+- **Marigold Flower Infusion**: (Infusion) - Marigold flowers, water. *Heals skin wounds, reduces inflammation, and supports eye health.*
+- **Marjoram Leaf Decoction**: (Decoction) - Marjoram leaves, water. *Relieves stress and supports digestive health.*
+- **Marsh Mallow Root Infusion**: (Infusion) - Marsh mallow root, water. *Soothes the digestive tract, relieves coughs, and has anti-inflammatory properties.*
+- **Marshmallow Flower Infusion**: (Infusion) - Marshmallow flowers, water. *Soothes sore throats, aids digestion, and has anti-inflammatory properties.*
+- **Marshmallow Root Decoction**: (Decoction) - Marshmallow root, water. *Moistens and heals mucous membranes.*
+- **Marshmallow Root Infusion**: (Infusion) - Marshmallow root, water. *Moistens and heals mucous membranes, soothes digestive tract, and has anti-inflammatory properties.*
+- **Marshmallow Root Tincture**: (Tincture) - Marshmallow root, alcohol. *Soothes mucous membranes, relieves digestive issues, and has anti-inflammatory properties.*
+- **Meadowfoam Seed Oil**: (Maceration) - Meadowfoam seeds, oil. *Nourishes skin, provides UV protection, and has antioxidant properties.*
+- **Meadowsweet Flower Tincture**: (Tincture) - Meadowsweet flowers, alcohol. *Relieves pain, reduces fever, and has anti-inflammatory properties.*
+- **Meadowsweet Infusion**: (Infusion) - Meadowsweet flowers, water. *Relieves pain and reduces fever.*
+- **Milk Thistle Flower Infusion**: (Infusion) - Milk thistle flowers, water. *Protects the liver, promotes liver regeneration, and has antioxidant properties.*
+- **Milk Thistle Seed Infusion**: (Infusion) - Milk thistle seeds, water. *Protects the liver, promotes liver regeneration, and has antioxidant properties.*
+- **Milk Thistle Seed Tincture**: (Tincture) - Milk thistle seeds, alcohol. *Protects the liver and promotes liver regeneration.*
+- **Milk Thistle Seed Tincture**: (Tincture) - Milk thistle seeds, alcohol. *Protects the liver, promotes liver regeneration, and has antioxidant properties.*
+- **Milkweed Herb Infusion**: (Infusion) - Milkweed herb, water. *Supports skin health, relieves respiratory issues, and has diuretic properties.*
+- **Mimosa Tree Bark Decoction**: (Decoction) - Mimosa tree bark, water. *Relieves anxiety, supports wound healing, and has anti-inflammatory properties.*
+- **Mimosa Tree Bark Tincture**: (Tincture) - Mimosa tree bark, alcohol. *Relieves anxiety, supports wound healing, and has anti-inflammatory properties.*
+- **Mint Infusion**: (Infusion) - Mint leaves, water. *Used for digestive issues, freshening breath, and soothing headaches.*
+- **Mint Leaf Tincture**: (Tincture) - Mint leaves, alcohol. *Aids digestion, soothes headaches, and has antimicrobial properties.*
+- **Mistletoe Herb Infusion**: (Infusion) - Mistletoe herb, water. *Lowers blood pressure, supports heart health, and has calming properties.*
+- **Mistletoe Herb Tincture**: (Tincture) - Mistletoe herb, alcohol. *Lowers blood pressure, supports heart health, and has calming properties.*
+- **Mistletoe Leaf Decoction**: (Decoction) - Mistletoe leaves, water. *Lowers blood pressure, supports heart health, and has calming properties.*
+- **Moringa Leaf Infusion**: (Infusion) - Moringa leaves, water. *Rich in nutrients, supports immune health, and has antioxidant properties.*
+- **Moringa Leaf Tincture**: (Tincture) - Moringa leaves, alcohol. *Rich in nutrients, supports immune health, and has antioxidant properties.*
+- **Mother of Thyme Herb Infusion**: (Infusion) - Mother of Thyme herb, water. *Has antimicrobial properties, supports respiratory health, and aids digestion.*
+- **Mother of Thyme Herb Infusion**: (Infusion) - Mother of Thyme herb, water. *Supports respiratory health, aids digestion, and has antimicrobial properties.*
+- **Motherwort Herb Infusion**: (Infusion) - Motherwort herb, water. *Improves heart health, reduces anxiety, and supports female reproductive health.*
+- **Motherwort Herb Tincture**: (Tincture) - Motherwort herb, alcohol. *Improves heart health, reduces anxiety, and supports female reproductive health.*
+- **Motherwort Tincture**: (Tincture) - Motherwort, alcohol. *Supports heart health and reduces anxiety.*
+- **Mountain Ash Berry Infusion**: (Infusion) - Mountain ash berries, water. *Supports immune health, aids digestion, and has anti-inflammatory properties.*
+- **Mountain Ash Berry Tincture**: (Tincture) - Mountain ash berries, alcohol. *Supports immune health, aids digestion, and has anti-inflammatory properties.*
+- **Mugwort Herb Decoction**: (Decoction) - Mugwort herb, water. *Promotes digestion, supports menstrual health, and aids dream recall.*
+- **Mugwort Herb Infusion**: (Infusion) - Mugwort herb, water. *Promotes digestion, supports menstrual health, and aids dream recall.*
+- **Mugwort Herb Tincture**: (Tincture) - Mugwort herb, alcohol. *Promotes digestion, supports menstrual health, and aids dream recall.*
+- **Mugwort Leaf Tincture**: (Tincture) - Mugwort leaves, alcohol. *Promotes digestion and dream recall.*
+- **Muira Puama Bark Infusion**: (Infusion) - Muira puama bark, water. *Enhances libido, supports nervous system health, and has adaptogenic properties.*
+- **Muira Puama Bark Tincture**: (Tincture) - Muira puama bark, alcohol. *Enhances libido, supports nervous system health, and has adaptogenic properties.*
+- **Mullein Flower Infusion**: (Infusion) - Mullein flowers, water. *Soothes respiratory conditions and eases earaches.*
+- **Mullein Flower Oil**: (Maceration) - Mullein flowers, oil. *Soothes earaches, supports respiratory health, and has anti-inflammatory properties.*
+- **Mullein Leaf Infusion**: (Infusion) - Mullein leaves, water. *Supports respiratory health, relieves cough, and has anti-inflammatory properties.*
+- **Mullein Leaf Tincture**: (Tincture) - Mullein leaves, alcohol. *Supports respiratory health, relieves cough, and has anti-inflammatory properties.*
+- **Mullein Root Decoction**: (Decoction) - Mullein root, water. *Supports respiratory health and reduces inflammation.*
+- **Mustard Seed Poultice**: (Poultice) - Mustard seeds, water. *Relieves muscle pain, stimulates circulation, and has warming properties.*
+- **Myrrh Gum Tincture**: (Tincture) - Myrrh gum, alcohol. *Supports oral health, has antimicrobial properties, and aids digestion.*
+- **Neem Leaf Decoction**: (Decoction) - Neem leaves, water. *Has antibacterial properties and supports skin health.*
+- **Neem Leaf Tincture**: (Tincture) - Neem leaves, alcohol. *Has antibacterial properties, supports skin health, and aids detoxification.*
+- **Nettle Leaf Decoction**: (Decoction) - Nettle leaves, water. *Used for joint pain, allergies, and as a diuretic.*
+- **Nettle Leaf Infusion**: (Infusion) - Nettle leaves, water. *Detoxifies the body, supports joint health, and reduces inflammation.*
+- **Nettle Leaf Tincture**: (Tincture) - Nettle leaves, alcohol. *Detoxifies the body, supports joint health, and reduces inflammation.*
+- **Nettle Root Tincture**: (Tincture) - Nettle root, alcohol. *Supports prostate health, reduces inflammation, and aids joint health.*
+- **Nettle Seed Infusion**: (Infusion) - Nettle seeds, water. *Supports kidney health, boosts energy, and has adaptogenic properties.*
+- **Nettle Seed Tincture**: (Tincture) - Nettle seeds, alcohol. *Supports kidney health, boosts energy, and has adaptogenic properties.*
+- **Noni Fruit Tincture**: (Tincture) - Noni fruit, alcohol. *Supports immune health, reduces pain, and has antioxidant properties.*
+- **Nutmeg Seed Infusion**: (Infusion) - Nutmeg seeds, water. *Relieves digestive issues, induces sleep, and has pain-relieving properties.*
+- **Nutmeg Seed Tincture**: (Tincture) - Nutmeg seeds, alcohol. *Relieves digestive issues, induces sleep, and has pain-relieving properties.*
+- **Oak Bark Decoction**: (Decoction) - Oak bark, water. *Treats skin conditions, reduces inflammation, and has astringent properties.*
+- **Oak Gall Decoction**: (Decoction) - Oak galls, water. *Treats skin conditions, supports oral health, and has astringent properties.*
+- **Oak Gall Tincture**: (Tincture) - Oak galls, alcohol. *Treats skin conditions, supports oral health, and has astringent properties.*
+- **Oat Grain Infusion**: (Infusion) - Oat grain, water. *Supports nervous system health, nourishes the body, and has calming properties.*
+- **Oat Seed Infusion**: (Infusion) - Oat seeds, water. *Supports nervous system health, aids sleep, and has anti-inflammatory properties.*
+- **Oat Straw Infusion**: (Infusion) - Oat straw, water. *Supports nervous system health, aids sleep, and has anti-inflammatory properties.*
+- **Oat Straw Tincture**: (Tincture) - Oat straw, alcohol. *Supports nervous system health, aids sleep, and has anti-inflammatory properties.*
+- **Oatstraw Infusion**: (Infusion) - Oatstraw, water. *Supports nervous system and bone health.*
+- **Olive Leaf Infusion**: (Infusion) - Olive leaves, water. *Supports cardiovascular health, has antimicrobial properties, and boosts immune health.*
+- **Olive Leaf Tincture**: (Tincture) - Olive leaves, alcohol. *Supports cardiovascular health, has antimicrobial properties, and boosts immune health.*
+- **Onion Bulb Poultice**: (Poultice) - Onion bulbs, water. *Relieves pain, reduces inflammation, and has antimicrobial properties.*
+- **Orange Peel Infusion**: (Infusion) - Orange peel, water. *Improves digestion, boosts mood, and is rich in antioxidants.*
+- **Orange Peel Tincture**: (Tincture) - Orange peel, alcohol. *Improves digestion, boosts mood, and is rich in antioxidants.*
+- **Oregano Herb Infusion**: (Infusion) - Oregano herb, water. *Has antimicrobial properties, supports respiratory health, and aids digestion.*
+- **Oregano Herb Tincture**: (Tincture) - Oregano herb, alcohol. *Has antimicrobial properties, supports respiratory health, and aids digestion.*
+- **Oregano Leaf Infusion**: (Infusion) - Oregano leaves, water. *Has antimicrobial properties and aids digestion.*
+- **Oregon Grape Root Decoction**: (Decoction) - Oregon grape root, water. *Treats skin conditions, supports liver function, and has antimicrobial properties.*
+- **Oregon Grape Root Tincture**: (Tincture) - Oregon grape root, alcohol. *Treats skin conditions, supports liver function, and has antimicrobial properties.*
+- **Orris Root Tincture**: (Tincture) - Orris root, alcohol. *Supports oral health, aids digestion, and has a pleasant fragrance.*
+- **Osha Root Decoction**: (Decoction) - Osha root, water. *Supports respiratory health, relieves pain, and has antimicrobial properties.*
+- **Papaya Leaf Infusion**: (Infusion) - Papaya leaves, water. *Aids digestion, supports immune health, and has anti-inflammatory properties.*
+- **Parsley Leaf Decoction**: (Decoction) - Parsley leaves, water. *Detoxifies the body and supports kidney health.*
+- **Parsley Leaf Infusion**: (Infusion) - Parsley leaves, water. *Supports urinary health, aids digestion, and has diuretic properties.*
+- **Parsley Leaf Tincture**: (Tincture) - Parsley leaves, alcohol. *Supports urinary health, aids digestion, and has diuretic properties.*
+- **Parsley Root Decoction**: (Decoction) - Parsley root, water. *Supports urinary health, aids digestion, and has diuretic properties.*
+- **Parsley Seed Decoction**: (Decoction) - Parsley seeds, water. *Supports urinary health, aids digestion, and has diuretic properties.*
+- **Passionflower Herb Infusion**: (Infusion) - Passionflower herb, water. *Reduces anxiety, aids sleep, and supports nervous system health.*
+- **Passionflower Infusion**: (Infusion) - Passionflower, water. *Promotes relaxation and helps with insomnia.*
+- **Passionflower Leaf Tincture**: (Tincture) - Passionflower leaves, alcohol. *Reduces anxiety and aids sleep.*
+- **Passionflower Vine Infusion**: (Infusion) - Passionflower vine, water. *Reduces anxiety, aids sleep, and supports nervous system health.*
+- **Passionflower Vine Tincture**: (Tincture) - Passionflower vine, alcohol. *Reduces anxiety, aids sleep, and supports nervous system health.*
+- **Patchouli Leaf Tincture**: (Tincture) - Patchouli leaves, alcohol. *Soothes skin conditions, repels insects, and has anti-inflammatory properties.*
+- **Pau d'Arco Bark Infusion**: (Infusion) - Pau d'Arco bark, water. *Boosts the immune system and fights fungal infections.*
+- **Pau D'Arco Bark Infusion**: (Infusion) - Pau D'Arco bark, water. *Boosts the immune system, fights fungal infections, and has anti-inflammatory properties.*
+- **Pau D'Arco Bark Tincture**: (Tincture) - Pau D'Arco bark, alcohol. *Boosts the immune system, fights fungal infections, and has anti-inflammatory properties.*
+- **Peach Leaf Infusion**: (Infusion) - Peach leaves, water. *Relieves cough, supports digestive health, and has mild laxative properties.*
+- **Pennyroyal Herb Infusion**: (Infusion) - Pennyroyal herb, water. *Relieves digestive issues, induces menstruation, and has insect repellent properties.*
+- **Pennyroyal Herb Tincture**: (Tincture) - Pennyroyal herb, alcohol. *Relieves digestive issues, induces menstruation, and has insect repellent properties.*
+- **Pennyroyal Leaf Infusion**: (Infusion) - Pennyroyal leaves, water. *Relieves digestive issues and can induce menstruation.*
+- **Peony Root Decoction**: (Decoction) - Peony root, water. *Relieves pain, supports menstrual health, and has anti-inflammatory properties.*
+- **Pepperberry Tincture**: (Tincture) - Pepperberry, alcohol. *Improves circulation, relieves pain, and has antimicrobial properties.*
+- **Peppermint Leaf Decoction**: (Decoction) - Peppermint leaves, water. *Soothes digestive issues, relieves headaches, and has antimicrobial properties.*
+- **Peppermint Leaf Infusion**: (Infusion) - Peppermint leaves, water. *Soothes digestive issues, relieves headaches, and has antimicrobial properties.*
+- **Peppermint Leaf Tincture**: (Tincture) - Peppermint leaves, alcohol. *Soothes digestive issues, relieves headaches, and has antimicrobial properties.*
+- **Peppermint Oil**: (Maceration) - Peppermint leaves, oil. *Used for digestive issues, headaches, and as a muscle relaxant.*
+- **Perilla Leaf Infusion**: (Infusion) - Perilla leaves, water. *Supports respiratory health, reduces inflammation, and has anti-allergic properties.*
+- **Periwinkle Herb Infusion**: (Infusion) - Periwinkle herb, water. *Improves circulation, cognitive function, and has anti-inflammatory properties.*
+- **Periwinkle Herb Tincture**: (Tincture) - Periwinkle herb, alcohol. *Improves circulation and cognitive function.*
+- **Pine Needle Infusion**: (Infusion) - Pine needles, water. *Rich in vitamin C and relieves respiratory issues.*
+- **Pine Needle Tincture**: (Tincture) - Pine needles, alcohol. *Rich in vitamin C, relieves respiratory issues, and has antimicrobial properties.*
+- **Pipsissewa Leaf Infusion**: (Infusion) - Pipsissewa leaves, water. *Supports urinary health, has diuretic properties, and aids digestion.*
+- **Plantain Leaf Infusion**: (Infusion) - Plantain leaves, water. *Heals skin wounds and relieves itching.*
+- **Plantain Leaf Infusion**: (Infusion) - Plantain leaves, water. *Heals skin wounds, relieves itching, and has anti-inflammatory properties.*
+- **Plantain Leaf Poultice**: (Poultice) - Plantain leaves, water. *Heals skin wounds, relieves itching, and has anti-inflammatory properties.*
+- **Plantain Leaf Tincture**: (Tincture) - Plantain leaves, alcohol. *Heals skin wounds, relieves itching, and has anti-inflammatory properties.*
+- **Pleurisy Root Decoction**: (Decoction) - Pleurisy root, water. *Supports respiratory health, reduces inflammation, and aids expectoration.*
+- **Pleurisy Root Tincture**: (Tincture) - Pleurisy root, alcohol. *Supports respiratory health, reduces inflammation, and aids expectoration.*
+- **Poke Root Infusion**: (Infusion) - Poke root, water. *Supports lymphatic health, treats skin conditions, and has anti-inflammatory properties.*
+- **Poke Root Tincture**: (Tincture) - Poke root, alcohol. *Supports lymphatic health and treats skin conditions.*
+- **Pomegranate Peel Infusion**: (Infusion) - Pomegranate peel, water. *Rich in antioxidants, supports digestive health, and has antimicrobial properties.*
+- **Pomegranate Seed Oil**: (Maceration) - Pomegranate seeds, oil. *Nourishes skin, supports heart health, and is rich in antioxidants.*
+- **Poplar Bud Tincture**: (Tincture) - Poplar buds, alcohol. *Relieves pain, reduces inflammation, and has antimicrobial properties.*
+- **Poppy Seed Infusion**: (Infusion) - Poppy seeds, water. *Relieves pain, aids sleep, and soothes nervous tension.*
+- **Prickly Ash Bark Tincture**: (Tincture) - Prickly ash bark, alcohol. *Stimulates circulation, relieves pain, and supports digestive health.*
+- **Prickly Pear Cactus Pad Infusion**: (Infusion) - Prickly pear cactus pads, water. *Supports skin health, has anti-inflammatory properties, and aids digestion.*
+- **Psyllium Husk Decoction**: (Decoction) - Psyllium husks, water. *Aids digestion, promotes bowel regularity, and supports heart health.*
+- **Psyllium Seed Infusion**: (Infusion) - Psyllium seeds, water. *Aids digestion, promotes bowel regularity, and supports heart health.*
+- **Pumpkin Seed Infusion**: (Infusion) - Pumpkin seeds, water. *Supports prostate health, promotes urinary health, and is rich in essential fatty acids.*
+- **Pumpkin Seed Oil**: (Maceration) - Pumpkin seeds, oil. *Supports prostate health, promotes urinary health, and is rich in essential fatty acids.*
+- **Pygeum Bark Decoction**: (Decoction) - Pygeum bark, water. *Supports prostate health and urinary health.*
+- **Pyrethrum Flower Infusion**: (Infusion) - Pyrethrum flowers, water. *Acts as a natural insecticide, relieves pain, and has anti-inflammatory properties.*
+- **Quassia Wood Tincture**: (Tincture) - Quassia wood, alcohol. *Stimulates digestion, has insecticidal properties, and supports liver health.*
+- **Queen of the Meadow Root Decoction**: (Decoction) - Queen of the Meadow root, water. *Relieves joint pain, supports urinary health, and has anti-inflammatory properties.*
+- **Quince Seed Poultice**: (Poultice) - Quince seeds, water. *Soothes skin irritations, supports respiratory health, and has moisturizing properties.*
+- **Raspberry Leaf Infusion**: (Infusion) - Raspberry leaves, water. *Eases childbirth and menstrual discomfort.*
+- **Raspberry Leaf Tincture**: (Tincture) - Raspberry leaves, alcohol. *Eases childbirth, supports menstrual health, and has anti-inflammatory properties.*
+- **Red Clover Blossom Infusion**: (Infusion) - Red clover blossoms, water. *Supports hormonal balance and detoxifies the body.*
+- **Red Clover Blossom Tincture**: (Tincture) - Red clover blossoms, alcohol. *Supports hormonal balance, detoxifies the body, and has anti-inflammatory properties.*
+- **Red Poppy Flower Infusion**: (Infusion) - Red poppy flowers, water. *Relieves pain, induces sleep, and has sedative properties.*
+- **Red Raspberry Leaf Infusion**: (Infusion) - Red raspberry leaves, water. *Eases childbirth, supports menstrual health, and has anti-inflammatory properties.*
+- **Red Raspberry Leaf Infusion**: (Infusion) - Red raspberry leaves, water. *Eases menstrual discomfort and supports pregnancy.*
+- **Red Raspberry Leaf Tincture**: (Tincture) - Red raspberry leaves, alcohol. *Eases childbirth, supports menstrual health, and has anti-inflammatory properties.*
+- **Red Root Tincture**: (Tincture) - Red root, alcohol. *Supports lymphatic health, reduces inflammation, and aids respiratory health.*
+- **Rehmannia Root Decoction**: (Decoction) - Rehmannia root, water. *Supports adrenal health, improves blood circulation, and has anti-inflammatory properties.*
+- **Reishi Mushroom Decoction**: (Decoction) - Reishi mushroom, water. *Boosts the immune system and supports stress reduction.*
+- **Reishi Mushroom Infusion**: (Infusion) - Reishi mushrooms, water. *Boosts the immune system, supports stress reduction, and has antioxidant properties.*
+- **Reishi Mushroom Tincture**: (Tincture) - Reishi mushrooms, alcohol. *Boosts the immune system, supports stress reduction, and has antioxidant properties.*
+- **Rhodiola Root Decoction**: (Decoction) - Rhodiola root, water. *Improves energy, stamina, and mental capacity.*
+- **Rhodiola Root Infusion**: (Infusion) - Rhodiola root, water. *Enhances energy, stamina, and mental clarity.*
+- **Rhodiola Root Infusion**: (Infusion) - Rhodiola root, water. *Improves energy, stamina, and mental capacity.*
+- **Rhodiola Root Tincture**: (Tincture) - Rhodiola root, alcohol. *Enhances energy, stamina, and mental clarity.*
+- **Rhodiola Root Tincture**: (Tincture) - Rhodiola root, alcohol. *Improves energy, stamina, and mental capacity.*
+- **Rhubarb Root Decoction**: (Decoction) - Rhubarb root, water. *Acts as a natural laxative, supports digestive health, and has astringent properties.*
+- **Rhubarb Root Tincture**: (Tincture) - Rhubarb root, alcohol. *Acts as a natural laxative, supports digestive health, and has astringent properties.*
+- **Rooibos Leaf Infusion**: (Infusion) - Rooibos leaves, water. *Rich in antioxidants, supports cardiovascular health, and has anti-inflammatory properties.*
+- **Rose Hip Infusion**: (Infusion) - Rose hips, water. *Rich in Vitamin C, supports immune health, and has anti-inflammatory properties.*
+- **Rose Hip Tincture**: (Tincture) - Rose hips, alcohol. *Rich in Vitamin C, supports immune health, and has anti-inflammatory properties.*
+- **Rose Petal Infusion**: (Infusion) - Rose petals, water. *Calms the mind and soothes skin irritation.*
+- **Rosehip Infusion**: (Infusion) - Rosehips, water. *Rich in Vitamin C and supports immune health.*
+- **Rosemary Leaf Decoction**: (Decoction) - Rosemary leaves, water. *Improves memory, circulation, and hair growth.*
+- **Rosemary Leaf Infusion**: (Infusion) - Rosemary leaves, water. *Improves memory, supports circulation, and has antimicrobial properties.*
+- **Rosemary Leaf Tincture**: (Tincture) - Rosemary leaves, alcohol. *Improves memory, supports circulation, and has antimicrobial properties.*
+- **Rosemary Oil**: (Maceration) - Rosemary leaves, oil. *Used for improving memory, circulation, and hair growth.*
+- **Rowan Berry Infusion**: (Infusion) - Rowan berries, water. *Supports immune health, aids digestion, and has antioxidant properties.*
+- **Royal Jelly Infusion**: (Infusion) - Royal jelly, water. *Boosts energy, supports hormonal balance, and has anti-aging properties.*
+- **Safflower Petal Infusion**: (Infusion) - Safflower petals, water. *Improves circulation, supports heart health, and has anti-inflammatory properties.*
+- **Saffron Stigma Infusion**: (Infusion) - Saffron stigma, water. *Uplifts mood, supports digestion, and enhances skin complexion.*
+- **Saffron Stigma Tincture**: (Tincture) - Saffron stigma, alcohol. *Uplifts mood, supports digestion, and enhances skin complexion.*
+- **Sage Infusion**: (Infusion) - Sage leaves, water. *Used for sore throat, dental hygiene, and menopausal symptoms.*
+- **Sage Leaf Infusion**: (Infusion) - Sage leaves, water. *Improves memory, supports digestion, and has antimicrobial properties.*
+- **Sage Leaf Tincture**: (Tincture) - Sage leaves, alcohol. *Improves memory, supports digestion, and has antimicrobial properties.*
+- **Sandalwood Heartwood Infusion**: (Infusion) - Sandalwood heartwood, water. *Calms the mind, supports skin health, and has antimicrobial properties.*
+- **Sarsaparilla Root Decoction**: (Decoction) - Sarsaparilla root, water. *Detoxifies the body and treats skin conditions.*
+- **Sarsaparilla Root Infusion**: (Infusion) - Sarsaparilla root, water. *Detoxifies the body, supports skin health, and has anti-inflammatory properties.*
+- **Sarsaparilla Root Tincture**: (Tincture) - Sarsaparilla root, alcohol. *Detoxifies the body, supports skin health, and has anti-inflammatory properties.*
+- **Sassafras Root Bark Decoction**: (Decoction) - Sassafras root bark, water. *Supports digestive health, has diuretic properties, and relieves skin conditions.*
+- **Sassafras Root Decoction**: (Decoction) - Sassafras root, water. *Supports digestive health, has diuretic properties, and relieves skin conditions.*
+- **Savory Herb Infusion**: (Infusion) - Savory herb, water. *Supports respiratory health, aids digestion, and has antimicrobial properties.*
+- **Saw Palmetto Berry Decoction**: (Decoction) - Saw palmetto berries, water. *Supports prostate health, balances hormones, and has anti-inflammatory properties.*
+- **Saw Palmetto Berry Infusion**: (Infusion) - Saw palmetto berries, water. *Supports prostate health, balances hormones, and has anti-inflammatory properties.*
+- **Saw Palmetto Berry Tincture**: (Tincture) - Saw palmetto berries, alcohol. *Supports prostate health and balances hormones.*
+- **Saw Palmetto Berry Tincture**: (Tincture) - Saw palmetto berries, alcohol. *Supports prostate health, balances hormones, and has anti-inflammatory properties.*
+- **Schisandra Berry Infusion**: (Infusion) - Schisandra berries, water. *Supports liver function and increases resistance to stress.*
+- **Schisandra Berry Infusion**: (Infusion) - Schisandra berries, water. *Supports liver function, increases resistance to stress, and has antioxidant properties.*
+- **Schisandra Berry Tincture**: (Tincture) - Schisandra berries, alcohol. *Supports liver function, increases resistance to stress, and has antioxidant properties.*
+- **Scullcap Herb Infusion**: (Infusion) - Scullcap herb, water. *Relieves anxiety, supports nervous system health, and aids sleep.*
+- **Scullcap Herb Tincture**: (Tincture) - Scullcap herb, alcohol. *Relieves anxiety, supports nervous system health, and aids sleep.*
+- **Sea Buckthorn Berry Infusion**: (Infusion) - Sea buckthorn berries, water. *Rich in vitamins, supports skin health, and boosts immunity.*
+- **Sea Buckthorn Berry Tincture**: (Tincture) - Sea buckthorn berries, alcohol. *Rich in vitamins, supports skin health, and boosts immunity.*
+- **Self-Heal Herb Infusion**: (Infusion) - Self-heal herb, water. *Supports wound healing, boosts immune health, and has anti-inflammatory properties.*
+- **Senna Leaf Decoction**: (Decoction) - Senna leaves, water. *Acts as a natural laxative and cleanses the bowels.*
+- **Senna Leaf Tincture**: (Tincture) - Senna leaves, alcohol. *Acts as a natural laxative and cleanses the bowels.*
+- **Senna Pod Infusion**: (Infusion) - Senna pods, water. *Acts as a natural laxative and cleanses the bowels.*
+- **Sesame Seed Oil**: (Maceration) - Sesame seeds, oil. *Nourishes skin, supports joint health, and is rich in essential fatty acids.*
+- **Sheep Sorrel Herb Infusion**: (Infusion) - Sheep sorrel herb, water. *Detoxifies the body, supports immune health, and has antioxidant properties.*
+- **Shepherd's Purse Herb Tincture**: (Tincture) - Shepherd's purse herb, alcohol. *Stops bleeding, supports urinary health, and reduces inflammation.*
+- **Shepherd's Purse Leaf Decoction**: (Decoction) - Shepherd's purse leaves, water. *Stops bleeding, supports urinary health, and reduces inflammation.*
+- **Shiitake Mushroom Infusion**: (Infusion) - Shiitake mushrooms, water. *Supports immune health and has antiviral properties.*
+- **Shiso Leaf Infusion**: (Infusion) - Shiso leaves, water. *Supports respiratory health, aids digestion, and has anti-inflammatory properties.*
+- **Siberian Ginseng Root Decoction**: (Decoction) - Siberian ginseng root, water. *Boosts energy, supports immune health, and has adaptogenic properties.*
+- **Skullcap Herb Infusion**: (Infusion) - Skullcap herb, water. *Relieves anxiety and promotes relaxation.*
+- **Skullcap Herb Tincture**: (Tincture) - Skullcap herb, alcohol. *Relieves anxiety, supports nervous system health, and aids sleep.*
+- **Skullcap Root Tincture**: (Tincture) - Skullcap root, alcohol. *Relieves anxiety, supports nervous system health, and aids sleep.*
+- **Skunk Cabbage Root Decoction**: (Decoction) - Skunk cabbage root, water. *Relieves respiratory issues, acts as a sedative, and has antispasmodic properties.*
+- **Slippery Elm Bark Decoction**: (Decoction) - Slippery elm bark, water. *Soothes sore throat and digestive tract.*
+- **Slippery Elm Bark Decoction**: (Decoction) - Slippery elm bark, water. *Soothes the digestive tract, relieves coughs, and has anti-inflammatory properties.*
+- **Slippery Elm Bark Infusion**: (Infusion) - Slippery elm bark, water. *Soothes and heals the digestive tract and throat.*
+- **Slippery Elm Bark Infusion**: (Infusion) - Slippery elm bark, water. *Soothes the digestive tract, relieves coughs, and has anti-inflammatory properties.*
+- **Slippery Elm Inner Bark Infusion**: (Infusion) - Slippery elm inner bark, water. *Soothes the digestive tract and relieves coughs.*
+- **Slippery Elm Inner Bark Tincture**: (Tincture) - Slippery elm inner bark, alcohol. *Soothes the digestive tract, relieves coughs, and has anti-inflammatory properties.*
+- **Soapwort Root Infusion**: (Infusion) - Soapwort root, water. *Cleanses skin, supports respiratory health, and has expectorant properties.*
+- **Southernwood Herb Infusion**: (Infusion) - Southernwood herb, water. *Repels insects, supports digestion, and has antiseptic properties.*
+- **Spearmint Leaf Infusion**: (Infusion) - Spearmint leaves, water. *Soothes digestive issues and freshens breath.*
+- **Spearmint Leaf Infusion**: (Infusion) - Spearmint leaves, water. *Soothes digestive issues, freshens breath, and has anti-inflammatory properties.*
+- **Spearmint Leaf Tincture**: (Tincture) - Spearmint leaves, alcohol. *Soothes digestive issues, freshens breath, and has anti-inflammatory properties.*
+- **Spikenard Root Infusion**: (Infusion) - Spikenard root, water. *Relieves stress, promotes relaxation, and supports immune health.*
+- **Spikenard Root Tincture**: (Tincture) - Spikenard root, alcohol. *Relieves stress, promotes relaxation, and supports immune health.*
+- **Spilanthes Flower Tincture**: (Tincture) - Spilanthes flowers, alcohol. *Stimulates the immune system and has antimicrobial properties.*
+- **St. John's Wort Flower Tincture**: (Tincture) - St. John's Wort flowers, alcohol. *Alleviates depression, supports nerve health, and has antiviral properties.*
+- **St. John's Wort Herb Infusion**: (Infusion) - St. John's Wort herb, water. *Alleviates depression, supports nerve health, and has antiviral properties.*
+- **St. John's Wort Herb Tincture**: (Tincture) - St. John's Wort herb, alcohol. *Alleviates depression, supports nerve health, and has antiviral properties.*
+- **St. John's Wort Oil**: (Maceration) - St. John's wort flowers, oil. *Used for depression, wound healing, and anti-inflammatory properties.*
+- **Star Anise Seed Infusion**: (Infusion) - Star anise seeds, water. *Relieves cough, supports digestion, and has antiviral properties.*
+- **Stevia Leaf Infusion**: (Infusion) - Stevia leaves, water. *Sweetens beverages, supports blood sugar regulation, and has antioxidant properties.*
+- **Stevia Leaf Tincture**: (Tincture) - Stevia leaves, alcohol. *Sweetens beverages naturally, supports blood sugar regulation, and has antioxidant properties.*
+- **Stinging Nettle Leaf Decoction**: (Decoction) - Stinging nettle leaves, water. *Detoxifies the body, supports joint health, and reduces inflammation.*
+- **Stinging Nettle Leaf Tincture**: (Tincture) - Stinging nettle leaves, alcohol. *Detoxifies the body, supports joint health, and reduces inflammation.*
+- **Stinging Nettle Root Tincture**: (Tincture) - Stinging nettle root, alcohol. *Supports prostate health, reduces inflammation, and aids urinary health.*
+- **Stone Root Decoction**: (Decoction) - Stone root, water. *Relieves urinary issues, supports digestive health, and has anti-inflammatory properties.*
+- **Strawberry Leaf Infusion**: (Infusion) - Strawberry leaves, water. *Supports digestive health, has diuretic properties, and is rich in antioxidants.*
+- **Suma Root Infusion**: (Infusion) - Suma root, water. *Boosts energy, supports hormonal balance, and strengthens the immune system.*
+- **Sundew Herb Infusion**: (Infusion) - Sundew herb, water. *Relieves coughs, supports respiratory health, and has antimicrobial properties.*
+- **Sweet Basil Leaf Infusion**: (Infusion) - Sweet basil leaves, water. *Relieves stress, supports digestion, and has antimicrobial properties.*
+- **Sweet Flag Root Decoction**: (Decoction) - Sweet flag root, water. *Improves digestion, relieves anxiety, and has mild sedative properties.*
+- **Sweet Violet Leaf Infusion**: (Infusion) - Sweet violet leaves, water. *Supports respiratory health, reduces inflammation, and has expectorant properties.*
+- **Tansy Herb Infusion**: (Infusion) - Tansy herb, water. *Repels insects, supports digestive health, and has vermifuge properties.*
+- **Tansy Leaf Decoction**: (Decoction) - Tansy leaves, water. *Repels insects and treats intestinal parasites.*
+- **Tarragon Leaf Infusion**: (Infusion) - Tarragon leaves, water. *Stimulates appetite, supports digestion, and promotes oral health.*
+- **Tarragon Leaf Tincture**: (Tincture) - Tarragon leaves, alcohol. *Stimulates appetite, supports digestion, and has sedative properties.*
+- **Tea Tree Leaf Tincture**: (Tincture) - Tea tree leaves, alcohol. *Has antimicrobial properties, treats skin conditions, and supports immune health.*
+- **Tea Tree Oil**: (Maceration) - Tea tree leaves, oil. *Has antimicrobial properties, treats skin conditions, and supports wound healing.*
+- **Thistle Seed Infusion**: (Infusion) - Thistle seeds, water. *Supports liver health, detoxifies the body, and has anti-inflammatory properties.*
+- **Thuja Leaf Decoction**: (Decoction) - Thuja leaves, water. *Supports respiratory health, has diuretic properties, and treats skin conditions.*
+- **Thuja Leaf Tincture**: (Tincture) - Thuja leaves, alcohol. *Supports respiratory health, has diuretic properties, and treats skin conditions.*
+- **Thyme Herb Infusion**: (Infusion) - Thyme herb, water. *Has antibacterial properties, supports respiratory health, and aids digestion.*
+- **Thyme Herb Tincture**: (Tincture) - Thyme herb, alcohol. *Has antibacterial properties, supports respiratory health, and aids digestion.*
+- **Thyme Leaf Infusion**: (Infusion) - Thyme leaves, water. *Has antibacterial properties, supports respiratory health, and aids digestion.*
+- **Thyme Leaf Tincture**: (Tincture) - Thyme leaves, alcohol. *Has antibacterial properties and supports respiratory health.*
+- **Thyme Tincture**: (Tincture) - Thyme leaves alcohol. *Used for respiratory issues, antibacterial and antifungal properties.*
+- **Tomato Leaf Infusion**: (Infusion) - Tomato leaves, water. *Repels insects, supports skin health, and has antimicrobial properties.*
+- **Tonka Bean Tincture**: (Tincture) - Tonka beans, alcohol. *Relieves stress, has antispasmodic properties, and supports digestive health.*
+- **Tormentil Root Decoction**: (Decoction) - Tormentil root, water. *Treats diarrhea, supports oral health, and has astringent properties.*
+- **Tormentil Root Infusion**: (Infusion) - Tormentil root, water. *Treats diarrhea, supports oral health, and has astringent properties.*
+- **Tribulus Fruit Decoction**: (Decoction) - Tribulus fruit, water. *Supports reproductive health and vitality.*
+- **Tribulus Fruit Infusion**: (Infusion) - Tribulus fruit, water. *Supports reproductive health, increases libido, and has diuretic properties.*
+- **Tribulus Terrestris Fruit Tincture**: (Tincture) - Tribulus terrestris fruit, alcohol. *Enhances libido, supports urinary health, and has adaptogenic properties.*
+- **Turmeric Leaf Infusion**: (Infusion) - Turmeric leaves, water. *Reduces inflammation, supports liver health, and has antioxidant properties.*
+- **Turmeric Leaf Tincture**: (Tincture) - Turmeric leaves, alcohol. *Reduces inflammation, supports liver health, and has antioxidant properties.*
+- **Turmeric Root Decoction**: (Decoction) - Turmeric root, water. *Reduces inflammation, supports liver health, and aids digestion.*
+- **Turmeric Root Infusion**: (Infusion) - Turmeric root, water. *Reduces inflammation, supports liver health, and aids digestion.*
+- **Turmeric Root Tincture**: (Tincture) - Turmeric root, alcohol. *Anti-inflammatory and supports liver health.*
+- **Turmeric Root Tincture**: (Tincture) - Turmeric root, alcohol. *Reduces inflammation, supports liver health, and aids digestion.*
+- **Usnea Lichen Infusion**: (Infusion) - Usnea lichen, water. *Has antibiotic properties, supports respiratory health, and aids wound healing.*
+- **Usnea Lichen Tincture**: (Tincture) - Usnea lichen, alcohol. *Has antibiotic properties, supports respiratory health, and aids wound healing.*
+- **Uva Ursi Leaf Decoction**: (Decoction) - Uva ursi leaves, water. *Treats urinary tract infections, supports kidney health, and has antimicrobial properties.*
+- **Uva Ursi Leaf Infusion**: (Infusion) - Uva ursi leaves, water. *Treats urinary tract infections and supports kidney health.*
+- **Uva Ursi Leaf Infusion**: (Infusion) - Uva ursi leaves, water. *Treats urinary tract infections, supports kidney health, and has antimicrobial properties.*
+- **Uva Ursi Leaf Tincture**: (Tincture) - Uva ursi leaves, alcohol. *Treats urinary tract infections, supports kidney health, and has antimicrobial properties.*
+- **Valerian Root Decoction**: (Decoction) - Valerian root, water. *Aids sleep and reduces anxiety.*
+- **Valerian Root Decoction**: (Decoction) - Valerian root, water. *Aids sleep, reduces anxiety, and has sedative properties.*
+- **Valerian Root Infusion**: (Infusion) - Valerian root, water. *Aids sleep, reduces anxiety, and has sedative properties.*
+- **Valerian Root Tincture**: (Tincture) - Valerian root, alcohol. *Aids sleep and reduces anxiety.*
+- **Valerian Root Tincture**: (Tincture) - Valerian root, alcohol. *Aids sleep, reduces anxiety, and has sedative properties.*
+- **Vanilla Bean Infusion**: (Infusion) - Vanilla beans, water. *Improves mood, relieves stress, and enhances flavor in culinary applications.*
+- **Vervain Herb Decoction**: (Decoction) - Vervain herb, water. *Relieves anxiety, supports liver health, and has anti-inflammatory properties.*
+- **Vervain Leaf Infusion**: (Infusion) - Vervain leaves, water. *Relieves anxiety, supports liver health, and has anti-inflammatory properties.*
+- **Vervain Leaf Tincture**: (Tincture) - Vervain leaves, alcohol. *Relieves anxiety, supports liver health, and has anti-inflammatory properties.*
+- **Vetiver Root Infusion**: (Infusion) - Vetiver root, water. *Calms nerves, supports sleep, and has grounding properties.*
+- **Violet Flower Infusion**: (Infusion) - Violet flowers, water. *Supports respiratory health, soothes skin irritations, and has anti-inflammatory properties.*
+- **Violet Leaf Infusion**: (Infusion) - Violet leaves, water. *Supports respiratory health, reduces inflammation, and soothes skin irritations.*
+- **Violet Leaf Tincture**: (Tincture) - Violet leaves, alcohol. *Supports respiratory health, reduces inflammation, and soothes skin irritations.*
+- **Virginia Creeper Berry Infusion**: (Infusion) - Virginia creeper berries, water. *Supports heart health, has diuretic properties, and relieves skin conditions.*
+- **Vitex Berry Tincture**: (Tincture) - Vitex berries, alcohol. *Regulates female hormones and supports reproductive health.*
+- **Walnut Husk Decoction**: (Decoction) - Walnut husks, water. *Treats skin conditions, supports digestive health, and has antimicrobial properties.*
+- **Walnut Husk Tincture**: (Tincture) - Walnut husks, alcohol. *Treats skin conditions, supports digestive health, and has antimicrobial properties.*
+- **Walnut Leaf Decoction**: (Decoction) - Walnut leaves, water. *Treats skin conditions, supports digestive health, and has antimicrobial properties.*
+- **Water Avens Root Decoction**: (Decoction) - Water avens root, water. *Supports digestive health, reduces inflammation, and has astringent properties.*
+- **Water Avens Root Infusion**: (Infusion) - Water avens root, water. *Supports digestive health, reduces inflammation, and has astringent properties.*
+- **Watercress Herb Infusion**: (Infusion) - Watercress herb, water. *Detoxifies the body, supports thyroid health, and has antioxidant properties.*
+- **Watercress Leaf Infusion**: (Infusion) - Watercress leaves, water. *Detoxifies the body, supports thyroid health, and has antioxidant properties.*
+- **Watermelon Seed Infusion**: (Infusion) - Watermelon seeds, water. *Supports urinary health, aids digestion, and has diuretic properties.*
+- **Wheatgrass Juice**: (Juice) - Wheatgrass, water. *Detoxifies the body, supports immune health, and is rich in nutrients.*
+- **White Birch Leaf Infusion**: (Infusion) - White birch leaves, water. *Reduces inflammation, supports joint health, and has diuretic properties.*
+- **White Dead Nettle Flower Infusion**: (Infusion) - White dead nettle flowers, water. *Relieves menstrual discomfort, supports urinary health, and has anti-inflammatory properties.*
+- **White Horehound Herb Decoction**: (Decoction) - White horehound herb, water. *Relieves cough, supports respiratory health, and has expectorant properties.*
+- **White Horehound Herb Infusion**: (Infusion) - White horehound herb, water. *Relieves cough, supports respiratory health, and has expectorant properties.*
+- **White Oak Acorn Infusion**: (Infusion) - White oak acorns, water. *Supports digestive health, has astringent properties, and aids skin health.*
+- **White Oak Bark Decoction**: (Decoction) - White oak bark, water. *Treats skin conditions, supports vein health, and reduces inflammation.*
+- **White Pine Bark Infusion**: (Infusion) - White pine bark, water. *Supports respiratory health, reduces inflammation, and has antimicrobial properties.*
+- **White Sage Leaf Infusion**: (Infusion) - White sage leaves, water. *Has antimicrobial properties, supports digestion, and aids relaxation.*
+- **White Willow Bark Decoction**: (Decoction) - White willow bark, water. *Relieves pain and reduces inflammation.*
+- **White Willow Bark Infusion**: (Infusion) - White willow bark, water. *Relieves pain, reduces inflammation, and has fever-reducing properties.*
+- **White Willow Bark Tincture**: (Tincture) - White willow bark, alcohol. *Relieves pain, reduces inflammation, and has fever-reducing properties.*
+- **Wild Carrot Seed Infusion**: (Infusion) - Wild carrot seeds, water. *Supports urinary health, has diuretic properties, and aids menstrual health.*
+- **Wild Cherry Bark Decoction**: (Decoction) - Wild cherry bark, water. *Relieves cough, supports respiratory health, and has sedative properties.*
+- **Wild Cherry Bark Infusion**: (Infusion) - Wild cherry bark, water. *Relieves cough, supports respiratory health, and has sedative properties.*
+- **Wild Cherry Bark Tincture**: (Tincture) - Wild cherry bark, alcohol. *Relieves cough, supports respiratory health, and has sedative properties.*
+- **Wild Indigo Root Tincture**: (Tincture) - Wild indigo root, alcohol. *Boosts the immune system, fights infections, and has anti-inflammatory properties.*
+- **Wild Lettuce Leaf Infusion**: (Infusion) - Wild lettuce leaves, water. *Acts as a mild sedative and relieves pain.*
+- **Wild Lettuce Leaf Infusion**: (Infusion) - Wild lettuce leaves, water. *Acts as a mild sedative, relieves pain, and supports sleep.*
+- **Wild Lettuce Leaf Tincture**: (Tincture) - Wild lettuce leaves, alcohol. *Acts as a mild sedative, relieves pain, and supports sleep.*
+- **Wild Yam Root Infusion**: (Infusion) - Wild yam root, water. *Supports female health, aids digestion, and reduces inflammation.*
+- **Wild Yam Root Tincture**: (Tincture) - Wild yam root, alcohol. *Supports female health, aids digestion, and reduces inflammation.*
+- **Willow Bark Decoction**: (Decoction) - Willow bark, water. *Natural source of salicylic acid, used for pain relief and reducing inflammation.*
+- **Willow Bark Infusion**: (Infusion) - Willow bark, water. *Relieves pain, reduces fever, and has anti-inflammatory properties.*
+- **Willow Herb Infusion**: (Infusion) - Willow herb, water. *Supports prostate health, reduces inflammation, and supports urinary health.*
+- **Winter Cherry Root Infusion**: (Infusion) - Winter cherry root, water. *Reduces stress, supports vitality, and has adaptogenic properties.*
+- **Wintergreen Leaf Infusion**: (Infusion) - Wintergreen leaves, water. *Relieves muscle pain, reduces inflammation, and has a refreshing aroma.*
+- **Wintergreen Leaf Infusion**: (Infusion) - Wintergreen leaves, water. *Relieves pain, reduces inflammation, and has a refreshing flavor.*
+- **Witch Hazel Bark Decoction**: (Decoction) - Witch hazel bark, water. *Reduces skin inflammation and treats hemorrhoids.*
+- **Witch Hazel Bark Decoction**: (Decoction) - Witch hazel bark, water. *Reduces skin inflammation, treats hemorrhoids, and has astringent properties.*
+- **Witch Hazel Bark Infusion**: (Infusion) - Witch hazel bark, water. *Reduces skin inflammation, treats hemorrhoids, and has astringent properties.*
+- **Witch Hazel Leaf Decoction**: (Decoction) - Witch hazel leaves, water. *Reduces skin inflammation, treats hemorrhoids, and has astringent properties.*
+- **Witch Hazel Leaf Infusion**: (Infusion) - Witch hazel leaves, water. *Reduces skin inflammation, treats hemorrhoids, and has astringent properties.*
+- **Witch Hazel Leaf Tincture**: (Tincture) - Witch hazel leaves, alcohol. *Reduces skin inflammation, treats hemorrhoids, and has astringent properties.*
+- **Wood Betony Flower Infusion**: (Infusion) - Wood betony flowers, water. *Relieves headaches, supports digestion, and reduces anxiety.*
+- **Wood Betony Herb Infusion**: (Infusion) - Wood betony herb, water. *Relieves headaches, supports digestion, and reduces anxiety.*
+- **Wood Sorrel Herb Infusion**: (Infusion) - Wood sorrel herb, water. *Supports digestion, relieves inflammation, and has diuretic properties.*
+- **Wormseed Herb Infusion**: (Infusion) - Wormseed herb, water. *Eliminates intestinal worms, supports digestive health, and has antimicrobial properties.*
+- **Wormwood Herb Decoction**: (Decoction) - Wormwood herb, water. *Aids digestion, eliminates intestinal worms, and has antimicrobial properties.*
+- **Wormwood Herb Infusion**: (Infusion) - Wormwood herb, water. *Aids digestion, eliminates intestinal worms, and has antimicrobial properties.*
+- **Wormwood Herb Tincture**: (Tincture) - Wormwood herb, alcohol. *Aids digestion, eliminates intestinal worms, and has antimicrobial properties.*
+- **Wormwood Leaf Decoction**: (Decoction) - Wormwood leaves, water. *Aids digestion and eliminates intestinal worms.*
+- **Yarrow Flower Decoction**: (Decoction) - Yarrow flowers, water. *Stops bleeding and reduces fever.*
+- **Yarrow Flower Infusion**: (Infusion) - Yarrow flowers, water. *Stops bleeding, reduces fever, and has anti-inflammatory properties.*
+- **Yarrow Flower Tincture**: (Tincture) - Yarrow flowers, alcohol. *Stops bleeding, reduces fever, and has anti-inflammatory properties.*
+- **Yarrow Infusion**: (Infusion) - Yarrow flowers and leaves, water. *Used for fever reduction, wound healing, and digestive issues.*
+- **Yellow Bedstraw Herb Infusion**: (Infusion) - Yellow bedstraw herb, water. *Supports lymphatic health, treats skin conditions, and has diuretic properties.*
+- **Yellow Dock Leaf Infusion**: (Infusion) - Yellow dock leaves, water. *Detoxifies the liver, supports skin health, and has anti-inflammatory properties.*
+- **Yellow Dock Root Decoction**: (Decoction) - Yellow dock root, water. *Detoxifies the liver and treats skin conditions.*
+- **Yellow Dock Root Infusion**: (Infusion) - Yellow dock root, water. *Detoxifies the liver, supports skin health, and has anti-inflammatory properties.*
+- **Yellow Dock Root Tincture**: (Tincture) - Yellow dock root, alcohol. *Detoxifies the liver, supports skin health, and has anti-inflammatory properties.*
+- **Yellow Gentian Root Tincture**: (Tincture) - Yellow gentian root, alcohol. *Aids digestion and stimulates appetite.*
+- **Yerba Buena Herb Infusion**: (Infusion) - Yerba buena herb, water. *Relieves headache, supports digestion, and has antimicrobial properties.*
+- **Yerba Mansa Root Decoction**: (Decoction) - Yerba mansa root, water. *Reduces inflammation, supports respiratory health, and has antimicrobial properties.*
+- **Yerba Mansa Root Infusion**: (Infusion) - Yerba mansa root, water. *Reduces inflammation, supports respiratory health, and has antimicrobial properties.*
+- **Yerba Mate Leaf Infusion**: (Infusion) - Yerba mate leaves, water. *Boosts energy, enhances mental clarity, and supports cardiovascular health.*
+- **Yerba Mate Leaf Tincture**: (Tincture) - Yerba mate leaves, alcohol. *Boosts energy, enhances mental clarity, and supports cardiovascular health.*
+- **Yerba Santa Leaf Decoction**: (Decoction) - Yerba santa leaves, water. *Supports respiratory health, reduces inflammation, and has expectorant properties.*
+- **Yohimbe Bark Decoction**: (Decoction) - Yohimbe bark, water. *Enhances circulation, supports sexual health, and has stimulant properties.*
+- **Yohimbe Bark Infusion**: (Infusion) - Yohimbe bark, water. *Enhances circulation, supports sexual health, and has stimulant properties.*
+- **Yohimbe Bark Tincture**: (Tincture) - Yohimbe bark, alcohol. *Enhances circulation, supports sexual health, and has stimulant properties.*
+- **Yucca Root Decoction**: (Decoction) - Yucca root, water. *Reduces inflammation, supports joint health, and aids digestion.*
+- **Yucca Root Infusion**: (Infusion) - Yucca root, water. *Reduces inflammation, supports joint health, and aids digestion.*
+- **Yucca Root Tincture**: (Tincture) - Yucca root, alcohol. *Reduces inflammation, supports joint health, and aids digestion.*
+- **Zedoary Root Infusion**: (Infusion) - Zedoary root, water. *Supports digestion, relieves pain, and has antimicrobial properties.*
+- **Zedoary Root Tincture**: (Tincture) - Zedoary root, alcohol. *Supports digestion, relieves pain, and has antimicrobial properties.*
+- **Ziziphus Fruit Decoction**: (Decoction) - Ziziphus fruit, water. *Calms nerves and aids sleep.*
+- **Ziziphus Jujube Fruit Infusion**: (Infusion) - Ziziphus jujube fruit, water. *Calms nerves, aids sleep, and has antioxidant properties.*
