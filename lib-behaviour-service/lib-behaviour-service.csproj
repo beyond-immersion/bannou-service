@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\ServiceLib.targets" />
+
+	<PropertyGroup>
+		<RootNamespace>$(RootNamespace).Behaviour</RootNamespace>
+		<ServiceLib>behaviour_service</ServiceLib>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\lib-behaviour-core\lib-behaviour-core.csproj" />
+	</ItemGroup>
+
+</Project>

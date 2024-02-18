@@ -23,8 +23,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Provisioning", "Provisionin
 		provisioning\docker-compose.elk.yml = provisioning\docker-compose.elk.yml
 		provisioning\docker-compose.ingress.yml = provisioning\docker-compose.ingress.yml
 		provisioning\docker-compose.local.ingress.yml = provisioning\docker-compose.local.ingress.yml
-		provisioning\docker-compose.yml = provisioning\docker-compose.yml
 		provisioning\docker-compose.local.yml = provisioning\docker-compose.local.yml
+		provisioning\docker-compose.yml = provisioning\docker-compose.yml
 		provisioning\Dockerfile = provisioning\Dockerfile
 	EndProjectSection
 EndProject
@@ -101,6 +101,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "run-init", "run-init", "{FD
 		provisioning\mysql\run-init\grant-permissions.sql = provisioning\mysql\run-init\grant-permissions.sql
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-behaviour-core", "lib-behaviour-core\lib-behaviour-core.csproj", "{909B6F63-7AB1-44A4-880C-6DD2BF774705}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-behaviour-service", "lib-behaviour-service\lib-behaviour-service.csproj", "{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -162,6 +166,18 @@ Global
 		{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}.Development|Any CPU.Build.0 = Debug|Any CPU
 		{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BFAAC0A3-BE42-4B64-AA4F-FC0A97BCDB4B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{909B6F63-7AB1-44A4-880C-6DD2BF774705}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{909B6F63-7AB1-44A4-880C-6DD2BF774705}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{909B6F63-7AB1-44A4-880C-6DD2BF774705}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{909B6F63-7AB1-44A4-880C-6DD2BF774705}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{909B6F63-7AB1-44A4-880C-6DD2BF774705}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{909B6F63-7AB1-44A4-880C-6DD2BF774705}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
