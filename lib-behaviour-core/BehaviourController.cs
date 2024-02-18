@@ -32,24 +32,24 @@ public sealed class BehaviourController : BaseDaprController
     {
         try
         {
-            (HttpStatusCode, object?) registerResult = await Service.AddBehaviourTree();
-            if (registerResult.Item1 != HttpStatusCode.OK)
+            var registerResult = await Service.AddBehaviourTree();
+            if (registerResult.StatusCode != StatusCodes.OK)
             {
-                if (registerResult.Item1 == HttpStatusCode.InternalServerError)
-                    return StatusCodes.ServerError.ToActionResult();
+                if (registerResult.StatusCode == StatusCodes.InternalServerError)
+                    return StatusCodes.InternalServerError.ToActionResult();
 
-                return StatusCodes.Unauthorized.ToActionResult();
+                return StatusCodes.Forbidden.ToActionResult();
             }
 
             var response = request.CreateResponse();
 
-            return StatusCodes.Ok.ToActionResult(response);
+            return StatusCodes.OK.ToActionResult(response);
         }
         catch (Exception exc)
         {
             Program.Logger?.Log(LogLevel.Error, exc, $"An exception was thrown handling API request to [{nameof(Add)}] endpoint on [{nameof(BehaviourController)}].");
 
-            return StatusCodes.ServerError.ToActionResult();
+            return StatusCodes.InternalServerError.ToActionResult();
         }
     }
 }

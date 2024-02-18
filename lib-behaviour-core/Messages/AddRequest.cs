@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Behaviour.Messages;
 /// The request model for service API calls to `/behaviour/add`.
 /// </summary>
 [JsonObject]
-public class AddRequest : ServiceRequest<AddResponse>
+public class AddRequest : ApiRequest<AddResponse>
 {
 
 }

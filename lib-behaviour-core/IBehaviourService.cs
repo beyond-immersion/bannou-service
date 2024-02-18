@@ -11,5 +11,5 @@ public interface IBehaviourService : IDaprService
     /// <summary>
     /// Adds a new behaviour tree to the system.
     /// </summary>
-    Task<(HttpStatusCode, object?)> AddBehaviourTree();
+    Task<ServiceResponse> AddBehaviourTree();
 }
