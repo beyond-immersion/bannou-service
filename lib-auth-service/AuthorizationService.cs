@@ -23,7 +23,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
 {
     private IConnectionMultiplexer? _redisConnection;
 
-    async Task IDaprService.OnStart(CancellationToken cancellationToken)
+    async Task IDaprService.OnStartAsync(CancellationToken cancellationToken)
     {
         if (Configuration.Redis_Connection_String == null)
             throw new NullReferenceException();
@@ -41,7 +41,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
     /// can be used in place of their password for
     /// logging in.
     /// </summary>
-    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> Register(string username, string password, string? email)
+    public async Task<ServiceResponse<AccessData?>> Register(string username, string password, string? email)
     {
         try
         {
@@ -54,27 +54,32 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (request.Response.StatusCode != HttpStatusCode.OK)
             {
                 Program.Logger.Log(LogLevel.Warning, $"Registration failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
-                return (request.Response.StatusCode, null);
+                return new(StatusCodes.Forbidden, null);
             }
 
             if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
                 throw new NullReferenceException();
 
-            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var secretSalt = request.Response.IdentityClaims?.Where(t => t.StartsWith("SecretSalt:")).FirstOrDefault();
+            var secretHash = request.Response.IdentityClaims?.Where(t => t.StartsWith("SecretHash:")).FirstOrDefault();
+            secretSalt = secretSalt?["SecretSalt:".Length..];
+            secretHash = secretHash?["SecretHash:".Length..];
+
+            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims, request.Response.AppClaims, request.Response.ScopeClaims);
             var refreshToken = CreateRefreshToken(request.Response.SecurityToken);
 
             if (string.IsNullOrWhiteSpace(jwt) || string.IsNullOrWhiteSpace(refreshToken))
                 throw new NullReferenceException();
 
             if (!await StoreTokensInDatabase(request.Response.Username, request.Response.SecurityToken, refreshToken))
-                return (HttpStatusCode.InternalServerError, null);
+                return new(StatusCodes.InternalServerError, null);
 
-            return (HttpStatusCode.OK, new() { AccessToken = jwt, RefreshToken = refreshToken });
+            return new(StatusCodes.OK, new() { AccessToken = jwt, RefreshToken = refreshToken });
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client registration.");
-            return (HttpStatusCode.InternalServerError, null);
+            return new(StatusCodes.InternalServerError, null);
         }
     }
 
@@ -82,7 +87,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
     /// Client login with username and password.
     /// </summary>
     /// <exception cref="NullReferenceException"></exception>
-    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithCredentials(string username, string password)
+    public async Task<ServiceResponse<AccessData?>> LoginWithCredentials(string username, string password)
     {
         try
         {
@@ -99,7 +104,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (request.Response.StatusCode != HttpStatusCode.OK)
             {
                 Program.Logger.Log(LogLevel.Warning, $"Login failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
-                return (request.Response.StatusCode, null);
+                return new(StatusCodes.OK, null);
             }
 
             if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
@@ -108,7 +113,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (request.Response.IdentityClaims == null)
             {
                 Program.Logger.Log(LogLevel.Warning, "Login failed- user account identity claims are missing.");
-                return (HttpStatusCode.Forbidden, null);
+                return new(StatusCodes.Forbidden, null);
             }
 
             var secretSalt = request.Response.IdentityClaims.Where(t => t.StartsWith("SecretSalt:")).FirstOrDefault();
@@ -119,31 +124,31 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (string.IsNullOrWhiteSpace(secretSalt) || string.IsNullOrWhiteSpace(secretHash))
             {
                 Program.Logger.Log(LogLevel.Warning, "Login failed- couldn't find stored salt/hashed secret.");
-                return (HttpStatusCode.Forbidden, null);
+                return new(StatusCodes.Forbidden, null);
             }
 
             var hashedPassword = IAccountService.GenerateHashedSecret(password, secretSalt);
-            if (!string.Equals(secretHash, hashedPassword))
+            if (!string.Equals(secretHash, hashedPassword, StringComparison.Ordinal))
             {
                 Program.Logger.Log(LogLevel.Warning, "Login failed- secret didn't match stored hash.");
-                return (HttpStatusCode.Forbidden, null);
+                return new(StatusCodes.Forbidden, null);
             }
 
-            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims, request.Response.AppClaims, request.Response.ScopeClaims);
             var refreshToken = CreateRefreshToken(request.Response.SecurityToken);
 
             if (string.IsNullOrWhiteSpace(jwt) || string.IsNullOrWhiteSpace(refreshToken))
                 throw new NullReferenceException();
 
             if (!await StoreTokensInDatabase(request.Response.Username, request.Response.SecurityToken, refreshToken))
-                return (HttpStatusCode.InternalServerError, null);
+                return new(StatusCodes.InternalServerError, null);
 
-            return (HttpStatusCode.OK, new() { AccessToken = jwt, RefreshToken = refreshToken });
+            return new(StatusCodes.OK, new() { AccessToken = jwt, RefreshToken = refreshToken });
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client login.");
-            return (HttpStatusCode.InternalServerError, null);
+            return new(StatusCodes.InternalServerError, null);
         }
     }
 
@@ -151,7 +156,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
     /// Client login using a refresh token.
     /// </summary>
     /// <exception cref="NullReferenceException"></exception>
-    public async Task<(HttpStatusCode, IAuthorizationService.LoginResult?)> LoginWithToken(string refreshToken)
+    public async Task<ServiceResponse<AccessData?>> LoginWithToken(string refreshToken)
     {
         try
         {
@@ -162,7 +167,7 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (string.IsNullOrWhiteSpace(username))
             {
                 Program.Logger.Log(LogLevel.Warning, "Login failed- client token didn't match stored token.");
-                return (HttpStatusCode.Forbidden, null);
+                return new(StatusCodes.Forbidden, null);
             }
 
             var request = new GetAccountRequest() { IncludeClaims = true, Username = username };
@@ -174,27 +179,27 @@ public sealed class AuthorizationService : DaprService<AuthorizationServiceConfi
             if (request.Response.StatusCode != HttpStatusCode.OK)
             {
                 Program.Logger.Log(LogLevel.Warning, $"Login failed- non-OK response to fetching user account: {request.Response.StatusCode}.");
-                return (request.Response.StatusCode, null);
+                return new(StatusCodes.Forbidden, null);
             }
 
             if (string.IsNullOrWhiteSpace(request.Response.Username) || string.IsNullOrWhiteSpace(request.Response.SecurityToken))
                 throw new NullReferenceException();
 
-            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims);
+            var jwt = CreateJWT(request.Response.ID, request.Response.Username, request.Response.Email, request.Response.RoleClaims, request.Response.AppClaims, request.Response.ScopeClaims);
             var newRefreshToken = CreateRefreshToken(request.Response.SecurityToken);
 
             if (string.IsNullOrWhiteSpace(jwt) || string.IsNullOrWhiteSpace(newRefreshToken))
                 throw new NullReferenceException();
 
             if (!await StoreTokensInDatabase(request.Response.Username, request.Response.SecurityToken, newRefreshToken))
-                return (HttpStatusCode.InternalServerError, null);
+                return new(StatusCodes.InternalServerError, null);
 
-            return (HttpStatusCode.OK, new() { AccessToken = jwt, RefreshToken = newRefreshToken });
+            return new(StatusCodes.OK, new() { AccessToken = jwt, RefreshToken = newRefreshToken });
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, "An exception occured while processing client login.");
-            return (HttpStatusCode.InternalServerError, null);
+            return new(StatusCodes.InternalServerError, null);
         }
     }
 
@@ -326,29 +331,35 @@ return 1
     /// Creates a JWT from the given user account data.
     /// </summary>
     /// <exception cref="NullReferenceException"></exception>
-    private string? CreateJWT(int? ID, string? username, string? email, HashSet<string>? roleClaims)
+    private string? CreateJWT(int? ID, string? username, string? email, HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims)
     {
         if (string.IsNullOrWhiteSpace(Configuration.Token_Public_Key) || string.IsNullOrWhiteSpace(Configuration.Token_Private_Key))
             throw new NullReferenceException();
 
         var jwtBuilder = CreateJWTBuilder(Configuration.Token_Public_Key, Configuration.Token_Private_Key);
-        if (!string.IsNullOrWhiteSpace(email))
-            jwtBuilder.AddHeader("email", email);
-
-        if (!string.IsNullOrWhiteSpace(username))
-            jwtBuilder.AddHeader("username", username);
+        jwtBuilder
+            .Issuer("AUTHSERVICE:" + Program.ServiceGUID)
+            .IssuedAt(DateTime.Now)
+            .ExpirationTime(DateTime.Now + TimeSpan.FromDays(1))
+            .MustVerifySignature();
 
         if (ID != null)
             jwtBuilder.Id(ID.Value);
 
-        jwtBuilder.Issuer("AUTHORIZATION_SERVICE:" + Program.ServiceGUID);
-        jwtBuilder.IssuedAt(DateTime.Now);
-        jwtBuilder.ExpirationTime(DateTime.Now + TimeSpan.FromDays(1));
-        jwtBuilder.MustVerifySignature();
+        if (!string.IsNullOrWhiteSpace(username))
+            jwtBuilder.AddHeader("username", username);
 
-        if (roleClaims != null)
-            foreach (var roleClaim in roleClaims)
-                jwtBuilder.AddClaim("role", roleClaim);
+        if (!string.IsNullOrWhiteSpace(email))
+            jwtBuilder.AddHeader("email", email);
+
+        if (roleClaims != null && roleClaims.Any())
+            jwtBuilder.AddClaim("roles", roleClaims);
+
+        if (appClaims != null && appClaims.Any())
+            jwtBuilder.AddClaim("services", appClaims);
+
+        if (scopeClaims != null && scopeClaims.Any())
+            jwtBuilder.AddClaim("scopes", scopeClaims);
 
         var newJWT = jwtBuilder.Encode();
         return newJWT;

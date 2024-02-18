@@ -1,10 +1,7 @@
 ﻿using BeyondImmersion.BannouService.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Net.Mime;
-using System.Net.WebSockets;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Connect.Messages;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Connect;
@@ -24,56 +21,30 @@ public sealed class ConnectController : BaseDaprController
         Service = service;
     }
 
+    [HttpGet]
+    [HttpPost]
     [DaprRoute("connect")]
-    public async Task<IActionResult> Post(
-        [FromHeader(Name = "token")] string? accessToken,
-        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ConnectRequest? request)
+    public async Task Post()
     {
-        await Task.CompletedTask;
-
         Program.Logger.Log(LogLevel.Warning, "Connection request received from client.");
 
-        if (string.IsNullOrWhiteSpace(accessToken))
-            return new BadRequestResult();
-
-        // use service handler to obtain JWT
-        if (HttpContext.WebSockets.IsWebSocketRequest)
+        // hand off to service without processing-
+        // we don't know if it's doing websockets or TCP/UDP/whatever
+        var response = await Service.ConnectAsync(HttpContext);
+        switch (response.StatusCode)
         {
-            Program.Logger.Log(LogLevel.Warning, "Websocket connection request received from client.");
-
-            //using var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            //await EchoMessage(websocket);
+            case StatusCodes.OK:
+                HttpContext.Response.StatusCode = 200;
+                return;
+            case StatusCodes.BadRequest:
+                HttpContext.Response.StatusCode = 400;
+                return;
+            case StatusCodes.Forbidden:
+                HttpContext.Response.StatusCode = 403;
+                return;
+            default:
+                HttpContext.Response.StatusCode = 500;
+                break;
         }
-
-        var result = new ConnectResponse()
-        {
-
-        };
-
-        return StatusCodes.Ok.ToActionResult(result);
-    }
-
-    private static async Task EchoMessage(WebSocket webSocket)
-    {
-        var buffer = new byte[1024 * 4];
-        var receiveResult = await webSocket.ReceiveAsync(
-            new ArraySegment<byte>(buffer), CancellationToken.None);
-
-        while (!receiveResult.CloseStatus.HasValue)
-        {
-            await webSocket.SendAsync(
-                new ArraySegment<byte>(buffer, 0, receiveResult.Count),
-                receiveResult.MessageType,
-                receiveResult.EndOfMessage,
-                CancellationToken.None);
-
-            receiveResult = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer), CancellationToken.None);
-        }
-
-        await webSocket.CloseAsync(
-            receiveResult.CloseStatus.Value,
-            receiveResult.CloseStatusDescription,
-            CancellationToken.None);
     }
 }

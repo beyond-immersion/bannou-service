@@ -12,7 +12,7 @@ namespace BeyondImmersion.BannouService.Accounts.Messages;
 /// accounts have a username or email associated.
 /// </summary>
 [JsonObject]
-public class GetAccountRequest : ServiceRequest<GetAccountResponse>
+public class GetAccountRequest : ApiRequest<GetAccountResponse>
 {
     [JsonProperty("include_claims")]
     public bool IncludeClaims { get; set; }

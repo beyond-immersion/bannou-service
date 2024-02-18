@@ -5,5 +5,8 @@ public class CollectionFixture : IDisposable
 {
     public CollectionFixture() { }
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+    }
 }

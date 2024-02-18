@@ -1,17 +1,12 @@
 ﻿using BeyondImmersion.BannouService.Services;
-using System.Net;
+using Microsoft.AspNetCore.Http;
 
 namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
-/// Service component responsible for login/connection handling.
+/// Service component responsible for persistent client connection handling.
 /// </summary>
 public interface IConnectService : IDaprService
 {
-    public sealed class ConnectResult
-    {
-
-    }
-
-    (StatusCodes, ConnectResult?) Connect();
+    Task<ServiceResponse> ConnectAsync(HttpContext requestContext);
 }

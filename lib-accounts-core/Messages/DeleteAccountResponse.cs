@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Accounts.Messages;
 /// The response model for service API calls to `/account/delete`.
 /// </summary>
 [JsonObject]
-public class DeleteAccountResponse : ServiceResponse
+public class DeleteAccountResponse : ApiResponse
 {
     /// <summary>
     /// The date/time the account was deleted (soft delete).

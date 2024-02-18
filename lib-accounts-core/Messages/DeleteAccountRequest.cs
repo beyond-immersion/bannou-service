@@ -11,7 +11,7 @@ namespace BeyondImmersion.BannouService.Accounts.Messages;
 /// be restored until cleanup occurs.
 /// </summary>
 [JsonObject]
-public class DeleteAccountRequest : ServiceRequest<DeleteAccountResponse>
+public class DeleteAccountRequest : ApiRequest<DeleteAccountResponse>
 {
     /// <summary>
     /// Internal ID of account to delete.
