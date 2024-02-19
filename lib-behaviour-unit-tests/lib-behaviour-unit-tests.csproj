@@ -2,17 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>lib_behaviour_unit_tests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>BeyondImmersion.BannouService.UnitTests</RootNamespace>
 
     <IsPackable>false</IsPackable>
-    <Configurations>Debug;Release;Development</Configurations>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Divergic.Logging.Xunit" Version="4.3.0" />
-    <PackageReference Include="JWT" Version="10.1.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
     <PackageReference Include="xunit" Version="2.7.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7">
@@ -27,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\bannou-service\bannou-service.csproj" />
+    <ProjectReference Include="..\lib-behaviour-service\lib-behaviour-service.csproj" />
   </ItemGroup>
 
 </Project>

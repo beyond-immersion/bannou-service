@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace BeyondImmersion.BannouService.Behaviour;
 
@@ -27,5 +28,15 @@ public sealed class BehaviourService : DaprService<BehaviourServiceConfiguration
         await Task.CompletedTask;
 
         return new ServiceResponse(StatusCodes.OK);
+    }
+
+    public static bool ValidateBehaviour(JObject obj)
+    {
+        return true;
+    }
+
+    public static bool ValidateBehaviour(string obj)
+    {
+        return true;
     }
 }
