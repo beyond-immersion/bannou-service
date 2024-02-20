@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>lib_behaviour_unit_tests</RootNamespace>
+    <RootNamespace>BeyondImmersion.BannouService.Behaviour.UnitTests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
@@ -28,5 +28,11 @@
     <ProjectReference Include="..\bannou-service\bannou-service.csproj" />
     <ProjectReference Include="..\lib-behaviour-service\lib-behaviour-service.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Behaviours\" />
+  </ItemGroup>
+
+  <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
 
 </Project>
