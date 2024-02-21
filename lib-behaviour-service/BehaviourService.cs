@@ -1,7 +1,6 @@
 ﻿using BeyondImmersion.BannouService.Behaviour.Messages;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text;
@@ -65,7 +64,7 @@ public sealed class BehaviourService : DaprService<BehaviourServiceConfiguration
         return new ServiceResponse(StatusCodes.OK);
     }
 
-    public static bool ResolveBehaviourRefs(JObject behaviour, Dictionary<string, JObject> refLookup)
+    public static bool ResolveBehaviourReferences(JObject behaviour, Dictionary<string, JObject> refLookup)
     {
         var allResolved = true;
         var childTokens = new Stack<JToken>(behaviour.Children());
@@ -102,21 +101,109 @@ public sealed class BehaviourService : DaprService<BehaviourServiceConfiguration
         return allResolved;
     }
 
-    public static bool IsValidBehaviour(JObject jsonObj, out IList<string> validationErrors) => jsonObj.IsValid(BehaviourSchema, out validationErrors);
-
-    public static bool IsValidBehaviour(string jsonStr, out IList<string> validationErrors)
+    public static bool ResolveBehavioursAndAddToLookup(JObject[] behaviours, ref Dictionary<string, JObject>? refLookup, out IList<string> validationErrors)
     {
-        var jsonObj = JObject.Parse(jsonStr);
+        int lastErrorCount;
+        var thisErrorCount = 0;
+        var errors = new List<string>();
 
-        return IsValidBehaviour(jsonObj, out validationErrors);
+        refLookup ??= [];
+
+        do
+        {
+            lastErrorCount = thisErrorCount;
+            thisErrorCount = 0;
+            errors.Clear();
+
+            foreach (var behaviour in behaviours)
+            {
+                var resolvedSuccess = ResolveAndValidateBehaviour(behaviour, refLookup, out var newErrors);
+
+                if (!resolvedSuccess)
+                {
+                    errors.AddRange(newErrors);
+                    thisErrorCount++;
+                }
+                else
+                {
+                    var name = (string?)behaviour["name"];
+
+                    if (string.IsNullOrWhiteSpace(name))
+                        throw new ArgumentNullException(nameof(name));
+
+                    refLookup.Add(name, behaviour);
+                }
+            }
+        }
+        while (thisErrorCount > 0 && thisErrorCount < lastErrorCount);
+        // keep going as long as more refs are being resolved each time
+
+        validationErrors = errors;
+
+        return thisErrorCount == 0;
     }
 
-    public static bool IsValidPrerequite(JObject jsonObj, out IList<string> validationErrors) => jsonObj.IsValid(PrereqSchema, out validationErrors);
-
-    public static bool IsValidPrerequite(string jsonStr, out IList<string> validationErrors)
+    public static bool ResolveAndValidateBehaviour(JObject behaviour, Dictionary<string, JObject> refLookup, out IList<string> validationErrors)
     {
-        var jsonObj = JObject.Parse(jsonStr);
+        var resolved = ResolveBehaviourReferences(behaviour, refLookup);
+        var name = (string?)behaviour["name"];
 
-        return IsValidPrerequite(jsonObj, out validationErrors);
+        if (!resolved)
+        {
+            Program.Logger.LogError($"Could not resolve references for behaviour [{name}].");
+            validationErrors = new List<string>() { $"Could not resolve all references for behaviour [{name}]" };
+
+            return false;
+        }
+
+        return IsValidBehaviour(behaviour, out validationErrors);
+    }
+
+    public static bool IsValidBehaviour(JObject behaviour, out IList<string> validationErrors) => behaviour.IsValid(BehaviourSchema, out validationErrors);
+
+    public static bool IsValidBehaviour(string behaviourStr, out IList<string> validationErrors)
+    {
+        var jsonObj = JObject.Parse(behaviourStr);
+        var name = (string?)jsonObj["name"];
+
+        validationErrors = new List<string>();
+
+        var valid = IsValidBehaviour(jsonObj, out var errors);
+        if (!valid)
+        {
+            Program.Logger.LogError($"Invalid behaviour [{name}].");
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"Behaviour [{name}] contains validation errors.");
+            sb.Append(errors);
+
+            validationErrors.Add(sb.ToString());
+        }
+
+        return valid;
+    }
+
+    public static bool IsValidPrerequite(JObject prereq, out IList<string> validationErrors) => prereq.IsValid(PrereqSchema, out validationErrors);
+
+    public static bool IsValidPrerequite(string prereqStr, out IList<string> validationErrors)
+    {
+        var jsonObj = JObject.Parse(prereqStr);
+        var name = (string?)jsonObj["name"];
+
+        validationErrors = new List<string>();
+
+        var valid = IsValidPrerequite(jsonObj, out var errors);
+        if (!valid)
+        {
+            Program.Logger.LogError($"Invalid prerequite [{name}].");
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"Prerequite [{name}] contains validation errors.");
+            sb.Append(errors);
+
+            validationErrors.Add(sb.ToString());
+        }
+
+        return valid;
     }
 }
