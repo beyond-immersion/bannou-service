@@ -27,6 +27,8 @@ services:
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
+      - --log.level=DEBUG
+      - --accesslog=true
     ports:
       - "80:80"
       - "443:443"
@@ -40,3 +42,5 @@ services:
 
 networks:
   celestial_network:
+    driver: bridge
+    external: true

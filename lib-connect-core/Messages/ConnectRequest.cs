@@ -7,6 +7,6 @@ namespace BeyondImmersion.BannouService.Connect.Messages;
 /// The request model for service API calls to `/connect`.
 /// </summary>
 [JsonObject]
-public class ConnectRequest : ServiceRequest
+public class ConnectRequest : ApiRequest
 {
 }

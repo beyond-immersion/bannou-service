@@ -19,12 +19,13 @@ services:
     network_mode:
       "service:bannou"
     volumes:
+      - "../install-tools.sh:/install-tools.sh"
       - "../wait-for-health.sh:/wait-for-health.sh"
       - "../service-tests.sh:/service-tests.sh"
     stdin_open: false
     depends_on:
       - bannou
-    command: bash -c "/wait-for-health.sh && /service-tests.sh"
+    command: bash -c "/install-tools.sh && /wait-for-health.sh && /service-tests.sh"
 
   # silence filebeat during CI testing
   filebeat:

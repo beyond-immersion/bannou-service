@@ -5,7 +5,6 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
-using System.Net;
 
 namespace BeyondImmersion.BannouService.Accounts;
 
@@ -20,7 +19,7 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
 {
     private string? _dbConnectionString;
 
-    async Task IDaprService.OnStart(CancellationToken cancellationToken)
+    async Task IDaprService.OnStartAsync(CancellationToken cancellationToken)
     {
         var dbHost = Configuration.Database_Host;
         var dbName = "accounts";
@@ -29,7 +28,6 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
         var dbPassword = Uri.EscapeDataString(Configuration.Database_Password);
 
         _dbConnectionString = $"Host={dbHost}; Port={dbPort}; UserID={dbUsername}; Password={dbPassword}; Database={dbName}; AllowUserVariables=True";
-        Program.Logger.Log(LogLevel.Warning, $"Connecting to MySQL with connection string '{_dbConnectionString}'.");
 
         MySqlConnection? dbConnection = null;
         while (dbConnection == null)
@@ -48,13 +46,11 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
             }
         }
 
-        Program.Logger.Log(LogLevel.Warning, $"Creating MySQL tables with connection string '{_dbConnectionString}'.");
-
         await InitializeDatabase(dbConnection);
         await dbConnection.CloseAsync();
     }
 
-    async Task<(HttpStatusCode, IAccountService.AccountData?)> IAccountService.GetAccount(bool includeClaims, int? id, string? username, string? email,
+    async Task<ServiceResponse<AccountData?>> IAccountService.GetAccount(bool includeClaims, int? id, string? username, string? email,
         string? steamID, string? googleID, string? identityClaim)
     {
         try
@@ -100,46 +96,33 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
             { }
 
             if (template == null || parameters == null)
-                return (HttpStatusCode.BadRequest, null);
+                return new(StatusCodes.BadRequest, null);
 
+            dynamic? queryResult = null;
             using var dbConnection = new MySqlConnection(_dbConnectionString);
-            dynamic? transactionResult = null;
-
             await dbConnection.OpenAsync(Program.ShutdownCancellationTokenSource.Token);
-            using (var transaction = await dbConnection.BeginTransactionAsync(Program.ShutdownCancellationTokenSource.Token))
-            {
-                try
-                {
-                    transactionResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters, transaction);
-                    if (transactionResult == null)
-                        throw new NullReferenceException(nameof(transactionResult));
 
-                    transaction.Commit();
-                }
-                catch
-                {
-                    await transaction.RollbackAsync(Program.ShutdownCancellationTokenSource.Token);
-                    throw;
-                }
-            }
+            queryResult = await dbConnection.QuerySingleOrDefaultAsync(template.RawSql, parameters);
+            if (queryResult == null)
+                return new(StatusCodes.NotFound, null);
 
             // should move to DTO later
-            var resUserID = (int)transactionResult.Id;
-            string resSecurityToken = transactionResult.SecurityToken;
-            string? resUsername = transactionResult.Username;
-            string? resEmail = transactionResult.Email;
-            string? resRegion = transactionResult.Region;
-            bool resEmailVerified = transactionResult.EmailVerified;
-            bool resTwoFactorEnabled = transactionResult.TwoFactorEnabled;
-            DateTime resCreatedAt = transactionResult.CreatedAt;
-            DateTime resUpdatedAt = transactionResult.UpdatedAt ?? resCreatedAt;
-            DateTime resLastLoginAt = transactionResult.LastLoginAt ?? resCreatedAt;
-            DateTime? resRemovedAt = transactionResult.RemovedAt;
-            DateTime? resLockoutEnd = transactionResult.LockoutEnd;
+            var resUserID = (int)queryResult.Id;
+            string resSecurityToken = queryResult.SecurityToken;
+            string? resUsername = queryResult.Username;
+            string? resEmail = queryResult.Email;
+            string? resRegion = queryResult.Region;
+            bool resEmailVerified = queryResult.EmailVerified;
+            bool resTwoFactorEnabled = queryResult.TwoFactorEnabled;
+            DateTime resCreatedAt = queryResult.CreatedAt;
+            DateTime resUpdatedAt = queryResult.UpdatedAt ?? resCreatedAt;
+            DateTime resLastLoginAt = queryResult.LastLoginAt ?? resCreatedAt;
+            DateTime? resRemovedAt = queryResult.RemovedAt;
+            DateTime? resLockoutEnd = queryResult.LockoutEnd;
 
             // NOTE: should never be the same as the DTO (if added)
             // or the Controller API response model- stay decoupled
-            var responseObj = new IAccountService.AccountData(resUserID, resSecurityToken, resCreatedAt)
+            var responseObj = new AccountData(resUserID, resSecurityToken, resCreatedAt)
             {
                 Username = resUsername,
                 Email = resEmail,
@@ -154,37 +137,37 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
 
             if (includeClaims)
             {
-                var claims = transactionResult.Role?.Split(',');
+                var claims = queryResult.Role?.Split(',');
                 if (claims != null)
                     responseObj.RoleClaims = new HashSet<string>(claims);
 
-                claims = transactionResult.App?.Split(',');
+                claims = queryResult.App?.Split(',');
                 if (claims != null)
                     responseObj.AppClaims = new HashSet<string>(claims);
 
-                claims = transactionResult.Scope?.Split(',');
+                claims = queryResult.Scope?.Split(',');
                 if (claims != null)
                     responseObj.ScopeClaims = new HashSet<string>(claims);
 
-                claims = transactionResult.Identity?.Split(',');
+                claims = queryResult.Identity?.Split(',');
                 if (claims != null)
                     responseObj.IdentityClaims = new HashSet<string>(claims);
 
-                claims = transactionResult.Profile?.Split(',');
+                claims = queryResult.Profile?.Split(',');
                 if (claims != null)
                     responseObj.ProfileClaims = new HashSet<string>(claims);
             }
 
-            return (HttpStatusCode.OK, responseObj);
+            return new(StatusCodes.OK, responseObj);
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while fetching the user account.");
-            return (HttpStatusCode.InternalServerError, null);
+            return new(StatusCodes.InternalServerError, null);
         }
     }
 
-    async Task<(HttpStatusCode, IAccountService.AccountData?)> IAccountService.CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? region,
+    async Task<ServiceResponse<AccountData?>> IAccountService.CreateAccount(string? email, bool emailVerified, bool twoFactorEnabled, string? region,
         string? username, string? password, string? steamID, string? steamToken, string? googleID, string? googleToken,
         HashSet<string>? roleClaims, HashSet<string>? appClaims, HashSet<string>? scopeClaims, HashSet<string>? identityClaims, HashSet<string>? profileClaims)
     {
@@ -232,7 +215,7 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
 
             // if a third-party identity claim is provided, the account can be accessed through that, but otherwise...
             if ((string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password)) && identityClaims.Count == 0)
-                return (HttpStatusCode.BadRequest, null);
+                return new(StatusCodes.BadRequest, null);
 
             string? passwordSalt = null;
             string? hashedPassword = null;
@@ -310,7 +293,7 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
 
             // NOTE: should never be the same as the DTO (if added)
             // or the Controller API response model- stay decoupled
-            var responseObj = new IAccountService.AccountData(resUserID, resSecurityToken, resCreatedAt)
+            var responseObj = new AccountData(resUserID, resSecurityToken, resCreatedAt)
             {
                 Username = resUsername,
                 Email = resEmail,
@@ -328,28 +311,28 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
                 ProfileClaims = profileClaims?.ToHashSet()
             };
 
-            return (HttpStatusCode.OK, responseObj);
+            return new(StatusCodes.OK, responseObj);
         }
         catch (MySqlException exc) when (exc.Number == 1062)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"A duplicate user account already exists with the provided keys.");
-            return (HttpStatusCode.Conflict, null);
+            return new(StatusCodes.Conflict, null);
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while inserting and fetching the new user account.");
-            return (HttpStatusCode.InternalServerError, null);
+            return new(StatusCodes.InternalServerError, null);
         }
     }
 
-    async Task<(HttpStatusCode, IAccountService.AccountData?)> IAccountService.UpdateAccount(int id, string? email, bool? emailVerified, bool? twoFactorEnabled, string? region,
+    async Task<ServiceResponse<AccountData?>> IAccountService.UpdateAccount(int id, string? email, bool? emailVerified, bool? twoFactorEnabled, string? region,
     string? username, string? password, string? steamID, string? steamToken, string? googleID, string? googleToken,
     Dictionary<string, string?>? roleClaims, Dictionary<string, string?>? appClaims, Dictionary<string, string?>? scopeClaims, Dictionary<string, string?>? identityClaims, Dictionary<string, string?>? profileClaims)
     {
         try
         {
             if (id < 0)
-                return (HttpStatusCode.BadRequest, null);
+                return new(StatusCodes.BadRequest, null);
 
             if (_dbConnectionString == null)
                 throw new SystemException("Database connection string not found.");
@@ -460,7 +443,7 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
             }
 
             if (transactionResult == null)
-                return (HttpStatusCode.NotFound, null);
+                return new(StatusCodes.NotFound, null);
 
             // should move to DTO later
             var resUserID = (int)transactionResult.Id;
@@ -478,7 +461,7 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
 
             // NOTE: should never be the same as the DTO (if added)
             // or the Controller API response model- stay decoupled
-            var responseObj = new IAccountService.AccountData(resUserID, resSecurityToken, resCreatedAt)
+            var responseObj = new AccountData(resUserID, resSecurityToken, resCreatedAt)
             {
                 Username = resUsername,
                 Email = resEmail,
@@ -521,7 +504,7 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
                 foreach (var claim in claims)
                     responseObj.ProfileClaims.Add(claim);
 
-            return (HttpStatusCode.OK, responseObj);
+            return new(StatusCodes.OK, responseObj);
 
             static void SplitClaims(Dictionary<string, string?>? claims, out JArray? claimsToRemove, out JArray? claimsToAdd)
             {
@@ -554,21 +537,21 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
         catch (MySqlException exc) when (exc.Number == 1062)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"A duplicate user account already exists with one of the provided IDs.");
-            return (HttpStatusCode.Conflict, null);
+            return new(StatusCodes.Conflict, null);
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while updating the user account.");
-            return (HttpStatusCode.InternalServerError, null);
+            return new(StatusCodes.InternalServerError, null);
         }
     }
 
-    async Task<(HttpStatusCode, DateTime?)> IAccountService.DeleteAccount(int id)
+    async Task<ServiceResponse<DateTime?>> IAccountService.DeleteAccount(int id)
     {
         try
         {
             if (id < 0)
-                return (HttpStatusCode.BadRequest, null);
+                return new(StatusCodes.BadRequest, null);
 
             if (_dbConnectionString == null)
                 throw new SystemException("Database connection string not found.");
@@ -599,7 +582,7 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
             }
 
             if (transactionResult == null)
-                return (HttpStatusCode.NotFound, null);
+                return new(StatusCodes.NotFound, null);
 
             // should move to DTO later
             var resUserID = (int)transactionResult.Id;
@@ -608,15 +591,15 @@ public sealed class AccountService : DaprService<AccountServiceConfiguration>, I
             if (resDeletedAt < (DateTime.Now - TimeSpan.FromSeconds(5)))
             {
                 Program.Logger.Log(LogLevel.Error, $"The user account was already deleted.");
-                return (HttpStatusCode.Conflict, null);
+                return new(StatusCodes.Conflict, null);
             }
 
-            return (HttpStatusCode.OK, resDeletedAt);
+            return new(StatusCodes.OK, resDeletedAt);
         }
         catch (Exception exc)
         {
             Program.Logger.Log(LogLevel.Error, exc, $"An error occurred while deleting the user account.");
-            return (HttpStatusCode.InternalServerError, null);
+            return new(StatusCodes.InternalServerError, null);
         }
     }
 

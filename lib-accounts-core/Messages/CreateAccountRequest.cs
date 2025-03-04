@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Accounts.Messages;
 /// The request model for service API calls to `/account/create`.
 /// </summary>
 [JsonObject]
-public class CreateAccountRequest : ServiceRequest<CreateAccountResponse>
+public class CreateAccountRequest : ApiRequest<CreateAccountResponse>
 {
     /// <summary>
     /// Username- optional if using OAUTH.

@@ -7,6 +7,6 @@ namespace BeyondImmersion.BannouService.Authorization.Messages;
 /// The response model for service API calls to `/authorization/validate`.
 /// </summary>
 [JsonObject]
-public class ValidateTokenResponse : ServiceResponse
+public class ValidateTokenResponse : ApiResponse
 {
 }

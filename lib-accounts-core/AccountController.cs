@@ -3,7 +3,7 @@ using System.Net.Mime;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Accounts.Messages;
 using Microsoft.Extensions.Logging;
-using System.Net;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Accounts;
 
@@ -37,26 +37,26 @@ public class AccountController : Controllers.BaseDaprController
                 request.IdentityClaims.Count == 0))
                 return BadRequest();
 
-            (HttpStatusCode, IAccountService.AccountData?) accountData = await Service.CreateAccount(
+            ServiceResponse<AccountData?> accountData = await Service.CreateAccount(
                 request.Email, request.EmailVerified, request.TwoFactorEnabled, request.Region,
                 request.Username, request.Password, request.SteamID, request.SteamToken, request.GoogleID, request.GoogleToken,
                 request.RoleClaims, request.AppClaims, request.ScopeClaims, request.IdentityClaims, request.ProfileClaims);
 
-            switch (accountData.Item1)
+            switch (accountData.StatusCode)
             {
-                case HttpStatusCode.OK:
-                    if (accountData.Item2 == null)
+                case StatusCodes.OK:
+                    if (accountData.Value == null)
                         return StatusCode(500);
                     break;
-                case HttpStatusCode.BadRequest:
+                case StatusCodes.BadRequest:
                     return BadRequest();
-                case HttpStatusCode.Conflict:
+                case StatusCodes.Conflict:
                     return Conflict();
                 default:
                     return StatusCode(500);
             }
 
-            var userAccount = accountData.Item2;
+            var userAccount = accountData.Value;
             var response = request.CreateResponse();
             response.ID = userAccount.ID;
             response.Username = userAccount.Username;
@@ -99,25 +99,25 @@ public class AccountController : Controllers.BaseDaprController
                 string.IsNullOrWhiteSpace(request.SteamID))
                 return BadRequest();
 
-            (HttpStatusCode, IAccountService.AccountData?) accountData = await Service.GetAccount(
+            ServiceResponse<AccountData?> accountData = await Service.GetAccount(
                 includeClaims: request.IncludeClaims, id: request.ID, username: request.Username, email: request.Email,
                 steamID: request.SteamID, googleID: request.GoogleID, identityClaim: request.IdentityClaim);
 
-            switch (accountData.Item1)
+            switch (accountData.StatusCode)
             {
-                case HttpStatusCode.OK:
-                    if (accountData.Item2 == null)
+                case StatusCodes.OK:
+                    if (accountData.Value == null)
                         return NotFound();
                     break;
-                case HttpStatusCode.BadRequest:
+                case StatusCodes.BadRequest:
                     return BadRequest();
-                case HttpStatusCode.NotFound:
+                case StatusCodes.NotFound:
                     return NotFound();
                 default:
                     return StatusCode(500);
             }
 
-            var userAccount = accountData.Item2;
+            var userAccount = accountData.Value;
             var response = request.CreateResponse();
             response.ID = userAccount.ID;
             response.Username = userAccount.Username;
@@ -155,28 +155,28 @@ public class AccountController : Controllers.BaseDaprController
             if (request.ID < 0)
                 return BadRequest();
 
-            (HttpStatusCode, IAccountService.AccountData?) accountData = await Service.UpdateAccount(
+            ServiceResponse<AccountData?> accountData = await Service.UpdateAccount(
                 id: request.ID, email: request.Email, emailVerified: request.EmailVerified, twoFactorEnabled: request.TwoFactorEnabled, region: request.Region,
                 username: request.Username, password: request.Password, steamID: request.SteamID, steamToken: request.SteamToken, googleID: request.GoogleID, googleToken: request.GoogleToken,
                 roleClaims: request.RoleClaims, appClaims: request.AppClaims, scopeClaims: request.ScopeClaims, identityClaims: request.IdentityClaims, profileClaims: request.ProfileClaims);
 
-            switch (accountData.Item1)
+            switch (accountData.StatusCode)
             {
-                case HttpStatusCode.OK:
-                    if (accountData.Item2 == null)
+                case StatusCodes.OK:
+                    if (accountData.Value == null)
                         return NotFound();
                     break;
-                case HttpStatusCode.BadRequest:
+                case StatusCodes.BadRequest:
                     return BadRequest();
-                case HttpStatusCode.Conflict:
+                case StatusCodes.Conflict:
                     return Conflict();
-                case HttpStatusCode.NotFound:
+                case StatusCodes.NotFound:
                     return NotFound();
                 default:
                     return StatusCode(500);
             }
 
-            var userAccount = accountData.Item2;
+            var userAccount = accountData.Value;
             var response = request.CreateResponse();
             response.ID = userAccount.ID;
             response.Username = userAccount.Username;
@@ -214,26 +214,26 @@ public class AccountController : Controllers.BaseDaprController
             if (request.ID < 0)
                 return BadRequest();
 
-            (HttpStatusCode, DateTime?) accountData = await Service.DeleteAccount(id: request.ID);
+            ServiceResponse<DateTime?> accountData = await Service.DeleteAccount(id: request.ID);
 
-            switch (accountData.Item1)
+            switch (accountData.StatusCode)
             {
-                case HttpStatusCode.OK:
-                    if (accountData.Item2 == null)
+                case StatusCodes.OK:
+                    if (accountData.Value == null)
                         return NotFound();
                     break;
-                case HttpStatusCode.BadRequest:
+                case StatusCodes.BadRequest:
                     return BadRequest();
-                case HttpStatusCode.Conflict:
+                case StatusCodes.Conflict:
                     return Conflict();
-                case HttpStatusCode.NotFound:
+                case StatusCodes.NotFound:
                     return NotFound();
                 default:
                     return StatusCode(500);
             }
 
             var response = request.CreateResponse();
-            response.DeletedAt = accountData.Item2;
+            response.DeletedAt = accountData.Value;
 
             return Ok(response);
         }

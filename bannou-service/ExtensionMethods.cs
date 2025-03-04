@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace BeyondImmersion.BannouService;
 
@@ -48,10 +47,10 @@ public static partial class ExtensionMethods
         {
             return httpStatusCode switch
             {
-                StatusCodes.Ok => new StatusCodeResult(200),
+                StatusCodes.OK => new StatusCodeResult(200),
                 StatusCodes.Accepted => new StatusCodeResult(202),
                 StatusCodes.BadRequest => new StatusCodeResult(400),
-                StatusCodes.Unauthorized => new StatusCodeResult(403),
+                StatusCodes.Forbidden => new StatusCodeResult(403),
                 StatusCodes.NotFound => new StatusCodeResult(404),
                 _ => new StatusCodeResult(500)
             };
@@ -59,10 +58,10 @@ public static partial class ExtensionMethods
 
         return httpStatusCode switch
         {
-            StatusCodes.Ok => new ObjectResult(value) { StatusCode = 200 },
+            StatusCodes.OK => new ObjectResult(value) { StatusCode = 200 },
             StatusCodes.Accepted => new ObjectResult(value) { StatusCode = 202 },
             StatusCodes.BadRequest => new ObjectResult(value) { StatusCode = 400 },
-            StatusCodes.Unauthorized => new ObjectResult(value) { StatusCode = 403 },
+            StatusCodes.Forbidden => new ObjectResult(value) { StatusCode = 403 },
             StatusCodes.NotFound => new ObjectResult(value) { StatusCode = 404 },
             _ => new ObjectResult(value) { StatusCode = 500 }
         };
@@ -175,7 +174,7 @@ public static partial class ExtensionMethods
     /// <summary>
     /// Binds HTTP endpoints for all registered dapr services.
     /// </summary>
-    public static void AddDaprServices(this IServiceCollection builder)
+    public static IServiceCollection AddDaprServices(this IServiceCollection builder)
     {
         foreach (var serviceInfo in IDaprService.EnabledServices)
         {
@@ -188,6 +187,8 @@ public static partial class ExtensionMethods
 
             builder.Add(new ServiceDescriptor(interfaceType, implementationType, serviceLifetime));
         }
+
+        return builder;
     }
 
     /// <summary>
@@ -221,13 +222,13 @@ public static partial class ExtensionMethods
 
             if (timeoutTime < 1)
             {
-                await serviceInst.OnStart(cancellationToken);
+                await serviceInst.OnStartAsync(cancellationToken);
                 continue;
             }
 
             try
             {
-                var startTask = serviceInst.OnStart(cancellationToken);
+                var startTask = serviceInst.OnStartAsync(cancellationToken);
                 var timeoutTask = Task.Delay(timeoutTime);
 
                 if (await Task.WhenAny(startTask, timeoutTask) == startTask)
@@ -267,7 +268,7 @@ public static partial class ExtensionMethods
         {
             var serviceInst = (IDaprService?)webApp.Services.GetService(serviceInfo.Item1);
             if (serviceInst != null)
-                await serviceInst.OnRunning(cancellationToken);
+                await serviceInst.OnRunningAsync(cancellationToken);
         }
     }
 
@@ -280,11 +281,11 @@ public static partial class ExtensionMethods
         {
             var serviceInst = (IDaprService?)webApp.Services.GetService(serviceInfo.Item1);
             if (serviceInst != null)
-                await serviceInst.OnShutdown();
+                await serviceInst.OnShutdownAsync();
         }
     }
 
-    public static void AddPropertyHeaders(this HttpRequestMessage message, ServiceRequest request)
+    public static void AddPropertyHeaders(this HttpRequestMessage message, ApiRequest request)
     {
         foreach (var headerKVP in request.SetPropertiesToHeaders())
             foreach (var headerValue in headerKVP.Item2)
