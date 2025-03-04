@@ -7,7 +7,8 @@
     <RootNamespace>BeyondImmersion.BannouService.Connect.UnitTests</RootNamespace>
 
     <IsPackable>false</IsPackable>
-	<IsTestProject>true</IsTestProject>
+	  <IsTestProject>true</IsTestProject>
+    <Configurations>Debug;Release;Development</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
