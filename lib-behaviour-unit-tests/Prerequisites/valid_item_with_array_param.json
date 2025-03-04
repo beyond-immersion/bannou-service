@@ -1,0 +1,8 @@
+﻿{
+  "amounts": [
+    { "USD": 10 },
+    { "EUR": 5 }
+  ],
+  "name": "Currency",
+  "type": "item"
+}

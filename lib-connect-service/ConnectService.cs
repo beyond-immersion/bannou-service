@@ -756,6 +756,8 @@ public sealed class ConnectService : DaprService<ConnectServiceConfiguration>, I
     /// </summary>
     private async Task OutboxProcessingTask(WebSocket webSocket)
     {
+        await Task.CompletedTask;
+
         while (webSocket?.CloseStatus == null)
         {
             while (ResponseOutbox.TryDequeue(out ServiceResponseItem responseItem))

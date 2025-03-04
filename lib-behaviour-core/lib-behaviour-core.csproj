@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\ServiceLib.targets" />
+
+	<PropertyGroup>
+		<RootNamespace>$(RootNamespace).Behaviour</RootNamespace>
+		<ServiceLib>behaviour</ServiceLib>
+	</PropertyGroup>
+
+</Project>

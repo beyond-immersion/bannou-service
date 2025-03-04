@@ -103,6 +103,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "run-init", "run-init", "{FD
 		provisioning\mysql\run-init\grant-permissions.sql = provisioning\mysql\run-init\grant-permissions.sql
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-behaviour-core", "lib-behaviour-core\lib-behaviour-core.csproj", "{909B6F63-7AB1-44A4-880C-6DD2BF774705}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-behaviour-service", "lib-behaviour-service\lib-behaviour-service.csproj", "{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-behaviour-unit-tests", "lib-behaviour-unit-tests\lib-behaviour-unit-tests.csproj", "{8DD26683-7787-4C03-912F-6600BB40E5DC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -170,6 +176,24 @@ Global
 		{FC14A966-8D29-4B76-BCB8-EAFAF7B86355}.Development|Any CPU.Build.0 = Debug|Any CPU
 		{FC14A966-8D29-4B76-BCB8-EAFAF7B86355}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC14A966-8D29-4B76-BCB8-EAFAF7B86355}.Release|Any CPU.Build.0 = Release|Any CPU
+		{909B6F63-7AB1-44A4-880C-6DD2BF774705}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{909B6F63-7AB1-44A4-880C-6DD2BF774705}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{909B6F63-7AB1-44A4-880C-6DD2BF774705}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{909B6F63-7AB1-44A4-880C-6DD2BF774705}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{909B6F63-7AB1-44A4-880C-6DD2BF774705}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{909B6F63-7AB1-44A4-880C-6DD2BF774705}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78B0FC2A-EA7F-47C5-B8A0-1D79F05E6162}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DD26683-7787-4C03-912F-6600BB40E5DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DD26683-7787-4C03-912F-6600BB40E5DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DD26683-7787-4C03-912F-6600BB40E5DC}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DD26683-7787-4C03-912F-6600BB40E5DC}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{8DD26683-7787-4C03-912F-6600BB40E5DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DD26683-7787-4C03-912F-6600BB40E5DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
