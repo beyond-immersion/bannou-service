@@ -28,20 +28,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y docker-compose
 
-      - name: Set UID and GID
-        run: |
-          echo "UID=$(id -u)" >> $GITHUB_ENV
-          echo "GID=$(id -g)" >> $GITHUB_ENV
-
       - name: Rebuild Services
         run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
 
       - name: Run Integration Tests
         run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
-
-      - name: Reset Permissions
-        if: always()
-        run: sudo /usr/bin/chown -R $(id -u):$(id -g) ./provisioning/
 
       - name: Cleanup
         if: always()
