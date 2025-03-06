@@ -6,21 +6,57 @@ using System.Security.Cryptography;
 using System.Text;
 using Xunit.Abstractions;
 using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Connect.UnitTests;
+
+public class XunitLogger<T>(ITestOutputHelper output) : ILogger<T>
+{
+    private readonly ITestOutputHelper _output = output;
+
+    IDisposable? ILogger.BeginScope<TState>(TState state) => null;
+
+    public bool IsEnabled(LogLevel logLevel) => true;
+
+    void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    {
+        if (!IsEnabled(logLevel))
+        {
+            return;
+        }
+
+        _output.WriteLine(formatter(state, exception));
+    }
+}
+
+public class XunitLoggerProvider(ITestOutputHelper output) : ILoggerProvider
+{
+    private readonly ITestOutputHelper _output = output;
+
+    public ILogger CreateLogger(string categoryName)
+    {
+        return new XunitLogger<string>(_output);
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+    }
+}
 
 [Collection("connect unit tests")]
 public class ConnectHelpers : IClassFixture<CollectionFixture>
 {
-    private CollectionFixture TestCollectionContext { get; }
-
     private string Test_Base64PublicKey { get; } = @"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0NCk1JR2ZNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0R05BRENCaVFLQmdRQ3k3MGJrMDlhckNBNWc1UDFNWnJLcWxEcWwNClNSSHVmOUdYWWZydXFGS0VVNUp5ZU9tOThHSmV6WUd6MUxoUlVObFZpSmpmMXltZGVNVzNnUitMQXlVN3JjMlcNCmkvdnNhNmwvcFQ1NW1QWncycG1xZWZlRHFNaVNWanZXQUs3eUI1ck45OFltWlRvVmh2MEVpd2ErQzNDRTNpQkYNCkIzZjhxSkZTUnYrb2cvcUFBUUlEQVFBQg0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t";
     private string Test_Base64PrivateKey { get; } = @"LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQ0KTUlJQ1hRSUJBQUtCZ1FDeTcwYmswOWFyQ0E1ZzVQMU1acktxbERxbFNSSHVmOUdYWWZydXFGS0VVNUp5ZU9tOQ0KOEdKZXpZR3oxTGhSVU5sVmlKamYxeW1kZU1XM2dSK0xBeVU3cmMyV2kvdnNhNmwvcFQ1NW1QWncycG1xZWZlRA0KcU1pU1ZqdldBSzd5QjVyTjk4WW1aVG9WaHYwRWl3YStDM0NFM2lCRkIzZjhxSkZTUnYrb2cvcUFBUUlEQVFBQg0KQW9HQVN5Vkg3YU8xZktCbWdYVEpsOE50ZDB2SEVWRU5rYzdtTTZBM1pQRVZybkwyaHRLV3YyanJ0d3F4Vk5lYQ0KRExSYWdaeGJMMjVLRU5MK25lRkJZUDBTTGprWjAxd1ZiR0pGald6eXNzUk5BSG5xUVBwZnRLTHFXZFlRV04vLw0KY09RQ0hhWFhidTNkSE1lc0FwdGVEdWhTOEdON3gxMmpjZER5QlpEY3JaUFpFczBDUVFEZWJqQm0yWWpvK09qdA0KNm8yWjFTa2djc3hCazFBcXZMQlRvSjRTUEJaYnpjY21EcXZwaURmalVXZWlOWHBPM2xoZWw4YlA2S0RBU3J1VA0KZ0svQnhaN1hBa0VBemZDV2sreWREUjh2SkRCd3BJSnMxeFRYMVhBTkNQUExkYjdjbHQrMlhtQnY0TDh6WHpSWg0KRDNsNTdIZDNtTis5ZVVwYU5UQ2U5UFIyYjV6Y3JxKzA1d0pCQUtYaUw1N0VwV0o2SDkwdmpDTXA0ZDRkUDArNA0KZVpVbDI2ckNvcUNleDEzMy9ZblliMFZmSGE4ZVN0ZWlZbkRuU2FoaU1SZGxPbDJ1WG00SER3eklRVWtDUUR1bw0KUzJhVXI3WkNaMXliYjdZb1ZqRkVSM1g4SExxUUxVdHh1K00wOFZhTHB6MDdCajI1STJlWk1CbXhUZ01LSlpCQw0KV3JsMzJVUnFvUGlhUDArWGROY0NRUURCVkJscmhrV3gwY2s0OWdOZFFTdXpiZ0phRG16M0xaTUFLbVBVWDJ5aw0KdXZzcUw4L3orb05ZVjRQczUzekdSUXpMTEpiWjdMMXlpK3NqQS80dFkweFMNCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0t";
 
     public ConnectHelpers(CollectionFixture collectionContext, ITestOutputHelper output)
     {
-        TestCollectionContext = collectionContext;
-        Program.Logger = output.BuildLoggerFor<ConnectHelpers>();
+        var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddProvider(new XunitLoggerProvider(output));
+        });
+        Program.Logger = loggerFactory.CreateLogger<ConnectHelpers>();
     }
 
     [Fact]

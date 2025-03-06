@@ -61,7 +61,7 @@ public class ApiRequest : ApiMessage
             else
                 requestUrl = $"{method}";
 
-            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(httpMethod.ToObject(), coordinatorService, requestUrl, this);
+            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(httpMethod.ToObject(), coordinatorService, requestUrl, (IReadOnlyCollection<KeyValuePair<string, string>>)this);
             requestMsg.AddPropertyHeaders(this);
 
             if (additionalHeaders != null)

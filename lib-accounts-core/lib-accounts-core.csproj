@@ -4,6 +4,7 @@
 	<PropertyGroup>
 		<RootNamespace>$(RootNamespace).Accounts</RootNamespace>
 		<ServiceLib>accounts</ServiceLib>
+		<TargetFramework>net9.0</TargetFramework>
 	</PropertyGroup>
 
 </Project>

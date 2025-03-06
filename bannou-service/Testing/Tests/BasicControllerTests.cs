@@ -69,7 +69,7 @@ public static class BasicControllerTests
             Service = testService
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", dataModel);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", (IReadOnlyCollection<KeyValuePair<string, string>>)dataModel);
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
 
         if (service.LastTestRequest == null)
@@ -94,7 +94,7 @@ public static class BasicControllerTests
             }
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", dataModel);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", (IReadOnlyCollection<KeyValuePair<string, string>>)dataModel);
         newRequest.AddPropertyHeaders(dataModel);
 
         if (!newRequest.Headers.TryGetValues("REQUEST_IDS", out var headerValues))

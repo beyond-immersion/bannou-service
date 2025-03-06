@@ -4,6 +4,7 @@
 	<PropertyGroup>
 		<RootNamespace>$(RootNamespace).Authorization</RootNamespace>
 		<ServiceLib>auth</ServiceLib>
+		<TargetFramework>net9.0</TargetFramework>
 	</PropertyGroup>
 
 	<ItemGroup>

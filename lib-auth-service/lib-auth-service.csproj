@@ -4,12 +4,13 @@
 	<PropertyGroup>
 		<RootNamespace>$(RootNamespace).Authorization</RootNamespace>
 		<ServiceLib>auth_service</ServiceLib>
+		<TargetFramework>net9.0</TargetFramework>
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Google.Apis.Auth" Version="1.66.0" />
-	  <PackageReference Include="JWT" Version="10.1.1" />
-	  <PackageReference Include="StackExchange.Redis" Version="2.7.17" />
+	  <PackageReference Include="Google.Apis.Auth" Version="1.69.0" />
+	  <PackageReference Include="JWT" Version="11.0.0" />
+	  <PackageReference Include="StackExchange.Redis" Version="2.8.24" />
 	</ItemGroup>
 
 	<ItemGroup>

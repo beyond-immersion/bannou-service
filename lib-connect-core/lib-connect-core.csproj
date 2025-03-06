@@ -4,6 +4,7 @@
 	<PropertyGroup>
 		<RootNamespace>$(RootNamespace).Connect</RootNamespace>
 		<ServiceLib>connect</ServiceLib>
+		<TargetFramework>net9.0</TargetFramework>
 	</PropertyGroup>
 
 </Project>
