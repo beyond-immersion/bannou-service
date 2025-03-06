@@ -13,13 +13,13 @@ public static class CreateAccountTests
 {
     [ServiceTest(testName: "account/create", serviceType: typeof(IAccountService))]
     public static async Task<bool> Run(TestingService service)
-        => await service.RunDelegates("account/create", new List<Func<TestingService, Task<bool>>>()
-            {
+        => await service.RunDelegates("account/create",
+            [
                 CreateAccount_UsernamePassword,
                 CreateAccount_GoogleOAUTH,
                 CreateAccount_SteamOAUTH,
                 CreateAccount_AllParameters
-            });
+            ]);
 
     private static async Task<bool> CreateAccount_UsernamePassword(TestingService service)
     {
@@ -151,11 +151,11 @@ public static class CreateAccountTests
             SteamToken = "SimpleReadablePassword",
             GoogleID = $"TestEmail@{userID}",
             GoogleToken = "SimpleReadablePassword",
-            RoleClaims = new HashSet<string>() { "Administrator" },
-            AppClaims = new HashSet<string>() { "ArcadiaGame" },
-            ScopeClaims = new HashSet<string>() { "ArcadiaGame:Admin" },
-            IdentityClaims = new HashSet<string>() { "ThirdParty:SomeToken" },
-            ProfileClaims = new HashSet<string>() { "ProfilePictureUri:http://some_url.com/test/picture.png" },
+            RoleClaims = ["Administrator"],
+            AppClaims = ["ArcadiaGame"],
+            ScopeClaims = ["ArcadiaGame:Admin"],
+            IdentityClaims = ["ThirdParty:SomeToken"],
+            ProfileClaims = ["ProfilePictureUri:http://some_url.com/test/picture.png"],
             RequestIDs = new()
             {
                 ["USER_ID"] = userID
@@ -185,9 +185,9 @@ public static class CreateAccountTests
             return false;
         }
 
-        if (requestModel.RequestIDs != null && requestModel.RequestIDs.Any())
+        if (requestModel.RequestIDs != null && requestModel.RequestIDs.Count != 0)
         {
-            if (responseModel.RequestIDs == null || !responseModel.RequestIDs.Any())
+            if (responseModel.RequestIDs == null || responseModel.RequestIDs.Count == 0)
             {
                 Program.Logger.Log(LogLevel.Error, "Test response missing REQUEST_IDS through headers.");
                 return false;

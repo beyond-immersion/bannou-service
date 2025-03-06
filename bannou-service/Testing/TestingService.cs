@@ -47,7 +47,7 @@ public sealed class TestingService : DaprService<TestingServiceConfiguration>
 
     public TestingService()
     {
-        ServiceTests = new Dictionary<string, Dictionary<string, Func<TestingService, Task<bool>>>>();
+        ServiceTests = [];
         foreach ((Type, MethodInfo, ServiceTestAttribute) methodInfo in IServiceAttribute.GetMethodsWithAttribute<ServiceTestAttribute>())
         {
             var testName = methodInfo.Item3?.TestName?.ToLower();
@@ -67,7 +67,7 @@ public sealed class TestingService : DaprService<TestingServiceConfiguration>
                 if (methodDel == null)
                     continue;
 
-                if (!ServiceTests.ContainsKey(serviceName))
+                if (!ServiceTests.TryGetValue(serviceName, out Dictionary<string, Func<TestingService, Task<bool>>>? value))
                 {
                     var newDict = new Dictionary<string, Func<TestingService, Task<bool>>>
                     {
@@ -77,7 +77,7 @@ public sealed class TestingService : DaprService<TestingServiceConfiguration>
                 }
                 else
                 {
-                    _ = ServiceTests[serviceName].TryAdd(testName, methodDel);
+                    _ = value.TryAdd(testName, methodDel);
                 }
             }
             catch { }
