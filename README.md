@@ -27,7 +27,7 @@ Bannou Service is a versatile ASP.NET Core application designed to provide a sea
 
 ## Features
 
-- Utilizes C#, .NET 7, Dapr, GitHub Actions, Docker, Docker-Compose, and/or Kubernetes
+- Utilizes C#, .NET 9, Dapr, GitHub Actions, Docker, Docker-Compose, and/or Kubernetes
 - Works in conjunction with popular game engines like Unreal and Unity
 - Provides a number built-in REST APIs for backend multiplayer video game support
 - Easily scalable and maintainable with microservices architecture

@@ -18,7 +18,7 @@ jobs:
 
       - name: Run Lint Tests
         id: ml
-        uses: oxsecurity/megalinter/flavors/dotnet@v8.4.0
+        uses: oxsecurity/megalinter/flavors/dotnet@v9
         env:
           VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           ENABLE: EDITORCONFIG

@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      DOTNET_VERSION: '8.0.406'
+      DOTNET_VERSION: '9.0.2'
 
     steps:
       - uses: actions/checkout@v4
