@@ -23,6 +23,11 @@ jobs:
       - uses: actions/checkout@v4
         name: Checkout Repo
 
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
       - name: Set UID and GID
         run: |
           echo "UID=$(id -u)" >> $GITHUB_ENV
