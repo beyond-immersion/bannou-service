@@ -8,6 +8,7 @@ namespace BeyondImmersion.BannouService.Testing.Tests;
 /// </summary>
 public static class BasicControllerTests
 {
+    private const string LOOPBACK_URI_PREFIX = $"{PROTOCOL}://{HOST_LOOPBACK}:{HOST_PORT}/v1.0/invoke/{SERVICE_NAME}/method/{CONTROLLER_NAME}/{ACTION_NAME}";
     private const string PROTOCOL = "http";
     private const string HOST_LOOPBACK = "127.0.0.1";
     private const string HOST_PORT = "3500";
@@ -17,14 +18,14 @@ public static class BasicControllerTests
 
     [ServiceTest(testName: "basic", serviceType: typeof(TestingService))]
     public static async Task<bool> Run(TestingService service)
-        => await service.RunDelegates("basic",
-            [
+        => await service.RunDelegates("basic", new List<Func<TestingService, Task<bool>>>()
+            {
                 Get_StringInRoute,
                 Get_MultipleStringsInRoute,
                 Post_ObjectModel,
                 Post_ObjectModel_HeaderArrays,
                 Post_ExecuteApiRequest
-            ]);
+            });
 
     private static async Task<bool> Get_StringInRoute(TestingService service)
     {
