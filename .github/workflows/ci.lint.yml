@@ -12,16 +12,14 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Run Lint Tests
         id: ml
-        # More info at https://megalinter.io/flavors/
-        uses: oxsecurity/megalinter/flavors/dotnet@v7.2.0
+        uses: oxsecurity/megalinter/flavors/dotnet@v8.4.0
         env:
-          # https://megalinter.io/configuration/
           VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           ENABLE: EDITORCONFIG
           EDITORCONFIG_EDITORCONFIG_CHECKER_ARGUMENTS: -disable-end-of-line -disable-insert-final-newline -v
