@@ -38,13 +38,20 @@ jobs:
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
           username: "GitHub Actions"
-          content: ":white_check_mark: The lint tests have passed successfully."
-          avatar-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
+          content: |
+            **:white_check_mark: Lint Tests Passed Successfully**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
+          avatar-url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Emoji_u2705.svg/1024px-Emoji_u2705.svg.png'
           embed-title: "Success: Lint Tests"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           embed-description: ":white_check_mark: The lint tests have passed successfully."
           embed-author-name: "${{ env.COMMIT_AUTHOR }}"
-          embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
+          embed-author-icon-url: "https://upload.wikimedia.org/wikipedia/en/8/86/Animated-check-mark.gif"
           embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
           embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
           embed-color: 15430476
@@ -57,7 +64,14 @@ jobs:
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
           username: "GitHub Actions"
-          content: ":x: The lint tests have failed."
+          content: |
+            **:x: Lint Tests Failed**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
           embed-title: "Failed: Lint Tests"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -76,7 +90,14 @@ jobs:
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
           username: "GitHub Actions"
-          content: ":warning: The lint tests have been cancelled."
+          content: |
+            **:warning: Lint Tests Cancelled**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
           embed-title: "Cancelled: Lint Tests"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

@@ -41,7 +41,14 @@ jobs:
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
           username: "GitHub Actions"
-          content: ":white_check_mark: The unit tests have passed successfully."
+          content: |
+            **:white_check_mark: Unit Tests Passed Successfully**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
           embed-title: "Success: Unit Tests"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -60,7 +67,14 @@ jobs:
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
           username: "GitHub Actions"
-          content: ":x: The unit tests have failed."
+          content: |
+            **:x: Unit Tests Failed**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
           embed-title: "Failed: Unit Tests"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -79,7 +93,14 @@ jobs:
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
           username: "GitHub Actions"
-          content: ":warning: The unit tests have been cancelled."
+          content: |
+            **:warning: Unit Tests Cancelled**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
           embed-title: "Cancelled: Unit Tests"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
