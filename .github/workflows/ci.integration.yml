@@ -44,27 +44,30 @@ jobs:
 
       - name: Notify Success
         if: success() && env.DISCORD_WEBHOOK != ''
-        uses: rjstone/discord-webhook-notify@v1
+        uses: Ilshidur/action-discord@v1
         continue-on-error: true
         with:
-          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          details: 'The integration tests have passed successfully.'
-          severity: info
+          webhook: ${{ env.DISCORD_WEBHOOK }}
+          username: 'GitHub Actions Bot'
+          message: ':white_check_mark: The integration tests have passed successfully.'
+          avatar_url: 'https://commons.wikimedia.org/wiki/File:Allowed.svg'
 
       - name: Notify Failure
         if: failure() && env.DISCORD_WEBHOOK != ''
-        uses: rjstone/discord-webhook-notify@v1
+        uses: Ilshidur/action-discord@v1
         continue-on-error: true
         with:
-          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          details: 'The integration tests have failed. Check the Actions log for more details.'
-          severity: error
+          webhook: ${{ env.DISCORD_WEBHOOK }}
+          username: 'GitHub Actions Bot'
+          message: ':x: The integration tests have failed. Check the Actions log for more details.'
+          avatar_url: 'https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png'
 
       - name: Notify Cancelled
         if: cancelled() && env.DISCORD_WEBHOOK != ''
-        uses: rjstone/discord-webhook-notify@v1
+        uses: Ilshidur/action-discord@v1
         continue-on-error: true
         with:
-          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          details: 'The integration tests have been cancelled.'
-          severity: warn
+          webhook: ${{ env.DISCORD_WEBHOOK }}
+          username: 'GitHub Actions Bot'
+          message: ':warning: The integration tests have been cancelled.'
+          avatar_url: 'https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png'
