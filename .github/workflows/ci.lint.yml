@@ -37,8 +37,9 @@ jobs:
         continue-on-error: true
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
-          username: "BeyondBot"
-          avatar_url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
+          username: "GitHub Actions"
+          content: ":white_check_mark: The lint tests have passed successfully."
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
           embed-title: "Success: Lint Tests"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           embed-description: ":white_check_mark: The lint tests have passed successfully."
@@ -55,9 +56,10 @@ jobs:
         continue-on-error: true
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
-          username: "BeyondBot"
-          avatar_url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
-          embed-title: "Success: Lint Tests"
+          username: "GitHub Actions"
+          content: ":x: The lint tests have failed."
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-title: "Failed: Lint Tests"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           embed-description: ":x: The lint tests have failed."
           embed-author-name: "${{ env.COMMIT_AUTHOR }}"
@@ -73,9 +75,10 @@ jobs:
         continue-on-error: true
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
-          username: "BeyondBot"
-          avatar_url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
-          embed-title: "Success: Lint Tests"
+          username: "GitHub Actions"
+          content: ":warning: The lint tests have been cancelled."
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-title: "Cancelled: Lint Tests"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           embed-description: ":warning: The lint tests have been cancelled."
           embed-author-name: "${{ env.COMMIT_AUTHOR }}"

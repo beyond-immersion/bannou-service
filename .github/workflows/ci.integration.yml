@@ -55,8 +55,9 @@ jobs:
         continue-on-error: true
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
-          username: "BeyondBot"
-          avatar_url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
+          username: "GitHub Actions"
+          content: ":white_check_mark: The integration tests have passed successfully."
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
           embed-title: "Success: Integration Tests"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           embed-description: ":white_check_mark: The integration tests have passed successfully."
@@ -73,9 +74,10 @@ jobs:
         continue-on-error: true
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
-          username: "BeyondBot"
-          avatar_url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
-          embed-title: "Success: Integration Tests"
+          username: "GitHub Actions"
+          content: ":x: The integration tests have failed."
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-title: "Failed: Integration Tests"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           embed-description: ":x: The integration tests have failed."
           embed-author-name: "${{ env.COMMIT_AUTHOR }}"
@@ -91,9 +93,10 @@ jobs:
         continue-on-error: true
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
-          username: "BeyondBot"
-          avatar_url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
-          embed-title: "Success: Integration Tests"
+          username: "GitHub Actions"
+          content: ":warning: The integration tests have been cancelled."
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-title: "Cancelled: Integration Tests"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           embed-description: ":warning: The integration tests have been cancelled."
           embed-author-name: "${{ env.COMMIT_AUTHOR }}"
