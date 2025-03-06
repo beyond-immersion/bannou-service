@@ -11,7 +11,7 @@ jobs:
 
   integration-tests:
     name: Integration Tests
-    runs-on: [self-hosted, bannou]
+    runs-on: ubuntu-latest
     env:
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       ACCOUNT_DB_USER: ${{ secrets.ACCOUNT_DB_USER }}
@@ -20,23 +20,19 @@ jobs:
       AUTH_TOKEN_PRIVATE_KEY: ${{ secrets.AUTH_TOKEN_PRIVATE_KEY }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Checkout Repo
 
-      - name: Set UID and GID
+      - name: Install Docker Compose
         run: |
-          echo "UID=$(id -u)" >> $GITHUB_ENV
-          echo "GID=$(id -g)" >> $GITHUB_ENV
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
 
       - name: Rebuild Services
         run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
 
       - name: Run Integration Tests
         run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
-
-      - name: Reset Permissions
-        if: always()
-        run: sudo /usr/bin/chown -R $(id -u):$(id -g) ./provisioning/
 
       - name: Cleanup
         if: always()
@@ -46,29 +42,87 @@ jobs:
             docker image prune -f &&
             docker volume prune -f
 
+      - name: Get Latest Commit Info
+        id: commit_info
+        run: |
+          echo "COMMIT_MESSAGE=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
+          echo "COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
+          echo "COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')" >> $GITHUB_ENV
+
       - name: Notify Success
         if: success() && env.DISCORD_WEBHOOK != ''
-        uses: rjstone/discord-webhook-notify@v1
+        uses: tsickert/discord-webhook@v7.0.0
         continue-on-error: true
         with:
-          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          details: 'The integration tests have passed successfully.'
-          severity: info
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          username: "GitHub Actions"
+          content: |
+            **:white_check_mark: Integration Tests Passed Successfully**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
+          embed-title: "Success: Integration Tests"
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: ":white_check_mark: The integration tests have passed successfully."
+          embed-author-name: "${{ env.COMMIT_AUTHOR }}"
+          embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
+          embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
+          embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
+          embed-color: 15430476
+          embed-timestamp: "${{ steps.ml.outputs.time }}"
 
       - name: Notify Failure
         if: failure() && env.DISCORD_WEBHOOK != ''
-        uses: rjstone/discord-webhook-notify@v1
+        uses: tsickert/discord-webhook@v7.0.0
         continue-on-error: true
         with:
-          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          details: 'The integration tests have failed. Check the Actions log for more details.'
-          severity: error
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          username: "GitHub Actions"
+          content: |
+            **:x: Integration Tests Failed**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-title: "Failed: Integration Tests"
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: ":x: The integration tests have failed."
+          embed-author-name: "${{ env.COMMIT_AUTHOR }}"
+          embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
+          embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
+          embed-color: 15430476
+          embed-timestamp: "${{ steps.ml.outputs.time }}"
 
       - name: Notify Cancelled
         if: cancelled() && env.DISCORD_WEBHOOK != ''
-        uses: rjstone/discord-webhook-notify@v1
+        uses: tsickert/discord-webhook@v7.0.0
         continue-on-error: true
         with:
-          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          details: 'The integration tests have been cancelled.'
-          severity: warn
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          username: "GitHub Actions"
+          content: |
+            **:warning: Integration Tests Cancelled**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-title: "Cancelled: Integration Tests"
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: ":warning: The integration tests have been cancelled."
+          embed-author-name: "${{ env.COMMIT_AUTHOR }}"
+          embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
+          embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
+          embed-color: 15430476
+          embed-timestamp: "${{ steps.ml.outputs.time }}"

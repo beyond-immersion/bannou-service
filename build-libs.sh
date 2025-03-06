@@ -10,7 +10,7 @@ for cmd in "${commands[@]}"; do
 done
 
 LIBS_DIR="libs"
-TARGET_FRAMEWORK="net7.0"
+TARGET_FRAMEWORK="net8.0"
 
 mkdir -p $LIBS_DIR
 

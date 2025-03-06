@@ -12,43 +12,99 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Run Lint Tests
         id: ml
-        # More info at https://megalinter.io/flavors/
-        uses: oxsecurity/megalinter/flavors/dotnet@v7.2.0
+        uses: oxsecurity/megalinter/flavors/dotnet@v8.4.0
         env:
-          # https://megalinter.io/configuration/
           VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           ENABLE: EDITORCONFIG
           EDITORCONFIG_EDITORCONFIG_CHECKER_ARGUMENTS: -disable-end-of-line -disable-insert-final-newline -v
 
+      - name: Get Latest Commit Info
+        id: commit_info
+        run: |
+          echo "COMMIT_MESSAGE=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
+          echo "COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
+          echo "COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')" >> $GITHUB_ENV
+
       - name: Notify Success
         if: success() && env.DISCORD_WEBHOOK != ''
-        uses: rjstone/discord-webhook-notify@v1
+        uses: tsickert/discord-webhook@v7.0.0
         continue-on-error: true
         with:
-          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          details: 'The lint tests have passed successfully.'
-          severity: info
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          username: "GitHub Actions"
+          content: |
+            **:white_check_mark: Lint Tests Passed Successfully**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
+          avatar-url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Emoji_u2705.svg/1024px-Emoji_u2705.svg.png'
+          embed-title: "Success: Lint Tests"
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: ":white_check_mark: The lint tests have passed successfully."
+          embed-author-name: "${{ env.COMMIT_AUTHOR }}"
+          embed-author-icon-url: "https://upload.wikimedia.org/wikipedia/en/8/86/Animated-check-mark.gif"
+          embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
+          embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
+          embed-color: 15430476
+          embed-timestamp: "${{ steps.ml.outputs.time }}"
 
       - name: Notify Failure
         if: failure() && env.DISCORD_WEBHOOK != ''
-        uses: rjstone/discord-webhook-notify@v1
+        uses: tsickert/discord-webhook@v7.0.0
         continue-on-error: true
         with:
-          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          details: 'The lint tests have failed. Check the Actions log for more details.'
-          severity: error
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          username: "GitHub Actions"
+          content: |
+            **:x: Lint Tests Failed**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-title: "Failed: Lint Tests"
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: ":x: The lint tests have failed."
+          embed-author-name: "${{ env.COMMIT_AUTHOR }}"
+          embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
+          embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
+          embed-color: 15430476
+          embed-timestamp: "${{ steps.ml.outputs.time }}"
 
       - name: Notify Cancelled
         if: cancelled() && env.DISCORD_WEBHOOK != ''
-        uses: rjstone/discord-webhook-notify@v1
+        uses: tsickert/discord-webhook@v7.0.0
         continue-on-error: true
         with:
-          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          details: 'The lint tests have been cancelled.'
-          severity: warn
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          username: "GitHub Actions"
+          content: |
+            **:warning: Lint Tests Cancelled**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-title: "Cancelled: Lint Tests"
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: ":warning: The lint tests have been cancelled."
+          embed-author-name: "${{ env.COMMIT_AUTHOR }}"
+          embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
+          embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
+          embed-color: 15430476
+          embed-timestamp: "${{ steps.ml.outputs.time }}"

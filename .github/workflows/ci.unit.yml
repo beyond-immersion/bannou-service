@@ -9,12 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      DOTNET_VERSION: '7.0.202'
+      DOTNET_VERSION: '8.0.406'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -27,29 +27,87 @@ jobs:
       - name: Run Unit Tests
         run: dotnet test --configuration Development --no-restore --verbosity normal
 
+      - name: Get Latest Commit Info
+        id: commit_info
+        run: |
+          echo "COMMIT_MESSAGE=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
+          echo "COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
+          echo "COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')" >> $GITHUB_ENV
+
       - name: Notify Success
         if: success() && env.DISCORD_WEBHOOK != ''
-        uses: rjstone/discord-webhook-notify@v1
+        uses: tsickert/discord-webhook@v7.0.0
         continue-on-error: true
         with:
-          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          details: 'The unit tests have passed successfully.'
-          severity: info
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          username: "GitHub Actions"
+          content: |
+            **:white_check_mark: Unit Tests Passed Successfully**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
+          embed-title: "Success: Unit Tests"
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: ":white_check_mark: The unit tests have passed successfully."
+          embed-author-name: "${{ env.COMMIT_AUTHOR }}"
+          embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
+          embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
+          embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
+          embed-color: 15430476
+          embed-timestamp: "${{ steps.ml.outputs.time }}"
 
       - name: Notify Failure
         if: failure() && env.DISCORD_WEBHOOK != ''
-        uses: rjstone/discord-webhook-notify@v1
+        uses: tsickert/discord-webhook@v7.0.0
         continue-on-error: true
         with:
-          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          details: 'The unit tests have failed. Check the Actions log for more details.'
-          severity: error
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          username: "GitHub Actions"
+          content: |
+            **:x: Unit Tests Failed**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-title: "Failed: Unit Tests"
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: ":x: The unit tests have failed."
+          embed-author-name: "${{ env.COMMIT_AUTHOR }}"
+          embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
+          embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
+          embed-color: 15430476
+          embed-timestamp: "${{ steps.ml.outputs.time }}"
 
       - name: Notify Cancelled
         if: cancelled() && env.DISCORD_WEBHOOK != ''
-        uses: rjstone/discord-webhook-notify@v1
+        uses: tsickert/discord-webhook@v7.0.0
         continue-on-error: true
         with:
-          webhookUrl: ${{ env.DISCORD_WEBHOOK }}
-          details: 'The unit tests have been cancelled.'
-          severity: warn
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          username: "GitHub Actions"
+          content: |
+            **:warning: Unit Tests Cancelled**
+
+            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Author:** ${{ env.COMMIT_AUTHOR }}
+            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
+
+            [Repository](${{ github.server_url }}/${{ github.repository }})
+          avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-title: "Cancelled: Unit Tests"
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: ":warning: The unit tests have been cancelled."
+          embed-author-name: "${{ env.COMMIT_AUTHOR }}"
+          embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
+          embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
+          embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
+          embed-color: 15430476
+          embed-timestamp: "${{ steps.ml.outputs.time }}"
