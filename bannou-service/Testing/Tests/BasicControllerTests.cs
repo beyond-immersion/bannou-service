@@ -19,13 +19,24 @@ public static class BasicControllerTests
     [ServiceTest(testName: "basic", serviceType: typeof(TestingService))]
     public static async Task<bool> Run(TestingService service)
         => await service.RunDelegates("basic", new List<Func<TestingService, Task<bool>>>()
-            {
-                Get_StringInRoute,
-                Get_MultipleStringsInRoute,
-                Post_ObjectModel,
-                Post_ObjectModel_HeaderArrays,
-                Post_ExecuteApiRequest
-            });
+        {
+            //Get_Loopback_StringFromRoute,
+            Get_StringInRoute,
+            Get_MultipleStringsInRoute,
+            Post_ObjectModel,
+            Post_ObjectModel_HeaderArrays,
+            Post_ExecuteApiRequest
+        });
+
+    private static async Task<bool> Get_Loopback_StringFromRoute(TestingService service)
+    {
+        var testID = "test_id_1";
+
+        var request = new HttpRequestMessage(HttpMethod.Get, LOOPBACK_URI_PREFIX + $"/{testID}");
+        await Program.DaprClient.InvokeMethodAsync(request, Program.ShutdownCancellationTokenSource.Token);
+
+        return service.LastTestID == testID;
+    }
 
     private static async Task<bool> Get_StringInRoute(TestingService service)
     {
@@ -58,7 +69,7 @@ public static class BasicControllerTests
             Service = testService
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", (IReadOnlyCollection<KeyValuePair<string, string>>)dataModel);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", null, dataModel);
         await Program.DaprClient.InvokeMethodAsync(newRequest, Program.ShutdownCancellationTokenSource.Token);
 
         if (service.LastTestRequest == null)
@@ -83,7 +94,7 @@ public static class BasicControllerTests
             }
         };
 
-        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", (IReadOnlyCollection<KeyValuePair<string, string>>)dataModel);
+        HttpRequestMessage newRequest = Program.DaprClient.CreateInvokeMethodRequest(HttpMethod.Post, "bannou", $"{CONTROLLER_NAME}/{ACTION_NAME}", null, dataModel);
         newRequest.AddPropertyHeaders(dataModel);
 
         if (!newRequest.Headers.TryGetValues("REQUEST_IDS", out var headerValues))
