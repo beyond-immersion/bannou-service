@@ -1,0 +1,29 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="app.Views.AssistantsPage">
+	<Grid>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="200"/>
+			<!-- Sidebar for Assistant settings -->
+			<ColumnDefinition Width="*"/>
+			<!-- Main chat history -->
+			<ColumnDefinition Width="200"/>
+			<!-- API commands log -->
+		</Grid.ColumnDefinitions>
+
+		<!-- Assistant settings sidebar -->
+		<StackPanel Grid.Column="0" Background="LightGray">
+			<!-- Controls for settings -->
+		</StackPanel>
+
+		<!-- Chat history -->
+		<StackPanel Grid.Column="1">
+			<!-- Controls for chat history -->
+		</StackPanel>
+
+		<!-- API commands log -->
+		<StackPanel Grid.Column="2" Background="LightGray">
+			<!-- Controls for API logs -->
+		</StackPanel>
+	</Grid>
+</UserControl>

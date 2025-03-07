@@ -1,0 +1,29 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="app.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Bannou Desktop" Width="1200" Height="800">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="100"/>
+			<!-- Header -->
+			<RowDefinition Height="*"/>
+			<!-- Main Body -->
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="300"/>
+			<!-- Sidebar -->
+			<ColumnDefinition Width="*"/>
+			<!-- Content -->
+		</Grid.ColumnDefinitions>
+
+		<!-- Header -->
+		<HeaderView Grid.Row="0" Grid.ColumnSpan="2"/>
+
+		<!-- Sidebar -->
+		<SidebarView Grid.Row="1" Grid.Column="0"/>
+
+		<!-- Content Area -->
+		<ContentControl Grid.Row="1" Grid.Column="1" Content="{Binding CurrentPageView}"/>
+	</Grid>
+</Window>

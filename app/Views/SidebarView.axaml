@@ -1,0 +1,11 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="app.Views.SidebarView">
+	<StackPanel>
+		<Button Command="{Binding NavigateCommand}" CommandParameter="Chat" Content="Chat" Margin="5"/>
+		<Button Command="{Binding NavigateCommand}" CommandParameter="Realtime" Content="Realtime" Margin="5"/>
+		<Button Command="{Binding NavigateCommand}" CommandParameter="Assistants" Content="Assistants" Margin="5"/>
+		<Button Command="{Binding NavigateCommand}" CommandParameter="TTS" Content="TTS" Margin="5"/>
+		<Button Command="{Binding NavigateCommand}" CommandParameter="Help" Content="Help" Margin="5" VerticalAlignment="Bottom"/>
+	</StackPanel>
+</UserControl>
