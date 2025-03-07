@@ -1,3 +1,4 @@
+using app.ViewModels;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
@@ -8,6 +9,7 @@ public partial class SidebarView : UserControl
     public SidebarView()
     {
         InitializeComponent();
+        DataContext = new SidebarViewModel();
     }
 
     private void InitializeComponent()

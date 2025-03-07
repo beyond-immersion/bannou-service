@@ -2,6 +2,8 @@
 using System.Reactive;
 using System.Linq;
 using app.ViewModels;
+using System.Diagnostics;
+using System;
 
 namespace app.ViewModels;
 
@@ -11,6 +13,11 @@ public class SidebarViewModel : ViewModelBase
 
     public SidebarViewModel()
     {
-        NavigateCommand = ReactiveCommand.Create<string>(param => { /* Change page logic here */ });
+        NavigateCommand = ReactiveCommand.Create<string>(Navigate);
+    }
+
+    private void Navigate(string pageName)
+    {
+        Console.WriteLine($"Navigating to page: '{pageName}'");
     }
 }

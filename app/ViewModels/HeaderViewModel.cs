@@ -2,14 +2,16 @@
 using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Linq;
+using System.Diagnostics;
+using System;
 
 namespace app.ViewModels;
 
 public class HeaderViewModel : ViewModelBase
 {
-    public ObservableCollection<string> Organizations { get; } = ["Org1", "Org2"];
-    public ObservableCollection<string> Projects { get; } = ["Project1", "Project2"];
-    public ObservableCollection<string> UserAccounts { get; } = ["User1", "User2"];
+    public ObservableCollection<string> Organizations { get; set; } = ["Org1", "Org2"];
+    public ObservableCollection<string> Projects { get; set; } = ["Project1", "Project2"];
+    public ObservableCollection<string> UserAccounts { get; set; } = ["User1", "User2"];
 
     private string? _selectedOrganization;
     public string? SelectedOrganization
@@ -36,6 +38,9 @@ public class HeaderViewModel : ViewModelBase
 
     public HeaderViewModel()
     {
-        NavigateCommand = ReactiveCommand.Create<string>(param => { /* Navigation logic here */ });
+        NavigateCommand = ReactiveCommand.Create<string>(param =>
+        {
+            Console.WriteLine($"Navigating to page: '{param}'");
+        });
     }
 }
