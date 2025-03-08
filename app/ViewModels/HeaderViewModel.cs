@@ -40,7 +40,7 @@ public class HeaderViewModel : ViewModelBase
     {
         NavigateCommand = ReactiveCommand.Create<string>(param =>
         {
-            Console.WriteLine($"Navigating to page: '{param}'");
+            Debug.WriteLine($"Navigating to page: '{param}'");
         });
     }
 }

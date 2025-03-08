@@ -18,6 +18,6 @@ public class SidebarViewModel : ViewModelBase
 
     private void Navigate(string pageName)
     {
-        Console.WriteLine($"Navigating to page: '{pageName}'");
+        Debug.WriteLine($"Navigating to page: '{pageName}'");
     }
 }
