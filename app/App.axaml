@@ -5,10 +5,14 @@
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
+	<Application.Resources>
+		<FontFamily x:Key="FontAwesome">avares://app/Assets/Font Awesome 6 Free-Regular-400.otf#Font Awesome 6 Free</FontFamily>
+	</Application.Resources>
+
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
-  
+
     <Application.Styles>
         <FluentTheme />
     </Application.Styles>
