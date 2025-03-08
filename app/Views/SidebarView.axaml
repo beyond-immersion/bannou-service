@@ -2,16 +2,45 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:vm="using:app.ViewModels"
+			 xmlns:app="using:app"
              x:Class="app.Views.SidebarView"
-			 x:DataType="vm:SidebarViewModel"
+			 x:DataType="vm:MainWindowViewModel"
              mc:Ignorable="d">
 
 	<StackPanel>
-		<TextBlock Text="&#xF3A5;Playground" FontFamily="{StaticResource FontAwesome}"/>
-		<Button Content="Chat" Command="{Binding NavigateCommand}" CommandParameter="Chat" Margin="5"/>
-		<Button Content="Realtime" Command="{Binding NavigateCommand}" CommandParameter="Realtime" Margin="5"/>
-		<Button Content="Assistants" Command="{Binding NavigateCommand}" CommandParameter="Assistants" Margin="5"/>
-		<Button Content="TTS" Command="{Binding NavigateCommand}" CommandParameter="TTS" Margin="5"/>
-		<Button Content="Help" Command="{Binding NavigateCommand}" CommandParameter="Help" Margin="5" VerticalAlignment="Bottom"/>
+		<StackPanel Orientation="Horizontal">
+			<TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xF3A5;" Margin="0,0,5,0"/>
+			<TextBlock Text="Playground" VerticalAlignment="Center"/>
+		</StackPanel>
+		<Button Classes="myCustomButton" Command="{Binding NavigateCommand}" CommandParameter="Chat" app:ButtonHelpers.IsSelected="{Binding IsChatSelected, Mode=TwoWay}">
+			<StackPanel Orientation="Horizontal">
+				<TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xF086;" Margin="0,0,5,0"/>
+				<TextBlock Text="Chat" VerticalAlignment="Center"/>
+			</StackPanel>
+		</Button>
+		<Button Classes="myCustomButton" Command="{Binding NavigateCommand}" CommandParameter="Realtime" app:ButtonHelpers.IsSelected="{Binding IsRealtimeSelected, Mode=TwoWay}">
+			<StackPanel Orientation="Horizontal">
+				<TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xF086;" Margin="0,0,5,0"/>
+				<TextBlock Text="Realtime" VerticalAlignment="Center"/>
+			</StackPanel>
+		</Button>
+		<Button Classes="myCustomButton" Command="{Binding NavigateCommand}" CommandParameter="Assistants" app:ButtonHelpers.IsSelected="{Binding IsAssistantsSelected, Mode=TwoWay}">
+			<StackPanel Orientation="Horizontal">
+				<TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xF086;" Margin="0,0,5,0"/>
+				<TextBlock Text="Assistants" VerticalAlignment="Center"/>
+			</StackPanel>
+		</Button>
+		<Button Classes="myCustomButton" Command="{Binding NavigateCommand}" CommandParameter="TTS" app:ButtonHelpers.IsSelected="{Binding IsTTSSelected, Mode=TwoWay}">
+			<StackPanel Orientation="Horizontal">
+				<TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xF086;" Margin="0,0,5,0"/>
+				<TextBlock Text="TTS" VerticalAlignment="Center"/>
+			</StackPanel>
+		</Button>
+		<Button Classes="myCustomButton" Command="{Binding NavigateCommand}" CommandParameter="Help" app:ButtonHelpers.IsSelected="{Binding IsHelpSelected, Mode=TwoWay}">
+			<StackPanel Orientation="Horizontal">
+				<TextBlock FontFamily="{StaticResource FontAwesome}" Text="&#xF086;" Margin="0,0,5,0"/>
+				<TextBlock Text="Help" VerticalAlignment="Center"/>
+			</StackPanel>
+		</Button>
 	</StackPanel>
 </UserControl>

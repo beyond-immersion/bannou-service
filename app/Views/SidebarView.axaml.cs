@@ -1,15 +1,15 @@
 using app.ViewModels;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Avalonia.ReactiveUI;
 
 namespace app.Views;
 
-public partial class SidebarView : UserControl
+public partial class SidebarView : ReactiveUserControl<SidebarViewModel>
 {
     public SidebarView()
     {
         InitializeComponent();
-        DataContext = new SidebarViewModel();
     }
 
     private void InitializeComponent()

@@ -2,7 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="app.Views.MainWindow"
 		xmlns:local="clr-namespace:app.Views"
+		xmlns:vm="using:app.ViewModels"
+		xmlns:app="using:app"
         Icon="/Assets/avalonia-logo.ico"
+		x:DataType="vm:MainWindowViewModel"
         Title="Bannou Desktop" Width="1200" Height="800">
 	<Grid>
 		<Grid.RowDefinitions>
@@ -24,7 +27,6 @@
 		<!-- Sidebar -->
 		<local:SidebarView Grid.Row="1" Grid.Column="0"/>
 
-		<!-- Content Area -->
-		<!-- <ContentControl Grid.Row="1" Grid.Column="1" Content="{Binding CurrentPageView}"/> -->
+		<ContentControl Grid.Row="1" Grid.Column="1" Content="{Binding CurrentPageView}"/>
 	</Grid>
 </Window>

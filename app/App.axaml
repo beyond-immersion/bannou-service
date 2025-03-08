@@ -1,16 +1,36 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="app.App"
-             xmlns:local="using:app"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             xmlns:app="using:app"
+             RequestedThemeVariant="Dark">
+
+	<Application.Styles>
+		<Style Selector="Button.myCustomButton">
+			<Setter Property="Background" Value="Black"/>
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+		</Style>
+
+		<Style Selector="Button.myCustomButton:pointerover">
+			<Setter Property="Background" Value="#444444"/>
+			<Setter Property="BorderBrush" Value="Black"/>
+			<Setter Property="BorderThickness" Value="1"/>
+		</Style>
+
+		<Style Selector="Button.myCustomButton.Selected">
+			<Setter Property="Background" Value="#888888"/>
+			<Setter Property="BorderBrush" Value="Black"/>
+			<Setter Property="BorderThickness" Value="1"/>
+		</Style>
+	</Application.Styles>
 
 	<Application.Resources>
 		<FontFamily x:Key="FontAwesome">avares://app/Assets/Font Awesome 6 Free-Regular-400.otf#Font Awesome 6 Free</FontFamily>
 	</Application.Resources>
 
     <Application.DataTemplates>
-        <local:ViewLocator/>
+        <app:ViewLocator/>
     </Application.DataTemplates>
 
     <Application.Styles>

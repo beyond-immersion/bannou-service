@@ -6,6 +6,8 @@ using System.Linq;
 using Avalonia.Markup.Xaml;
 using app.ViewModels;
 using app.Views;
+using Avalonia.Controls;
+using System.Diagnostics;
 
 namespace app;
 
@@ -43,5 +45,18 @@ public partial class App : Application
         {
             BindingPlugins.DataValidators.Remove(plugin);
         }
+    }
+}
+
+public static class ButtonHelpers
+{
+    public static readonly AttachedProperty<bool> IsSelectedProperty =
+        AvaloniaProperty.RegisterAttached<Button, Control, bool>("IsSelected", defaultValue: true);
+
+    public static bool GetIsSelected(Control control) => control.GetValue(IsSelectedProperty);
+    public static void SetIsSelected(Control control, bool value)
+    {
+        Debug.WriteLine($"Setting {control.Name} to Selected");
+        control.SetValue(IsSelectedProperty, value);
     }
 }
