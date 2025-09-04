@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Attributes;
+namespace BeyondImmersion.BannouService.Attributes;
 
 /// <summary>
 /// Attribute to propagate common headers through dapr requests.

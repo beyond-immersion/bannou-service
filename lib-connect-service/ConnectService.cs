@@ -1,4 +1,4 @@
-﻿using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using JWT.Algorithms;
 using JWT.Builder;

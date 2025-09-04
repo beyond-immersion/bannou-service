@@ -1,4 +1,4 @@
-﻿using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using Dapper;

@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Behaviour;
+namespace BeyondImmersion.BannouService.Behaviour;
 
 public static class Schemas
 {

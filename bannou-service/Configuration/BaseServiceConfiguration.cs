@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Configuration;
+namespace BeyondImmersion.BannouService.Configuration;
 
 public class BaseServiceConfiguration : IServiceConfiguration
 {

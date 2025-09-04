@@ -1,4 +1,4 @@
-﻿using System.Net.Mime;
+using System.Net.Mime;
 using System.Text;
 
 namespace BeyondImmersion.BannouService.Controllers.Messages;

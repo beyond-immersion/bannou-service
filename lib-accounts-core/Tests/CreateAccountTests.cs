@@ -1,4 +1,4 @@
-﻿using BeyondImmersion.BannouService.Accounts.Messages;
+using BeyondImmersion.BannouService.Accounts.Messages;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.Logging;

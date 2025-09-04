@@ -87,6 +87,10 @@ public class Program
         }
     }
 
+    /// <summary>
+    /// Runs the interactive test console that allows users to select and execute tests
+    /// </summary>
+    /// <param name="testClient">The test client to use for executing tests</param>
     private static async Task RunInteractiveTestConsole(ITestClient testClient)
     {
         LoadServiceTests();
@@ -165,6 +169,9 @@ public class Program
         } while (true);
     }
 
+    /// <summary>
+    /// Loads all available service test handlers and registers their tests
+    /// </summary>
     private static void LoadServiceTests()
     {
         // Add "All Tests" meta-test
@@ -185,6 +192,12 @@ public class Program
         }
     }
 
+    /// <summary>
+    /// Executes all registered tests in sequence and reports overall results
+    /// </summary>
+    /// <param name="testClient">The test client to use for executing tests</param>
+    /// <param name="args">Command line arguments passed to each test</param>
+    /// <returns>A TestResult indicating whether all tests passed</returns>
     private static async Task<TestResult> RunAllTests(ITestClient testClient, string[] args)
     {
         int passed = 0;

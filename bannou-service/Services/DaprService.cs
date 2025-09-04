@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Services;
+namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Optional base type for service handlers.

@@ -31,6 +31,12 @@ public class HttpTestClient : ITestClient, IDisposable
 
     public string TransportType => "HTTP";
 
+    /// <summary>
+    /// Registers a new user account with the service
+    /// </summary>
+    /// <param name="username">Username for the new account</param>
+    /// <param name="password">Password for the new account</param>
+    /// <returns>True if registration was successful and tokens were obtained</returns>
     public async Task<bool> RegisterAsync(string username, string password)
     {
         try
@@ -71,6 +77,12 @@ public class HttpTestClient : ITestClient, IDisposable
         }
     }
 
+    /// <summary>
+    /// Authenticates with the service using username and password credentials
+    /// </summary>
+    /// <param name="username">Username for authentication</param>
+    /// <param name="password">Password for authentication</param>
+    /// <returns>True if login was successful and tokens were obtained</returns>
     public async Task<bool> LoginAsync(string username, string password)
     {
         try
@@ -115,6 +127,14 @@ public class HttpTestClient : ITestClient, IDisposable
         return await MakeRequestAsync<T>(HttpMethod.Get, endpoint, null);
     }
 
+    /// <summary>
+    /// Makes an authenticated HTTP request to the specified endpoint
+    /// </summary>
+    /// <typeparam name="T">Expected response data type</typeparam>
+    /// <param name="method">HTTP method to use</param>
+    /// <param name="endpoint">API endpoint to call</param>
+    /// <param name="requestBody">Request body object (null for GET requests)</param>
+    /// <returns>TestResponse containing the result of the API call</returns>
     private async Task<TestResponse<T>> MakeRequestAsync<T>(HttpMethod method, string endpoint, object? requestBody) where T : class
     {
         try

@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Testing.Messages;
+namespace BeyondImmersion.BannouService.Testing.Messages;
 
 /// <summary>
 /// The request model for service API calls to `/testing/run-test`.

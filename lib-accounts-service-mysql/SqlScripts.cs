@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Accounts;
+namespace BeyondImmersion.BannouService.Accounts;
 
 public static class SqlScripts
 {

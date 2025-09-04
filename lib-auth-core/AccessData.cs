@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Authorization;
+namespace BeyondImmersion.BannouService.Authorization;
 
 /// <summary>
 /// Data returned for successful logins.

@@ -1,4 +1,4 @@
-﻿using BeyondImmersion.BannouService.Testing.Messages;
+using BeyondImmersion.BannouService.Testing.Messages;
 using Newtonsoft.Json.Linq;
 
 namespace BeyondImmersion.BannouService.Testing.Tests;

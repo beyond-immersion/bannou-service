@@ -1,4 +1,4 @@
-﻿using BeyondImmersion.BannouService.Controllers.Messages;
+using BeyondImmersion.BannouService.Controllers.Messages;
 using Newtonsoft.Json;
 
 namespace BeyondImmersion.BannouService.Connect.Messages;

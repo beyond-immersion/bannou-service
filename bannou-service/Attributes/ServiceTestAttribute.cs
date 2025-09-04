@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Attributes;
+namespace BeyondImmersion.BannouService.Attributes;
 
 /// <summary>
 /// Service attribute used on static async methods returning boolean,

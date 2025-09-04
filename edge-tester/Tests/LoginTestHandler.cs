@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.ServiceTester.Tests;
+namespace BeyondImmersion.ServiceTester.Tests;
 
 public class LoginTestHandler : IServiceTestHandler
 {

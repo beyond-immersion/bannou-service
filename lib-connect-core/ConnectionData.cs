@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Connect;
+namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
 /// Data returned for connection service requests.

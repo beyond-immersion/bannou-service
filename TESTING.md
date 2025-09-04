@@ -18,7 +18,7 @@ When debugging service issues, it's critical to isolate whether problems are:
 2. **Edge/Protocol Issues** - HTTP Tester passes, Edge Tester fails  
 3. **Infrastructure Issues** - Both tests fail consistently
 
-This mirrors SignalWire's approach where you can test FreeSWITCH directly vs. through Switchblade/Hagrid.
+This follows industry best practices for testing distributed systems where you can isolate protocol/transport layer issues from core business logic.
 
 ## HTTP Tester
 

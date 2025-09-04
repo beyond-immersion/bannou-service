@@ -1,4 +1,4 @@
-﻿using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Http;
 
 namespace BeyondImmersion.BannouService.Connect;

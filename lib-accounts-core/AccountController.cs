@@ -1,4 +1,4 @@
-﻿using BeyondImmersion.BannouService.Accounts.Messages;
+using BeyondImmersion.BannouService.Accounts.Messages;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Mvc;
