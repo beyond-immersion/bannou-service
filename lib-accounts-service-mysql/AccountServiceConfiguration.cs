@@ -4,7 +4,7 @@ using BeyondImmersion.BannouService.Configuration;
 namespace BeyondImmersion.BannouService.Accounts;
 
 [ServiceConfiguration(typeof(AccountService), envPrefix: "account_")]
-public class AccountServiceConfiguration :  BaseServiceConfiguration
+public class AccountServiceConfiguration : BaseServiceConfiguration
 {
     [ConfigRequired]
     public string Database_Host { get; set; } = "account-db";

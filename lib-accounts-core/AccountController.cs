@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Net.Mime;
+﻿using BeyondImmersion.BannouService.Accounts.Messages;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Accounts.Messages;
-using Microsoft.Extensions.Logging;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System.Net.Mime;
 
 namespace BeyondImmersion.BannouService.Accounts;
 

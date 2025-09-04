@@ -1,12 +1,12 @@
+using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
-using JWT;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Xunit.Abstractions;
-using Newtonsoft.Json.Linq;
-using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Connect.UnitTests;
 

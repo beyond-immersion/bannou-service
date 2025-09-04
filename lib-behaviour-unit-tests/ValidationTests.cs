@@ -1,7 +1,7 @@
-using Xunit.Abstractions;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
-using Microsoft.Extensions.Logging;
+using Xunit.Abstractions;
 
 namespace BeyondImmersion.BannouService.Behaviour.UnitTests;
 

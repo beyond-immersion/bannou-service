@@ -1,11 +1,11 @@
-﻿using BeyondImmersion.BannouService.Behaviour.Messages;
-using BeyondImmersion.BannouService.Attributes;
+﻿using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Behaviour.Messages;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
-using System.Net;
-using System.Text;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
+using System.Net;
+using System.Text;
 
 namespace BeyondImmersion.BannouService.Behaviour;
 

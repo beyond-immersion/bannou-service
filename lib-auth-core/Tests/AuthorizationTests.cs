@@ -1,7 +1,7 @@
-﻿using BeyondImmersion.BannouService.Authorization.Messages;
-using BeyondImmersion.BannouService.Attributes;
-using Microsoft.Extensions.Logging;
+﻿using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Authorization.Messages;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Authorization.Tests;
 

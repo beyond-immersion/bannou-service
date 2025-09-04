@@ -1,8 +1,8 @@
-﻿using BeyondImmersion.BannouService.Controllers;
+﻿using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Mime;
-using BeyondImmersion.BannouService.Attributes;
 using Microsoft.Extensions.Logging;
+using System.Net.Mime;
 
 namespace BeyondImmersion.BannouService.Connect;
 

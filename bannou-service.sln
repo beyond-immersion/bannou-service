@@ -5,7 +5,11 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bannou-service", "bannou-service\bannou-service.csproj", "{FD238707-4552-4A0E-8F17-6A12CC731B86}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "service-tester", "service-tester\service-tester.csproj", "{3E450249-3580-4178-BB5E-7F36D254D38E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "edge-tester", "edge-tester\service-tester.csproj", "{3E450249-3580-4178-BB5E-7F36D254D38E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "http-tester", "http-tester\http-tester.csproj", "{A1B2C3D4-E5F6-7890-1234-567890ABCDEF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-testing-core", "lib-testing-core\lib-testing-core.csproj", "{B2C3D4E5-F6A7-8901-2345-67890ABCDEF0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "unit-tests", "unit-tests\unit-tests.csproj", "{F33DE2EC-6A19-401A-894F-7E23BB429562}"
 EndProject
@@ -109,8 +113,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lib-behaviour-service", "li
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-behaviour-unit-tests", "lib-behaviour-unit-tests\lib-behaviour-unit-tests.csproj", "{8DD26683-7787-4C03-912F-6600BB40E5DC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "app", "app\app.csproj", "{6C0F928A-B28D-D207-D239-598F22CCD0B7}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -130,6 +132,18 @@ Global
 		{3E450249-3580-4178-BB5E-7F36D254D38E}.Development|Any CPU.Build.0 = Development|Any CPU
 		{3E450249-3580-4178-BB5E-7F36D254D38E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E450249-3580-4178-BB5E-7F36D254D38E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-1234-567890ABCDEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-1234-567890ABCDEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-1234-567890ABCDEF}.Development|Any CPU.ActiveCfg = Development|Any CPU
+		{A1B2C3D4-E5F6-7890-1234-567890ABCDEF}.Development|Any CPU.Build.0 = Development|Any CPU
+		{A1B2C3D4-E5F6-7890-1234-567890ABCDEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-1234-567890ABCDEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-2345-67890ABCDEF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-2345-67890ABCDEF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-2345-67890ABCDEF0}.Development|Any CPU.ActiveCfg = Development|Any CPU
+		{B2C3D4E5-F6A7-8901-2345-67890ABCDEF0}.Development|Any CPU.Build.0 = Development|Any CPU
+		{B2C3D4E5-F6A7-8901-2345-67890ABCDEF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-2345-67890ABCDEF0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F33DE2EC-6A19-401A-894F-7E23BB429562}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F33DE2EC-6A19-401A-894F-7E23BB429562}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F33DE2EC-6A19-401A-894F-7E23BB429562}.Development|Any CPU.ActiveCfg = Development|Any CPU
@@ -196,12 +210,6 @@ Global
 		{8DD26683-7787-4C03-912F-6600BB40E5DC}.Development|Any CPU.Build.0 = Debug|Any CPU
 		{8DD26683-7787-4C03-912F-6600BB40E5DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8DD26683-7787-4C03-912F-6600BB40E5DC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6C0F928A-B28D-D207-D239-598F22CCD0B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6C0F928A-B28D-D207-D239-598F22CCD0B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6C0F928A-B28D-D207-D239-598F22CCD0B7}.Development|Any CPU.ActiveCfg = Release|Any CPU
-		{6C0F928A-B28D-D207-D239-598F22CCD0B7}.Development|Any CPU.Build.0 = Release|Any CPU
-		{6C0F928A-B28D-D207-D239-598F22CCD0B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6C0F928A-B28D-D207-D239-598F22CCD0B7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

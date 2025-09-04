@@ -1,10 +1,10 @@
-﻿using BeyondImmersion.BannouService.Controllers;
-using Microsoft.AspNetCore.Mvc;
-using BeyondImmersion.BannouService.Attributes;
+﻿using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behaviour.Messages;
+using BeyondImmersion.BannouService.Controllers;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System.Net.Mime;
 using System.Net;
+using System.Net.Mime;
 
 namespace BeyondImmersion.BannouService.Behaviour;
 
