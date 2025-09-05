@@ -11,7 +11,7 @@ public sealed class TestConfiguration
     public string? Http_Base_Url { get; set; }
 
     /// <summary>
-    /// WebSocket endpoint for edge testing (e.g., "ws://localhost:8080/connect")
+    /// WebSocket endpoint for Connect service testing (e.g., "ws://localhost:8080/connect", "wss://connect.bannou.game")
     /// </summary>
     public string? WebSocket_Endpoint { get; set; }
 

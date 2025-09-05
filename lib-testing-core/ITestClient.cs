@@ -3,7 +3,7 @@ namespace BeyondImmersion.BannouService.Testing;
 /// <summary>
 /// Interface for test clients that can execute API calls via different transport mechanisms
 /// </summary>
-public interface ITestClient
+public interface ITestClient : IDisposable
 {
     /// <summary>
     /// Make an authenticated HTTP POST request to a service endpoint

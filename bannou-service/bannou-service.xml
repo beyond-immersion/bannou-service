@@ -596,6 +596,569 @@
             Additional error details
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerControllerBase.Register(BeyondImmersion.BannouService.Controllers.Generated.RegisterRequest,System.Threading.CancellationToken)">
+            <summary>
+            Register new user account
+            </summary>
+            <remarks>
+            Creates a new user account with username and password authentication.
+            <br/>Returns JWT access token and refresh token on successful registration.
+            <br/>Email is optional but recommended for account recovery.
+            </remarks>
+            <returns>User registered successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerControllerBase.LoginWithCredentialsGet(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Login with username and password (GET)
+            </summary>
+            <remarks>
+            Authenticate user with username and password provided via headers.
+            <br/>Returns JWT access token and refresh token on successful authentication.
+            <br/>Uses GET method for simple credential-based login.
+            </remarks>
+            <param name="username">Username for authentication</param>
+            <param name="password">Password for authentication</param>
+            <returns>Login successful</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerControllerBase.LoginWithCredentialsPost(System.String,System.String,BeyondImmersion.BannouService.Controllers.Generated.LoginRequest,System.Threading.CancellationToken)">
+            <summary>
+            Login with username and password (POST)
+            </summary>
+            <remarks>
+            Authenticate user with username and password provided via headers.
+            <br/>Returns JWT access token and refresh token on successful authentication.
+            <br/>Uses POST method for credential-based login with potential request body.
+            </remarks>
+            <param name="username">Username for authentication</param>
+            <param name="password">Password for authentication</param>
+            <param name="body">Optional login request body (currently unused)</param>
+            <returns>Login successful</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerControllerBase.LoginWithTokenGet(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Login with refresh token (GET)
+            </summary>
+            <remarks>
+            Authenticate user with a refresh token provided via header.
+            <br/>Returns new JWT access token and potentially new refresh token.
+            <br/>Used for token refresh flows without requiring password re-entry.
+            </remarks>
+            <param name="token">Refresh token for authentication</param>
+            <returns>Token refresh successful</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerControllerBase.LoginWithTokenPost(System.String,BeyondImmersion.BannouService.Controllers.Generated.LoginRequest,System.Threading.CancellationToken)">
+            <summary>
+            Login with refresh token (POST)
+            </summary>
+            <remarks>
+            Authenticate user with a refresh token provided via header.
+            <br/>Returns new JWT access token and potentially new refresh token.
+            <br/>Uses POST method for token refresh with potential request body.
+            </remarks>
+            <param name="token">Refresh token for authentication</param>
+            <param name="body">Optional login request body (currently unused)</param>
+            <returns>Token refresh successful</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerControllerBase.ValidateToken(BeyondImmersion.BannouService.Controllers.Generated.ValidateTokenRequest,System.Threading.CancellationToken)">
+            <summary>
+            Validate JWT access token
+            </summary>
+            <remarks>
+            Validates a JWT access token and returns token status information.
+            <br/>Can be used to check if a token is valid, expired, or contains specific claims.
+            <br/>Currently returns basic validation response.
+            </remarks>
+            <returns>Token validation completed</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.RegisterRequest">
+            <summary>
+            Request to register a new user account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.RegisterRequest.Username">
+            <summary>
+            Unique username for the account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.RegisterRequest.Password">
+            <summary>
+            Password for the account (will be securely hashed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.RegisterRequest.Email">
+            <summary>
+            Email address for the account (optional but recommended)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.RegisterResponse">
+            <summary>
+            Response from successful user registration
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.RegisterResponse.Access_token">
+            <summary>
+            JWT access token for immediate authentication
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.RegisterResponse.Refresh_token">
+            <summary>
+            Refresh token for obtaining new access tokens
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.LoginRequest">
+            <summary>
+            Login request body (currently unused - credentials passed via headers).
+            <br/>Provided for future extensibility and consistency with API patterns.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.LoginResponse">
+            <summary>
+            Response from successful user login
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.LoginResponse.Access_token">
+            <summary>
+            JWT access token for authentication
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.LoginResponse.Refresh_token">
+            <summary>
+            Refresh token for obtaining new access tokens
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.ValidateTokenRequest">
+            <summary>
+            Request to validate a JWT access token
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ValidateTokenRequest.Token">
+            <summary>
+            JWT access token to validate
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.ValidateTokenResponse">
+            <summary>
+            Response from token validation (currently minimal implementation).
+            <br/>Future versions may include token claims, expiration info, and validation details.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ValidateTokenResponse.Valid">
+            <summary>
+            Whether the token is valid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ValidateTokenResponse.Expires_at">
+            <summary>
+            Token expiration timestamp
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ValidateTokenResponse.Subject">
+            <summary>
+            Token subject (user identifier)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ValidateTokenResponse.Claims">
+            <summary>
+            Token claims (roles, permissions, etc.)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.AccessData">
+            <summary>
+            Internal access data structure containing authentication tokens.
+            <br/>Used by service implementations but not directly exposed in API responses.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AccessData.Access_token">
+            <summary>
+            JWT access token
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AccessData.Refresh_token">
+            <summary>
+            Refresh token for token renewal
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.AuthErrorResponse">
+            <summary>
+            Error response for failed requests
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AuthErrorResponse.Error">
+            <summary>
+            Error type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AuthErrorResponse.Message">
+            <summary>
+            Human-readable error message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AuthErrorResponse.Details">
+            <summary>
+            Additional error context and details
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.BehaviourControllerControllerBase.AddBehaviourTree(BeyondImmersion.BannouService.Controllers.Generated.AddBehaviourTreeRequest,System.Threading.CancellationToken)">
+            <summary>
+            Add new behavior tree
+            </summary>
+            <remarks>
+            Adds a new behavior tree to the AI behavior system.
+            <br/>Behavior trees are used to define complex AI decision-making patterns
+            <br/>and can include prerequisites, steps, and context updates.
+            </remarks>
+            <returns>Behavior tree added successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.BehaviourControllerControllerBase.ValidateBehaviour(BeyondImmersion.BannouService.Controllers.Generated.ValidateBehaviourRequest,System.Threading.CancellationToken)">
+            <summary>
+            Validate behavior definition
+            </summary>
+            <remarks>
+            Validates a behavior definition against the JSON schema.
+            <br/>Includes reference resolution and comprehensive validation.
+            </remarks>
+            <returns>Validation result</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.BehaviourControllerControllerBase.ValidatePrerequisite(BeyondImmersion.BannouService.Controllers.Generated.ValidatePrerequisiteRequest,System.Threading.CancellationToken)">
+            <summary>
+            Validate prerequisite definition
+            </summary>
+            <remarks>
+            Validates a prerequisite definition against the JSON schema.
+            </remarks>
+            <returns>Validation result</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.BehaviourControllerControllerBase.ResolveBehaviourReferences(BeyondImmersion.BannouService.Controllers.Generated.ResolveReferencesRequest,System.Threading.CancellationToken)">
+            <summary>
+            Resolve behavior references
+            </summary>
+            <remarks>
+            Resolves behavior references ($ref) within behavior definitions.
+            <br/>Returns fully resolved behavior trees ready for execution.
+            </remarks>
+            <returns>References resolved successfully</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ResolveReferencesRequest.Behaviors">
+            <summary>
+            Array of behavior definitions to resolve references for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AddBehaviourTreeResponse.Success">
+            <summary>
+            Indicates if the operation was successful
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AddBehaviourTreeResponse.Message">
+            <summary>
+            Success message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AddBehaviourTreeResponse.Behavior_id">
+            <summary>
+            Unique identifier for the added behavior tree
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ValidateBehaviourResponse.Is_valid">
+            <summary>
+            Whether the behavior is valid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ValidateBehaviourResponse.Validation_errors">
+            <summary>
+            List of validation errors if behavior is invalid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ValidateBehaviourResponse.Resolved_behavior">
+            <summary>
+            Behavior with resolved references (if applicable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ValidatePrerequisiteResponse.Is_valid">
+            <summary>
+            Whether the prerequisite is valid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ValidatePrerequisiteResponse.Validation_errors">
+            <summary>
+            List of validation errors if prerequisite is invalid
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ResolveReferencesResponse.Success">
+            <summary>
+            Whether all references were resolved successfully
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ResolveReferencesResponse.Resolved_behaviors">
+            <summary>
+            Array of behaviors with resolved references
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ResolveReferencesResponse.Unresolved_references">
+            <summary>
+            List of references that could not be resolved
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ResolveReferencesResponse.Validation_errors">
+            <summary>
+            Validation errors encountered during resolution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviorDefinition.Name">
+            <summary>
+            Unique name of the behavior
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviorDefinition.Description">
+            <summary>
+            Description of what the behavior does
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviorDefinition.Type">
+            <summary>
+            Type of behavior execution pattern
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviorDefinition.Prerequisites">
+            <summary>
+            Requirements that must be met before behavior can execute
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviorDefinition.Steps">
+            <summary>
+            Sub-behaviors to execute (for sequence/repeat types)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviorDefinition.Outcome">
+            <summary>
+            Description of the behavior's result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviorDefinition.ContextUpdates">
+            <summary>
+            Changes to character/world state after behavior execution
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviorReference.Ref">
+            <summary>
+            Reference to another behavior by name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.Prerequisite.Name">
+            <summary>
+            Name of the required resource, skill, or condition
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.Prerequisite.Type">
+            <summary>
+            Category of prerequisite
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.Prerequisite.Value">
+            <summary>
+            Required quantity or level (defaults to 1)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviourErrorResponse.Error">
+            <summary>
+            Error message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviourErrorResponse.Details">
+            <summary>
+            Detailed error information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviourErrorResponse.Validation_errors">
+            <summary>
+            Schema validation errors
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviourErrorResponse.Timestamp">
+            <summary>
+            When the error occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.BehaviourErrorResponse.Request_id">
+            <summary>
+            Unique identifier for the failed request
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.ConnectControllerControllerBase.ConnectWebSocket(BeyondImmersion.BannouService.Controllers.Generated.Connection,BeyondImmersion.BannouService.Controllers.Generated.Upgrade,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Establish WebSocket connection
+            </summary>
+            <remarks>
+            Initiates a WebSocket connection for real-time communication.
+            <br/>Requires JWT authentication via Authorization header.
+            <br/>
+            <br/>**Connection Flow:**
+            <br/>1. Send HTTP GET request with `Connection: Upgrade` and `Upgrade: websocket` headers
+            <br/>2. Include `Authorization: Bearer &lt;jwt_token&gt;` header for authentication
+            <br/>3. Server validates JWT and extracts user claims (roles, scopes, services)
+            <br/>4. Connection upgrades to WebSocket protocol
+            <br/>5. Client can send binary messages using the custom protocol
+            <br/>
+            <br/>**Reconnection:**
+            <br/>For existing sessions, use `Authorization: Reconnect &lt;reconnect_token&gt;` instead.
+            </remarks>
+            <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
+            <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
+            <param name="authorization">JWT Bearer token for new connections: "Bearer &lt;jwt_token&gt;"
+            <br/>Reconnect token for existing sessions: "Reconnect &lt;reconnect_token&gt;"</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.ConnectControllerControllerBase.ConnectWebSocketPost(BeyondImmersion.BannouService.Controllers.Generated.Connection2,BeyondImmersion.BannouService.Controllers.Generated.Upgrade2,System.String,BeyondImmersion.BannouService.Controllers.Generated.ConnectRequest,System.Threading.CancellationToken)">
+            <summary>
+            Establish WebSocket connection (POST variant)
+            </summary>
+            <remarks>
+            Alternative POST method for establishing WebSocket connections.
+            <br/>Functionally identical to the GET method but supports clients that
+            <br/>require POST for WebSocket upgrades.
+            </remarks>
+            <param name="body">Optional connection parameters</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.ConnectRequest">
+            <summary>
+            Request model for WebSocket connection establishment.
+            <br/>Currently contains no specific fields but extends the base ApiRequest.
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.ConnectionData">
+            <summary>
+            Connection state data returned for connection service requests.
+            <br/>Currently a placeholder for future connection metadata.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ConnectErrorResponse.Error">
+            <summary>
+            Error type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ConnectErrorResponse.Message">
+            <summary>
+            Human-readable error description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ConnectErrorResponse.Status_code">
+            <summary>
+            HTTP status code
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.ResponseCodes">
+            <summary>
+            Response codes used in the binary protocol.
+            <br/>
+            <br/>**Success:**
+            <br/>- 0: OK
+            <br/>
+            <br/>**Request Errors (10-19):**
+            <br/>- 10: RequestError
+            <br/>- 11: RequestTooLarge
+            <br/>- 12: TooManyRequests
+            <br/>- 13: InvalidRequestChannel
+            <br/>
+            <br/>**Authorization Errors (20-29):**
+            <br/>- 20: Unauthorized
+            <br/>
+            <br/>**Not Found Errors (30-39):**
+            <br/>- 30: ServiceNotFound
+            <br/>- 31: ClientNotFound
+            <br/>- 32: MessageNotFound
+            <br/>
+            <br/>**Service Errors (50-60):**
+            <br/>- 50: Service_BadRequest
+            <br/>- 51: Service_NotFound
+            <br/>- 52: Service_Unauthorized
+            <br/>- 60: Service_InternalServerError
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.ServiceRequestMessage">
+            <summary>
+            Structure of a service request message in the binary protocol.
+            <br/>This schema is for documentation - actual messages are binary.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ServiceRequestMessage.Message_id">
+            <summary>
+            Unique identifier for request/response matching
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ServiceRequestMessage.Message_channel">
+            <summary>
+            Channel for sequential message processing (0 = no channel)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ServiceRequestMessage.Service_id">
+            <summary>
+            Target service UUID for routing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ServiceRequestMessage.Content">
+            <summary>
+            Message payload (JSON or binary data)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.ServiceResponseMessage">
+            <summary>
+            Structure of a service response message in the binary protocol.
+            <br/>This schema is for documentation - actual messages are binary.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ServiceResponseMessage.Message_id">
+            <summary>
+            Matches the request message ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ServiceResponseMessage.Content">
+            <summary>
+            Optional response payload
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.ConnectionConfiguration">
+            <summary>
+            Configuration options for the connect service.
+            <br/>These are server-side settings and not directly exposed via API.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ConnectionConfiguration.Obfuscate_not_found_response">
+            <summary>
+            Return Unauthorized instead of NotFound for better security
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ConnectionConfiguration.Client_request_max_size">
+            <summary>
+            Maximum size for client requests in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ConnectionConfiguration.Client_response_max_size">
+            <summary>
+            Maximum size for client responses in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ConnectionConfiguration.Client_reconnection_time">
+            <summary>
+            Time in seconds to allow client reconnection
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ConnectionConfiguration.Redis_connection_string">
+            <summary>
+            Redis connection string for session management
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ConnectionConfiguration.Token_public_key">
+            <summary>
+            Base64-encoded RSA public key for JWT validation
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Controllers.HealthController">
             <summary>
             Application healthcheck endpoint.
