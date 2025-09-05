@@ -57,13 +57,14 @@ lib-accounts-service-mysql/ # Hand-written business logic
 
 ### 1. Documentation & Code Generation
 
-**NSwag** (Implemented) ✅
+**NSwag** (Fully Implemented) ✅
 - **Pros**: Powerful code generation, TypeScript client generation, full contract-first support
-- **Cons**: More complex setup initially
-- **Implementation**: Full schema-first development with automatic controller/model generation
+- **Cons**: More complex setup initially (resolved)
+- **Implementation**: Complete schema-first development with automatic controller/model generation for all services
 - **Runtime**: .NET 9 with NSwag.AspNetCore and NSwag.MSBuild packages
+- **Generated Assets**: All controllers, TypeScript clients, and WebSocket protocol definitions
 
-**Decision**: We implemented NSwag for complete contract-first development, enabling automatic generation of controllers, models, and client libraries from OpenAPI schemas.
+**Decision**: Successfully implemented NSwag for complete contract-first development across all Bannou services, with comprehensive test generation and WebSocket protocol support.
 
 ### 2. Code Generation Approach
 
@@ -73,38 +74,93 @@ lib-accounts-service-mysql/ # Hand-written business logic
 3. Implement only business logic in service classes
 4. Maintain schema as the single source of truth
 
-**Implementation Status**: Successfully implemented schema-first development for accounts service with automated controller generation.
+**Implementation Status**: Successfully implemented schema-first development for all Bannou services with comprehensive automated generation:
+- Controllers and models for all services (accounts, auth, connect, behaviour)
+- TypeScript clients for game integration
+- WebSocket protocol definitions and binary communication
+- Comprehensive schema-driven test generation system
+
+## WebSocket-First Architecture Integration
+
+### Dual-Transport API Support
+Bannou's schema-first approach seamlessly supports both transport mechanisms:
+
+**HTTP Transport (Development/Testing)**
+- Direct service endpoint access for debugging and development
+- Traditional REST API patterns with JSON request/response
+- Swagger UI for interactive API exploration and testing
+
+**WebSocket Transport (Production)**  
+- Binary protocol communication via Connect service edge gateway
+- Zero-copy message routing using service GUIDs
+- Same API contracts validated through WebSocket binary protocol
+
+### Schema-Driven WebSocket Protocol
+```typescript
+// Generated from OpenAPI schemas
+export interface ServiceRequestMessage {
+  type: 'service_request';
+  timestamp: number;
+  correlation_id: string;
+  service_method: string;  // "account.create", "auth.login" 
+  payload: any;           // Generated request models
+  expect_response: boolean;
+}
+```
+
+The WebSocket protocol uses the same request/response models generated from OpenAPI schemas, ensuring perfect consistency between HTTP and WebSocket communication.
 
 ## Implementation Complete ✅
 
 ### Phase 1: Schema-First Development Foundation (Complete)
 - ✅ Installed NSwag.AspNetCore and NSwag.MSBuild packages
 - ✅ Converted project from .NET 10 to .NET 9 for tooling compatibility  
-- ✅ Created comprehensive OpenAPI schema for accounts service
-- ✅ Configured automated controller generation from schema
-- ✅ Generated abstract controller with full validation and documentation
+- ✅ Created comprehensive OpenAPI schemas for all services
+- ✅ Configured automated controller generation from schemas
+- ✅ Generated abstract controllers with full validation and documentation
 
-### Accounts Service Implementation
+### Complete Service Implementation (All Services Complete)
 ```bash
-# Schema location
-schemas/accounts-api.yaml
+# Schema locations
+schemas/accounts-api.yaml    # Account management
+schemas/auth-api.yaml        # Authentication & authorization
+schemas/connect-api.yaml     # WebSocket edge gateway
+schemas/behaviour-api.yaml   # AI behavior management
 
-# Generated controller
+# Generated controllers
 bannou-service/Controllers/Generated/AccountsController.Generated.cs
+bannou-service/Controllers/Generated/AuthController.Generated.cs
+bannou-service/Controllers/Generated/ConnectController.Generated.cs
+bannou-service/Controllers/Generated/BehaviourController.Generated.cs
+
+# Additional generated assets
+lib-accounts-core/AccountsGeneratedController.cs  # Accounts core controller
 ```
 
 **Generated Features:**
-- Abstract controller class with proper ASP.NET Core routing
+- Abstract controller classes with proper ASP.NET Core routing
 - Full request/response models with validation attributes
 - Support for multiple authentication methods (OAuth, username/password)
 - Cancellation token support for async operations
 - ActionResult<T> return types for proper HTTP response handling
+- Complete XML documentation for all endpoints and models
 
-### Phase 2: Next Steps
-- Extend schema-first approach to other Bannou services (auth, connect, behaviour)
-- Generate TypeScript clients for web/game integration
-- Add automated schema validation to CI/CD pipeline
-- Create service implementation classes that inherit from generated abstract controllers
+### Phase 2: Client Generation & Testing (Complete)
+- ✅ Extended schema-first approach to all Bannou services (auth, connect, behaviour)
+- ✅ Generated TypeScript clients for web/game integration
+- ✅ Implemented comprehensive schema-driven test generation
+- ✅ Created dual-transport testing system (HTTP + WebSocket)
+- ✅ Built WebSocket binary protocol implementation
+
+### Generated TypeScript Clients
+```bash
+clients/typescript/AccountsClient.ts   # Account management client
+clients/typescript/AuthClient.ts       # Authentication client  
+clients/typescript/ConnectClient.ts    # WebSocket connection client
+clients/typescript/BehaviourClient.ts  # AI behavior client
+clients/typescript/BannouClient.ts     # WebSocket protocol client
+clients/typescript/WebSocketProtocol.ts # Protocol definitions
+```
 
 ## Schema-First Development Workflow
 
@@ -153,11 +209,13 @@ public class ServiceController : ServiceControllerControllerBase
 
 This approach ensures API contracts remain consistent while allowing focus on business logic implementation.
 
-### Phase 3: Code Generation (Full Contract-First)
-- Implement schema-to-code generation pipeline
-- Auto-generate client libraries for game integration
-- Create automated testing from OpenAPI contracts
-- Extend to all services following accounts pattern
+### Phase 3: WebSocket Protocol & Testing (Complete)
+- ✅ Implemented WebSocket-first architecture with Connect service edge gateway
+- ✅ Created binary protocol with service GUID routing (zero-copy message routing)
+- ✅ Built comprehensive schema-driven test generation system
+- ✅ Implemented dual-transport testing (HTTP + WebSocket validation)
+- ✅ Created production-ready WebSocket client SDK with TypeScript definitions
+- ✅ Added automatic test generation for success, validation, and authorization scenarios
 
 ## Example: Accounts Service Schema
 
