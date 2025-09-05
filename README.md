@@ -87,6 +87,19 @@ Bannou uses **contract-first development** where OpenAPI specifications define t
 
 See [API-DESIGN.md](API-DESIGN.md) for detailed implementation guide.
 
+### Development Workflow
+After updating schemas or regenerating NSwag code:
+```bash
+# Regenerate controllers and models
+nswag run
+
+# Fix line endings for generated files (ensures EditorConfig compliance)
+./fix-generated-line-endings.sh
+
+# Verify lint compliance
+docker run --rm -v $(pwd):/tmp/lint:rw oxsecurity/megalinter-dotnet:v8 -e "ENABLE=EDITORCONFIG"
+```
+
 ## Testing Architecture
 
 Bannou implements a comprehensive **dual-transport testing** system with automatic test generation:
