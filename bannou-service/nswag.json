@@ -5,7 +5,7 @@
     "fromDocument": {
       "url": "../schemas/accounts-api.yaml",
       "output": null,
-      "newLineBehavior": "Auto"
+      "newLineBehavior": "LF"
     }
   },
   "codeGenerators": {

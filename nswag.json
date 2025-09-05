@@ -7,7 +7,7 @@
       "json": "./schemas/accounts-api.yaml",
       "url": null,
       "output": null,
-      "newLineBehavior": "Auto"
+      "newLineBehavior": "LF"
     }
   },
   "codeGenerators": {

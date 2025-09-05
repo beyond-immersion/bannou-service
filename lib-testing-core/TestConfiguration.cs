@@ -45,10 +45,10 @@ public sealed class TestConfiguration
     /// </summary>
     public bool HasHttpRequired()
         => !string.IsNullOrWhiteSpace(Client_Username) &&
-           !string.IsNullOrWhiteSpace(Client_Password) &&
-           !string.IsNullOrWhiteSpace(Http_Base_Url) &&
-           !string.IsNullOrWhiteSpace(Register_Endpoint) &&
-           !string.IsNullOrWhiteSpace(Login_Credentials_Endpoint);
+            !string.IsNullOrWhiteSpace(Client_Password) &&
+            !string.IsNullOrWhiteSpace(Http_Base_Url) &&
+            !string.IsNullOrWhiteSpace(Register_Endpoint) &&
+            !string.IsNullOrWhiteSpace(Login_Credentials_Endpoint);
 
     /// <summary>
     /// Check if required WebSocket testing configuration is provided
