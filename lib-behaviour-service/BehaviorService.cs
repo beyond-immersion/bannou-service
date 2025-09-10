@@ -91,7 +91,8 @@ public class BehaviorService : IBehaviorService
                 Error_code = "ABML_INTERNAL_ERROR",
                 Timestamp = DateTime.UtcNow,
                 Request_id = Guid.NewGuid().ToString()
-            }) { StatusCode = 500 };
+            })
+            { StatusCode = 500 };
         }
     }
 
@@ -152,11 +153,12 @@ public class BehaviorService : IBehaviorService
                 Error_code = "STACK_INTERNAL_ERROR",
                 Timestamp = DateTime.UtcNow,
                 Request_id = Guid.NewGuid().ToString()
-            }) { StatusCode = 500 };
+            })
+            { StatusCode = 500 };
         }
     }
 
-    public async Task<ActionResult<ValidateAbmlResponse>> ValidateAbml(string body, CancellationToken cancellationToken = default)
+    public Task<ActionResult<ValidateAbmlResponse>> ValidateAbml(string body, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -212,22 +214,23 @@ public class BehaviorService : IBehaviorService
                 }
             }
 
-            return new OkObjectResult(response);
+            return Task.FromResult<ActionResult<ValidateAbmlResponse>>(new OkObjectResult(response));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error during ABML validation");
-            return new ObjectResult(new AbmlErrorResponse
+            return Task.FromResult<ActionResult<ValidateAbmlResponse>>(new ObjectResult(new AbmlErrorResponse
             {
                 Error = "Internal server error during ABML validation",
                 Error_code = "VALIDATION_INTERNAL_ERROR",
                 Timestamp = DateTime.UtcNow,
                 Request_id = Guid.NewGuid().ToString()
-            }) { StatusCode = 500 };
+            })
+            { StatusCode = 500 });
         }
     }
 
-    public async Task<ActionResult<CachedBehaviorResponse>> GetCachedBehavior(string behavior_id, CancellationToken cancellationToken = default)
+    public Task<ActionResult<CachedBehaviorResponse>> GetCachedBehavior(string behavior_id, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -243,31 +246,32 @@ public class BehaviorService : IBehaviorService
                     Cache_hit = true
                 };
 
-                return new OkObjectResult(response);
+                return Task.FromResult<ActionResult<CachedBehaviorResponse>>(new OkObjectResult(response));
             }
 
-            return new NotFoundObjectResult(new AbmlErrorResponse
+            return Task.FromResult<ActionResult<CachedBehaviorResponse>>(new NotFoundObjectResult(new AbmlErrorResponse
             {
                 Error = "Behavior not found in cache",
                 Error_code = "BEHAVIOR_NOT_CACHED",
                 Timestamp = DateTime.UtcNow,
                 Request_id = Guid.NewGuid().ToString()
-            });
+            }));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error retrieving cached behavior: {BehaviorId}", behavior_id);
-            return new ObjectResult(new AbmlErrorResponse
+            return Task.FromResult<ActionResult<CachedBehaviorResponse>>(new ObjectResult(new AbmlErrorResponse
             {
                 Error = "Internal server error during cache retrieval",
                 Error_code = "CACHE_INTERNAL_ERROR",
                 Timestamp = DateTime.UtcNow,
                 Request_id = Guid.NewGuid().ToString()
-            }) { StatusCode = 500 };
+            })
+            { StatusCode = 500 });
         }
     }
 
-    public async Task<IActionResult> InvalidateCachedBehavior(string behavior_id, CancellationToken cancellationToken = default)
+    public Task<IActionResult> InvalidateCachedBehavior(string behavior_id, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -275,31 +279,32 @@ public class BehaviorService : IBehaviorService
 
             if (_behaviorCache.TryRemove(behavior_id, out _))
             {
-                return new OkResult();
+                return Task.FromResult<IActionResult>(new OkResult());
             }
 
-            return new NotFoundObjectResult(new AbmlErrorResponse
+            return Task.FromResult<IActionResult>(new NotFoundObjectResult(new AbmlErrorResponse
             {
                 Error = "Behavior not found in cache",
                 Error_code = "BEHAVIOR_NOT_CACHED",
                 Timestamp = DateTime.UtcNow,
                 Request_id = Guid.NewGuid().ToString()
-            });
+            }));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error invalidating cached behavior: {BehaviorId}", behavior_id);
-            return new ObjectResult(new AbmlErrorResponse
+            return Task.FromResult<IActionResult>(new ObjectResult(new AbmlErrorResponse
             {
                 Error = "Internal server error during cache invalidation",
                 Error_code = "CACHE_INTERNAL_ERROR",
                 Timestamp = DateTime.UtcNow,
                 Request_id = Guid.NewGuid().ToString()
-            }) { StatusCode = 500 };
+            })
+            { StatusCode = 500 });
         }
     }
 
-    public async Task<ActionResult<ResolveContextResponse>> ResolveContextVariables(ResolveContextRequest body, CancellationToken cancellationToken = default)
+    public Task<ActionResult<ResolveContextResponse>> ResolveContextVariables(ResolveContextRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -320,18 +325,19 @@ public class BehaviorService : IBehaviorService
                 Context_variables_used = contextVariables?.ToList() ?? new List<string>()
             };
 
-            return new OkObjectResult(response);
+            return Task.FromResult<ActionResult<ResolveContextResponse>>(new OkObjectResult(response));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error resolving context variables");
-            return new ObjectResult(new AbmlErrorResponse
+            return Task.FromResult<ActionResult<ResolveContextResponse>>(new ObjectResult(new AbmlErrorResponse
             {
                 Error = "Internal server error during context variable resolution",
                 Error_code = "CONTEXT_INTERNAL_ERROR",
                 Timestamp = DateTime.UtcNow,
                 Request_id = Guid.NewGuid().ToString()
-            }) { StatusCode = 500 };
+            })
+            { StatusCode = 500 });
         }
     }
 

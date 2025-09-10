@@ -278,9 +278,9 @@ public class AbmlParser
             {
                 var expression = match.Groups[1].Value;
                 var resolvedValue = ResolveContextExpression(expression, characterContext);
-                
+
                 _logger?.LogTrace("Resolved context variable '{Expression}' to '{Value}'", expression, resolvedValue);
-                
+
                 return resolvedValue?.ToString() ?? "null";
             });
 

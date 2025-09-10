@@ -30,7 +30,7 @@ public class AbmlCompiler
     /// <param name="options">Compilation options</param>
     /// <returns>Compilation result with executable behavior tree</returns>
     public async Task<CompilationResult> CompileAbmlBehavior(
-        string abmlContent, 
+        string abmlContent,
         CharacterContext? characterContext = null,
         CompilationOptions? options = null)
     {
@@ -55,7 +55,7 @@ public class AbmlCompiler
             if (characterContext != null && options.ResolveContextVariables)
             {
                 resolvedContent = _parser.ResolveContextVariables(abmlContent, characterContext);
-                
+
                 // Re-parse with resolved variables
                 var resolvedParseResult = _parser.ParseAbmlDocument(resolvedContent);
                 if (!resolvedParseResult.IsSuccess)
@@ -67,10 +67,10 @@ public class AbmlCompiler
 
             // Compile the behavior tree
             var behaviorTree = await CompileBehaviorTree(document, characterContext, options);
-            
+
             // Extract GOAP goals if enabled
-            var goapGoals = options.GenerateGoapGoals 
-                ? ExtractGoapGoals(document) 
+            var goapGoals = options.GenerateGoapGoals
+                ? ExtractGoapGoals(document)
                 : new List<GoapGoal>();
 
             // Calculate execution metadata
@@ -172,7 +172,7 @@ public class AbmlCompiler
     /// <summary>
     /// Merges multiple ABML documents with priority-based conflict resolution.
     /// </summary>
-    private async Task<MergeResult> MergeBehaviorDocuments(
+    private Task<MergeResult> MergeBehaviorDocuments(
         List<(BehaviorSetDefinition Set, AbmlDocument Document)> parsedDocuments,
         CharacterContext? characterContext,
         CompilationOptions options)
@@ -223,8 +223,8 @@ public class AbmlCompiler
                         mergedDocument.Behaviors[behaviorName] = behavior;
                         setMergeInfo.OverriddenBehaviors.Add(behaviorName);
                         setMergeInfo.TookPrecedence = true;
-                        
-                        _logger?.LogDebug("Behavior '{Name}' overridden by set '{SetId}' (priority {Priority})", 
+
+                        _logger?.LogDebug("Behavior '{Name}' overridden by set '{SetId}' (priority {Priority})",
                             behaviorName, set.Id, set.Priority);
                     }
                 }
@@ -246,7 +246,7 @@ public class AbmlCompiler
 
         var mergedContent = serializer.Serialize(mergedDocument);
 
-        return MergeResult.Success(mergedContent, mergeInfo);
+        return Task.FromResult(MergeResult.Success(mergedContent, mergeInfo));
     }
 
     /// <summary>
@@ -280,8 +280,8 @@ public class AbmlCompiler
     /// Determines if a behavior should be overridden based on priority.
     /// </summary>
     private bool ShouldOverrideBehavior(
-        string behaviorName, 
-        BehaviorSetDefinition currentSet, 
+        string behaviorName,
+        BehaviorSetDefinition currentSet,
         List<(BehaviorSetDefinition Set, AbmlDocument Document)> allSets)
     {
         // Find the highest priority set that defines this behavior
@@ -296,7 +296,7 @@ public class AbmlCompiler
     /// Compiles a behavior tree from an ABML document.
     /// </summary>
     private async Task<Dictionary<string, object>> CompileBehaviorTree(
-        AbmlDocument document, 
+        AbmlDocument document,
         CharacterContext? characterContext,
         CompilationOptions options)
     {
@@ -432,7 +432,7 @@ public class AbmlCompiler
     /// <summary>
     /// Compiles action definitions into executable actions.
     /// </summary>
-    private async Task<List<Dictionary<string, object>>> CompileActions(
+    private Task<List<Dictionary<string, object>>> CompileActions(
         List<Dictionary<string, object>> actions,
         CharacterContext? characterContext,
         CompilationOptions options)
@@ -474,7 +474,7 @@ public class AbmlCompiler
             }
         }
 
-        return compiledActions;
+        return Task.FromResult(compiledActions);
     }
 
     /// <summary>
@@ -493,7 +493,7 @@ public class AbmlCompiler
             "delete_"
         };
 
-        return serviceActionPatterns.Any(pattern => 
+        return serviceActionPatterns.Any(pattern =>
             actionType.Contains(pattern, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -681,7 +681,7 @@ public class AbmlCompiler
         var baseId = document.Metadata?.Id ?? "behavior";
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var hash = Math.Abs(document.GetHashCode());
-        
+
         return $"{baseId}_{timestamp}_{hash:X8}";
     }
 }
@@ -788,8 +788,8 @@ public class StackCompilationResult : CompilationResult
     /// Creates a successful stack compilation result.
     /// </summary>
     public static StackCompilationResult Success(
-        string behaviorId, 
-        CompiledBehavior compiledBehavior, 
+        string behaviorId,
+        CompiledBehavior compiledBehavior,
         int compilationTimeMs,
         List<BehaviorSetMergeInfo> mergeInfo)
     {

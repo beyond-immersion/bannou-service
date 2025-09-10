@@ -1,11 +1,11 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using System.Collections.Immutable;
-using System.Text;
-using System.Linq;
-using System.IO;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace BeyondImmersion.BannouService.SourceGeneration;
 
@@ -48,13 +48,13 @@ public class EventModelGenerator : IIncrementalGenerator
 
                 // Generate event models (data classes)
                 GenerateEventModels(context, serviceName, schemaContent.ToString());
-                
+
                 // Generate event publisher service
                 GenerateEventPublisher(context, serviceName);
-                
+
                 // Generate event subscriber handlers
                 GenerateEventSubscriber(context, serviceName);
-                
+
                 // Generate DI extensions for events
                 GenerateEventRegistrations(context, serviceName);
             }
@@ -310,7 +310,7 @@ public static partial class {{pascalCaseServiceName}}EventExtensions
         // Simple parsing for demonstration - in real implementation,
         // you'd use proper YAML parser and OpenAPI model
         var events = new List<EventModel>();
-        
+
         // Parse basic event structures (simplified)
         if (schemaContent.Contains("AccountCreatedEvent"))
         {
@@ -330,7 +330,7 @@ public static partial class {{pascalCaseServiceName}}EventExtensions
         {
             events.Add(new EventModel
             {
-                Name = "ServiceMappingEvent", 
+                Name = "ServiceMappingEvent",
                 Properties = new List<EventProperty>
                 {
                     new() { Name = "ServiceName", Type = "string", Required = true },
@@ -346,7 +346,7 @@ public static partial class {{pascalCaseServiceName}}EventExtensions
     private static string GenerateEventClass(string serviceNamePascal, EventModel eventModel)
     {
         var properties = eventModel.Properties.Select(p => GenerateEventProperty(p));
-        
+
         return $$"""
 /// <summary>
 /// {{eventModel.Name}} event for {{serviceNamePascal}} service.
@@ -361,10 +361,10 @@ public class {{eventModel.Name}} : {{serviceNamePascal}}EventBase
     private static string GenerateEventProperty(EventProperty property)
     {
         var attributes = new List<string>();
-        
+
         if (property.Required)
             attributes.Add("[Required]");
-        
+
         attributes.Add($"[JsonProperty(\"{ToCamelCase(property.Name)}\")]");
 
         var csharpType = MapTypeToCSharp(property.Type);

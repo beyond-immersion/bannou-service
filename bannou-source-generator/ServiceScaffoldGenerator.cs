@@ -1,11 +1,11 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using System.Collections.Immutable;
-using System.Text;
-using System.Linq;
-using System.IO;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace BeyondImmersion.BannouService.SourceGeneration;
 
@@ -21,7 +21,7 @@ public class ServiceScaffoldGenerator : IIncrementalGenerator
     {
         // Get MSBuild properties
         var generateNewServicesProvider = context.AnalyzerConfigOptionsProvider
-            .Select((options, _) => 
+            .Select((options, _) =>
             {
                 options.GlobalOptions.TryGetValue("build_property.GenerateNewServices", out var value);
                 return bool.TryParse(value, out var result) && result;
@@ -61,13 +61,13 @@ public class ServiceScaffoldGenerator : IIncrementalGenerator
 
                 // Generate service interface
                 GenerateServiceInterface(context, serviceName, schemaContent.ToString());
-                
+
                 // Generate service implementation stub (only if doesn't exist)
                 GenerateServiceImplementation(context, serviceName);
-                
+
                 // Generate client registration
                 GenerateClientRegistration(context, serviceName);
-                
+
                 // Generate DI extensions
                 GenerateServiceRegistration(context, serviceName);
             }
@@ -226,7 +226,7 @@ public static partial class {{pascalCaseServiceName}}ServiceExtensions
         // Simple parsing for demonstration - in a real implementation,
         // you'd use a proper YAML parser and OpenAPI model
         var endpoints = new List<ServiceEndpoint>();
-        
+
         // For now, return a basic endpoint structure
         // This would be replaced with actual OpenAPI parsing
         endpoints.Add(new ServiceEndpoint
@@ -243,7 +243,7 @@ public static partial class {{pascalCaseServiceName}}ServiceExtensions
     private static string GenerateServiceMethod(ServiceEndpoint endpoint)
     {
         var methodName = endpoint.OperationId ?? $"{endpoint.Method}{endpoint.Path.Replace("/", "").Replace("{", "").Replace("}", "")}";
-        
+
         return $"""
     /// <summary>
     /// {endpoint.Method} {endpoint.Path}

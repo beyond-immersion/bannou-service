@@ -1,7 +1,7 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 using Xunit.Abstractions;
-using Microsoft.AspNetCore.Mvc;
 
 namespace BeyondImmersion.BannouService.Behaviour.UnitTests;
 
@@ -39,11 +39,11 @@ behaviors:
 ";
 
         var result = await _behaviorService.ValidateAbml(abmlContent);
-        
+
         Assert.IsType<OkObjectResult>(result.Result);
         var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as ValidateAbmlResponse;
-        
+
         Assert.NotNull(response);
         Assert.True(response.Is_valid);
     }
@@ -54,11 +54,11 @@ behaviors:
         var invalidYaml = "invalid: yaml: content: [";
 
         var result = await _behaviorService.ValidateAbml(invalidYaml);
-        
+
         Assert.IsType<OkObjectResult>(result.Result);
         var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as ValidateAbmlResponse;
-        
+
         Assert.NotNull(response);
         Assert.False(response.Is_valid);
     }
@@ -81,11 +81,11 @@ behaviors:
 ";
 
         var result = await _behaviorService.CompileAbmlBehavior(abmlContent);
-        
+
         Assert.IsType<OkObjectResult>(result.Result);
         var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as CompileBehaviorResponse;
-        
+
         Assert.NotNull(response);
         Assert.True(response.Success);
         Assert.NotNull(response.Behavior_id);
@@ -96,7 +96,7 @@ behaviors:
     public async Task GetCachedBehavior_NonExistentId_ReturnsNotFound()
     {
         var result = await _behaviorService.GetCachedBehavior("non-existent-id");
-        
+
         Assert.IsType<NotFoundObjectResult>(result.Result);
     }
 
@@ -104,7 +104,7 @@ behaviors:
     public async Task InvalidateCachedBehavior_NonExistentId_ReturnsNotFound()
     {
         var result = await _behaviorService.InvalidateCachedBehavior("non-existent-id");
-        
+
         Assert.IsType<NotFoundObjectResult>(result);
     }
 }
