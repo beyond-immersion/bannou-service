@@ -7,4 +7,9 @@
 		<TargetFramework>net9.0</TargetFramework>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<PackageReference Include="YamlDotNet" Version="16.2.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.0" />
+	</ItemGroup>
+
 </Project>

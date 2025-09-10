@@ -9,6 +9,8 @@
 
 	<ItemGroup>
 	  <PackageReference Include="Newtonsoft.Json.Schema" Version="4.0.1" />
+	  <PackageReference Include="YamlDotNet" Version="16.2.0" />
+	  <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

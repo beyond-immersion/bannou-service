@@ -1,0 +1,632 @@
+openapi: 3.0.0
+info:
+  title: ABML Behavior Management API
+  version: 2.0.0
+  description: |
+    Arcadia Behavior Markup Language (ABML) API for character behavior management.
+    
+    This API handles:
+    - YAML-based behavior definition parsing and compilation
+    - Stackable behavior set management with priority resolution
+    - GOAP (Goal-Oriented Action Planning) integration
+    - Cultural adaptation and context-aware behavior modification
+    - Real-time behavior state management and caching
+    - Integration with Dapr service mesh for distributed character agents
+
+servers:
+  - url: http://localhost/api/behavior
+    description: Development server
+
+paths:
+  /compile:
+    post:
+      summary: Compile ABML behavior definition
+      description: |
+        Compiles a YAML-based ABML behavior definition into executable behavior trees.
+        Handles stackable behavior sets, cultural adaptations, and context variable resolution.
+      operationId: CompileAbmlBehavior
+      tags:
+        - ABML
+      requestBody:
+        required: true
+        content:
+          application/yaml:
+            schema:
+              type: string
+              description: Raw ABML YAML content
+            example: |
+              version: "1.0.0"
+              metadata:
+                id: "blacksmith_daily_routine"
+                category: "profession"
+                priority: 60
+                description: "Daily routine for a master blacksmith NPC"
+              
+              context:
+                variables:
+                  energy_level: "${npc.stats.energy}"
+                  skill_level: "${npc.skills.blacksmithing}"
+                  shop_reputation: "${npc.reputation.local}"
+                
+                services:
+                  - name: "crafting_service"
+                    required: true
+                  - name: "economy_service"
+                    required: true
+              
+              behaviors:
+                morning_startup:
+                  triggers:
+                    - time_range: "06:00-09:00"
+                    - condition: "${context.energy_level > 0.7}"
+                  actions:
+                    - wake_up:
+                        animation: "stretch_and_yawn"
+                        duration: 3
+                        energy_cost: -0.05
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompileBehaviorRequest'
+      responses:
+        '200':
+          description: ABML behavior compiled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompileBehaviorResponse'
+        '400':
+          description: Invalid ABML definition or compilation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbmlErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbmlErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbmlErrorResponse'
+
+  /stack/compile:
+    post:
+      summary: Compile stackable behavior sets
+      description: |
+        Compiles multiple ABML behavior sets with priority-based merging.
+        Handles cultural adaptations, profession specializations, and context resolution.
+      operationId: CompileBehaviorStack
+      tags:
+        - BehaviorStacks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BehaviorStackRequest'
+      responses:
+        '200':
+          description: Behavior stack compiled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompileBehaviorResponse'
+        '400':
+          description: Invalid behavior stack or compilation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbmlErrorResponse'
+
+  /validate:
+    post:
+      summary: Validate ABML definition
+      description: |
+        Validates ABML YAML against schema and checks for semantic correctness.
+        Includes context variable validation and service dependency checking.
+      operationId: ValidateAbml
+      tags:
+        - Validation
+      requestBody:
+        required: true
+        content:
+          application/yaml:
+            schema:
+              type: string
+              description: Raw ABML YAML content to validate
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateAbmlRequest'
+      responses:
+        '200':
+          description: Validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateAbmlResponse'
+
+  /cache/{behavior_id}:
+    get:
+      summary: Get cached compiled behavior
+      description: |
+        Retrieves a previously compiled behavior from the cache.
+        Used for performance optimization in high-frequency behavior execution.
+      operationId: GetCachedBehavior
+      tags:
+        - Cache
+      parameters:
+        - name: behavior_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the cached behavior
+      responses:
+        '200':
+          description: Cached behavior retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CachedBehaviorResponse'
+        '404':
+          description: Behavior not found in cache
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbmlErrorResponse'
+
+    delete:
+      summary: Invalidate cached behavior
+      description: |
+        Removes a behavior from the cache, forcing recompilation on next access.
+        Used when behavior definitions are updated.
+      operationId: InvalidateCachedBehavior
+      tags:
+        - Cache
+      parameters:
+        - name: behavior_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the cached behavior
+      responses:
+        '200':
+          description: Cache invalidated successfully
+        '404':
+          description: Behavior not found in cache
+
+  /context/resolve:
+    post:
+      summary: Resolve context variables
+      description: |
+        Resolves context variables in ABML definitions against character and world state.
+        Used for dynamic behavior adaptation based on current game state.
+      operationId: ResolveContextVariables
+      tags:
+        - Context
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveContextRequest'
+      responses:
+        '200':
+          description: Context variables resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveContextResponse'
+
+components:
+  schemas:
+    # Request Models
+    CompileBehaviorRequest:
+      type: object
+      required:
+        - abml_content
+      properties:
+        abml_content:
+          type: string
+          description: Raw ABML YAML content to compile
+          example: |
+            version: "1.0.0"
+            metadata:
+              id: "example_behavior"
+              category: "basic"
+            behaviors:
+              example:
+                triggers:
+                  - condition: "true"
+                actions:
+                  - log:
+                      message: "Hello World"
+        character_context:
+          $ref: '#/components/schemas/CharacterContext'
+        compilation_options:
+          $ref: '#/components/schemas/CompilationOptions'
+
+    BehaviorStackRequest:
+      type: object
+      required:
+        - behavior_sets
+      properties:
+        behavior_sets:
+          type: array
+          items:
+            $ref: '#/components/schemas/BehaviorSetDefinition'
+          description: Array of behavior sets to compile together
+        character_context:
+          $ref: '#/components/schemas/CharacterContext'
+        compilation_options:
+          $ref: '#/components/schemas/CompilationOptions'
+
+    ValidateAbmlRequest:
+      type: object
+      required:
+        - abml_content
+      properties:
+        abml_content:
+          type: string
+          description: Raw ABML YAML content to validate
+        strict_mode:
+          type: boolean
+          default: false
+          description: Enable strict validation mode with enhanced checking
+
+    ResolveContextRequest:
+      type: object
+      required:
+        - context_expression
+        - character_context
+      properties:
+        context_expression:
+          type: string
+          description: Context variable expression to resolve
+          example: "${npc.stats.energy > 0.5 && world.time.hour < 18}"
+        character_context:
+          $ref: '#/components/schemas/CharacterContext'
+
+    # Response Models
+    CompileBehaviorResponse:
+      type: object
+      required:
+        - success
+        - behavior_id
+      properties:
+        success:
+          type: boolean
+          description: Whether compilation was successful
+        behavior_id:
+          type: string
+          description: Unique identifier for the compiled behavior
+          example: "behavior_abc123"
+        compiled_behavior:
+          $ref: '#/components/schemas/CompiledBehavior'
+        compilation_time_ms:
+          type: integer
+          description: Time taken to compile the behavior
+        cache_key:
+          type: string
+          description: Key for caching the compiled behavior
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Non-fatal warnings during compilation
+
+    ValidateAbmlResponse:
+      type: object
+      required:
+        - is_valid
+      properties:
+        is_valid:
+          type: boolean
+          description: Whether the ABML definition is valid
+        validation_errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          description: List of validation errors if invalid
+        semantic_warnings:
+          type: array
+          items:
+            type: string
+          description: Semantic warnings that don't prevent compilation
+        schema_version:
+          type: string
+          description: ABML schema version used for validation
+
+    CachedBehaviorResponse:
+      type: object
+      required:
+        - behavior_id
+        - compiled_behavior
+      properties:
+        behavior_id:
+          type: string
+          description: Unique identifier for the cached behavior
+        compiled_behavior:
+          $ref: '#/components/schemas/CompiledBehavior'
+        cache_timestamp:
+          type: string
+          format: date-time
+          description: When the behavior was cached
+        cache_hit:
+          type: boolean
+          description: Whether this was a cache hit or miss
+
+    ResolveContextResponse:
+      type: object
+      required:
+        - resolved_value
+      properties:
+        resolved_value:
+          description: The resolved value of the context expression
+        resolved_type:
+          type: string
+          enum: [boolean, string, number, object, array]
+          description: Type of the resolved value
+        context_variables_used:
+          type: array
+          items:
+            type: string
+          description: List of context variables referenced in the expression
+
+    # Core Data Models
+    BehaviorSetDefinition:
+      type: object
+      required:
+        - id
+        - priority
+        - abml_content
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the behavior set
+          example: "base_humanoid"
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Priority level for merging (higher priority overrides lower)
+          example: 50
+        category:
+          type: string
+          description: Category of the behavior set
+          enum: [base, cultural, professional, personal, situational]
+        abml_content:
+          type: string
+          description: Raw ABML YAML content for this behavior set
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata for the behavior set
+
+    CharacterContext:
+      type: object
+      properties:
+        npc_id:
+          type: string
+          description: Unique identifier for the NPC
+          example: "npc_12345"
+        culture:
+          type: string
+          description: Cultural background identifier
+          example: "european_medieval"
+        profession:
+          type: string
+          description: Character profession identifier
+          example: "blacksmith"
+        stats:
+          type: object
+          additionalProperties:
+            type: number
+          description: Character statistics and attributes
+          example:
+            energy: 0.8
+            health: 1.0
+            hunger: 0.3
+        skills:
+          type: object
+          additionalProperties:
+            type: number
+          description: Character skill levels
+          example:
+            blacksmithing: 85
+            trading: 42
+        location:
+          type: object
+          properties:
+            current:
+              type: string
+            region:
+              type: string
+            coordinates:
+              type: object
+              properties:
+                x: { type: number }
+                y: { type: number }
+                z: { type: number }
+        relationships:
+          type: object
+          additionalProperties:
+            type: number
+          description: Relationship values with other characters
+        world_state:
+          type: object
+          additionalProperties: true
+          description: Relevant world state information
+
+    CompiledBehavior:
+      type: object
+      required:
+        - behavior_tree
+        - context_schema
+      properties:
+        behavior_tree:
+          type: object
+          description: Compiled executable behavior tree structure
+        context_schema:
+          type: object
+          description: Schema defining required context variables
+        service_dependencies:
+          type: array
+          items:
+            type: string
+          description: List of required services for this behavior
+        goap_goals:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoapGoal'
+          description: GOAP goals extracted from the behavior
+        execution_metadata:
+          type: object
+          properties:
+            estimated_duration:
+              type: integer
+              description: Estimated execution time in seconds
+            resource_requirements:
+              type: object
+              additionalProperties:
+                type: number
+            interrupt_conditions:
+              type: array
+              items:
+                type: string
+
+    GoapGoal:
+      type: object
+      required:
+        - name
+        - conditions
+        - priority
+      properties:
+        name:
+          type: string
+          description: Name of the goal
+          example: "satisfy_hunger"
+        description:
+          type: string
+          description: Human-readable description of the goal
+        conditions:
+          type: object
+          additionalProperties:
+            type: number
+          description: World state conditions that satisfy this goal
+          example:
+            hunger_level: 0.0
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Priority of this goal relative to others
+        preconditions:
+          type: object
+          additionalProperties:
+            type: number
+          description: World state conditions required to pursue this goal
+
+    CompilationOptions:
+      type: object
+      properties:
+        enable_optimizations:
+          type: boolean
+          default: true
+          description: Enable behavior tree optimizations
+        cache_compiled_result:
+          type: boolean
+          default: true
+          description: Cache the compiled behavior for reuse
+        strict_validation:
+          type: boolean
+          default: false
+          description: Enable strict validation mode
+        cultural_adaptations:
+          type: boolean
+          default: true
+          description: Apply cultural adaptations during compilation
+        goap_integration:
+          type: boolean
+          default: true
+          description: Generate GOAP goals from behaviors
+
+    ValidationError:
+      type: object
+      required:
+        - type
+        - message
+      properties:
+        type:
+          type: string
+          enum: [syntax, semantic, schema, context, service_dependency]
+          description: Type of validation error
+        message:
+          type: string
+          description: Human-readable error message
+        line_number:
+          type: integer
+          description: Line number where the error occurred (if applicable)
+        column_number:
+          type: integer
+          description: Column number where the error occurred (if applicable)
+        yaml_path:
+          type: string
+          description: YAML path to the problematic element
+          example: "behaviors.morning_startup.actions[0]"
+
+    # Error Response Model
+    AbmlErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "ABML compilation failed"
+        error_code:
+          type: string
+          description: Specific error code for programmatic handling
+          example: "ABML_SYNTAX_ERROR"
+        details:
+          type: array
+          items:
+            type: string
+          description: Detailed error information
+        validation_errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          description: Validation errors encountered
+        yaml_line:
+          type: integer
+          description: Line number in YAML where error occurred
+        context:
+          type: object
+          additionalProperties: true
+          description: Additional context about the error
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred
+        request_id:
+          type: string
+          description: Unique identifier for the failed request
+
+tags:
+  - name: ABML
+    description: Core ABML compilation and management operations
+  - name: BehaviorStacks
+    description: Stackable behavior set compilation and merging
+  - name: Validation
+    description: ABML validation and semantic checking
+  - name: Cache
+    description: Behavior compilation caching operations
+  - name: Context
+    description: Context variable resolution and management

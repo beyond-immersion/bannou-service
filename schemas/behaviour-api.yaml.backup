@@ -1,0 +1,436 @@
+openapi: 3.0.0
+info:
+  title: Bannou Behaviour API
+  version: 1.0.0
+  description: |
+    AI behavior management for Bannou services.
+    
+    This API handles:
+    - Behavior tree creation and management for AI entities
+    - Prerequisite validation for behavior execution
+    - JSON schema-based behavior validation
+    - Support for complex nested behavior structures
+    - Integration with Dapr service mesh for distributed AI systems
+
+servers:
+  - url: http://localhost/api/behaviour
+    description: Development server
+
+paths:
+  /add:
+    post:
+      summary: Add new behavior tree
+      description: |
+        Adds a new behavior tree to the AI behavior system.
+        Behavior trees are used to define complex AI decision-making patterns
+        and can include prerequisites, steps, and context updates.
+      operationId: AddBehaviourTree
+      tags:
+        - Behaviours
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddBehaviourTreeRequest'
+            examples:
+              simple-terminal:
+                summary: Simple terminal behavior
+                value:
+                  behavior:
+                    name: "drink_water"
+                    description: "Character drinks water to satisfy thirst"
+                    type: "terminal"
+                    prerequisites:
+                      - name: "Water Bottle"
+                        type: "item"
+                        value: 1
+                    outcome: "Thirst reduced by 50%"
+                    contextUpdates:
+                      thirst: -50
+                      water_bottle_count: -1
+              complex-sequence:
+                summary: Complex sequence behavior
+                value:
+                  behavior:
+                    name: "craft_sword"
+                    description: "Craft a basic iron sword"
+                    type: "sequence"
+                    prerequisites:
+                      - name: "Smithing"
+                        type: "skill"
+                        value: 25
+                      - name: "Anvil"
+                        type: "tool"
+                      - name: "Iron Ingot"
+                        type: "item"
+                        value: 3
+                    steps:
+                      - name: "heat_metal"
+                        description: "Heat iron in forge"
+                        type: "terminal"
+                        outcome: "Iron heated to working temperature"
+                      - name: "shape_blade"
+                        description: "Shape the sword blade"
+                        type: "terminal"
+                        outcome: "Blade shaped and formed"
+                      - name: "attach_handle"
+                        description: "Attach handle to blade"
+                        type: "terminal"
+                        outcome: "Sword completed"
+                    outcome: "Iron sword crafted"
+                    contextUpdates:
+                      iron_ingot_count: -3
+                      iron_sword_count: 1
+                      smithing_xp: 50
+      responses:
+        '200':
+          description: Behavior tree added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddBehaviourTreeResponse'
+        '400':
+          description: Invalid behavior definition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BehaviourErrorResponse'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BehaviourErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BehaviourErrorResponse'
+
+  /validate/behavior:
+    post:
+      summary: Validate behavior definition
+      description: |
+        Validates a behavior definition against the JSON schema.
+        Includes reference resolution and comprehensive validation.
+      operationId: ValidateBehaviour
+      tags:
+        - Validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateBehaviourRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateBehaviourResponse'
+
+  /validate/prerequisite:
+    post:
+      summary: Validate prerequisite definition
+      description: |
+        Validates a prerequisite definition against the JSON schema.
+      operationId: ValidatePrerequisite
+      tags:
+        - Validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidatePrerequisiteRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidatePrerequisiteResponse'
+
+  /resolve/references:
+    post:
+      summary: Resolve behavior references
+      description: |
+        Resolves behavior references ($ref) within behavior definitions.
+        Returns fully resolved behavior trees ready for execution.
+      operationId: ResolveBehaviourReferences
+      tags:
+        - References
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveReferencesRequest'
+      responses:
+        '200':
+          description: References resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveReferencesResponse'
+        '400':
+          description: Unable to resolve references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BehaviourErrorResponse'
+
+components:
+  schemas:
+    # Request Models
+    AddBehaviourTreeRequest:
+      type: object
+      required:
+        - behavior
+      properties:
+        behavior:
+          $ref: '#/components/schemas/BehaviorDefinition'
+      example:
+        behavior:
+          name: "example_behavior"
+          description: "Example behavior for demonstration"
+          type: "terminal"
+
+    ValidateBehaviourRequest:
+      type: object
+      required:
+        - behavior
+      properties:
+        behavior:
+          $ref: '#/components/schemas/BehaviorDefinition'
+
+    ValidatePrerequisiteRequest:
+      type: object
+      required:
+        - prerequisite
+      properties:
+        prerequisite:
+          $ref: '#/components/schemas/Prerequisite'
+
+    ResolveReferencesRequest:
+      type: object
+      required:
+        - behaviors
+      properties:
+        behaviors:
+          type: array
+          items:
+            $ref: '#/components/schemas/BehaviorDefinition'
+          description: Array of behavior definitions to resolve references for
+
+    # Response Models
+    AddBehaviourTreeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          example: true
+        message:
+          type: string
+          description: Success message
+          example: "Behavior tree added successfully"
+        behavior_id:
+          type: string
+          description: Unique identifier for the added behavior tree
+          example: "behavior_12345"
+
+    ValidateBehaviourResponse:
+      type: object
+      required:
+        - is_valid
+      properties:
+        is_valid:
+          type: boolean
+          description: Whether the behavior is valid
+        validation_errors:
+          type: array
+          items:
+            type: string
+          description: List of validation errors if behavior is invalid
+        resolved_behavior:
+          $ref: '#/components/schemas/BehaviorDefinition'
+          description: Behavior with resolved references (if applicable)
+
+    ValidatePrerequisiteResponse:
+      type: object
+      required:
+        - is_valid
+      properties:
+        is_valid:
+          type: boolean
+          description: Whether the prerequisite is valid
+        validation_errors:
+          type: array
+          items:
+            type: string
+          description: List of validation errors if prerequisite is invalid
+
+    ResolveReferencesResponse:
+      type: object
+      required:
+        - success
+        - resolved_behaviors
+      properties:
+        success:
+          type: boolean
+          description: Whether all references were resolved successfully
+        resolved_behaviors:
+          type: array
+          items:
+            $ref: '#/components/schemas/BehaviorDefinition'
+          description: Array of behaviors with resolved references
+        unresolved_references:
+          type: array
+          items:
+            type: string
+          description: List of references that could not be resolved
+        validation_errors:
+          type: array
+          items:
+            type: string
+          description: Validation errors encountered during resolution
+
+    # Core Data Models
+    BehaviorDefinition:
+      type: object
+      required:
+        - name
+        - description
+        - type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Unique name of the behavior
+          example: "gather_berries"
+        description:
+          type: string
+          description: Description of what the behavior does
+          example: "Character searches for and gathers edible berries from bushes"
+        type:
+          type: string
+          enum: [sequence, terminal, repeat]
+          description: Type of behavior execution pattern
+          example: "terminal"
+        prerequisites:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prerequisite'
+          description: Requirements that must be met before behavior can execute
+        steps:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/BehaviorDefinition'
+              - $ref: '#/components/schemas/BehaviorReference'
+          minItems: 1
+          description: Sub-behaviors to execute (for sequence/repeat types)
+        outcome:
+          type: string
+          nullable: true
+          description: Description of the behavior's result
+          example: "Berries added to inventory"
+        contextUpdates:
+          type: object
+          nullable: true
+          description: Changes to character/world state after behavior execution
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: boolean  
+              - type: integer
+              - type: number
+              - type: "null"
+              - type: array
+                items:
+                  oneOf:
+                    - type: string
+                    - type: boolean
+                    - type: integer
+                    - type: number
+          example:
+            berry_count: 5
+            foraging_xp: 25
+            energy: -10
+
+    BehaviorReference:
+      type: object
+      required:
+        - $ref
+      properties:
+        $ref:
+          type: string
+          description: Reference to another behavior by name
+          example: "common_gathering_behavior"
+
+    Prerequisite:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Name of the required resource, skill, or condition
+          example: "Foraging Skill"
+        type:
+          type: string
+          enum: [item, tool, skill, milestone, knowledge, status, other]
+          description: Category of prerequisite
+          example: "skill"
+        value:
+          type: integer
+          default: 1
+          description: Required quantity or level (defaults to 1)
+          example: 15
+      example:
+        name: "Foraging Skill"
+        type: "skill"
+        value: 15
+
+    # Error Response Model
+    BehaviourErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid behavior definition"
+        details:
+          type: array
+          items:
+            type: string
+          description: Detailed error information
+          example: ["Missing required field 'name'", "Invalid behavior type"]
+        validation_errors:
+          type: array
+          items:
+            type: string
+          description: Schema validation errors
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred
+        request_id:
+          type: string
+          description: Unique identifier for the failed request
+
+tags:
+  - name: Behaviours
+    description: Behavior tree management operations
+  - name: Validation
+    description: Schema validation operations for behaviors and prerequisites
+  - name: References
+    description: Reference resolution operations for behavior trees
