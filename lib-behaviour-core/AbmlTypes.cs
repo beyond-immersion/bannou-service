@@ -17,18 +17,6 @@ public enum BehaviorSetCategory
 }
 
 /// <summary>
-/// Types of validation errors that can occur.
-/// </summary>
-public enum ValidationErrorType
-{
-    Syntax,
-    Semantic,
-    Schema,
-    Context,
-    ServiceDependency
-}
-
-/// <summary>
 /// Root ABML document structure for YAML parsing.
 /// </summary>
 public class AbmlDocument
@@ -196,7 +184,7 @@ public class BehaviorSetMergeInfo
 /// Response model for behavior stack compilation operations.
 /// Extends the base response with merge information.
 /// </summary>
-public class CompileBehaviorStack : CompileBehaviorResponse
+public class CompileBehaviorStackResponse : CompileBehaviorResponse
 {
     /// <summary>
     /// Information about how behavior sets were merged.

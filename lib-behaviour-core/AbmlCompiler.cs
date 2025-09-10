@@ -78,11 +78,11 @@ public class AbmlCompiler
 
             var compiledBehavior = new CompiledBehavior
             {
-                BehaviorTree = behaviorTree,
-                ContextSchema = ExtractContextSchema(document),
-                ServiceDependencies = ExtractServiceDependencies(document),
-                GoapGoals = goapGoals,
-                ExecutionMetadata = executionMetadata
+                Behavior_tree = behaviorTree,
+                Context_schema = ExtractContextSchema(document),
+                Service_dependencies = ExtractServiceDependencies(document),
+                Goap_goals = goapGoals,
+                Execution_metadata = executionMetadata
             };
 
             var compilationTime = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
@@ -125,7 +125,7 @@ public class AbmlCompiler
 
             foreach (var behaviorSet in sortedSets)
             {
-                var parseResult = _parser.ParseAbmlDocument(behaviorSet.AbmlContent);
+                var parseResult = _parser.ParseAbmlDocument(behaviorSet.Abml_content);
                 if (!parseResult.IsSuccess)
                 {
                     allValidationErrors.AddRange(parseResult.ValidationErrors);
@@ -157,8 +157,8 @@ public class AbmlCompiler
             var compilationTime = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
 
             return StackCompilationResult.Success(
-                compiledResult.BehaviorId,
-                compiledResult.CompiledBehavior!,
+                compiledResult.Behavior_id,
+                compiledResult.Compiled_behavior!,
                 compilationTime,
                 mergeResult.MergeInfo);
         }
@@ -624,19 +624,23 @@ public class AbmlCompiler
     /// <summary>
     /// Calculates execution metadata for a compiled behavior.
     /// </summary>
-    private ExecutionMetadata CalculateExecutionMetadata(AbmlDocument document, Dictionary<string, object> behaviorTree)
+    private Execution_metadata CalculateExecutionMetadata(AbmlDocument document, Dictionary<string, object> behaviorTree)
     {
-        var metadata = new ExecutionMetadata();
+        var metadata = new Execution_metadata();
 
         // Estimate duration based on number of actions
         var totalActions = document.Behaviors.Sum(b => b.Value.Actions.Count);
-        metadata.EstimatedDuration = Math.Max(1, totalActions * 2); // 2 seconds per action as base estimate
+        metadata.Estimated_duration = Math.Max(1, totalActions * 2); // 2 seconds per action as base estimate
 
         // Analyze resource requirements
-        metadata.ResourceRequirements["cpu"] = Math.Min(1.0, totalActions * 0.1);
-        metadata.ResourceRequirements["memory"] = Math.Min(1.0, totalActions * 0.05);
+        metadata.Resource_requirements = new Dictionary<string, double>
+        {
+            ["cpu"] = Math.Min(1.0, totalActions * 0.1),
+            ["memory"] = Math.Min(1.0, totalActions * 0.05)
+        };
 
         // Extract interrupt conditions from triggers
+        metadata.Interrupt_conditions = new List<string>();
         foreach (var behavior in document.Behaviors.Values)
         {
             foreach (var trigger in behavior.Triggers)
@@ -645,7 +649,7 @@ public class AbmlCompiler
                 {
                     if (triggerKvp.Key == "condition")
                     {
-                        metadata.InterruptConditions.Add(triggerKvp.Value.ToString()!);
+                        metadata.Interrupt_conditions.Add(triggerKvp.Value.ToString()!);
                     }
                 }
             }
@@ -683,9 +687,9 @@ public class AbmlCompiler
 }
 
 /// <summary>
-/// Compilation options for ABML behavior compilation.
+/// Compilation options for ABML behavior compilation (extends generated type).
 /// </summary>
-public class CompilationOptions
+public partial class CompilationOptions
 {
     /// <summary>
     /// Whether to resolve context variables during compilation.
@@ -693,29 +697,9 @@ public class CompilationOptions
     public bool ResolveContextVariables { get; set; } = true;
 
     /// <summary>
-    /// Whether to enable behavior tree optimizations.
+    /// Whether to generate GOAP goals from behaviors (maps to generated Goap_integration).
     /// </summary>
-    public bool EnableOptimizations { get; set; } = true;
-
-    /// <summary>
-    /// Whether to cache the compiled result.
-    /// </summary>
-    public bool CacheCompiledResult { get; set; } = true;
-
-    /// <summary>
-    /// Whether to enable strict validation mode.
-    /// </summary>
-    public bool StrictValidation { get; set; } = false;
-
-    /// <summary>
-    /// Whether to apply cultural adaptations during compilation.
-    /// </summary>
-    public bool CulturalAdaptations { get; set; } = true;
-
-    /// <summary>
-    /// Whether to generate GOAP goals from behaviors.
-    /// </summary>
-    public bool GenerateGoapGoals { get; set; } = true;
+    public bool GenerateGoapGoals => Goap_integration;
 }
 
 /// <summary>
@@ -726,39 +710,39 @@ public class CompilationResult
     /// <summary>
     /// Whether compilation was successful.
     /// </summary>
-    public bool IsSuccess { get; private set; }
+    public bool IsSuccess { get; protected set; }
 
     /// <summary>
     /// Unique identifier for the compiled behavior.
     /// </summary>
-    public string BehaviorId { get; private set; } = string.Empty;
+    public string Behavior_id { get; protected set; } = string.Empty;
 
     /// <summary>
     /// The compiled behavior (null if compilation failed).
     /// </summary>
-    public CompiledBehavior? CompiledBehavior { get; private set; }
+    public CompiledBehavior? Compiled_behavior { get; protected set; }
 
     /// <summary>
     /// Time taken to compile in milliseconds.
     /// </summary>
-    public int CompilationTimeMs { get; private set; }
+    public int CompilationTimeMs { get; protected set; }
 
     /// <summary>
     /// Error message if compilation failed.
     /// </summary>
-    public string? ErrorMessage { get; private set; }
+    public string? ErrorMessage { get; protected set; }
 
     /// <summary>
     /// Validation errors encountered during compilation.
     /// </summary>
-    public List<ValidationError> ValidationErrors { get; private set; } = new();
+    public List<ValidationError> ValidationErrors { get; protected set; } = new();
 
     /// <summary>
     /// Non-fatal warnings during compilation.
     /// </summary>
-    public List<string> Warnings { get; private set; } = new();
+    public List<string> Warnings { get; protected set; } = new();
 
-    private CompilationResult() { }
+    protected CompilationResult() { }
 
     /// <summary>
     /// Creates a successful compilation result.
@@ -768,8 +752,8 @@ public class CompilationResult
         return new CompilationResult
         {
             IsSuccess = true,
-            BehaviorId = behaviorId,
-            CompiledBehavior = compiledBehavior,
+            Behavior_id = behaviorId,
+            Compiled_behavior = compiledBehavior,
             CompilationTimeMs = compilationTimeMs
         };
     }
@@ -796,9 +780,9 @@ public class StackCompilationResult : CompilationResult
     /// <summary>
     /// Information about how behavior sets were merged.
     /// </summary>
-    public List<BehaviorSetMergeInfo> MergeInfo { get; private set; } = new();
+    public List<BehaviorSetMergeInfo> MergeInfo { get; protected set; } = new();
 
-    private StackCompilationResult() { }
+    protected StackCompilationResult() { }
 
     /// <summary>
     /// Creates a successful stack compilation result.
@@ -812,8 +796,8 @@ public class StackCompilationResult : CompilationResult
         return new StackCompilationResult
         {
             IsSuccess = true,
-            BehaviorId = behaviorId,
-            CompiledBehavior = compiledBehavior,
+            Behavior_id = behaviorId,
+            Compiled_behavior = compiledBehavior,
             CompilationTimeMs = compilationTimeMs,
             MergeInfo = mergeInfo
         };
@@ -841,29 +825,29 @@ public class MergeResult
     /// <summary>
     /// Whether merging was successful.
     /// </summary>
-    public bool IsSuccess { get; private set; }
+    public bool IsSuccess { get; protected set; }
 
     /// <summary>
     /// Merged ABML content as YAML string.
     /// </summary>
-    public string? MergedContent { get; private set; }
+    public string? MergedContent { get; protected set; }
 
     /// <summary>
     /// Information about how sets were merged.
     /// </summary>
-    public List<BehaviorSetMergeInfo> MergeInfo { get; private set; } = new();
+    public List<BehaviorSetMergeInfo> MergeInfo { get; protected set; } = new();
 
     /// <summary>
     /// Validation errors encountered during merging.
     /// </summary>
-    public List<ValidationError> ValidationErrors { get; private set; } = new();
+    public List<ValidationError> ValidationErrors { get; protected set; } = new();
 
     /// <summary>
     /// Error message if merging failed.
     /// </summary>
-    public string? ErrorMessage { get; private set; }
+    public string? ErrorMessage { get; protected set; }
 
-    private MergeResult() { }
+    protected MergeResult() { }
 
     /// <summary>
     /// Creates a successful merge result.

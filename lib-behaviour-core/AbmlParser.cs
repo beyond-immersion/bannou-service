@@ -86,8 +86,8 @@ public class AbmlParser
                 {
                     Type = ValidationErrorType.Syntax,
                     Message = yamlEx.Message,
-                    LineNumber = yamlEx.Start.Line,
-                    ColumnNumber = yamlEx.Start.Column
+                    Line_number = (int)yamlEx.Start.Line,
+                    Column_number = (int)yamlEx.Start.Column
                 }
             });
         }
@@ -114,7 +114,7 @@ public class AbmlParser
             {
                 Type = ValidationErrorType.Schema,
                 Message = "Document version is required",
-                YamlPath = "version"
+                Yaml_path = "version"
             });
         }
         else if (!IsCompatibleVersion(document.Version))
@@ -123,7 +123,7 @@ public class AbmlParser
             {
                 Type = ValidationErrorType.Schema,
                 Message = $"Unsupported ABML version: {document.Version}",
-                YamlPath = "version"
+                Yaml_path = "version"
             });
         }
 
@@ -136,7 +136,7 @@ public class AbmlParser
                 {
                     Type = ValidationErrorType.Schema,
                     Message = "Metadata ID is required when metadata is present",
-                    YamlPath = "metadata.id"
+                    Yaml_path = "metadata.id"
                 });
             }
 
@@ -146,7 +146,7 @@ public class AbmlParser
                 {
                     Type = ValidationErrorType.Schema,
                     Message = "Metadata priority must be between 1 and 100",
-                    YamlPath = "metadata.priority"
+                    Yaml_path = "metadata.priority"
                 });
             }
         }
@@ -158,7 +158,7 @@ public class AbmlParser
             {
                 Type = ValidationErrorType.Schema,
                 Message = "At least one behavior must be defined",
-                YamlPath = "behaviors"
+                Yaml_path = "behaviors"
             });
         }
 
@@ -175,7 +175,7 @@ public class AbmlParser
                 {
                     Type = ValidationErrorType.Schema,
                     Message = "Behavior must have either triggers or actions defined",
-                    YamlPath = behaviorPath
+                    Yaml_path = behaviorPath
                 });
             }
 
@@ -191,7 +191,7 @@ public class AbmlParser
                     {
                         Type = ValidationErrorType.Schema,
                         Message = "Empty trigger definition",
-                        YamlPath = triggerPath
+                        Yaml_path = triggerPath
                     });
                 }
             }
@@ -208,7 +208,7 @@ public class AbmlParser
                     {
                         Type = ValidationErrorType.Schema,
                         Message = "Empty action definition",
-                        YamlPath = actionPath
+                        Yaml_path = actionPath
                     });
                 }
             }
@@ -242,6 +242,26 @@ public class AbmlParser
         _logger?.LogDebug("Extracted {Count} unique context variables", variables.Count);
 
         return variables.ToList();
+    }
+
+    /// <summary>
+    /// Converts a dictionary of doubles to a dictionary of objects.
+    /// </summary>
+    private Dictionary<string, object>? ConvertToObjectDictionary(IDictionary<string, double>? source)
+    {
+        if (source == null) return null;
+        return source.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value);
+    }
+
+    /// <summary>
+    /// Converts an object to a dictionary of objects if it's already a dictionary, or null otherwise.
+    /// </summary>
+    private Dictionary<string, object>? ConvertToObjectDictionary(object? source)
+    {
+        if (source == null) return null;
+        if (source is Dictionary<string, object> dict) return dict;
+        if (source is IDictionary<string, object> idict) return new Dictionary<string, object>(idict);
+        return null;
     }
 
     /// <summary>
@@ -317,13 +337,13 @@ public class AbmlParser
 
         return propertyPath[0].ToLowerInvariant() switch
         {
-            "id" => characterContext.NpcId,
+            "id" => characterContext.Npc_id,
             "culture" => characterContext.Culture,
             "profession" => characterContext.Profession,
-            "stats" => ResolveNestedProperty(propertyPath.Skip(1).ToArray(), characterContext.Stats),
-            "skills" => ResolveNestedProperty(propertyPath.Skip(1).ToArray(), characterContext.Skills),
+            "stats" => ResolveNestedProperty(propertyPath.Skip(1).ToArray(), ConvertToObjectDictionary(characterContext.Stats) ?? new Dictionary<string, object>()),
+            "skills" => ResolveNestedProperty(propertyPath.Skip(1).ToArray(), ConvertToObjectDictionary(characterContext.Skills) ?? new Dictionary<string, object>()),
             "location" => ResolveLocationProperty(propertyPath.Skip(1).ToArray(), characterContext.Location),
-            "relationships" => ResolveNestedProperty(propertyPath.Skip(1).ToArray(), characterContext.Relationships),
+            "relationships" => ResolveNestedProperty(propertyPath.Skip(1).ToArray(), ConvertToObjectDictionary(characterContext.Relationships) ?? new Dictionary<string, object>()),
             _ => null
         };
     }
@@ -333,7 +353,7 @@ public class AbmlParser
     /// </summary>
     private object? ResolveWorldProperty(string[] propertyPath, CharacterContext characterContext)
     {
-        return ResolveNestedProperty(propertyPath, characterContext.WorldState);
+        return ResolveNestedProperty(propertyPath, ConvertToObjectDictionary(characterContext.World_state) ?? new Dictionary<string, object>());
     }
 
     /// <summary>
@@ -346,10 +366,10 @@ public class AbmlParser
 
         return propertyPath[0].ToLowerInvariant() switch
         {
-            "energy_level" => characterContext.Stats.GetValueOrDefault("energy", 0.0),
-            "health_level" => characterContext.Stats.GetValueOrDefault("health", 1.0),
-            "is_hungry" => characterContext.Stats.GetValueOrDefault("hunger", 0.0) > 0.7,
-            "is_tired" => characterContext.Stats.GetValueOrDefault("fatigue", 0.0) > 0.8,
+            "energy_level" => characterContext.Stats?.ContainsKey("energy") == true ? characterContext.Stats["energy"] : 0.0,
+            "health_level" => characterContext.Stats?.ContainsKey("health") == true ? characterContext.Stats["health"] : 1.0,
+            "is_hungry" => (characterContext.Stats?.ContainsKey("hunger") == true ? characterContext.Stats["hunger"] : 0.0) > 0.7,
+            "is_tired" => (characterContext.Stats?.ContainsKey("fatigue") == true ? characterContext.Stats["fatigue"] : 0.0) > 0.8,
             _ => null
         };
     }
@@ -357,7 +377,7 @@ public class AbmlParser
     /// <summary>
     /// Resolves location properties from location context.
     /// </summary>
-    private object? ResolveLocationProperty(string[] propertyPath, LocationContext? location)
+    private object? ResolveLocationProperty(string[] propertyPath, Location? location)
     {
         if (location == null || propertyPath.Length == 0) return null;
 
@@ -373,7 +393,7 @@ public class AbmlParser
     /// <summary>
     /// Resolves coordinate properties from coordinate point.
     /// </summary>
-    private object? ResolveCoordinatesProperty(string[] propertyPath, CoordinatePoint? coordinates)
+    private object? ResolveCoordinatesProperty(string[] propertyPath, Coordinates? coordinates)
     {
         if (coordinates == null || propertyPath.Length == 0) return null;
 

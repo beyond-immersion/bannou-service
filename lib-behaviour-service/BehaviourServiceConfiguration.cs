@@ -3,7 +3,7 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Behaviour;
 
-[ServiceConfiguration(typeof(BehaviourService))]
-public class BehaviourServiceConfiguration : BaseServiceConfiguration
+[ServiceConfiguration(typeof(BehaviorService))]
+public class BehaviorServiceConfiguration : BaseServiceConfiguration
 {
 }
