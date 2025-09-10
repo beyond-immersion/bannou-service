@@ -181,7 +181,8 @@ public class Program
         var testHandlers = new List<IServiceTestHandler>
         {
             new AccountTestHandler(),
-            new AuthTestHandler()
+            new AuthTestHandler(),
+            new DaprServiceMappingTestHandler()
             // Add more test handlers as needed
         };
 

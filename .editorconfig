@@ -101,6 +101,19 @@ csharp_style_prefer_switch_expression = true
 # Null-checking preferences
 csharp_style_conditional_delegate_call = true:warning
 
+# Nullable reference types
+dotnet_style_null_propagation = true:warning
+csharp_style_prefer_null_check_over_type_check = true:suggestion
+dotnet_diagnostic.CS8618.severity = error
+dotnet_diagnostic.CS8625.severity = error
+dotnet_diagnostic.CS8600.severity = error
+dotnet_diagnostic.CS8602.severity = error
+dotnet_diagnostic.CS8603.severity = error
+dotnet_diagnostic.CS8604.severity = error
+
+# Discourage null-forgiving operator
+dotnet_diagnostic.CS8632.severity = warning
+
 # Modifier preferences
 csharp_prefer_static_local_function = true
 csharp_preferred_modifier_order = public,private,protected,internal,file,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,required,volatile,async

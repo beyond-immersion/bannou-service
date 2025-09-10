@@ -113,9 +113,12 @@
     "openApiToCSharpClient": {
       "className": "AccountsClient",
       "namespace": "BeyondImmersion.BannouService.Accounts.Client",
+      "additionalNamespaceUsages": [
+        "BeyondImmersion.BannouService.ServiceClients"
+      ],
       "generateClientClasses": true,
       "generateClientInterfaces": true,
-      "clientBaseClass": null,
+      "clientBaseClass": "DaprServiceClientBase",
       "useHttpClientCreationMethod": false,
       "generateExceptionClasses": true,
       "exceptionClass": "ApiException",
@@ -134,8 +137,8 @@
       "responseClass": "SwaggerResponse",
       "protectedMethods": [],
       "configurationClass": null,
-      "useBaseUrl": true,
-      "generateBaseUrlProperty": true,
+      "useBaseUrl": false,
+      "generateBaseUrlProperty": false,
       "generateSyncMethods": false,
       "exposeJsonSerializerSettings": false,
       "injectHttpClient": true,

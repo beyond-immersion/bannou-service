@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>BeyondImmersion.BannouService</RootNamespace>
@@ -14,6 +15,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
+    <!-- Service generation flag - set to true to generate new services from schemas -->
+    <GenerateNewServices Condition="'$(GenerateNewServices)' == ''">false</GenerateNewServices>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -53,14 +56,46 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../bannou-source-generator/bannou-source-generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="../schemas/*.yaml" />
+  </ItemGroup>
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
     <Exec Command="dotnet format --no-restore" />
   </Target>
 
-  <!-- NSwag code generation disabled - files already generated -->
-  <!-- <Target Name="NSwag" BeforeTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+  <!-- Service generation target - runs when GenerateNewServices=true -->
+  <Target Name="GenerateServices" BeforeTargets="Build" Condition="'$(GenerateNewServices)' == 'true'">
+    <Message Text="🔧 Generating services from schemas..." Importance="high" />
+    
+    <!-- Generate API clients from schemas -->
     <Exec Command="$(NSwagExe_Net90) run nswag.json" Condition="'$(NSwagExe_Net90)' != ''" />
     <Exec Command="nswag run nswag.json" Condition="'$(NSwagExe_Net90)' == ''" />
-  </Target> -->
+    
+    <!-- Generate event models if events schema exists -->
+    <ItemGroup>
+      <EventSchemas Include="../schemas/*-events.yaml" />
+    </ItemGroup>
+    <Exec Command="$(NSwagExe_Net90) run nswag-events.json" Condition="'$(NSwagExe_Net90)' != '' and '@(EventSchemas)' != ''" />
+    <Exec Command="nswag run nswag-events.json" Condition="'$(NSwagExe_Net90)' == '' and '@(EventSchemas)' != ''" />
+    
+    <!-- Run line ending fixes -->
+    <Exec Command="chmod +x ../fix-generated-line-endings.sh" Condition="Exists('../fix-generated-line-endings.sh')" />
+    <Exec Command="../fix-generated-line-endings.sh" Condition="Exists('../fix-generated-line-endings.sh')" />
+    
+    <Message Text="✅ Service generation completed" Importance="high" />
+  </Target>
+
+  <!-- Development convenience target for manual service generation -->
+  <Target Name="RegenerateAllServices">
+    <PropertyGroup>
+      <GenerateNewServices>true</GenerateNewServices>
+    </PropertyGroup>
+    <CallTarget Targets="GenerateServices" />
+  </Target>
 
 </Project>

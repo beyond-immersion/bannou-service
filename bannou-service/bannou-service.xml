@@ -186,6 +186,66 @@
             Can be null.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Attributes.ServiceMappingEventAttribute">
+            <summary>
+            Attribute for marking methods as service mapping event handlers.
+            Provides metadata for automatic registration with the service mapping event system.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ServiceMappingEventAttribute.Action">
+            <summary>
+            The action this handler responds to (register, update, unregister, or * for all).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ServiceMappingEventAttribute.ServiceName">
+            <summary>
+            Optional service name filter. If specified, only handles events for this service.
+            Use "*" or null to handle events for all services.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ServiceMappingEventAttribute.Priority">
+            <summary>
+            Priority for handler execution when multiple handlers match (lower = higher priority).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ServiceMappingEventAttribute.RunAsync">
+            <summary>
+            Whether this handler should run asynchronously with other handlers.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ServiceMappingEventAttribute.#ctor(System.String)">
+            <summary>
+            Creates a new service mapping event handler attribute.
+            </summary>
+            <param name="action">The action this handler responds to (register, update, unregister, or *)</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Attributes.ServiceMappingHandlerAttribute">
+            <summary>
+            Attribute for marking classes that contain service mapping event handlers.
+            Provides metadata for automatic discovery and registration.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ServiceMappingHandlerAttribute.Name">
+            <summary>
+            Human-readable name for this handler collection.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ServiceMappingHandlerAttribute.Description">
+            <summary>
+            Description of what this handler collection does.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Attributes.ServiceMappingHandlerAttribute.AutoRegister">
+            <summary>
+            Whether handlers in this class should be automatically registered.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Attributes.ServiceMappingHandlerAttribute.#ctor(System.String)">
+            <summary>
+            Creates a new service mapping handler attribute.
+            </summary>
+            <param name="name">Human-readable name for this handler collection</param>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.ServiceTestAttribute">
             <summary>
             Service attribute used on static async methods returning boolean,
@@ -1418,6 +1478,294 @@
             Will stop the webhost and initiate a service shutdown.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase">
+            <summary>
+            Base class for all Dapr-aware service clients.
+            Handles dynamic app-id resolution and Dapr routing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.BaseUrl">
+            <summary>
+            Gets the base URL for Dapr service invocation with dynamic app-id resolution.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.String)">
+            <summary>
+            Prepares the HTTP request with proper Dapr headers.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.Text.StringBuilder)">
+            <summary>
+            Prepares the HTTP request with URL builder for Dapr routing.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ProcessResponse(System.Net.Http.HttpClient,System.Net.Http.HttpResponseMessage)">
+            <summary>
+            Processes the HTTP response from Dapr service invocation.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers">
+            <summary>
+            Example service mapping event handlers showing how to use the attribute system.
+            These handlers demonstrate various patterns for responding to service mapping changes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers.OnServiceRegistrationAsync(BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent,System.Threading.CancellationToken)">
+            <summary>
+            Handles all service registrations with high priority logging.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers.OnServiceUnregistrationAsync(BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent,System.Threading.CancellationToken)">
+            <summary>
+            Handles service unregistrations.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers.OnAccountsServiceEventAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Specifically handles accounts service events with custom logic.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers.OnServiceUpdateAsync(BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent)">
+            <summary>
+            Asynchronous handler for service updates (runs in parallel with other async handlers).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers.OnAnyServiceEventAsync(BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent)">
+            <summary>
+            Catch-all handler for any service mapping events (low priority).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceAppMappingResolver">
+            <summary>
+            Resolves service names to Dapr app-ids for distributed service routing.
+            Supports dynamic mapping via RabbitMQ events for production scaling.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceAppMappingResolver.GetAppIdForService(System.String)">
+            <summary>
+            Gets the Dapr app-id for the specified service name.
+            Defaults to "bannou" (omnipotent local node) but can be overridden
+            by service mapping events from RabbitMQ.
+            </summary>
+            <param name="serviceName">The service name (e.g., "accounts", "character-agent")</param>
+            <returns>The Dapr app-id to route requests to</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceAppMappingResolver.UpdateServiceMapping(System.String,System.String)">
+            <summary>
+            Updates the service mapping from RabbitMQ service discovery events.
+            </summary>
+            <param name="serviceName">The service name</param>
+            <param name="appId">The Dapr app-id where this service is running</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceAppMappingResolver.RemoveServiceMapping(System.String)">
+            <summary>
+            Removes a service mapping (when service goes offline).
+            </summary>
+            <param name="serviceName">The service name to remove</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceAppMappingResolver.GetAllMappings">
+            <summary>
+            Gets all current service mappings for debugging/monitoring.
+            </summary>
+            <returns>Dictionary of service name to app-id mappings</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceAppMappingResolver">
+            <summary>
+            Default implementation of service-to-app-id mapping with dynamic updates via RabbitMQ.
+            Defaults to "bannou" (omnipotent local node) for all services, but can be dynamically
+            updated based on service discovery events for distributed production deployments.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceAppMappingResolver.GetAppIdForService(System.String)">
+            <summary>
+            Gets the Dapr app-id for the specified service.
+            Defaults to "bannou" but can be overridden by RabbitMQ service mapping events.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceAppMappingResolver.UpdateServiceMapping(System.String,System.String)">
+            <summary>
+            Updates service mapping from RabbitMQ service discovery events.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceAppMappingResolver.RemoveServiceMapping(System.String)">
+            <summary>
+            Removes service mapping when service goes offline.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceAppMappingResolver.GetAllMappings">
+            <summary>
+            Gets all current service mappings for debugging/monitoring.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions">
+            <summary>
+            Dependency injection extensions for registering Dapr-aware service clients.
+            Provides dynamic app-id resolution with default "bannou" routing.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddServiceAppMappingResolver(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers the service app mapping resolver as a singleton.
+            This resolver handles dynamic service-to-app-id mapping via RabbitMQ events.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddDaprServiceClient``2(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.String,System.Action{System.Net.Http.HttpClient})">
+            <summary>
+            Registers a Dapr-aware service client with automatic HttpClient configuration.
+            The client uses dynamic app-id resolution defaulting to "bannou".
+            </summary>
+            <typeparam name="TClient">The service client type (e.g., AccountsClient)</typeparam>
+            <typeparam name="TInterface">The service interface type (e.g., IAccountsClient)</typeparam>
+            <param name="serviceName">The service name for app-id resolution (e.g., "accounts")</param>
+            <param name="configureClient">Optional HttpClient configuration</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddDaprServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.ValueTuple{System.Type,System.Type,System.String}[])">
+            <summary>
+            Registers multiple Dapr service clients at once for convenience.
+            Uses service name derived from client type name (e.g., AccountsClient -> "accounts").
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllDaprServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Auto-registers all service clients found in the current assembly.
+            Follows naming convention: {Service}Client implements I{Service}Client.
+            Service name is derived by removing "Client" suffix and converting to lowercase.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection">
+            <summary>
+            Extension methods for registering all service client infrastructure.
+            This includes Dapr service clients, event handling, and service mapping.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers the complete Bannou service client infrastructure.
+            Includes Dapr clients, service mapping, events, and lifecycle management.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddAllBannouServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers all discovered Dapr service clients automatically.
+            Uses reflection to find all {Service}Client classes and registers them with DI.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection.AddSpecificServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.ValueTuple{System.Type,System.Type,System.String}[])">
+            <summary>
+            Registers specific service clients manually for more control.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceMappingEventDispatcher">
+            <summary>
+            Dispatches service mapping events to registered handlers using reflection and attributes.
+            Provides a clean, declarative way to handle service mapping events.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceMappingEventDispatcher.DispatchEventAsync(BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent,System.Threading.CancellationToken)">
+            <summary>
+            Dispatches a service mapping event to all matching handlers.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceMappingEventDispatcher.GetRegisteredHandlers">
+            <summary>
+            Gets information about all registered handlers for debugging.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEventDispatcher">
+            <summary>
+            Default implementation of service mapping event dispatcher.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceMappingHandlerInfo">
+            <summary>
+            Information about a registered service mapping event handler.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEventHandler">
+            <summary>
+            Handles service mapping events from RabbitMQ via Dapr pub/sub.
+            Updates the dynamic service-to-app-id mapping based on service discovery events.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEventHandler.HandleServiceMappingEventAsync(BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent)">
+            <summary>
+            Handles service mapping events from the bannou-service-mappings topic.
+            These events update the dynamic routing table for distributed services.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEventHandler.GetHealth">
+            <summary>
+            Health check endpoint for service mapping event handling.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent">
+            <summary>
+            Service mapping event data model.
+            Represents changes in service-to-app-id mappings for distributed deployment.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent.EventId">
+            <summary>
+            Unique identifier for this event.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent.Timestamp">
+            <summary>
+            When the event occurred.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent.ServiceName">
+            <summary>
+            Name of the service (e.g., "accounts", "character-agent").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent.AppId">
+            <summary>
+            Dapr app-id where the service is running.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent.Action">
+            <summary>
+            Type of mapping change: register, update, unregister.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent.Metadata">
+            <summary>
+            Additional service metadata (optional).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceMappingEventPublisher">
+            <summary>
+            Publisher for service mapping events via Dapr pub/sub to RabbitMQ.
+            Announces service registration, updates, and shutdowns for dynamic routing.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceMappingEventPublisher.AnnounceServiceStartupAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Announces that a service is starting and should be mapped to this app-id.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceMappingEventPublisher.AnnounceServiceShutdownAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Announces that a service is shutting down and should be unmapped.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceMappingEventPublisher.UpdateServiceMappingAsync(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Updates service mapping (for configuration changes or health status updates).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEventPublisher">
+            <summary>
+            Default implementation of service mapping event publisher using Dapr.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceMappingLifecycleService">
+            <summary>
+            Background service that automatically announces service startup and shutdown events.
+            Integrates with ASP.NET Core hosting lifecycle to manage service mappings.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Services.DaprService">
             <summary>
             Optional base type for service handlers.
@@ -1660,6 +2008,76 @@
         <member name="T:BeyondImmersion.BannouService.Testing.Tests.BasicControllerTests">
             <summary>
             Tests that only require the testing service itself.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase">
+            <summary>
+            Event models for Accounts service.
+            Generated from OpenAPI schema: accounts-events.yaml
+            </summary>
+            <summary>
+            Base class for all Accounts events.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase.EventId">
+            <summary>
+            Unique identifier for this event.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase.Timestamp">
+            <summary>
+            When the event occurred.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountCreatedEvent">
+            <summary>
+            AccountCreatedEvent event for Accounts service.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.ServiceMappingEvent">
+            <summary>
+            ServiceMappingEvent event for Accounts service.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.IAccountsEventPublisher">
+            <summary>
+            Publisher service for Accounts events via Dapr pub/sub.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Accounts.Events.IAccountsEventPublisher.PublishEventAsync``1(``0,System.Threading.CancellationToken)">
+            <summary>
+            Publishes an event to the bannou-accounts-events channel.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountsEventPublisher">
+            <summary>
+            Default implementation of Accounts event publisher.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountsEventSubscriber">
+            <summary>
+            Subscriber for Accounts events via Dapr pub/sub.
+            Override methods in partial class to handle specific events.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Accounts.Events.AccountsEventSubscriber.HandleEventAsync(BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase)">
+            <summary>
+            Handles all Accounts events from the bannou-accounts-events topic.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Accounts.Events.AccountsEventSubscriber.RouteEventAsync(BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase)">
+            <summary>
+            Routes events to specific handlers. Override in partial class to add custom routing.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountsEventExtensions">
+            <summary>
+            Event registration extensions for Accounts.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Accounts.Events.AccountsEventExtensions.AddAccountsEvents(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers Accounts event publisher and subscriber.
             </summary>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0">
