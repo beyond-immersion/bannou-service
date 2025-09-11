@@ -2010,6 +2010,76 @@
             Tests that only require the testing service itself.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase">
+            <summary>
+            Event models for Accounts service.
+            Generated from OpenAPI schema: accounts-events.yaml
+            </summary>
+            <summary>
+            Base class for all Accounts events.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase.EventId">
+            <summary>
+            Unique identifier for this event.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase.Timestamp">
+            <summary>
+            When the event occurred.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountCreatedEvent">
+            <summary>
+            AccountCreatedEvent event for Accounts service.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.ServiceMappingEvent">
+            <summary>
+            ServiceMappingEvent event for Accounts service.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.IAccountsEventPublisher">
+            <summary>
+            Publisher service for Accounts events via Dapr pub/sub.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Accounts.Events.IAccountsEventPublisher.PublishEventAsync``1(``0,System.Threading.CancellationToken)">
+            <summary>
+            Publishes an event to the bannou-accounts-events channel.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountsEventPublisher">
+            <summary>
+            Default implementation of Accounts event publisher.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountsEventSubscriber">
+            <summary>
+            Subscriber for Accounts events via Dapr pub/sub.
+            Override methods in partial class to handle specific events.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Accounts.Events.AccountsEventSubscriber.HandleEventAsync(BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase)">
+            <summary>
+            Handles all Accounts events from the bannou-accounts-events topic.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Accounts.Events.AccountsEventSubscriber.RouteEventAsync(BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase)">
+            <summary>
+            Routes events to specific handlers. Override in partial class to add custom routing.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountsEventExtensions">
+            <summary>
+            Event registration extensions for Accounts.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Accounts.Events.AccountsEventExtensions.AddAccountsEvents(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers Accounts event publisher and subscriber.
+            </summary>
+        </member>
         <member name="T:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0">
             <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the REGEX_InvalidChars method.</summary>
         </member>
