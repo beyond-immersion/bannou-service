@@ -13,10 +13,31 @@ This file contains specific instructions for Claude Code when working on the Ban
 ### Schema-First Development (Critical)
 **ALWAYS reference [API-DESIGN.md](API-DESIGN.md) before making any service changes.**
 
-1. **OpenAPI specifications** in `/schemas/` directory are the **single source of truth**
-2. **Controllers and models** are generated via NSwag - **never edit generated files manually**
-3. **Business logic only** goes in service implementation classes
-4. **Schema changes** require regeneration via `nswag run`
+**⚠️ CRITICAL DEVELOPMENT PROCESS - NEVER SKIP THESE STEPS:**
+
+1. **Schema First**: ALL service definitions start with OpenAPI YAML in `/schemas/` directory
+2. **Generate Controllers**: Run `dotnet build -p:GenerateNewServices=true` to generate controllers and message types
+3. **Implement Services**: Write business logic ONLY in service implementation classes
+4. **Never Edit Generated**: Controllers and message classes are auto-generated - **NEVER EDIT MANUALLY**
+
+**Schema-First Development Workflow (MANDATORY)**:
+```bash
+# 1. CREATE/UPDATE SCHEMA FIRST
+edit schemas/service-name-api.yaml
+
+# 2. GENERATE CONTROLLERS AND MESSAGES
+dotnet build bannou-service -p:GenerateNewServices=true
+
+# 3. IMPLEMENT SERVICE LOGIC
+# Generated files appear in:
+# - bannou-service/Controllers/Generated/ServiceController.Generated.cs (controller + message types)
+# - lib-service-core/Generated/ (if separate library needed)
+
+# 4. WRITE BUSINESS LOGIC in service implementation classes
+# Create lib-service/ServiceService.cs implementing IServiceService
+```
+
+**NEVER CREATE MESSAGE CLASSES MANUALLY** - they are defined in schemas and auto-generated during build.
 
 ### WebSocket-First Architecture
 - **Connect service** provides zero-copy message routing via service GUIDs
@@ -62,20 +83,71 @@ make test-all           # Complete test suite
 make ci-test            # Matches GitHub Actions workflow
 ```
 
-### 3. Code Generation
+### 3. Code Generation Systems
+
+Bannou uses **two complementary code generation systems** with distinct responsibilities:
+
+#### NSwag (Primary API Generation) ✅ WORKING
+**Purpose**: Generate API contracts, controllers, models, and clients from OpenAPI schemas  
+**Input**: `schemas/*-api.yaml` files  
+**Output**: ASP.NET Core controllers, request/response models, client classes  
+
 ```bash
-# Generate controllers and models from schemas
-nswag run
+# Generate controllers and models from API schemas
+nswag run                                    # Main API schemas (accounts, auth, etc.)
+nswag run nswag-website.json               # Website service (if needed)
+nswag run nswag-events.json                # Event models (if needed)
 
 # Fix line endings for EditorConfig compliance
 ./fix-generated-line-endings.sh
-
-# Generate new services from schemas (uses Roslyn generators)
-make generate-services
-
-# Generate unit test projects (if enabled)
-dotnet build -p:GenerateUnitTests=true
 ```
+
+**Generated Files**:
+- `Controllers/Generated/*Controller.Generated.cs` (~400-500 lines each)
+- Request/response models with validation attributes
+- TypeScript/C# client classes
+
+**Build Integration**: Runs via MSBuild target when `GenerateNewServices=true`
+
+#### Roslyn Source Generators (Specialized Patterns) ⚠️ STATUS UNCLEAR
+**Purpose**: Generate specialized business logic patterns that NSwag cannot handle  
+**Input**: Various schema files + MSBuild properties  
+**Output**: Event handlers, service scaffolding, unit tests  
+
+```bash
+# Generate specialized patterns (controlled by MSBuild flags)
+dotnet build -p:GenerateNewServices=true    # Service scaffolding
+dotnet build -p:GenerateUnitTests=true      # Unit test projects
+dotnet build -p:GenerateEventModels=true    # Event models and handlers
+```
+
+**Generators**:
+1. **EventModelGenerator**: Creates event models and pub/sub handlers from `schemas/*-events.yaml`
+2. **ServiceScaffoldGenerator**: Creates service interfaces and DI registrations
+3. **UnitTestGenerator**: Creates comprehensive unit test projects
+
+**⚠️ NOTE**: Current analysis suggests Roslyn generators may not be producing output files. Verify functionality before relying on them.
+
+#### Division of Responsibilities
+
+**Use NSwag For**: 
+- API controllers and routing
+- Request/response models
+- Client generation (C#, TypeScript)
+- OpenAPI documentation
+- Data validation attributes
+
+**Use Roslyn For**:
+- Event model generation and pub/sub patterns
+- Service interface scaffolding beyond controllers
+- Unit test project generation
+- Custom DI registration patterns
+- Business logic scaffolding
+
+**❌ AVOID DUPLICATION**: 
+- Never manually create models that can be generated from schemas
+- Don't use both systems for the same purpose
+- NSwag takes precedence for API contracts
 
 ### 4. Quality Assurance
 ```bash
@@ -232,11 +304,33 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ## Advanced Features
 
-### Roslyn Source Generators
-- **`EventModelGenerator.cs`** - Generates event models from `schemas/*-events.yaml`
-- **`ServiceScaffoldGenerator.cs`** - Creates service scaffolding from OpenAPI schemas
-- **`UnitTestGenerator.cs`** - Generates comprehensive unit test projects
-- Controlled by MSBuild properties (`GenerateEventModels`, `GenerateNewServices`, `GenerateUnitTests`)
+### Code Generation Troubleshooting
+
+#### NSwag Issues
+- **Controller not generated**: Check schema file exists at expected path, verify nswag.json output path
+- **Wrong working directory**: NSwag configs must be run from correct directory (bannou-service/ for most configs)
+- **Line ending issues**: Always run `./fix-generated-line-endings.sh` after generation
+- **Missing models**: Verify OpenAPI schema has proper `operationId` and `components/schemas` sections
+
+#### Roslyn Generator Issues  
+- **No output files**: Check MSBuild properties are set (`-p:GenerateNewServices=true`)
+- **Build errors**: Roslyn generators run during build - check for compilation errors first
+- **Status verification**: Check `bannou-service/obj/Debug/net9.0/` for generated .g.cs files
+- **Conflicting output**: Remove manually created files that conflict with generated ones
+
+#### When to Use Which System
+**Missing API endpoints** → Use NSwag with proper schema definition  
+**Missing event handling** → Use Roslyn EventModelGenerator (if working)  
+**Missing service patterns** → Use Roslyn ServiceScaffoldGenerator (if working)  
+**Missing validation** → Use NSwag data annotations  
+**Missing client code** → Use NSwag client generation  
+**Missing unit tests** → Use Roslyn UnitTestGenerator (if working)
+
+### Roslyn Source Generators Status
+- **`EventModelGenerator.cs`** ⚠️ Status unclear - may not be producing output
+- **`ServiceScaffoldGenerator.cs`** ⚠️ Status unclear - may not be producing output  
+- **`UnitTestGenerator.cs`** ⚠️ Status unclear - may not be producing output
+- **Recommendation**: Verify Roslyn generator functionality before relying on them
 
 ### Service Client Architecture
 ```csharp

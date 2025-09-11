@@ -59,12 +59,22 @@ ci-test:
 	docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v
 
 generate-services:
-	@echo "🔧 Generating services from OpenAPI schemas..."
+	@echo "🔧 Generating all services (NSwag + Roslyn)..."
+	./generate-all-services.sh
+	@echo "✅ Service generation completed"
+
+generate-services-legacy:
+	@echo "🔧 [LEGACY] Generating services from OpenAPI schemas via MSBuild..."
+	@echo "⚠️  This method has known issues with NSwag config file execution"
 	cd bannou-service && dotnet build -p:GenerateNewServices=true
 	@echo "✅ Service generation completed"
 
-regenerate-all-services:
-	@echo "🔧 Regenerating all services (including clients and events)..."
+regenerate-all-services: generate-services
+	@echo "✅ All services regenerated (using working script method)"
+
+regenerate-all-services-legacy:
+	@echo "🔧 [LEGACY] Regenerating all services (including clients and events)..."
+	@echo "⚠️  This method has known issues with NSwag config file execution"
 	cd bannou-service && dotnet msbuild -t:RegenerateAllServices
 	@echo "✅ All services regenerated"
 

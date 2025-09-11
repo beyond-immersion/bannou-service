@@ -1,0 +1,16 @@
+{
+  "runtime": "Net90",
+  "documentGenerator": {
+    "fromDocument": {
+      "url": "../schemas/website-api.yaml"
+    }
+  },
+  "codeGenerators": {
+    "aspNetCoreController": {
+      "output": "Controllers/Generated/TestController.Generated.cs",
+      "namespace": "BeyondImmersion.BannouService.Controllers.Generated",
+      "controllerStyle": "Abstract",
+      "controllerBaseClass": "Microsoft.AspNetCore.Mvc.ControllerBase"
+    }
+  }
+}

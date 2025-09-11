@@ -76,6 +76,10 @@
     <Exec Command="$(NSwagExe_Net90) run nswag.json" Condition="'$(NSwagExe_Net90)' != ''" />
     <Exec Command="nswag run nswag.json" Condition="'$(NSwagExe_Net90)' == ''" />
     
+    <!-- Generate website controllers from website schema -->
+    <Exec Command="$(NSwagExe_Net90) run nswag-website.json" Condition="'$(NSwagExe_Net90)' != '' and Exists('nswag-website.json')" />
+    <Exec Command="nswag run nswag-website.json" Condition="'$(NSwagExe_Net90)' == '' and Exists('nswag-website.json')" />
+    
     <!-- Generate event models if events schema exists -->
     <ItemGroup>
       <EventSchemas Include="../schemas/*-events.yaml" />
