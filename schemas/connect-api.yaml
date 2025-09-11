@@ -1,0 +1,636 @@
+openapi: 3.0.0
+info:
+  title: Bannou Connect API
+  version: 1.0.0
+  description: |
+    Real-time communication and WebSocket connection management for Bannou services.
+    
+    This API handles:
+    - WebSocket connection establishment with JWT authentication
+    - Bi-directional real-time messaging between clients and services
+    - Binary protocol with message flags, channels, and service routing
+    - Client reconnection and session management
+    - Integration with Dapr service mesh for service-to-service communication
+    - Redis-backed connection state management
+    
+    ## Connection Protocol
+    
+    The connect service uses a custom binary protocol over WebSockets with the following features:
+    
+    - **Message Flags**: Control message behavior (binary, encrypted, compressed, high priority, events vs RPC)
+    - **Channel System**: Support for sequential message processing on specific channels
+    - **Service Routing**: Route messages to appropriate Dapr services via GUID-based service lookup
+    - **Bi-directional RPC**: Services can make RPC calls back to connected clients
+    - **Reconnection Support**: Clients can reconnect to existing sessions within a configurable time window
+
+servers:
+  - url: http://localhost/api/connect
+    description: Development server (HTTP upgrade to WebSocket)
+  - url: ws://localhost/api/connect
+    description: Development WebSocket server
+
+paths:
+  /internal/proxy:
+    post:
+      summary: Internal API proxy for stateless requests
+      operationId: proxyInternalRequest
+      tags:
+        - Internal Proxy
+      description: |
+        Stateless HTTP proxy for internal requests that don't require persistent sessions.
+        Applies permission validation and rate limiting based on agent role and context.
+        Perfect for AI agents making one-off API calls or bulk operations.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalProxyRequest'
+      responses:
+        '200':
+          description: Request proxied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalProxyResponse'
+        '403':
+          description: Permission denied
+        '404':
+          description: Target service or endpoint not found
+        '429':
+          description: Rate limit exceeded
+
+  /api-discovery:
+    post:
+      summary: Get available APIs for current session
+      operationId: discoverAPIs
+      tags:
+        - API Discovery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiDiscoveryRequest'
+      responses:
+        '200':
+          description: Available APIs discovered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDiscoveryResponse'
+
+  /connect:
+    get:
+      summary: Establish WebSocket connection
+      description: |
+        Initiates a WebSocket connection for real-time communication.
+        Requires JWT authentication via Authorization header.
+        
+        **Connection Flow:**
+        1. Send HTTP GET request with `Connection: Upgrade` and `Upgrade: websocket` headers
+        2. Include `Authorization: Bearer <jwt_token>` header for authentication
+        3. Server validates JWT and extracts user claims (roles, scopes, services)
+        4. Connection upgrades to WebSocket protocol
+        5. Client can send binary messages using the custom protocol
+        
+        **Reconnection:**
+        For existing sessions, use `Authorization: Reconnect <reconnect_token>` instead.
+      operationId: ConnectWebSocket
+      tags:
+        - WebSocket Connection
+      parameters:
+        - name: Connection
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["Upgrade"]
+          description: Must be "Upgrade" to initiate WebSocket connection
+        - name: Upgrade
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["websocket"]
+          description: Must be "websocket" to specify protocol upgrade
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: |
+            JWT Bearer token for new connections: "Bearer <jwt_token>"
+            Reconnect token for existing sessions: "Reconnect <reconnect_token>"
+          examples:
+            new-connection:
+              summary: New connection with JWT
+              value: "Bearer eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9..."
+            reconnection:
+              summary: Reconnect to existing session
+              value: "Reconnect abc123def456..."
+      responses:
+        '101':
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                enum: ["websocket"]
+              description: Confirms protocol upgrade to WebSocket
+            Connection:
+              schema:
+                type: string
+                enum: ["Upgrade"]
+              description: Confirms connection upgrade
+        '400':
+          description: Bad request - missing required headers or invalid request format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectErrorResponse'
+              examples:
+                missing-authorization:
+                  summary: Missing authorization header
+                  value:
+                    error: "BadRequest"
+                    message: "Authorization header is required for WebSocket connections"
+                    status_code: 400
+                not-websocket:
+                  summary: Not a WebSocket request
+                  value:
+                    error: "BadRequest"
+                    message: "Request must be a WebSocket upgrade request"
+                    status_code: 400
+        '403':
+          description: Forbidden - invalid JWT token or reconnection token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectErrorResponse'
+              examples:
+                invalid-jwt:
+                  summary: Invalid or expired JWT token
+                  value:
+                    error: "Forbidden"
+                    message: "Invalid or expired authentication token"
+                    status_code: 403
+                reconnect-failed:
+                  summary: Reconnection token not found or expired
+                  value:
+                    error: "Forbidden"
+                    message: "Reconnection token is invalid or expired"
+                    status_code: 403
+        '500':
+          description: Internal server error during connection setup
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectErrorResponse'
+              examples:
+                server-error:
+                  summary: Internal server error
+                  value:
+                    error: "InternalServerError"
+                    message: "An error occurred establishing the WebSocket connection"
+                    status_code: 500
+    post:
+      summary: Establish WebSocket connection (POST variant)
+      description: |
+        Alternative POST method for establishing WebSocket connections.
+        Functionally identical to the GET method but supports clients that
+        require POST for WebSocket upgrades.
+      operationId: ConnectWebSocketPost
+      tags:
+        - WebSocket Connection
+      parameters:
+        - name: Connection
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["Upgrade"]
+        - name: Upgrade
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["websocket"]
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Optional connection parameters
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectRequest'
+            examples:
+              empty-request:
+                summary: Standard connection request
+                value: {}
+      responses:
+        '101':
+          description: WebSocket connection established successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectErrorResponse'
+
+components:
+  schemas:
+    InternalProxyRequest:
+      type: object
+      required:
+        - agentId
+        - agentRole
+        - targetService
+        - targetEndpoint
+        - method
+      properties:
+        agentId:
+          type: string
+          description: Unique identifier for the requesting agent (NPC ID, system ID, etc.)
+        agentRole:
+          type: string
+          description: Role of the agent for permission validation
+          examples: ["npc_trader", "npc_guard", "system_scheduler", "ai_moderator"]
+        accountId:
+          type: string
+          format: uuid
+          description: Associated account ID if agent represents a user
+        targetService:
+          type: string
+          description: Target service ID or name
+        targetEndpoint:
+          type: string
+          description: Target API endpoint path
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+          description: HTTP method for the target endpoint
+        requestData:
+          type: object
+          additionalProperties: true
+          description: Request payload to forward to target service
+        contextData:
+          type: object
+          additionalProperties: true
+          description: Agent context for permission evaluation (location, state, relationships, etc.)
+        rateLimitKey:
+          type: string
+          description: Custom rate limit key (defaults to agentRole)
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata for logging/monitoring
+
+    InternalProxyResponse:
+      type: object
+      required:
+        - success
+        - agentId
+      properties:
+        success:
+          type: boolean
+        agentId:
+          type: string
+          description: Echo of the requesting agent ID
+        targetService:
+          type: string
+          description: Service that handled the request
+        responseData:
+          type: object
+          additionalProperties: true
+          description: Response from the target service
+        permissionInfo:
+          type: object
+          properties:
+            granted:
+              type: boolean
+            requiredPermissions:
+              type: array
+              items:
+                type: string
+            rateLimitRemaining:
+              type: integer
+        executionTime:
+          type: integer
+          description: Request execution time in milliseconds
+
+    ApiDiscoveryRequest:
+      type: object
+      required:
+        - sessionId
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: Current WebSocket session ID
+        contextData:
+          type: object
+          additionalProperties: true
+          description: Additional context (game session, character, etc.)
+
+    ApiDiscoveryResponse:
+      type: object
+      required:
+        - sessionId
+        - availableAPIs
+        - version
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        availableAPIs:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailableAPI'
+          description: All APIs currently accessible to this session
+        version:
+          type: integer
+          description: Version number for capability updates
+        expiresAt:
+          type: string
+          format: date-time
+          description: When this API list expires
+
+    AvailableAPI:
+      type: object
+      required:
+        - serviceId
+        - serviceName
+        - endpoint
+        - method
+      properties:
+        serviceId:
+          type: string
+          description: Service GUID for routing via binary protocol
+        serviceName:
+          type: string
+          description: Human-readable service name
+        endpoint:
+          type: string
+          description: API endpoint path
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+        description:
+          type: string
+          description: Human-readable endpoint description
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+          description: Permissions that enabled this API
+        rateLimits:
+          $ref: '#/components/schemas/ApiRateLimit'
+        category:
+          type: string
+          description: API category (auth, game, social, etc.)
+
+    ApiRateLimit:
+      type: object
+      properties:
+        requestsPerMinute:
+          type: integer
+        requestsPerHour:
+          type: integer
+        burstLimit:
+          type: integer
+        remaining:
+          type: integer
+          description: Current remaining requests
+
+    ConnectRequest:
+      type: object
+      description: |
+        Request model for WebSocket connection establishment.
+        Currently contains no specific fields but extends the base ApiRequest.
+      properties: {}
+      additionalProperties: false
+
+    ConnectionData:
+      type: object
+      description: |
+        Connection state data returned for connection service requests.
+        Currently a placeholder for future connection metadata.
+      properties: {}
+      additionalProperties: false
+
+    ConnectErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - status_code
+      properties:
+        error:
+          type: string
+          description: Error type identifier
+          enum:
+            - "BadRequest"
+            - "Forbidden"
+            - "InternalServerError"
+        message:
+          type: string
+          description: Human-readable error description
+        status_code:
+          type: integer
+          description: HTTP status code
+          enum: [400, 403, 500]
+      additionalProperties: false
+
+    # Binary Protocol Schemas (for documentation purposes)
+    MessageFlags:
+      type: integer
+      format: byte
+      description: |
+        Bit flags controlling message behavior in the binary protocol.
+        
+        **Flags:**
+        - 0x00 (None): Default - JSON text, service request, unencrypted, standard priority, expects response
+        - 0x01 (Binary): Message payload is binary data
+        - 0x02 (Encrypted): Message payload is encrypted
+        - 0x04 (Compressed): Message payload is compressed
+        - 0x08 (HighPriority): Deliver at high priority, skip to front of queues
+        - 0x10 (Event): Fire-and-forget message, no response expected
+        - 0x20 (Client): Route to another WebSocket client (not a Dapr service)
+        - 0x40 (Response): Message is a response to an RPC (not a new request)
+      minimum: 0
+      maximum: 255
+      example: 0
+
+    ResponseCodes:
+      type: integer
+      format: byte
+      description: |
+        Response codes used in the binary protocol.
+        
+        **Success:**
+        - 0: OK
+        
+        **Request Errors (10-19):**
+        - 10: RequestError
+        - 11: RequestTooLarge
+        - 12: TooManyRequests
+        - 13: InvalidRequestChannel
+        
+        **Authorization Errors (20-29):**
+        - 20: Unauthorized
+        
+        **Not Found Errors (30-39):**
+        - 30: ServiceNotFound
+        - 31: ClientNotFound
+        - 32: MessageNotFound
+        
+        **Service Errors (50-60):**
+        - 50: Service_BadRequest
+        - 51: Service_NotFound
+        - 52: Service_Unauthorized
+        - 60: Service_InternalServerError
+      enum: [0, 10, 11, 12, 13, 20, 30, 31, 32, 50, 51, 52, 60]
+      example: 0
+
+    ServiceRequestMessage:
+      type: object
+      description: |
+        Structure of a service request message in the binary protocol.
+        This schema is for documentation - actual messages are binary.
+      required:
+        - flags
+        - message_id
+        - message_channel
+        - service_id
+        - content
+      properties:
+        flags:
+          $ref: '#/components/schemas/MessageFlags'
+        message_id:
+          type: string
+          format: uuid
+          description: Unique identifier for request/response matching
+        message_channel:
+          type: integer
+          format: uint16
+          description: Channel for sequential message processing (0 = no channel)
+        service_id:
+          type: string
+          format: uuid
+          description: Target service UUID for routing
+        content:
+          type: string
+          format: byte
+          description: Message payload (JSON or binary data)
+
+    ServiceResponseMessage:
+      type: object
+      description: |
+        Structure of a service response message in the binary protocol.
+        This schema is for documentation - actual messages are binary.
+      required:
+        - flags
+        - message_id
+        - response_code
+      properties:
+        flags:
+          $ref: '#/components/schemas/MessageFlags'
+        message_id:
+          type: string
+          format: uuid
+          description: Matches the request message ID
+        response_code:
+          $ref: '#/components/schemas/ResponseCodes'
+        content:
+          type: string
+          format: byte
+          description: Optional response payload
+          nullable: true
+
+    ConnectionConfiguration:
+      type: object
+      description: |
+        Configuration options for the connect service.
+        These are server-side settings and not directly exposed via API.
+      properties:
+        obfuscate_not_found_response:
+          type: boolean
+          description: Return Unauthorized instead of NotFound for better security
+          default: true
+        client_request_max_size:
+          type: integer
+          format: uint32
+          description: Maximum size for client requests in bytes
+          default: 16384
+        client_response_max_size:
+          type: integer
+          format: uint32
+          description: Maximum size for client responses in bytes
+          default: 16384
+        client_reconnection_time:
+          type: integer
+          format: uint32
+          description: Time in seconds to allow client reconnection
+          default: 30
+        redis_connection_string:
+          type: string
+          description: Redis connection string for session management
+        token_public_key:
+          type: string
+          description: Base64-encoded RSA public key for JWT validation
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT access token containing user claims:
+        - jti: Client/User ID
+        - roles: Array of role claims (e.g., ["user", "administrator"])
+        - scopes: Array of scope claims (e.g., ["connect", "accounts"])
+        - services: Array of accessible service names
+
+    ReconnectAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: |
+        Reconnection token in format: "Reconnect <token>"
+        Used to reconnect to existing WebSocket sessions.
+
+tags:
+  - name: WebSocket Connection
+    description: |
+      WebSocket connection establishment and management.
+      
+      **Protocol Flow:**
+      1. HTTP upgrade request with JWT authentication
+      2. WebSocket connection established
+      3. Binary protocol messages exchanged
+      4. Automatic reconnection support during connection drops
+
+security:
+  - BearerAuth: []
+  - ReconnectAuth: []
+
+externalDocs:
+  description: Binary Protocol Documentation
+  url: https://github.com/your-org/bannou/docs/connect-protocol.md

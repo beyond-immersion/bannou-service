@@ -2,13 +2,18 @@
 
 [![Build Status](https://github.com/ParnassianStudios/bannou-service/actions/workflows/ci.integration.yml/badge.svg?branch=master&event=push)](https://github.com/ParnassianStudios/bannou-service/actions/workflows/ci.integration.yml)
 
-Bannou Service is a versatile ASP.NET Core application designed to provide a seamless codebase for creating HTTP Dapr APIs with minimal effort. Primarily designed to support a common backend microservice framework for largely multiplayer online video games, the service could in theory be a core part of any system requiring infinitely extensible REST APIs. By coupling with game engine servers like Unreal or Unity, Bannou Service becomes the foundation of the universal cloud-based platform for developing and hosting multiplayer video games, tentatively called "CelestialLink".
+Bannou Service is a versatile ASP.NET Core application designed to provide a WebSocket-first microservices architecture for massively multiplayer online games. Featuring an intelligent Connect service edge gateway that routes messages via service GUIDs without payload inspection, Bannou enables zero-copy message routing and seamless dual-transport communication (HTTP for development, WebSocket for production). The platform uses schema-driven development with NSwag code generation to ensure API consistency across all services. Primarily designed to support Arcadia, a revolutionary MMORPG with AI-driven NPCs, Bannou becomes the foundation of the universal cloud-based platform for developing and hosting multiplayer video games, tentatively called "CelestialLink".
+
+**⚠️ IMPORTANT**: For all Bannou development tasks, always reference [**API-DESIGN.md**](API-DESIGN.md) first. This document defines the authoritative schema-driven development approach, consolidated service architecture (one plugin per service), and implementation patterns that must be followed for all Bannou services.
 
 ## Table of Contents
 
 - [Bannou Service](#bannou-service)
   - [Table of Contents](#table-of-contents)
   - [Features](#features)
+  - [WebSocket-First Architecture](#websocket-first-architecture)
+  - [Schema-Driven Development](#schema-driven-development)
+  - [Testing Architecture](#testing-architecture)
   - [Local Deploy (Compose)](#local-deploy-compose)
     - [Prerequisites](#prerequisites)
     - [Manual](#manual)
@@ -21,17 +26,115 @@ Bannou Service is a versatile ASP.NET Core application designed to provide a sea
     - [Implementing IServiceAttribute](#implementing-iserviceattribute)
   - [Deployment Notes](#deployment-notes)
     - [Applications](#applications)
-  - [Generated Docs (WIP)](#generated-docs-wip)
+  - [Generated Docs](#generated-docs)
   - [Contributing](#contributing)
   - [License](#license)
 
 ## Features
 
-- Utilizes C#, .NET 7, Dapr, GitHub Actions, Docker, Docker-Compose, and/or Kubernetes
+- Utilizes C#, .NET 9, Dapr, GitHub Actions, Docker, Docker-Compose, and/or Kubernetes
+- **WebSocket-First Architecture** with Connect service edge gateway for zero-copy message routing
+- **Schema-Driven Development** with NSwag code generation from OpenAPI specifications
+- **Dual-Transport Testing** supporting both HTTP and WebSocket protocols
 - Works in conjunction with popular game engines like Unreal and Unity
-- Provides a number built-in REST APIs for backend multiplayer video game support
+- Provides built-in APIs for backend multiplayer video game support with binary protocol efficiency
 - Easily scalable and maintainable with microservices architecture
 - Complements the CelestialLink universal platform for online game development and hosting
+
+## WebSocket-First Architecture
+
+Bannou features an innovative **Connect service edge gateway** that enables zero-copy message routing and seamless dual-transport communication:
+
+### Connect Service Edge Gateway
+- **Service GUID Routing**: Messages routed via 16-byte service identifiers without payload inspection
+- **Zero-Copy Performance**: Connect service never deserializes message contents for maximum efficiency
+- **Client-Specific Security**: Same service receives different GUID per client connection (salted for security)
+- **Progressive Access Control**: Service mappings dynamically update based on authentication state
+
+### Binary Protocol
+- **24-byte Header**: 16-byte service GUID + 8-byte message ID for correlation
+- **Variable Payload**: JSON or binary data support with automatic serialization
+- **Service Discovery**: Clients receive method → GUID mappings at connection time
+- **Bidirectional RPC**: RabbitMQ integration enables server-initiated requests to clients
+
+### Dual Routing Capability
+- **Client-to-Client**: P2P communication using the same WebSocket protocol
+- **Client-to-Service**: Traditional client-server patterns via Connect service routing
+- **Additional Connections**: WebSocket negotiates separate TCP/UDP connections for specialized needs (low-latency input, streaming)
+
+See [WEBSOCKET-PROTOCOL.md](WEBSOCKET-PROTOCOL.md) for complete technical documentation.
+
+## Schema-Driven Development
+
+Bannou uses **contract-first development** where OpenAPI specifications define the single source of truth for all APIs:
+
+### NSwag Code Generation
+- **YAML Schemas**: Define APIs in `/schemas/` directory using OpenAPI 3.0
+- **Automatic Controllers**: Generate abstract controllers with full validation from schemas
+- **TypeScript Clients**: Auto-generate game integration libraries from the same schemas
+- **Model Generation**: Request/response models with proper validation attributes
+
+### Benefits
+- **API Consistency**: All services follow identical patterns derived from schemas
+- **Type Safety**: Generated clients provide compile-time validation
+- **Documentation**: Interactive Swagger UI with zero maintenance overhead
+- **Validation**: Automatic request/response validation against contracts
+
+### Schema-First Workflow
+1. Define API contract in OpenAPI YAML
+2. Generate controllers and models with NSwag
+3. Implement business logic in service classes
+4. Generated tests validate schema compliance
+5. TypeScript clients enable type-safe game integration
+
+See [API-DESIGN.md](API-DESIGN.md) for detailed implementation guide.
+
+### Development Workflow
+After updating schemas or regenerating NSwag code:
+```bash
+# Regenerate controllers and models
+nswag run
+
+# Fix line endings for generated files (ensures EditorConfig compliance)
+./fix-generated-line-endings.sh
+
+# Verify lint compliance
+docker run --rm -v $(pwd):/tmp/lint:rw oxsecurity/megalinter-dotnet:v8 -e "ENABLE=EDITORCONFIG"
+```
+
+## Testing Architecture
+
+Bannou implements a comprehensive **dual-transport testing** system with automatic test generation:
+
+### Schema-Driven Test Generation
+- **Automatic Coverage**: Tests generated for success, validation, and authorization scenarios
+- **OpenAPI Integration**: YAML schemas drive comprehensive test case creation
+- **Failure Scenarios**: Missing required fields, invalid types, unauthorized access automatically tested
+
+### Dual-Transport Validation
+- **HTTP Testing**: Direct service endpoint validation (development/debugging)
+- **WebSocket Testing**: Complete Connect service protocol validation (production experience)
+- **Consistency Verification**: Same tests run via both transports to ensure identical behavior
+- **Transport Discrepancy Detection**: Identifies inconsistencies between HTTP and WebSocket responses
+
+### Testing Clients
+- **Shared Interface**: `ITestClient` abstraction works with both HTTP and WebSocket
+- **Schema Integration**: `ISchemaTestHandler` enables automatic test generation from OpenAPI specs
+- **Comprehensive Reporting**: Test results include transport comparison and discrepancy analysis
+
+Run tests via:
+```bash
+# HTTP direct testing
+dotnet run --project http-tester
+
+# WebSocket protocol testing  
+dotnet run --project edge-tester
+
+# All unit tests (167 total)
+dotnet test
+```
+
+See [TESTING.md](TESTING.md) for complete testing documentation.
 
 ## Local Deploy (Compose)
 
@@ -130,10 +233,13 @@ Applications are assigned via Dapr configuration, which means they can be update
 
 The separation between enabling services/controllers (via ENVs) and mapping services to applications (Dapr configuration) might be a bit hard to wrap your head around at first, but it's a key piece of what makes this monoservice so versatile, regardless of your project's requirements.
 
-## Generated Docs (WIP)
+## Generated Docs
 
-- [Service Configuration](documentation/configuration.md)
-- [Service APIs](documentation/services.md)
+- [WebSocket Protocol Architecture](WEBSOCKET-PROTOCOL.md) - Complete binary protocol specification
+- [API Design & Schema-Driven Development](API-DESIGN.md) - Contract-first development guide
+- [Testing Architecture](TESTING.md) - Dual-transport and schema-driven testing
+- [Service Configuration](documentation/configuration.md) - Environment and deployment configuration
+- [Service APIs](documentation/services.md) - Generated API documentation
 
 ## Contributing
 

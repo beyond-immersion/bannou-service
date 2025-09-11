@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Misc;
+namespace BeyondImmersion.BannouService.Misc;
 
 /// <summary>
 /// Static helper for CRC encoding strings.

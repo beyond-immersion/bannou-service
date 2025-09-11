@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>BeyondImmersion.BannouService</RootNamespace>
@@ -11,6 +12,11 @@
 
   <PropertyGroup>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <!-- Service generation flag - set to true to generate new services from schemas -->
+    <GenerateNewServices Condition="'$(GenerateNewServices)' == ''">false</GenerateNewServices>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -26,27 +32,70 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.AspNetCore" Version="1.12.0" />
-    <PackageReference Include="Dapr.Client" Version="1.12.0" />
-    <PackageReference Include="Dapr.Extensions.Configuration" Version="1.12.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.6" />
+    <PackageReference Include="Dapr.AspNetCore" Version="1.15.1" />
+    <PackageReference Include="Dapr.Client" Version="1.15.1" />
+    <PackageReference Include="Dapr.Extensions.Configuration" Version="1.15.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.2" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
-    <PackageReference Include="Serilog" Version="3.1.1" />
-    <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
-    <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
-    <PackageReference Include="Serilog.Sinks.Debug" Version="2.0.0" />
-    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.3" />
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="NSwag.AspNetCore" Version="14.2.0" />
+    <PackageReference Include="NSwag.MSBuild" Version="14.2.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../bannou-source-generator/bannou-source-generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="../schemas/*.yaml" />
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
     <Exec Command="dotnet format --no-restore" />
+  </Target>
+
+  <!-- Service generation target - runs when GenerateNewServices=true -->
+  <Target Name="GenerateServices" BeforeTargets="Build" Condition="'$(GenerateNewServices)' == 'true'">
+    <Message Text="🔧 Generating services from schemas..." Importance="high" />
+    
+    <!-- Generate API clients from schemas -->
+    <Exec Command="$(NSwagExe_Net90) run nswag.json" Condition="'$(NSwagExe_Net90)' != ''" />
+    <Exec Command="nswag run nswag.json" Condition="'$(NSwagExe_Net90)' == ''" />
+    
+    <!-- Generate event models if events schema exists -->
+    <ItemGroup>
+      <EventSchemas Include="../schemas/*-events.yaml" />
+    </ItemGroup>
+    <Exec Command="$(NSwagExe_Net90) run nswag-events.json" Condition="'$(NSwagExe_Net90)' != '' and '@(EventSchemas)' != ''" />
+    <Exec Command="nswag run nswag-events.json" Condition="'$(NSwagExe_Net90)' == '' and '@(EventSchemas)' != ''" />
+    
+    <!-- Run line ending fixes -->
+    <Exec Command="chmod +x ../fix-generated-line-endings.sh" Condition="Exists('../fix-generated-line-endings.sh')" />
+    <Exec Command="../fix-generated-line-endings.sh" Condition="Exists('../fix-generated-line-endings.sh')" />
+    
+    <Message Text="✅ Service generation completed" Importance="high" />
+  </Target>
+
+  <!-- Development convenience target for manual service generation -->
+  <Target Name="RegenerateAllServices">
+    <PropertyGroup>
+      <GenerateNewServices>true</GenerateNewServices>
+    </PropertyGroup>
+    <CallTarget Targets="GenerateServices" />
   </Target>
 
 </Project>

@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      DOTNET_VERSION: '8.0.406'
+      DOTNET_VERSION: '9.0.x'
 
     steps:
       - uses: actions/checkout@v4
@@ -47,11 +47,9 @@ jobs:
           username: "GitHub Actions"
           content: |
             **:white_check_mark: Unit Tests Passed Successfully**
-
             - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - **Author:** ${{ env.COMMIT_AUTHOR }}
             - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
-
             [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
           embed-title: "Success: Unit Tests"
@@ -73,11 +71,9 @@ jobs:
           username: "GitHub Actions"
           content: |
             **:x: Unit Tests Failed**
-
             - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - **Author:** ${{ env.COMMIT_AUTHOR }}
             - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
-
             [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
           embed-title: "Failed: Unit Tests"
@@ -99,11 +95,9 @@ jobs:
           username: "GitHub Actions"
           content: |
             **:warning: Unit Tests Cancelled**
-
             - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - **Author:** ${{ env.COMMIT_AUTHOR }}
             - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
-
             [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
           embed-title: "Cancelled: Unit Tests"

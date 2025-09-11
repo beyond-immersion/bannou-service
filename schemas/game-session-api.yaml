@@ -1,0 +1,462 @@
+openapi: 3.0.0
+info:
+  title: Bannou Game Session Service API
+  description: Minimal game session management for Arcadia and other games
+  version: 1.0.0
+servers:
+  - url: http://localhost:3500/v1.0/invoke/game-session/method
+    description: Dapr sidecar endpoint
+
+paths:
+  /sessions:
+    get:
+      summary: List available game sessions
+      operationId: listGameSessions
+      tags:
+        - Game Sessions
+      x-permissions:
+        - type: role
+          value: user
+      x-rate-limit:
+        requestsPerMinute: 30
+        requestsPerHour: 500
+      parameters:
+        - name: gameType
+          in: query
+          schema:
+            type: string
+            enum: [arcadia, generic]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [waiting, active, full]
+      responses:
+        '200':
+          description: Game sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameSessionListResponse'
+
+    post:
+      summary: Create new game session
+      operationId: createGameSession
+      tags:
+        - Game Sessions
+      x-permissions:
+        - type: role
+          value: user
+        - type: session_state
+          value: authenticated
+      x-rate-limit:
+        requestsPerMinute: 5
+        requestsPerHour: 20
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGameSessionRequest'
+      responses:
+        '201':
+          description: Game session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameSessionResponse'
+
+  /sessions/{sessionId}:
+    get:
+      summary: Get game session details
+      operationId: getGameSession
+      tags:
+        - Game Sessions
+      x-permissions:
+        - type: role
+          value: user
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Game session retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameSessionResponse'
+
+  /sessions/{sessionId}/join:
+    post:
+      summary: Join a game session
+      operationId: joinGameSession
+      tags:
+        - Game Sessions
+      x-permissions:
+        - type: role
+          value: user
+        - type: session_state
+          value: authenticated
+      x-rate-limit:
+        requestsPerMinute: 10
+        requestsPerHour: 50
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinGameSessionRequest'
+      responses:
+        '200':
+          description: Successfully joined game session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinGameSessionResponse'
+
+  /sessions/{sessionId}/leave:
+    post:
+      summary: Leave a game session
+      operationId: leaveGameSession
+      tags:
+        - Game Sessions
+      x-permissions:
+        - type: context
+          contextKey: gameSessionId
+          value: "{sessionId}"
+          operator: equals
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully left game session
+
+  /sessions/{sessionId}/kick:
+    post:
+      summary: Kick player from game session (admin only)
+      operationId: kickPlayer
+      tags:
+        - Game Sessions
+      x-permissions:
+        - type: role
+          value: admin
+        - type: context
+          contextKey: gameSessionOwner
+          value: "{accountId}"
+          operator: equals
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KickPlayerRequest'
+      responses:
+        '200':
+          description: Player kicked successfully
+
+  /sessions/{sessionId}/chat:
+    post:
+      summary: Send chat message to game session
+      operationId: sendChatMessage
+      tags:
+        - Game Chat
+      x-permissions:
+        - type: context
+          contextKey: gameSessionId
+          value: "{sessionId}"
+          operator: equals
+      x-rate-limit:
+        requestsPerMinute: 60
+        burstLimit: 10
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatMessageRequest'
+      responses:
+        '200':
+          description: Chat message sent successfully
+
+  /sessions/{sessionId}/actions:
+    post:
+      summary: Perform game action (enhanced permissions after joining)
+      operationId: performGameAction
+      tags:
+        - Game Actions
+      x-permissions:
+        - type: context
+          contextKey: gameSessionId
+          value: "{sessionId}"
+          operator: equals
+        - type: context
+          contextKey: gameSessionRole
+          value: player
+          operator: equals
+      x-rate-limit:
+        requestsPerMinute: 120
+        burstLimit: 20
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameActionRequest'
+      responses:
+        '200':
+          description: Game action performed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameActionResponse'
+
+components:
+  schemas:
+    CreateGameSessionRequest:
+      type: object
+      required:
+        - gameType
+        - maxPlayers
+      properties:
+        gameType:
+          type: string
+          enum: [arcadia, generic]
+        maxPlayers:
+          type: integer
+          minimum: 1
+          maximum: 100
+        sessionName:
+          type: string
+          maxLength: 100
+        isPrivate:
+          type: boolean
+          default: false
+        gameSettings:
+          type: object
+          additionalProperties: true
+
+    GameSessionResponse:
+      type: object
+      required:
+        - sessionId
+        - gameType
+        - status
+        - createdAt
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        gameType:
+          type: string
+          enum: [arcadia, generic]
+        sessionName:
+          type: string
+        status:
+          type: string
+          enum: [waiting, active, full, finished]
+        maxPlayers:
+          type: integer
+        currentPlayers:
+          type: integer
+        isPrivate:
+          type: boolean
+        owner:
+          type: string
+          format: uuid
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/GamePlayer'
+        createdAt:
+          type: string
+          format: date-time
+        gameSettings:
+          type: object
+          additionalProperties: true
+
+    GameSessionListResponse:
+      type: object
+      required:
+        - sessions
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameSessionResponse'
+        totalCount:
+          type: integer
+
+    JoinGameSessionRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          description: Password for private sessions
+        characterData:
+          type: object
+          additionalProperties: true
+          description: Game-specific character data
+
+    JoinGameSessionResponse:
+      type: object
+      required:
+        - success
+        - sessionId
+        - playerRole
+      properties:
+        success:
+          type: boolean
+        sessionId:
+          type: string
+          format: uuid
+        playerRole:
+          type: string
+          enum: [player, spectator, moderator]
+        gameData:
+          type: object
+          additionalProperties: true
+          description: Initial game state data
+        newPermissions:
+          type: array
+          items:
+            type: string
+          description: Additional permissions granted by joining
+
+    GamePlayer:
+      type: object
+      required:
+        - accountId
+        - joinedAt
+        - role
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        role:
+          type: string
+          enum: [player, spectator, moderator]
+        joinedAt:
+          type: string
+          format: date-time
+        characterData:
+          type: object
+          additionalProperties: true
+
+    KickPlayerRequest:
+      type: object
+      required:
+        - targetAccountId
+      properties:
+        targetAccountId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          maxLength: 200
+
+    ChatMessageRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          maxLength: 500
+        messageType:
+          type: string
+          enum: [public, whisper, system]
+          default: public
+        targetPlayerId:
+          type: string
+          format: uuid
+          description: For whisper messages
+
+    GameActionRequest:
+      type: object
+      required:
+        - actionType
+      properties:
+        actionType:
+          type: string
+          enum: [move, interact, attack, cast_spell, use_item]
+        actionData:
+          type: object
+          additionalProperties: true
+          description: Action-specific data
+        targetId:
+          type: string
+          format: uuid
+          description: Target of the action (if applicable)
+
+    GameActionResponse:
+      type: object
+      required:
+        - success
+        - actionId
+      properties:
+        success:
+          type: boolean
+        actionId:
+          type: string
+          format: uuid
+        result:
+          type: object
+          additionalProperties: true
+          description: Action result data
+        newGameState:
+          type: object
+          additionalProperties: true
+          description: Updated game state (if applicable)
+
+# Service Registration Information (used by permission system)
+x-service-registration:
+  serviceId: "game-session-service-guid"
+  serviceName: "Game Session Service"
+  version: "1.0.0"
+  categories:
+    - gaming
+    - social
+  basePermissions:
+    - user  # All endpoints require at least 'user' role
+  contextualPermissions:
+    gameSessionId: "Current game session ID"
+    gameSessionRole: "Role within the game session (player, spectator, moderator)"
+    gameSessionOwner: "Account ID of session owner"

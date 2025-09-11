@@ -1,0 +1,568 @@
+openapi: 3.0.0
+info:
+  title: Bannou Accounts Service API
+  description: Internal account management service (CRUD operations only, never exposed to internet)
+  version: 1.0.0
+servers:
+  - url: http://localhost:3500/v1.0/invoke/accounts/method
+    description: Dapr sidecar endpoint (internal only)
+
+paths:
+  /accounts:
+    get:
+      summary: List accounts with filtering
+      operationId: listAccounts
+      tags:
+        - Account Management
+      parameters:
+        - name: email
+          in: query
+          schema:
+            type: string
+            format: email
+        - name: displayName
+          in: query
+          schema:
+            type: string
+        - name: provider
+          in: query
+          schema:
+            type: string
+            enum: [email, google, discord, twitch, steam]
+        - name: verified
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Accounts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountListResponse'
+
+    post:
+      summary: Create new account
+      operationId: createAccount
+      tags:
+        - Account Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccountRequest'
+      responses:
+        '201':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400':
+          description: Invalid account data
+        '409':
+          description: Account already exists
+
+  /accounts/{accountId}:
+    get:
+      summary: Get account by ID
+      operationId: getAccount
+      tags:
+        - Account Management
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Account retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Account not found
+
+    put:
+      summary: Update account
+      operationId: updateAccount
+      tags:
+        - Account Management
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccountRequest'
+      responses:
+        '200':
+          description: Account updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Account not found
+        '400':
+          description: Invalid update data
+
+    delete:
+      summary: Delete account
+      operationId: deleteAccount
+      tags:
+        - Account Management
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Account deleted successfully
+        '404':
+          description: Account not found
+        '409':
+          description: Account cannot be deleted (active sessions exist)
+
+  /accounts/by-email/{email}:
+    get:
+      summary: Get account by email
+      operationId: getAccountByEmail
+      tags:
+        - Account Lookup
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Account retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Account not found
+
+  /accounts/{accountId}/auth-methods:
+    get:
+      summary: Get authentication methods for account
+      operationId: getAuthMethods
+      tags:
+        - Authentication Methods
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Authentication methods retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthMethodsResponse'
+        '404':
+          description: Account not found
+
+    post:
+      summary: Add authentication method to account
+      operationId: addAuthMethod
+      tags:
+        - Authentication Methods
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddAuthMethodRequest'
+      responses:
+        '201':
+          description: Authentication method added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthMethodResponse'
+        '404':
+          description: Account not found
+        '409':
+          description: Authentication method already exists
+
+  /accounts/{accountId}/auth-methods/{methodId}:
+    delete:
+      summary: Remove authentication method from account
+      operationId: removeAuthMethod
+      tags:
+        - Authentication Methods
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: methodId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Authentication method removed successfully
+        '404':
+          description: Account or method not found
+        '400':
+          description: Cannot remove last authentication method
+
+  /accounts/by-provider/{provider}/{externalId}:
+    get:
+      summary: Get account by external provider ID
+      operationId: getAccountByProvider
+      tags:
+        - Account Lookup
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, discord, twitch, steam]
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Account not found
+
+  /accounts/{accountId}/profile:
+    put:
+      summary: Update account profile
+      operationId: updateProfile
+      tags:
+        - Profile Management
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Account not found
+
+  /accounts/{accountId}/password:
+    put:
+      summary: Update account password hash
+      operationId: updatePasswordHash
+      tags:
+        - Account Management
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordRequest'
+      responses:
+        '200':
+          description: Password hash updated successfully
+        '404':
+          description: Account not found
+
+  /accounts/{accountId}/verification:
+    put:
+      summary: Update email verification status
+      operationId: updateVerificationStatus
+      tags:
+        - Account Management
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVerificationRequest'
+      responses:
+        '200':
+          description: Verification status updated successfully
+        '404':
+          description: Account not found
+
+components:
+  schemas:
+    CreateAccountRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+        passwordHash:
+          type: string
+          nullable: true
+          description: Pre-hashed password from Auth service
+        displayName:
+          type: string
+          nullable: true
+          maxLength: 100
+        emailVerified:
+          type: boolean
+          default: false
+        roles:
+          type: array
+          items:
+            type: string
+          default: []
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    UpdateAccountRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+          nullable: true
+          maxLength: 100
+        roles:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+          nullable: true
+          maxLength: 100
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    UpdatePasswordRequest:
+      type: object
+      required:
+        - passwordHash
+      properties:
+        passwordHash:
+          type: string
+          description: New pre-hashed password from Auth service
+
+    UpdateVerificationRequest:
+      type: object
+      required:
+        - emailVerified
+      properties:
+        emailVerified:
+          type: boolean
+
+    AddAuthMethodRequest:
+      type: object
+      required:
+        - provider
+      properties:
+        provider:
+          type: string
+          enum: [google, discord, twitch, steam]
+        externalId:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+
+    AccountResponse:
+      type: object
+      required:
+        - accountId
+        - email
+        - createdAt
+        - emailVerified
+        - roles
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        emailVerified:
+          type: boolean
+        roles:
+          type: array
+          items:
+            type: string
+        authMethods:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthMethodInfo'
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    AuthMethodInfo:
+      type: object
+      required:
+        - provider
+        - linkedAt
+      properties:
+        methodId:
+          type: string
+          format: uuid
+        provider:
+          type: string
+          enum: [email, google, discord, twitch, steam]
+        externalId:
+          type: string
+          nullable: true
+        displayName:
+          type: string
+          nullable: true
+        linkedAt:
+          type: string
+          format: date-time
+
+    AuthMethodResponse:
+      type: object
+      required:
+        - methodId
+        - provider
+        - linkedAt
+      properties:
+        methodId:
+          type: string
+          format: uuid
+        provider:
+          type: string
+          enum: [google, discord, twitch, steam]
+        externalId:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        linkedAt:
+          type: string
+          format: date-time
+
+    AuthMethodsResponse:
+      type: object
+      required:
+        - authMethods
+      properties:
+        authMethods:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthMethodInfo'
+
+    AccountListResponse:
+      type: object
+      required:
+        - accounts
+        - totalCount
+        - page
+        - pageSize
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountResponse'
+        totalCount:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean

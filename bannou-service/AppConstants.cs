@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService;
+namespace BeyondImmersion.BannouService;
 
 public static class AppConstants
 {

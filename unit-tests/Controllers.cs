@@ -31,10 +31,10 @@ public class Controllers : IClassFixture<CollectionFixture>
 
     public interface ITestService_FromInterface : IDaprService { }
     [DaprService("ControllerTests.Interface", typeof(ITestService_FromInterface))]
-    public class Service_FromInterface: ITestService_FromInterface { }
+    public class Service_FromInterface : ITestService_FromInterface { }
 
     [DaprController(typeof(ITestService_FromInterface))]
-    public class Controller_FromInterface: ControllerBase, IDaprController { }
+    public class Controller_FromInterface : ControllerBase, IDaprController { }
 
     public Controllers(CollectionFixture collectionContext, ITestOutputHelper output)
     {

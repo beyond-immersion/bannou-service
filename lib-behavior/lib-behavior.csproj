@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\ServiceLib.targets" />
+
+	<PropertyGroup>
+		<RootNamespace>$(RootNamespace).Behavior</RootNamespace>
+		<ServiceLib>behavior</ServiceLib>
+		<TargetFramework>net9.0</TargetFramework>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="YamlDotNet" Version="16.2.0" />
+		<PackageReference Include="Newtonsoft.Json.Schema" Version="4.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.0" />
+	</ItemGroup>
+
+</Project>

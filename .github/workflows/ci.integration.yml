@@ -22,6 +22,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         name: Checkout Repo
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Install Docker Compose
         run: |
@@ -62,11 +64,9 @@ jobs:
           username: "GitHub Actions"
           content: |
             **:white_check_mark: Integration Tests Passed Successfully**
-
             - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - **Author:** ${{ env.COMMIT_AUTHOR }}
             - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
-
             [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
           embed-title: "Success: Integration Tests"
@@ -88,11 +88,9 @@ jobs:
           username: "GitHub Actions"
           content: |
             **:x: Integration Tests Failed**
-
             - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - **Author:** ${{ env.COMMIT_AUTHOR }}
             - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
-
             [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
           embed-title: "Failed: Integration Tests"
@@ -114,11 +112,9 @@ jobs:
           username: "GitHub Actions"
           content: |
             **:warning: Integration Tests Cancelled**
-
             - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - **Author:** ${{ env.COMMIT_AUTHOR }}
             - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
-
             [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
           embed-title: "Cancelled: Integration Tests"

@@ -1,4 +1,4 @@
-﻿using System.Net.Mime;
+using System.Net.Mime;
 using System.Text;
 
 namespace BeyondImmersion.BannouService.Controllers.Messages;
@@ -61,7 +61,7 @@ public class ApiRequest : ApiMessage
             else
                 requestUrl = $"{method}";
 
-            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(httpMethod.ToObject(), coordinatorService, requestUrl, this);
+            HttpRequestMessage requestMsg = Program.DaprClient.CreateInvokeMethodRequest(httpMethod.ToObject(), coordinatorService, requestUrl, null, this);
             requestMsg.AddPropertyHeaders(this);
 
             if (additionalHeaders != null)

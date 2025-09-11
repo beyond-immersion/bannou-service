@@ -40,3 +40,9 @@ msbuild.wrn
 .vs/
 
 [Pp]rovisioning/[Cc]ertificates/
+
+# MegaLinter reports
+megalinter-reports/
+
+# Empty files
+bannou-service/{}

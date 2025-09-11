@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Attributes;
+namespace BeyondImmersion.BannouService.Attributes;
 
 /// <summary>
 /// Easy base type for custom attributes.

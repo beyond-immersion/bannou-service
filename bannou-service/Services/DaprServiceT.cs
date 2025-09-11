@@ -1,4 +1,4 @@
-﻿using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Services;
 

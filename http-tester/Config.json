@@ -1,0 +1,8 @@
+{
+  "Http_Base_Url": "http://localhost:80",
+  "Register_Endpoint": "api/accounts/create",
+  "Login_Credentials_Endpoint": "api/auth/login",
+  "Login_Token_Endpoint": "api/auth/refresh",
+  "Client_Username": "testuser",
+  "Client_Password": "TestPassword123!"
+}

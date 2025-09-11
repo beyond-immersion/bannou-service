@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json.schemastore.org/nswag",
+  "runtime": "Net90",
+  "defaultVariables": null,
+  "documentGenerator": {
+    "fromDocument": {
+      "json": "./schemas/accounts-events.yaml",
+      "url": null,
+      "output": null,
+      "newLineBehavior": "LF"
+    }
+  },
+  "codeGenerators": {
+    "openApiToCSharpClient": {
+      "className": "AccountsEventsModels",
+      "namespace": "BeyondImmersion.BannouService.Accounts.Events",
+      "additionalNamespaceUsages": [
+        "System.ComponentModel.DataAnnotations",
+        "Newtonsoft.Json"
+      ],
+      "generateClientClasses": false,
+      "generateClientInterfaces": false,
+      "generateOptionalParameters": true,
+      "generateJsonMethods": false,
+      "enforceFlagEnums": false,
+      "parameterArrayType": "System.Collections.Generic.IEnumerable",
+      "parameterDictionaryType": "System.Collections.Generic.IDictionary",
+      "responseArrayType": "System.Collections.Generic.List",
+      "responseDictionaryType": "System.Collections.Generic.Dictionary",
+      "wrapResponses": false,
+      "generateResponseClasses": false,
+      "generateExceptionClasses": false,
+      "generateUpdateJsonSerializerSettingsMethod": true,
+      "useRequestAndResponseSerializationAttribute": false,
+      "serializeTypeInformation": false,
+      "queryNullValue": "",
+      "generateContracts": true,
+      "generateDataAnnotations": true,
+      "excludedTypeNames": [],
+      "handleReferences": true,
+      "generateDefaultValues": true,
+      "generateDataAnnotations": true,
+      "output": "lib-accounts-core/Generated/AccountsEventsModels.cs"
+    }
+  }
+}

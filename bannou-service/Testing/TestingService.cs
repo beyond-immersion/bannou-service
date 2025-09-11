@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Testing;
 
@@ -255,7 +255,7 @@ public sealed class TestingService : DaprService<TestingServiceConfiguration>
 
                 if (!await serviceTest.Value.Invoke(this))
                 {
-                    Program.Logger?.Log(LogLevel.Error, $"Test '{testName}' against service '{serviceName}' failed!");
+                    Program.Logger?.Log(LogLevel.Critical, $"Test '{testName}' against service '{serviceName}' failed!");
 
                     results = false;
                     if (stopOnFailure)

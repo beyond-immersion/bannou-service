@@ -1,0 +1,498 @@
+openapi: 3.0.0
+info:
+  title: Bannou Authorization API
+  version: 1.0.0
+  description: |
+    User authentication and authorization for Bannou services.
+    
+    This API handles:
+    - User registration with username/password authentication
+    - User login with credentials (username/password) 
+    - Token-based authentication using JWT access tokens and refresh tokens
+    - Token validation and refresh flows
+    - Integration with Dapr service mesh
+
+servers:
+  - url: http://localhost/api/authorization
+    description: Development server
+
+paths:
+  /register:
+    post:
+      summary: Register new user account
+      description: |
+        Creates a new user account with username and password authentication.
+        Returns JWT access token and refresh token on successful registration.
+        Email is optional but recommended for account recovery.
+      operationId: Register
+      tags:
+        - Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              standard-registration:
+                summary: Standard username/password registration
+                value:
+                  username: "gameuser123"
+                  password: "SecurePassword123!"
+                  email: "user@example.com"
+              minimal-registration:
+                summary: Registration without email
+                value:
+                  username: "player456"
+                  password: "AnotherSecurePass!"
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          description: Invalid request data (missing username/password)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '403':
+          description: Registration forbidden (username taken, policy violation)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+  /login/credentials:
+    get:
+      summary: Login with username and password (GET)
+      description: |
+        Authenticate user with username and password provided via headers.
+        Returns JWT access token and refresh token on successful authentication.
+        Uses GET method for simple credential-based login.
+      operationId: LoginWithCredentialsGet
+      tags:
+        - Authorization
+      parameters:
+        - name: username
+          in: header
+          required: true
+          description: Username for authentication
+          schema:
+            type: string
+            minLength: 1
+            example: "gameuser123"
+        - name: password
+          in: header
+          required: true
+          description: Password for authentication  
+          schema:
+            type: string
+            format: password
+            minLength: 1
+            example: "SecurePassword123!"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Missing username or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '403':
+          description: Authentication failed (invalid credentials)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+    
+    post:
+      summary: Login with username and password (POST)
+      description: |
+        Authenticate user with username and password provided via headers.
+        Returns JWT access token and refresh token on successful authentication.
+        Uses POST method for credential-based login with potential request body.
+      operationId: LoginWithCredentialsPost
+      tags:
+        - Authorization
+      parameters:
+        - name: username
+          in: header
+          required: true
+          description: Username for authentication
+          schema:
+            type: string
+            minLength: 1
+            example: "gameuser123"
+        - name: password
+          in: header
+          required: true
+          description: Password for authentication
+          schema:
+            type: string
+            format: password
+            minLength: 1
+            example: "SecurePassword123!"
+      requestBody:
+        required: false
+        description: Optional login request body (currently unused)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Missing username or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '403':
+          description: Authentication failed (invalid credentials)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+  /login/token:
+    get:
+      summary: Login with refresh token (GET)
+      description: |
+        Authenticate user with a refresh token provided via header.
+        Returns new JWT access token and potentially new refresh token.
+        Used for token refresh flows without requiring password re-entry.
+      operationId: LoginWithTokenGet
+      tags:
+        - Authorization  
+      parameters:
+        - name: token
+          in: header
+          required: true
+          description: Refresh token for authentication
+          schema:
+            type: string
+            minLength: 1
+            example: "refresh_token_abc123xyz"
+      responses:
+        '200':
+          description: Token refresh successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Missing or invalid token format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '403':
+          description: Token invalid or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+    post:
+      summary: Login with refresh token (POST)
+      description: |
+        Authenticate user with a refresh token provided via header.
+        Returns new JWT access token and potentially new refresh token.
+        Uses POST method for token refresh with potential request body.
+      operationId: LoginWithTokenPost
+      tags:
+        - Authorization
+      parameters:
+        - name: token
+          in: header
+          required: true
+          description: Refresh token for authentication
+          schema:
+            type: string
+            minLength: 1
+            example: "refresh_token_abc123xyz"
+      requestBody:
+        required: false
+        description: Optional login request body (currently unused)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Token refresh successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Missing or invalid token format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '403':
+          description: Token invalid or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+  /validate:
+    post:
+      summary: Validate JWT access token
+      description: |
+        Validates a JWT access token and returns token status information.
+        Can be used to check if a token is valid, expired, or contains specific claims.
+        Currently returns basic validation response.
+      operationId: ValidateToken
+      tags:
+        - Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTokenRequest'
+            examples:
+              token-validation:
+                summary: Validate access token
+                value:
+                  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Token validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateTokenResponse'
+        '400':
+          description: Invalid request (missing token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '401':
+          description: Token invalid or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      description: Request to register a new user account
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Unique username for the account
+          minLength: 3
+          maxLength: 32
+          pattern: '^[a-zA-Z0-9_]+$'
+          example: "gameuser123"
+        password:
+          type: string
+          description: Password for the account (will be securely hashed)
+          minLength: 8
+          maxLength: 128
+          format: password
+          example: "SecurePassword123!"
+        email:
+          type: string
+          description: Email address for the account (optional but recommended)
+          format: email
+          maxLength: 255
+          nullable: true
+          example: "user@example.com"
+
+    RegisterResponse:
+      type: object
+      description: Response from successful user registration
+      required:
+        - access_token
+      properties:
+        access_token:
+          type: string
+          description: JWT access token for immediate authentication
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature"
+        refresh_token:
+          type: string
+          description: Refresh token for obtaining new access tokens
+          nullable: true
+          example: "refresh_token_abc123xyz789"
+
+    LoginRequest:
+      type: object
+      description: |
+        Login request body (currently unused - credentials passed via headers).
+        Provided for future extensibility and consistency with API patterns.
+      properties: {}
+
+    LoginResponse:
+      type: object
+      description: Response from successful user login
+      required:
+        - access_token
+      properties:
+        access_token:
+          type: string
+          description: JWT access token for authentication
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature"
+        refresh_token:
+          type: string
+          description: Refresh token for obtaining new access tokens
+          nullable: true
+          example: "refresh_token_def456uvw012"
+
+    ValidateTokenRequest:
+      type: object
+      description: Request to validate a JWT access token
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: JWT access token to validate
+          minLength: 1
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature"
+
+    ValidateTokenResponse:
+      type: object
+      description: |
+        Response from token validation (currently minimal implementation).
+        Future versions may include token claims, expiration info, and validation details.
+      properties:
+        valid:
+          type: boolean
+          description: Whether the token is valid
+          example: true
+        expires_at:
+          type: string
+          description: Token expiration timestamp
+          format: date-time
+          nullable: true
+          example: "2024-01-01T15:00:00Z"
+        subject:
+          type: string  
+          description: Token subject (user identifier)
+          nullable: true
+          example: "gameuser123"
+        claims:
+          type: object
+          description: Token claims (roles, permissions, etc.)
+          additionalProperties: true
+          nullable: true
+
+    AccessData:
+      type: object
+      description: |
+        Internal access data structure containing authentication tokens.
+        Used by service implementations but not directly exposed in API responses.
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+          nullable: true
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refresh_token:
+          type: string
+          description: Refresh token for token renewal
+          nullable: true
+          example: "refresh_token_abc123xyz"
+
+    AuthErrorResponse:
+      type: object
+      description: Error response for failed requests
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type identifier
+          enum:
+            - INVALID_REQUEST
+            - MISSING_CREDENTIALS
+            - AUTHENTICATION_FAILED
+            - TOKEN_INVALID
+            - TOKEN_EXPIRED
+            - USER_EXISTS
+            - INTERNAL_ERROR
+          example: "AUTHENTICATION_FAILED"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid username or password"
+        details:
+          type: object
+          description: Additional error context and details
+          additionalProperties: true
+          nullable: true
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token authentication
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Authorization
+    description: User authentication and authorization operations

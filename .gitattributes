@@ -1,7 +1,7 @@
 ###############################################################################
 # Set default behavior to automatically normalize line endings.
 ###############################################################################
-* text eol=crlf
+* text eol=lf
 *.sh text eol=lf
 *.bash text eol=lf
 *.sql text eol=lf

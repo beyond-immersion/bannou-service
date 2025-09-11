@@ -1,4 +1,4 @@
-﻿namespace BeyondImmersion.BannouService.Services;
+namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// The standard service function response.

@@ -29,6 +29,16 @@ libs:
 tests:
 	bash ./service-tests.sh
 
+generate-services:
+	@echo "🔧 Generating services from OpenAPI schemas..."
+	cd bannou-service && dotnet build -p:GenerateNewServices=true
+	@echo "✅ Service generation completed"
+
+regenerate-all-services:
+	@echo "🔧 Regenerating all services (including clients and events)..."
+	cd bannou-service && dotnet msbuild -t:RegenerateAllServices
+	@echo "✅ All services regenerated"
+
 sync:
 	git pull && git submodule update --init --recursive
 

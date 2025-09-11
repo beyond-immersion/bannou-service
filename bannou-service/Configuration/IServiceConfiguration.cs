@@ -1,4 +1,4 @@
-﻿using Dapr.Extensions.Configuration;
+using Dapr.Extensions.Configuration;
 using System.Reflection;
 using System.Text.Json;
 

@@ -1,9 +1,0 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-	<Import Project="..\ServiceLib.targets" />
-
-	<PropertyGroup>
-		<RootNamespace>$(RootNamespace).Connect</RootNamespace>
-		<ServiceLib>connect</ServiceLib>
-	</PropertyGroup>
-
-</Project>

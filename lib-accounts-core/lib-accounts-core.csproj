@@ -1,9 +1,0 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-	<Import Project="..\ServiceLib.targets" />
-
-	<PropertyGroup>
-		<RootNamespace>$(RootNamespace).Accounts</RootNamespace>
-		<ServiceLib>accounts</ServiceLib>
-	</PropertyGroup>
-
-</Project>

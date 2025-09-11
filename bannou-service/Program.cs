@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Controllers.Filters;
 using BeyondImmersion.BannouService.Logging;
+using BeyondImmersion.BannouService.ServiceClients;
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebSockets;
@@ -163,8 +164,20 @@ public static class Program
 
             webAppBuilder.Services
                 .AddWebSockets((websocketOptions) => { })
-                .AddDaprServices()
-                .AddDaprClient();
+                .AddDaprServices();
+
+            webAppBuilder.Services.AddDaprClient();
+            webAppBuilder.Services.AddAllBannouServiceClients();
+
+            // Configure OpenAPI documentation with NSwag
+            webAppBuilder.Services.AddOpenApiDocument(document =>
+            {
+                document.Title = "Bannou API";
+                document.Version = "v1";
+                document.Description = "Schema-first microservice APIs for Bannou platform - Generated from OpenAPI specifications";
+                document.DocumentName = "v1";
+
+            });
 
             // configure webhost
             webAppBuilder.WebHost
@@ -199,6 +212,14 @@ public static class Program
         WebApplication webApp = webAppBuilder.Build();
         try
         {
+            // Configure OpenAPI documentation in development
+            if (webApp.Environment.IsDevelopment())
+            {
+                webApp.UseOpenApi(); // Serves OpenAPI specification
+                webApp.UseSwaggerUi(); // Serves Swagger UI
+                webApp.UseReDoc(); // Alternative documentation UI
+            }
+
             // enable websocket connections
             webApp.UseWebSockets(new WebSocketOptions()
             {

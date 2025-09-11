@@ -1,4 +1,4 @@
-﻿using BeyondImmersion.BannouService.Controllers.Filters;
+using BeyondImmersion.BannouService.Controllers.Filters;
 using BeyondImmersion.BannouService.Controllers.Messages;
 using System.Reflection;
 using Xunit.Abstractions;

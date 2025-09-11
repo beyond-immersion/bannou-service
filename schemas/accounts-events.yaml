@@ -1,0 +1,124 @@
+openapi: 3.0.3
+info:
+  title: Accounts Service Events
+  description: Event models for accounts service RabbitMQ pub/sub via Dapr
+  version: 1.0.0
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    AccountCreatedEvent:
+      type: object
+      required:
+        - eventId
+        - timestamp
+        - accountId
+        - username
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the created account
+        username:
+          type: string
+          description: Username of the created account
+        email:
+          type: string
+          format: email
+          description: Email address of the created account
+        roles:
+          type: array
+          items:
+            type: string
+          description: Roles assigned to the account
+
+    AccountUpdatedEvent:
+      type: object
+      required:
+        - eventId
+        - timestamp
+        - accountId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the updated account
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of fields that were changed
+        previousValues:
+          type: object
+          description: Previous values of changed fields
+        newValues:
+          type: object
+          description: New values of changed fields
+
+    AccountDeletedEvent:
+      type: object
+      required:
+        - eventId
+        - timestamp
+        - accountId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the deleted account
+        username:
+          type: string
+          description: Username of the deleted account
+        deletionReason:
+          type: string
+          description: Reason for account deletion
+
+    ServiceMappingEvent:
+      type: object
+      required:
+        - eventId
+        - timestamp
+        - serviceName
+        - appId
+        - action
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        serviceName:
+          type: string
+          description: Name of the service (e.g., "accounts", "character-agent")
+        appId:
+          type: string
+          description: Dapr app-id where the service is running
+        action:
+          type: string
+          enum: [register, update, unregister]
+          description: Type of mapping change
+        metadata:
+          type: object
+          description: Additional service metadata
