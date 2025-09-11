@@ -15,12 +15,14 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
 {
     public ServiceTest[] GetServiceTests()
     {
-        // TODO: Regenerate with new schema-first services
-        return [];
+        return
+        [
+            new ServiceTest(TestServiceMappingResolver, "Service Mapping Resolver", "Infrastructure", "Tests basic service-to-app-id resolution"),
+            new ServiceTest(TestServiceMappingEvents, "Service Mapping Events", "Infrastructure", "Tests RabbitMQ service mapping events"),
+            new ServiceTest(TestDaprServiceClientRouting, "Dapr Service Client Routing", "Infrastructure", "Tests Dapr service client routing"),
+            new ServiceTest(TestServiceMappingHealth, "Service Mapping Health", "Infrastructure", "Tests service mapping health endpoints")
+        ];
     }
-
-    /*
-    // TODO: Regenerate with new schema-first services
     
     /// <summary>
     /// Tests the basic service mapping resolver functionality.
@@ -32,7 +34,7 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
             Console.WriteLine("Testing service mapping resolver...");
 
             // Test default resolution
-            var resolver = new ServiceMappingResolver(CreateTestLogger<ServiceMappingResolver>());
+            var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>());
 
             // Should default to "bannou"
             var appId = resolver.GetAppIdForService("accounts");
@@ -121,7 +123,7 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
         {
             Console.WriteLine("Testing Dapr service client routing...");
 
-            var resolver = new ServiceMappingResolver(CreateTestLogger<ServiceMappingResolver>());
+            var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>());
             var logger = CreateTestLogger<DaprServiceClientBase>();
 
             // Create a mock service client base to test routing
@@ -171,10 +173,11 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
                 return Task.FromResult(new TestResult(true, "Service mapping health test skipped (HTTP transport required)"));
             }
 
-            // Test the health endpoint if available
-            var httpClient = testClient as HttpTestClient;
-            if (httpClient == null)
-                return Task.FromResult(new TestResult(false, "Could not cast test client to HttpTestClient"));
+            // Test with any test client type
+            if (!testClient.IsAuthenticated)
+            {
+                return Task.FromResult(new TestResult(true, "Service mapping health test skipped (authentication required)"));
+            }
 
             // Try to reach the service mapping health endpoint
             // This would be implemented if we have access to make HTTP calls
@@ -193,7 +196,7 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
     /// </summary>
     private static Task TestServiceMappingEndpoint(ITestClient testClient)
     {
-        if (testClient is not HttpTestClient httpTestClient)
+        if (testClient.TransportType != "HTTP")
             return Task.CompletedTask;
         Console.WriteLine("Testing service mapping HTTP endpoint...");
 
@@ -231,5 +234,4 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
 
         public string TestGetBaseUrl() => BaseUrl;
     }
-    */
 }
