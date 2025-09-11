@@ -192,9 +192,16 @@ csharp_space_between_method_declaration_parameter_list_parentheses = false
 csharp_space_between_parentheses = false
 csharp_space_between_square_brackets = false
 
-# Wrapping preferences
+# Wrapping preferences  
 csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = true
+
+# Indentation preferences for continuation lines
+csharp_indent_case_contents_when_block = true
+csharp_indent_switch_labels = true
+
+# Binary operator placement (affects continuation line indentation)
+dotnet_style_operator_placement_when_wrapping = beginning_of_line
 
 #### Naming styles ####
 
