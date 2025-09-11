@@ -13,6 +13,9 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("unit-tests")]
 namespace BeyondImmersion.BannouService;
 
+/// <summary>
+/// Main program class for the Bannou service platform.
+/// </summary>
 public static class Program
 {
     private static AppRunningStates _appRunningState = AppRunningStates.Stopped;

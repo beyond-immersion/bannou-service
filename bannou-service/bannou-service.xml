@@ -686,14 +686,97 @@
             The basic API controller request payload model.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest.HttpClient">
+            <summary>
+            HTTP client for making service requests.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest.Response">
+            <summary>
+            The response from the API request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest.ExecuteRequest``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},BeyondImmersion.BannouService.HttpMethodTypes)">
+            <summary>
+            Executes an API request with a typed response.
+            </summary>
+            <typeparam name="T">The type of response expected.</typeparam>
+            <param name="service">The target service name.</param>
+            <param name="method">The method to invoke.</param>
+            <param name="additionalHeaders">Optional additional headers.</param>
+            <param name="httpMethod">The HTTP method to use.</param>
+            <returns>True if the request was successful, false otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest.ExecuteRequest(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},BeyondImmersion.BannouService.HttpMethodTypes)">
+            <summary>
+            Executes an API request.
+            </summary>
+            <param name="service">The target service name.</param>
+            <param name="method">The method to invoke.</param>
+            <param name="additionalHeaders">Optional additional headers.</param>
+            <param name="httpMethod">The HTTP method to use.</param>
+            <returns>True if the request was successful, false otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest.ExecuteRequest_INTERNAL(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},BeyondImmersion.BannouService.HttpMethodTypes)">
+            <summary>
+            Internal implementation for executing API requests.
+            </summary>
+            <param name="service">The target service name.</param>
+            <param name="method">The method to invoke.</param>
+            <param name="additionalHeaders">Optional additional headers.</param>
+            <param name="httpMethod">The HTTP method to use.</param>
+            <returns>True if the request was successful, false otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest.ExecuteRequest_INTERNAL``1(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},BeyondImmersion.BannouService.HttpMethodTypes)">
+            <summary>
+            Internal implementation for executing typed API requests.
+            </summary>
+            <typeparam name="T">The type of response expected.</typeparam>
+            <param name="service">The target service name.</param>
+            <param name="method">The method to invoke.</param>
+            <param name="additionalHeaders">Optional additional headers.</param>
+            <param name="httpMethod">The HTTP method to use.</param>
+            <returns>True if the request was successful, false otherwise.</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest`1">
             <summary>
             The basic API controller request payload model.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest`1.Response">
+            <summary>
+            The typed response from the API request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest`1.ExecuteRequest(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},BeyondImmersion.BannouService.HttpMethodTypes)">
+            <summary>
+            Executes an API request with typed response handling.
+            </summary>
+            <param name="service">The target service name.</param>
+            <param name="method">The method to invoke.</param>
+            <param name="additionalHeaders">Optional additional headers.</param>
+            <param name="httpMethod">The HTTP method to use.</param>
+            <returns>True if the request was successful, false otherwise.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Messages.ApiRequest`1.CreateResponse">
+            <summary>
+            Creates a response instance and copies header properties from the request.
+            </summary>
+            <returns>A new response instance of type T.</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Controllers.Messages.ApiResponse">
             <summary>
             The base API controller response model.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Messages.ApiResponse.StatusCode">
+            <summary>
+            The HTTP status code for the response.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Messages.ApiResponse.Message">
+            <summary>
+            Optional message associated with the response.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.AppRunningStates">
@@ -803,6 +886,11 @@
             Internal server error (500).
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.ExtensionMethods">
+            <summary>
+            Extension methods for various types used throughout the Bannou service platform.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.ExtensionMethods.REGEX_InvalidChars">
             <remarks>
             Pattern:<br/>
@@ -833,6 +921,21 @@
             </code>
             </remarks>
         </member>
+        <member name="M:BeyondImmersion.BannouService.ExtensionMethods.ToObject(BeyondImmersion.BannouService.HttpMethodTypes)">
+            <summary>
+            Converts HttpMethodTypes enum to HttpMethod object.
+            </summary>
+            <param name="httpMethod">The HTTP method type to convert.</param>
+            <returns>The corresponding HttpMethod object.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ExtensionMethods.ToActionResult(BeyondImmersion.BannouService.StatusCodes,System.Object)">
+            <summary>
+            Converts StatusCodes enum to IStatusCodeActionResult for ASP.NET Core responses.
+            </summary>
+            <param name="httpStatusCode">The status code to convert.</param>
+            <param name="value">Optional response value.</param>
+            <returns>The corresponding IStatusCodeActionResult.</returns>
+        </member>
         <member name="M:BeyondImmersion.BannouService.ExtensionMethods.Log(Microsoft.Extensions.Logging.ILogger,Microsoft.Extensions.Logging.LogLevel,System.Exception,System.String,System.String,System.String,System.Int32)">
             <summary>
             Logging extension/helper methods, for including additional context as JSON.
@@ -847,6 +950,13 @@
             <summary>
             Check if field or property has the "Obsolete" attribute attached, and return message if so.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ExtensionMethods.GetAllImplementedInterfaces(System.Type)">
+            <summary>
+            Gets all interfaces implemented by a type, including inherited interfaces.
+            </summary>
+            <param name="type">The type to examine.</param>
+            <returns>Array of all implemented interface types.</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.ExtensionMethods.IsSafeForPath(System.String)">
             <summary>
@@ -890,6 +1000,11 @@
             Iterates through and invokes the Shutdown() method on all loaded service handlers.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.ExtensionMethods.AddPropertyHeaders(System.Net.Http.HttpRequestMessage,BeyondImmersion.BannouService.Controllers.Messages.ApiRequest)">
+            <summary>
+            Add property headers.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Logging.ServiceLogging">
             <summary>
             A collection of helpers for generating service logs.
@@ -916,6 +1031,11 @@
             <summary>
             Static helper for CRC encoding strings.
             Used in routing by service names.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Program">
+            <summary>
+            Main program class for the Bannou service platform.
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Program.AppRunningState">

@@ -7,6 +7,9 @@ using System.Text.RegularExpressions;
 
 namespace BeyondImmersion.BannouService;
 
+/// <summary>
+/// Extension methods for various types used throughout the Bannou service platform.
+/// </summary>
 public static partial class ExtensionMethods
 {
     private static bool sProviderRegistered = false;
@@ -29,6 +32,11 @@ public static partial class ExtensionMethods
     [GeneratedRegex("\\s+")]
     public static partial Regex REGEX_MultipleSpaces();
 
+    /// <summary>
+    /// Converts HttpMethodTypes enum to HttpMethod object.
+    /// </summary>
+    /// <param name="httpMethod">The HTTP method type to convert.</param>
+    /// <returns>The corresponding HttpMethod object.</returns>
     public static HttpMethod ToObject(this HttpMethodTypes httpMethod)
         => httpMethod switch
         {
@@ -41,6 +49,12 @@ public static partial class ExtensionMethods
             _ => HttpMethod.Post
         };
 
+    /// <summary>
+    /// Converts StatusCodes enum to IStatusCodeActionResult for ASP.NET Core responses.
+    /// </summary>
+    /// <param name="httpStatusCode">The status code to convert.</param>
+    /// <param name="value">Optional response value.</param>
+    /// <returns>The corresponding IStatusCodeActionResult.</returns>
     public static IStatusCodeActionResult ToActionResult(this StatusCodes httpStatusCode, object? value = null)
     {
         if (value == null)
@@ -96,6 +110,11 @@ public static partial class ExtensionMethods
         return false;
     }
 
+    /// <summary>
+    /// Gets all interfaces implemented by a type, including inherited interfaces.
+    /// </summary>
+    /// <param name="type">The type to examine.</param>
+    /// <returns>Array of all implemented interface types.</returns>
     public static Type[] GetAllImplementedInterfaces(this Type? type)
     {
         var interfaces = new List<Type>();
@@ -285,6 +304,9 @@ public static partial class ExtensionMethods
         }
     }
 
+    /// <summary>
+    /// Add property headers.
+    /// </summary>
     public static void AddPropertyHeaders(this HttpRequestMessage message, ApiRequest request)
     {
         foreach (var headerKVP in request.SetPropertiesToHeaders())

@@ -47,8 +47,8 @@ public class Program
     /// <returns>True if in daemon mode, false otherwise.</returns>
     private static bool IsDaemonMode(string[] args)
     {
-        return Environment.GetEnvironmentVariable("DAEMON_MODE") == "true" || 
-               args.Contains("--daemon") || 
+        return Environment.GetEnvironmentVariable("DAEMON_MODE") == "true" ||
+               args.Contains("--daemon") ||
                args.Contains("-d");
     }
 
@@ -112,26 +112,55 @@ public class Program
             ShutdownCancellationTokenSource.Cancel();
             Console.WriteLine($"An exception has occurred: '{exc.Message}'");
             Console.WriteLine($"Stack trace: {exc.StackTrace}");
-            
+
             WaitForUserInput("Press any key to exit...", args);
         }
     }
 
     /// <summary>
-    /// Runs the interactive test console that allows users to select and execute tests
+    /// Runs the test console that allows users to select and execute tests, or runs all tests in daemon mode
     /// </summary>
     /// <param name="testClient">The test client to use for executing tests</param>
     private static async Task RunInteractiveTestConsole(ITestClient testClient, string[] args)
     {
         LoadServiceTests();
 
-        string? line;
         if (sTestRegistry.Count == 0)
         {
             WaitForUserInput("No tests to run - press any key to exit.", args);
             return;
         }
 
+        // In daemon mode, run all tests automatically
+        if (IsDaemonMode(args))
+        {
+            Console.WriteLine("Running in daemon mode - executing all tests automatically...");
+            foreach (var kvp in sTestRegistry)
+            {
+                Console.WriteLine($"Running test: {kvp.Value.Name} ({testClient.TransportType})");
+                try
+                {
+                    var result = await kvp.Value.TestAction(testClient, Array.Empty<string>());
+                    if (result.Success)
+                    {
+                        Console.WriteLine($"✅ Test {kvp.Value.Name} completed successfully: {result.Message}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ Test {kvp.Value.Name} failed: {result.Message}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Test {kvp.Value.Name} failed with exception: {ex.Message}");
+                }
+            }
+            Console.WriteLine("All tests completed in daemon mode.");
+            return;
+        }
+
+        // Interactive mode
+        string? line;
         string command;
         List<string> commandArgs;
         do

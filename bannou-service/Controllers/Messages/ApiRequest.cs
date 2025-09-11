@@ -10,6 +10,9 @@ namespace BeyondImmersion.BannouService.Controllers.Messages;
 public class ApiRequest : ApiMessage
 {
     private static HttpClient _httpClient;
+    /// <summary>
+    /// HTTP client for making service requests.
+    /// </summary>
     [JsonIgnore]
     protected static HttpClient HttpClient
     {
@@ -27,9 +30,21 @@ public class ApiRequest : ApiMessage
         }
     }
 
+    /// <summary>
+    /// The response from the API request.
+    /// </summary>
     [JsonIgnore]
     public ApiResponse? Response { get; protected set; }
 
+    /// <summary>
+    /// Executes an API request with a typed response.
+    /// </summary>
+    /// <typeparam name="T">The type of response expected.</typeparam>
+    /// <param name="service">The target service name.</param>
+    /// <param name="method">The method to invoke.</param>
+    /// <param name="additionalHeaders">Optional additional headers.</param>
+    /// <param name="httpMethod">The HTTP method to use.</param>
+    /// <returns>True if the request was successful, false otherwise.</returns>
     public virtual async Task<bool> ExecuteRequest<T>(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
         where T : ApiResponse, new()
     {
@@ -46,9 +61,25 @@ public class ApiRequest : ApiMessage
         return await ExecuteRequest_INTERNAL<T>(service, method, additionalHeaders, httpMethod);
     }
 
+    /// <summary>
+    /// Executes an API request.
+    /// </summary>
+    /// <param name="service">The target service name.</param>
+    /// <param name="method">The method to invoke.</param>
+    /// <param name="additionalHeaders">Optional additional headers.</param>
+    /// <param name="httpMethod">The HTTP method to use.</param>
+    /// <returns>True if the request was successful, false otherwise.</returns>
     public virtual async Task<bool> ExecuteRequest(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
         => await ExecuteRequest_INTERNAL(service, method, additionalHeaders, httpMethod);
 
+    /// <summary>
+    /// Internal implementation for executing API requests.
+    /// </summary>
+    /// <param name="service">The target service name.</param>
+    /// <param name="method">The method to invoke.</param>
+    /// <param name="additionalHeaders">Optional additional headers.</param>
+    /// <param name="httpMethod">The HTTP method to use.</param>
+    /// <returns>True if the request was successful, false otherwise.</returns>
     protected async Task<bool> ExecuteRequest_INTERNAL(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
     {
         try
@@ -99,6 +130,15 @@ public class ApiRequest : ApiMessage
         return false;
     }
 
+    /// <summary>
+    /// Internal implementation for executing typed API requests.
+    /// </summary>
+    /// <typeparam name="T">The type of response expected.</typeparam>
+    /// <param name="service">The target service name.</param>
+    /// <param name="method">The method to invoke.</param>
+    /// <param name="additionalHeaders">Optional additional headers.</param>
+    /// <param name="httpMethod">The HTTP method to use.</param>
+    /// <returns>True if the request was successful, false otherwise.</returns>
     protected async Task<bool> ExecuteRequest_INTERNAL<T>(string? service, string method, IEnumerable<KeyValuePair<string, string>>? additionalHeaders = null, HttpMethodTypes httpMethod = HttpMethodTypes.POST)
         where T : ApiResponse, new()
     {
