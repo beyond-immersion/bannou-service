@@ -12,8 +12,14 @@ namespace BeyondImmersion.BannouService.SourceGeneration;
 /// <summary>
 /// Source generator that creates event models and pub/sub handlers from OpenAPI event schemas.
 /// Generates event classes, publisher services, and subscriber handlers.
+/// 
+/// ⚠️ DISABLED: NSwag already generates event models perfectly from schemas/*-events.yaml files.
+/// This generator was creating duplicate event model classes causing build conflicts.
+/// NSwag handles: AccountsEventsModels.cs with AccountCreatedEvent, ServiceMappingEvent, etc.
+/// 
+/// Re-enable only if specialized pub/sub patterns are needed that NSwag cannot generate.
 /// </summary>
-[Generator]
+// [Generator] - DISABLED: NSwag handles event models - see comment above
 public class EventModelGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)

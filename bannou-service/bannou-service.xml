@@ -401,262 +401,95 @@
             Easy base type for dapr controller classes.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerControllerBase.CreateAccount(BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.ListAccounts(System.String,System.String,System.Nullable{BeyondImmersion.BannouService.Controllers.Generated.Provider},System.Nullable{System.Boolean},System.Nullable{System.Int32},System.Nullable{System.Int32},System.Threading.CancellationToken)">
             <summary>
-            Create new user account
+            List accounts with filtering
             </summary>
-            <remarks>
-            Creates a new user account with support for multiple authentication methods.
-            <br/>At least one identity method must be provided (username, email, or OAuth).
-            </remarks>
+            <returns>Accounts retrieved successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.CreateAccount(BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest,System.Threading.CancellationToken)">
+            <summary>
+            Create new account
+            </summary>
             <returns>Account created successfully</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerControllerBase.GetAccount(BeyondImmersion.BannouService.Controllers.Generated.GetAccountRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.GetAccount(System.Guid,System.Threading.CancellationToken)">
             <summary>
-            Retrieve user account
+            Get account by ID
             </summary>
-            <remarks>
-            Retrieves user account information by various identifiers.
-            <br/>At least one identifier must be provided.
-            </remarks>
             <returns>Account retrieved successfully</returns>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.UpdateAccount(System.Guid,BeyondImmersion.BannouService.Controllers.Generated.UpdateAccountRequest,System.Threading.CancellationToken)">
             <summary>
-            Request to create a new user account
+            Update account
+            </summary>
+            <returns>Account updated successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.DeleteAccount(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete account
+            </summary>
+            <returns>Account deleted successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.GetAccountByEmail(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get account by email
+            </summary>
+            <returns>Account retrieved successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.GetAuthMethods(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get authentication methods for account
+            </summary>
+            <returns>Authentication methods retrieved</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.AddAuthMethod(System.Guid,BeyondImmersion.BannouService.Controllers.Generated.AddAuthMethodRequest,System.Threading.CancellationToken)">
+            <summary>
+            Add authentication method to account
+            </summary>
+            <returns>Authentication method added successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.RemoveAuthMethod(System.Guid,System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Remove authentication method from account
+            </summary>
+            <returns>Authentication method removed successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.GetAccountByProvider(BeyondImmersion.BannouService.Controllers.Generated.Provider2,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get account by external provider ID
+            </summary>
+            <returns>Account retrieved successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.UpdateProfile(System.Guid,BeyondImmersion.BannouService.Controllers.Generated.UpdateProfileRequest,System.Threading.CancellationToken)">
+            <summary>
+            Update account profile
+            </summary>
+            <returns>Profile updated successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.UpdatePasswordHash(System.Guid,BeyondImmersion.BannouService.Controllers.Generated.UpdatePasswordRequest,System.Threading.CancellationToken)">
+            <summary>
+            Update account password hash
+            </summary>
+            <returns>Password hash updated successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AccountsControllerBaseControllerBase.UpdateVerificationStatus(System.Guid,BeyondImmersion.BannouService.Controllers.Generated.UpdateVerificationRequest,System.Threading.CancellationToken)">
+            <summary>
+            Update email verification status
+            </summary>
+            <returns>Verification status updated successfully</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.PasswordHash">
+            <summary>
+            Pre-hashed password from Auth service
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Username">
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.UpdatePasswordRequest.PasswordHash">
             <summary>
-            Username - optional if using OAuth
+            New pre-hashed password from Auth service
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Password">
-            <summary>
-            Password - optional if using OAuth
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Steam_id">
-            <summary>
-            Steam user ID, if using Steam OAuth
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Steam_token">
-            <summary>
-            Steam user token, if using Steam OAuth
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Google_id">
-            <summary>
-            Google user ID, if using Google OAuth
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Google_token">
-            <summary>
-            Google user token, if using Google OAuth
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Email">
-            <summary>
-            Email address - optional
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Region">
-            <summary>
-            Account creation region - used for routing and metrics
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Email_verified">
-            <summary>
-            Whether the email should be considered verified
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Two_factor_enabled">
-            <summary>
-            Whether 2-factor authentication has been enabled
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Role_claims">
-            <summary>
-            System-wide role claims (Administrator, User, etc.)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.App_claims">
-            <summary>
-            Application access claims, may include licenses
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Scope_claims">
-            <summary>
-            Specific permissions within applications
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Identity_claims">
-            <summary>
-            Identity-related claims (OAuth tokens, hashed passwords)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountRequest.Profile_claims">
-            <summary>
-            Generic profile information
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse">
-            <summary>
-            Response from account creation
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Id">
-            <summary>
-            Unique account identifier
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Username">
-            <summary>
-            Account username
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Email">
-            <summary>
-            Account email address
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Email_verified">
-            <summary>
-            Email verification status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Region">
-            <summary>
-            Account region
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Security_token">
-            <summary>
-            Security token for account operations
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Two_factor_enabled">
-            <summary>
-            2FA status
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Lockout_end">
-            <summary>
-            Account lockout end time (if locked)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Last_login_at">
-            <summary>
-            Last login timestamp
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Created_at">
-            <summary>
-            Account creation timestamp
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Updated_at">
-            <summary>
-            Last account update timestamp
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Deleted_at">
-            <summary>
-            Account deletion timestamp (soft delete)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.App_claims">
-            <summary>
-            Application claims assigned to account
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.CreateAccountResponse.Identity_claims">
-            <summary>
-            Identity claims assigned to account
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.GetAccountRequest">
-            <summary>
-            Request to retrieve account information
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.GetAccountRequest.Id">
-            <summary>
-            Account ID
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.GetAccountRequest.Username">
-            <summary>
-            Account username
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.GetAccountRequest.Email">
-            <summary>
-            Account email
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.GetAccountRequest.Steam_id">
-            <summary>
-            Steam user ID
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.GetAccountRequest.Google_id">
-            <summary>
-            Google user ID
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.GetAccountRequest.Identity_claim">
-            <summary>
-            Specific identity claim to search by
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.GetAccountRequest.Include_claims">
-            <summary>
-            Whether to include all claims in response
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.GetAccountResponse">
-            <summary>
-            Account information response
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.GetAccountResponse.Role_claims">
-            <summary>
-            Role claims (only if include_claims=true)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.GetAccountResponse.Scope_claims">
-            <summary>
-            Scope claims (only if include_claims=true)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.GetAccountResponse.Profile_claims">
-            <summary>
-            Profile claims (only if include_claims=true)
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Controllers.Generated.ErrorResponse">
-            <summary>
-            Error response
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ErrorResponse.Error">
-            <summary>
-            Error type
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ErrorResponse.Message">
-            <summary>
-            Human-readable error message
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ErrorResponse.Details">
-            <summary>
-            Additional error details
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerControllerBase.Register(BeyondImmersion.BannouService.Controllers.Generated.RegisterRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerBaseControllerBase.Register(BeyondImmersion.BannouService.Controllers.Generated.RegisterRequest,System.Threading.CancellationToken)">
             <summary>
             Register new user account
             </summary>
@@ -667,7 +500,7 @@
             </remarks>
             <returns>User registered successfully</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerControllerBase.LoginWithCredentialsGet(System.String,System.String,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerBaseControllerBase.LoginWithCredentialsGet(System.String,System.String,System.Threading.CancellationToken)">
             <summary>
             Login with username and password (GET)
             </summary>
@@ -680,7 +513,7 @@
             <param name="password">Password for authentication</param>
             <returns>Login successful</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerControllerBase.LoginWithCredentialsPost(System.String,System.String,BeyondImmersion.BannouService.Controllers.Generated.LoginRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerBaseControllerBase.LoginWithCredentialsPost(System.String,System.String,BeyondImmersion.BannouService.Controllers.Generated.LoginRequest,System.Threading.CancellationToken)">
             <summary>
             Login with username and password (POST)
             </summary>
@@ -694,7 +527,7 @@
             <param name="body">Optional login request body (currently unused)</param>
             <returns>Login successful</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerControllerBase.LoginWithTokenGet(System.String,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerBaseControllerBase.LoginWithTokenGet(System.String,System.Threading.CancellationToken)">
             <summary>
             Login with refresh token (GET)
             </summary>
@@ -706,7 +539,7 @@
             <param name="token">Refresh token for authentication</param>
             <returns>Token refresh successful</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerControllerBase.LoginWithTokenPost(System.String,BeyondImmersion.BannouService.Controllers.Generated.LoginRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerBaseControllerBase.LoginWithTokenPost(System.String,BeyondImmersion.BannouService.Controllers.Generated.LoginRequest,System.Threading.CancellationToken)">
             <summary>
             Login with refresh token (POST)
             </summary>
@@ -719,7 +552,7 @@
             <param name="body">Optional login request body (currently unused)</param>
             <returns>Token refresh successful</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerControllerBase.ValidateToken(BeyondImmersion.BannouService.Controllers.Generated.ValidateTokenRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.AuthControllerBaseControllerBase.ValidateToken(BeyondImmersion.BannouService.Controllers.Generated.ValidateTokenRequest,System.Threading.CancellationToken)">
             <summary>
             Validate JWT access token
             </summary>
@@ -861,7 +694,7 @@
             Additional error context and details
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.BehaviourControllerControllerBase.AddBehaviourTree(BeyondImmersion.BannouService.Controllers.Generated.AddBehaviourTreeRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.BehaviourControllerBaseControllerBase.AddBehaviourTree(BeyondImmersion.BannouService.Controllers.Generated.AddBehaviourTreeRequest,System.Threading.CancellationToken)">
             <summary>
             Add new behavior tree
             </summary>
@@ -872,7 +705,7 @@
             </remarks>
             <returns>Behavior tree added successfully</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.BehaviourControllerControllerBase.ValidateBehaviour(BeyondImmersion.BannouService.Controllers.Generated.ValidateBehaviourRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.BehaviourControllerBaseControllerBase.ValidateBehaviour(BeyondImmersion.BannouService.Controllers.Generated.ValidateBehaviourRequest,System.Threading.CancellationToken)">
             <summary>
             Validate behavior definition
             </summary>
@@ -882,7 +715,7 @@
             </remarks>
             <returns>Validation result</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.BehaviourControllerControllerBase.ValidatePrerequisite(BeyondImmersion.BannouService.Controllers.Generated.ValidatePrerequisiteRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.BehaviourControllerBaseControllerBase.ValidatePrerequisite(BeyondImmersion.BannouService.Controllers.Generated.ValidatePrerequisiteRequest,System.Threading.CancellationToken)">
             <summary>
             Validate prerequisite definition
             </summary>
@@ -891,7 +724,7 @@
             </remarks>
             <returns>Validation result</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.BehaviourControllerControllerBase.ResolveBehaviourReferences(BeyondImmersion.BannouService.Controllers.Generated.ResolveReferencesRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.BehaviourControllerBaseControllerBase.ResolveBehaviourReferences(BeyondImmersion.BannouService.Controllers.Generated.ResolveReferencesRequest,System.Threading.CancellationToken)">
             <summary>
             Resolve behavior references
             </summary>
@@ -1046,7 +879,24 @@
             Unique identifier for the failed request
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.ConnectControllerControllerBase.ConnectWebSocket(BeyondImmersion.BannouService.Controllers.Generated.Connection,BeyondImmersion.BannouService.Controllers.Generated.Upgrade,System.String,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.ConnectControllerBaseControllerBase.ProxyInternalRequest(BeyondImmersion.BannouService.Controllers.Generated.InternalProxyRequest,System.Threading.CancellationToken)">
+            <summary>
+            Internal API proxy for stateless requests
+            </summary>
+            <remarks>
+            Stateless HTTP proxy for internal requests that don't require persistent sessions.
+            <br/>Applies permission validation and rate limiting based on agent role and context.
+            <br/>Perfect for AI agents making one-off API calls or bulk operations.
+            </remarks>
+            <returns>Request proxied successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.ConnectControllerBaseControllerBase.DiscoverAPIs(BeyondImmersion.BannouService.Controllers.Generated.ApiDiscoveryRequest,System.Threading.CancellationToken)">
+            <summary>
+            Get available APIs for current session
+            </summary>
+            <returns>Available APIs discovered successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.ConnectControllerBaseControllerBase.ConnectWebSocket(BeyondImmersion.BannouService.Controllers.Generated.Connection,BeyondImmersion.BannouService.Controllers.Generated.Upgrade,System.String,System.Threading.CancellationToken)">
             <summary>
             Establish WebSocket connection
             </summary>
@@ -1069,7 +919,7 @@
             <param name="authorization">JWT Bearer token for new connections: "Bearer &lt;jwt_token&gt;"
             <br/>Reconnect token for existing sessions: "Reconnect &lt;reconnect_token&gt;"</param>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.ConnectControllerControllerBase.ConnectWebSocketPost(BeyondImmersion.BannouService.Controllers.Generated.Connection2,BeyondImmersion.BannouService.Controllers.Generated.Upgrade2,System.String,BeyondImmersion.BannouService.Controllers.Generated.ConnectRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.ConnectControllerBaseControllerBase.ConnectWebSocketPost(BeyondImmersion.BannouService.Controllers.Generated.Connection2,BeyondImmersion.BannouService.Controllers.Generated.Upgrade2,System.String,BeyondImmersion.BannouService.Controllers.Generated.ConnectRequest,System.Threading.CancellationToken)">
             <summary>
             Establish WebSocket connection (POST variant)
             </summary>
@@ -1079,6 +929,136 @@
             <br/>require POST for WebSocket upgrades.
             </remarks>
             <param name="body">Optional connection parameters</param>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyRequest.AgentId">
+            <summary>
+            Unique identifier for the requesting agent (NPC ID, system ID, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyRequest.AgentRole">
+            <summary>
+            Role of the agent for permission validation
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyRequest.AccountId">
+            <summary>
+            Associated account ID if agent represents a user
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyRequest.TargetService">
+            <summary>
+            Target service ID or name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyRequest.TargetEndpoint">
+            <summary>
+            Target API endpoint path
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyRequest.Method">
+            <summary>
+            HTTP method for the target endpoint
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyRequest.RequestData">
+            <summary>
+            Request payload to forward to target service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyRequest.ContextData">
+            <summary>
+            Agent context for permission evaluation (location, state, relationships, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyRequest.RateLimitKey">
+            <summary>
+            Custom rate limit key (defaults to agentRole)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyRequest.Metadata">
+            <summary>
+            Additional metadata for logging/monitoring
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyResponse.AgentId">
+            <summary>
+            Echo of the requesting agent ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyResponse.TargetService">
+            <summary>
+            Service that handled the request
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyResponse.ResponseData">
+            <summary>
+            Response from the target service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.InternalProxyResponse.ExecutionTime">
+            <summary>
+            Request execution time in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ApiDiscoveryRequest.SessionId">
+            <summary>
+            Current WebSocket session ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ApiDiscoveryRequest.ContextData">
+            <summary>
+            Additional context (game session, character, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ApiDiscoveryResponse.AvailableAPIs">
+            <summary>
+            All APIs currently accessible to this session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ApiDiscoveryResponse.Version">
+            <summary>
+            Version number for capability updates
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ApiDiscoveryResponse.ExpiresAt">
+            <summary>
+            When this API list expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AvailableAPI.ServiceId">
+            <summary>
+            Service GUID for routing via binary protocol
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AvailableAPI.ServiceName">
+            <summary>
+            Human-readable service name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AvailableAPI.Endpoint">
+            <summary>
+            API endpoint path
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AvailableAPI.Description">
+            <summary>
+            Human-readable endpoint description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AvailableAPI.RequiredPermissions">
+            <summary>
+            Permissions that enabled this API
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.AvailableAPI.Category">
+            <summary>
+            API category (auth, game, social, etc.)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ApiRateLimit.Remaining">
+            <summary>
+            Current remaining requests
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Controllers.Generated.ConnectRequest">
             <summary>
@@ -1217,6 +1197,147 @@
         <member name="P:BeyondImmersion.BannouService.Controllers.Generated.ConnectionConfiguration.Token_public_key">
             <summary>
             Base64-encoded RSA public key for JWT validation
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.GetStatus(System.Threading.CancellationToken)">
+            <summary>
+            Get website status and version
+            </summary>
+            <returns>Website service status</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.GetPageContent(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get dynamic page content from CMS
+            </summary>
+            <param name="slug">Page slug identifier</param>
+            <returns>Page content retrieved</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.GetNews(System.Nullable{System.Int32},System.Nullable{System.Int32},System.Threading.CancellationToken)">
+            <summary>
+            Get latest news and announcements
+            </summary>
+            <param name="limit">Number of news items to return</param>
+            <param name="offset">Pagination offset</param>
+            <returns>News items retrieved</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.GetServerStatus(System.Threading.CancellationToken)">
+            <summary>
+            Get game server status for all realms
+            </summary>
+            <returns>Server status information</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.GetDownloads(System.Nullable{BeyondImmersion.BannouService.Controllers.Generated.Platform},System.Threading.CancellationToken)">
+            <summary>
+            Get download links for game clients
+            </summary>
+            <param name="platform">Filter by platform</param>
+            <returns>Download links retrieved</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.SubmitContact(BeyondImmersion.BannouService.Controllers.Generated.ContactRequest,System.Threading.CancellationToken)">
+            <summary>
+            Submit contact form
+            </summary>
+            <returns>Contact form submitted</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.GetAccountProfile(System.Threading.CancellationToken)">
+            <summary>
+            Get account profile for logged-in user
+            </summary>
+            <returns>Account profile retrieved</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.GetAccountCharacters(System.Threading.CancellationToken)">
+            <summary>
+            Get character list for logged-in user
+            </summary>
+            <returns>Character list retrieved</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.ListPages(System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            List all CMS pages
+            </summary>
+            <returns>Page list retrieved</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.CreatePage(BeyondImmersion.BannouService.Controllers.Generated.PageContent,System.Threading.CancellationToken)">
+            <summary>
+            Create new CMS page
+            </summary>
+            <returns>Page created</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.UpdatePage(System.String,BeyondImmersion.BannouService.Controllers.Generated.PageContent,System.Threading.CancellationToken)">
+            <summary>
+            Update CMS page
+            </summary>
+            <returns>Page updated</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.DeletePage(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Delete CMS page
+            </summary>
+            <returns>Page deleted</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.GetSiteSettings(System.Threading.CancellationToken)">
+            <summary>
+            Get site configuration
+            </summary>
+            <returns>Site settings retrieved</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.UpdateSiteSettings(BeyondImmersion.BannouService.Controllers.Generated.SiteSettings,System.Threading.CancellationToken)">
+            <summary>
+            Update site configuration
+            </summary>
+            <returns>Settings updated</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.GetTheme(System.Threading.CancellationToken)">
+            <summary>
+            Get current theme configuration
+            </summary>
+            <returns>Theme configuration retrieved</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.UpdateTheme(BeyondImmersion.BannouService.Controllers.Generated.ThemeConfig,System.Threading.CancellationToken)">
+            <summary>
+            Update theme configuration
+            </summary>
+            <returns>Theme updated</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.Generated.WebsiteControllerBaseControllerBase.GetSubscription(System.Threading.CancellationToken)">
+            <summary>
+            Get subscription status
+            </summary>
+            <returns>Subscription information retrieved</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.StatusResponse.Uptime">
+            <summary>
+            Uptime in seconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.PageContent.Content">
+            <summary>
+            HTML, Markdown, or custom template content
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.PageContent.Template">
+            <summary>
+            Template name for custom layouts
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.PageContent.Metadata">
+            <summary>
+            Custom metadata for the page
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.RealmStatus.Ping">
+            <summary>
+            Latency in milliseconds
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.DownloadInfo.Size">
+            <summary>
+            File size in bytes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.Generated.DownloadInfo.Checksum">
+            <summary>
+            SHA256 checksum
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Controllers.HealthController">
@@ -1387,6 +1508,91 @@
         <member name="M:BeyondImmersion.BannouService.ExtensionMethods.InvokeAllServiceShutdownMethods(Microsoft.AspNetCore.Builder.WebApplication)">
             <summary>
             Iterates through and invokes the Shutdown() method on all loaded service handlers.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountCreatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountCreatedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountCreatedEvent.AccountId">
+            <summary>
+            ID of the created account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountCreatedEvent.Username">
+            <summary>
+            Username of the created account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountCreatedEvent.Email">
+            <summary>
+            Email address of the created account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountCreatedEvent.Roles">
+            <summary>
+            Roles assigned to the account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountUpdatedEvent.AccountId">
+            <summary>
+            ID of the updated account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountUpdatedEvent.ChangedFields">
+            <summary>
+            List of fields that were changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountUpdatedEvent.PreviousValues">
+            <summary>
+            Previous values of changed fields
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountUpdatedEvent.NewValues">
+            <summary>
+            New values of changed fields
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountDeletedEvent.AccountId">
+            <summary>
+            ID of the deleted account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountDeletedEvent.Username">
+            <summary>
+            Username of the deleted account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountDeletedEvent.DeletionReason">
+            <summary>
+            Reason for account deletion
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.ServiceMappingEvent.ServiceName">
+            <summary>
+            Name of the service (e.g., "accounts", "character-agent")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.ServiceMappingEvent.AppId">
+            <summary>
+            Dapr app-id where the service is running
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.ServiceMappingEvent.Action">
+            <summary>
+            Type of mapping change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Accounts.Events.ServiceMappingEvent.Metadata">
+            <summary>
+            Additional service metadata
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Logging.ServiceLogging">
@@ -2008,76 +2214,6 @@
         <member name="T:BeyondImmersion.BannouService.Testing.Tests.BasicControllerTests">
             <summary>
             Tests that only require the testing service itself.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase">
-            <summary>
-            Event models for Accounts service.
-            Generated from OpenAPI schema: accounts-events.yaml
-            </summary>
-            <summary>
-            Base class for all Accounts events.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase.EventId">
-            <summary>
-            Unique identifier for this event.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase.Timestamp">
-            <summary>
-            When the event occurred.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountCreatedEvent">
-            <summary>
-            AccountCreatedEvent event for Accounts service.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Accounts.Events.ServiceMappingEvent">
-            <summary>
-            ServiceMappingEvent event for Accounts service.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Accounts.Events.IAccountsEventPublisher">
-            <summary>
-            Publisher service for Accounts events via Dapr pub/sub.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Accounts.Events.IAccountsEventPublisher.PublishEventAsync``1(``0,System.Threading.CancellationToken)">
-            <summary>
-            Publishes an event to the bannou-accounts-events channel.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountsEventPublisher">
-            <summary>
-            Default implementation of Accounts event publisher.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountsEventSubscriber">
-            <summary>
-            Subscriber for Accounts events via Dapr pub/sub.
-            Override methods in partial class to handle specific events.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Accounts.Events.AccountsEventSubscriber.HandleEventAsync(BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase)">
-            <summary>
-            Handles all Accounts events from the bannou-accounts-events topic.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Accounts.Events.AccountsEventSubscriber.RouteEventAsync(BeyondImmersion.BannouService.Accounts.Events.AccountsEventBase)">
-            <summary>
-            Routes events to specific handlers. Override in partial class to add custom routing.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Accounts.Events.AccountsEventExtensions">
-            <summary>
-            Event registration extensions for Accounts.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Accounts.Events.AccountsEventExtensions.AddAccountsEvents(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
-            <summary>
-            Registers Accounts event publisher and subscriber.
             </summary>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0">

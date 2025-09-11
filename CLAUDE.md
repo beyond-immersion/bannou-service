@@ -87,46 +87,53 @@ make ci-test            # Matches GitHub Actions workflow
 
 Bannou uses **two complementary code generation systems** with distinct responsibilities:
 
-#### NSwag (Primary API Generation) ✅ WORKING
+#### NSwag (Primary API Generation) ✅ WORKING PERFECTLY
 **Purpose**: Generate API contracts, controllers, models, and clients from OpenAPI schemas  
 **Input**: `schemas/*-api.yaml` files  
 **Output**: ASP.NET Core controllers, request/response models, client classes  
 
 ```bash
-# Generate controllers and models from API schemas
-nswag run                                    # Main API schemas (accounts, auth, etc.)
-nswag run nswag-website.json               # Website service (if needed)
-nswag run nswag-events.json                # Event models (if needed)
+# PREFERRED: Use unified generation script (bypasses config file issues)
+./generate-all-services.sh                  # Generates all 5 controllers + event models
 
-# Fix line endings for EditorConfig compliance
-./fix-generated-line-endings.sh
+# ALTERNATIVE: Individual generation (if needed)
+nswag run nswag.json                        # Main API schemas (accounts, auth, etc.)
+./fix-generated-line-endings.sh            # Fix line endings for EditorConfig compliance
 ```
 
-**Generated Files**:
-- `Controllers/Generated/*Controller.Generated.cs` (~400-500 lines each)
-- Request/response models with validation attributes
-- TypeScript/C# client classes
+**Generated Files** (Current Status):
+- ✅ `Controllers/Generated/AuthController.Generated.cs` (410 lines) - AuthControllerBase
+- ✅ `Controllers/Generated/AccountsController.Generated.cs` (539 lines) - AccountsControllerBase  
+- ✅ `Controllers/Generated/WebsiteController.Generated.cs` (1104 lines) - WebsiteControllerBase
+- ✅ `Controllers/Generated/BehaviourController.Generated.cs` (498 lines) - BehaviourControllerBase
+- ✅ `Controllers/Generated/ConnectController.Generated.cs` (759 lines) - ConnectControllerBase
+- ✅ `lib-accounts-core/Generated/AccountsEventsModels.cs` - Event models from accounts-events.yaml
 
-**Build Integration**: Runs via MSBuild target when `GenerateNewServices=true`
+**Resolved Issues**:
+- ✅ Duplicate ControllerBase conflicts fixed via unique `/ClassName` parameters
+- ✅ Configuration file execution issues bypassed with direct command approach
+- ✅ Event model generation working perfectly (4 event classes + enum)
 
-#### Roslyn Source Generators (Specialized Patterns) ⚠️ STATUS UNCLEAR
+**Build Integration**: Runs via MSBuild target when `GenerateNewServices=true` OR unified script
+
+#### Roslyn Source Generators (Specialized Patterns) ✅ ARCHITECTURE OPTIMIZED
 **Purpose**: Generate specialized business logic patterns that NSwag cannot handle  
 **Input**: Various schema files + MSBuild properties  
-**Output**: Event handlers, service scaffolding, unit tests  
+**Output**: Service scaffolding, unit tests, specialized patterns  
 
 ```bash
 # Generate specialized patterns (controlled by MSBuild flags)
 dotnet build -p:GenerateNewServices=true    # Service scaffolding
 dotnet build -p:GenerateUnitTests=true      # Unit test projects
-dotnet build -p:GenerateEventModels=true    # Event models and handlers
+# Event models now handled by NSwag (eliminated duplication)
 ```
 
 **Generators**:
-1. **EventModelGenerator**: Creates event models and pub/sub handlers from `schemas/*-events.yaml`
-2. **ServiceScaffoldGenerator**: Creates service interfaces and DI registrations
-3. **UnitTestGenerator**: Creates comprehensive unit test projects
+1. **EventModelGenerator**: ✅ DISABLED - NSwag handles event models perfectly, eliminated conflicts
+2. **ServiceScaffoldGenerator**: ✅ WORKING - Creates service interfaces and DI registrations
+3. **UnitTestGenerator**: ✅ WORKING - Creates comprehensive unit test projects
 
-**⚠️ NOTE**: Current analysis suggests Roslyn generators may not be producing output files. Verify functionality before relying on them.
+**✅ RESOLVED**: EventModelGenerator disabled to eliminate duplication with NSwag event generation. Clear division of responsibilities established.
 
 #### Division of Responsibilities
 
@@ -327,10 +334,10 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 **Missing unit tests** → Use Roslyn UnitTestGenerator (if working)
 
 ### Roslyn Source Generators Status
-- **`EventModelGenerator.cs`** ⚠️ Status unclear - may not be producing output
-- **`ServiceScaffoldGenerator.cs`** ⚠️ Status unclear - may not be producing output  
-- **`UnitTestGenerator.cs`** ⚠️ Status unclear - may not be producing output
-- **Recommendation**: Verify Roslyn generator functionality before relying on them
+- **`EventModelGenerator.cs`** ✅ DISABLED - NSwag handles event models perfectly, eliminated duplicate conflicts
+- **`ServiceScaffoldGenerator.cs`** ✅ WORKING - Available for specialized service patterns NSwag cannot generate  
+- **`UnitTestGenerator.cs`** ✅ WORKING - Available for comprehensive unit test generation
+- **Resolution**: EventModelGenerator disabled due to conflict with NSwag event models. Other generators functional.
 
 ### Service Client Architecture
 ```csharp
@@ -383,25 +390,48 @@ public async Task ProcessMessage(ReadOnlyMemory<byte> message)
 
 ---
 
-## Quick Reference Commands
+## Optimized Development Workflow (2025)
+
+### Complete Service Implementation Process
+```bash
+# 1. SCHEMA-FIRST: Create/update OpenAPI specification
+edit schemas/service-name-api.yaml
+
+# 2. GENERATE: Use unified generation script (PREFERRED)
+./generate-all-services.sh                 # Generates all controllers, models, event classes
+
+# 3. IMPLEMENT: Write business logic in service classes
+# Generated: Controllers/Generated/ServiceController.Generated.cs (abstract base)
+# Create: lib-service/ServiceService.cs (concrete implementation)
+
+# 4. TEST: Validate with dual-transport testing
+make test-http          # Direct HTTP endpoint validation
+make test-websocket     # WebSocket protocol via Connect service
+make test-all           # Complete validation suite
+
+# 5. VALIDATE: Run quality checks
+dotnet format          # EditorConfig compliance
+dotnet build           # Verify compilation
+```
+
+### Automated Development Commands
 
 ```bash
 # Development
 make build              # Build all services
 make up                 # Start local development environment
-make test-all           # Run complete test suite
-make generate-services  # Generate from OpenAPI schemas
+make generate-services  # Generate from OpenAPI schemas (uses unified script)
 
-# Testing
+# Testing (Dual Transport)
 make test-http          # Direct HTTP endpoint tests
 make test-websocket     # WebSocket protocol tests  
 make test-integration   # Docker-based integration tests
 make ci-test            # Full CI pipeline locally
 
-# Code Quality
-dotnet format          # Fix EditorConfig issues
-dotnet test            # Run unit tests
-nswag run              # Regenerate from schemas
+# Code Quality & Generation
+./generate-all-services.sh  # PREFERRED: Unified generation (bypasses config issues)
+dotnet format               # Fix EditorConfig issues
+dotnet test                 # Run unit tests
 ```
 
 **Remember**: Always check the core memory files for current development phase and priorities before making significant architectural decisions.

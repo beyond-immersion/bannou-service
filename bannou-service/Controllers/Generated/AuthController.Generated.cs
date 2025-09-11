@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Controllers.Generated
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
     [Microsoft.AspNetCore.Mvc.Route("api/authorization")]
 
-    public abstract class ControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
+    public abstract class AuthControllerBaseControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
     {
         /// <summary>
         /// Register new user account

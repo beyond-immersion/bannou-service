@@ -49,6 +49,7 @@ generate_controller() {
         "/namespace:BeyondImmersion.BannouService.Controllers.Generated" \
         "/ControllerStyle:Abstract" \
         "/ControllerBaseClass:Microsoft.AspNetCore.Mvc.ControllerBase" \
+        "/ClassName:${service_name^}ControllerBase" \
         "/UseCancellationToken:true" \
         "/UseActionResultType:true" \
         "/GenerateModelValidationAttributes:true" \
