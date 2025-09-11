@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\lib-testing-core\lib-testing-core.csproj" />
+    <ProjectReference Include="..\lib-testing\lib-testing.csproj" />
   </ItemGroup>
 
 </Project>

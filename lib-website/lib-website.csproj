@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-    <PackageReference Include="Dapr.AspNetCore" Version="1.14.0" />
+    <PackageReference Include="Dapr.AspNetCore" Version="1.15.1" />
     <PackageReference Include="NSwag.AspNetCore" Version="14.2.0" />
     <PackageReference Include="NSwag.MSBuild" Version="14.2.0">
       <PrivateAssets>all</PrivateAssets>
@@ -18,8 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\lib-shared-configuration\lib-shared-configuration.csproj" />
-    <ProjectReference Include="..\lib-shared-base\lib-shared-base.csproj" />
+    <ProjectReference Include="..\bannou-service\bannou-service.csproj" />
   </ItemGroup>
 
 </Project>
