@@ -1,0 +1,326 @@
+openapi: 3.0.0
+info:
+  title: Bannou Permission System API
+  description: Dynamic API discovery and session-based permissions for WebSocket services
+  version: 1.0.0
+servers:
+  - url: http://localhost:3500/v1.0/invoke/permissions/method
+    description: Dapr sidecar endpoint (internal only)
+
+paths:
+  /permissions/capabilities:
+    post:
+      summary: Get available API capabilities for session
+      operationId: getCapabilities
+      tags:
+        - Permission Discovery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CapabilityRequest'
+      responses:
+        '200':
+          description: API capabilities retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilityResponse'
+
+  /permissions/validate:
+    post:
+      summary: Validate API access permission
+      operationId: validateApiAccess
+      tags:
+        - Permission Validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationRequest'
+      responses:
+        '200':
+          description: Permission validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+
+  /permissions/register-service:
+    post:
+      summary: Register service API endpoints with permission requirements
+      operationId: registerServiceAPIs
+      tags:
+        - Service Registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceRegistrationRequest'
+      responses:
+        '200':
+          description: Service APIs registered successfully
+
+  /permissions/update-session:
+    post:
+      summary: Update session permissions (e.g., after joining game)
+      operationId: updateSessionPermissions
+      tags:
+        - Session Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionUpdateRequest'
+      responses:
+        '200':
+          description: Session permissions updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilityResponse'
+
+components:
+  schemas:
+    CapabilityRequest:
+      type: object
+      required:
+        - sessionId
+        - accountId
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: Current session ID
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID from JWT token
+        roles:
+          type: array
+          items:
+            type: string
+          description: Base roles from account (admin, user, etc.)
+        contextData:
+          type: object
+          additionalProperties: true
+          description: Additional context (game session, character ID, etc.)
+
+    CapabilityResponse:
+      type: object
+      required:
+        - sessionId
+        - capabilities
+        - expiresAt
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        capabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiCapability'
+          description: All APIs currently available to this session
+        expiresAt:
+          type: string
+          format: date-time
+          description: When these capabilities expire (for caching)
+        version:
+          type: integer
+          description: Version number for capability updates
+
+    ApiCapability:
+      type: object
+      required:
+        - serviceId
+        - endpoint
+        - method
+        - permissions
+      properties:
+        serviceId:
+          type: string
+          description: Service GUID for routing
+        serviceName:
+          type: string
+          description: Human-readable service name
+        endpoint:
+          type: string
+          description: API endpoint path
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+        permissions:
+          type: array
+          items:
+            type: string
+          description: Required permissions for this endpoint
+        rateLimits:
+          $ref: '#/components/schemas/RateLimit'
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional endpoint metadata
+
+    ValidationRequest:
+      type: object
+      required:
+        - sessionId
+        - serviceId
+        - endpoint
+        - method
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        serviceId:
+          type: string
+          description: Target service GUID
+        endpoint:
+          type: string
+          description: API endpoint being accessed
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+        contextData:
+          type: object
+          additionalProperties: true
+          description: Request-specific context
+
+    ValidationResponse:
+      type: object
+      required:
+        - allowed
+        - sessionId
+      properties:
+        allowed:
+          type: boolean
+          description: Whether access is permitted
+        sessionId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          description: Reason for denial (if applicable)
+        rateLimitRemaining:
+          type: integer
+          description: Remaining rate limit for this endpoint
+        suggestedAction:
+          type: string
+          description: What the client should do if denied
+
+    ServiceRegistrationRequest:
+      type: object
+      required:
+        - serviceId
+        - serviceName
+        - endpoints
+      properties:
+        serviceId:
+          type: string
+          description: Unique service GUID
+        serviceName:
+          type: string
+          description: Human-readable service name
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/EndpointDefinition'
+        version:
+          type: string
+          description: Service API version
+
+    EndpointDefinition:
+      type: object
+      required:
+        - endpoint
+        - method
+        - permissions
+      properties:
+        endpoint:
+          type: string
+          description: API endpoint path
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+        rateLimits:
+          $ref: '#/components/schemas/RateLimit'
+        description:
+          type: string
+          description: Human-readable endpoint description
+        metadata:
+          type: object
+          additionalProperties: true
+
+    Permission:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum: [role, session_state, context, custom]
+          description: Type of permission check
+        value:
+          type: string
+          description: Required permission value
+        operator:
+          type: string
+          enum: [equals, contains, greater_than, less_than, exists]
+          default: equals
+        contextKey:
+          type: string
+          description: Context key to check (for context permissions)
+
+    SessionUpdateRequest:
+      type: object
+      required:
+        - sessionId
+        - updateType
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        updateType:
+          type: string
+          enum: [role_change, context_change, game_join, game_leave, character_select]
+        contextData:
+          type: object
+          additionalProperties: true
+          description: New context data
+        addedRoles:
+          type: array
+          items:
+            type: string
+          description: Roles to add to session
+        removedRoles:
+          type: array
+          items:
+            type: string
+          description: Roles to remove from session
+
+    RateLimit:
+      type: object
+      properties:
+        requestsPerMinute:
+          type: integer
+          description: Maximum requests per minute
+        requestsPerHour:
+          type: integer
+          description: Maximum requests per hour
+        burstLimit:
+          type: integer
+          description: Maximum burst requests
+        bypassRoles:
+          type: array
+          items:
+            type: string
+          description: Roles that bypass rate limiting

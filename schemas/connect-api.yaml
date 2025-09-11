@@ -30,6 +30,56 @@ servers:
     description: Development WebSocket server
 
 paths:
+  /internal/proxy:
+    post:
+      summary: Internal API proxy for stateless requests
+      operationId: proxyInternalRequest
+      tags:
+        - Internal Proxy
+      description: |
+        Stateless HTTP proxy for internal requests that don't require persistent sessions.
+        Applies permission validation and rate limiting based on agent role and context.
+        Perfect for AI agents making one-off API calls or bulk operations.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalProxyRequest'
+      responses:
+        '200':
+          description: Request proxied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalProxyResponse'
+        '403':
+          description: Permission denied
+        '404':
+          description: Target service or endpoint not found
+        '429':
+          description: Rate limit exceeded
+
+  /api-discovery:
+    post:
+      summary: Get available APIs for current session
+      operationId: discoverAPIs
+      tags:
+        - API Discovery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiDiscoveryRequest'
+      responses:
+        '200':
+          description: Available APIs discovered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiDiscoveryResponse'
+
   /connect:
     get:
       summary: Establish WebSocket connection
@@ -206,6 +256,169 @@ paths:
 
 components:
   schemas:
+    InternalProxyRequest:
+      type: object
+      required:
+        - agentId
+        - agentRole
+        - targetService
+        - targetEndpoint
+        - method
+      properties:
+        agentId:
+          type: string
+          description: Unique identifier for the requesting agent (NPC ID, system ID, etc.)
+        agentRole:
+          type: string
+          description: Role of the agent for permission validation
+          examples: ["npc_trader", "npc_guard", "system_scheduler", "ai_moderator"]
+        accountId:
+          type: string
+          format: uuid
+          description: Associated account ID if agent represents a user
+        targetService:
+          type: string
+          description: Target service ID or name
+        targetEndpoint:
+          type: string
+          description: Target API endpoint path
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+          description: HTTP method for the target endpoint
+        requestData:
+          type: object
+          additionalProperties: true
+          description: Request payload to forward to target service
+        contextData:
+          type: object
+          additionalProperties: true
+          description: Agent context for permission evaluation (location, state, relationships, etc.)
+        rateLimitKey:
+          type: string
+          description: Custom rate limit key (defaults to agentRole)
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata for logging/monitoring
+
+    InternalProxyResponse:
+      type: object
+      required:
+        - success
+        - agentId
+      properties:
+        success:
+          type: boolean
+        agentId:
+          type: string
+          description: Echo of the requesting agent ID
+        targetService:
+          type: string
+          description: Service that handled the request
+        responseData:
+          type: object
+          additionalProperties: true
+          description: Response from the target service
+        permissionInfo:
+          type: object
+          properties:
+            granted:
+              type: boolean
+            requiredPermissions:
+              type: array
+              items:
+                type: string
+            rateLimitRemaining:
+              type: integer
+        executionTime:
+          type: integer
+          description: Request execution time in milliseconds
+
+    ApiDiscoveryRequest:
+      type: object
+      required:
+        - sessionId
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: Current WebSocket session ID
+        contextData:
+          type: object
+          additionalProperties: true
+          description: Additional context (game session, character, etc.)
+
+    ApiDiscoveryResponse:
+      type: object
+      required:
+        - sessionId
+        - availableAPIs
+        - version
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        availableAPIs:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailableAPI'
+          description: All APIs currently accessible to this session
+        version:
+          type: integer
+          description: Version number for capability updates
+        expiresAt:
+          type: string
+          format: date-time
+          description: When this API list expires
+
+    AvailableAPI:
+      type: object
+      required:
+        - serviceId
+        - serviceName
+        - endpoint
+        - method
+      properties:
+        serviceId:
+          type: string
+          description: Service GUID for routing via binary protocol
+        serviceName:
+          type: string
+          description: Human-readable service name
+        endpoint:
+          type: string
+          description: API endpoint path
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+        description:
+          type: string
+          description: Human-readable endpoint description
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+          description: Permissions that enabled this API
+        rateLimits:
+          $ref: '#/components/schemas/ApiRateLimit'
+        category:
+          type: string
+          description: API category (auth, game, social, etc.)
+
+    ApiRateLimit:
+      type: object
+      properties:
+        requestsPerMinute:
+          type: integer
+        requestsPerHour:
+          type: integer
+        burstLimit:
+          type: integer
+        remaining:
+          type: integer
+          description: Current remaining requests
+
     ConnectRequest:
       type: object
       description: |
