@@ -10,88 +10,105 @@ namespace BeyondImmersion.BannouService.Accounts;
 public interface IAccountsService
 {
     /// <summary>
-    /// Lists accounts with optional filtering and pagination.
+    /// List accounts with filtering
     /// </summary>
     Task<ActionResult<AccountListResponse>> ListAccountsAsync(
-        string? email = null,
-        string? displayName = null,
-        string? provider = null,
-        bool? verified = null,
-        int page = 1,
-        int pageSize = 20,
+        string? email,
+        string? displayName,
+        Provider? provider,
+        bool? verified,
+        int? page = 1,
+        int? pageSize = 20,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Creates a new user account.
+    /// Create new account
     /// </summary>
     Task<ActionResult<AccountResponse>> CreateAccountAsync(
-        CreateAccountRequest request,
+        CreateAccountRequest body,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets an account by ID.
+    /// Get account by ID
     /// </summary>
     Task<ActionResult<AccountResponse>> GetAccountAsync(
-        Guid accountId,
+        System.Guid accountId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates an existing account.
+    /// Update existing account
     /// </summary>
     Task<ActionResult<AccountResponse>> UpdateAccountAsync(
-        Guid accountId,
-        UpdateAccountRequest request,
+        System.Guid accountId,
+        UpdateAccountRequest body,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deletes an account.
+    /// Delete account
     /// </summary>
     Task<IActionResult> DeleteAccountAsync(
-        Guid accountId,
+        System.Guid accountId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets an account by email address.
+    /// Get account by email address
     /// </summary>
     Task<ActionResult<AccountResponse>> GetAccountByEmailAsync(
         string email,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets authentication methods for an account.
+    /// Get authentication methods for account
     /// </summary>
     Task<ActionResult<AuthMethodsResponse>> GetAuthMethodsAsync(
-        Guid accountId,
+        System.Guid accountId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds an authentication method to an account.
+    /// Add authentication method to account
     /// </summary>
     Task<ActionResult<AuthMethodResponse>> AddAuthMethodAsync(
-        Guid accountId,
-        AddAuthMethodRequest request,
+        System.Guid accountId,
+        AddAuthMethodRequest body,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Removes an authentication method from an account.
+    /// Remove authentication method from account
     /// </summary>
     Task<IActionResult> RemoveAuthMethodAsync(
-        Guid accountId,
-        string provider,
+        System.Guid accountId,
+        System.Guid methodId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates user profile information.
+    /// Get account by provider and external ID
     /// </summary>
-    Task<ActionResult<ProfileResponse>> UpdateProfileAsync(
-        Guid accountId,
-        UpdateProfileRequest request,
+    Task<ActionResult<AccountResponse>> GetAccountByProviderAsync(
+        Provider2 provider,
+        string externalId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets user profile information.
+    /// Update profile information
     /// </summary>
-    Task<ActionResult<ProfileResponse>> GetProfileAsync(
-        Guid accountId,
+    Task<ActionResult<AccountResponse>> UpdateProfileAsync(
+        System.Guid accountId,
+        UpdateProfileRequest body,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update password hash
+    /// </summary>
+    Task<IActionResult> UpdatePasswordHashAsync(
+        System.Guid accountId,
+        UpdatePasswordRequest body,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update verification status
+    /// </summary>
+    Task<IActionResult> UpdateVerificationStatusAsync(
+        System.Guid accountId,
+        UpdateVerificationRequest body,
         CancellationToken cancellationToken = default);
 }

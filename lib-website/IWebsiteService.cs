@@ -1,54 +1,125 @@
-using BeyondImmersion.BannouService.Website.Messages;
+using Microsoft.AspNetCore.Mvc;
+using BeyondImmersion.BannouService.Controllers.Generated;
 
 namespace BeyondImmersion.BannouService.Website;
 
 /// <summary>
-/// Interface for the website service providing public-facing web portal functionality.
+/// Interface for website service operations.
+/// Implements business logic for the generated WebsiteController methods.
 /// </summary>
 public interface IWebsiteService
 {
     /// <summary>
-    /// Gets the current status of the website service.
+    /// Get website status and version
     /// </summary>
-    Task<StatusResponse> GetStatusAsync();
+    Task<ActionResult<StatusResponse>> GetStatusAsync(
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets cached content for a specific page.
+    /// Get dynamic page content from CMS
     /// </summary>
-    Task<PageContent?> GetPageContentAsync(string page);
+    Task<ActionResult<PageContent>> GetPageContentAsync(
+        string slug,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the latest news and announcements.
+    /// Get latest news and announcements
     /// </summary>
-    Task<NewsResponse> GetNewsAsync(int limit = 10, int offset = 0);
+    Task<ActionResult<NewsResponse>> GetNewsAsync(
+        int? limit = 10,
+        int? offset = 0,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the status of all game servers.
+    /// Get game server status and metrics
     /// </summary>
-    Task<ServerStatusResponse> GetServerStatusAsync();
+    Task<ActionResult<ServerStatusResponse>> GetServerStatusAsync(
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets download links for game clients.
+    /// Get available downloads by platform
     /// </summary>
-    Task<DownloadsResponse> GetDownloadsAsync(string? platform = null);
+    Task<ActionResult<DownloadsResponse>> GetDownloadsAsync(
+        Platform? platform,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Submits a contact form.
+    /// Submit contact form message
     /// </summary>
-    Task<ContactResponse> SubmitContactAsync(ContactRequest request);
+    Task<ActionResult<ContactResponse>> SubmitContactAsync(
+        ContactRequest body,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the account profile for the authenticated user.
+    /// Get authenticated user's account profile
     /// </summary>
-    Task<AccountProfile?> GetAccountProfileAsync(string accountId);
+    Task<ActionResult<AccountProfile>> GetAccountProfileAsync(
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the character list for the authenticated user.
+    /// Get authenticated user's character list
     /// </summary>
-    Task<CharacterListResponse> GetAccountCharactersAsync(string accountId);
+    Task<ActionResult<CharacterListResponse>> GetAccountCharactersAsync(
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the subscription status for the authenticated user.
+    /// List all CMS pages with metadata
     /// </summary>
-    Task<SubscriptionResponse> GetSubscriptionAsync(string accountId);
+    Task<ActionResult<System.Collections.Generic.ICollection<PageMetadata>>> ListPagesAsync(
+        bool? includeUnpublished = false,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Create new CMS page
+    /// </summary>
+    Task<ActionResult<PageContent>> CreatePageAsync(
+        PageContent body,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update existing CMS page
+    /// </summary>
+    Task<ActionResult<PageContent>> UpdatePageAsync(
+        string slug,
+        PageContent body,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete CMS page
+    /// </summary>
+    Task<IActionResult> DeletePageAsync(
+        string slug,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get site-wide configuration settings
+    /// </summary>
+    Task<ActionResult<SiteSettings>> GetSiteSettingsAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update site-wide configuration settings
+    /// </summary>
+    Task<ActionResult<SiteSettings>> UpdateSiteSettingsAsync(
+        SiteSettings body,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get current theme configuration
+    /// </summary>
+    Task<ActionResult<ThemeConfig>> GetThemeAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update theme configuration
+    /// </summary>
+    Task<IActionResult> UpdateThemeAsync(
+        ThemeConfig body,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get user subscription status
+    /// </summary>
+    Task<ActionResult<SubscriptionResponse>> GetSubscriptionAsync(
+        CancellationToken cancellationToken = default);
 }
