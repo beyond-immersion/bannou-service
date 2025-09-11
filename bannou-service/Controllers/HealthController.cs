@@ -9,6 +9,10 @@ namespace BeyondImmersion.BannouService.Controllers;
 [Route("health")]
 public class HealthController : ControllerBase
 {
+    /// <summary>
+    /// Gets the current health status of the application.
+    /// </summary>
+    /// <returns>HTTP 200 if healthy, 503 if starting, 500 if error.</returns>
     [HttpGet]
     public Task<IActionResult> Get()
     {
@@ -20,6 +24,10 @@ public class HealthController : ControllerBase
         };
     }
 
+    /// <summary>
+    /// Checks the current health status of the application via POST.
+    /// </summary>
+    /// <returns>HTTP 200 if healthy, 503 if starting, 500 if error.</returns>
     [HttpPost]
     public Task<IActionResult> Post()
     {

@@ -14,7 +14,6 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
-    <NoWarn>$(NoWarn);1591</NoWarn>
     <!-- Service generation flag - set to true to generate new services from schemas -->
     <GenerateNewServices Condition="'$(GenerateNewServices)' == ''">false</GenerateNewServices>
   </PropertyGroup>

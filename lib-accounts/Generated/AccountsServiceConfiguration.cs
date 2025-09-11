@@ -1,14 +1,13 @@
+using BeyondImmersion.BannouService;
 using System.ComponentModel.DataAnnotations;
-using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Configuration;
 
-namespace BeyondImmersion.BannouService.Behavior
+namespace BeyondImmersion.BannouService.Accounts
 {
     /// <summary>
-    /// Generated configuration for Behavior service
+    /// Generated configuration for Accounts service
     /// </summary>
-    [ServiceConfiguration(typeof(BehaviorService), envPrefix: "BEHAVIOR_")]
-    public class BehaviorServiceConfiguration : IServiceConfiguration
+    [ServiceConfiguration(typeof(AccountsService), envPrefix: "ACCOUNTS_")]
+    public class AccountsServiceConfiguration : IServiceConfiguration
     {
         /// <summary>
         /// Force specific service ID (optional)

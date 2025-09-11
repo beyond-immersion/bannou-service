@@ -1,39 +1,38 @@
-using Microsoft.AspNetCore.Mvc;
-using BeyondImmersion.BannouService.Controllers.Generated;
+using BeyondImmersion.BannouService;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace BeyondImmersion.BannouService.Behavior;
-
-/// <summary>
-/// Interface for behavior service operations.
-/// Implements business logic for the generated BehaviourController methods.
-/// </summary>
-public interface IBehaviorService
+namespace BeyondImmersion.BannouService.Behavior
 {
     /// <summary>
-    /// Add new behavior tree
+    /// Service interface for Behavior API - generated from controller
     /// </summary>
-    Task<ActionResult<AddBehaviourTreeResponse>> AddBehaviourTreeAsync(
-        AddBehaviourTreeRequest body,
-        CancellationToken cancellationToken = default);
+    public interface IBehaviorService
+    {
+        /// <summary>
+        /// CompileAbmlBehavior operation  
+        /// </summary>
+        Task<(StatusCodes, CompileBehaviorResponse?)> CompileAbmlBehaviorAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Validate behavior definition
-    /// </summary>
-    Task<ActionResult<ValidateBehaviourResponse>> ValidateBehaviourAsync(
-        ValidateBehaviourRequest body,
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// CompileBehaviorStack operation  
+        /// </summary>
+        Task<(StatusCodes, CompileBehaviorResponse?)> CompileBehaviorStackAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Validate prerequisite condition
-    /// </summary>
-    Task<ActionResult<ValidatePrerequisiteResponse>> ValidatePrerequisiteAsync(
-        ValidatePrerequisiteRequest body,
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// ValidateAbml operation  
+        /// </summary>
+        Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Resolve behavior references
-    /// </summary>
-    Task<ActionResult<ResolveReferencesResponse>> ResolveBehaviourReferencesAsync(
-        ResolveReferencesRequest body,
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// GetCachedBehavior operation  
+        /// </summary>
+        Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(/* TODO: Add parameters from schema */);
+
+        /// <summary>
+        /// ResolveContextVariables operation  
+        /// </summary>
+        Task<(StatusCodes, ResolveContextResponse?)> ResolveContextVariablesAsync(/* TODO: Add parameters from schema */);
+
+    }
 }

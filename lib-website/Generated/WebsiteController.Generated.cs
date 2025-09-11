@@ -20,7 +20,7 @@
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Controllers.Generated
+namespace BeyondImmersion.BannouService.Website
 {
     using System = global::System;
 
@@ -66,7 +66,7 @@ namespace BeyondImmersion.BannouService.Controllers.Generated
         /// <param name="platform">Filter by platform</param>
         /// <returns>Download links retrieved</returns>
         [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/downloads")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DownloadsResponse>> GetDownloads([Microsoft.AspNetCore.Mvc.FromQuery] Platform? platform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DownloadsResponse>> GetDownloads([Microsoft.AspNetCore.Mvc.FromQuery] Platform? platform = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <summary>
         /// Submit contact form
@@ -427,7 +427,7 @@ namespace BeyondImmersion.BannouService.Controllers.Generated
 
         [Newtonsoft.Json.JsonProperty("target", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public NavigationItemTarget Target { get; set; } = BeyondImmersion.BannouService.Controllers.Generated.NavigationItemTarget._self;
+        public NavigationItemTarget Target { get; set; } = BeyondImmersion.BannouService.Website.NavigationItemTarget._self;
 
         [Newtonsoft.Json.JsonProperty("children", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.List<NavigationItem> Children { get; set; } = default!;
@@ -659,7 +659,7 @@ namespace BeyondImmersion.BannouService.Controllers.Generated
 
         [Newtonsoft.Json.JsonProperty("category", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public ContactRequestCategory Category { get; set; } = BeyondImmersion.BannouService.Controllers.Generated.ContactRequestCategory.General;
+        public ContactRequestCategory Category { get; set; } = BeyondImmersion.BannouService.Website.ContactRequestCategory.General;
 
         private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

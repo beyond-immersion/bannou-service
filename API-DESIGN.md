@@ -78,18 +78,54 @@ lib-accounts/               # Single consolidated service plugin
 
 ### 2. Code Generation Approach
 
-**Schema-First Approach (Implemented)** ✅
-1. Define OpenAPI schemas in `/schemas/` directory
-2. Generate all controllers/models from schemas using NSwag
-3. Implement only business logic in service classes
-4. Maintain schema as the single source of truth
+**Schema-First Approach (Complete Generation)** ✅
 
-**Implementation Status**: Successfully implemented schema-first development for all Bannou services with comprehensive automated generation:
-- Controllers and models for all services (accounts, auth, connect, behavior)
-- Single consolidated service plugins replacing core/service separation
-- TypeScript clients for game integration  
-- WebSocket protocol definitions and binary communication
-- Comprehensive schema-driven test generation system
+**Core Design Philosophy**:
+- **Services Return Tuples**: `(StatusCodes, ResponseModel?)` using custom `StatusCodes` enum 
+- **Controllers Are Pure Shells**: Controllers only call services and convert tuples to ActionResults
+- **1:1 Controller-Service Mapping**: Every controller method directly maps to a service method
+- **No Manual Logic in Generated Classes**: Only service classes can have additional business logic beyond what's generated
+- **Schema-First Everything**: Controllers, service interfaces, service implementations, and configuration ALL generated from OpenAPI schemas
+
+**Complete Generation Workflow**:
+1. Define API contract in OpenAPI YAML (`/schemas/` directory) with complete request/response models
+2. Generate controllers, service interfaces, service implementations, and configuration with NSwag
+3. Controllers use `StatusCodes.ToActionResult()` extension method to convert service tuples to HTTP responses
+4. Add additional business logic only to service implementation classes
+5. All other classes (controllers, interfaces, configurations) remain as generated
+
+**Service Implementation Pattern**:
+```csharp
+// Generated from schema - can be extended with business logic
+public class AccountsService : IAccountsService
+{
+    public async Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(...)
+    {
+        // Business logic here
+        return (StatusCodes.OK, response);
+    }
+}
+```
+
+**Controller Pattern** (Generated):
+```csharp
+// Pure shell - never modified manually
+public class AccountsController : AccountsControllerBase
+{
+    public override async Task<ActionResult<AccountListResponse>> ListAccounts(...)
+    {
+        var (statusCode, response) = await _service.ListAccountsAsync(...);
+        return statusCode.ToActionResult(response);
+    }
+}
+```
+
+**Implementation Status**: Complete schema-first generation for all Bannou services:
+- Controllers, service interfaces, service implementations, and configurations all generated
+- Custom `StatusCodes` enum eliminates HTTP namespace dependencies in services  
+- Tuple-based service pattern ensures consistent error handling
+- Controllers are pure shells with zero manual logic
+- Complete service implementation from schema in under a day
 
 ## WebSocket-First Architecture Integration
 

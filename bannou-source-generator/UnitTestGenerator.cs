@@ -59,8 +59,8 @@ public class UnitTestGenerator : IIncrementalGenerator
                 continue;
 
             // Find corresponding schema file
-            var schemaFile = input.schemaFiles.FirstOrDefault(schema => 
-                schema.Path.Contains($"/{serviceName}-api.yaml") || 
+            var schemaFile = input.schemaFiles.FirstOrDefault(schema =>
+                schema.Path.Contains($"/{serviceName}-api.yaml") ||
                 schema.Path.Contains($"/{serviceName.Replace("-", "")}-api.yaml"));
 
             GenerateUnitTestProject(context, serviceName, schemaFile);
@@ -71,7 +71,7 @@ public class UnitTestGenerator : IIncrementalGenerator
     {
         var testProjectName = $"{serviceName}-unit-tests";
         var className = ToPascalCase(serviceName.Replace("-", ""));
-        
+
         // Generate project file
         var projectFileContent = GenerateProjectFile(serviceName);
         context.AddSource($"{testProjectName}.csproj", SourceText.From(projectFileContent, Encoding.UTF8));
@@ -323,7 +323,7 @@ public class {className}ServiceTests
     private static string ExtractServiceName(string filePath)
     {
         var fileName = Path.GetFileNameWithoutExtension(filePath);
-        
+
         // Handle lib-service-name format
         if (fileName.StartsWith("lib-"))
             return fileName.Substring(4); // Remove "lib-" prefix
@@ -337,9 +337,9 @@ public class {className}ServiceTests
             return input;
 
         var parts = input.Split(new[] { '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
-        var result = string.Join("", parts.Select(part => 
+        var result = string.Join("", parts.Select(part =>
             char.ToUpperInvariant(part[0]) + part.Substring(1).ToLowerInvariant()));
-        
+
         return result;
     }
 }

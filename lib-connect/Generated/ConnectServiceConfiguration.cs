@@ -1,14 +1,12 @@
 using System.ComponentModel.DataAnnotations;
-using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Configuration;
 
-namespace BeyondImmersion.BannouService.Behavior
+namespace BeyondImmersion.BannouService.Connect
 {
     /// <summary>
-    /// Generated configuration for Behavior service
+    /// Generated configuration for Connect service
     /// </summary>
-    [ServiceConfiguration(typeof(BehaviorService), envPrefix: "BEHAVIOR_")]
-    public class BehaviorServiceConfiguration : IServiceConfiguration
+    [ServiceConfiguration(typeof(ConnectService), envPrefix: "CONNECT_")]
+    public class ConnectServiceConfiguration : IServiceConfiguration
     {
         /// <summary>
         /// Force specific service ID (optional)

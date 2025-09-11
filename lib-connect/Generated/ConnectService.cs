@@ -3,19 +3,19 @@ using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BeyondImmersion.BannouService.Accounts
+namespace BeyondImmersion.BannouService.Connect
 {
     /// <summary>
-    /// Generated service implementation for Accounts API
+    /// Generated service implementation for Connect API
     /// </summary>
-    public class AccountsService : IAccountsService
+    public class ConnectService : IConnectService
     {
-        private readonly ILogger<AccountsService> _logger;
-        private readonly AccountsServiceConfiguration _configuration;
+        private readonly ILogger<ConnectService> _logger;
+        private readonly ConnectServiceConfiguration _configuration;
 
-        public AccountsService(
-            ILogger<AccountsService> logger,
-            AccountsServiceConfiguration configuration)
+        public ConnectService(
+            ILogger<ConnectService> logger,
+            ConnectServiceConfiguration configuration)
         {
             _logger = logger;
             _configuration = configuration;

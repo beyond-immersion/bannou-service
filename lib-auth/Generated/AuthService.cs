@@ -3,19 +3,19 @@ using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BeyondImmersion.BannouService.Accounts
+namespace BeyondImmersion.BannouService.Auth
 {
     /// <summary>
-    /// Generated service implementation for Accounts API
+    /// Generated service implementation for Auth API
     /// </summary>
-    public class AccountsService : IAccountsService
+    public class AuthService : IAuthService
     {
-        private readonly ILogger<AccountsService> _logger;
-        private readonly AccountsServiceConfiguration _configuration;
+        private readonly ILogger<AuthService> _logger;
+        private readonly AuthServiceConfiguration _configuration;
 
-        public AccountsService(
-            ILogger<AccountsService> logger,
-            AccountsServiceConfiguration configuration)
+        public AuthService(
+            ILogger<AuthService> logger,
+            AuthServiceConfiguration configuration)
         {
             _logger = logger;
             _configuration = configuration;

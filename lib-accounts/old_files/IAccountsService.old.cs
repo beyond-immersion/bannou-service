@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using BeyondImmersion.BannouService.Controllers.Generated;
+using BeyondImmersion.BannouService.Accounts;
 
 namespace BeyondImmersion.BannouService.Accounts;
 

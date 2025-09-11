@@ -1,125 +1,83 @@
-using Microsoft.AspNetCore.Mvc;
-using BeyondImmersion.BannouService.Controllers.Generated;
+using BeyondImmersion.BannouService;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace BeyondImmersion.BannouService.Website;
-
-/// <summary>
-/// Interface for website service operations.
-/// Implements business logic for the generated WebsiteController methods.
-/// </summary>
-public interface IWebsiteService
+namespace BeyondImmersion.BannouService.Website
 {
     /// <summary>
-    /// Get website status and version
+    /// Service interface for Website API - generated from controller
     /// </summary>
-    Task<ActionResult<StatusResponse>> GetStatusAsync(
-        CancellationToken cancellationToken = default);
+    public interface IWebsiteService
+    {
+        /// <summary>
+        /// GetStatus operation  
+        /// </summary>
+        Task<(StatusCodes, StatusResponse?)> GetStatusAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Get dynamic page content from CMS
-    /// </summary>
-    Task<ActionResult<PageContent>> GetPageContentAsync(
-        string slug,
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// GetPageContent operation  
+        /// </summary>
+        Task<(StatusCodes, PageContent?)> GetPageContentAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Get latest news and announcements
-    /// </summary>
-    Task<ActionResult<NewsResponse>> GetNewsAsync(
-        int? limit = 10,
-        int? offset = 0,
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// GetNews operation  
+        /// </summary>
+        Task<(StatusCodes, NewsResponse?)> GetNewsAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Get game server status and metrics
-    /// </summary>
-    Task<ActionResult<ServerStatusResponse>> GetServerStatusAsync(
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// GetServerStatus operation  
+        /// </summary>
+        Task<(StatusCodes, ServerStatusResponse?)> GetServerStatusAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Get available downloads by platform
-    /// </summary>
-    Task<ActionResult<DownloadsResponse>> GetDownloadsAsync(
-        Platform? platform,
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// GetDownloads operation  
+        /// </summary>
+        Task<(StatusCodes, DownloadsResponse?)> GetDownloadsAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Submit contact form message
-    /// </summary>
-    Task<ActionResult<ContactResponse>> SubmitContactAsync(
-        ContactRequest body,
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// SubmitContact operation  
+        /// </summary>
+        Task<(StatusCodes, ContactResponse?)> SubmitContactAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Get authenticated user's account profile
-    /// </summary>
-    Task<ActionResult<AccountProfile>> GetAccountProfileAsync(
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// GetAccountProfile operation  
+        /// </summary>
+        Task<(StatusCodes, AccountProfile?)> GetAccountProfileAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Get authenticated user's character list
-    /// </summary>
-    Task<ActionResult<CharacterListResponse>> GetAccountCharactersAsync(
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// GetAccountCharacters operation  
+        /// </summary>
+        Task<(StatusCodes, CharacterListResponse?)> GetAccountCharactersAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// List all CMS pages with metadata
-    /// </summary>
-    Task<ActionResult<System.Collections.Generic.ICollection<PageMetadata>>> ListPagesAsync(
-        bool? includeUnpublished = false,
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// CreatePage operation  
+        /// </summary>
+        Task<(StatusCodes, PageContent?)> CreatePageAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Create new CMS page
-    /// </summary>
-    Task<ActionResult<PageContent>> CreatePageAsync(
-        PageContent body,
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// UpdatePage operation  
+        /// </summary>
+        Task<(StatusCodes, PageContent?)> UpdatePageAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Update existing CMS page
-    /// </summary>
-    Task<ActionResult<PageContent>> UpdatePageAsync(
-        string slug,
-        PageContent body,
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// GetSiteSettings operation  
+        /// </summary>
+        Task<(StatusCodes, SiteSettings?)> GetSiteSettingsAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Delete CMS page
-    /// </summary>
-    Task<IActionResult> DeletePageAsync(
-        string slug,
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// UpdateSiteSettings operation  
+        /// </summary>
+        Task<(StatusCodes, SiteSettings?)> UpdateSiteSettingsAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Get site-wide configuration settings
-    /// </summary>
-    Task<ActionResult<SiteSettings>> GetSiteSettingsAsync(
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// GetTheme operation  
+        /// </summary>
+        Task<(StatusCodes, ThemeConfig?)> GetThemeAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Update site-wide configuration settings
-    /// </summary>
-    Task<ActionResult<SiteSettings>> UpdateSiteSettingsAsync(
-        SiteSettings body,
-        CancellationToken cancellationToken = default);
+        /// <summary>
+        /// GetSubscription operation  
+        /// </summary>
+        Task<(StatusCodes, SubscriptionResponse?)> GetSubscriptionAsync(/* TODO: Add parameters from schema */);
 
-    /// <summary>
-    /// Get current theme configuration
-    /// </summary>
-    Task<ActionResult<ThemeConfig>> GetThemeAsync(
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Update theme configuration
-    /// </summary>
-    Task<IActionResult> UpdateThemeAsync(
-        ThemeConfig body,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get user subscription status
-    /// </summary>
-    Task<ActionResult<SubscriptionResponse>> GetSubscriptionAsync(
-        CancellationToken cancellationToken = default);
+    }
 }

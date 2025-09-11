@@ -27,8 +27,16 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
     /// </summary>
     public string? EnvPrefix { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the ServiceConfigurationAttribute with default values.
+    /// </summary>
     public ServiceConfigurationAttribute() { }
 
+    /// <summary>
+    /// Initializes a new instance of the ServiceConfigurationAttribute with the specified configuration.
+    /// </summary>
+    /// <param name="serviceImplementation">The service implementation type this configuration is for.</param>
+    /// <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
     public ServiceConfigurationAttribute(Type? serviceImplementation = null, string? envPrefix = null)
     {
         if (serviceImplementation != null)

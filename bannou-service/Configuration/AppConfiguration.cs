@@ -1,16 +1,36 @@
 namespace BeyondImmersion.BannouService.Configuration;
 
+/// <summary>
+/// Main application configuration for the Bannou service platform.
+/// </summary>
 [ServiceConfiguration]
 public class AppConfiguration : BaseServiceConfiguration
 {
+    /// <summary>
+    /// Enumeration for log output destinations.
+    /// </summary>
     [Flags]
     public enum LogModes
     {
+        /// <summary>
+        /// No logging output.
+        /// </summary>
         None = 0,
+        /// <summary>
+        /// Log output to file.
+        /// </summary>
         File = 1 << 0,
+        /// <summary>
+        /// Log output to console.
+        /// </summary>
         Console = 1 << 1,
+        /// <summary>
+        /// Log output to cloud services.
+        /// </summary>
         Cloud = 1 << 2,
-        // convenience
+        /// <summary>
+        /// Log output to all destinations (convenience flag).
+        /// </summary>
         All = File | Cloud | Console
     }
 

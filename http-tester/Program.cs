@@ -40,7 +40,37 @@ public class Program
     /// </summary>
     private static readonly Dictionary<string, ServiceTest> sTestRegistry = new();
 
-    internal static async Task Main()
+    /// <summary>
+    /// Checks if the application is running in daemon mode (non-interactive).
+    /// </summary>
+    /// <param name="args">Command line arguments.</param>
+    /// <returns>True if in daemon mode, false otherwise.</returns>
+    private static bool IsDaemonMode(string[] args)
+    {
+        return Environment.GetEnvironmentVariable("DAEMON_MODE") == "true" || 
+               args.Contains("--daemon") || 
+               args.Contains("-d");
+    }
+
+    /// <summary>
+    /// Waits for user input if not in daemon mode.
+    /// </summary>
+    /// <param name="message">Message to display to the user.</param>
+    /// <param name="args">Command line arguments.</param>
+    private static void WaitForUserInput(string message, string[] args)
+    {
+        if (!IsDaemonMode(args))
+        {
+            Console.WriteLine(message);
+            _ = Console.ReadKey();
+        }
+        else
+        {
+            Console.WriteLine("Running in daemon mode - continuing without user input.");
+        }
+    }
+
+    internal static async Task Main(string[] args)
     {
         try
         {
@@ -75,15 +105,15 @@ public class Program
             }
 
             // Start the interactive test console
-            await RunInteractiveTestConsole(httpClient);
+            await RunInteractiveTestConsole(httpClient, args);
         }
         catch (Exception exc)
         {
             ShutdownCancellationTokenSource.Cancel();
             Console.WriteLine($"An exception has occurred: '{exc.Message}'");
             Console.WriteLine($"Stack trace: {exc.StackTrace}");
-            Console.WriteLine("Press any key to exit...");
-            _ = Console.ReadKey();
+            
+            WaitForUserInput("Press any key to exit...", args);
         }
     }
 
@@ -91,15 +121,14 @@ public class Program
     /// Runs the interactive test console that allows users to select and execute tests
     /// </summary>
     /// <param name="testClient">The test client to use for executing tests</param>
-    private static async Task RunInteractiveTestConsole(ITestClient testClient)
+    private static async Task RunInteractiveTestConsole(ITestClient testClient, string[] args)
     {
         LoadServiceTests();
 
         string? line;
         if (sTestRegistry.Count == 0)
         {
-            Console.WriteLine("No tests to run - press any key to exit.");
-            _ = Console.ReadKey();
+            WaitForUserInput("No tests to run - press any key to exit.", args);
             return;
         }
 
@@ -159,8 +188,7 @@ public class Program
                 }
 
                 Console.WriteLine();
-                Console.WriteLine($"Press any key to continue...");
-                _ = Console.ReadKey();
+                WaitForUserInput("Press any key to continue...", args);
                 Console.Clear();
             }
 

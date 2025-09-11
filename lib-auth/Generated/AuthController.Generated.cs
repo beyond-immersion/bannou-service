@@ -20,7 +20,7 @@
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Controllers.Generated
+namespace BeyondImmersion.BannouService.Auth
 {
     using System = global::System;
 
@@ -68,7 +68,7 @@ namespace BeyondImmersion.BannouService.Controllers.Generated
         /// <param name="body">Optional login request body (currently unused)</param>
         /// <returns>Login successful</returns>
         [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("login/credentials")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginWithCredentialsPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string username, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string password, [Microsoft.AspNetCore.Mvc.FromBody] LoginRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginWithCredentialsPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string username, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string password, [Microsoft.AspNetCore.Mvc.FromBody] LoginRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <summary>
         /// Login with refresh token (GET)
@@ -95,7 +95,7 @@ namespace BeyondImmersion.BannouService.Controllers.Generated
         /// <param name="body">Optional login request body (currently unused)</param>
         /// <returns>Token refresh successful</returns>
         [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("login/token")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginWithTokenPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string token, [Microsoft.AspNetCore.Mvc.FromBody] LoginRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginWithTokenPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string token, [Microsoft.AspNetCore.Mvc.FromBody] LoginRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <summary>
         /// Validate JWT access token

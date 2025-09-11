@@ -1,161 +1,129 @@
-using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Controllers.Generated;
-using BeyondImmersion.BannouService.Services;
-using Microsoft.AspNetCore.Mvc;
+using BeyondImmersion.BannouService;
 using Microsoft.Extensions.Logging;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace BeyondImmersion.BannouService.Behavior;
-
-/// <summary>
-/// Service implementation for behavior operations.
-/// Implements the schema-first generated interface methods.
-/// </summary>
-[DaprService("behavior", typeof(IBehaviorService), lifetime: ServiceLifetime.Scoped)]
-public class BehaviorService : DaprService<BehaviorServiceConfiguration>, IBehaviorService
+namespace BeyondImmersion.BannouService.Behavior
 {
-    private readonly ILogger<BehaviorService> _logger;
-
-    public BehaviorService(
-        BehaviorServiceConfiguration configuration,
-        ILogger<BehaviorService> logger)
-        : base(configuration, logger)
+    /// <summary>
+    /// Generated service implementation for Behavior API
+    /// </summary>
+    public class BehaviorService : IBehaviorService
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+        private readonly ILogger<BehaviorService> _logger;
+        private readonly BehaviorServiceConfiguration _configuration;
 
-    /// <inheritdoc/>
-    public async Task<ActionResult<AddBehaviourTreeResponse>> AddBehaviourTreeAsync(
-        AddBehaviourTreeRequest body,
-        CancellationToken cancellationToken = default)
-    {
-        try
+        public BehaviorService(
+            ILogger<BehaviorService> logger,
+            BehaviorServiceConfiguration configuration)
         {
-            _logger.LogInformation("Processing add behaviour tree request");
+            _logger = logger;
+            _configuration = configuration;
+        }
 
-            // Validate request
-            if (body == null)
+        /// <summary>
+        /// CompileAbmlBehavior operation implementation
+        /// </summary>
+        public async Task<(StatusCodes, CompileBehaviorResponse?)> CompileAbmlBehaviorAsync(/* TODO: Add parameters from schema */)
+        {
+            try
             {
-                return new BadRequestObjectResult(new { error = "Request body is required" });
+                _logger.LogDebug("Processing ABML behavior compilation request");
+                
+                // TODO: Implement ABML behavior compilation logic
+                // This should parse YAML behavior definitions and compile them
+                
+                return (StatusCodes.OK, null); // TODO: Return actual response
             }
-
-            // In a real implementation, you would:
-            // 1. Parse and validate the behavior tree definition
-            // 2. Store it in the database
-            // 3. Compile it for execution
-            // For now, return a mock response
-
-            await Task.Delay(10, cancellationToken); // Simulate processing
-
-            return new AddBehaviourTreeResponse
+            catch (Exception ex)
             {
-                TreeId = Guid.NewGuid(),
-                Success = true,
-                Message = "Behavior tree added successfully"
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing add behaviour tree request");
-            return new ObjectResult(new { error = "INTERNAL_ERROR", message = "An error occurred while processing the request" }) { StatusCode = 500 };
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task<ActionResult<ValidateBehaviourResponse>> ValidateBehaviourAsync(
-        ValidateBehaviourRequest body,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing validate behaviour request");
-
-            if (body == null)
-            {
-                return new BadRequestObjectResult(new { error = "Request body is required" });
+                _logger.LogError(ex, "Error compiling ABML behavior");
+                return (StatusCodes.InternalServerError, null);
             }
-
-            // In a real implementation, you would:
-            // 1. Parse the behavior definition
-            // 2. Validate against schema
-            // 3. Check for logical consistency
-            // For now, return a mock validation
-
-            await Task.Delay(10, cancellationToken); // Simulate validation
-
-            return new ValidateBehaviourResponse
-            {
-                Valid = true,
-                Errors = new List<string>(),
-                Warnings = new List<string>()
-            };
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing validate behaviour request");
-            return new ObjectResult(new { error = "INTERNAL_ERROR", message = "An error occurred while processing the request" }) { StatusCode = 500 };
-        }
-    }
 
-    /// <inheritdoc/>
-    public async Task<ActionResult<ValidatePrerequisiteResponse>> ValidatePrerequisiteAsync(
-        ValidatePrerequisiteRequest body,
-        CancellationToken cancellationToken = default)
-    {
-        try
+        /// <summary>
+        /// CompileBehaviorStack operation implementation
+        /// </summary>
+        public async Task<(StatusCodes, CompileBehaviorResponse?)> CompileBehaviorStackAsync(/* TODO: Add parameters from schema */)
         {
-            _logger.LogInformation("Processing validate prerequisite request");
-
-            if (body == null)
+            try
             {
-                return new BadRequestObjectResult(new { error = "Request body is required" });
+                _logger.LogDebug("Processing behavior stack compilation request");
+                
+                // TODO: Implement behavior stack compilation logic
+                // This should handle stackable behavior sets with priority resolution
+                
+                return (StatusCodes.OK, null); // TODO: Return actual response
             }
-
-            // Mock prerequisite validation
-            await Task.Delay(10, cancellationToken); // Simulate validation
-
-            return new ValidatePrerequisiteResponse
+            catch (Exception ex)
             {
-                Valid = true,
-                Details = "Prerequisite validation passed"
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing validate prerequisite request");
-            return new ObjectResult(new { error = "INTERNAL_ERROR", message = "An error occurred while processing the request" }) { StatusCode = 500 };
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task<ActionResult<ResolveReferencesResponse>> ResolveBehaviourReferencesAsync(
-        ResolveReferencesRequest body,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing resolve behaviour references request");
-
-            if (body == null)
-            {
-                return new BadRequestObjectResult(new { error = "Request body is required" });
+                _logger.LogError(ex, "Error compiling behavior stack");
+                return (StatusCodes.InternalServerError, null);
             }
-
-            // Mock reference resolution
-            await Task.Delay(10, cancellationToken); // Simulate resolution
-
-            return new ResolveReferencesResponse
-            {
-                ResolvedReferences = new Dictionary<string, object>
-                {
-                    { "example-reference", "resolved-value" }
-                },
-                UnresolvedReferences = new List<string>()
-            };
         }
-        catch (Exception ex)
+
+        /// <summary>
+        /// ValidateAbml operation implementation
+        /// </summary>
+        public async Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(/* TODO: Add parameters from schema */)
         {
-            _logger.LogError(ex, "Error processing resolve behaviour references request");
-            return new ObjectResult(new { error = "INTERNAL_ERROR", message = "An error occurred while processing the request" }) { StatusCode = 500 };
+            try
+            {
+                _logger.LogDebug("Processing ABML validation request");
+                
+                // TODO: Implement ABML YAML validation logic
+                // This should validate YAML syntax and ABML schema compliance
+                
+                return (StatusCodes.OK, null); // TODO: Return actual response
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error validating ABML");
+                return (StatusCodes.InternalServerError, null);
+            }
+        }
+
+        /// <summary>
+        /// GetCachedBehavior operation implementation
+        /// </summary>
+        public async Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(/* TODO: Add parameters from schema */)
+        {
+            try
+            {
+                _logger.LogDebug("Processing cached behavior retrieval request");
+                
+                // TODO: Implement cached behavior retrieval logic
+                // This should retrieve compiled behaviors from cache (Redis)
+                
+                return (StatusCodes.OK, null); // TODO: Return actual response
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving cached behavior");
+                return (StatusCodes.InternalServerError, null);
+            }
+        }
+
+        /// <summary>
+        /// ResolveContextVariables operation implementation
+        /// </summary>
+        public async Task<(StatusCodes, ResolveContextResponse?)> ResolveContextVariablesAsync(/* TODO: Add parameters from schema */)
+        {
+            try
+            {
+                _logger.LogDebug("Processing context variable resolution request");
+                
+                // TODO: Implement context variable resolution logic
+                // This should resolve context variables and cultural adaptations
+                
+                return (StatusCodes.OK, null); // TODO: Return actual response
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resolving context variables");
+                return (StatusCodes.InternalServerError, null);
+            }
         }
     }
 }

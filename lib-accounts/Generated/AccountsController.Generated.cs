@@ -20,7 +20,7 @@
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Controllers.Generated
+namespace BeyondImmersion.BannouService.Accounts
 {
     using System = global::System;
 
@@ -34,7 +34,7 @@ namespace BeyondImmersion.BannouService.Controllers.Generated
         /// </summary>
         /// <returns>Accounts retrieved successfully</returns>
         [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountListResponse>> ListAccounts([Microsoft.AspNetCore.Mvc.FromQuery] string? email, [Microsoft.AspNetCore.Mvc.FromQuery] string? displayName, [Microsoft.AspNetCore.Mvc.FromQuery] Provider? provider, [Microsoft.AspNetCore.Mvc.FromQuery] bool? verified, [Microsoft.AspNetCore.Mvc.FromQuery] int? page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int? pageSize = 20, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountListResponse>> ListAccounts([Microsoft.AspNetCore.Mvc.FromQuery] string? email = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? displayName = null, [Microsoft.AspNetCore.Mvc.FromQuery] Provider? provider = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool? verified = null, [Microsoft.AspNetCore.Mvc.FromQuery] int? page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int? pageSize = 20, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <summary>
         /// Create new account

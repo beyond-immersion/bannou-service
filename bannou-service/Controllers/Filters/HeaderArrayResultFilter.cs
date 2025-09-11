@@ -4,13 +4,25 @@ using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Controllers.Filters;
 
+/// <summary>
+/// Result filter for restoring header array properties after response processing.
+/// </summary>
 public class HeaderArrayResultFilter : IResultFilter
 {
     private const string HEADER_ARRAY_LIST = "HEADER_ARRAY_PROPERTIES";
     private const string HEADER_ARRAY_PREFIX = "HEADER_ARRAY:";
     private const string PROPERTYINFO_PREFIX = "PROPERTY_INFO:";
 
+    /// <summary>
+    /// Called before the result is executed (no operation).
+    /// </summary>
+    /// <param name="context">The result executing context.</param>
     public void OnResultExecuting(ResultExecutingContext context) { }
+
+    /// <summary>
+    /// Called after the result is executed to restore header array properties.
+    /// </summary>
+    /// <param name="context">The result executed context.</param>
     public void OnResultExecuted(ResultExecutedContext context)
     {
         if (context.Result is ObjectResult objectResult && objectResult?.Value != null)

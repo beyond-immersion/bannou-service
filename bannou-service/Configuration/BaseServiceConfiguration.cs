@@ -1,5 +1,8 @@
 namespace BeyondImmersion.BannouService.Configuration;
 
+/// <summary>
+/// Base configuration class for Bannou services with common configuration properties.
+/// </summary>
 public class BaseServiceConfiguration : IServiceConfiguration
 {
     /// <summary>

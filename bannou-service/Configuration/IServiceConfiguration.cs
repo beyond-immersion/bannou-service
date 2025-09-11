@@ -4,6 +4,9 @@ using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Configuration;
 
+/// <summary>
+/// Interface for service configuration with support for environment variables, JSON files, and command line arguments.
+/// </summary>
 public interface IServiceConfiguration
 {
     /// <summary>

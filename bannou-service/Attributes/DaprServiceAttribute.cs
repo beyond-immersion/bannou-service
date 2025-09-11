@@ -38,6 +38,14 @@ public sealed class DaprServiceAttribute : BaseServiceAttribute
     public string Name { get; }
 
     private DaprServiceAttribute() { }
+
+    /// <summary>
+    /// Initializes a new instance of the DaprServiceAttribute with the specified configuration.
+    /// </summary>
+    /// <param name="name">Name of the service.</param>
+    /// <param name="interfaceType">The service interface type (must implement IDaprService).</param>
+    /// <param name="priority">Whether this service has automatic priority over other handlers.</param>
+    /// <param name="lifetime">How long the service instance lasts (Transient, Scoped, or Singleton).</param>
     public DaprServiceAttribute(string name, Type? interfaceType = null, bool priority = false, ServiceLifetime lifetime = ServiceLifetime.Singleton)
     {
         if (string.IsNullOrWhiteSpace(name))

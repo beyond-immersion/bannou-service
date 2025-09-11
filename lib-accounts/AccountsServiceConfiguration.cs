@@ -1,58 +1,30 @@
-using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Configuration;
 using System.ComponentModel.DataAnnotations;
 
-namespace BeyondImmersion.BannouService.Accounts;
-
-/// <summary>
-/// Configuration for the Accounts service.
-/// </summary>
-[ServiceConfiguration(typeof(AccountsService), envPrefix: "ACCOUNTS_")]
-public class AccountsServiceConfiguration : IServiceConfiguration
+namespace BeyondImmersion.BannouService.Accounts
 {
     /// <summary>
-    /// MySQL connection string for accounts database.
+    /// Generated configuration for Accounts service
     /// </summary>
-    [Required]
-    public string ConnectionString { get; set; } = string.Empty;
+    [ServiceConfiguration(typeof(AccountsService), envPrefix: "ACCOUNTS_")]
+    public class AccountsServiceConfiguration : IServiceConfiguration
+    {
+        /// <summary>
+        /// Force specific service ID (optional)
+        /// </summary>
+        public string? Force_Service_ID { get; set; }
 
-    /// <summary>
-    /// Whether to automatically apply database migrations on startup.
-    /// </summary>
-    public bool AutoMigrate { get; set; } = true;
+        /// <summary>
+        /// Disable this service (optional)
+        /// </summary>
+        public bool? Service_Disabled { get; set; }
 
-    /// <summary>
-    /// Maximum page size for account listing operations.
-    /// </summary>
-    public int MaxPageSize { get; set; } = 100;
-
-    /// <summary>
-    /// Default page size for account listing operations.
-    /// </summary>
-    public int DefaultPageSize { get; set; } = 20;
-
-    /// <summary>
-    /// Whether to enable soft delete for accounts (recommended for production).
-    /// </summary>
-    public bool EnableSoftDelete { get; set; } = true;
-
-    /// <summary>
-    /// Account cache expiration time in minutes.
-    /// </summary>
-    public int CacheExpirationMinutes { get; set; } = 30;
-
-    /// <summary>
-    /// Maximum display name length.
-    /// </summary>
-    public int MaxDisplayNameLength { get; set; } = 100;
-
-    /// <summary>
-    /// Default roles assigned to new accounts.
-    /// </summary>
-    public string[] DefaultRoles { get; set; } = ["user"];
-
-    /// <summary>
-    /// Whether email verification is required for new accounts.
-    /// </summary>
-    public bool RequireEmailVerification { get; set; } = true;
+        // TODO: Add service-specific configuration properties from schema
+        // Example properties:
+        // [Required]
+        // public string ConnectionString { get; set; } = string.Empty;
+        //
+        // public int MaxRetries { get; set; } = 3;
+        //
+        // public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
+    }
 }

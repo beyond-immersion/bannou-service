@@ -27,21 +27,37 @@ public abstract class ApiMessage
     };
 
     private static Type[] _arrayInterfaces;
+    /// <summary>
+    /// Gets the array interfaces implemented by the Array type.
+    /// </summary>
     public static Type[] ArrayInterfaces
             => _arrayInterfaces ??= typeof(Array).GetAllImplementedInterfaces();
 
     private static Type[] _listInterfaces;
+    /// <summary>
+    /// Gets the interfaces implemented by the generic List type.
+    /// </summary>
     public static Type[] ListInterfaces
             => _listInterfaces ??= typeof(List<>).GetAllImplementedInterfaces();
 
     private static Type[] _dictionaryInterfaces;
+    /// <summary>
+    /// Gets the interfaces implemented by the generic Dictionary type.
+    /// </summary>
     public static Type[] DictionaryInterfaces
             => _dictionaryInterfaces ??= typeof(Dictionary<,>).GetAllImplementedInterfaces();
 
+    /// <summary>
+    /// Gets or sets the request IDs dictionary, mapped from REQUEST_IDS header.
+    /// </summary>
     [JsonIgnore]
     [HeaderArray(Name = "REQUEST_IDS")]
     public Dictionary<string, string>? RequestIDs { get; set; }
 
+    /// <summary>
+    /// Maps HTTP headers to properties marked with HeaderArrayAttribute.
+    /// </summary>
+    /// <param name="headers">The HTTP headers to map to properties.</param>
     public virtual void SetHeadersToProperties(IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
     {
         if (headers == null || !headers.Any())
@@ -72,6 +88,10 @@ public abstract class ApiMessage
         }
     }
 
+    /// <summary>
+    /// Converts properties marked with HeaderArrayAttribute to HTTP header arrays.
+    /// </summary>
+    /// <returns>Array of header name and value pairs.</returns>
     public virtual (string, string[])[] SetPropertiesToHeaders()
     {
         var messageType = GetType();
@@ -95,6 +115,13 @@ public abstract class ApiMessage
         return headersToSet.ToArray();
     }
 
+    /// <summary>
+    /// Converts a property value to HTTP header array format based on HeaderArrayAttribute configuration.
+    /// </summary>
+    /// <param name="propertyInfo">The property information.</param>
+    /// <param name="value">The property value to convert.</param>
+    /// <param name="headerAttr">The HeaderArrayAttribute containing configuration.</param>
+    /// <returns>Array of header name and value pairs.</returns>
     public static (string, string[])[] SetHeaderArrayPropertyToHeaders(PropertyInfo propertyInfo, object value, HeaderArrayAttribute headerAttr)
     {
         var headersToSet = new List<(string, string[])>();
@@ -197,6 +224,13 @@ public abstract class ApiMessage
         return headersToSet.ToArray();
     }
 
+    /// <summary>
+    /// Builds a property value from HTTP headers based on the property type and HeaderArrayAttribute configuration.
+    /// </summary>
+    /// <param name="propertyType">The target property type.</param>
+    /// <param name="headers">The header values to parse.</param>
+    /// <param name="propertyAttr">The HeaderArrayAttribute containing parsing configuration.</param>
+    /// <returns>The parsed property value or null if parsing fails.</returns>
     public static object? BuildPropertyValueFromHeaders(Type propertyType, IEnumerable<string> headers, HeaderArrayAttribute propertyAttr)
     {
         if (headers == null || !headers.Any())

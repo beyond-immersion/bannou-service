@@ -1,55 +1,32 @@
+using System.ComponentModel.DataAnnotations;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 
-namespace BeyondImmersion.BannouService.Website;
-
-/// <summary>
-/// Configuration for the website service.
-/// </summary>
-[ServiceConfiguration]
-public class WebsiteServiceConfiguration : IServiceConfiguration
+namespace BeyondImmersion.BannouService.Website
 {
     /// <summary>
-    /// Redis connection string for caching (via Dapr state management).
+    /// Generated configuration for Website service
     /// </summary>
-    public string? Redis_State_Store { get; set; } = "statestore";
+    [ServiceConfiguration(typeof(WebsiteService), envPrefix: "WEBSITE_")]
+    public class WebsiteServiceConfiguration : IServiceConfiguration
+    {
+        /// <summary>
+        /// Force specific service ID (optional)
+        /// </summary>
+        public string? Force_Service_ID { get; set; }
 
-    /// <summary>
-    /// Cache expiration time in seconds for page content.
-    /// </summary>
-    public int Cache_Expiration_Seconds { get; set; } = 300; // 5 minutes
+        /// <summary>
+        /// Disable this service (optional)
+        /// </summary>
+        public bool? Service_Disabled { get; set; }
 
-    /// <summary>
-    /// Maximum number of contact form submissions per IP per hour.
-    /// </summary>
-    public int Contact_Rate_Limit { get; set; } = 5;
-
-    /// <summary>
-    /// Auth service endpoint for registration and login.
-    /// </summary>
-    public string Auth_Service_AppId { get; set; } = "auth";
-
-    /// <summary>
-    /// Connect service WebSocket endpoint URL to provide after login.
-    /// </summary>
-    public string Connect_Service_Url { get; set; } = "wss://connect.bannou.com/ws";
-
-    /// <summary>
-    /// Support email address for contact forms.
-    /// </summary>
-    public string Support_Email { get; set; } = "support@bannou.com";
-
-    /// <summary>
-    /// Enable debug mode for development.
-    /// </summary>
-    public bool Debug_Mode { get; set; } = false;
-
-    /// <summary>
-    /// CDN URL for static assets.
-    /// </summary>
-    public string? CDN_Url { get; set; }
-
-    /// <summary>
-    /// Google Analytics tracking ID.
-    /// </summary>
-    public string? Analytics_Tracking_Id { get; set; }
+        // TODO: Add service-specific configuration properties from schema
+        // Example properties:
+        // [Required]
+        // public string ConnectionString { get; set; } = string.Empty;
+        //
+        // public int MaxRetries { get; set; } = 3;
+        //
+        // public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
+    }
 }

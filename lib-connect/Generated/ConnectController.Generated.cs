@@ -20,7 +20,7 @@
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Controllers.Generated
+namespace BeyondImmersion.BannouService.Connect
 {
     using System = global::System;
 
@@ -82,7 +82,7 @@ namespace BeyondImmersion.BannouService.Controllers.Generated
         /// </remarks>
         /// <param name="body">Optional connection parameters</param>
         [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("connect")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     }
 

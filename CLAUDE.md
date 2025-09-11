@@ -20,24 +20,31 @@ This file contains specific instructions for Claude Code when working on the Ban
 3. **Implement Services**: Write business logic ONLY in service implementation classes
 4. **Never Edit Generated**: Controllers and message classes are auto-generated - **NEVER EDIT MANUALLY**
 
-**Schema-First Development Workflow (MANDATORY)**:
+**Complete Schema-First Generation Workflow (MANDATORY)**:
 ```bash
-# 1. CREATE/UPDATE SCHEMA FIRST
+# 1. CREATE/UPDATE SCHEMA FIRST (defines ALL components)
 edit schemas/service-name-api.yaml
 
-# 2. GENERATE CONTROLLERS AND MESSAGES
-dotnet build bannou-service -p:GenerateNewServices=true
+# 2. GENERATE EVERYTHING FROM SCHEMA
+./generate-all-services.sh
+# This generates:
+# - lib-service/Generated/ServiceController.Generated.cs (pure shell controller)
+# - lib-service/Generated/IServiceService.cs (service interface)
+# - lib-service/Generated/ServiceService.Generated.cs (base service implementation)
+# - lib-service/Generated/ServiceConfiguration.cs (configuration class)
+# - lib-service/Generated/RequestResponseModels.cs (all models)
 
-# 3. IMPLEMENT SERVICE LOGIC
-# Generated files appear in:
-# - bannou-service/Controllers/Generated/ServiceController.Generated.cs (controller + message types)
-# - lib-service-core/Generated/ (if separate library needed)
-
-# 4. WRITE BUSINESS LOGIC in service implementation classes
-# Create lib-service/ServiceService.cs implementing IServiceService
+# 3. EXTEND SERVICE IMPLEMENTATION (ONLY place for custom logic)
+# Edit lib-service/ServiceService.cs to extend generated base
+# Services MUST return (StatusCodes, ResponseModel?) tuples
 ```
 
-**NEVER CREATE MESSAGE CLASSES MANUALLY** - they are defined in schemas and auto-generated during build.
+**CRITICAL ARCHITECTURE RULES**:
+- **Services Return Tuples**: `(StatusCodes, ResponseModel?)` using custom `StatusCodes` enum
+- **Controllers Are Pure Shells**: Only call services and use `StatusCodes.ToActionResult()`
+- **1:1 Controller-Service Mapping**: Every controller method maps directly to service method
+- **No Manual Logic in Generated Classes**: Only service implementations can have additional logic
+- **NEVER CREATE ANY CLASSES MANUALLY** - controllers, interfaces, configurations, models ALL generated from schemas
 
 ### WebSocket-First Architecture
 - **Connect service** provides zero-copy message routing via service GUIDs
