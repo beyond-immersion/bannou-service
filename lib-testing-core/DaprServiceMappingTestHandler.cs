@@ -23,7 +23,7 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
             new ServiceTest(TestServiceMappingHealth, "Service Mapping Health", "Infrastructure", "Tests service mapping health endpoints")
         ];
     }
-    
+
     /// <summary>
     /// Tests the basic service mapping resolver functionality.
     /// </summary>
