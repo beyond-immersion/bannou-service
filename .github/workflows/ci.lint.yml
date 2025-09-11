@@ -1,11 +1,11 @@
-name: 'Lint Tests'
+name: 'EditorConfig Validation'
 
 on:
   push:
 
 jobs:
   build:
-    name: Lint Tests
+    name: EditorConfig Validation
     runs-on: ubuntu-latest
     env:
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
@@ -16,13 +16,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Lint Tests
-        id: ml
-        uses: oxsecurity/megalinter/flavors/dotnet@v8
+      - name: Run EditorConfig Validation
+        id: super-linter
+        uses: github/super-linter/slim@v5
         env:
+          DEFAULT_BRANCH: master
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-          ENABLE: EDITORCONFIG
-          EDITORCONFIG_EDITORCONFIG_CHECKER_ARGUMENTS: -disable-end-of-line -disable-insert-final-newline -v
+          # Enable ONLY EditorConfig validation - focused, reliable checking without formatter conflicts
+          VALIDATE_EDITORCONFIG: true
+          # Disable C# linting to avoid conflicts with dotnet format
+          VALIDATE_CSHARP: false
 
       - name: Get Latest Commit Info
         id: commit_info
@@ -43,21 +47,20 @@ jobs:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
           username: "GitHub Actions"
           content: |
-            **:white_check_mark: Lint Tests Passed Successfully**
+            **:white_check_mark: EditorConfig Validation Passed Successfully**
             - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - **Author:** ${{ env.COMMIT_AUTHOR }}
             - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
             [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Emoji_u2705.svg/1024px-Emoji_u2705.svg.png'
-          embed-title: "Success: Lint Tests"
+          embed-title: "Success: EditorConfig Validation"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          embed-description: ":white_check_mark: The lint tests have passed successfully."
+          embed-description: ":white_check_mark: EditorConfig validation has passed successfully."
           embed-author-name: "${{ env.COMMIT_AUTHOR }}"
           embed-author-icon-url: "https://upload.wikimedia.org/wikipedia/en/8/86/Animated-check-mark.gif"
           embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
           embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
           embed-color: 15430476
-          embed-timestamp: "${{ steps.ml.outputs.time }}"
 
       - name: Notify Failure
         if: failure() && env.DISCORD_WEBHOOK != ''
@@ -67,21 +70,20 @@ jobs:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
           username: "GitHub Actions"
           content: |
-            **:x: Lint Tests Failed**
+            **:x: EditorConfig Validation Failed**
             - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - **Author:** ${{ env.COMMIT_AUTHOR }}
             - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
             [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
-          embed-title: "Failed: Lint Tests"
+          embed-title: "Failed: EditorConfig Validation"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          embed-description: ":x: The lint tests have failed."
+          embed-description: ":x: The EditorConfig validation have failed."
           embed-author-name: "${{ env.COMMIT_AUTHOR }}"
           embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
           embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
           embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
           embed-color: 15430476
-          embed-timestamp: "${{ steps.ml.outputs.time }}"
 
       - name: Notify Cancelled
         if: cancelled() && env.DISCORD_WEBHOOK != ''
@@ -91,18 +93,17 @@ jobs:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
           username: "GitHub Actions"
           content: |
-            **:warning: Lint Tests Cancelled**
+            **:warning: EditorConfig Validation Cancelled**
             - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - **Author:** ${{ env.COMMIT_AUTHOR }}
             - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
             [Repository](${{ github.server_url }}/${{ github.repository }})
           avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
-          embed-title: "Cancelled: Lint Tests"
+          embed-title: "Cancelled: EditorConfig Validation"
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          embed-description: ":warning: The lint tests have been cancelled."
+          embed-description: ":warning: The EditorConfig validation have been cancelled."
           embed-author-name: "${{ env.COMMIT_AUTHOR }}"
           embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
           embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
           embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
           embed-color: 15430476
-          embed-timestamp: "${{ steps.ml.outputs.time }}"
