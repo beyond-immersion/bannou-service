@@ -4,6 +4,8 @@
 
 Bannou Service is a versatile ASP.NET Core application designed to provide a WebSocket-first microservices architecture for massively multiplayer online games. Featuring an intelligent Connect service edge gateway that routes messages via service GUIDs without payload inspection, Bannou enables zero-copy message routing and seamless dual-transport communication (HTTP for development, WebSocket for production). The platform uses schema-driven development with NSwag code generation to ensure API consistency across all services. Primarily designed to support Arcadia, a revolutionary MMORPG with AI-driven NPCs, Bannou becomes the foundation of the universal cloud-based platform for developing and hosting multiplayer video games, tentatively called "CelestialLink".
 
+**⚠️ IMPORTANT**: For all Bannou development tasks, always reference [**API-DESIGN.md**](API-DESIGN.md) first. This document defines the authoritative schema-driven development approach, consolidated service architecture (one plugin per service), and implementation patterns that must be followed for all Bannou services.
+
 ## Table of Contents
 
 - [Bannou Service](#bannou-service)

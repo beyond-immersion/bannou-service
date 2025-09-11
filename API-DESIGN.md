@@ -4,7 +4,7 @@ This document describes Bannou's contract-first API development approach using O
 
 ## Overview
 
-Bannou uses **Schema-Driven Development** where OpenAPI specifications define the contract for each service, then code generation tools create controllers, models, tests, and client libraries automatically. This approach perfectly complements Bannou's modular `lib-*-core` / `lib-*-service` architecture.
+Bannou uses **Schema-Driven Development** where OpenAPI specifications define the contract for each service, then code generation tools create controllers, models, tests, and client libraries automatically. This approach perfectly complements Bannou's consolidated service architecture with one plugin per service.
 
 ## Why Contract-First Development?
 
@@ -24,34 +24,44 @@ Bannou uses **Schema-Driven Development** where OpenAPI specifications define th
 
 ## Architecture Integration
 
-### Current Bannou Pattern
-```
-lib-accounts-core/          # Controllers, interfaces, message models
-├── AccountController.cs    # [HttpPost] endpoints with [DaprRoute]
-├── IAccountService.cs      # Service interface
-└── Messages/              
-    ├── CreateAccountRequest.cs   # Request models with [JsonProperty]
-    └── CreateAccountResponse.cs  # Response models
-
-lib-accounts-service-mysql/ # Implementation
-└── AccountService.cs       # [DaprService] implementation
-```
-
-### Enhanced with OpenAPI
+### Consolidated Service Architecture (2025)
+**One Plugin Per Service** - Simplified and schema-driven:
 ```
 schemas/
 └── accounts-api.yaml       # OpenAPI specification (single source of truth)
 
-lib-accounts-core/          # Generated from schema
-├── AccountController.cs    # Auto-generated with validation
-├── IAccountService.cs      # Auto-generated interface  
-└── Messages/               # Auto-generated models
-    ├── CreateAccountRequest.cs  
-    └── CreateAccountResponse.cs  
-
-lib-accounts-service-mysql/ # Hand-written business logic
-└── AccountService.cs       # Implements generated interface
+lib-accounts/               # Single consolidated service plugin
+├── Generated/              # NSwag generated from schema
+│   ├── AccountController.cs    # Auto-generated controller with validation
+│   └── AccountModels.cs        # Auto-generated request/response models
+├── IAccountService.cs      # Service interface
+├── AccountService.cs       # Business logic implementation
+└── AccountServiceConfiguration.cs # Service configuration
 ```
+
+### Architecture Benefits
+- **Simplified Structure**: One service plugin instead of artificial core/service separation
+- **Schema-First**: All controllers and models generated from OpenAPI specifications
+- **Dapr Integration**: Service configuration handled via Dapr components, not separate projects
+- **Clean Separation**: Generated code vs. business logic clearly separated
+- **Consistent Patterns**: All services follow identical plugin structure
+
+### Why Consolidation? (2025 Architectural Decision)
+
+**Previous Architecture Issues:**
+- **lib-*-core** / **lib-*-service** separation provided minimal architectural value
+- Dual project maintenance burden without clear benefit
+- Manual controller implementation conflicted with schema-first generation
+- Unclear placement of new service functionality
+- Extra complexity in project references and dependencies
+
+**Consolidated Benefits:**
+- **Single Source of Truth**: One schema → one service plugin → clear ownership
+- **Dapr Handles Infrastructure**: Database/caching differences managed via Dapr components
+- **ServiceLib.targets**: Common build patterns shared across all plugins
+- **Deployment Flexibility**: Assembly loading system allows same code to deploy in different configurations
+- **Testing Simplicity**: One project to test, one project to deploy
+- **Schema-First Alignment**: Generated controllers replace manual implementation entirely
 
 ## Implementation Tools & Choices
 
@@ -75,8 +85,9 @@ lib-accounts-service-mysql/ # Hand-written business logic
 4. Maintain schema as the single source of truth
 
 **Implementation Status**: Successfully implemented schema-first development for all Bannou services with comprehensive automated generation:
-- Controllers and models for all services (accounts, auth, connect, behaviour)
-- TypeScript clients for game integration
+- Controllers and models for all services (accounts, auth, connect, behavior)
+- Single consolidated service plugins replacing core/service separation
+- TypeScript clients for game integration  
 - WebSocket protocol definitions and binary communication
 - Comprehensive schema-driven test generation system
 
@@ -119,22 +130,22 @@ The WebSocket protocol uses the same request/response models generated from Open
 - ✅ Configured automated controller generation from schemas
 - ✅ Generated abstract controllers with full validation and documentation
 
-### Complete Service Implementation (All Services Complete)
+### Complete Service Implementation (Clean Slate 2025)
 ```bash
-# Schema locations
+# Schema locations (authoritative)
 schemas/accounts-api.yaml    # Account management
-schemas/auth-api.yaml        # Authentication & authorization
-schemas/connect-api.yaml     # WebSocket edge gateway
-schemas/behaviour-api.yaml   # AI behavior management
+schemas/auth-api-v3.yaml     # Authentication & authorization v3
+schemas/connect-api.yaml     # WebSocket edge gateway with dynamic permissions
+schemas/behavior-api.yaml    # ABML behavior management v2.0
 
-# Generated controllers
-bannou-service/Controllers/Generated/AccountsController.Generated.cs
-bannou-service/Controllers/Generated/AuthController.Generated.cs
-bannou-service/Controllers/Generated/ConnectController.Generated.cs
-bannou-service/Controllers/Generated/BehaviourController.Generated.cs
+# Service plugins (consolidated architecture)
+lib-behavior/                # Single behavior service plugin
+│                           # (replaces lib-behaviour-core + lib-behaviour-service)
 
-# Additional generated assets
-lib-accounts-core/AccountsGeneratedController.cs  # Accounts core controller
+# Schema-driven generation ready for:
+# - Controllers generated from schemas via NSwag
+# - Models and validation generated automatically  
+# - Unit test projects via Roslyn source generator
 ```
 
 **Generated Features:**
@@ -193,21 +204,35 @@ nswag openapi2cscontroller \
   /output:Controllers/Generated/ServiceController.Generated.cs
 ```
 
-### 3. Implement Business Logic
+### 3. Implement Service Logic
 ```csharp
-// Inherit from generated abstract controller
-public class ServiceController : ServiceControllerControllerBase
+// Single service plugin with generated controllers
+namespace BeyondImmersion.BannouService.ServiceName;
+
+public class ServiceNameService : IServiceNameService
 {
-    public override async Task<ActionResult<ResponseModel>> MethodName(
+    private readonly ILogger<ServiceNameService> _logger;
+
+    public ServiceNameService(ILogger<ServiceNameService> logger)
+    {
+        _logger = logger;
+    }
+
+    // Implement business logic methods defined in schema
+    // Generated controllers handle routing, validation, and serialization
+    public async Task<ActionResult<ResponseModel>> MethodName(
         RequestModel request, CancellationToken cancellationToken)
     {
-        // Implement business logic here
-        // Generated controller handles routing, validation, and serialization
+        // Pure business logic - no controller concerns
+        _logger.LogDebug("Processing {Method}", nameof(MethodName));
+        
+        // Your implementation here
+        return new ResponseModel { /* ... */ };
     }
 }
 ```
 
-This approach ensures API contracts remain consistent while allowing focus on business logic implementation.
+This consolidated approach ensures API contracts remain consistent while maintaining clean separation between generated framework code and business logic.
 
 ### Phase 3: WebSocket Protocol & Testing (Complete)
 - ✅ Implemented WebSocket-first architecture with Connect service edge gateway
