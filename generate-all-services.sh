@@ -377,7 +377,8 @@ generate_client() {
             /newLineBehavior:LF \
             /generateOptionalParameters:true \
             /useHttpClientCreationMethod:false \
-            /additionalNamespaceUsages:"BeyondImmersion.BannouService.ServiceClients"
+            /additionalNamespaceUsages:"BeyondImmersion.BannouService.ServiceClients" \
+            /templateDirectory:"../templates/nswag"
 
         # Check if NSwag client generation succeeded
         if [ $? -eq 0 ]; then
@@ -447,7 +448,8 @@ generate_controller() {
             "/JsonLibrary:NewtonsoftJson" \
             "/GenerateNullableReferenceTypes:true" \
             "/NewLineBehavior:LF" \
-            "/GenerateOptionalParameters:true"
+            "/GenerateOptionalParameters:true" \
+            "/TemplateDirectory:../templates/nswag"
         
         if [ $? -eq 0 ]; then
             nswag_success=true

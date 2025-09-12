@@ -20,512 +20,510 @@
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Accounts
+namespace BeyondImmersion.BannouService.Accounts;
+
+using System = global::System;
+
+[System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+[Microsoft.AspNetCore.Mvc.Route("v1.0/invoke/accounts/method")]
+
+public abstract class AccountsControllerBaseControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
 {
-    using System = global::System;
-
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    [Microsoft.AspNetCore.Mvc.Route("v1.0/invoke/accounts/method")]
-
-    public abstract class AccountsControllerBaseControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
-    {
-        /// <summary>
-        /// List accounts with filtering
-        /// </summary>
-        /// <returns>Accounts retrieved successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountListResponse>> ListAccounts([Microsoft.AspNetCore.Mvc.FromQuery] string? email = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? displayName = null, [Microsoft.AspNetCore.Mvc.FromQuery] Provider? provider = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool? verified = null, [Microsoft.AspNetCore.Mvc.FromQuery] int? page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int? pageSize = 20, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Create new account
-        /// </summary>
-        /// <returns>Account created successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> CreateAccount([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Get account by ID
-        /// </summary>
-        /// <returns>Account retrieved successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccount([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Update account
-        /// </summary>
-        /// <returns>Account updated successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateAccount([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Delete account
-        /// </summary>
-        /// <returns>Account deleted successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteAccount([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Get account by email
-        /// </summary>
-        /// <returns>Account retrieved successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-email/{email}")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByEmail([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string email, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Get authentication methods for account
-        /// </summary>
-        /// <returns>Authentication methods retrieved</returns>
-        [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/auth-methods")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodsResponse>> GetAuthMethods([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Add authentication method to account
-        /// </summary>
-        /// <returns>Authentication method added successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/auth-methods")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodResponse>> AddAuthMethod([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Remove authentication method from account
-        /// </summary>
-        /// <returns>Authentication method removed successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/auth-methods/{methodId}")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveAuthMethod([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid methodId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Get account by external provider ID
-        /// </summary>
-        /// <returns>Account retrieved successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-provider/{provider}/{externalId}")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByProvider([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider2 provider, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string externalId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Update account profile
-        /// </summary>
-        /// <returns>Profile updated successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/profile")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateProfile([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Update account password hash
-        /// </summary>
-        /// <returns>Password hash updated successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/password")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdatePasswordHash([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Update email verification status
-        /// </summary>
-        /// <returns>Verification status updated successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/verification")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateVerificationStatus([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CreateAccountRequest
-    {
-        [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Email { get; set; } = default!;
-
-        /// <summary>
-        /// Pre-hashed password from Auth service
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? PasswordHash { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [System.ComponentModel.DataAnnotations.StringLength(100)]
-        public string? DisplayName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool EmailVerified { get; set; } = false;
-
-        [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.List<string> Roles { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object? Metadata { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class UpdateAccountRequest
-    {
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [System.ComponentModel.DataAnnotations.StringLength(100)]
-        public string? DisplayName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.List<string> Roles { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object? Metadata { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class UpdateProfileRequest
-    {
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [System.ComponentModel.DataAnnotations.StringLength(100)]
-        public string? DisplayName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object? Metadata { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class UpdatePasswordRequest
-    {
-        /// <summary>
-        /// New pre-hashed password from Auth service
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string PasswordHash { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class UpdateVerificationRequest
-    {
-        [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.Always)]
-        public bool EmailVerified { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AddAuthMethodRequest
-    {
-        [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public AddAuthMethodRequestProvider Provider { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string ExternalId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? DisplayName { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AccountResponse
-    {
-        [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid AccountId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Email { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? DisplayName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("updatedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.Always)]
-        public bool EmailVerified { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.List<string> Roles { get; set; } = new System.Collections.Generic.List<string>();
-
-        [Newtonsoft.Json.JsonProperty("authMethods", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.List<AuthMethodInfo> AuthMethods { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object? Metadata { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AuthMethodInfo
-    {
-        [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Guid MethodId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public AuthMethodInfoProvider Provider { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? ExternalId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? DisplayName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("linkedAt", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.DateTimeOffset LinkedAt { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AuthMethodResponse
-    {
-        [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid MethodId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public AuthMethodResponseProvider Provider { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string ExternalId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? DisplayName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("linkedAt", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.DateTimeOffset LinkedAt { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AuthMethodsResponse
-    {
-        [Newtonsoft.Json.JsonProperty("authMethods", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.List<AuthMethodInfo> AuthMethods { get; set; } = new System.Collections.Generic.List<AuthMethodInfo>();
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AccountListResponse
-    {
-        [Newtonsoft.Json.JsonProperty("accounts", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.List<AccountResponse> Accounts { get; set; } = new System.Collections.Generic.List<AccountResponse>();
-
-        [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.Always)]
-        public int TotalCount { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("page", Required = Newtonsoft.Json.Required.Always)]
-        public int Page { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("pageSize", Required = Newtonsoft.Json.Required.Always)]
-        public int PageSize { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("hasNextPage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool HasNextPage { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("hasPreviousPage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool HasPreviousPage { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum Provider
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"email")]
-        Email = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"google")]
-        Google = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-        Discord = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-        Twitch = 3,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-        Steam = 4,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum Provider2
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"google")]
-        Google = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-        Discord = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-        Twitch = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-        Steam = 3,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum AddAuthMethodRequestProvider
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"google")]
-        Google = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-        Discord = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-        Twitch = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-        Steam = 3,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum AuthMethodInfoProvider
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"email")]
-        Email = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"google")]
-        Google = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-        Discord = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-        Twitch = 3,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-        Steam = 4,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum AuthMethodResponseProvider
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"google")]
-        Google = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-        Discord = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-        Twitch = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-        Steam = 3,
-
-    }
-
+    /// <summary>
+    /// List accounts with filtering
+    /// </summary>
+    /// <returns>Accounts retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountListResponse>> ListAccounts([Microsoft.AspNetCore.Mvc.FromQuery] string? email = null, [Microsoft.AspNetCore.Mvc.FromQuery] string? displayName = null, [Microsoft.AspNetCore.Mvc.FromQuery] Provider? provider = null, [Microsoft.AspNetCore.Mvc.FromQuery] bool? verified = null, [Microsoft.AspNetCore.Mvc.FromQuery] int? page = 1, [Microsoft.AspNetCore.Mvc.FromQuery] int? pageSize = 20, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Create new account
+    /// </summary>
+    /// <returns>Account created successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> CreateAccount([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get account by ID
+    /// </summary>
+    /// <returns>Account retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccount([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Update account
+    /// </summary>
+    /// <returns>Account updated successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateAccount([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Delete account
+    /// </summary>
+    /// <returns>Account deleted successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteAccount([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get account by email
+    /// </summary>
+    /// <returns>Account retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-email/{email}")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByEmail([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string email, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get authentication methods for account
+    /// </summary>
+    /// <returns>Authentication methods retrieved</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/auth-methods")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodsResponse>> GetAuthMethods([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Add authentication method to account
+    /// </summary>
+    /// <returns>Authentication method added successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/auth-methods")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodResponse>> AddAuthMethod([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Remove authentication method from account
+    /// </summary>
+    /// <returns>Authentication method removed successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/auth-methods/{methodId}")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveAuthMethod([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid methodId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get account by external provider ID
+    /// </summary>
+    /// <returns>Account retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-provider/{provider}/{externalId}")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByProvider([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider2 provider, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string externalId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Update account profile
+    /// </summary>
+    /// <returns>Profile updated successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/profile")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateProfile([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Update account password hash
+    /// </summary>
+    /// <returns>Password hash updated successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/password")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdatePasswordHash([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Update email verification status
+    /// </summary>
+    /// <returns>Verification status updated successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/verification")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateVerificationStatus([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CreateAccountRequest
+{
+    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Email { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-hashed password from Auth service
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? PasswordHash { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool EmailVerified { get; set; } = false;
+
+    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.List<string> Roles { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object? Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UpdateAccountRequest
+{
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.List<string> Roles { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object? Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UpdateProfileRequest
+{
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object? Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UpdatePasswordRequest
+{
+    /// <summary>
+    /// New pre-hashed password from Auth service
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string PasswordHash { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UpdateVerificationRequest
+{
+    [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.Always)]
+    public bool EmailVerified { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AddAuthMethodRequest
+{
+    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public AddAuthMethodRequestProvider Provider { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string ExternalId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? DisplayName { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AccountResponse
+{
+    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid AccountId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Email { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("updatedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.Always)]
+    public bool EmailVerified { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.List<string> Roles { get; set; } = new System.Collections.Generic.List<string>();
+
+    [Newtonsoft.Json.JsonProperty("authMethods", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.List<AuthMethodInfo> AuthMethods { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object? Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthMethodInfo
+{
+    [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Guid MethodId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public AuthMethodInfoProvider Provider { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? ExternalId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("linkedAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset LinkedAt { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthMethodResponse
+{
+    [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid MethodId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public AuthMethodResponseProvider Provider { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string ExternalId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("linkedAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset LinkedAt { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthMethodsResponse
+{
+    [Newtonsoft.Json.JsonProperty("authMethods", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.List<AuthMethodInfo> AuthMethods { get; set; } = new System.Collections.Generic.List<AuthMethodInfo>();
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AccountListResponse
+{
+    [Newtonsoft.Json.JsonProperty("accounts", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.List<AccountResponse> Accounts { get; set; } = new System.Collections.Generic.List<AccountResponse>();
+
+    [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.Always)]
+    public int TotalCount { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("page", Required = Newtonsoft.Json.Required.Always)]
+    public int Page { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("pageSize", Required = Newtonsoft.Json.Required.Always)]
+    public int PageSize { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("hasNextPage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool HasNextPage { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("hasPreviousPage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool HasPreviousPage { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum Provider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"email")]
+    Email = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 4,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum Provider2
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 3,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AddAuthMethodRequestProvider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 3,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthMethodInfoProvider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"email")]
+    Email = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 4,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthMethodResponseProvider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 3,
+
+}
+
 
 #pragma warning restore  108
 #pragma warning restore  114

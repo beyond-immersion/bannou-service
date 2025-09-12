@@ -22,2667 +22,2685 @@ using BeyondImmersion.BannouService.ServiceClients;
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Website.Client
+namespace BeyondImmersion.BannouService.Website.Client;
+
+using System = global::System;
+
+[System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial interface IWebsiteClient
 {
-    using System = global::System;
 
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial interface IWebsiteClient
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get website status and version
+    /// </summary>
+    /// <returns>Website service status</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<StatusResponse> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get dynamic page content from CMS
+    /// </summary>
+    /// <param name="slug">Page slug identifier</param>
+    /// <returns>Page content retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<PageContent> GetPageContentAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get latest news and announcements
+    /// </summary>
+    /// <param name="limit">Number of news items to return</param>
+    /// <param name="offset">Pagination offset</param>
+    /// <returns>News items retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<NewsResponse> GetNewsAsync(int? limit = null, int? offset = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get game server status for all realms
+    /// </summary>
+    /// <returns>Server status information</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<ServerStatusResponse> GetServerStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get download links for game clients
+    /// </summary>
+    /// <param name="platform">Filter by platform</param>
+    /// <returns>Download links retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<DownloadsResponse> GetDownloadsAsync(Platform? platform = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Submit contact form
+    /// </summary>
+    /// <returns>Contact form submitted</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<ContactResponse> SubmitContactAsync(ContactRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get account profile for logged-in user
+    /// </summary>
+    /// <returns>Account profile retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<AccountProfile> GetAccountProfileAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get character list for logged-in user
+    /// </summary>
+    /// <returns>Character list retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<CharacterListResponse> GetAccountCharactersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// List all CMS pages
+    /// </summary>
+    /// <returns>Page list retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<System.Collections.Generic.ICollection<PageMetadata>> ListPagesAsync(bool? includeUnpublished = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Create new CMS page
+    /// </summary>
+    /// <returns>Page created</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<PageContent> CreatePageAsync(PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update CMS page
+    /// </summary>
+    /// <returns>Page updated</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<PageContent> UpdatePageAsync(string slug, PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Delete CMS page
+    /// </summary>
+    /// <returns>Page deleted</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task DeletePageAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get site configuration
+    /// </summary>
+    /// <returns>Site settings retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<SiteSettings> GetSiteSettingsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update site configuration
+    /// </summary>
+    /// <returns>Settings updated</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<SiteSettings> UpdateSiteSettingsAsync(SiteSettings body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get current theme configuration
+    /// </summary>
+    /// <returns>Theme configuration retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<ThemeConfig> GetThemeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update theme configuration
+    /// </summary>
+    /// <returns>Theme updated</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task UpdateThemeAsync(ThemeConfig body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get subscription status
+    /// </summary>
+    /// <returns>Subscription information retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<SubscriptionResponse> GetSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IWebsiteClient
+{
+    #pragma warning disable 8618
+    private string _baseUrl;
+    #pragma warning restore 8618
+
+    private System.Net.Http.HttpClient _httpClient;
+    private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
+    private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+    public WebsiteClient(System.Net.Http.HttpClient httpClient)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get website status and version
-        /// </summary>
-        /// <returns>Website service status</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<StatusResponse> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get dynamic page content from CMS
-        /// </summary>
-        /// <param name="slug">Page slug identifier</param>
-        /// <returns>Page content retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<PageContent> GetPageContentAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get latest news and announcements
-        /// </summary>
-        /// <param name="limit">Number of news items to return</param>
-        /// <param name="offset">Pagination offset</param>
-        /// <returns>News items retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<NewsResponse> GetNewsAsync(int? limit = null, int? offset = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get game server status for all realms
-        /// </summary>
-        /// <returns>Server status information</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<ServerStatusResponse> GetServerStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get download links for game clients
-        /// </summary>
-        /// <param name="platform">Filter by platform</param>
-        /// <returns>Download links retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<DownloadsResponse> GetDownloadsAsync(Platform? platform = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Submit contact form
-        /// </summary>
-        /// <returns>Contact form submitted</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<ContactResponse> SubmitContactAsync(ContactRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get account profile for logged-in user
-        /// </summary>
-        /// <returns>Account profile retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<AccountProfile> GetAccountProfileAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get character list for logged-in user
-        /// </summary>
-        /// <returns>Character list retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<CharacterListResponse> GetAccountCharactersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// List all CMS pages
-        /// </summary>
-        /// <returns>Page list retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<System.Collections.Generic.ICollection<PageMetadata>> ListPagesAsync(bool? includeUnpublished = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Create new CMS page
-        /// </summary>
-        /// <returns>Page created</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<PageContent> CreatePageAsync(PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update CMS page
-        /// </summary>
-        /// <returns>Page updated</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<PageContent> UpdatePageAsync(string slug, PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Delete CMS page
-        /// </summary>
-        /// <returns>Page deleted</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task DeletePageAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get site configuration
-        /// </summary>
-        /// <returns>Site settings retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<SiteSettings> GetSiteSettingsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update site configuration
-        /// </summary>
-        /// <returns>Settings updated</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<SiteSettings> UpdateSiteSettingsAsync(SiteSettings body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get current theme configuration
-        /// </summary>
-        /// <returns>Theme configuration retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<ThemeConfig> GetThemeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update theme configuration
-        /// </summary>
-        /// <returns>Theme updated</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task UpdateThemeAsync(ThemeConfig body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get subscription status
-        /// </summary>
-        /// <returns>Subscription information retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<SubscriptionResponse> GetSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
+        BaseUrl = "http://localhost:3500/v1.0/invoke/bannou/method";
+        _httpClient = httpClient;
+        Initialize();
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IWebsiteClient
+    private static Newtonsoft.Json.JsonSerializerSettings CreateSerializerSettings()
     {
-        #pragma warning disable 8618
-        private string _baseUrl;
-        #pragma warning restore 8618
+        var settings = new Newtonsoft.Json.JsonSerializerSettings();
+        UpdateJsonSerializerSettings(settings);
+        return settings;
+    }
 
-        private System.Net.Http.HttpClient _httpClient;
-        private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
-        private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
-
-    #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        public WebsiteClient(System.Net.Http.HttpClient httpClient)
-    #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+    public string BaseUrl
+    {
+        get { return _baseUrl; }
+        set
         {
-            BaseUrl = "http://localhost:3500/v1.0/invoke/bannou/method";
-            _httpClient = httpClient;
-            Initialize();
+            _baseUrl = value;
+            if (!string.IsNullOrEmpty(_baseUrl) && !_baseUrl.EndsWith("/"))
+                _baseUrl += '/';
         }
+    }
 
-        private static Newtonsoft.Json.JsonSerializerSettings CreateSerializerSettings()
+    protected Newtonsoft.Json.JsonSerializerSettings JsonSerializerSettings { get { return _instanceSettings ?? _settings.Value; } }
+
+    static partial void UpdateJsonSerializerSettings(Newtonsoft.Json.JsonSerializerSettings settings);
+
+    partial void Initialize();
+
+    partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
+    partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
+    partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get website status and version
+    /// </summary>
+    /// <returns>Website service status</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<StatusResponse> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            var settings = new Newtonsoft.Json.JsonSerializerSettings();
-            UpdateJsonSerializerSettings(settings);
-            return settings;
-        }
-
-        public string BaseUrl
-        {
-            get { return _baseUrl; }
-            set
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                _baseUrl = value;
-                if (!string.IsNullOrEmpty(_baseUrl) && !_baseUrl.EndsWith("/"))
-                    _baseUrl += '/';
-            }
-        }
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
-        protected Newtonsoft.Json.JsonSerializerSettings JsonSerializerSettings { get { return _instanceSettings ?? _settings.Value; } }
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/status"
+                urlBuilder_.Append("website/status");
 
-        static partial void UpdateJsonSerializerSettings(Newtonsoft.Json.JsonSerializerSettings settings);
+                PrepareRequest(client_, request_, urlBuilder_);
 
-        partial void Initialize();
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
 
-        partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
-        partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
-        partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
+                PrepareRequest(client_, request_, url_);
 
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get website status and version
-        /// </summary>
-        /// <returns>Website service status</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<StatusResponse> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/status"
-                    urlBuilder_.Append("website/status");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<StatusResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get dynamic page content from CMS
-        /// </summary>
-        /// <param name="slug">Page slug identifier</param>
-        /// <returns>Page content retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<PageContent> GetPageContentAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (slug == null)
-                throw new System.ArgumentNullException("slug");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/content/{slug}"
-                    urlBuilder_.Append("website/content/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(slug, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<PageContent>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 404)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            throw new ApiException<ErrorResponse>("Page not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get latest news and announcements
-        /// </summary>
-        /// <param name="limit">Number of news items to return</param>
-        /// <param name="offset">Pagination offset</param>
-        /// <returns>News items retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<NewsResponse> GetNewsAsync(int? limit = null, int? offset = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/news"
-                    urlBuilder_.Append("website/news");
-                    urlBuilder_.Append('?');
-                    if (limit != null)
-                    {
-                        urlBuilder_.Append(System.Uri.EscapeDataString("limit")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(limit, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    }
-                    if (offset != null)
-                    {
-                        urlBuilder_.Append(System.Uri.EscapeDataString("offset")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(offset, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    }
-                    urlBuilder_.Length--;
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<NewsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get game server status for all realms
-        /// </summary>
-        /// <returns>Server status information</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<ServerStatusResponse> GetServerStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/server-status"
-                    urlBuilder_.Append("website/server-status");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<ServerStatusResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get download links for game clients
-        /// </summary>
-        /// <param name="platform">Filter by platform</param>
-        /// <returns>Download links retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<DownloadsResponse> GetDownloadsAsync(Platform? platform = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/downloads"
-                    urlBuilder_.Append("website/downloads");
-                    urlBuilder_.Append('?');
-                    if (platform != null)
-                    {
-                        urlBuilder_.Append(System.Uri.EscapeDataString("platform")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(platform, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    }
-                    urlBuilder_.Length--;
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<DownloadsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Submit contact form
-        /// </summary>
-        /// <returns>Contact form submitted</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<ContactResponse> SubmitContactAsync(ContactRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (body == null)
-                throw new System.ArgumentNullException("body");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                    var content_ = new System.Net.Http.StringContent(json_);
-                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                    request_.Content = content_;
-                    request_.Method = new System.Net.Http.HttpMethod("POST");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/contact"
-                    urlBuilder_.Append("website/contact");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<ContactResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 400)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            throw new ApiException<ErrorResponse>("Invalid form data", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        if (status_ == 429)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            throw new ApiException<ErrorResponse>("Too many requests", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get account profile for logged-in user
-        /// </summary>
-        /// <returns>Account profile retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<AccountProfile> GetAccountProfileAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/account/profile"
-                    urlBuilder_.Append("website/account/profile");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<AccountProfile>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 401)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            throw new ApiException<ErrorResponse>("Unauthorized", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get character list for logged-in user
-        /// </summary>
-        /// <returns>Character list retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<CharacterListResponse> GetAccountCharactersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/account/characters"
-                    urlBuilder_.Append("website/account/characters");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<CharacterListResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 401)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            throw new ApiException<ErrorResponse>("Unauthorized", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// List all CMS pages
-        /// </summary>
-        /// <returns>Page list retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<PageMetadata>> ListPagesAsync(bool? includeUnpublished = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/cms/pages"
-                    urlBuilder_.Append("website/cms/pages");
-                    urlBuilder_.Append('?');
-                    if (includeUnpublished != null)
-                    {
-                        urlBuilder_.Append(System.Uri.EscapeDataString("includeUnpublished")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(includeUnpublished, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    }
-                    urlBuilder_.Length--;
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<System.Collections.Generic.ICollection<PageMetadata>>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Create new CMS page
-        /// </summary>
-        /// <returns>Page created</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<PageContent> CreatePageAsync(PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (body == null)
-                throw new System.ArgumentNullException("body");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                    var content_ = new System.Net.Http.StringContent(json_);
-                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                    request_.Content = content_;
-                    request_.Method = new System.Net.Http.HttpMethod("POST");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/cms/pages"
-                    urlBuilder_.Append("website/cms/pages");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 201)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<PageContent>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update CMS page
-        /// </summary>
-        /// <returns>Page updated</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<PageContent> UpdatePageAsync(string slug, PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (slug == null)
-                throw new System.ArgumentNullException("slug");
-
-            if (body == null)
-                throw new System.ArgumentNullException("body");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                    var content_ = new System.Net.Http.StringContent(json_);
-                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                    request_.Content = content_;
-                    request_.Method = new System.Net.Http.HttpMethod("PUT");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/cms/pages/{slug}"
-                    urlBuilder_.Append("website/cms/pages/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(slug, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<PageContent>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Delete CMS page
-        /// </summary>
-        /// <returns>Page deleted</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task DeletePageAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (slug == null)
-                throw new System.ArgumentNullException("slug");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("DELETE");
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/cms/pages/{slug}"
-                    urlBuilder_.Append("website/cms/pages/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(slug, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 204)
-                        {
-                            return;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get site configuration
-        /// </summary>
-        /// <returns>Site settings retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<SiteSettings> GetSiteSettingsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/cms/site-settings"
-                    urlBuilder_.Append("website/cms/site-settings");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<SiteSettings>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update site configuration
-        /// </summary>
-        /// <returns>Settings updated</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<SiteSettings> UpdateSiteSettingsAsync(SiteSettings body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (body == null)
-                throw new System.ArgumentNullException("body");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                    var content_ = new System.Net.Http.StringContent(json_);
-                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                    request_.Content = content_;
-                    request_.Method = new System.Net.Http.HttpMethod("PUT");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/cms/site-settings"
-                    urlBuilder_.Append("website/cms/site-settings");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<SiteSettings>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get current theme configuration
-        /// </summary>
-        /// <returns>Theme configuration retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<ThemeConfig> GetThemeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/cms/theme"
-                    urlBuilder_.Append("website/cms/theme");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<ThemeConfig>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update theme configuration
-        /// </summary>
-        /// <returns>Theme updated</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task UpdateThemeAsync(ThemeConfig body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (body == null)
-                throw new System.ArgumentNullException("body");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                    var content_ = new System.Net.Http.StringContent(json_);
-                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                    request_.Content = content_;
-                    request_.Method = new System.Net.Http.HttpMethod("PUT");
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/cms/theme"
-                    urlBuilder_.Append("website/cms/theme");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            return;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get subscription status
-        /// </summary>
-        /// <returns>Subscription information retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<SubscriptionResponse> GetSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "website/account/subscription"
-                    urlBuilder_.Append("website/account/subscription");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<SubscriptionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 401)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            throw new ApiException<ErrorResponse>("Unauthorized", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        protected struct ObjectResponseResult<T>
-        {
-            public ObjectResponseResult(T responseObject, string responseText)
-            {
-                this.Object = responseObject;
-                this.Text = responseText;
-            }
-
-            public T Object { get; }
-
-            public string Text { get; }
-        }
-
-        public bool ReadResponseAsString { get; set; }
-
-        protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
-        {
-            if (response == null || response.Content == null)
-            {
-                return new ObjectResponseResult<T>(default(T)!, string.Empty);
-            }
-
-            if (ReadResponseAsString)
-            {
-                var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
                 try
                 {
-                    var typedBody = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseText, JsonSerializerSettings);
-                    return new ObjectResponseResult<T>(typedBody!, responseText);
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<StatusResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
                 }
-                catch (Newtonsoft.Json.JsonException exception)
+                finally
                 {
-                    var message = "Could not deserialize the response body string as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, responseText, headers, exception);
+                    if (disposeResponse_)
+                        response_.Dispose();
                 }
             }
-            else
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get dynamic page content from CMS
+    /// </summary>
+    /// <param name="slug">Page slug identifier</param>
+    /// <returns>Page content retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<PageContent> GetPageContentAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (slug == null)
+            throw new System.ArgumentNullException("slug");
+
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/content/{slug}"
+                urlBuilder_.Append("website/content/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(slug, System.Globalization.CultureInfo.InvariantCulture)));
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
                 try
                 {
-                    using (var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
-                    using (var streamReader = new System.IO.StreamReader(responseStream))
-                    using (var jsonTextReader = new Newtonsoft.Json.JsonTextReader(streamReader))
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
                     {
-                        var serializer = Newtonsoft.Json.JsonSerializer.Create(JsonSerializerSettings);
-                        var typedBody = serializer.Deserialize<T>(jsonTextReader);
-                        return new ObjectResponseResult<T>(typedBody!, string.Empty);
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
                     }
-                }
-                catch (Newtonsoft.Json.JsonException exception)
-                {
-                    var message = "Could not deserialize the response body stream as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
-                }
-            }
-        }
 
-        private string ConvertToString(object? value, System.Globalization.CultureInfo cultureInfo)
-        {
-            if (value == null)
-            {
-                return "";
-            }
+                    ProcessResponse(client_, response_);
 
-            if (value is System.Enum)
-            {
-                var name = System.Enum.GetName(value.GetType(), value);
-                if (name != null)
-                {
-                    var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
-                    if (field != null)
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
                     {
-                        var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
-                            as System.Runtime.Serialization.EnumMemberAttribute;
-                        if (attribute != null)
+                        var objectResponse_ = await ReadObjectResponseAsync<PageContent>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
                         {
-                            return attribute.Value != null ? attribute.Value : name;
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new ApiException<ErrorResponse>("Page not found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get latest news and announcements
+    /// </summary>
+    /// <param name="limit">Number of news items to return</param>
+    /// <param name="offset">Pagination offset</param>
+    /// <returns>News items retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<NewsResponse> GetNewsAsync(int? limit = null, int? offset = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/news"
+                urlBuilder_.Append("website/news");
+                urlBuilder_.Append('?');
+                if (limit != null)
+                {
+                    urlBuilder_.Append(System.Uri.EscapeDataString("limit")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(limit, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                }
+                if (offset != null)
+                {
+                    urlBuilder_.Append(System.Uri.EscapeDataString("offset")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(offset, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                }
+                urlBuilder_.Length--;
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
                     }
 
-                    var converted = System.Convert.ToString(System.Convert.ChangeType(value, System.Enum.GetUnderlyingType(value.GetType()), cultureInfo));
-                    return converted == null ? string.Empty : converted;
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<NewsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
                 }
-            }
-            else if (value is bool)
-            {
-                return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
-            }
-            else if (value is byte[])
-            {
-                return System.Convert.ToBase64String((byte[]) value);
-            }
-            else if (value is string[])
-            {
-                return string.Join(",", (string[])value);
-            }
-            else if (value.GetType().IsArray)
-            {
-                var valueArray = (System.Array)value;
-                var valueTextArray = new string[valueArray.Length];
-                for (var i = 0; i < valueArray.Length; i++)
+                finally
                 {
-                    valueTextArray[i] = ConvertToString(valueArray.GetValue(i), cultureInfo);
+                    if (disposeResponse_)
+                        response_.Dispose();
                 }
-                return string.Join(",", valueTextArray);
             }
-
-            var result = System.Convert.ToString(value, cultureInfo);
-            return result == null ? "" : result;
         }
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class StatusResponse
-    {
-        [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public StatusResponseStatus Status { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Version { get; set; } = default!;
-
-        /// <summary>
-        /// Uptime in seconds
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("uptime", Required = Newtonsoft.Json.Required.Always)]
-        public int Uptime { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("maintenanceMessage", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? MaintenanceMessage { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class PageContent
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get game server status for all realms
+    /// </summary>
+    /// <returns>Server status information</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<ServerStatusResponse> GetServerStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("slug", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
-        public string Slug { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("title", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Title { get; set; } = default!;
-
-        /// <summary>
-        /// HTML, Markdown, or custom template content
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("content", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Content { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("contentType", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public PageContentContentType ContentType { get; set; } = default!;
-
-        /// <summary>
-        /// Template name for custom layouts
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("template", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Template { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("published", Required = Newtonsoft.Json.Required.Always)]
-        public bool Published { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("publishedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset? PublishedAt { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("lastModified", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset LastModified { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("author", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Author { get; set; } = default!;
-
-        /// <summary>
-        /// Custom metadata for the page
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object Metadata { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("seo", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public SEOMetadata Seo { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/server-status"
+                urlBuilder_.Append("website/server-status");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ServerStatusResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class PageMetadata
-    {
-        [Newtonsoft.Json.JsonProperty("slug", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Slug { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("title", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Title { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("published", Required = Newtonsoft.Json.Required.Always)]
-        public bool Published { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("publishedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset? PublishedAt { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("lastModified", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset LastModified { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("author", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Author { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class SEOMetadata
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get download links for game clients
+    /// </summary>
+    /// <param name="platform">Filter by platform</param>
+    /// <returns>Download links retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<DownloadsResponse> GetDownloadsAsync(Platform? platform = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Description { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("keywords", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> Keywords { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("ogTitle", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? OgTitle { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("ogDescription", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? OgDescription { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("ogImage", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Uri? OgImage { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/downloads"
+                urlBuilder_.Append("website/downloads");
+                urlBuilder_.Append('?');
+                if (platform != null)
+                {
+                    urlBuilder_.Append(System.Uri.EscapeDataString("platform")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(platform, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                }
+                urlBuilder_.Length--;
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<DownloadsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class SiteSettings
-    {
-        [Newtonsoft.Json.JsonProperty("siteName", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string SiteName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("siteUrl", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Uri SiteUrl { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("tagline", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Tagline { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("defaultLanguage", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string DefaultLanguage { get; set; } = "en";
-
-        [Newtonsoft.Json.JsonProperty("supportedLanguages", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> SupportedLanguages { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("maintenanceMode", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool MaintenanceMode { get; set; } = false;
-
-        [Newtonsoft.Json.JsonProperty("maintenanceMessage", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? MaintenanceMessage { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("contactEmail", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string ContactEmail { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("socialLinks", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.IDictionary<string, System.Uri> SocialLinks { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("analytics", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public Analytics Analytics { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("customScripts", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CustomScripts CustomScripts { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ThemeConfig
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Submit contact form
+    /// </summary>
+    /// <returns>Contact form submitted</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<ContactResponse> SubmitContactAsync(ContactRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("themeName", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string ThemeName { get; set; } = default!;
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
-        [Newtonsoft.Json.JsonProperty("primaryColor", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
-        public string PrimaryColor { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("secondaryColor", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
-        public string SecondaryColor { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("backgroundColor", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
-        public string BackgroundColor { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("textColor", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
-        public string TextColor { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("fontFamily", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string FontFamily { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("customCSS", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? CustomCSS { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("logo", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public Logo Logo { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("favicon", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Uri? Favicon { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("navigation", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<NavigationItem> Navigation { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/contact"
+                urlBuilder_.Append("website/contact");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ContactResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new ApiException<ErrorResponse>("Invalid form data", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    if (status_ == 429)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new ApiException<ErrorResponse>("Too many requests", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class NavigationItem
-    {
-        [Newtonsoft.Json.JsonProperty("label", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Label { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("url", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Url { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("order", Required = Newtonsoft.Json.Required.Always)]
-        public int Order { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("target", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public NavigationItemTarget Target { get; set; } = BeyondImmersion.BannouService.Website.Client.NavigationItemTarget._self;
-
-        [Newtonsoft.Json.JsonProperty("children", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<NavigationItem> Children { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class NewsResponse
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get account profile for logged-in user
+    /// </summary>
+    /// <returns>Account profile retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<AccountProfile> GetAccountProfileAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("items", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<NewsItem> Items { get; set; } = new System.Collections.ObjectModel.Collection<NewsItem>();
-
-        [Newtonsoft.Json.JsonProperty("total", Required = Newtonsoft.Json.Required.Always)]
-        public int Total { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("hasMore", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool HasMore { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/account/profile"
+                urlBuilder_.Append("website/account/profile");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<AccountProfile>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 401)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new ApiException<ErrorResponse>("Unauthorized", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class NewsItem
-    {
-        [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid Id { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("title", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Title { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("summary", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Summary { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("content", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Content { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("author", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Author { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("publishedAt", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.DateTimeOffset PublishedAt { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("tags", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("imageUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Uri? ImageUrl { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ServerStatusResponse
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get character list for logged-in user
+    /// </summary>
+    /// <returns>Character list retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<CharacterListResponse> GetAccountCharactersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("globalStatus", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public ServerStatusResponseGlobalStatus GlobalStatus { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("realms", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<RealmStatus> Realms { get; set; } = new System.Collections.ObjectModel.Collection<RealmStatus>();
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/account/characters"
+                urlBuilder_.Append("website/account/characters");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<CharacterListResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 401)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new ApiException<ErrorResponse>("Unauthorized", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class RealmStatus
-    {
-        [Newtonsoft.Json.JsonProperty("realmId", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string RealmId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Name { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public RealmStatusStatus Status { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("population", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public RealmStatusPopulation Population { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("playerCount", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int? PlayerCount { get; set; } = default!;
-
-        /// <summary>
-        /// Latency in milliseconds
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("ping", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int? Ping { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class DownloadsResponse
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// List all CMS pages
+    /// </summary>
+    /// <returns>Page list retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<PageMetadata>> ListPagesAsync(bool? includeUnpublished = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("clients", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<DownloadInfo> Clients { get; set; } = new System.Collections.ObjectModel.Collection<DownloadInfo>();
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/cms/pages"
+                urlBuilder_.Append("website/cms/pages");
+                urlBuilder_.Append('?');
+                if (includeUnpublished != null)
+                {
+                    urlBuilder_.Append(System.Uri.EscapeDataString("includeUnpublished")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(includeUnpublished, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                }
+                urlBuilder_.Length--;
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<System.Collections.Generic.ICollection<PageMetadata>>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class DownloadInfo
-    {
-        [Newtonsoft.Json.JsonProperty("platform", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public DownloadInfoPlatform Platform { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Version { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("url", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Uri Url { get; set; } = default!;
-
-        /// <summary>
-        /// File size in bytes
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("size", Required = Newtonsoft.Json.Required.Always)]
-        public int Size { get; set; } = default!;
-
-        /// <summary>
-        /// SHA256 checksum
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("checksum", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Checksum { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("releaseNotes", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? ReleaseNotes { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("minimumRequirements", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object MinimumRequirements { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ContactRequest
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Create new CMS page
+    /// </summary>
+    /// <returns>Page created</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<PageContent> CreatePageAsync(PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Email { get; set; } = default!;
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
-        [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Name { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("subject", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 5)]
-        public string Subject { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        [System.ComponentModel.DataAnnotations.StringLength(2000, MinimumLength = 10)]
-        public string Message { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("category", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public ContactRequestCategory Category { get; set; } = BeyondImmersion.BannouService.Website.Client.ContactRequestCategory.General;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/cms/pages"
+                urlBuilder_.Append("website/cms/pages");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 201)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<PageContent>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ContactResponse
-    {
-        [Newtonsoft.Json.JsonProperty("ticketId", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid TicketId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Message { get; set; } = "Thank you for contacting us. We will respond within 24-48 hours.";
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AccountProfile
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update CMS page
+    /// </summary>
+    /// <returns>Page updated</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<PageContent> UpdatePageAsync(string slug, PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid AccountId { get; set; } = default!;
+        if (slug == null)
+            throw new System.ArgumentNullException("slug");
 
-        [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Email { get; set; } = default!;
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? DisplayName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("lastLogin", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset? LastLogin { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("characterSlots", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int CharacterSlots { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("usedSlots", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int UsedSlots { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("PUT");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/cms/pages/{slug}"
+                urlBuilder_.Append("website/cms/pages/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(slug, System.Globalization.CultureInfo.InvariantCulture)));
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<PageContent>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CharacterListResponse
-    {
-        [Newtonsoft.Json.JsonProperty("characters", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<CharacterSummary> Characters { get; set; } = new System.Collections.ObjectModel.Collection<CharacterSummary>();
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CharacterSummary
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Delete CMS page
+    /// </summary>
+    /// <returns>Page deleted</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task DeletePageAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("characterId", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid CharacterId { get; set; } = default!;
+        if (slug == null)
+            throw new System.ArgumentNullException("slug");
 
-        [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Name { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("realm", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Realm { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("level", Required = Newtonsoft.Json.Required.Always)]
-        public int Level { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("class", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Class { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("lastPlayed", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset? LastPlayed { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("DELETE");
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/cms/pages/{slug}"
+                urlBuilder_.Append("website/cms/pages/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(slug, System.Globalization.CultureInfo.InvariantCulture)));
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 204)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class SubscriptionResponse
-    {
-        [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public SubscriptionResponseStatus Status { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("type", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public SubscriptionResponseType Type { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("expiresAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("autoRenew", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool AutoRenew { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("benefits", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> Benefits { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ErrorResponse
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get site configuration
+    /// </summary>
+    /// <returns>Site settings retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<SiteSettings> GetSiteSettingsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Error { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Message { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("details", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object? Details { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/cms/site-settings"
+                urlBuilder_.Append("website/cms/site-settings");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<SiteSettings>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum Platform
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"windows")]
-        Windows = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"macos")]
-        Macos = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"linux")]
-        Linux = 2,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum StatusResponseStatus
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
-        Healthy = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
-        Degraded = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
-        Maintenance = 2,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum PageContentContentType
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"html")]
-        Html = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"markdown")]
-        Markdown = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"blazor")]
-        Blazor = 2,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class Analytics
-    {
-        [Newtonsoft.Json.JsonProperty("googleAnalyticsId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? GoogleAnalyticsId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("otherTrackers", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object OtherTrackers { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CustomScripts
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update site configuration
+    /// </summary>
+    /// <returns>Settings updated</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<SiteSettings> UpdateSiteSettingsAsync(SiteSettings body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("head", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Head { get; set; } = default!;
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
-        [Newtonsoft.Json.JsonProperty("bodyStart", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? BodyStart { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("bodyEnd", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? BodyEnd { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("PUT");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/cms/site-settings"
+                urlBuilder_.Append("website/cms/site-settings");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<SiteSettings>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class Logo
-    {
-        [Newtonsoft.Json.JsonProperty("url", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Uri Url { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("alt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Alt { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum NavigationItemTarget
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get current theme configuration
+    /// </summary>
+    /// <returns>Theme configuration retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<ThemeConfig> GetThemeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"_self")]
-        _self = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"_blank")]
-        _blank = 1,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum ServerStatusResponseGlobalStatus
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"online")]
-        Online = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"partial")]
-        Partial = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"offline")]
-        Offline = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
-        Maintenance = 3,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum RealmStatusStatus
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"online")]
-        Online = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"offline")]
-        Offline = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
-        Maintenance = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"full")]
-        Full = 3,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum RealmStatusPopulation
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"low")]
-        Low = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"medium")]
-        Medium = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"high")]
-        High = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"full")]
-        Full = 3,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum DownloadInfoPlatform
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"windows")]
-        Windows = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"macos")]
-        Macos = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"linux")]
-        Linux = 2,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum ContactRequestCategory
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"general")]
-        General = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"support")]
-        Support = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"bug")]
-        Bug = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"feedback")]
-        Feedback = 3,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"business")]
-        Business = 4,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum SubscriptionResponseStatus
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"active")]
-        Active = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"inactive")]
-        Inactive = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"trial")]
-        Trial = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"expired")]
-        Expired = 3,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum SubscriptionResponseType
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"free")]
-        Free = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"basic")]
-        Basic = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"premium")]
-        Premium = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"lifetime")]
-        Lifetime = 3,
-
-    }
-
-
-
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ApiException : System.Exception
-    {
-        public int StatusCode { get; private set; }
-
-        public string? Response { get; private set; }
-
-        public System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> Headers { get; private set; }
-
-        public ApiException(string message, int statusCode, string? response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Exception? innerException)
-            : base(message + "\n\nStatus: " + statusCode + "\nResponse: \n" + ((response == null) ? "(null)" : response.Substring(0, response.Length >= 512 ? 512 : response.Length)), innerException)
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            StatusCode = statusCode;
-            Response = response;
-            Headers = headers;
-        }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
-        public override string ToString()
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/cms/theme"
+                urlBuilder_.Append("website/cms/theme");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ThemeConfig>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
         {
-            return string.Format("HTTP Response: \n\n{0}\n\n{1}", Response, base.ToString());
+            if (disposeClient_)
+                client_.Dispose();
         }
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ApiException<TResult> : ApiException
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update theme configuration
+    /// </summary>
+    /// <returns>Theme updated</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task UpdateThemeAsync(ThemeConfig body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        public TResult Result { get; private set; }
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
-        public ApiException(string message, int statusCode, string? response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, TResult result, System.Exception? innerException)
-            : base(message, statusCode, response, headers, innerException)
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            Result = result;
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("PUT");
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/cms/theme"
+                urlBuilder_.Append("website/cms/theme");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
         }
     }
 
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get subscription status
+    /// </summary>
+    /// <returns>Subscription information retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<SubscriptionResponse> GetSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "website/account/subscription"
+                urlBuilder_.Append("website/account/subscription");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<SubscriptionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 401)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new ApiException<ErrorResponse>("Unauthorized", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    protected struct ObjectResponseResult<T>
+    {
+        public ObjectResponseResult(T responseObject, string responseText)
+        {
+            this.Object = responseObject;
+            this.Text = responseText;
+        }
+
+        public T Object { get; }
+
+        public string Text { get; }
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    private static System.Threading.Tasks.Task<string> ReadAsStringAsync(System.Net.Http.HttpContent content, System.Threading.CancellationToken cancellationToken)
+    {
+#if NET5_0_OR_GREATER
+        return content.ReadAsStringAsync(cancellationToken);
+#else
+        return content.ReadAsStringAsync();
+#endif
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    private static System.Threading.Tasks.Task<System.IO.Stream> ReadAsStreamAsync(System.Net.Http.HttpContent content, System.Threading.CancellationToken cancellationToken)
+    {
+#if NET5_0_OR_GREATER
+        return content.ReadAsStreamAsync(cancellationToken);
+#else
+        return content.ReadAsStreamAsync();
+#endif
+    }
+
+    public bool ReadResponseAsString { get; set; }
+
+    protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
+    {
+        if (response == null || response.Content == null)
+        {
+            return new ObjectResponseResult<T>(default(T)!, string.Empty);
+        }
+
+        if (ReadResponseAsString)
+        {
+            var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            try
+            {
+                var typedBody = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseText, JsonSerializerSettings);
+                return new ObjectResponseResult<T>(typedBody!, responseText);
+            }
+            catch (Newtonsoft.Json.JsonException exception)
+            {
+                var message = "Could not deserialize the response body string as " + typeof(T).FullName + ".";
+                throw new ApiException(message, (int)response.StatusCode, responseText, headers, exception);
+            }
+        }
+        else
+        {
+            try
+            {
+                using (var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                using (var streamReader = new System.IO.StreamReader(responseStream))
+                using (var jsonTextReader = new Newtonsoft.Json.JsonTextReader(streamReader))
+                {
+                    var serializer = Newtonsoft.Json.JsonSerializer.Create(JsonSerializerSettings);
+                    var typedBody = serializer.Deserialize<T>(jsonTextReader);
+                    return new ObjectResponseResult<T>(typedBody!, string.Empty);
+                }
+            }
+            catch (Newtonsoft.Json.JsonException exception)
+            {
+                var message = "Could not deserialize the response body stream as " + typeof(T).FullName + ".";
+                throw new ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
+            }
+        }
+    }
+
+    private string ConvertToString(object? value, System.Globalization.CultureInfo cultureInfo)
+    {
+        if (value == null)
+        {
+            return "";
+        }
+
+        if (value is System.Enum)
+        {
+            var name = System.Enum.GetName(value.GetType(), value);
+            if (name != null)
+            {
+                var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
+                if (field != null)
+                {
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                        as System.Runtime.Serialization.EnumMemberAttribute;
+                    if (attribute != null)
+                    {
+                        return attribute.Value != null ? attribute.Value : name;
+                    }
+                }
+
+                var converted = System.Convert.ToString(System.Convert.ChangeType(value, System.Enum.GetUnderlyingType(value.GetType()), cultureInfo));
+                return converted == null ? string.Empty : converted;
+            }
+        }
+        else if (value is bool)
+        {
+            return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
+        }
+        else if (value is byte[])
+        {
+            return System.Convert.ToBase64String((byte[]) value);
+        }
+        else if (value is string[])
+        {
+            return string.Join(",", (string[])value);
+        }
+        else if (value.GetType().IsArray)
+        {
+            var valueArray = (System.Array)value;
+            var valueTextArray = new string[valueArray.Length];
+            for (var i = 0; i < valueArray.Length; i++)
+            {
+                valueTextArray[i] = ConvertToString(valueArray.GetValue(i), cultureInfo);
+            }
+            return string.Join(",", valueTextArray);
+        }
+
+        var result = System.Convert.ToString(value, cultureInfo);
+        return result == null ? "" : result;
+    }
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class StatusResponse
+{
+    [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public StatusResponseStatus Status { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Version { get; set; } = default!;
+
+    /// <summary>
+    /// Uptime in seconds
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("uptime", Required = Newtonsoft.Json.Required.Always)]
+    public int Uptime { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("maintenanceMessage", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? MaintenanceMessage { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PageContent
+{
+    [Newtonsoft.Json.JsonProperty("slug", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
+    public string Slug { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("title", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Title { get; set; } = default!;
+
+    /// <summary>
+    /// HTML, Markdown, or custom template content
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("content", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Content { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("contentType", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public PageContentContentType ContentType { get; set; } = default!;
+
+    /// <summary>
+    /// Template name for custom layouts
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("template", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Template { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("published", Required = Newtonsoft.Json.Required.Always)]
+    public bool Published { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("publishedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset? PublishedAt { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("lastModified", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset LastModified { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("author", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Author { get; set; } = default!;
+
+    /// <summary>
+    /// Custom metadata for the page
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object Metadata { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("seo", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public SEOMetadata Seo { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PageMetadata
+{
+    [Newtonsoft.Json.JsonProperty("slug", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Slug { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("title", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Title { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("published", Required = Newtonsoft.Json.Required.Always)]
+    public bool Published { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("publishedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset? PublishedAt { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("lastModified", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset LastModified { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("author", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Author { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SEOMetadata
+{
+    [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Description { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("keywords", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> Keywords { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("ogTitle", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? OgTitle { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("ogDescription", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? OgDescription { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("ogImage", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Uri? OgImage { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SiteSettings
+{
+    [Newtonsoft.Json.JsonProperty("siteName", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string SiteName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("siteUrl", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Uri SiteUrl { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("tagline", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Tagline { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("defaultLanguage", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string DefaultLanguage { get; set; } = "en";
+
+    [Newtonsoft.Json.JsonProperty("supportedLanguages", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> SupportedLanguages { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("maintenanceMode", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool MaintenanceMode { get; set; } = false;
+
+    [Newtonsoft.Json.JsonProperty("maintenanceMessage", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? MaintenanceMessage { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("contactEmail", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string ContactEmail { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("socialLinks", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.IDictionary<string, System.Uri> SocialLinks { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("analytics", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public Analytics Analytics { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("customScripts", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public CustomScripts CustomScripts { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ThemeConfig
+{
+    [Newtonsoft.Json.JsonProperty("themeName", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ThemeName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("primaryColor", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
+    public string PrimaryColor { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("secondaryColor", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
+    public string SecondaryColor { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("backgroundColor", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
+    public string BackgroundColor { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("textColor", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
+    public string TextColor { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("fontFamily", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string FontFamily { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("customCSS", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? CustomCSS { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("logo", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public Logo Logo { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("favicon", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Uri? Favicon { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("navigation", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<NavigationItem> Navigation { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class NavigationItem
+{
+    [Newtonsoft.Json.JsonProperty("label", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Label { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("url", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Url { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("order", Required = Newtonsoft.Json.Required.Always)]
+    public int Order { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("target", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public NavigationItemTarget Target { get; set; } = BeyondImmersion.BannouService.Website.Client.NavigationItemTarget._self;
+
+    [Newtonsoft.Json.JsonProperty("children", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<NavigationItem> Children { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class NewsResponse
+{
+    [Newtonsoft.Json.JsonProperty("items", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<NewsItem> Items { get; set; } = new System.Collections.ObjectModel.Collection<NewsItem>();
+
+    [Newtonsoft.Json.JsonProperty("total", Required = Newtonsoft.Json.Required.Always)]
+    public int Total { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("hasMore", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool HasMore { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class NewsItem
+{
+    [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid Id { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("title", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Title { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("summary", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Summary { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("content", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Content { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("author", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Author { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("publishedAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset PublishedAt { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("tags", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("imageUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Uri? ImageUrl { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServerStatusResponse
+{
+    [Newtonsoft.Json.JsonProperty("globalStatus", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public ServerStatusResponseGlobalStatus GlobalStatus { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("realms", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<RealmStatus> Realms { get; set; } = new System.Collections.ObjectModel.Collection<RealmStatus>();
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RealmStatus
+{
+    [Newtonsoft.Json.JsonProperty("realmId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string RealmId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Name { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public RealmStatusStatus Status { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("population", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public RealmStatusPopulation Population { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("playerCount", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int? PlayerCount { get; set; } = default!;
+
+    /// <summary>
+    /// Latency in milliseconds
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("ping", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int? Ping { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DownloadsResponse
+{
+    [Newtonsoft.Json.JsonProperty("clients", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<DownloadInfo> Clients { get; set; } = new System.Collections.ObjectModel.Collection<DownloadInfo>();
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DownloadInfo
+{
+    [Newtonsoft.Json.JsonProperty("platform", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public DownloadInfoPlatform Platform { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Version { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("url", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Uri Url { get; set; } = default!;
+
+    /// <summary>
+    /// File size in bytes
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("size", Required = Newtonsoft.Json.Required.Always)]
+    public int Size { get; set; } = default!;
+
+    /// <summary>
+    /// SHA256 checksum
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("checksum", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Checksum { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("releaseNotes", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? ReleaseNotes { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("minimumRequirements", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object MinimumRequirements { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ContactRequest
+{
+    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Email { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Name { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("subject", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 5)]
+    public string Subject { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.StringLength(2000, MinimumLength = 10)]
+    public string Message { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("category", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public ContactRequestCategory Category { get; set; } = BeyondImmersion.BannouService.Website.Client.ContactRequestCategory.General;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ContactResponse
+{
+    [Newtonsoft.Json.JsonProperty("ticketId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid TicketId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Message { get; set; } = "Thank you for contacting us. We will respond within 24-48 hours.";
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AccountProfile
+{
+    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid AccountId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Email { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("lastLogin", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset? LastLogin { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("characterSlots", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int CharacterSlots { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("usedSlots", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int UsedSlots { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterListResponse
+{
+    [Newtonsoft.Json.JsonProperty("characters", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<CharacterSummary> Characters { get; set; } = new System.Collections.ObjectModel.Collection<CharacterSummary>();
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterSummary
+{
+    [Newtonsoft.Json.JsonProperty("characterId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Name { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("realm", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Realm { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("level", Required = Newtonsoft.Json.Required.Always)]
+    public int Level { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("class", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Class { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("lastPlayed", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset? LastPlayed { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SubscriptionResponse
+{
+    [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public SubscriptionResponseStatus Status { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("type", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public SubscriptionResponseType Type { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("expiresAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("autoRenew", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool AutoRenew { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("benefits", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> Benefits { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ErrorResponse
+{
+    [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Error { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Message { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("details", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object? Details { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum Platform
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"windows")]
+    Windows = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"macos")]
+    Macos = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"linux")]
+    Linux = 2,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum StatusResponseStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
+    Healthy = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
+    Degraded = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
+    Maintenance = 2,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum PageContentContentType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"html")]
+    Html = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"markdown")]
+    Markdown = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"blazor")]
+    Blazor = 2,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Analytics
+{
+    [Newtonsoft.Json.JsonProperty("googleAnalyticsId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? GoogleAnalyticsId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("otherTrackers", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object OtherTrackers { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CustomScripts
+{
+    [Newtonsoft.Json.JsonProperty("head", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Head { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("bodyStart", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? BodyStart { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("bodyEnd", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? BodyEnd { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Logo
+{
+    [Newtonsoft.Json.JsonProperty("url", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Uri Url { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("alt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Alt { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum NavigationItemTarget
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"_self")]
+    _self = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"_blank")]
+    _blank = 1,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ServerStatusResponseGlobalStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"online")]
+    Online = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"partial")]
+    Partial = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"offline")]
+    Offline = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
+    Maintenance = 3,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum RealmStatusStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"online")]
+    Online = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"offline")]
+    Offline = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
+    Maintenance = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"full")]
+    Full = 3,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum RealmStatusPopulation
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"low")]
+    Low = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"medium")]
+    Medium = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"high")]
+    High = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"full")]
+    Full = 3,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DownloadInfoPlatform
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"windows")]
+    Windows = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"macos")]
+    Macos = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"linux")]
+    Linux = 2,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ContactRequestCategory
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"general")]
+    General = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"support")]
+    Support = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"bug")]
+    Bug = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"feedback")]
+    Feedback = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"business")]
+    Business = 4,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SubscriptionResponseStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    Active = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"inactive")]
+    Inactive = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"trial")]
+    Trial = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
+    Expired = 3,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SubscriptionResponseType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"free")]
+    Free = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"basic")]
+    Basic = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"premium")]
+    Premium = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"lifetime")]
+    Lifetime = 3,
+
+}
+
+
+
+[System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ApiException : System.Exception
+{
+    public int StatusCode { get; private set; }
+
+    public string? Response { get; private set; }
+
+    public System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> Headers { get; private set; }
+
+    public ApiException(string message, int statusCode, string? response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Exception? innerException)
+        : base(message + "\n\nStatus: " + statusCode + "\nResponse: \n" + ((response == null) ? "(null)" : response.Substring(0, response.Length >= 512 ? 512 : response.Length)), innerException)
+    {
+        StatusCode = statusCode;
+        Response = response;
+        Headers = headers;
+    }
+
+    public override string ToString()
+    {
+        return string.Format("HTTP Response: \n\n{0}\n\n{1}", Response, base.ToString());
+    }
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ApiException<TResult> : ApiException
+{
+    public TResult Result { get; private set; }
+
+    public ApiException(string message, int statusCode, string? response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, TResult result, System.Exception? innerException)
+        : base(message, statusCode, response, headers, innerException)
+    {
+        Result = result;
+    }
 }
 
 #pragma warning restore  108

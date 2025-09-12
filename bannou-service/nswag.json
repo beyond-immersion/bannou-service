@@ -43,7 +43,7 @@
       "generateDtoTypes": true,
       "generateOptionalPropertiesAsNullable": false,
       "generateNullableReferenceTypes": true,
-      "templateDirectory": null,
+      "templateDirectory": "../templates/nswag",
       "typeNameGeneratorType": null,
       "propertyNameGeneratorType": null,
       "enumNameGeneratorType": null,

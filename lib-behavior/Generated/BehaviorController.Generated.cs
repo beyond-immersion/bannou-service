@@ -20,836 +20,834 @@
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Behavior
+namespace BeyondImmersion.BannouService.Behavior;
+
+using System = global::System;
+
+[System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+[Microsoft.AspNetCore.Mvc.Route("api/behavior")]
+
+public abstract class BehaviorControllerBaseControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
 {
-    using System = global::System;
-
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    [Microsoft.AspNetCore.Mvc.Route("api/behavior")]
-
-    public abstract class BehaviorControllerBaseControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
-    {
-        /// <summary>
-        /// Compile ABML behavior definition
-        /// </summary>
-        /// <remarks>
-        /// Compiles a YAML-based ABML behavior definition into executable behavior trees.
-        /// <br/>Handles stackable behavior sets, cultural adaptations, and context variable resolution.
-        /// </remarks>
-        /// <returns>ABML behavior compiled successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("compile")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileAbmlBehavior([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Compile stackable behavior sets
-        /// </summary>
-        /// <remarks>
-        /// Compiles multiple ABML behavior sets with priority-based merging.
-        /// <br/>Handles cultural adaptations, profession specializations, and context resolution.
-        /// </remarks>
-        /// <returns>Behavior stack compiled successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("stack/compile")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileBehaviorStack([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BehaviorStackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Validate ABML definition
-        /// </summary>
-        /// <remarks>
-        /// Validates ABML YAML against schema and checks for semantic correctness.
-        /// <br/>Includes context variable validation and service dependency checking.
-        /// </remarks>
-        /// <returns>Validation completed</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("validate")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateAbmlResponse>> ValidateAbml([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Get cached compiled behavior
-        /// </summary>
-        /// <remarks>
-        /// Retrieves a previously compiled behavior from the cache.
-        /// <br/>Used for performance optimization in high-frequency behavior execution.
-        /// </remarks>
-        /// <param name="behavior_id">Unique identifier for the cached behavior</param>
-        /// <returns>Cached behavior retrieved successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("cache/{behavior_id}")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CachedBehaviorResponse>> GetCachedBehavior([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Invalidate cached behavior
-        /// </summary>
-        /// <remarks>
-        /// Removes a behavior from the cache, forcing recompilation on next access.
-        /// <br/>Used when behavior definitions are updated.
-        /// </remarks>
-        /// <param name="behavior_id">Unique identifier for the cached behavior</param>
-        /// <returns>Cache invalidated successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("cache/{behavior_id}")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InvalidateCachedBehavior([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Resolve context variables
-        /// </summary>
-        /// <remarks>
-        /// Resolves context variables in ABML definitions against character and world state.
-        /// <br/>Used for dynamic behavior adaptation based on current game state.
-        /// </remarks>
-        /// <returns>Context variables resolved successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("context/resolve")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ResolveContextResponse>> ResolveContextVariables([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ResolveContextRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CompileBehaviorRequest
-    {
-        /// <summary>
-        /// Raw ABML YAML content to compile
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("abml_content", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Abml_content { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("character_context", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CharacterContext Character_context { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("compilation_options", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CompilationOptions Compilation_options { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class BehaviorStackRequest
-    {
-        /// <summary>
-        /// Array of behavior sets to compile together
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("behavior_sets", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.List<BehaviorSetDefinition> Behavior_sets { get; set; } = new System.Collections.Generic.List<BehaviorSetDefinition>();
-
-        [Newtonsoft.Json.JsonProperty("character_context", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CharacterContext Character_context { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("compilation_options", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CompilationOptions Compilation_options { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ValidateAbmlRequest
-    {
-        /// <summary>
-        /// Raw ABML YAML content to validate
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("abml_content", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Abml_content { get; set; } = default!;
-
-        /// <summary>
-        /// Enable strict validation mode with enhanced checking
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("strict_mode", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool Strict_mode { get; set; } = false;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ResolveContextRequest
-    {
-        /// <summary>
-        /// Context variable expression to resolve
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("context_expression", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Context_expression { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("character_context", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public CharacterContext Character_context { get; set; } = new CharacterContext();
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CompileBehaviorResponse
-    {
-        /// <summary>
-        /// Whether compilation was successful
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
-        public bool Success { get; set; } = default!;
-
-        /// <summary>
-        /// Unique identifier for the compiled behavior
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("behavior_id", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Behavior_id { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("compiled_behavior", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public CompiledBehavior Compiled_behavior { get; set; } = default!;
-
-        /// <summary>
-        /// Time taken to compile the behavior
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("compilation_time_ms", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int Compilation_time_ms { get; set; } = default!;
-
-        /// <summary>
-        /// Key for caching the compiled behavior
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("cache_key", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Cache_key { get; set; } = default!;
-
-        /// <summary>
-        /// Non-fatal warnings during compilation
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("warnings", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.List<string> Warnings { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ValidateAbmlResponse
-    {
-        /// <summary>
-        /// Whether the ABML definition is valid
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("is_valid", Required = Newtonsoft.Json.Required.Always)]
-        public bool Is_valid { get; set; } = default!;
-
-        /// <summary>
-        /// List of validation errors if invalid
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("validation_errors", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.List<ValidationError> Validation_errors { get; set; } = default!;
-
-        /// <summary>
-        /// Semantic warnings that don't prevent compilation
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("semantic_warnings", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.List<string> Semantic_warnings { get; set; } = default!;
-
-        /// <summary>
-        /// ABML schema version used for validation
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("schema_version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Schema_version { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CachedBehaviorResponse
-    {
-        /// <summary>
-        /// Unique identifier for the cached behavior
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("behavior_id", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Behavior_id { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("compiled_behavior", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public CompiledBehavior Compiled_behavior { get; set; } = new CompiledBehavior();
-
-        /// <summary>
-        /// When the behavior was cached
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("cache_timestamp", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset Cache_timestamp { get; set; } = default!;
-
-        /// <summary>
-        /// Whether this was a cache hit or miss
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("cache_hit", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool Cache_hit { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ResolveContextResponse
-    {
-        /// <summary>
-        /// The resolved value of the context expression
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("resolved_value", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public object Resolved_value { get; set; } = default!;
-
-        /// <summary>
-        /// Type of the resolved value
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("resolved_type", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public ResolveContextResponseResolved_type Resolved_type { get; set; } = default!;
-
-        /// <summary>
-        /// List of context variables referenced in the expression
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("context_variables_used", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.List<string> Context_variables_used { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class BehaviorSetDefinition
-    {
-        /// <summary>
-        /// Unique identifier for the behavior set
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Id { get; set; } = default!;
-
-        /// <summary>
-        /// Priority level for merging (higher priority overrides lower)
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("priority", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Range(1, 100)]
-        public int Priority { get; set; } = default!;
-
-        /// <summary>
-        /// Category of the behavior set
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("category", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public BehaviorSetDefinitionCategory Category { get; set; } = default!;
-
-        /// <summary>
-        /// Raw ABML YAML content for this behavior set
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("abml_content", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Abml_content { get; set; } = default!;
-
-        /// <summary>
-        /// Additional metadata for the behavior set
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object Metadata { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CharacterContext
-    {
-        /// <summary>
-        /// Unique identifier for the NPC
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("npc_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Npc_id { get; set; } = default!;
-
-        /// <summary>
-        /// Cultural background identifier
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("culture", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Culture { get; set; } = default!;
-
-        /// <summary>
-        /// Character profession identifier
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("profession", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Profession { get; set; } = default!;
-
-        /// <summary>
-        /// Character statistics and attributes
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("stats", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.IDictionary<string, double> Stats { get; set; } = default!;
-
-        /// <summary>
-        /// Character skill levels
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("skills", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.IDictionary<string, double> Skills { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("location", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public Location Location { get; set; } = default!;
-
-        /// <summary>
-        /// Relationship values with other characters
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("relationships", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.IDictionary<string, double> Relationships { get; set; } = default!;
-
-        /// <summary>
-        /// Relevant world state information
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("world_state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object World_state { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CompiledBehavior
-    {
-        /// <summary>
-        /// Compiled executable behavior tree structure
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("behavior_tree", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public object Behavior_tree { get; set; } = new object();
-
-        /// <summary>
-        /// Schema defining required context variables
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("context_schema", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public object Context_schema { get; set; } = new object();
-
-        /// <summary>
-        /// List of required services for this behavior
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("service_dependencies", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.List<string> Service_dependencies { get; set; } = default!;
-
-        /// <summary>
-        /// GOAP goals extracted from the behavior
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("goap_goals", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.List<GoapGoal> Goap_goals { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("execution_metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public Execution_metadata Execution_metadata { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class GoapGoal
-    {
-        /// <summary>
-        /// Name of the goal
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Name { get; set; } = default!;
-
-        /// <summary>
-        /// Human-readable description of the goal
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Description { get; set; } = default!;
-
-        /// <summary>
-        /// World state conditions that satisfy this goal
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("conditions", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.IDictionary<string, double> Conditions { get; set; } = new System.Collections.Generic.Dictionary<string, double>();
-
-        /// <summary>
-        /// Priority of this goal relative to others
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("priority", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Range(1, 100)]
-        public int Priority { get; set; } = default!;
-
-        /// <summary>
-        /// World state conditions required to pursue this goal
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("preconditions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.IDictionary<string, double> Preconditions { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CompilationOptions
-    {
-        /// <summary>
-        /// Enable behavior tree optimizations
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("enable_optimizations", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool Enable_optimizations { get; set; } = true;
-
-        /// <summary>
-        /// Cache the compiled behavior for reuse
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("cache_compiled_result", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool Cache_compiled_result { get; set; } = true;
-
-        /// <summary>
-        /// Enable strict validation mode
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("strict_validation", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool Strict_validation { get; set; } = false;
-
-        /// <summary>
-        /// Apply cultural adaptations during compilation
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("cultural_adaptations", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool Cultural_adaptations { get; set; } = true;
-
-        /// <summary>
-        /// Generate GOAP goals from behaviors
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("goap_integration", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool Goap_integration { get; set; } = true;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ValidationError
-    {
-        /// <summary>
-        /// Type of validation error
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("type", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public ValidationErrorType Type { get; set; } = default!;
-
-        /// <summary>
-        /// Human-readable error message
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Message { get; set; } = default!;
-
-        /// <summary>
-        /// Line number where the error occurred (if applicable)
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("line_number", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int Line_number { get; set; } = default!;
-
-        /// <summary>
-        /// Column number where the error occurred (if applicable)
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("column_number", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int Column_number { get; set; } = default!;
-
-        /// <summary>
-        /// YAML path to the problematic element
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("yaml_path", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Yaml_path { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AbmlErrorResponse
-    {
-        /// <summary>
-        /// Error message
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Error { get; set; } = default!;
-
-        /// <summary>
-        /// Specific error code for programmatic handling
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("error_code", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Error_code { get; set; } = default!;
-
-        /// <summary>
-        /// Detailed error information
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("details", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.List<string> Details { get; set; } = default!;
-
-        /// <summary>
-        /// Validation errors encountered
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("validation_errors", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.List<ValidationError> Validation_errors { get; set; } = default!;
-
-        /// <summary>
-        /// Line number in YAML where error occurred
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("yaml_line", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int Yaml_line { get; set; } = default!;
-
-        /// <summary>
-        /// Additional context about the error
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("context", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object Context { get; set; } = default!;
-
-        /// <summary>
-        /// When the error occurred
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-        /// <summary>
-        /// Unique identifier for the failed request
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("request_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Request_id { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum ResolveContextResponseResolved_type
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"boolean")]
-        Boolean = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"string")]
-        String = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"number")]
-        Number = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"object")]
-        Object = 3,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"array")]
-        Array = 4,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum BehaviorSetDefinitionCategory
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"base")]
-        Base = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"cultural")]
-        Cultural = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"professional")]
-        Professional = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"personal")]
-        Personal = 3,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"situational")]
-        Situational = 4,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class Location
-    {
-        [Newtonsoft.Json.JsonProperty("current", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Current { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("region", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Region { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("coordinates", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public Coordinates Coordinates { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class Execution_metadata
-    {
-        /// <summary>
-        /// Estimated execution time in seconds
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("estimated_duration", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int Estimated_duration { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("resource_requirements", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.IDictionary<string, double> Resource_requirements { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("interrupt_conditions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.List<string> Interrupt_conditions { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum ValidationErrorType
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"syntax")]
-        Syntax = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"semantic")]
-        Semantic = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"schema")]
-        Schema = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"context")]
-        Context = 3,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"service_dependency")]
-        Service_dependency = 4,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class Coordinates
-    {
-        [Newtonsoft.Json.JsonProperty("x", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double X { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("y", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double Y { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("z", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double Z { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
+    /// <summary>
+    /// Compile ABML behavior definition
+    /// </summary>
+    /// <remarks>
+    /// Compiles a YAML-based ABML behavior definition into executable behavior trees.
+    /// <br/>Handles stackable behavior sets, cultural adaptations, and context variable resolution.
+    /// </remarks>
+    /// <returns>ABML behavior compiled successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("compile")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileAbmlBehavior([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Compile stackable behavior sets
+    /// </summary>
+    /// <remarks>
+    /// Compiles multiple ABML behavior sets with priority-based merging.
+    /// <br/>Handles cultural adaptations, profession specializations, and context resolution.
+    /// </remarks>
+    /// <returns>Behavior stack compiled successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("stack/compile")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileBehaviorStack([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BehaviorStackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Validate ABML definition
+    /// </summary>
+    /// <remarks>
+    /// Validates ABML YAML against schema and checks for semantic correctness.
+    /// <br/>Includes context variable validation and service dependency checking.
+    /// </remarks>
+    /// <returns>Validation completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("validate")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateAbmlResponse>> ValidateAbml([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get cached compiled behavior
+    /// </summary>
+    /// <remarks>
+    /// Retrieves a previously compiled behavior from the cache.
+    /// <br/>Used for performance optimization in high-frequency behavior execution.
+    /// </remarks>
+    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
+    /// <returns>Cached behavior retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("cache/{behavior_id}")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CachedBehaviorResponse>> GetCachedBehavior([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Invalidate cached behavior
+    /// </summary>
+    /// <remarks>
+    /// Removes a behavior from the cache, forcing recompilation on next access.
+    /// <br/>Used when behavior definitions are updated.
+    /// </remarks>
+    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
+    /// <returns>Cache invalidated successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("cache/{behavior_id}")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InvalidateCachedBehavior([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Resolve context variables
+    /// </summary>
+    /// <remarks>
+    /// Resolves context variables in ABML definitions against character and world state.
+    /// <br/>Used for dynamic behavior adaptation based on current game state.
+    /// </remarks>
+    /// <returns>Context variables resolved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("context/resolve")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ResolveContextResponse>> ResolveContextVariables([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ResolveContextRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CompileBehaviorRequest
+{
+    /// <summary>
+    /// Raw ABML YAML content to compile
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("abml_content", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Abml_content { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("character_context", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public CharacterContext Character_context { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("compilation_options", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public CompilationOptions Compilation_options { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BehaviorStackRequest
+{
+    /// <summary>
+    /// Array of behavior sets to compile together
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("behavior_sets", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.List<BehaviorSetDefinition> Behavior_sets { get; set; } = new System.Collections.Generic.List<BehaviorSetDefinition>();
+
+    [Newtonsoft.Json.JsonProperty("character_context", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public CharacterContext Character_context { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("compilation_options", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public CompilationOptions Compilation_options { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ValidateAbmlRequest
+{
+    /// <summary>
+    /// Raw ABML YAML content to validate
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("abml_content", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Abml_content { get; set; } = default!;
+
+    /// <summary>
+    /// Enable strict validation mode with enhanced checking
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("strict_mode", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool Strict_mode { get; set; } = false;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResolveContextRequest
+{
+    /// <summary>
+    /// Context variable expression to resolve
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("context_expression", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Context_expression { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("character_context", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public CharacterContext Character_context { get; set; } = new CharacterContext();
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CompileBehaviorResponse
+{
+    /// <summary>
+    /// Whether compilation was successful
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the compiled behavior
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("behavior_id", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Behavior_id { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("compiled_behavior", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public CompiledBehavior Compiled_behavior { get; set; } = default!;
+
+    /// <summary>
+    /// Time taken to compile the behavior
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("compilation_time_ms", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int Compilation_time_ms { get; set; } = default!;
+
+    /// <summary>
+    /// Key for caching the compiled behavior
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("cache_key", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Cache_key { get; set; } = default!;
+
+    /// <summary>
+    /// Non-fatal warnings during compilation
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("warnings", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.List<string> Warnings { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ValidateAbmlResponse
+{
+    /// <summary>
+    /// Whether the ABML definition is valid
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("is_valid", Required = Newtonsoft.Json.Required.Always)]
+    public bool Is_valid { get; set; } = default!;
+
+    /// <summary>
+    /// List of validation errors if invalid
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("validation_errors", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.List<ValidationError> Validation_errors { get; set; } = default!;
+
+    /// <summary>
+    /// Semantic warnings that don't prevent compilation
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("semantic_warnings", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.List<string> Semantic_warnings { get; set; } = default!;
+
+    /// <summary>
+    /// ABML schema version used for validation
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("schema_version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Schema_version { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CachedBehaviorResponse
+{
+    /// <summary>
+    /// Unique identifier for the cached behavior
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("behavior_id", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Behavior_id { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("compiled_behavior", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public CompiledBehavior Compiled_behavior { get; set; } = new CompiledBehavior();
+
+    /// <summary>
+    /// When the behavior was cached
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("cache_timestamp", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset Cache_timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this was a cache hit or miss
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("cache_hit", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool Cache_hit { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResolveContextResponse
+{
+    /// <summary>
+    /// The resolved value of the context expression
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("resolved_value", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public object Resolved_value { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the resolved value
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("resolved_type", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public ResolveContextResponseResolved_type Resolved_type { get; set; } = default!;
+
+    /// <summary>
+    /// List of context variables referenced in the expression
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("context_variables_used", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.List<string> Context_variables_used { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BehaviorSetDefinition
+{
+    /// <summary>
+    /// Unique identifier for the behavior set
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Id { get; set; } = default!;
+
+    /// <summary>
+    /// Priority level for merging (higher priority overrides lower)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("priority", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Range(1, 100)]
+    public int Priority { get; set; } = default!;
+
+    /// <summary>
+    /// Category of the behavior set
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("category", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public BehaviorSetDefinitionCategory Category { get; set; } = default!;
+
+    /// <summary>
+    /// Raw ABML YAML content for this behavior set
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("abml_content", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Abml_content { get; set; } = default!;
+
+    /// <summary>
+    /// Additional metadata for the behavior set
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterContext
+{
+    /// <summary>
+    /// Unique identifier for the NPC
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("npc_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Npc_id { get; set; } = default!;
+
+    /// <summary>
+    /// Cultural background identifier
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("culture", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Culture { get; set; } = default!;
+
+    /// <summary>
+    /// Character profession identifier
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("profession", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Profession { get; set; } = default!;
+
+    /// <summary>
+    /// Character statistics and attributes
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("stats", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.IDictionary<string, double> Stats { get; set; } = default!;
+
+    /// <summary>
+    /// Character skill levels
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("skills", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.IDictionary<string, double> Skills { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("location", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public Location Location { get; set; } = default!;
+
+    /// <summary>
+    /// Relationship values with other characters
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("relationships", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.IDictionary<string, double> Relationships { get; set; } = default!;
+
+    /// <summary>
+    /// Relevant world state information
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("world_state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object World_state { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CompiledBehavior
+{
+    /// <summary>
+    /// Compiled executable behavior tree structure
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("behavior_tree", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public object Behavior_tree { get; set; } = new object();
+
+    /// <summary>
+    /// Schema defining required context variables
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("context_schema", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public object Context_schema { get; set; } = new object();
+
+    /// <summary>
+    /// List of required services for this behavior
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("service_dependencies", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.List<string> Service_dependencies { get; set; } = default!;
+
+    /// <summary>
+    /// GOAP goals extracted from the behavior
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("goap_goals", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.List<GoapGoal> Goap_goals { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("execution_metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public Execution_metadata Execution_metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GoapGoal
+{
+    /// <summary>
+    /// Name of the goal
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description of the goal
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Description { get; set; } = default!;
+
+    /// <summary>
+    /// World state conditions that satisfy this goal
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("conditions", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.IDictionary<string, double> Conditions { get; set; } = new System.Collections.Generic.Dictionary<string, double>();
+
+    /// <summary>
+    /// Priority of this goal relative to others
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("priority", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Range(1, 100)]
+    public int Priority { get; set; } = default!;
+
+    /// <summary>
+    /// World state conditions required to pursue this goal
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("preconditions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.IDictionary<string, double> Preconditions { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CompilationOptions
+{
+    /// <summary>
+    /// Enable behavior tree optimizations
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("enable_optimizations", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool Enable_optimizations { get; set; } = true;
+
+    /// <summary>
+    /// Cache the compiled behavior for reuse
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("cache_compiled_result", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool Cache_compiled_result { get; set; } = true;
+
+    /// <summary>
+    /// Enable strict validation mode
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("strict_validation", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool Strict_validation { get; set; } = false;
+
+    /// <summary>
+    /// Apply cultural adaptations during compilation
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("cultural_adaptations", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool Cultural_adaptations { get; set; } = true;
+
+    /// <summary>
+    /// Generate GOAP goals from behaviors
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("goap_integration", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool Goap_integration { get; set; } = true;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ValidationError
+{
+    /// <summary>
+    /// Type of validation error
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("type", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public ValidationErrorType Type { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable error message
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Message { get; set; } = default!;
+
+    /// <summary>
+    /// Line number where the error occurred (if applicable)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("line_number", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int Line_number { get; set; } = default!;
+
+    /// <summary>
+    /// Column number where the error occurred (if applicable)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("column_number", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int Column_number { get; set; } = default!;
+
+    /// <summary>
+    /// YAML path to the problematic element
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("yaml_path", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Yaml_path { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AbmlErrorResponse
+{
+    /// <summary>
+    /// Error message
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Error { get; set; } = default!;
+
+    /// <summary>
+    /// Specific error code for programmatic handling
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("error_code", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Error_code { get; set; } = default!;
+
+    /// <summary>
+    /// Detailed error information
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("details", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.List<string> Details { get; set; } = default!;
+
+    /// <summary>
+    /// Validation errors encountered
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("validation_errors", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.List<ValidationError> Validation_errors { get; set; } = default!;
+
+    /// <summary>
+    /// Line number in YAML where error occurred
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("yaml_line", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int Yaml_line { get; set; } = default!;
+
+    /// <summary>
+    /// Additional context about the error
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("context", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object Context { get; set; } = default!;
+
+    /// <summary>
+    /// When the error occurred
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the failed request
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("request_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Request_id { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ResolveContextResponseResolved_type
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"boolean")]
+    Boolean = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"string")]
+    String = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"number")]
+    Number = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"object")]
+    Object = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"array")]
+    Array = 4,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum BehaviorSetDefinitionCategory
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"base")]
+    Base = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cultural")]
+    Cultural = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"professional")]
+    Professional = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"personal")]
+    Personal = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"situational")]
+    Situational = 4,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Location
+{
+    [Newtonsoft.Json.JsonProperty("current", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Current { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("region", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Region { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("coordinates", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public Coordinates Coordinates { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Execution_metadata
+{
+    /// <summary>
+    /// Estimated execution time in seconds
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("estimated_duration", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int Estimated_duration { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("resource_requirements", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.IDictionary<string, double> Resource_requirements { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("interrupt_conditions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.List<string> Interrupt_conditions { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ValidationErrorType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"syntax")]
+    Syntax = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"semantic")]
+    Semantic = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"schema")]
+    Schema = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"context")]
+    Context = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"service_dependency")]
+    Service_dependency = 4,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Coordinates
+{
+    [Newtonsoft.Json.JsonProperty("x", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public double X { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("y", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public double Y { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("z", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public double Z { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
 
 #pragma warning restore  108
 #pragma warning restore  114

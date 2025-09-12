@@ -22,1886 +22,1904 @@ using BeyondImmersion.BannouService.ServiceClients;
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Accounts.Client
+namespace BeyondImmersion.BannouService.Accounts.Client;
+
+using System = global::System;
+
+[System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial interface IAccountsClient
 {
-    using System = global::System;
 
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial interface IAccountsClient
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// List accounts with filtering
+    /// </summary>
+    /// <returns>Accounts retrieved successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<AccountListResponse> ListAccountsAsync(string? email = null, string? displayName = null, Provider? provider = null, bool? verified = null, int? page = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Create new account
+    /// </summary>
+    /// <returns>Account created successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<AccountResponse> CreateAccountAsync(CreateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get account by ID
+    /// </summary>
+    /// <returns>Account retrieved successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<AccountResponse> GetAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update account
+    /// </summary>
+    /// <returns>Account updated successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<AccountResponse> UpdateAccountAsync(System.Guid accountId, UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Delete account
+    /// </summary>
+    /// <returns>Account deleted successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task DeleteAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get account by email
+    /// </summary>
+    /// <returns>Account retrieved successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<AccountResponse> GetAccountByEmailAsync(string email, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get authentication methods for account
+    /// </summary>
+    /// <returns>Authentication methods retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<AuthMethodsResponse> GetAuthMethodsAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Add authentication method to account
+    /// </summary>
+    /// <returns>Authentication method added successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<AuthMethodResponse> AddAuthMethodAsync(System.Guid accountId, AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Remove authentication method from account
+    /// </summary>
+    /// <returns>Authentication method removed successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task RemoveAuthMethodAsync(System.Guid accountId, System.Guid methodId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get account by external provider ID
+    /// </summary>
+    /// <returns>Account retrieved successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<AccountResponse> GetAccountByProviderAsync(Provider2 provider, string externalId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update account profile
+    /// </summary>
+    /// <returns>Profile updated successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<AccountResponse> UpdateProfileAsync(System.Guid accountId, UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update account password hash
+    /// </summary>
+    /// <returns>Password hash updated successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task UpdatePasswordHashAsync(System.Guid accountId, UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update email verification status
+    /// </summary>
+    /// <returns>Verification status updated successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task UpdateVerificationStatusAsync(System.Guid accountId, UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IAccountsClient
+{
+    #pragma warning disable 8618
+    private string _baseUrl;
+    #pragma warning restore 8618
+
+    private System.Net.Http.HttpClient _httpClient;
+    private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
+    private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+    public AccountsClient(System.Net.Http.HttpClient httpClient)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// List accounts with filtering
-        /// </summary>
-        /// <returns>Accounts retrieved successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<AccountListResponse> ListAccountsAsync(string? email = null, string? displayName = null, Provider? provider = null, bool? verified = null, int? page = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Create new account
-        /// </summary>
-        /// <returns>Account created successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<AccountResponse> CreateAccountAsync(CreateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get account by ID
-        /// </summary>
-        /// <returns>Account retrieved successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<AccountResponse> GetAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update account
-        /// </summary>
-        /// <returns>Account updated successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<AccountResponse> UpdateAccountAsync(System.Guid accountId, UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Delete account
-        /// </summary>
-        /// <returns>Account deleted successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task DeleteAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get account by email
-        /// </summary>
-        /// <returns>Account retrieved successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<AccountResponse> GetAccountByEmailAsync(string email, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get authentication methods for account
-        /// </summary>
-        /// <returns>Authentication methods retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<AuthMethodsResponse> GetAuthMethodsAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Add authentication method to account
-        /// </summary>
-        /// <returns>Authentication method added successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<AuthMethodResponse> AddAuthMethodAsync(System.Guid accountId, AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Remove authentication method from account
-        /// </summary>
-        /// <returns>Authentication method removed successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task RemoveAuthMethodAsync(System.Guid accountId, System.Guid methodId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get account by external provider ID
-        /// </summary>
-        /// <returns>Account retrieved successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<AccountResponse> GetAccountByProviderAsync(Provider2 provider, string externalId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update account profile
-        /// </summary>
-        /// <returns>Profile updated successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<AccountResponse> UpdateProfileAsync(System.Guid accountId, UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update account password hash
-        /// </summary>
-        /// <returns>Password hash updated successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task UpdatePasswordHashAsync(System.Guid accountId, UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update email verification status
-        /// </summary>
-        /// <returns>Verification status updated successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task UpdateVerificationStatusAsync(System.Guid accountId, UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
+        BaseUrl = "http://localhost:3500/v1.0/invoke/accounts/method";
+        _httpClient = httpClient;
+        Initialize();
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IAccountsClient
+    private static Newtonsoft.Json.JsonSerializerSettings CreateSerializerSettings()
     {
-        #pragma warning disable 8618
-        private string _baseUrl;
-        #pragma warning restore 8618
+        var settings = new Newtonsoft.Json.JsonSerializerSettings();
+        UpdateJsonSerializerSettings(settings);
+        return settings;
+    }
 
-        private System.Net.Http.HttpClient _httpClient;
-        private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
-        private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
-
-    #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        public AccountsClient(System.Net.Http.HttpClient httpClient)
-    #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+    public string BaseUrl
+    {
+        get { return _baseUrl; }
+        set
         {
-            BaseUrl = "http://localhost:3500/v1.0/invoke/accounts/method";
-            _httpClient = httpClient;
-            Initialize();
+            _baseUrl = value;
+            if (!string.IsNullOrEmpty(_baseUrl) && !_baseUrl.EndsWith("/"))
+                _baseUrl += '/';
         }
+    }
 
-        private static Newtonsoft.Json.JsonSerializerSettings CreateSerializerSettings()
-        {
-            var settings = new Newtonsoft.Json.JsonSerializerSettings();
-            UpdateJsonSerializerSettings(settings);
-            return settings;
-        }
+    protected Newtonsoft.Json.JsonSerializerSettings JsonSerializerSettings { get { return _instanceSettings ?? _settings.Value; } }
 
-        public string BaseUrl
+    static partial void UpdateJsonSerializerSettings(Newtonsoft.Json.JsonSerializerSettings settings);
+
+    partial void Initialize();
+
+    partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
+    partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
+    partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// List accounts with filtering
+    /// </summary>
+    /// <returns>Accounts retrieved successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<AccountListResponse> ListAccountsAsync(string? email = null, string? displayName = null, Provider? provider = null, bool? verified = null, int? page = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _baseUrl; }
-            set
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                _baseUrl = value;
-                if (!string.IsNullOrEmpty(_baseUrl) && !_baseUrl.EndsWith("/"))
-                    _baseUrl += '/';
-            }
-        }
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
-        protected Newtonsoft.Json.JsonSerializerSettings JsonSerializerSettings { get { return _instanceSettings ?? _settings.Value; } }
-
-        static partial void UpdateJsonSerializerSettings(Newtonsoft.Json.JsonSerializerSettings settings);
-
-        partial void Initialize();
-
-        partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
-        partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
-        partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// List accounts with filtering
-        /// </summary>
-        /// <returns>Accounts retrieved successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<AccountListResponse> ListAccountsAsync(string? email = null, string? displayName = null, Provider? provider = null, bool? verified = null, int? page = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts"
+                urlBuilder_.Append("accounts");
+                urlBuilder_.Append('?');
+                if (email != null)
                 {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts"
-                    urlBuilder_.Append("accounts");
-                    urlBuilder_.Append('?');
-                    if (email != null)
-                    {
-                        urlBuilder_.Append(System.Uri.EscapeDataString("email")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(email, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    }
-                    if (displayName != null)
-                    {
-                        urlBuilder_.Append(System.Uri.EscapeDataString("displayName")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(displayName, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    }
-                    if (provider != null)
-                    {
-                        urlBuilder_.Append(System.Uri.EscapeDataString("provider")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(provider, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    }
-                    if (verified != null)
-                    {
-                        urlBuilder_.Append(System.Uri.EscapeDataString("verified")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(verified, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    }
-                    if (page != null)
-                    {
-                        urlBuilder_.Append(System.Uri.EscapeDataString("page")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(page, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    }
-                    if (pageSize != null)
-                    {
-                        urlBuilder_.Append(System.Uri.EscapeDataString("pageSize")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(pageSize, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    }
-                    urlBuilder_.Length--;
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<AccountListResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
+                    urlBuilder_.Append(System.Uri.EscapeDataString("email")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(email, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                 }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Create new account
-        /// </summary>
-        /// <returns>Account created successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<AccountResponse> CreateAccountAsync(CreateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (body == null)
-                throw new System.ArgumentNullException("body");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                if (displayName != null)
                 {
-                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                    var content_ = new System.Net.Http.StringContent(json_);
-                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                    request_.Content = content_;
-                    request_.Method = new System.Net.Http.HttpMethod("POST");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts"
-                    urlBuilder_.Append("accounts");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 201)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<AccountResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 400)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Invalid account data", status_, responseText_, headers_, null);
-                        }
-                        else
-                        if (status_ == 409)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account already exists", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
+                    urlBuilder_.Append(System.Uri.EscapeDataString("displayName")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(displayName, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                 }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get account by ID
-        /// </summary>
-        /// <returns>Account retrieved successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<AccountResponse> GetAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (accountId == null)
-                throw new System.ArgumentNullException("accountId");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                if (provider != null)
                 {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts/{accountId}"
-                    urlBuilder_.Append("accounts/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<AccountResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 404)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account not found", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
+                    urlBuilder_.Append(System.Uri.EscapeDataString("provider")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(provider, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                 }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update account
-        /// </summary>
-        /// <returns>Account updated successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<AccountResponse> UpdateAccountAsync(System.Guid accountId, UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (accountId == null)
-                throw new System.ArgumentNullException("accountId");
-
-            if (body == null)
-                throw new System.ArgumentNullException("body");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                if (verified != null)
                 {
-                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                    var content_ = new System.Net.Http.StringContent(json_);
-                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                    request_.Content = content_;
-                    request_.Method = new System.Net.Http.HttpMethod("PUT");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts/{accountId}"
-                    urlBuilder_.Append("accounts/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<AccountResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 404)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account not found", status_, responseText_, headers_, null);
-                        }
-                        else
-                        if (status_ == 400)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Invalid update data", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
+                    urlBuilder_.Append(System.Uri.EscapeDataString("verified")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(verified, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                 }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Delete account
-        /// </summary>
-        /// <returns>Account deleted successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task DeleteAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (accountId == null)
-                throw new System.ArgumentNullException("accountId");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                if (page != null)
                 {
-                    request_.Method = new System.Net.Http.HttpMethod("DELETE");
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts/{accountId}"
-                    urlBuilder_.Append("accounts/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 204)
-                        {
-                            return;
-                        }
-                        else
-                        if (status_ == 404)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account not found", status_, responseText_, headers_, null);
-                        }
-                        else
-                        if (status_ == 409)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account cannot be deleted (active sessions exist)", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
+                    urlBuilder_.Append(System.Uri.EscapeDataString("page")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(page, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                 }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get account by email
-        /// </summary>
-        /// <returns>Account retrieved successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<AccountResponse> GetAccountByEmailAsync(string email, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (email == null)
-                throw new System.ArgumentNullException("email");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                if (pageSize != null)
                 {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts/by-email/{email}"
-                    urlBuilder_.Append("accounts/by-email/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(email, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<AccountResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 404)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account not found", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
+                    urlBuilder_.Append(System.Uri.EscapeDataString("pageSize")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(pageSize, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                 }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
+                urlBuilder_.Length--;
 
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get authentication methods for account
-        /// </summary>
-        /// <returns>Authentication methods retrieved</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<AuthMethodsResponse> GetAuthMethodsAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (accountId == null)
-                throw new System.ArgumentNullException("accountId");
+                PrepareRequest(client_, request_, urlBuilder_);
 
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
 
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts/{accountId}/auth-methods"
-                    urlBuilder_.Append("accounts/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append("/auth-methods");
+                PrepareRequest(client_, request_, url_);
 
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<AuthMethodsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 404)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account not found", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Add authentication method to account
-        /// </summary>
-        /// <returns>Authentication method added successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<AuthMethodResponse> AddAuthMethodAsync(System.Guid accountId, AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (accountId == null)
-                throw new System.ArgumentNullException("accountId");
-
-            if (body == null)
-                throw new System.ArgumentNullException("body");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                    var content_ = new System.Net.Http.StringContent(json_);
-                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                    request_.Content = content_;
-                    request_.Method = new System.Net.Http.HttpMethod("POST");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts/{accountId}/auth-methods"
-                    urlBuilder_.Append("accounts/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append("/auth-methods");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 201)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<AuthMethodResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 404)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account not found", status_, responseText_, headers_, null);
-                        }
-                        else
-                        if (status_ == 409)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Authentication method already exists", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Remove authentication method from account
-        /// </summary>
-        /// <returns>Authentication method removed successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task RemoveAuthMethodAsync(System.Guid accountId, System.Guid methodId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (accountId == null)
-                throw new System.ArgumentNullException("accountId");
-
-            if (methodId == null)
-                throw new System.ArgumentNullException("methodId");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("DELETE");
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts/{accountId}/auth-methods/{methodId}"
-                    urlBuilder_.Append("accounts/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append("/auth-methods/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(methodId, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 204)
-                        {
-                            return;
-                        }
-                        else
-                        if (status_ == 404)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account or method not found", status_, responseText_, headers_, null);
-                        }
-                        else
-                        if (status_ == 400)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Cannot remove last authentication method", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Get account by external provider ID
-        /// </summary>
-        /// <returns>Account retrieved successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<AccountResponse> GetAccountByProviderAsync(Provider2 provider, string externalId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (provider == null)
-                throw new System.ArgumentNullException("provider");
-
-            if (externalId == null)
-                throw new System.ArgumentNullException("externalId");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts/by-provider/{provider}/{externalId}"
-                    urlBuilder_.Append("accounts/by-provider/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(provider, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append('/');
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(externalId, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<AccountResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 404)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account not found", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update account profile
-        /// </summary>
-        /// <returns>Profile updated successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<AccountResponse> UpdateProfileAsync(System.Guid accountId, UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (accountId == null)
-                throw new System.ArgumentNullException("accountId");
-
-            if (body == null)
-                throw new System.ArgumentNullException("body");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                    var content_ = new System.Net.Http.StringContent(json_);
-                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                    request_.Content = content_;
-                    request_.Method = new System.Net.Http.HttpMethod("PUT");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts/{accountId}/profile"
-                    urlBuilder_.Append("accounts/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append("/profile");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<AccountResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        if (status_ == 404)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account not found", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update account password hash
-        /// </summary>
-        /// <returns>Password hash updated successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task UpdatePasswordHashAsync(System.Guid accountId, UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (accountId == null)
-                throw new System.ArgumentNullException("accountId");
-
-            if (body == null)
-                throw new System.ArgumentNullException("body");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                    var content_ = new System.Net.Http.StringContent(json_);
-                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                    request_.Content = content_;
-                    request_.Method = new System.Net.Http.HttpMethod("PUT");
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts/{accountId}/password"
-                    urlBuilder_.Append("accounts/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append("/password");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            return;
-                        }
-                        else
-                        if (status_ == 404)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account not found", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <summary>
-        /// Update email verification status
-        /// </summary>
-        /// <returns>Verification status updated successfully</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task UpdateVerificationStatusAsync(System.Guid accountId, UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-        {
-            if (accountId == null)
-                throw new System.ArgumentNullException("accountId");
-
-            if (body == null)
-                throw new System.ArgumentNullException("body");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
-            try
-            {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
-                {
-                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                    var content_ = new System.Net.Http.StringContent(json_);
-                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                    request_.Content = content_;
-                    request_.Method = new System.Net.Http.HttpMethod("PUT");
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "accounts/{accountId}/verification"
-                    urlBuilder_.Append("accounts/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append("/verification");
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            return;
-                        }
-                        else
-                        if (status_ == 404)
-                        {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("Account not found", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
-                }
-            }
-            finally
-            {
-                if (disposeClient_)
-                    client_.Dispose();
-            }
-        }
-
-        protected struct ObjectResponseResult<T>
-        {
-            public ObjectResponseResult(T responseObject, string responseText)
-            {
-                this.Object = responseObject;
-                this.Text = responseText;
-            }
-
-            public T Object { get; }
-
-            public string Text { get; }
-        }
-
-        public bool ReadResponseAsString { get; set; }
-
-        protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
-        {
-            if (response == null || response.Content == null)
-            {
-                return new ObjectResponseResult<T>(default(T)!, string.Empty);
-            }
-
-            if (ReadResponseAsString)
-            {
-                var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
                 try
                 {
-                    var typedBody = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseText, JsonSerializerSettings);
-                    return new ObjectResponseResult<T>(typedBody!, responseText);
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<AccountListResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
                 }
-                catch (Newtonsoft.Json.JsonException exception)
+                finally
                 {
-                    var message = "Could not deserialize the response body string as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, responseText, headers, exception);
+                    if (disposeResponse_)
+                        response_.Dispose();
                 }
             }
-            else
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Create new account
+    /// </summary>
+    /// <returns>Account created successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<AccountResponse> CreateAccountAsync(CreateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts"
+                urlBuilder_.Append("accounts");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
                 try
                 {
-                    using (var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
-                    using (var streamReader = new System.IO.StreamReader(responseStream))
-                    using (var jsonTextReader = new Newtonsoft.Json.JsonTextReader(streamReader))
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
                     {
-                        var serializer = Newtonsoft.Json.JsonSerializer.Create(JsonSerializerSettings);
-                        var typedBody = serializer.Deserialize<T>(jsonTextReader);
-                        return new ObjectResponseResult<T>(typedBody!, string.Empty);
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
                     }
-                }
-                catch (Newtonsoft.Json.JsonException exception)
-                {
-                    var message = "Could not deserialize the response body stream as " + typeof(T).FullName + ".";
-                    throw new ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
-                }
-            }
-        }
 
-        private string ConvertToString(object? value, System.Globalization.CultureInfo cultureInfo)
-        {
-            if (value == null)
-            {
-                return "";
-            }
+                    ProcessResponse(client_, response_);
 
-            if (value is System.Enum)
-            {
-                var name = System.Enum.GetName(value.GetType(), value);
-                if (name != null)
-                {
-                    var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
-                    if (field != null)
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 201)
                     {
-                        var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
-                            as System.Runtime.Serialization.EnumMemberAttribute;
-                        if (attribute != null)
+                        var objectResponse_ = await ReadObjectResponseAsync<AccountResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
                         {
-                            return attribute.Value != null ? attribute.Value : name;
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Invalid account data", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 409)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account already exists", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get account by ID
+    /// </summary>
+    /// <returns>Account retrieved successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<AccountResponse> GetAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (accountId == null)
+            throw new System.ArgumentNullException("accountId");
+
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts/{accountId}"
+                urlBuilder_.Append("accounts/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
                     }
 
-                    var converted = System.Convert.ToString(System.Convert.ChangeType(value, System.Enum.GetUnderlyingType(value.GetType()), cultureInfo));
-                    return converted == null ? string.Empty : converted;
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<AccountResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
                 }
-            }
-            else if (value is bool)
-            {
-                return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
-            }
-            else if (value is byte[])
-            {
-                return System.Convert.ToBase64String((byte[]) value);
-            }
-            else if (value is string[])
-            {
-                return string.Join(",", (string[])value);
-            }
-            else if (value.GetType().IsArray)
-            {
-                var valueArray = (System.Array)value;
-                var valueTextArray = new string[valueArray.Length];
-                for (var i = 0; i < valueArray.Length; i++)
+                finally
                 {
-                    valueTextArray[i] = ConvertToString(valueArray.GetValue(i), cultureInfo);
+                    if (disposeResponse_)
+                        response_.Dispose();
                 }
-                return string.Join(",", valueTextArray);
             }
-
-            var result = System.Convert.ToString(value, cultureInfo);
-            return result == null ? "" : result;
         }
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CreateAccountRequest
-    {
-        [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Email { get; set; } = default!;
-
-        /// <summary>
-        /// Pre-hashed password from Auth service
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? PasswordHash { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [System.ComponentModel.DataAnnotations.StringLength(100)]
-        public string? DisplayName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool EmailVerified { get; set; } = false;
-
-        [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object? Metadata { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class UpdateAccountRequest
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update account
+    /// </summary>
+    /// <returns>Account updated successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<AccountResponse> UpdateAccountAsync(System.Guid accountId, UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [System.ComponentModel.DataAnnotations.StringLength(100)]
-        public string? DisplayName { get; set; } = default!;
+        if (accountId == null)
+            throw new System.ArgumentNullException("accountId");
 
-        [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
-        [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object? Metadata { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("PUT");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts/{accountId}"
+                urlBuilder_.Append("accounts/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<AccountResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Invalid update data", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class UpdateProfileRequest
-    {
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [System.ComponentModel.DataAnnotations.StringLength(100)]
-        public string? DisplayName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object? Metadata { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class UpdatePasswordRequest
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Delete account
+    /// </summary>
+    /// <returns>Account deleted successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task DeleteAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        /// <summary>
-        /// New pre-hashed password from Auth service
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string PasswordHash { get; set; } = default!;
+        if (accountId == null)
+            throw new System.ArgumentNullException("accountId");
 
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("DELETE");
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts/{accountId}"
+                urlBuilder_.Append("accounts/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 204)
+                    {
+                        return;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 409)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account cannot be deleted (active sessions exist)", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class UpdateVerificationRequest
-    {
-        [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.Always)]
-        public bool EmailVerified { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AddAuthMethodRequest
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get account by email
+    /// </summary>
+    /// <returns>Account retrieved successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<AccountResponse> GetAccountByEmailAsync(string email, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public AddAuthMethodRequestProvider Provider { get; set; } = default!;
+        if (email == null)
+            throw new System.ArgumentNullException("email");
 
-        [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string ExternalId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? DisplayName { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts/by-email/{email}"
+                urlBuilder_.Append("accounts/by-email/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(email, System.Globalization.CultureInfo.InvariantCulture)));
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<AccountResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AccountResponse
-    {
-        [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid AccountId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Email { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? DisplayName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("updatedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.Always)]
-        public bool EmailVerified { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<string> Roles { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-        [Newtonsoft.Json.JsonProperty("authMethods", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<AuthMethodInfo> AuthMethods { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object? Metadata { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AuthMethodInfo
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get authentication methods for account
+    /// </summary>
+    /// <returns>Authentication methods retrieved</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<AuthMethodsResponse> GetAuthMethodsAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Guid MethodId { get; set; } = default!;
+        if (accountId == null)
+            throw new System.ArgumentNullException("accountId");
 
-        [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public AuthMethodInfoProvider Provider { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? ExternalId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? DisplayName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("linkedAt", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.DateTimeOffset LinkedAt { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts/{accountId}/auth-methods"
+                urlBuilder_.Append("accounts/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/auth-methods");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<AuthMethodsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AuthMethodResponse
-    {
-        [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid MethodId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public AuthMethodResponseProvider Provider { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string ExternalId { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? DisplayName { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("linkedAt", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.DateTimeOffset LinkedAt { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AuthMethodsResponse
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Add authentication method to account
+    /// </summary>
+    /// <returns>Authentication method added successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<AuthMethodResponse> AddAuthMethodAsync(System.Guid accountId, AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        [Newtonsoft.Json.JsonProperty("authMethods", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<AuthMethodInfo> AuthMethods { get; set; } = new System.Collections.ObjectModel.Collection<AuthMethodInfo>();
+        if (accountId == null)
+            throw new System.ArgumentNullException("accountId");
 
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts/{accountId}/auth-methods"
+                urlBuilder_.Append("accounts/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/auth-methods");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 201)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<AuthMethodResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 409)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Authentication method already exists", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
         }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AccountListResponse
-    {
-        [Newtonsoft.Json.JsonProperty("accounts", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<AccountResponse> Accounts { get; set; } = new System.Collections.ObjectModel.Collection<AccountResponse>();
-
-        [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.Always)]
-        public int TotalCount { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("page", Required = Newtonsoft.Json.Required.Always)]
-        public int Page { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("pageSize", Required = Newtonsoft.Json.Required.Always)]
-        public int PageSize { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("hasNextPage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool HasNextPage { get; set; } = default!;
-
-        [Newtonsoft.Json.JsonProperty("hasPreviousPage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool HasPreviousPage { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        finally
         {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
+            if (disposeClient_)
+                client_.Dispose();
         }
-
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum Provider
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Remove authentication method from account
+    /// </summary>
+    /// <returns>Authentication method removed successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task RemoveAuthMethodAsync(System.Guid accountId, System.Guid methodId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (accountId == null)
+            throw new System.ArgumentNullException("accountId");
 
-        [System.Runtime.Serialization.EnumMember(Value = @"email")]
-        Email = 0,
+        if (methodId == null)
+            throw new System.ArgumentNullException("methodId");
 
-        [System.Runtime.Serialization.EnumMember(Value = @"google")]
-        Google = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-        Discord = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-        Twitch = 3,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-        Steam = 4,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum Provider2
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"google")]
-        Google = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-        Discord = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-        Twitch = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-        Steam = 3,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum AddAuthMethodRequestProvider
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"google")]
-        Google = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-        Discord = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-        Twitch = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-        Steam = 3,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum AuthMethodInfoProvider
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"email")]
-        Email = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"google")]
-        Google = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-        Discord = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-        Twitch = 3,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-        Steam = 4,
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum AuthMethodResponseProvider
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"google")]
-        Google = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-        Discord = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-        Twitch = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-        Steam = 3,
-
-    }
-
-
-
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ApiException : System.Exception
-    {
-        public int StatusCode { get; private set; }
-
-        public string? Response { get; private set; }
-
-        public System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> Headers { get; private set; }
-
-        public ApiException(string message, int statusCode, string? response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Exception? innerException)
-            : base(message + "\n\nStatus: " + statusCode + "\nResponse: \n" + ((response == null) ? "(null)" : response.Substring(0, response.Length >= 512 ? 512 : response.Length)), innerException)
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            StatusCode = statusCode;
-            Response = response;
-            Headers = headers;
-        }
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("DELETE");
 
-        public override string ToString()
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts/{accountId}/auth-methods/{methodId}"
+                urlBuilder_.Append("accounts/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/auth-methods/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(methodId, System.Globalization.CultureInfo.InvariantCulture)));
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 204)
+                    {
+                        return;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account or method not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Cannot remove last authentication method", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
         {
-            return string.Format("HTTP Response: \n\n{0}\n\n{1}", Response, base.ToString());
+            if (disposeClient_)
+                client_.Dispose();
         }
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ApiException<TResult> : ApiException
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get account by external provider ID
+    /// </summary>
+    /// <returns>Account retrieved successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<AccountResponse> GetAccountByProviderAsync(Provider2 provider, string externalId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        public TResult Result { get; private set; }
+        if (provider == null)
+            throw new System.ArgumentNullException("provider");
 
-        public ApiException(string message, int statusCode, string? response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, TResult result, System.Exception? innerException)
-            : base(message, statusCode, response, headers, innerException)
+        if (externalId == null)
+            throw new System.ArgumentNullException("externalId");
+
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
         {
-            Result = result;
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts/by-provider/{provider}/{externalId}"
+                urlBuilder_.Append("accounts/by-provider/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(provider, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append('/');
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(externalId, System.Globalization.CultureInfo.InvariantCulture)));
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<AccountResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
         }
     }
 
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update account profile
+    /// </summary>
+    /// <returns>Profile updated successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<AccountResponse> UpdateProfileAsync(System.Guid accountId, UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (accountId == null)
+            throw new System.ArgumentNullException("accountId");
+
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("PUT");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts/{accountId}/profile"
+                urlBuilder_.Append("accounts/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/profile");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<AccountResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update account password hash
+    /// </summary>
+    /// <returns>Password hash updated successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task UpdatePasswordHashAsync(System.Guid accountId, UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (accountId == null)
+            throw new System.ArgumentNullException("accountId");
+
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("PUT");
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts/{accountId}/password"
+                urlBuilder_.Append("accounts/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/password");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        return;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update email verification status
+    /// </summary>
+    /// <returns>Verification status updated successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task UpdateVerificationStatusAsync(System.Guid accountId, UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (accountId == null)
+            throw new System.ArgumentNullException("accountId");
+
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("PUT");
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "accounts/{accountId}/verification"
+                urlBuilder_.Append("accounts/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/verification");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        return;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new ApiException("Account not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    protected struct ObjectResponseResult<T>
+    {
+        public ObjectResponseResult(T responseObject, string responseText)
+        {
+            this.Object = responseObject;
+            this.Text = responseText;
+        }
+
+        public T Object { get; }
+
+        public string Text { get; }
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    private static System.Threading.Tasks.Task<string> ReadAsStringAsync(System.Net.Http.HttpContent content, System.Threading.CancellationToken cancellationToken)
+    {
+#if NET5_0_OR_GREATER
+        return content.ReadAsStringAsync(cancellationToken);
+#else
+        return content.ReadAsStringAsync();
+#endif
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    private static System.Threading.Tasks.Task<System.IO.Stream> ReadAsStreamAsync(System.Net.Http.HttpContent content, System.Threading.CancellationToken cancellationToken)
+    {
+#if NET5_0_OR_GREATER
+        return content.ReadAsStreamAsync(cancellationToken);
+#else
+        return content.ReadAsStreamAsync();
+#endif
+    }
+
+    public bool ReadResponseAsString { get; set; }
+
+    protected virtual async System.Threading.Tasks.Task<ObjectResponseResult<T>> ReadObjectResponseAsync<T>(System.Net.Http.HttpResponseMessage response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Threading.CancellationToken cancellationToken)
+    {
+        if (response == null || response.Content == null)
+        {
+            return new ObjectResponseResult<T>(default(T)!, string.Empty);
+        }
+
+        if (ReadResponseAsString)
+        {
+            var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            try
+            {
+                var typedBody = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseText, JsonSerializerSettings);
+                return new ObjectResponseResult<T>(typedBody!, responseText);
+            }
+            catch (Newtonsoft.Json.JsonException exception)
+            {
+                var message = "Could not deserialize the response body string as " + typeof(T).FullName + ".";
+                throw new ApiException(message, (int)response.StatusCode, responseText, headers, exception);
+            }
+        }
+        else
+        {
+            try
+            {
+                using (var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                using (var streamReader = new System.IO.StreamReader(responseStream))
+                using (var jsonTextReader = new Newtonsoft.Json.JsonTextReader(streamReader))
+                {
+                    var serializer = Newtonsoft.Json.JsonSerializer.Create(JsonSerializerSettings);
+                    var typedBody = serializer.Deserialize<T>(jsonTextReader);
+                    return new ObjectResponseResult<T>(typedBody!, string.Empty);
+                }
+            }
+            catch (Newtonsoft.Json.JsonException exception)
+            {
+                var message = "Could not deserialize the response body stream as " + typeof(T).FullName + ".";
+                throw new ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);
+            }
+        }
+    }
+
+    private string ConvertToString(object? value, System.Globalization.CultureInfo cultureInfo)
+    {
+        if (value == null)
+        {
+            return "";
+        }
+
+        if (value is System.Enum)
+        {
+            var name = System.Enum.GetName(value.GetType(), value);
+            if (name != null)
+            {
+                var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
+                if (field != null)
+                {
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                        as System.Runtime.Serialization.EnumMemberAttribute;
+                    if (attribute != null)
+                    {
+                        return attribute.Value != null ? attribute.Value : name;
+                    }
+                }
+
+                var converted = System.Convert.ToString(System.Convert.ChangeType(value, System.Enum.GetUnderlyingType(value.GetType()), cultureInfo));
+                return converted == null ? string.Empty : converted;
+            }
+        }
+        else if (value is bool)
+        {
+            return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
+        }
+        else if (value is byte[])
+        {
+            return System.Convert.ToBase64String((byte[]) value);
+        }
+        else if (value is string[])
+        {
+            return string.Join(",", (string[])value);
+        }
+        else if (value.GetType().IsArray)
+        {
+            var valueArray = (System.Array)value;
+            var valueTextArray = new string[valueArray.Length];
+            for (var i = 0; i < valueArray.Length; i++)
+            {
+                valueTextArray[i] = ConvertToString(valueArray.GetValue(i), cultureInfo);
+            }
+            return string.Join(",", valueTextArray);
+        }
+
+        var result = System.Convert.ToString(value, cultureInfo);
+        return result == null ? "" : result;
+    }
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CreateAccountRequest
+{
+    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Email { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-hashed password from Auth service
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? PasswordHash { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool EmailVerified { get; set; } = false;
+
+    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object? Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UpdateAccountRequest
+{
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object? Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UpdateProfileRequest
+{
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object? Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UpdatePasswordRequest
+{
+    /// <summary>
+    /// New pre-hashed password from Auth service
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string PasswordHash { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UpdateVerificationRequest
+{
+    [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.Always)]
+    public bool EmailVerified { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AddAuthMethodRequest
+{
+    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public AddAuthMethodRequestProvider Provider { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string ExternalId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? DisplayName { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AccountResponse
+{
+    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid AccountId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Email { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("updatedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.Always)]
+    public bool EmailVerified { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<string> Roles { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    [Newtonsoft.Json.JsonProperty("authMethods", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<AuthMethodInfo> AuthMethods { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object? Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthMethodInfo
+{
+    [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Guid MethodId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public AuthMethodInfoProvider Provider { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? ExternalId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("linkedAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset LinkedAt { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthMethodResponse
+{
+    [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid MethodId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public AuthMethodResponseProvider Provider { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string ExternalId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("linkedAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset LinkedAt { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthMethodsResponse
+{
+    [Newtonsoft.Json.JsonProperty("authMethods", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<AuthMethodInfo> AuthMethods { get; set; } = new System.Collections.ObjectModel.Collection<AuthMethodInfo>();
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AccountListResponse
+{
+    [Newtonsoft.Json.JsonProperty("accounts", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<AccountResponse> Accounts { get; set; } = new System.Collections.ObjectModel.Collection<AccountResponse>();
+
+    [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.Always)]
+    public int TotalCount { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("page", Required = Newtonsoft.Json.Required.Always)]
+    public int Page { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("pageSize", Required = Newtonsoft.Json.Required.Always)]
+    public int PageSize { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("hasNextPage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool HasNextPage { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("hasPreviousPage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool HasPreviousPage { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum Provider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"email")]
+    Email = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 4,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum Provider2
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 3,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AddAuthMethodRequestProvider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 3,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthMethodInfoProvider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"email")]
+    Email = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 4,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthMethodResponseProvider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 3,
+
+}
+
+
+
+[System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ApiException : System.Exception
+{
+    public int StatusCode { get; private set; }
+
+    public string? Response { get; private set; }
+
+    public System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> Headers { get; private set; }
+
+    public ApiException(string message, int statusCode, string? response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Exception? innerException)
+        : base(message + "\n\nStatus: " + statusCode + "\nResponse: \n" + ((response == null) ? "(null)" : response.Substring(0, response.Length >= 512 ? 512 : response.Length)), innerException)
+    {
+        StatusCode = statusCode;
+        Response = response;
+        Headers = headers;
+    }
+
+    public override string ToString()
+    {
+        return string.Format("HTTP Response: \n\n{0}\n\n{1}", Response, base.ToString());
+    }
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ApiException<TResult> : ApiException
+{
+    public TResult Result { get; private set; }
+
+    public ApiException(string message, int statusCode, string? response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, TResult result, System.Exception? innerException)
+        : base(message, statusCode, response, headers, innerException)
+    {
+        Result = result;
+    }
 }
 
 #pragma warning restore  108

@@ -20,383 +20,381 @@
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Auth
+namespace BeyondImmersion.BannouService.Auth;
+
+using System = global::System;
+
+[System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+[Microsoft.AspNetCore.Mvc.Route("api/authorization")]
+
+public abstract class AuthControllerBaseControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
 {
-    using System = global::System;
-
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    [Microsoft.AspNetCore.Mvc.Route("api/authorization")]
-
-    public abstract class AuthControllerBaseControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
-    {
-        /// <summary>
-        /// Register new user account
-        /// </summary>
-        /// <remarks>
-        /// Creates a new user account with username and password authentication.
-        /// <br/>Returns JWT access token and refresh token on successful registration.
-        /// <br/>Email is optional but recommended for account recovery.
-        /// </remarks>
-        /// <returns>User registered successfully</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("register")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterResponse>> Register([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Login with username and password (GET)
-        /// </summary>
-        /// <remarks>
-        /// Authenticate user with username and password provided via headers.
-        /// <br/>Returns JWT access token and refresh token on successful authentication.
-        /// <br/>Uses GET method for simple credential-based login.
-        /// </remarks>
-        /// <param name="username">Username for authentication</param>
-        /// <param name="password">Password for authentication</param>
-        /// <returns>Login successful</returns>
-        [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("login/credentials")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginWithCredentialsGet([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string username, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string password, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Login with username and password (POST)
-        /// </summary>
-        /// <remarks>
-        /// Authenticate user with username and password provided via headers.
-        /// <br/>Returns JWT access token and refresh token on successful authentication.
-        /// <br/>Uses POST method for credential-based login with potential request body.
-        /// </remarks>
-        /// <param name="username">Username for authentication</param>
-        /// <param name="password">Password for authentication</param>
-        /// <param name="body">Optional login request body (currently unused)</param>
-        /// <returns>Login successful</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("login/credentials")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginWithCredentialsPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string username, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string password, [Microsoft.AspNetCore.Mvc.FromBody] LoginRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Login with refresh token (GET)
-        /// </summary>
-        /// <remarks>
-        /// Authenticate user with a refresh token provided via header.
-        /// <br/>Returns new JWT access token and potentially new refresh token.
-        /// <br/>Used for token refresh flows without requiring password re-entry.
-        /// </remarks>
-        /// <param name="token">Refresh token for authentication</param>
-        /// <returns>Token refresh successful</returns>
-        [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("login/token")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginWithTokenGet([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Login with refresh token (POST)
-        /// </summary>
-        /// <remarks>
-        /// Authenticate user with a refresh token provided via header.
-        /// <br/>Returns new JWT access token and potentially new refresh token.
-        /// <br/>Uses POST method for token refresh with potential request body.
-        /// </remarks>
-        /// <param name="token">Refresh token for authentication</param>
-        /// <param name="body">Optional login request body (currently unused)</param>
-        /// <returns>Token refresh successful</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("login/token")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginWithTokenPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string token, [Microsoft.AspNetCore.Mvc.FromBody] LoginRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-        /// <summary>
-        /// Validate JWT access token
-        /// </summary>
-        /// <remarks>
-        /// Validates a JWT access token and returns token status information.
-        /// <br/>Can be used to check if a token is valid, expired, or contains specific claims.
-        /// <br/>Currently returns basic validation response.
-        /// </remarks>
-        /// <returns>Token validation completed</returns>
-        [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("validate")]
-        public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateToken([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ValidateTokenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    }
+    /// <summary>
+    /// Register new user account
+    /// </summary>
+    /// <remarks>
+    /// Creates a new user account with username and password authentication.
+    /// <br/>Returns JWT access token and refresh token on successful registration.
+    /// <br/>Email is optional but recommended for account recovery.
+    /// </remarks>
+    /// <returns>User registered successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("register")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterResponse>> Register([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Request to register a new user account
+    /// Login with username and password (GET)
     /// </summary>
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class RegisterRequest
-    {
-        /// <summary>
-        /// Unique username for the account
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("username", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 3)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-zA-Z0-9_]+$")]
-        public string Username { get; set; } = default!;
-
-        /// <summary>
-        /// Password for the account (will be securely hashed)
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("password", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 8)]
-        public string Password { get; set; } = default!;
-
-        /// <summary>
-        /// Email address for the account (optional but recommended)
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [System.ComponentModel.DataAnnotations.StringLength(255)]
-        public string? Email { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
+    /// <remarks>
+    /// Authenticate user with username and password provided via headers.
+    /// <br/>Returns JWT access token and refresh token on successful authentication.
+    /// <br/>Uses GET method for simple credential-based login.
+    /// </remarks>
+    /// <param name="username">Username for authentication</param>
+    /// <param name="password">Password for authentication</param>
+    /// <returns>Login successful</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("login/credentials")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginWithCredentialsGet([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string username, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string password, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Response from successful user registration
+    /// Login with username and password (POST)
     /// </summary>
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class RegisterResponse
-    {
-        /// <summary>
-        /// JWT access token for immediate authentication
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("access_token", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Access_token { get; set; } = default!;
-
-        /// <summary>
-        /// Refresh token for obtaining new access tokens
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("refresh_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Refresh_token { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
+    /// <remarks>
+    /// Authenticate user with username and password provided via headers.
+    /// <br/>Returns JWT access token and refresh token on successful authentication.
+    /// <br/>Uses POST method for credential-based login with potential request body.
+    /// </remarks>
+    /// <param name="username">Username for authentication</param>
+    /// <param name="password">Password for authentication</param>
+    /// <param name="body">Optional login request body (currently unused)</param>
+    /// <returns>Login successful</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("login/credentials")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginWithCredentialsPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string username, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string password, [Microsoft.AspNetCore.Mvc.FromBody] LoginRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Login request body (currently unused - credentials passed via headers).
-    /// <br/>Provided for future extensibility and consistency with API patterns.
-    /// <br/>
+    /// Login with refresh token (GET)
     /// </summary>
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class LoginRequest
-    {
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
+    /// <remarks>
+    /// Authenticate user with a refresh token provided via header.
+    /// <br/>Returns new JWT access token and potentially new refresh token.
+    /// <br/>Used for token refresh flows without requiring password re-entry.
+    /// </remarks>
+    /// <param name="token">Refresh token for authentication</param>
+    /// <returns>Token refresh successful</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("login/token")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginWithTokenGet([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Response from successful user login
+    /// Login with refresh token (POST)
     /// </summary>
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class LoginResponse
-    {
-        /// <summary>
-        /// JWT access token for authentication
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("access_token", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Access_token { get; set; } = default!;
-
-        /// <summary>
-        /// Refresh token for obtaining new access tokens
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("refresh_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Refresh_token { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
+    /// <remarks>
+    /// Authenticate user with a refresh token provided via header.
+    /// <br/>Returns new JWT access token and potentially new refresh token.
+    /// <br/>Uses POST method for token refresh with potential request body.
+    /// </remarks>
+    /// <param name="token">Refresh token for authentication</param>
+    /// <param name="body">Optional login request body (currently unused)</param>
+    /// <returns>Token refresh successful</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("login/token")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginWithTokenPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string token, [Microsoft.AspNetCore.Mvc.FromBody] LoginRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Request to validate a JWT access token
+    /// Validate JWT access token
     /// </summary>
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ValidateTokenRequest
-    {
-        /// <summary>
-        /// JWT access token to validate
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("token", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required]
-        public string Token { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    /// <summary>
-    /// Response from token validation (currently minimal implementation).
-    /// <br/>Future versions may include token claims, expiration info, and validation details.
-    /// <br/>
-    /// </summary>
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ValidateTokenResponse
-    {
-        /// <summary>
-        /// Whether the token is valid
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("valid", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public bool Valid { get; set; } = default!;
-
-        /// <summary>
-        /// Token expiration timestamp
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("expires_at", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset? Expires_at { get; set; } = default!;
-
-        /// <summary>
-        /// Token subject (user identifier)
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("subject", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Subject { get; set; } = default!;
-
-        /// <summary>
-        /// Token claims (roles, permissions, etc.)
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("claims", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object? Claims { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    /// <summary>
-    /// Internal access data structure containing authentication tokens.
-    /// <br/>Used by service implementations but not directly exposed in API responses.
-    /// <br/>
-    /// </summary>
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AccessData
-    {
-        /// <summary>
-        /// JWT access token
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("access_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Access_token { get; set; } = default!;
-
-        /// <summary>
-        /// Refresh token for token renewal
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("refresh_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string? Refresh_token { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    /// <summary>
-    /// Error response for failed requests
-    /// </summary>
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AuthErrorResponse
-    {
-        /// <summary>
-        /// Error type identifier
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public AuthErrorResponseError Error { get; set; } = default!;
-
-        /// <summary>
-        /// Human-readable error message
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Message { get; set; } = default!;
-
-        /// <summary>
-        /// Additional error context and details
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("details", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object? Details { get; set; } = default!;
-
-        private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-        [Newtonsoft.Json.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-        {
-            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-            set { _additionalProperties = value; }
-        }
-
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum AuthErrorResponseError
-    {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"INVALID_REQUEST")]
-        INVALID_REQUEST = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"MISSING_CREDENTIALS")]
-        MISSING_CREDENTIALS = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"AUTHENTICATION_FAILED")]
-        AUTHENTICATION_FAILED = 2,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"TOKEN_INVALID")]
-        TOKEN_INVALID = 3,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"TOKEN_EXPIRED")]
-        TOKEN_EXPIRED = 4,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"USER_EXISTS")]
-        USER_EXISTS = 5,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"INTERNAL_ERROR")]
-        INTERNAL_ERROR = 6,
-
-    }
-
+    /// <remarks>
+    /// Validates a JWT access token and returns token status information.
+    /// <br/>Can be used to check if a token is valid, expired, or contains specific claims.
+    /// <br/>Currently returns basic validation response.
+    /// </remarks>
+    /// <returns>Token validation completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("validate")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateToken([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ValidateTokenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
+
+/// <summary>
+/// Request to register a new user account
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RegisterRequest
+{
+    /// <summary>
+    /// Unique username for the account
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("username", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 3)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-zA-Z0-9_]+$")]
+    public string Username { get; set; } = default!;
+
+    /// <summary>
+    /// Password for the account (will be securely hashed)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("password", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 8)]
+    public string Password { get; set; } = default!;
+
+    /// <summary>
+    /// Email address for the account (optional but recommended)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.StringLength(255)]
+    public string? Email { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Response from successful user registration
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RegisterResponse
+{
+    /// <summary>
+    /// JWT access token for immediate authentication
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("access_token", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Access_token { get; set; } = default!;
+
+    /// <summary>
+    /// Refresh token for obtaining new access tokens
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("refresh_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Refresh_token { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Login request body (currently unused - credentials passed via headers).
+/// <br/>Provided for future extensibility and consistency with API patterns.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LoginRequest
+{
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Response from successful user login
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LoginResponse
+{
+    /// <summary>
+    /// JWT access token for authentication
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("access_token", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Access_token { get; set; } = default!;
+
+    /// <summary>
+    /// Refresh token for obtaining new access tokens
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("refresh_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Refresh_token { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Request to validate a JWT access token
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ValidateTokenRequest
+{
+    /// <summary>
+    /// JWT access token to validate
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("token", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public string Token { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Response from token validation (currently minimal implementation).
+/// <br/>Future versions may include token claims, expiration info, and validation details.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ValidateTokenResponse
+{
+    /// <summary>
+    /// Whether the token is valid
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("valid", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool Valid { get; set; } = default!;
+
+    /// <summary>
+    /// Token expiration timestamp
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("expires_at", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset? Expires_at { get; set; } = default!;
+
+    /// <summary>
+    /// Token subject (user identifier)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("subject", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Subject { get; set; } = default!;
+
+    /// <summary>
+    /// Token claims (roles, permissions, etc.)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("claims", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object? Claims { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Internal access data structure containing authentication tokens.
+/// <br/>Used by service implementations but not directly exposed in API responses.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AccessData
+{
+    /// <summary>
+    /// JWT access token
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("access_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Access_token { get; set; } = default!;
+
+    /// <summary>
+    /// Refresh token for token renewal
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("refresh_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? Refresh_token { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Error response for failed requests
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthErrorResponse
+{
+    /// <summary>
+    /// Error type identifier
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public AuthErrorResponseError Error { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable error message
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Message { get; set; } = default!;
+
+    /// <summary>
+    /// Additional error context and details
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("details", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object? Details { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthErrorResponseError
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"INVALID_REQUEST")]
+    INVALID_REQUEST = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"MISSING_CREDENTIALS")]
+    MISSING_CREDENTIALS = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AUTHENTICATION_FAILED")]
+    AUTHENTICATION_FAILED = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"TOKEN_INVALID")]
+    TOKEN_INVALID = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"TOKEN_EXPIRED")]
+    TOKEN_EXPIRED = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"USER_EXISTS")]
+    USER_EXISTS = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"INTERNAL_ERROR")]
+    INTERNAL_ERROR = 6,
+
+}
+
 
 #pragma warning restore  108
 #pragma warning restore  114
