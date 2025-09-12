@@ -41,7 +41,7 @@ test-websocket:
 test-integration:
 	@echo "🧪 Running integration tests with Docker..."
 	if [ ! -f .env ]; then touch .env; fi
-	docker-compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.ci.yml --project-name bannou-test up --exit-code-from=bannou-tester
+	set -a && source .env && set +a && docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.ci.yml --project-name bannou-test up --exit-code-from=bannou-tester
 
 test-all: test-unit test-http test-websocket test-integration
 	@echo "✅ All tests completed"
@@ -54,9 +54,9 @@ test-unit:
 ci-test:
 	@echo "🚀 Running CI test pipeline..."
 	if [ ! -f .env ]; then touch .env; fi
-	docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
-	docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
-	docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v
+	set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
+	set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
+	set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v
 
 generate-services:
 	@echo "🔧 Generating all services (NSwag + Roslyn)..."

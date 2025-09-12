@@ -277,9 +277,9 @@ DAEMON_MODE=true make test-websocket # Automated client testing
 
 Bannou uses **two complementary code generation systems** with distinct responsibilities:
 
-#### NSwag (Primary API Generation) ✅ WORKING PERFECTLY
-**Purpose**: Generate API contracts, controllers, models, and **SERVICE CLIENTS** from OpenAPI schemas
-**Input**: `schemas/*-api.yaml` files
+#### NSwag (Primary API Generation) ✅ WORKING PERFECTLY WITH CUSTOM TEMPLATES
+**Purpose**: Generate API contracts, controllers, models, and **SERVICE CLIENTS** from OpenAPI schemas with custom file-scoped namespace templates
+**Input**: `schemas/*-api.yaml` files  
 **Output**: ASP.NET Core controllers, request/response models, **client classes for service-to-service calls**
 
 ```bash
@@ -291,13 +291,34 @@ nswag run nswag.json                        # Main API schemas (accounts, auth, 
 ./fix-endings.sh                          # Fix line endings for EditorConfig compliance
 ```
 
+#### ✅ **Custom NSwag Template System** (File-Scoped Namespaces Implementation)
+
+**Custom Template Directory**: `templates/nswag/`
+- **File.liquid**: Modified to generate `namespace MyNamespace;` instead of `namespace MyNamespace { }`
+- **Controller.liquid**: Uses file-scoped namespace syntax for C# 10+ compatibility
+- **Client.Class.liquid**: Generates client classes with modern C# syntax
+
+**Template Integration**:
+```bash
+# All NSwag commands now use custom templates automatically
+nswag openapi2cscontroller /input:../schemas/behavior-api.yaml /output:Controllers/Generated/BehaviorController.Generated.cs /namespace:BeyondImmersion.BannouService.Behavior /TemplateDirectory:"../templates/nswag" /ControllerStyle:Abstract
+
+nswag openapi2csclient /input:../schemas/behavior-api.yaml /output:lib-behavior/Generated/BehaviorClient.cs /namespace:BeyondImmersion.BannouService.Behavior.Client /TemplateDirectory:"../templates/nswag"
+```
+
+**Key Template Modifications**:
+- **Line 17 in File.liquid**: Changed from `namespace {{ Namespace }}` with braces to `namespace {{ Namespace }};`
+- **Removed closing braces**: Eliminated traditional namespace block syntax
+- **Removed `| tab` filters**: Cleaned up indentation for file-scoped syntax
+- **EditorConfig Compliance**: All generated files now use LF line endings and proper formatting
+
 **Generated Files** (Current Status):
-- ✅ `Controllers/Generated/AuthController.Generated.cs` (410 lines) - AuthControllerBase
-- ✅ `Controllers/Generated/AccountsController.Generated.cs` (539 lines) - AccountsControllerBase
-- ✅ `Controllers/Generated/WebsiteController.Generated.cs` (1104 lines) - WebsiteControllerBase
-- ✅ `Controllers/Generated/BehaviourController.Generated.cs` (498 lines) - BehaviourControllerBase
-- ✅ `Controllers/Generated/ConnectController.Generated.cs` (759 lines) - ConnectControllerBase
-- ✅ **SERVICE CLIENTS**: `lib-{service}/Generated/{Service}Client.cs` - DaprServiceClientBase clients for service-to-service calls
+- ✅ `Controllers/Generated/AuthController.Generated.cs` - Uses `namespace BeyondImmersion.BannouService.Auth;`
+- ✅ `Controllers/Generated/AccountsController.Generated.cs` - Uses `namespace BeyondImmersion.BannouService.Accounts;`
+- ✅ `Controllers/Generated/WebsiteController.Generated.cs` - Uses `namespace BeyondImmersion.BannouService.Website;`
+- ✅ `Controllers/Generated/BehaviorController.Generated.cs` - Uses `namespace BeyondImmersion.BannouService.Behavior;`
+- ✅ `Controllers/Generated/ConnectController.Generated.cs` - Uses `namespace BeyondImmersion.BannouService.Connect;`
+- ✅ **SERVICE CLIENTS**: `lib-{service}/Generated/{Service}Client.cs` - DaprServiceClientBase clients with file-scoped namespaces
 - ✅ `lib-accounts-core/Generated/AccountsEventsModels.cs` - Event models from accounts-events.yaml
 
 **Critical Architecture Note**:
@@ -306,11 +327,16 @@ nswag run nswag.json                        # Main API schemas (accounts, auth, 
 - **Always use generated clients** (e.g., `IAccountsClient`) for distributed service calls
 - **Clients inherit from `DaprServiceClientBase`** for automatic app-id resolution
 
-**Resolved Issues**:
-- ✅ Duplicate ControllerBase conflicts fixed via unique `/ClassName` parameters
-- ✅ Configuration file execution issues bypassed with direct command approach
-- ✅ Event model generation working perfectly (4 event classes + enum)
-- ✅ **Service client generation added to unified script** - fixes service-to-service communication architecture
+**Template System Benefits**:
+- ✅ **File-Scoped Namespace Support**: All generated code uses modern C# 10+ syntax
+- ✅ **Consistent Code Style**: Custom templates ensure all generated code follows project conventions
+- ✅ **EditorConfig Compliance**: Generated files automatically comply with project formatting rules
+- ✅ **Future-Proof**: Template system allows easy customization of generated code patterns
+
+**Configuration Integration**:
+- **bannou-service/nswag.json**: Updated with `"templateDirectory": "../templates/nswag"` on line 46
+- **generate-all-services.sh**: All commands include `/TemplateDirectory:"../templates/nswag"` parameter
+- **Direct Command Approach**: Bypassed configuration file execution issues with command-line parameters
 
 **Build Integration**: Runs via MSBuild target when `GenerateNewServices=true` OR unified script
 
@@ -371,9 +397,15 @@ docker run --rm -v $(pwd):/tmp/lint:rw oxsecurity/megalinter-dotnet:v8 -e "ENABL
 **Local Integration Testing Setup**: Complete workflow to run GitHub Actions integration tests locally without CI dependencies.
 
 #### **Prerequisites**
-- Docker and Docker Compose V2 installed
+- Docker and Docker Compose V2 installed (all Makefile commands now use `docker compose` v2 syntax)
 - `.env` file with required environment variables (see below)
 - Stop any conflicting services (e.g., `docker stop conference-manager-redis`)
+
+#### **CI/CD Configuration Notes**
+- **Docker Compose V2**: All Makefile targets use `docker compose` (v2) instead of `docker-compose` (v1)
+- **Dapr Components**: CI configuration uses `provisioning/dapr/components/ci/` directory for proper pub/sub and state store components
+- **Environment Variables**: Commands use `set -a && source .env && set +a` pattern for proper variable loading
+- **Service Events**: `bannou-pubsub` component required for ServiceMappingEventPublisher functionality
 
 #### **Environment Variables Setup**
 Create/verify `.env` file in project root:
@@ -648,13 +680,6 @@ Based on recent commits and current build status:
 - **Character Agent Services**: NPC lifecycle management and state persistence
 - **Cross-Service Integration**: Event-driven communication via RabbitMQ
 - **Performance Optimization**: Behavior compilation caching and scaling
-
-### 🎯 Implementation Standards Established
-- **Single Plugin Architecture**: One `lib-{service}` per service (consolidation complete)
-- **Schema-First Generation**: All controllers/models auto-generated from OpenAPI specs
-- **Tuple-Based Services**: `(StatusCodes, ResponseModel?)` pattern implemented across all services
-- **Documentation**: XML documentation warnings reduced to minimal levels
-- **Testing**: Dual-transport (HTTP + WebSocket) validation framework operational
 
 ## 🎯 CRITICAL: Dapr-First Development Patterns
 

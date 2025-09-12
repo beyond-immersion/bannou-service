@@ -16,10 +16,10 @@ services:
       interval: 10s
 
   # add the CI components to the dapr sidecar attached to the monoservice
-  # Temporarily disable components to allow integration testing of HTTP endpoints
+  # Use CI components for integration testing
   bannou-dapr:
     volumes:
-      - "./dapr/components/ci-disabled/:/components"
+      - "./dapr/components/ci/:/components"
     restart: "no"
 
   # adds a new sidecar to the monoservice, just to run the shell script
