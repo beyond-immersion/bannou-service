@@ -7,25 +7,34 @@ services:
       - APP_LOGGING_LEVEL=Information
       - ASPNETCORE_ENVIRONMENT=Development
 
+  # Add healthcheck to MySQL service for better startup coordination
+  account-db:
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "Franklin", "-pDevPassword"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+
   # add the CI components to the dapr sidecar attached to the monoservice
+  # Temporarily disable components to allow integration testing of HTTP endpoints
   bannou-dapr:
     volumes:
-      - "./dapr/components/ci/:/components"
+      - "./dapr/components/ci-disabled/:/components"
+    restart: "no"
 
   # adds a new sidecar to the monoservice, just to run the shell script
   # which CURLs an API to trigger all of the integration tests to run
   bannou-tester:
-    image: ubuntu:latest
+    image: alpine:latest
     network_mode:
       "service:bannou"
     volumes:
-      - "../install-tools.sh:/install-tools.sh"
       - "../wait-for-health.sh:/wait-for-health.sh"
       - "../service-tests.sh:/service-tests.sh"
     stdin_open: false
     depends_on:
       - bannou
-    command: bash -c "/install-tools.sh && /wait-for-health.sh && /service-tests.sh"
+    command: sh -c "apk add --no-cache curl && /wait-for-health.sh && /service-tests.sh"
 
   # silence filebeat during CI testing
   filebeat:

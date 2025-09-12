@@ -1,13 +1,12 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 
-for i in {1..5}; do
-    apt-get update && apt-get install -y curl && break || sleep 15
-done
-echo "tools installed"
+echo "Running integration tests..."
 
 if curl --fail -X GET "127.0.0.1/testing/run-enabled"; then
+  echo "Integration test passed!"
   exit 0
 fi
+echo "Integration test failed!"
 exit 1

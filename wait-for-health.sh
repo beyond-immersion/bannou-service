@@ -1,13 +1,13 @@
 #!/bin/bash
 
-ENDPOINT="https://127.0.0.1/health"
+ENDPOINT="http://127.0.0.1/health"
 MAX_RETRIES=60
 RETRY_TIME=5
 COUNT=0
 
 while [[ $COUNT -lt $MAX_RETRIES ]]
 do
-    RESPONSE_CODE=$(curl --connect-timeout 5 -o /dev/null -k -s -w "%{http_code}" $ENDPOINT 2>/dev/null)
+    RESPONSE_CODE=$(curl --connect-timeout 5 -o /dev/null -s -w "%{http_code}" $ENDPOINT 2>/dev/null)
 
     if [[ $RESPONSE_CODE -eq 200 ]]; then
         echo "Service is ready!"

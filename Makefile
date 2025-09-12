@@ -92,6 +92,23 @@ regenerate-all-services-legacy:
 sync:
 	git pull && git submodule update --init --recursive
 
+# Docker Compose V2 Integration Testing (Improved)
+test-integration-v2:
+	@echo "🧪 Running integration tests with Docker Compose V2..."
+	if [ ! -f .env ]; then touch .env; fi
+	set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
+
+ci-test-v2:
+	@echo "🚀 Running full CI pipeline with Docker Compose V2..."
+	if [ ! -f .env ]; then touch .env; fi
+	set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --pull
+	set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
+	set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v
+
+# Local testing commands (all use Docker Compose V2 for reliability)
+test-all-v2: test-unit test-http test-websocket test-integration-v2
+	@echo "✅ All tests completed with Docker Compose V2"
+
 tagname := $(shell date -u +%FT%H-%M-%SZ)
 tag:
 	git tag $(tagname) -a -m '$(msg)'

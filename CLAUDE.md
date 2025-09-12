@@ -105,25 +105,139 @@ lib-{service}/                 # Single consolidated service plugin
 4. **Fix Line Endings**: Run `./fix-endings.sh` after generation
 5. **Test**: Use dual-transport testing framework
 
-### 2. Testing Strategy
-**Always use existing testing infrastructure:**
+### 2. Three-Tier Testing Strategy
 
-- **`http-tester/`** - Direct HTTP endpoint testing with interactive console
-- **`edge-tester/`** - WebSocket protocol testing via Connect service
-- **`lib-testing-core/`** - Dual-transport framework with schema-driven test generation
+**Comprehensive Testing Architecture**: Bannou uses a sophisticated three-tier testing system that validates different aspects of the service architecture from infrastructure through service integration to client experience.
 
-**Testing Commands:**
+#### **Tier 1: Integration Testing (Infrastructure Validation)**
+**Purpose**: Validates that Dapr infrastructure is functional and services can communicate in the most general sense
+**Location**: `service-tests.sh` via Docker Compose CI pipeline  
+**Scope**: Minimal, intentionally simple HTTP endpoint testing
+
+**What it validates**:
+- ✅ Bannou service starts successfully in "omnipotent mode"
+- ✅ Dapr sidecar initializes without critical errors
+- ✅ Basic HTTP endpoint accessibility (`/testing/run-enabled`)
+- ✅ Database connectivity and service health
+
+**Commands**:
 ```bash
-# Local testing
-make test-http          # Direct HTTP endpoint tests
-make test-websocket     # WebSocket protocol tests
-make test-unit          # All unit tests
-make test-integration   # Docker-based integration tests
-make test-all           # Complete test suite
+# Quick integration test (matches GitHub Actions exactly)
+make test-integration-v2
 
-# CI/CD pipeline
-make ci-test            # Matches GitHub Actions workflow
+# Full CI pipeline with build, test, cleanup  
+make ci-test-v2
+
+# Manual Docker Compose execution
+set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
 ```
+
+**Architecture**: Uses Alpine Linux test container with simple curl commands to validate basic service availability.
+
+#### **Tier 2: Service-to-Service Testing (HTTP Direct Testing)**
+**Purpose**: Thoroughly tests inter-service API interactions and business logic validation  
+**Location**: `http-tester/` project with comprehensive test suites  
+**Scope**: Direct HTTP endpoint testing with authentication and service integration
+
+**What it validates**:
+- ✅ Authentication system (login, registration, JWT token handling)
+- ✅ Account management service interactions  
+- ✅ Service-to-service communication via generated C# clients
+- ✅ Business logic correctness (e.g., accounts system as seen by auth system)
+- ✅ API contract compliance and error handling
+- ✅ Dapr service mapping and routing
+
+**Key Features**:
+- **Interactive Console**: Select and run individual tests for debugging
+- **Daemon Mode**: Automated execution for CI/CD integration (`DAEMON_MODE=true`)
+- **Generated Client Integration**: Uses NSwag-generated C# service clients for type-safe API calls
+- **Authentication Flow**: Automatic registration/login with configurable credentials
+
+**Test Handlers**:
+- `AccountTestHandler`: Account creation, profile management, validation
+- `AuthTestHandler`: Authentication flows and JWT token validation  
+- `DaprServiceMappingTestHandler`: Service discovery and routing validation
+
+**Commands**:
+```bash
+# Interactive HTTP testing (development)
+dotnet run --project http-tester
+
+# Automated HTTP testing (CI/CD)  
+DAEMON_MODE=true dotnet run --project http-tester
+```
+
+#### **Tier 3: Client Experience Testing (WebSocket Protocol Testing)**
+**Purpose**: Tests complete client experience through the WebSocket protocol via Connect service edge gateway  
+**Location**: `edge-tester/` project with WebSocket-first testing  
+**Scope**: Full client perspective testing including WebSocket binary protocol, authentication, and service interactions
+
+**What it validates**:
+- ✅ WebSocket connection establishment with JWT authentication
+- ✅ Binary protocol message formatting and routing (24-byte header + JSON payload)
+- ✅ Connect service edge gateway zero-copy message routing
+- ✅ Service GUID resolution and client-to-service communication
+- ✅ Message ID correlation and response handling
+- ✅ Client authentication flows and session management
+
+**Binary Protocol Architecture**:
+```csharp
+// Message structure: [ServiceGUID: 16 bytes][MessageID: 8 bytes][Flags: 1 byte][Payload: Variable]
+public enum MessageFlags : byte
+{
+    None = 0,              // Default: Text/JSON to service, expecting response
+    Binary = 1 << 0,       // Binary payload data
+    Encrypted = 1 << 1,    // Encrypted payload  
+    Compressed = 1 << 2,   // Compressed payload
+    HighPriority = 1 << 3, // Skip to front of queues
+    Event = 1 << 4,        // Fire-and-forget event
+    Client = 1 << 5,       // Route to WebSocket client
+    Response = 1 << 6      // Response to RPC
+}
+```
+
+**Test Capabilities**:
+- **WebSocket Authentication**: Bearer token in connection headers
+- **Service Discovery**: Dynamic service GUID mapping and resolution
+- **Message Correlation**: Request/response ID matching for async operations
+- **Protocol Validation**: Binary message format compliance
+
+**Commands**:
+```bash
+# WebSocket protocol testing (client perspective)
+dotnet run --project edge-tester
+
+# Background WebSocket testing (daemon mode)
+DAEMON_MODE=true dotnet run --project edge-tester  
+```
+
+#### **Comprehensive Testing Commands**
+```bash
+# Development workflow (all tiers)
+make test-unit              # Unit tests (C# libraries)
+make test-http              # Tier 2: HTTP service testing  
+make test-websocket         # Tier 3: WebSocket protocol testing
+make test-integration-v2    # Tier 1: Infrastructure validation
+make test-all               # Execute all testing tiers
+
+# CI/CD pipeline (matches GitHub Actions)
+make ci-test-v2             # Full integration pipeline
+DAEMON_MODE=true make test-http     # Automated service testing
+DAEMON_MODE=true make test-websocket # Automated client testing
+```
+
+#### **Testing Architecture Benefits**
+**Progressive Validation**: Each tier builds upon the previous, ensuring comprehensive coverage:
+1. **Infrastructure** → Basic service availability and health  
+2. **Service Logic** → Business rules and inter-service communication
+3. **Client Experience** → End-to-end user interaction patterns
+
+**Development Efficiency**: Developers can isolate issues to specific tiers:
+- Tier 1 failures → Infrastructure/deployment issues
+- Tier 2 failures → Business logic or API contract issues  
+- Tier 3 failures → Protocol or client integration issues
+
+**Production Confidence**: Local execution of all three tiers provides complete confidence that changes will work in GitHub Actions CI/CD pipeline.
 
 ### 3. Code Generation Systems
 
@@ -218,34 +332,158 @@ dotnet test
 docker run --rm -v $(pwd):/tmp/lint:rw oxsecurity/megalinter-dotnet:v8 -e "ENABLE=EDITORCONFIG"
 ```
 
-### 5. CI/CD Integration Testing Dependencies
+### 5. Local Integration Testing Workflow (Validated Working Solution)
 
-**"Bannou" Omnipotent Mode**: Integration testing runs all services on a single node in "bannou" mode, requiring all dependent infrastructure services.
+**Local Integration Testing Setup**: Complete workflow to run GitHub Actions integration tests locally without CI dependencies.
 
-**Required Infrastructure Services for CI**:
-- **Redis**: Required for Dapr state management and caching
-- **MySQL/PostgreSQL**: Required for persistent data storage
-- **RabbitMQ**: Required for Dapr pub/sub messaging
-- **Dapr Sidecar**: Required for service mesh functionality
+#### **Prerequisites**
+- Docker and Docker Compose V2 installed
+- `.env` file with required environment variables (see below)
+- Stop any conflicting services (e.g., `docker stop conference-manager-redis`)
 
-**CI Docker Compose Dependency Management**:
-When adding new services to the codebase, ALWAYS update:
-
-1. **`provisioning/docker-compose.ci.yml`**: Add any new infrastructure dependencies (databases, message queues, etc.)
-2. **`.env` file**: Add required environment variables and connection strings
-3. **Dapr components**: Add component configurations in `provisioning/dapr/components/ci/`
-4. **Service configuration**: Ensure new services can initialize with CI environment settings
-
-**Example New Service Integration**:
+#### **Environment Variables Setup** 
+Create/verify `.env` file in project root:
 ```bash
-# When adding a new service that requires MongoDB:
-# 1. Add MongoDB to docker-compose.ci.yml
-# 2. Add MONGODB_CONNECTION_STRING to .env
-# 3. Add MongoDB Dapr component configuration
-# 4. Ensure service can start without manual database setup
+# Database
+ACCOUNT_DB_USER=Franklin
+ACCOUNT_DB_PASSWORD=DevPassword
+
+# JWT Authentication
+AUTH_TOKEN_PUBLIC_KEY=your-public-key
+AUTH_TOKEN_PRIVATE_KEY=your-private-key
+
+# Optional: Add any additional service-specific variables
 ```
 
-**Integration Testing Philosophy**: All services must be able to start and pass basic health checks in "bannou" omnipotent mode with only infrastructure dependencies running. This ensures the CI pipeline can validate complete system integration.
+#### **Docker Compose Integration Testing Commands**
+
+**Makefile Targets (Docker Compose V2)**:
+```bash
+# Quick integration test (matches GitHub Actions exactly)  
+make test-integration-v2
+
+# Full CI pipeline with build, test, cleanup
+make ci-test-v2
+
+# Legacy Docker Compose V1 (may have environment variable issues)
+make test-integration     # Original - may fail with variable loading
+make ci-test             # Original - may fail with variable loading
+```
+
+**Manual Commands (Direct)**:
+```bash
+# Complete CI test pipeline (build + test + cleanup)
+set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --pull
+set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
+set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v
+
+# Integration test only (no rebuild)
+set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
+```
+
+#### **Architecture Details**
+
+**Service Architecture**: Integration testing uses "bannou" omnipotent mode where all services run in a single container.
+
+**Docker Compose Stack**:
+- **`bannou`**: Main service container with all APIs enabled
+- **`account-db`**: MySQL 8.1.0 with healthcheck and proper authentication
+- **`auth-redis`** & **`connect-redis`**: Redis instances for service caching
+- **`bannou-dapr`**: Dapr sidecar (components disabled for HTTP-only testing)
+- **`bannou-tester`**: Alpine Linux container that runs integration test scripts
+- **`filebeat`**: Log aggregation (silenced during testing)
+
+**Test Execution Flow**:
+1. Docker builds/pulls all service images
+2. MySQL starts with proper user permissions for Docker networks
+3. Redis instances start for service caching
+4. Bannou service starts and waits for database connectivity
+5. Dapr sidecar starts (components disabled to avoid MySQL binding issues)
+6. Alpine test container starts, installs curl, and runs health + integration tests
+7. Test container calls `/testing/run-enabled` endpoint via HTTP
+8. Exit code propagates success/failure back to Docker Compose
+
+#### **Troubleshooting Guide**
+
+**Common Issues and Solutions**:
+
+1. **Environment Variable Issues**:
+   ```bash
+   # Error: "The ACCOUNT_DB_USER variable is not set"
+   # Solution: Use Docker Compose V2 with explicit environment export
+   set -a && source .env && set +a && docker compose ...
+   ```
+
+2. **Port Conflicts with Existing Redis**:
+   ```bash
+   # Error: "port is already allocated"
+   # Solution: Stop conflicting containers
+   docker stop conference-manager-redis
+   docker ps  # Verify no port conflicts
+   ```
+
+3. **MySQL Authentication Failures**:
+   ```bash
+   # Error: "Access denied for user 'Franklin'@'172.x.x.x'"
+   # Solution: Already fixed in grant-permissions.sql with Docker network patterns
+   # File handles localhost, wildcard, and Docker network subnets automatically
+   ```
+
+4. **Network Connectivity in Test Container**:
+   ```bash
+   # Error: "Temporary failure resolving archive.ubuntu.com"
+   # Solution: Already fixed - using Alpine Linux with apk package manager
+   # Alpine: apk add --no-cache curl (works in Docker networks)
+   ```
+
+5. **Dapr Component Issues**:
+   ```bash
+   # Error: MySQL connection issues in Dapr sidecar
+   # Solution: Components disabled in ci-disabled/ directory for HTTP-only testing
+   # Override: bannou-dapr uses ./dapr/components/ci-disabled/ volume
+   ```
+
+#### **File Locations and Key Configurations**
+
+**Docker Compose Override (`provisioning/docker-compose.ci.yml`)**:
+- MySQL healthcheck with proper authentication parameters
+- Alpine Linux test container with curl installation  
+- Dapr components disabled via ci-disabled directory mount
+- FileBeats logging disabled during testing
+
+**Test Scripts**:
+- **`wait-for-health.sh`**: Waits for HTTP health endpoint (not HTTPS)
+- **`service-tests.sh`**: Calls integration test endpoint `/testing/run-enabled`
+
+**MySQL Configuration (`provisioning/mysql/run-init/grant-permissions.sql`)**:
+- Franklin user permissions for localhost, wildcard (%), Docker networks (172.x.x.x, 192.168.x.x)
+- MySQL 8 native password authentication compatibility
+
+**Dapr Components**:
+- **Production**: `provisioning/dapr/components/` (includes MySQL binding)
+- **CI Testing**: `provisioning/dapr/components/ci-disabled/` (empty directory, no MySQL binding)
+
+#### **CI/CD Pipeline Integration**
+
+**GitHub Actions Equivalence**: The local commands replicate the exact CI workflow:
+1. ✅ Environment variable loading
+2. ✅ Docker image building with `--pull` for latest base images  
+3. ✅ Service orchestration with proper dependency ordering
+4. ✅ Health check validation and test execution
+5. ✅ Resource cleanup with `--remove-orphans -v`
+
+**Development Workflow Integration**:
+```bash
+# Before committing changes, verify integration tests pass locally
+make ci-test-v2
+
+# Quick validation during development
+make test-integration-v2
+
+# If tests pass locally, they will pass in GitHub Actions
+```
+
+**Performance**: Complete local integration test cycle (build + test + cleanup) runs in ~3-5 minutes depending on machine performance.
 
 ## Service Implementation Guidelines
 
