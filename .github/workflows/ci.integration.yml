@@ -1,4 +1,4 @@
-name: 'Integration Tests'
+name: 'Comprehensive CI Pipeline'
 
 on:
   push:
@@ -9,9 +9,10 @@ on:
 
 jobs:
 
-  integration-tests:
-    name: Integration Tests
+  comprehensive-tests:
+    name: Comprehensive Testing Pipeline
     runs-on: ubuntu-latest
+    environment: production
     env:
       DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       ACCOUNT_DB_USER: ${{ secrets.ACCOUNT_DB_USER }}
@@ -25,24 +26,114 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Install Docker Compose
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      # Step 1: Generate Services - Ensure all controllers/models are current
+      - name: 1️⃣ Generate Services (Initial)
         run: |
+          echo "🔧 Generating all service controllers, models, and clients..."
+          ./generate-all-services.sh
+          
+      # Step 2: Generate SDK - Create client SDK from current service definitions
+      - name: 2️⃣ Generate Client SDK (Initial) 
+        run: |
+          echo "📦 Generating Client SDK from current services..."
+          ./generate-client-sdk.sh
+          
+      # Step 3: Build - Compile everything with fresh generated code
+      - name: 3️⃣ Build All Projects
+        run: |
+          echo "🏗️ Building all projects with generated code..."
+          dotnet build --configuration Release
+          
+      # Step 4: Generate Services (again) - Detect any conflicts from duplicate generation
+      - name: 4️⃣ Generate Services (Conflict Detection)
+        run: |
+          echo "🔍 Re-generating services to detect conflicts..."
+          ./generate-all-services.sh
+          
+      # Step 5: Generate SDK (again) - Ensure SDK consistency after conflict resolution
+      - name: 5️⃣ Generate Client SDK (Consistency Check)
+        run: |
+          echo "🔄 Re-generating Client SDK for consistency..."
+          ./generate-client-sdk.sh
+          
+      # Step 6: Unit Tests - Test individual components
+      - name: 6️⃣ Unit Tests
+        run: |
+          echo "🧪 Running unit tests..."
+          dotnet test --configuration Release --no-build
+          
+      # Step 7: Infrastructure Tests - Basic service availability
+      - name: 7️⃣ Infrastructure Tests (Docker Setup)
+        run: |
+          echo "🐳 Installing Docker Compose and setting up infrastructure tests..."
           sudo apt-get update
           sudo apt-get install -y docker-compose
+          
+      - name: 7️⃣ Infrastructure Tests (Execution)
+        run: |
+          echo "🏗️ Running infrastructure tests (service availability)..."
+          docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
+          docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
 
-      - name: Rebuild Services
-        run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
-
-      - name: Run Integration Tests
-        run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
-
-      - name: Cleanup
+      # Step 8: HTTP Integration Tests - http-tester using newly generated client types
+      - name: 8️⃣ HTTP Integration Tests (Generated Clients)
+        run: |
+          echo "🔗 Running HTTP integration tests with generated client types..."
+          DAEMON_MODE=true dotnet run --project http-tester --configuration Release --no-build
+          
+      # Step 9: WebSocket Integration Tests (Backwards Compatibility) - edge-tester using published NuGet
+      - name: 9️⃣ WebSocket Tests (Backwards Compatibility - Published SDK)
+        run: |
+          echo "📡 Running WebSocket tests with published NuGet SDK (backwards compatibility)..."
+          # Build edge-tester with published NuGet dependency
+          dotnet build edge-tester --configuration Release -p:UsePublishedSDK=true --no-dependencies
+          DAEMON_MODE=true dotnet run --project edge-tester --configuration Release --no-build
+          
+      # Step 10: WebSocket Integration Tests (Forward Compatibility) - edge-tester using current SDK
+      - name: 🔟 WebSocket Tests (Forward Compatibility - Current SDK)
+        run: |
+          echo "🚀 Running WebSocket tests with current generated SDK (forward compatibility)..."
+          # Build edge-tester with current generated SDK
+          dotnet build edge-tester --configuration Release -p:UseCurrentSDK=true --no-dependencies
+          DAEMON_MODE=true dotnet run --project edge-tester --configuration Release --no-build
+          
+      - name: Docker Cleanup
         if: always()
         continue-on-error: true
-        run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v &&
-            docker container prune -f &&
-            docker image prune -f &&
-            docker volume prune -f
+        run: |
+          echo "🧹 Cleaning up Docker resources..."
+          docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v
+          docker container prune -f
+          docker image prune -f
+          docker volume prune -f
+
+      # NuGet Publishing Pipeline - only runs on master branch success with production environment
+      - name: Calculate Semantic Version
+        if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
+        id: version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          dry_run: false
+          
+      - name: 📦 Build and Pack Client SDK for Release
+        if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
+        run: |
+          echo "📦 Building and packing Client SDK v${{ steps.version.outputs.new_version }}..."
+          dotnet build Bannou.Client.SDK --configuration Release --no-dependencies
+          dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=${{ steps.version.outputs.new_version }} --output ./nuget-packages --no-build
+          
+      - name: 🚀 Publish to NuGet (Production Environment)
+        if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
+        run: |
+          echo "🚀 Publishing to NuGet.org with production environment restrictions..."
+          dotnet nuget push ./nuget-packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Get Latest Commit Info
         id: commit_info

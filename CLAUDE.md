@@ -914,6 +914,10 @@ public async Task ProcessMessage(ReadOnlyMemory<byte> message)
 
 ---
 
+## GitHub Actions & CI/CD Pipeline Reference
+
+**For GitHub Actions, CI/CD workflows, NuGet publishing, and deployment processes**: See `/NUGET-SETUP.md` for complete documentation of the enhanced 10-step CI pipeline, environment-specific publishing, and backwards/forward compatibility testing strategies.
+
 ## Optimized Development Workflow (2025)
 
 ### Complete Service Implementation Process

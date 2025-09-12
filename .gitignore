@@ -6,6 +6,11 @@ project.lock.json
 nupkg/
 .env
 
+# Generated Client SDK (regenerated on build)
+Bannou.Client.SDK/
+test-nuget/
+nuget-packages/
+
 # Visual Studio Code
 .vscode
 
