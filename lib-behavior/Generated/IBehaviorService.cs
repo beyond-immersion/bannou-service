@@ -15,24 +15,14 @@ public interface IBehaviorService
     Task<(StatusCodes, CompileBehaviorResponse?)> CompileAbmlBehaviorAsync(string body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// Compile stackable behavior sets
+    /// CompileBehaviorStack operation
     /// </summary>
-    /// <remarks>
-    /// Compiles multiple ABML behavior sets with priority-based merging.
-    /// <br/>Handles cultural adaptations, profession specializations, and context resolution.
-    /// </remarks>
-    /// <returns>Behavior stack compiled successfully</returns>
-    public abstract Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileBehaviorStack(BehaviorStackRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, CompileBehaviorResponse?)> CompileBehaviorStackAsync(BehaviorStackRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// Validate ABML definition
+    /// ValidateAbml operation
     /// </summary>
-    /// <remarks>
-    /// Validates ABML YAML against schema and checks for semantic correctness.
-    /// <br/>Includes context variable validation and service dependency checking.
-    /// </remarks>
-    /// <returns>Validation completed</returns>
-    public abstract Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateAbmlResponse>> ValidateAbml(string body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(string body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// GetCachedBehavior operation

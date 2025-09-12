@@ -26,7 +26,7 @@ public class ServiceNamePascalServiceTests
         var exception = Record.Exception(() => new ServiceNamePascalService(
             _mockConfiguration.Object,
             _mockLogger.Object));
-            
+
         Assert.Null(exception);
     }
 

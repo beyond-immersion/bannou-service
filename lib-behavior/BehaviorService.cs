@@ -25,7 +25,7 @@ public class BehaviorService : IBehaviorService
     /// <summary>
     /// CompileAbmlBehavior operation implementation
     /// </summary>
-    public Task<(StatusCodes, CompileBehaviorResponse?)> CompileAbmlBehaviorAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, CompileBehaviorResponse?)> CompileAbmlBehaviorAsync(string body, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -46,7 +46,7 @@ public class BehaviorService : IBehaviorService
     /// <summary>
     /// CompileBehaviorStack operation implementation
     /// </summary>
-    public Task<(StatusCodes, CompileBehaviorResponse?)> CompileBehaviorStackAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, CompileBehaviorResponse?)> CompileBehaviorStackAsync(BehaviorStackRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -67,7 +67,7 @@ public class BehaviorService : IBehaviorService
     /// <summary>
     /// ValidateAbml operation implementation
     /// </summary>
-    public Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(string body, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -88,7 +88,7 @@ public class BehaviorService : IBehaviorService
     /// <summary>
     /// GetCachedBehavior operation implementation
     /// </summary>
-    public Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(string behavior_id, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -109,7 +109,7 @@ public class BehaviorService : IBehaviorService
     /// <summary>
     /// ResolveContextVariables operation implementation
     /// </summary>
-    public Task<(StatusCodes, ResolveContextResponse?)> ResolveContextVariablesAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, ResolveContextResponse?)> ResolveContextVariablesAsync(ResolveContextRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -126,10 +126,4 @@ public class BehaviorService : IBehaviorService
             return Task.FromResult<(StatusCodes, ResolveContextResponse?)>((StatusCodes.InternalServerError, null));
         }
     }
-
-    public Task<(StatusCodes, CompileBehaviorResponse?)> CompileAbmlBehaviorAsync(string body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    public Task<ActionResult<CompileBehaviorResponse>> CompileBehaviorStack(BehaviorStackRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    public Task<ActionResult<ValidateAbmlResponse>> ValidateAbml(string body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    public Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(string behavior_id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    public Task<(StatusCodes, ResolveContextResponse?)> ResolveContextVariablesAsync(ResolveContextRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

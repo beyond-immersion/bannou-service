@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-ENDPOINT="http://127.0.0.1/health"
+ENDPOINT="http://bannou/health"
 MAX_RETRIES=60
 RETRY_TIME=5
 COUNT=0

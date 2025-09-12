@@ -74,14 +74,14 @@
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Attributes.DaprServiceAttribute.InterfaceType">
-            <summary>
-            IDaprService interface type.
-            Must implement/inherit IDaprService.
-            Can be an interface, abstract or concrete class.
-            If null, will use exact class type.
-
-            MUST match the service pulled from DI in related controllers.
-            </summary>
+             <summary>
+             IDaprService interface type.
+             Must implement/inherit IDaprService.
+             Can be an interface, abstract or concrete class.
+             If null, will use exact class type.
+            
+             MUST match the service pulled from DI in related controllers.
+             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Attributes.DaprServiceAttribute.Lifetime">
             <summary>
@@ -144,7 +144,7 @@
              <summary>
              Will retrieve the PropertyInfo of all properties with the given attribute,
              across all types and all loaded assemblies.
-
+            
              Return the type, propertyInfo, and the attribute instance.
              </summary>
         </member>
@@ -152,7 +152,7 @@
              <summary>
              Will retrieve the PropertyInfo of all properties with the given attribute,
              across all types and all loaded assemblies.
-
+            
              Return the type, propertyInfo, and the attribute instance.
              </summary>
         </member>
@@ -160,7 +160,7 @@
              <summary>
              Will retrieve the FieldInfo of all fields with the given attribute,
              across all types and all loaded assemblies.
-
+            
              Return the type, fieldInfo, and the attribute instance.
              </summary>
         </member>
@@ -168,7 +168,7 @@
              <summary>
              Will retrieve the FieldInfo of all fields with the given attribute,
              across all types and all loaded assemblies.
-
+            
              Return the type, fieldInfo, and the attribute instance.
              </summary>
         </member>
@@ -176,7 +176,7 @@
              <summary>
              Will retrieve the MethodInfo of all methods with the given attribute,
              across all types and all loaded assemblies.
-
+            
              Return the type, methodInfo, and the attribute instance.
              </summary>
         </member>
@@ -184,7 +184,7 @@
              <summary>
              Will retrieve the MethodInfo of all methods with the given attribute,
              across all types and all loaded assemblies.
-
+            
              Return the type, methodInfo, and the attribute instance.
              </summary>
         </member>
@@ -1140,12 +1140,12 @@
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Program.LoadAssemblies">
-            <summary>
-            Load appropriate sets of libs in /libs/ and subdirectories
-            based on current application configuration.
-
-            <seealso cref="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Include_Assemblies"/>
-            </summary>
+             <summary>
+             Load appropriate sets of libs in /libs/ and subdirectories
+             based on current application configuration.
+            
+             <seealso cref="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Include_Assemblies"/>
+             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Program.OnAssemblyResolve(System.Object,System.ResolveEventArgs)">
             <summary>
@@ -1558,14 +1558,14 @@
             <inheritdoc/>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.IDaprService">
-            <summary>
-            Interface to implement for all internal dapr service,
-            which provides the logic for any given set of APIs.
-
-            For example, the Inventory service is in charge of
-            any API calls that desire to create/modify inventory
-            data in the game.
-            </summary>
+             <summary>
+             Interface to implement for all internal dapr service,
+             which provides the logic for any given set of APIs.
+            
+             For example, the Inventory service is in charge of
+             any API calls that desire to create/modify inventory
+             data in the game.
+             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Services.IDaprService.Services">
             <summary>
@@ -1578,22 +1578,22 @@
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Services.IDaprService.ServiceAppMappings">
-            <summary>
-            Lookup for mapping applications to services in the Dapr network.
-            Is applied as an override to hardcoded and configurable network_mode presets.
-
-            <seealso cref="P:BeyondImmersion.BannouService.Services.IDaprService.NetworkModePresets"/>
-            </summary>
+             <summary>
+             Lookup for mapping applications to services in the Dapr network.
+             Is applied as an override to hardcoded and configurable network_mode presets.
+            
+             <seealso cref="P:BeyondImmersion.BannouService.Services.IDaprService.NetworkModePresets"/>
+             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Services.IDaprService.NetworkModePresets">
-            <summary>
-            The service->application name mappings for the network.
-            Specific to the network mode that's been configured.
-
-            Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
-            mappings to use.
-            <seealso cref="P:BeyondImmersion.BannouService.Services.IDaprService.ServiceAppMappings"/>
-            </summary>
+             <summary>
+             The service->application name mappings for the network.
+             Specific to the network mode that's been configured.
+            
+             Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
+             mappings to use.
+             <seealso cref="P:BeyondImmersion.BannouService.Services.IDaprService.ServiceAppMappings"/>
+             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IDaprService.OnStartAsync(System.Threading.CancellationToken)">
             <summary>
@@ -1682,13 +1682,13 @@
             <returns>Interface Type, Implementation Type, Service Attribute</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetPresetAppNameFromServiceName(System.String)">
-            <summary>
-            Returns the application name mapped for the given service name, from the
-            network mode preset.
-
-            Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
-            mappings to use.
-            </summary>
+             <summary>
+             Returns the application name mapped for the given service name, from the
+             network mode preset.
+            
+             Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
+             mappings to use.
+             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetServicePresetsByAppName(System.String)">
             <summary>
@@ -1708,12 +1708,12 @@
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetAppByServiceName(System.String)">
-            <summary>
-            Get the app name for the given service name.
-
-            The service name is primarily obtained from the DaprService
-            attribute attached to the implementation type.
-            </summary>
+             <summary>
+             Get the app name for the given service name.
+            
+             The service name is primarily obtained from the DaprService
+             attribute attached to the implementation type.
+             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceResponse">
             <summary>

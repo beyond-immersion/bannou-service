@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace BeyondImmersion.BannouService.Website;
 
 /// <summary>
-/// Generated service implementation for Website API
+/// Service implementation for Website API
 /// </summary>
 public class WebsiteService : IWebsiteService
 {
@@ -24,14 +24,11 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// GetStatus operation implementation
     /// </summary>
-    public Task<(StatusCodes, StatusResponse?)> GetStatusAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, StatusResponse?)> GetStatusAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogDebug("Processing status request");
-
-            // TODO: Implement status logic
-
             return Task.FromResult<(StatusCodes, StatusResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -44,14 +41,11 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// GetPageContent operation implementation
     /// </summary>
-    public Task<(StatusCodes, PageContent?)> GetPageContentAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, PageContent?)> GetPageContentAsync(string slug, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing page content request");
-
-            // TODO: Implement page content retrieval logic
-
+            _logger.LogDebug("Processing page content request for slug: {Slug}", slug);
             return Task.FromResult<(StatusCodes, PageContent?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -64,14 +58,11 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// GetNews operation implementation
     /// </summary>
-    public Task<(StatusCodes, NewsResponse?)> GetNewsAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, NewsResponse?)> GetNewsAsync(int? limit = 10, int? offset = 0, CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogDebug("Processing news request");
-
-            // TODO: Implement news retrieval logic
-
             return Task.FromResult<(StatusCodes, NewsResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -84,14 +75,11 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// GetServerStatus operation implementation
     /// </summary>
-    public Task<(StatusCodes, ServerStatusResponse?)> GetServerStatusAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, ServerStatusResponse?)> GetServerStatusAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogDebug("Processing server status request");
-
-            // TODO: Implement server status logic
-
             return Task.FromResult<(StatusCodes, ServerStatusResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -104,14 +92,11 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// GetDownloads operation implementation
     /// </summary>
-    public Task<(StatusCodes, DownloadsResponse?)> GetDownloadsAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, DownloadsResponse?)> GetDownloadsAsync(Platform? platform = null, CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogDebug("Processing downloads request");
-
-            // TODO: Implement downloads retrieval logic
-
             return Task.FromResult<(StatusCodes, DownloadsResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -124,14 +109,11 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// SubmitContact operation implementation
     /// </summary>
-    public Task<(StatusCodes, ContactResponse?)> SubmitContactAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, ContactResponse?)> SubmitContactAsync(ContactRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing contact submission request");
-
-            // TODO: Implement contact submission logic
-
+            _logger.LogDebug("Processing contact submission");
             return Task.FromResult<(StatusCodes, ContactResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -144,14 +126,11 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// GetAccountProfile operation implementation
     /// </summary>
-    public Task<(StatusCodes, AccountProfile?)> GetAccountProfileAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, AccountProfile?)> GetAccountProfileAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogDebug("Processing account profile request");
-
-            // TODO: Implement account profile retrieval logic
-
             return Task.FromResult<(StatusCodes, AccountProfile?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -164,14 +143,11 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// GetAccountCharacters operation implementation
     /// </summary>
-    public Task<(StatusCodes, CharacterListResponse?)> GetAccountCharactersAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, CharacterListResponse?)> GetAccountCharactersAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogDebug("Processing account characters request");
-
-            // TODO: Implement account characters retrieval logic
-
             return Task.FromResult<(StatusCodes, CharacterListResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -181,17 +157,15 @@ public class WebsiteService : IWebsiteService
         }
     }
 
+
     /// <summary>
     /// CreatePage operation implementation
     /// </summary>
-    public Task<(StatusCodes, PageContent?)> CreatePageAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, PageContent?)> CreatePageAsync(PageContent body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing page creation request");
-
-            // TODO: Implement page creation logic
-
+            _logger.LogDebug("Processing create page request");
             return Task.FromResult<(StatusCodes, PageContent?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -204,14 +178,11 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// UpdatePage operation implementation
     /// </summary>
-    public Task<(StatusCodes, PageContent?)> UpdatePageAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, PageContent?)> UpdatePageAsync(string slug, PageContent body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing page update request");
-
-            // TODO: Implement page update logic
-
+            _logger.LogDebug("Processing update page request for slug: {Slug}", slug);
             return Task.FromResult<(StatusCodes, PageContent?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -224,14 +195,11 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// GetSiteSettings operation implementation
     /// </summary>
-    public Task<(StatusCodes, SiteSettings?)> GetSiteSettingsAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, SiteSettings?)> GetSiteSettingsAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing site settings request");
-
-            // TODO: Implement site settings retrieval logic
-
+            _logger.LogDebug("Processing get site settings request");
             return Task.FromResult<(StatusCodes, SiteSettings?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -244,14 +212,11 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// UpdateSiteSettings operation implementation
     /// </summary>
-    public Task<(StatusCodes, SiteSettings?)> UpdateSiteSettingsAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, SiteSettings?)> UpdateSiteSettingsAsync(SiteSettings body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing site settings update request");
-
-            // TODO: Implement site settings update logic
-
+            _logger.LogDebug("Processing update site settings request");
             return Task.FromResult<(StatusCodes, SiteSettings?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -264,14 +229,11 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// GetTheme operation implementation
     /// </summary>
-    public Task<(StatusCodes, ThemeConfig?)> GetThemeAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, ThemeConfig?)> GetThemeAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing theme request");
-
-            // TODO: Implement theme retrieval logic
-
+            _logger.LogDebug("Processing get theme request");
             return Task.FromResult<(StatusCodes, ThemeConfig?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -282,16 +244,30 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// GetSubscription operation implementation
+    /// UpdateTheme operation implementation
     /// </summary>
-    public Task<(StatusCodes, SubscriptionResponse?)> GetSubscriptionAsync(/* TODO: Add parameters from schema */)
+    public Task<(StatusCodes, ThemeConfig?)> UpdateThemeAsync(ThemeConfig body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing subscription request");
+            _logger.LogDebug("Processing update theme request");
+            return Task.FromResult<(StatusCodes, ThemeConfig?)>((StatusCodes.OK, null)); // TODO: Return actual response
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating theme");
+            return Task.FromResult<(StatusCodes, ThemeConfig?)>((StatusCodes.InternalServerError, null));
+        }
+    }
 
-            // TODO: Implement subscription retrieval logic
-
+    /// <summary>
+    /// GetSubscription operation implementation
+    /// </summary>
+    public Task<(StatusCodes, SubscriptionResponse?)> GetSubscriptionAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Processing get subscription request");
             return Task.FromResult<(StatusCodes, SubscriptionResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)

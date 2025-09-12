@@ -45,6 +45,40 @@ edit schemas/service-name-api.yaml
 - **RESEARCH ALTERNATIVES WHEN REQUESTED** - when told to find an alternative to something, research multiple options and provide context/advice, even if an alternative is suggested simultaneously
 - **ASK FOR DIRECTION ON FAILURES** - when unable to accomplish a task, ask for direction instead of skipping ahead or piling additional changes on top of the failure
 
+### ⚠️ CRITICAL: Procedural Violation Prevention
+
+**ABSOLUTE PROHIBITIONS - THESE ACTIONS WILL CAUSE MAJOR PROBLEMS:**
+
+1. **NEVER MANUALLY EDIT GENERATED FILES**:
+   - Any file in `*/Generated/` directories is auto-generated
+   - Any file with `.Generated.cs` suffix is auto-generated
+   - **If a generated file has compilation errors**: Fix the underlying schema, NEVER edit the file directly
+   - **Example violation**: Changing `Tasks.Task` to `Task` in `IBehaviorService.cs` instead of fixing the NSwag schema issue
+
+2. **NEVER MASS-MODIFY NON-C# FILES**:
+   - Scripts like `fix-endings.sh` should ONLY affect files you're certain about
+   - **Before running any mass file modification**: Explicitly verify which file types will be affected
+   - **If unsure**: Restrict operations to specific file extensions (e.g., `*.cs` only)
+   - **Example violation**: Running whitespace cleanup on 56 mixed files instead of C# files only
+
+3. **NEVER BYPASS SCHEMA-FIRST DEVELOPMENT**:
+   - All API changes MUST start with schema modifications
+   - Generated interfaces/controllers MUST match schemas exactly
+   - **If interface is wrong**: Fix `schemas/*.yaml`, then regenerate, NEVER manually edit interface
+   - **If model is wrong**: Fix schema components section, NEVER manually edit model classes
+
+4. **IMMEDIATE VIOLATION RESPONSE PROTOCOL**:
+   - **STOP ALL WORK** immediately when procedural violation is identified
+   - **ASK FOR DIRECTION** before attempting to fix the violation
+   - **NEVER ASSUME** that continuing with manual fixes is acceptable
+   - **DOCUMENT** the violation in commit messages and todo items
+
+**Violation Prevention Checklist Before Any Code Generation/Modification**:
+- [ ] Will this affect any files in `/Generated/` directories? → Must use schema-first approach
+- [ ] Will this affect non-C# files? → Must explicitly verify file types and get approval
+- [ ] Am I manually editing an interface/controller/model? → Must fix underlying schema instead
+- [ ] Am I bypassing the official code generation pipeline? → Must use proper workflow
+
 ### WebSocket-First Architecture
 - **Connect service** provides zero-copy message routing via service GUIDs
 - **Binary protocol**: 24-byte header + JSON payload
@@ -111,7 +145,7 @@ lib-{service}/                 # Single consolidated service plugin
 
 #### **Tier 1: Integration Testing (Infrastructure Validation)**
 **Purpose**: Validates that Dapr infrastructure is functional and services can communicate in the most general sense
-**Location**: `service-tests.sh` via Docker Compose CI pipeline  
+**Location**: `service-tests.sh` via Docker Compose CI pipeline
 **Scope**: Minimal, intentionally simple HTTP endpoint testing
 
 **What it validates**:
@@ -125,7 +159,7 @@ lib-{service}/                 # Single consolidated service plugin
 # Quick integration test (matches GitHub Actions exactly)
 make test-integration-v2
 
-# Full CI pipeline with build, test, cleanup  
+# Full CI pipeline with build, test, cleanup
 make ci-test-v2
 
 # Manual Docker Compose execution
@@ -135,13 +169,13 @@ set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisio
 **Architecture**: Uses Alpine Linux test container with simple curl commands to validate basic service availability.
 
 #### **Tier 2: Service-to-Service Testing (HTTP Direct Testing)**
-**Purpose**: Thoroughly tests inter-service API interactions and business logic validation  
-**Location**: `http-tester/` project with comprehensive test suites  
+**Purpose**: Thoroughly tests inter-service API interactions and business logic validation
+**Location**: `http-tester/` project with comprehensive test suites
 **Scope**: Direct HTTP endpoint testing with authentication and service integration
 
 **What it validates**:
 - ✅ Authentication system (login, registration, JWT token handling)
-- ✅ Account management service interactions  
+- ✅ Account management service interactions
 - ✅ Service-to-service communication via generated C# clients
 - ✅ Business logic correctness (e.g., accounts system as seen by auth system)
 - ✅ API contract compliance and error handling
@@ -155,7 +189,7 @@ set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisio
 
 **Test Handlers**:
 - `AccountTestHandler`: Account creation, profile management, validation
-- `AuthTestHandler`: Authentication flows and JWT token validation  
+- `AuthTestHandler`: Authentication flows and JWT token validation
 - `DaprServiceMappingTestHandler`: Service discovery and routing validation
 
 **Commands**:
@@ -163,13 +197,13 @@ set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisio
 # Interactive HTTP testing (development)
 dotnet run --project http-tester
 
-# Automated HTTP testing (CI/CD)  
+# Automated HTTP testing (CI/CD)
 DAEMON_MODE=true dotnet run --project http-tester
 ```
 
 #### **Tier 3: Client Experience Testing (WebSocket Protocol Testing)**
-**Purpose**: Tests complete client experience through the WebSocket protocol via Connect service edge gateway  
-**Location**: `edge-tester/` project with WebSocket-first testing  
+**Purpose**: Tests complete client experience through the WebSocket protocol via Connect service edge gateway
+**Location**: `edge-tester/` project with WebSocket-first testing
 **Scope**: Full client perspective testing including WebSocket binary protocol, authentication, and service interactions
 
 **What it validates**:
@@ -187,7 +221,7 @@ public enum MessageFlags : byte
 {
     None = 0,              // Default: Text/JSON to service, expecting response
     Binary = 1 << 0,       // Binary payload data
-    Encrypted = 1 << 1,    // Encrypted payload  
+    Encrypted = 1 << 1,    // Encrypted payload
     Compressed = 1 << 2,   // Compressed payload
     HighPriority = 1 << 3, // Skip to front of queues
     Event = 1 << 4,        // Fire-and-forget event
@@ -208,14 +242,14 @@ public enum MessageFlags : byte
 dotnet run --project edge-tester
 
 # Background WebSocket testing (daemon mode)
-DAEMON_MODE=true dotnet run --project edge-tester  
+DAEMON_MODE=true dotnet run --project edge-tester
 ```
 
 #### **Comprehensive Testing Commands**
 ```bash
 # Development workflow (all tiers)
 make test-unit              # Unit tests (C# libraries)
-make test-http              # Tier 2: HTTP service testing  
+make test-http              # Tier 2: HTTP service testing
 make test-websocket         # Tier 3: WebSocket protocol testing
 make test-integration-v2    # Tier 1: Infrastructure validation
 make test-all               # Execute all testing tiers
@@ -228,13 +262,13 @@ DAEMON_MODE=true make test-websocket # Automated client testing
 
 #### **Testing Architecture Benefits**
 **Progressive Validation**: Each tier builds upon the previous, ensuring comprehensive coverage:
-1. **Infrastructure** → Basic service availability and health  
+1. **Infrastructure** → Basic service availability and health
 2. **Service Logic** → Business rules and inter-service communication
 3. **Client Experience** → End-to-end user interaction patterns
 
 **Development Efficiency**: Developers can isolate issues to specific tiers:
 - Tier 1 failures → Infrastructure/deployment issues
-- Tier 2 failures → Business logic or API contract issues  
+- Tier 2 failures → Business logic or API contract issues
 - Tier 3 failures → Protocol or client integration issues
 
 **Production Confidence**: Local execution of all three tiers provides complete confidence that changes will work in GitHub Actions CI/CD pipeline.
@@ -244,9 +278,9 @@ DAEMON_MODE=true make test-websocket # Automated client testing
 Bannou uses **two complementary code generation systems** with distinct responsibilities:
 
 #### NSwag (Primary API Generation) ✅ WORKING PERFECTLY
-**Purpose**: Generate API contracts, controllers, models, and **SERVICE CLIENTS** from OpenAPI schemas  
-**Input**: `schemas/*-api.yaml` files  
-**Output**: ASP.NET Core controllers, request/response models, **client classes for service-to-service calls**  
+**Purpose**: Generate API contracts, controllers, models, and **SERVICE CLIENTS** from OpenAPI schemas
+**Input**: `schemas/*-api.yaml` files
+**Output**: ASP.NET Core controllers, request/response models, **client classes for service-to-service calls**
 
 ```bash
 # PREFERRED: Use unified generation script (generates BOTH controllers AND clients)
@@ -259,7 +293,7 @@ nswag run nswag.json                        # Main API schemas (accounts, auth, 
 
 **Generated Files** (Current Status):
 - ✅ `Controllers/Generated/AuthController.Generated.cs` (410 lines) - AuthControllerBase
-- ✅ `Controllers/Generated/AccountsController.Generated.cs` (539 lines) - AccountsControllerBase  
+- ✅ `Controllers/Generated/AccountsController.Generated.cs` (539 lines) - AccountsControllerBase
 - ✅ `Controllers/Generated/WebsiteController.Generated.cs` (1104 lines) - WebsiteControllerBase
 - ✅ `Controllers/Generated/BehaviourController.Generated.cs` (498 lines) - BehaviourControllerBase
 - ✅ `Controllers/Generated/ConnectController.Generated.cs` (759 lines) - ConnectControllerBase
@@ -281,9 +315,9 @@ nswag run nswag.json                        # Main API schemas (accounts, auth, 
 **Build Integration**: Runs via MSBuild target when `GenerateNewServices=true` OR unified script
 
 #### Roslyn Source Generators (Specialized Patterns) ✅ ARCHITECTURE OPTIMIZED
-**Purpose**: Generate specialized business logic patterns that NSwag cannot handle  
-**Input**: Various schema files + MSBuild properties  
-**Output**: Service scaffolding, unit tests, specialized patterns  
+**Purpose**: Generate specialized business logic patterns that NSwag cannot handle
+**Input**: Various schema files + MSBuild properties
+**Output**: Service scaffolding, unit tests, specialized patterns
 
 ```bash
 # Generate specialized patterns (controlled by MSBuild flags)
@@ -301,7 +335,7 @@ dotnet build -p:GenerateUnitTests=true      # Unit test projects
 
 #### Division of Responsibilities
 
-**Use NSwag For**: 
+**Use NSwag For**:
 - API controllers and routing
 - Request/response models
 - Client generation (C#, TypeScript)
@@ -315,7 +349,7 @@ dotnet build -p:GenerateUnitTests=true      # Unit test projects
 - Custom DI registration patterns
 - Business logic scaffolding
 
-**❌ AVOID DUPLICATION**: 
+**❌ AVOID DUPLICATION**:
 - Never manually create models that can be generated from schemas
 - Don't use both systems for the same purpose
 - NSwag takes precedence for API contracts
@@ -341,7 +375,7 @@ docker run --rm -v $(pwd):/tmp/lint:rw oxsecurity/megalinter-dotnet:v8 -e "ENABL
 - `.env` file with required environment variables (see below)
 - Stop any conflicting services (e.g., `docker stop conference-manager-redis`)
 
-#### **Environment Variables Setup** 
+#### **Environment Variables Setup**
 Create/verify `.env` file in project root:
 ```bash
 # Database
@@ -359,7 +393,7 @@ AUTH_TOKEN_PRIVATE_KEY=your-private-key
 
 **Makefile Targets (Docker Compose V2)**:
 ```bash
-# Quick integration test (matches GitHub Actions exactly)  
+# Quick integration test (matches GitHub Actions exactly)
 make test-integration-v2
 
 # Full CI pipeline with build, test, cleanup
@@ -447,7 +481,7 @@ set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisio
 
 **Docker Compose Override (`provisioning/docker-compose.ci.yml`)**:
 - MySQL healthcheck with proper authentication parameters
-- Alpine Linux test container with curl installation  
+- Alpine Linux test container with curl installation
 - Dapr components disabled via ci-disabled directory mount
 - FileBeats logging disabled during testing
 
@@ -467,7 +501,7 @@ set -a && source .env && set +a && docker compose -p bannou-tests -f "./provisio
 
 **GitHub Actions Equivalence**: The local commands replicate the exact CI workflow:
 1. ✅ Environment variable loading
-2. ✅ Docker image building with `--pull` for latest base images  
+2. ✅ Docker image building with `--pull` for latest base images
 3. ✅ Service orchestration with proper dependency ordering
 4. ✅ Health check validation and test execution
 5. ✅ Resource cleanup with `--remove-orphans -v`
@@ -503,7 +537,7 @@ public class ExampleClass
     /// Gets or sets the example property description.
     /// </summary>
     public string ExampleProperty { get; set; }
-    
+
     /// <summary>
     /// Performs the example operation with the given input.
     /// </summary>
@@ -537,7 +571,7 @@ public class ServiceNameConfiguration : IServiceConfiguration
 {
     [Required]
     public string RequiredSetting { get; set; } = string.Empty;
-    
+
     // Other settings with defaults
 }
 ```
@@ -550,7 +584,7 @@ public class ServiceDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
         // Global soft delete filter
         modelBuilder.Entity<EntityName>()
             .HasQueryFilter(e => e.DeletedAt == null);
@@ -604,7 +638,7 @@ Based on recent commits and current build status:
 
 - **✅ Accounts Service**: Schema-driven implementation with MySQL persistence
 - **✅ Auth Service**: Complete authentication system with JWT and multi-provider support
-- **✅ Behavior Service**: ABML YAML DSL foundation for character behaviors  
+- **✅ Behavior Service**: ABML YAML DSL foundation for character behaviors
 - **✅ Connect Service**: WebSocket-first edge gateway with binary protocol
 - **✅ Website Service**: MVC integration with schema-driven APIs
 - **✅ Core Infrastructure**: Assembly loading, service discovery, Dapr integration
@@ -634,15 +668,15 @@ public class ExampleService : IExampleService
 {
     private readonly DaprClient _daprClient;
     private const string STATE_STORE = "service-store";
-    
+
     // ✅ State Management via Dapr
     await _daprClient.SaveStateAsync(STATE_STORE, key, data);
     var data = await _daprClient.GetStateAsync<ModelType>(STATE_STORE, key);
     await _daprClient.DeleteStateAsync(STATE_STORE, key);
-    
+
     // ✅ Event Publishing via Dapr
     await _daprClient.PublishEventAsync("pubsub", "topic", eventData);
-    
+
     // ✅ Service-to-Service calls via Dapr (automatic routing)
     var response = await _httpClient.PostAsync("/api/endpoint", content);
     // ServiceAppMappingResolver automatically routes to correct node
@@ -656,7 +690,7 @@ private readonly DbContext _dbContext;
 await _dbContext.Entities.AddAsync(entity);
 await _dbContext.SaveChangesAsync();
 
-// ❌ WRONG: Direct SQL connections  
+// ❌ WRONG: Direct SQL connections
 private readonly IDbConnection _connection;
 
 // ❌ WRONG: Direct RabbitMQ usage
@@ -672,7 +706,7 @@ public class ServiceNameService : IServiceNameService
     private readonly DaprClient _daprClient;           // ✅ Required for all services
     private readonly ILogger<ServiceNameService> _logger;
     private readonly ServiceNameConfiguration _configuration;
-    
+
     // Constructor injection only - no direct database/messaging dependencies
 }
 ```
@@ -691,8 +725,8 @@ private const string KEY_PREFIX = "{entity-type}-";
 
 // Storage pattern
 await _daprClient.SaveStateAsync(
-    STATE_STORE, 
-    $"{KEY_PREFIX}{entityId}", 
+    STATE_STORE,
+    $"{KEY_PREFIX}{entityId}",
     entityModel);
 ```
 
@@ -739,7 +773,7 @@ public class AccountsService : IAccountsService { }
 
 The framework automatically:
 - Discovers all services via reflection
-- Registers them in DI container  
+- Registers them in DI container
 - Maps them to app instances via configuration
 - Routes requests based on current deployment topology
 
@@ -817,23 +851,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - **Line ending issues**: Always run `./fix-endings.sh` after generation
 - **Missing models**: Verify OpenAPI schema has proper `operationId` and `components/schemas` sections
 
-#### Roslyn Generator Issues  
+#### Roslyn Generator Issues
 - **No output files**: Check MSBuild properties are set (`-p:GenerateNewServices=true`)
 - **Build errors**: Roslyn generators run during build - check for compilation errors first
 - **Status verification**: Check `bannou-service/obj/Debug/net9.0/` for generated .g.cs files
 - **Conflicting output**: Remove manually created files that conflict with generated ones
 
 #### When to Use Which System
-**Missing API endpoints** → Use NSwag with proper schema definition  
-**Missing event handling** → Use Roslyn EventModelGenerator (if working)  
-**Missing service patterns** → Use Roslyn ServiceScaffoldGenerator (if working)  
-**Missing validation** → Use NSwag data annotations  
-**Missing client code** → Use NSwag client generation  
+**Missing API endpoints** → Use NSwag with proper schema definition
+**Missing event handling** → Use Roslyn EventModelGenerator (if working)
+**Missing service patterns** → Use Roslyn ServiceScaffoldGenerator (if working)
+**Missing validation** → Use NSwag data annotations
+**Missing client code** → Use NSwag client generation
 **Missing unit tests** → Use Roslyn UnitTestGenerator (if working)
 
 ### Roslyn Source Generators Status
 - **`EventModelGenerator.cs`** ✅ DISABLED - NSwag handles event models perfectly, eliminated duplicate conflicts
-- **`ServiceScaffoldGenerator.cs`** ✅ WORKING - Available for specialized service patterns NSwag cannot generate  
+- **`ServiceScaffoldGenerator.cs`** ✅ WORKING - Available for specialized service patterns NSwag cannot generate
 - **`UnitTestGenerator.cs`** ✅ WORKING - Available for comprehensive unit test generation
 - **Resolution**: EventModelGenerator disabled due to conflict with NSwag event models. Other generators functional.
 
@@ -846,7 +880,7 @@ public partial class AccountsClient : DaprServiceClientBase, IAccountsClient
 {
     private readonly IServiceAppMappingResolver _resolver;
     private readonly DaprClient _daprClient;
-    
+
     public async Task<CreateAccountResponse> CreateAccountAsync(CreateAccountRequest request)
     {
         var appId = _resolver.GetAppIdForService("accounts"); // Defaults to "bannou"
@@ -862,7 +896,7 @@ public partial class AccountsClient : DaprServiceClientBase, IAccountsClient
 public class AuthService : IAuthService
 {
     private readonly IAccountsClient _accountsClient; // Generated client injection
-    
+
     public async Task<(StatusCodes, LoginResponse?)> LoginAsync(LoginRequest request)
     {
         // Use generated client for service-to-service calls
@@ -885,9 +919,9 @@ public async Task ProcessMessage(ReadOnlyMemory<byte> message)
 {
     var binaryMessage = new BinaryMessage(message);
     var serviceGuid = binaryMessage.ServiceGuid;  // 16 bytes
-    var messageId = binaryMessage.MessageId;      // 8 bytes  
+    var messageId = binaryMessage.MessageId;      // 8 bytes
     var payload = binaryMessage.Payload;          // Variable JSON
-    
+
     // Route without payload inspection (zero-copy)
     await RouteToDestination(serviceGuid, message);
 }
@@ -900,7 +934,7 @@ public async Task ProcessMessage(ReadOnlyMemory<byte> message)
 - **Line ending issues**: Run `./fix-endings.sh`
 - **Missing dependencies**: Check project references in `.csproj` files
 
-### Runtime Issues  
+### Runtime Issues
 - **Service not found**: Verify `{SERVICE_NAME}_SERVICE_ENABLED=true`
 - **Auth failures**: Check JWT configuration in Auth service
 - **Database errors**: Verify connection strings and migrations
@@ -952,7 +986,7 @@ make generate-services  # Generate from OpenAPI schemas (uses unified script)
 
 # Testing (Dual Transport)
 make test-http          # Direct HTTP endpoint tests
-make test-websocket     # WebSocket protocol tests  
+make test-websocket     # WebSocket protocol tests
 make test-integration   # Docker-based integration tests
 make ci-test            # Full CI pipeline locally
 
