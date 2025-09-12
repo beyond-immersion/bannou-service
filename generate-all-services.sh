@@ -16,14 +16,55 @@ NC='\033[0m' # No Color
 # Set working directory to bannou-service
 cd "$(dirname "$0")/bannou-service"
 
-# NSwag executable path
-NSWAG_EXE="$HOME/.nuget/packages/nswag.msbuild/14.2.0/tools/Net90/dotnet-nswag.exe"
+# Function to find NSwag executable
+find_nswag_exe() {
+    # Try multiple possible locations for NSwag executable
+    local possible_paths=(
+        "$HOME/.nuget/packages/nswag.msbuild/14.2.0/tools/Net90/dotnet-nswag.exe"
+        "$HOME/.nuget/packages/nswag.msbuild/14.1.0/tools/Net90/dotnet-nswag.exe" 
+        "$HOME/.nuget/packages/nswag.msbuild/14.0.7/tools/Net90/dotnet-nswag.exe"
+        "$(find $HOME/.nuget/packages/nswag.msbuild -name "dotnet-nswag.exe" 2>/dev/null | head -1)"
+    )
+    
+    for path in "${possible_paths[@]}"; do
+        if [ -n "$path" ] && [ -f "$path" ]; then
+            echo "$path"
+            return 0
+        fi
+    done
+    
+    return 1
+}
 
-# Verify NSwag executable exists
-if [ ! -f "$NSWAG_EXE" ]; then
-    echo -e "${RED}❌ NSwag executable not found at: $NSWAG_EXE${NC}"
-    echo "Please ensure NSwag.MSBuild package is restored."
-    exit 1
+# NSwag executable path
+NSWAG_EXE=$(find_nswag_exe)
+
+# Verify NSwag executable exists, if not try alternative approach
+if [ -z "$NSWAG_EXE" ]; then
+    echo -e "${YELLOW}⚠️  NSwag executable not found in standard locations, trying dotnet build approach...${NC}"
+    echo "  📦 Restoring NuGet packages first..."
+    
+    # Try restoring packages first
+    if dotnet restore --verbosity quiet; then
+        echo -e "${GREEN}    ✅ NuGet packages restored${NC}"
+        
+        # Try finding NSwag again after restore
+        NSWAG_EXE=$(find_nswag_exe)
+        
+        if [ -z "$NSWAG_EXE" ]; then
+            echo -e "${RED}❌ NSwag executable still not found after package restore${NC}"
+            echo "Available NSwag packages:"
+            find $HOME/.nuget/packages -name "*nswag*" -type d 2>/dev/null | head -5
+            exit 1
+        else
+            echo -e "${GREEN}    ✅ Found NSwag at: $NSWAG_EXE${NC}"
+        fi
+    else
+        echo -e "${RED}❌ Failed to restore NuGet packages${NC}"
+        exit 1
+    fi
+else
+    echo -e "${GREEN}✅ Found NSwag at: $NSWAG_EXE${NC}"
 fi
 
 echo -e "${YELLOW}📋 Generating NSwag controllers from schemas...${NC}"
@@ -311,36 +352,43 @@ generate_client() {
 
     mkdir -p "$(dirname "$output_path")"
 
-    # Generate service client using direct NSwag command (DaprServiceClientBase pattern)
-    "$NSWAG_EXE" openapi2csclient \
-        /input:"$schema_file" \
-        /output:"$output_path" \
-        /namespace:"BeyondImmersion.BannouService.${service_name^}.Client" \
-        /clientBaseClass:"BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase" \
-        /className:"${service_name^}Client" \
-        /generateClientClasses:true \
-        /generateClientInterfaces:true \
-        /injectHttpClient:true \
-        /disposeHttpClient:false \
-        /jsonLibrary:NewtonsoftJson \
-        /generateNullableReferenceTypes:true \
-        /newLineBehavior:LF \
-        /generateOptionalParameters:true \
-        /useHttpClientCreationMethod:false \
-        /additionalNamespaceUsages:"BeyondImmersion.BannouService.ServiceClients"
-
-    # Check if NSwag client generation succeeded
-    if [ $? -eq 0 ]; then
-        if [ -f "$output_path" ]; then
-            local file_size=$(wc -l < "$output_path" 2>/dev/null || echo "0")
-            echo -e "${GREEN}    ✅ Generated service client $client_name ($file_size lines)${NC}"
-        else
-            echo -e "${YELLOW}    ⚠️  No client output file created (no change detected)${NC}"
-        fi
+    # Generate service client using appropriate method
+    if [ "$USE_DOTNET_BUILD" = "true" ]; then
+        echo "    🔧 Skipping direct client generation (using dotnet build approach)"
+        echo -e "${YELLOW}    ⚠️  Client generation handled by dotnet build${NC}"
         return 0
     else
-        echo -e "${RED}    ❌ Failed to generate service client $client_name${NC}"
-        return 1
+        # Generate service client using direct NSwag command (DaprServiceClientBase pattern)
+        "$NSWAG_EXE" openapi2csclient \
+            /input:"$schema_file" \
+            /output:"$output_path" \
+            /namespace:"BeyondImmersion.BannouService.${service_name^}.Client" \
+            /clientBaseClass:"BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase" \
+            /className:"${service_name^}Client" \
+            /generateClientClasses:true \
+            /generateClientInterfaces:true \
+            /injectHttpClient:true \
+            /disposeHttpClient:false \
+            /jsonLibrary:NewtonsoftJson \
+            /generateNullableReferenceTypes:true \
+            /newLineBehavior:LF \
+            /generateOptionalParameters:true \
+            /useHttpClientCreationMethod:false \
+            /additionalNamespaceUsages:"BeyondImmersion.BannouService.ServiceClients"
+
+        # Check if NSwag client generation succeeded
+        if [ $? -eq 0 ]; then
+            if [ -f "$output_path" ]; then
+                local file_size=$(wc -l < "$output_path" 2>/dev/null || echo "0")
+                echo -e "${GREEN}    ✅ Generated service client $client_name ($file_size lines)${NC}"
+            else
+                echo -e "${YELLOW}    ⚠️  No client output file created (no change detected)${NC}"
+            fi
+            return 0
+        else
+            echo -e "${RED}    ❌ Failed to generate service client $client_name${NC}"
+            return 1
+        fi
     fi
 }
 
@@ -368,22 +416,40 @@ generate_controller() {
     # Create Generated directory if it doesn't exist
     mkdir -p "$(dirname "$output_path")"
 
-    # Generate controller using direct NSwag command (pure shell pattern)
-    "$NSWAG_EXE" openapi2cscontroller \
-        "/input:$schema_file" \
-        "/output:$output_path" \
-        "/namespace:BeyondImmersion.BannouService.${service_name^}" \
-        "/ControllerStyle:Abstract" \
-        "/ControllerBaseClass:Microsoft.AspNetCore.Mvc.ControllerBase" \
-        "/ClassName:${service_name^}ControllerBase" \
-        "/UseCancellationToken:true" \
-        "/UseActionResultType:true" \
-        "/GenerateModelValidationAttributes:true" \
-        "/GenerateDataAnnotations:true" \
-        "/JsonLibrary:NewtonsoftJson" \
-        "/GenerateNullableReferenceTypes:true" \
-        "/NewLineBehavior:LF" \
-        "/GenerateOptionalParameters:true"
+    # Generate controller using appropriate method
+    local nswag_success=false
+    
+    if [ "$USE_DOTNET_BUILD" = "true" ]; then
+        # Use dotnet build approach - trigger NSwag via MSBuild
+        echo "      🔧 Using dotnet build approach for NSwag generation..."
+        if dotnet build -p:GenerateNewServices=true --verbosity quiet; then
+            nswag_success=true
+            echo "      ✅ Generated via dotnet build"
+        else
+            echo "      ❌ Failed via dotnet build"
+        fi
+    else
+        # Use direct NSwag command (pure shell pattern)
+        "$NSWAG_EXE" openapi2cscontroller \
+            "/input:$schema_file" \
+            "/output:$output_path" \
+            "/namespace:BeyondImmersion.BannouService.${service_name^}" \
+            "/ControllerStyle:Abstract" \
+            "/ControllerBaseClass:Microsoft.AspNetCore.Mvc.ControllerBase" \
+            "/ClassName:${service_name^}ControllerBase" \
+            "/UseCancellationToken:true" \
+            "/UseActionResultType:true" \
+            "/GenerateModelValidationAttributes:true" \
+            "/GenerateDataAnnotations:true" \
+            "/JsonLibrary:NewtonsoftJson" \
+            "/GenerateNullableReferenceTypes:true" \
+            "/NewLineBehavior:LF" \
+            "/GenerateOptionalParameters:true"
+        
+        if [ $? -eq 0 ]; then
+            nswag_success=true
+        fi
+    fi
 
     # Generate service client from schema (CRITICAL for service-to-service communication)
     generate_client "$schema_file" "$service_name" "$service_plugin_dir"
@@ -397,8 +463,8 @@ generate_controller() {
     # Generate configuration class from schema
     generate_service_configuration "$schema_file" "$service_name" "$service_plugin_dir"
 
-    # Check if NSwag command succeeded (exit code 0)
-    if [ $? -eq 0 ]; then
+    # Check if NSwag generation succeeded
+    if [ "$nswag_success" = "true" ]; then
         if [ -f "$output_path" ]; then
             local file_size=$(wc -l < "$output_path" 2>/dev/null || echo "0")
             echo -e "${GREEN}    ✅ Generated $controller_name ($file_size lines)${NC}"
@@ -411,6 +477,15 @@ generate_controller() {
         return 1
     fi
 }
+
+# Alternative approach: use dotnet build if NSwag executable fails
+USE_DOTNET_BUILD=false
+
+# Check if we should fall back to dotnet build approach
+if [ -z "$NSWAG_EXE" ] || [ ! -x "$NSWAG_EXE" ]; then
+    echo -e "${YELLOW}⚠️  Falling back to dotnet build approach for NSwag generation${NC}"
+    USE_DOTNET_BUILD=true
+fi
 
 # Generate controllers for available schemas (support single service argument)
 generated_count=0
