@@ -31,6 +31,16 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: Restore NuGet Packages
+        run: |
+          echo "📦 Restoring NuGet packages (including NSwag.MSBuild)..."
+          dotnet restore
+
+      - name: Install NSwag Global Tool (Fallback)
+        run: |
+          echo "🔧 Installing NSwag as global tool (fallback for CI environments)..."
+          dotnet tool install --global NSwag.ConsoleCore --version 14.2.0 || echo "NSwag tool already installed or MSBuild package sufficient"
+
       # Step 1: Generate Services - Ensure all controllers/models are current
       - name: 1️⃣ Generate Services (Initial)
         run: |

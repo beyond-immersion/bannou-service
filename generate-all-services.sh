@@ -24,6 +24,9 @@ find_nswag_exe() {
         "$HOME/.nuget/packages/nswag.msbuild/14.1.0/tools/Net90/dotnet-nswag.exe" 
         "$HOME/.nuget/packages/nswag.msbuild/14.0.7/tools/Net90/dotnet-nswag.exe"
         "$(find $HOME/.nuget/packages/nswag.msbuild -name "dotnet-nswag.exe" 2>/dev/null | head -1)"
+        # Try global tool installation
+        "$(which nswag 2>/dev/null)"
+        "$(command -v nswag 2>/dev/null)"
     )
     
     for path in "${possible_paths[@]}"; do
