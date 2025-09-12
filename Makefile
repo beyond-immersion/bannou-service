@@ -63,6 +63,17 @@ generate-services:
 	./generate-all-services.sh
 	@echo "✅ Service generation completed"
 
+# Fix line endings and final newlines for all project files
+fix-endings:
+	@echo "🔧 Fixing line endings for all project files..."
+	./fix-endings.sh
+
+# Complete formatting workflow  
+format: fix-endings
+	@echo "🔧 Running complete code formatting..."
+	dotnet format
+	@echo "✅ All formatting completed"
+
 generate-services-legacy:
 	@echo "🔧 [LEGACY] Generating services from OpenAPI schemas via MSBuild..."
 	@echo "⚠️  This method has known issues with NSwag config file execution"

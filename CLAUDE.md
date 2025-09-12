@@ -69,6 +69,18 @@ lib-{service}/                 # Single consolidated service plugin
 - **NSwag**: Configured for LF line endings in generated code
 - **XML Documentation**: All public classes, methods, and properties MUST have comprehensive XML documentation (`<summary>` tags minimum)
 
+### Code Formatting Requirements
+**Complete formatting workflow** (use `make format` for convenience):
+1. **Line Ending Compliance**: `./fix-endings.sh` - Fixes line endings (CRLF→LF) and final newlines for ALL file types
+2. **C# Code Formatting**: `dotnet format` - Handles C# syntax (spacing, indentation, braces, etc.)
+
+**Why both tools are needed**:
+- `dotnet format` handles C# syntax formatting but **cannot** fix line endings or final newlines
+- `fix-endings.sh` handles line ending compliance for **all project files** (.cs, .md, .json, .yml, .sh, .xml, .csproj, etc.)
+- **Always run both** before committing or use `make format` to run them in sequence
+
+**File types handled by `fix-endings.sh`**: .cs, .md, .json, .yml/.yaml, .sh, .txt, .xml, .csproj, .sln
+
 ### Testing Policy
 - **Lint Testing**: Use MegaLinter command above
 - **Integration Testing**: `docker compose --env-file .env -f provisioning/docker-compose.yml -f provisioning/docker-compose.ci.yml up --exit-code-from=bannou-tester`
@@ -684,7 +696,7 @@ make test-websocket     # WebSocket protocol via Connect service
 make test-all           # Complete validation suite
 
 # 5. VALIDATE: Run quality checks
-dotnet format          # EditorConfig compliance
+make format            # Complete formatting (EditorConfig + C# formatting)
 dotnet build           # Verify compilation
 ```
 
@@ -703,7 +715,9 @@ make test-integration   # Docker-based integration tests
 make ci-test            # Full CI pipeline locally
 
 # Code Quality & Generation
-./generate-all-services.sh  # PREFERRED: Unified generation (bypasses config issues)
-dotnet format               # Fix EditorConfig issues
+make generate-services      # PREFERRED: Unified generation (bypasses config issues)
+make format                 # Complete formatting (EditorConfig + C# syntax)
+make fix-editorconfig       # EditorConfig compliance only (line endings, final newlines)
+dotnet format               # C# syntax formatting only (spacing, braces, etc.)
 dotnet test                 # Run unit tests
 ```
