@@ -20,11 +20,11 @@ public class Program
         /// made to a service endpoint (rather than to another client),
         /// unencrypted, uncompressed, standard priority, and expecting
         /// a response from the service.
-        /// 
+        ///
         /// With these flags, the next "ServiceID" section of the header
         /// would be referring to the Dapr service app to pass the message
         /// along to, after converting it to an HTTP request.
-        /// 
+        ///
         /// The "MessageID" section will also be enterring the system for
         /// the first time- the same ID will need to be handed back to the
         /// client for the response, so they can associate it back to the
@@ -66,7 +66,7 @@ public class Program
     };
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public enum ResponseCodes : byte
     {

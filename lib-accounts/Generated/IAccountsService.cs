@@ -10,49 +10,49 @@ namespace BeyondImmersion.BannouService.Accounts
     public interface IAccountsService
     {
         /// <summary>
-        /// ListAccounts operation  
+        /// ListAccounts operation
         /// </summary>
-        Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(/* TODO: Add parameters from schema */);
+        Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(string? email = null, string? displayName = null, Provider? provider = null, bool? verified = null, int? page = 1, int? pageSize = 20, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// CreateAccount operation  
+        /// CreateAccount operation
         /// </summary>
-        Task<(StatusCodes, AccountResponse?)> CreateAccountAsync(/* TODO: Add parameters from schema */);
+        Task<(StatusCodes, AccountResponse?)> CreateAccountAsync(CreateAccountRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// GetAccount operation  
+        /// GetAccount operation
         /// </summary>
-        Task<(StatusCodes, AccountResponse?)> GetAccountAsync(/* TODO: Add parameters from schema */);
+        Task<(StatusCodes, AccountResponse?)> GetAccountAsync(Guid accountId, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// UpdateAccount operation  
+        /// UpdateAccount operation
         /// </summary>
-        Task<(StatusCodes, AccountResponse?)> UpdateAccountAsync(/* TODO: Add parameters from schema */);
+        Task<(StatusCodes, AccountResponse?)> UpdateAccountAsync(Guid accountId, UpdateAccountRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// GetAccountByEmail operation  
+        /// GetAccountByEmail operation
         /// </summary>
-        Task<(StatusCodes, AccountResponse?)> GetAccountByEmailAsync(/* TODO: Add parameters from schema */);
+        Task<(StatusCodes, AccountResponse?)> GetAccountByEmailAsync(string email, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// GetAuthMethods operation  
+        /// GetAuthMethods operation
         /// </summary>
-        Task<(StatusCodes, AuthMethodsResponse?)> GetAuthMethodsAsync(/* TODO: Add parameters from schema */);
+        Task<(StatusCodes, AuthMethodsResponse?)> GetAuthMethodsAsync(Guid accountId, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// AddAuthMethod operation  
+        /// AddAuthMethod operation
         /// </summary>
-        Task<(StatusCodes, AuthMethodResponse?)> AddAuthMethodAsync(/* TODO: Add parameters from schema */);
+        Task<(StatusCodes, AuthMethodResponse?)> AddAuthMethodAsync(Guid accountId, AddAuthMethodRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// GetAccountByProvider operation  
+        /// GetAccountByProvider operation
         /// </summary>
-        Task<(StatusCodes, AccountResponse?)> GetAccountByProviderAsync(/* TODO: Add parameters from schema */);
+        Task<(StatusCodes, AccountResponse?)> GetAccountByProviderAsync(Provider2 provider, string externalId, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// UpdateProfile operation  
+        /// UpdateProfile operation
         /// </summary>
-        Task<(StatusCodes, AccountResponse?)> UpdateProfileAsync(/* TODO: Add parameters from schema */);
+        Task<(StatusCodes, AccountResponse?)> UpdateProfileAsync(Guid accountId, UpdateProfileRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     }
 }

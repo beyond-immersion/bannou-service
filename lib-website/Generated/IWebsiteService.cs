@@ -10,73 +10,98 @@ namespace BeyondImmersion.BannouService.Website;
 public interface IWebsiteService
 {
     /// <summary>
-    /// GetStatus operation  
+    /// GetStatus operation
     /// </summary>
-    Task<(StatusCodes, StatusResponse?)> GetStatusAsync(/* TODO: Add parameters from schema */);
+    Task<(StatusCodes, StatusResponse?)> GetStatusAsync(CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// GetPageContent operation  
+    /// GetPageContent operation
     /// </summary>
-    Task<(StatusCodes, PageContent?)> GetPageContentAsync(/* TODO: Add parameters from schema */);
+    Task<(StatusCodes, PageContent?)> GetPageContentAsync(string slug, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// GetNews operation  
+    /// Get latest news and announcements
     /// </summary>
-    Task<(StatusCodes, NewsResponse?)> GetNewsAsync(/* TODO: Add parameters from schema */);
+    /// <param name="limit">Number of news items to return</param>
+    /// <param name="offset">Pagination offset</param>
+    /// <returns>News items retrieved</returns>
+    public abstract Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NewsResponse>> GetNews(int? limit = 10, int? offset = 0, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// GetServerStatus operation  
+    /// Get game server status for all realms
     /// </summary>
-    Task<(StatusCodes, ServerStatusResponse?)> GetServerStatusAsync(/* TODO: Add parameters from schema */);
+    /// <returns>Server status information</returns>
+    public abstract Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServerStatusResponse>> GetServerStatus(CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// GetDownloads operation  
+    /// Get download links for game clients
     /// </summary>
-    Task<(StatusCodes, DownloadsResponse?)> GetDownloadsAsync(/* TODO: Add parameters from schema */);
+    /// <param name="platform">Filter by platform</param>
+    /// <returns>Download links retrieved</returns>
+    public abstract Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DownloadsResponse>> GetDownloads(Platform? platform = null, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// SubmitContact operation  
+    /// Submit contact form
     /// </summary>
-    Task<(StatusCodes, ContactResponse?)> SubmitContactAsync(/* TODO: Add parameters from schema */);
+    /// <returns>Contact form submitted</returns>
+    public abstract Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContactResponse>> SubmitContact(ContactRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// GetAccountProfile operation  
+    /// Get account profile for logged-in user
     /// </summary>
-    Task<(StatusCodes, AccountProfile?)> GetAccountProfileAsync(/* TODO: Add parameters from schema */);
+    /// <returns>Account profile retrieved</returns>
+    public abstract Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountProfile>> GetAccountProfile(CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// GetAccountCharacters operation  
+    /// Get character list for logged-in user
     /// </summary>
-    Task<(StatusCodes, CharacterListResponse?)> GetAccountCharactersAsync(/* TODO: Add parameters from schema */);
+    /// <returns>Character list retrieved</returns>
+    public abstract Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterListResponse>> GetAccountCharacters(CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// CreatePage operation  
+    /// List all CMS pages
     /// </summary>
-    Task<(StatusCodes, PageContent?)> CreatePageAsync(/* TODO: Add parameters from schema */);
+    /// <returns>Page list retrieved</returns>
+    public abstract Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<Collections.Generic.ICollection<PageMetadata>>> ListPages(bool? includeUnpublished = false, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// UpdatePage operation  
+    /// Create new CMS page
     /// </summary>
-    Task<(StatusCodes, PageContent?)> UpdatePageAsync(/* TODO: Add parameters from schema */);
+    /// <returns>Page created</returns>
+    public abstract Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> CreatePage(PageContent body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// GetSiteSettings operation  
+    /// UpdatePage operation
     /// </summary>
-    Task<(StatusCodes, SiteSettings?)> GetSiteSettingsAsync(/* TODO: Add parameters from schema */);
+    Task<(StatusCodes, PageContent?)> UpdatePageAsync(string slug, PageContent body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// UpdateSiteSettings operation  
+    /// GetSiteSettings operation
     /// </summary>
-    Task<(StatusCodes, SiteSettings?)> UpdateSiteSettingsAsync(/* TODO: Add parameters from schema */);
+    Task<(StatusCodes, SiteSettings?)> GetSiteSettingsAsync(CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// GetTheme operation  
+    /// Update site configuration
     /// </summary>
-    Task<(StatusCodes, ThemeConfig?)> GetThemeAsync(/* TODO: Add parameters from schema */);
+    /// <returns>Settings updated</returns>
+    public abstract Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SiteSettings>> UpdateSiteSettings(SiteSettings body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// GetSubscription operation  
+    /// Get current theme configuration
     /// </summary>
-    Task<(StatusCodes, SubscriptionResponse?)> GetSubscriptionAsync(/* TODO: Add parameters from schema */);
+    /// <returns>Theme configuration retrieved</returns>
+    public abstract Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ThemeConfig>> GetTheme(CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// Update theme configuration
+    /// </summary>
+    /// <returns>Theme updated</returns>
+    public abstract Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateTheme(ThemeConfig body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// Get subscription status
+    /// </summary>
+    /// <returns>Subscription information retrieved</returns>
+    public abstract Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionResponse>> GetSubscription(CancellationToken cancellationToken = default(CancellationToken));
 
 }

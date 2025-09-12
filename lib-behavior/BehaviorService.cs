@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
@@ -125,4 +126,10 @@ public class BehaviorService : IBehaviorService
             return Task.FromResult<(StatusCodes, ResolveContextResponse?)>((StatusCodes.InternalServerError, null));
         }
     }
+
+    public Task<(StatusCodes, CompileBehaviorResponse?)> CompileAbmlBehaviorAsync(string body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public Task<ActionResult<CompileBehaviorResponse>> CompileBehaviorStack(BehaviorStackRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public Task<ActionResult<ValidateAbmlResponse>> ValidateAbml(string body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(string behavior_id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public Task<(StatusCodes, ResolveContextResponse?)> ResolveContextVariablesAsync(ResolveContextRequest body, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

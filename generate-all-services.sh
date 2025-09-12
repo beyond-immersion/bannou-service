@@ -33,15 +33,15 @@ create_service_plugin() {
     local service_name="$1"
     local service_plugin_dir="../lib-${service_name}"
     local project_file="$service_plugin_dir/lib-${service_name}.csproj"
-    
+
     if [ ! -d "$service_plugin_dir" ]; then
         echo "  📁 Creating service plugin directory: $service_plugin_dir"
         mkdir -p "$service_plugin_dir"
     fi
-    
+
     if [ ! -f "$project_file" ]; then
         echo "  📝 Creating service plugin project: $project_file"
-        
+
         # Generate consolidated service plugin project file
         cat > "$project_file" << EOF
 <Project Sdk="Microsoft.NET.Sdk">
@@ -79,22 +79,22 @@ generate_service_interface() {
     local interface_name="I${service_name^}Service.cs"
     local output_path="$service_plugin_dir/Generated/$interface_name"
     local controller_file="$service_plugin_dir/Generated/${service_name^}Controller.Generated.cs"
-    
+
     echo "    🔄 Generating service interface $interface_name..."
-    
+
     if [ ! -f "$schema_file" ]; then
         echo -e "${RED}    ⚠️  Schema file not found: $schema_file${NC}"
         return 1
     fi
-    
+
     # Check if controller exists to extract interface from
     if [ ! -f "$controller_file" ]; then
         echo -e "${RED}    ⚠️  Controller file not found: $controller_file${NC}"
         return 1
     fi
-    
+
     mkdir -p "$(dirname "$output_path")"
-    
+
     # Create service interface by extracting method signatures from generated controller
     cat > "$output_path" << EOF
 using BeyondImmersion.BannouService;
@@ -110,22 +110,42 @@ namespace BeyondImmersion.BannouService.${service_name^}
     {
 EOF
 
-    # Extract abstract method signatures from controller and convert to service interface methods
-    # Use a simpler approach with grep and sed to extract methods
-    grep -A 1 "public abstract.*Task<.*ActionResult<.*>" "$controller_file" | \
-    sed -n 's/.*public abstract.*Task<.*ActionResult<\([^>]*\)>>\s*\([A-Za-z]*\)(.*/\2:\1/p' | \
-    while IFS=: read -r method_name return_type; do
-        if [ ! -z "$method_name" ] && [ ! -z "$return_type" ]; then
-            cat >> "$output_path" << EOF
-        /// <summary>
-        /// ${method_name} operation  
-        /// </summary>
-        Task<(StatusCodes, ${return_type}?)> ${method_name}Async(/* TODO: Add parameters from schema */);
+    # Extract full method signatures from controller and convert to service interface methods
+    # Parse controller methods to extract complete signatures including parameters
+    python3 -c "
+import re
+import sys
 
-EOF
-        fi
-    done
-    
+with open('$controller_file', 'r') as f:
+    content = f.read()
+
+# Find all abstract methods with multiline handling
+method_pattern = r'public abstract System\.Threading\.Tasks\.Task<Microsoft\.AspNetCore\.Mvc\.ActionResult<([^>]+)>>\s+(\w+)\(([^;]+)\);'
+
+matches = re.findall(method_pattern, content, re.MULTILINE | re.DOTALL)
+
+for return_type, method_name, params in matches:
+    # Convert controller parameters to service parameters
+    # Remove ASP.NET Core specific attributes and system types
+    clean_params = re.sub(r'\[Microsoft\.AspNetCore\.Mvc\.[^\]]+\]\s*', '', params)
+    clean_params = re.sub(r'\[Microsoft\.AspNetCore\.Mvc\.ModelBinding\.[^\]]+\]\s*', '', clean_params)
+    clean_params = re.sub(r'System\.Threading\.', '', clean_params)
+    clean_params = re.sub(r'System\.', '', clean_params)
+
+    # Clean up extra whitespace and newlines
+    clean_params = re.sub(r'\s+', ' ', clean_params).strip()
+
+    # Handle specific type conversions - fix any remaining issues
+    clean_params = clean_params.replace('Provider?', 'Provider?')
+    clean_params = clean_params.replace('Provider2', 'Provider2')
+
+    print(f'''        /// <summary>
+        /// {method_name} operation
+        /// </summary>
+        Task<(StatusCodes, {return_type}?)> {method_name}Async({clean_params});
+''')
+" >> "$output_path"
+
     # Close the interface
     cat >> "$output_path" << EOF
     }
@@ -139,27 +159,27 @@ EOF
 
 # Function to generate service implementation from schema
 generate_service_implementation() {
-    local schema_file="$1" 
+    local schema_file="$1"
     local service_name="$2"
     local service_plugin_dir="$3"
     local service_name_pascal="${service_name^}Service.cs"
     local output_path="$service_plugin_dir/$service_name_pascal"
-    
+
     echo "    🔄 Generating service implementation $service_name_pascal..."
-    
+
     if [ ! -f "$schema_file" ]; then
         echo -e "${RED}    ⚠️  Schema file not found: $schema_file${NC}"
         return 1
     fi
-    
+
     # Check if service implementation already exists - protect existing logic
     if [ -f "$output_path" ]; then
         echo -e "${YELLOW}    📝 Service implementation already exists, preserving existing logic${NC}"
         return 0
     fi
-    
+
     mkdir -p "$(dirname "$output_path")"
-    
+
     # Create service implementation template that returns tuples
     cat > "$output_path" << EOF
 using BeyondImmersion.BannouService;
@@ -190,11 +210,11 @@ namespace BeyondImmersion.BannouService.${service_name^}
         // public async Task<(StatusCodes, CreateResponseModel?)> CreateAsync(
         //     CreateRequestModel request, CancellationToken cancellationToken = default)
         // {
-        //     try 
+        //     try
         //     {
         //         // Business logic implementation here
         //         _logger.LogDebug("Processing create request");
-        //         
+        //
         //         // Return success with response model
         //         return (StatusCodes.OK, new CreateResponseModel { /* ... */ });
         //     }
@@ -216,23 +236,23 @@ EOF
 # Function to generate service configuration from schema
 generate_service_configuration() {
     local schema_file="$1"
-    local service_name="$2" 
+    local service_name="$2"
     local service_plugin_dir="$3"
     local config_name="${service_name^}ServiceConfiguration.cs"
     local output_path="$service_plugin_dir/$config_name"
-    
+
     echo "    🔄 Generating service configuration $config_name..."
-    
+
     if [ ! -f "$schema_file" ]; then
         echo -e "${RED}    ⚠️  Schema file not found: $schema_file${NC}"
         return 1
     fi
-    
+
     # Always regenerate service configuration from schema
     # Configuration should be schema-driven, not preserved from manual changes
-    
+
     mkdir -p "$(dirname "$output_path")"
-    
+
     # Create configuration class template
     cat > "$output_path" << EOF
 using System.ComponentModel.DataAnnotations;
@@ -281,16 +301,16 @@ generate_client() {
     local service_plugin_dir="$3"
     local client_name="${service_name^}Client.cs"
     local output_path="$service_plugin_dir/Generated/$client_name"
-    
+
     echo "    🔄 Generating service client $client_name..."
-    
+
     if [ ! -f "$schema_file" ]; then
         echo -e "${RED}    ⚠️  Schema file not found: $schema_file${NC}"
         return 1
     fi
-    
+
     mkdir -p "$(dirname "$output_path")"
-    
+
     # Generate service client using direct NSwag command (DaprServiceClientBase pattern)
     "$NSWAG_EXE" openapi2csclient \
         /input:"$schema_file" \
@@ -308,7 +328,7 @@ generate_client() {
         /generateOptionalParameters:true \
         /useHttpClientCreationMethod:false \
         /additionalNamespaceUsages:"BeyondImmersion.BannouService.ServiceClients"
-    
+
     # Check if NSwag client generation succeeded
     if [ $? -eq 0 ]; then
         if [ -f "$output_path" ]; then
@@ -329,25 +349,25 @@ generate_controller() {
     local schema_file="$1"
     local service_name="$2"
     local controller_name="${service_name^}Controller.Generated.cs"  # Capitalize first letter
-    
+
     # Consolidated architecture: generate in service plugin directory
     local service_plugin_dir="../lib-${service_name}"
     local output_path="$service_plugin_dir/Generated/$controller_name"
-    
+
     echo "  🔄 Generating $controller_name from $schema_file..."
     echo "      📁 Output: $output_path"
-    
+
     if [ ! -f "$schema_file" ]; then
         echo -e "${RED}    ⚠️  Schema file not found: $schema_file${NC}"
         return 1
     fi
-    
+
     # Ensure service plugin exists (create if needed)
     create_service_plugin "$service_name"
-    
+
     # Create Generated directory if it doesn't exist
     mkdir -p "$(dirname "$output_path")"
-    
+
     # Generate controller using direct NSwag command (pure shell pattern)
     "$NSWAG_EXE" openapi2cscontroller \
         "/input:$schema_file" \
@@ -364,19 +384,19 @@ generate_controller() {
         "/GenerateNullableReferenceTypes:true" \
         "/NewLineBehavior:LF" \
         "/GenerateOptionalParameters:true"
-        
+
     # Generate service client from schema (CRITICAL for service-to-service communication)
     generate_client "$schema_file" "$service_name" "$service_plugin_dir"
-        
+
     # Generate service interface from schema
     generate_service_interface "$schema_file" "$service_name" "$service_plugin_dir"
-    
-    # Generate service implementation from schema  
+
+    # Generate service implementation from schema
     generate_service_implementation "$schema_file" "$service_name" "$service_plugin_dir"
-    
+
     # Generate configuration class from schema
     generate_service_configuration "$schema_file" "$service_name" "$service_plugin_dir"
-        
+
     # Check if NSwag command succeeded (exit code 0)
     if [ $? -eq 0 ]; then
         if [ -f "$output_path" ]; then
@@ -392,22 +412,47 @@ generate_controller() {
     fi
 }
 
-# Generate controllers for all available schemas
+# Generate controllers for available schemas (support single service argument)
 generated_count=0
 failed_count=0
 
-# Core service schemas
-schemas=(
+# Define all available schemas
+all_schemas=(
     "../schemas/accounts-api.yaml:accounts"
-    "../schemas/auth-api.yaml:auth" 
+    "../schemas/auth-api.yaml:auth"
     "../schemas/website-api.yaml:website"
     "../schemas/behavior-api.yaml:behavior"
     "../schemas/connect-api.yaml:connect"
 )
 
+# Check if specific service was requested
+if [ "$1" ]; then
+    requested_service="$1"
+    schemas=()
+    found=false
+
+    for schema_entry in "${all_schemas[@]}"; do
+        IFS=':' read -r schema_file service_name <<< "$schema_entry"
+        if [ "$service_name" = "$requested_service" ]; then
+            schemas=("$schema_entry")
+            found=true
+            echo "🎯 Generating only for requested service: $requested_service"
+            break
+        fi
+    done
+
+    if [ "$found" = false ]; then
+        echo -e "${RED}❌ Service '$requested_service' not found. Available services: accounts, auth, website, behavior, connect${NC}"
+        exit 1
+    fi
+else
+    # Generate all schemas if no specific service requested
+    schemas=("${all_schemas[@]}")
+fi
+
 for schema_entry in "${schemas[@]}"; do
     IFS=':' read -r schema_file service_name <<< "$schema_entry"
-    
+
     if generate_controller "$schema_file" "$service_name"; then
         ((generated_count++))
     else
@@ -421,10 +466,10 @@ event_schemas=($(find ../schemas -name "*-events.yaml" 2>/dev/null || true))
 
 if [ ${#event_schemas[@]} -gt 0 ]; then
     echo "  🔄 Found ${#event_schemas[@]} event schema(s), generating event models..."
-    
+
     # Use Roslyn source generators for event models
     echo -e "${YELLOW}📋 Generating Roslyn source generators...${NC}"
-    
+
     if dotnet build -p:GenerateEventModels=true --verbosity quiet; then
         echo -e "${GREEN}    ✅ Event models generated successfully${NC}"
         ((generated_count++))
@@ -442,31 +487,31 @@ echo -e "${YELLOW}📋 Generating unit test projects...${NC}"
 generate_unit_test_projects() {
     local test_generated=0
     local test_failed=0
-    
+
     for schema_entry in "${schemas[@]}"; do
         IFS=':' read -r schema_file service_name <<< "$schema_entry"
         local service_name_pascal="${service_name^}" # Capitalize first letter
         local test_project_dir="../lib-${service_name}.tests"
-        
+
         # Skip if test project already exists
         if [ -d "$test_project_dir" ]; then
             echo "    📝 Unit test project already exists: $test_project_dir"
             continue
         fi
-        
+
         echo "    🧪 Creating unit test project for $service_name..."
-        
+
         # Create test project directory
         mkdir -p "$test_project_dir"
-        
+
         # Use dotnet new with our custom template (fallback to manual creation if template fails)
         if dotnet new bannou-test -n "lib-${service_name}.tests" -o "$test_project_dir" --ServiceName "$service_name" --force >/dev/null 2>&1; then
-            
+
             # Fix the generated files (template has some quirks)
             if [ -f "$test_project_dir/lib-${service_name}.tests.Tests.csproj" ]; then
                 mv "$test_project_dir/lib-${service_name}.tests.Tests.csproj" "$test_project_dir/lib-${service_name}.tests.csproj"
             fi
-            
+
             # Create proper test class file
             cat > "$test_project_dir/${service_name_pascal}ServiceTests.cs" << EOF
 using BeyondImmersion.BannouService.${service_name_pascal};
@@ -498,7 +543,7 @@ public class ${service_name_pascal}ServiceTests
         var exception = Record.Exception(() => new ${service_name_pascal}Service(
             _mockConfiguration.Object,
             _mockLogger.Object));
-            
+
         Assert.Null(exception);
     }
 
@@ -525,7 +570,7 @@ public class ${service_name_pascal}ServiceTests
     // Example: Add reference to lib-accounts project to test AuthService → AccountsClient integration
 }
 EOF
-            
+
             echo -e "${GREEN}        ✅ Generated unit test project for $service_name${NC}"
             ((test_generated++))
         else
@@ -533,7 +578,7 @@ EOF
             ((test_failed++))
         fi
     done
-    
+
     echo "    📊 Unit test generation: $test_generated created, $test_failed failed"
     if [ $test_failed -eq 0 ]; then
         echo -e "${GREEN}    ✅ All unit test projects generated successfully${NC}"

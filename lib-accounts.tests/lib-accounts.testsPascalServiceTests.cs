@@ -26,7 +26,7 @@ public class AccountsServiceTests
         var exception = Record.Exception(() => new AccountsService(
             _mockConfiguration.Object,
             _mockLogger.Object));
-            
+
         Assert.Null(exception);
     }
 

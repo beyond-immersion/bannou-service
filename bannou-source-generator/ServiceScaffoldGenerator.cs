@@ -32,7 +32,7 @@ public class ServiceScaffoldGenerator : IIncrementalGenerator
             .Where(file => file.Path.Contains("/schemas/") && file.Path.EndsWith("-api.yaml"))
             .Collect();
 
-        // Combine inputs  
+        // Combine inputs
         var combinedProvider = generateNewServicesProvider
             .Combine(schemaFilesProvider);
 
@@ -209,10 +209,10 @@ public static partial class {{pascalCaseServiceName}}ServiceExtensions
     public static IServiceCollection Add{{pascalCaseServiceName}}Service(this IServiceCollection services)
     {
         services.AddScoped<I{{pascalCaseServiceName}}Service, {{pascalCaseServiceName}}Service>();
-        
+
         // Add any additional service-specific dependencies here
         // Generated services can be extended by partial classes
-        
+
         return services;
     }
 }

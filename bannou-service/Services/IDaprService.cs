@@ -5,7 +5,7 @@ namespace BeyondImmersion.BannouService.Services;
 /// <summary>
 /// Interface to implement for all internal dapr service,
 /// which provides the logic for any given set of APIs.
-/// 
+///
 /// For example, the Inventory service is in charge of
 /// any API calls that desire to create/modify inventory
 /// data in the game.
@@ -105,7 +105,7 @@ public interface IDaprService
     /// <summary>
     /// Lookup for mapping applications to services in the Dapr network.
     /// Is applied as an override to hardcoded and configurable network_mode presets.
-    /// 
+    ///
     /// <seealso cref="NetworkModePresets"/>
     /// </summary>
     public static IDictionary<string, IList<(Type, Type, DaprServiceAttribute)>> ServiceAppMappings
@@ -138,7 +138,7 @@ public interface IDaprService
     /// <summary>
     /// The service->application name mappings for the network.
     /// Specific to the network mode that's been configured.
-    /// 
+    ///
     /// Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
     /// mappings to use.
     /// <seealso cref="ServiceAppMappings"/>
@@ -378,7 +378,7 @@ public interface IDaprService
     /// <summary>
     /// Returns the application name mapped for the given service name, from the
     /// network mode preset.
-    /// 
+    ///
     /// Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
     /// mappings to use.
     /// </summary>
@@ -463,7 +463,7 @@ public interface IDaprService
 
     /// <summary>
     /// Get the app name for the given service name.
-    /// 
+    ///
     /// The service name is primarily obtained from the DaprService
     /// attribute attached to the implementation type.
     /// </summary>

@@ -19,7 +19,7 @@ public readonly struct BinaryMessage
     {
         if (data.Length < HeaderSize)
             throw new ArgumentException($"Message must be at least {HeaderSize} bytes", nameof(data));
-        
+
         _data = data;
     }
 

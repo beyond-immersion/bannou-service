@@ -27,7 +27,7 @@ public class WebsiteServiceTests
         var exception = Record.Exception(() => new WebsiteService(
             _mockConfiguration.Object,
             _mockLogger.Object));
-            
+
         Assert.Null(exception);
     }
 

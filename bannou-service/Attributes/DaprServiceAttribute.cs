@@ -14,7 +14,7 @@ public sealed class DaprServiceAttribute : BaseServiceAttribute
     /// Must implement/inherit IDaprService.
     /// Can be an interface, abstract or concrete class.
     /// If null, will use exact class type.
-    /// 
+    ///
     /// MUST match the service pulled from DI in related controllers.
     /// </summary>
     public Type? InterfaceType { get; }

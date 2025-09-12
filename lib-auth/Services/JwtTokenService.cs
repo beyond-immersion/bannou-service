@@ -85,9 +85,9 @@ public class JwtTokenService
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var principal = tokenHandler.ValidateToken(token, _tokenValidationParameters, out var validatedToken);
-            
+
             // Ensure the token is a JWT token
-            if (validatedToken is not JwtSecurityToken jwtToken || 
+            if (validatedToken is not JwtSecurityToken jwtToken ||
                 !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
             {
                 return null;
@@ -111,7 +111,7 @@ public class JwtTokenService
             var tokenHandler = new JwtSecurityTokenHandler();
             var jsonToken = tokenHandler.ReadJwtToken(token);
             var accountIdClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-            
+
             if (accountIdClaim != null && Guid.TryParse(accountIdClaim.Value, out var accountId))
             {
                 return accountId;

@@ -51,7 +51,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
 
         _connections = new ConcurrentDictionary<string, ClientConnection>();
         _serviceGuidToClient = new ConcurrentDictionary<Guid, string>();
-        
+
         // Create message processing queue
         var channelOptions = new BoundedChannelOptions(10000)
         {
@@ -59,7 +59,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
             SingleReader = false,
             SingleWriter = false
         };
-        
+
         _messageQueue = Channel.CreateBounded<BinaryMessage>(channelOptions);
         _messageWriter = _messageQueue.Writer;
         _messageReader = _messageQueue.Reader;
@@ -84,8 +84,8 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
             {
                 var token = authorization.StartsWith("Bearer ") ? authorization[7..] : authorization;
                 var validateResult = await _authService.ValidateTokenAsync(token, cancellationToken);
-                
-                if (validateResult.Result is OkObjectResult okResult && 
+
+                if (validateResult.Result is OkObjectResult okResult &&
                     okResult.Value is ValidateTokenResponse tokenResponse &&
                     tokenResponse.Valid)
                 {
@@ -94,7 +94,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
                         new(ClaimTypes.NameIdentifier, tokenResponse.AccountId.ToString()),
                         new(ClaimTypes.Email, tokenResponse.Email)
                     };
-                    
+
                     claims.AddRange(tokenResponse.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
                     principal = new ClaimsPrincipal(new ClaimsIdentity(claims, "Bearer"));
                 }
@@ -102,7 +102,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
 
             // Determine available services based on authentication
             var availableServices = GetAvailableServices(principal);
-            
+
             // Generate client-specific service mappings
             var clientId = Guid.NewGuid().ToString();
             var serviceMappings = GenerateServiceMappings(clientId, availableServices);
@@ -221,7 +221,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
         CancellationToken cancellationToken = default)
     {
         var clientId = Guid.NewGuid().ToString();
-        
+
         // Validate authorization and create principal
         ClaimsPrincipal? principal = null;
         if (!string.IsNullOrWhiteSpace(authorization))
@@ -231,7 +231,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
 
         // Create connection
         var connection = new ClientConnection(clientId, webSocket, principal);
-        
+
         // Update service mappings based on authentication
         var availableServices = GetAvailableServices(principal);
         connection.UpdateServiceMappings(availableServices);
@@ -244,11 +244,11 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
 
         // Add to connections
         _connections[clientId] = connection;
-        
+
         Interlocked.Increment(ref _totalConnections);
         Interlocked.Increment(ref _currentConnections);
 
-        _logger.LogDebug("Registered client {ClientId} with {ServiceCount} available services", 
+        _logger.LogDebug("Registered client {ClientId} with {ServiceCount} available services",
             clientId, connection.ServiceMappings.Count);
 
         return clientId;
@@ -270,7 +270,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
             connection.Dispose();
 
             Interlocked.Decrement(ref _currentConnections);
-            
+
             _logger.LogDebug("Unregistered client {ClientId}", clientId);
         }
     }
@@ -290,9 +290,9 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
             }
 
             var binaryMessage = new BinaryMessage(message);
-            
+
             // Check if this is a client-to-client message
-            if (Configuration.EnableClientToClientRouting && 
+            if (Configuration.EnableClientToClientRouting &&
                 _serviceGuidToClient.TryGetValue(binaryMessage.ServiceGuid, out var targetClientId) &&
                 targetClientId != clientId)
             {
@@ -329,11 +329,11 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
     {
         var connections = _connections.Values.ToArray();
         var tasks = connections.Select(conn => conn.SendAsync(message, cancellationToken));
-        
+
         var results = await Task.WhenAll(tasks);
         var successCount = results.Count(r => r);
-        
-        _logger.LogDebug("Broadcast message to {Total} clients, {Success} successful", 
+
+        _logger.LogDebug("Broadcast message to {Total} clients, {Success} successful",
             connections.Length, successCount);
     }
 
@@ -345,8 +345,8 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
         {
             var token = authorization.StartsWith("Bearer ") ? authorization[7..] : authorization;
             var validateResult = await _authService.ValidateTokenAsync(token, cancellationToken);
-            
-            if (validateResult.Result is OkObjectResult okResult && 
+
+            if (validateResult.Result is OkObjectResult okResult &&
                 okResult.Value is ValidateTokenResponse tokenResponse &&
                 tokenResponse.Valid)
             {
@@ -355,7 +355,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
                     new(ClaimTypes.NameIdentifier, tokenResponse.AccountId.ToString()),
                     new(ClaimTypes.Email, tokenResponse.Email)
                 };
-                
+
                 claims.AddRange(tokenResponse.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
                 return new ClaimsPrincipal(new ClaimsIdentity(claims, "Bearer"));
             }
@@ -371,7 +371,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
     private List<string> GetAvailableServices(ClaimsPrincipal? principal)
     {
         var services = new List<string>(Configuration.DefaultServices);
-        
+
         if (principal?.Identity?.IsAuthenticated == true)
         {
             services.AddRange(Configuration.AuthenticatedServices);
@@ -383,7 +383,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
     private Dictionary<string, string> GenerateServiceMappings(string clientId, IEnumerable<string> services)
     {
         var mappings = new Dictionary<string, string>();
-        
+
         foreach (var service in services)
         {
             // Generate unique GUID for this client/service combination
@@ -409,7 +409,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
 
         var jsonResponse = JsonSerializer.Serialize(response);
         var responseMessage = BinaryMessage.Create(Guid.Empty, 0, jsonResponse);
-        
+
         await connection.SendAsync(responseMessage.Data, cancellationToken);
     }
 
@@ -429,7 +429,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
 
         // Queue message for processing
         var binaryMessage = new BinaryMessage(messageData);
-        
+
         if (!await _messageWriter.WaitToWriteAsync(cancellationToken))
             return;
 
@@ -461,14 +461,14 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
         var serviceName = connection.GetServiceForGuid(message.ServiceGuid);
         if (string.IsNullOrEmpty(serviceName))
         {
-            _logger.LogWarning("Unknown service GUID {ServiceGuid} from client {ClientId}", 
+            _logger.LogWarning("Unknown service GUID {ServiceGuid} from client {ClientId}",
                 message.ServiceGuid, clientId);
             return false;
         }
 
         // TODO: Route to actual Dapr service
         // This is where we would call the appropriate service via Dapr
-        _logger.LogDebug("Routing message to service {ServiceName} for client {ClientId}", 
+        _logger.LogDebug("Routing message to service {ServiceName} for client {ClientId}",
             serviceName, clientId);
 
         await Task.CompletedTask;
@@ -493,11 +493,11 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
         if (disposing)
         {
             _messageWriter.Complete();
-            
+
             // Close all connections
             var connections = _connections.Values.ToArray();
             Parallel.ForEach(connections, connection => connection.Dispose());
-            
+
             _connections.Clear();
             _serviceGuidToClient.Clear();
         }

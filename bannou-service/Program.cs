@@ -308,7 +308,7 @@ public static class Program
     /// <summary>
     /// Load appropriate sets of libs in /libs/ and subdirectories
     /// based on current application configuration.
-    /// 
+    ///
     /// <seealso cref="AppConfiguration.Include_Assemblies"/>
     /// </summary>
     private static void LoadAssemblies()

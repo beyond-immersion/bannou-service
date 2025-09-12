@@ -27,7 +27,7 @@ public class BehaviorServiceTests
         var exception = Record.Exception(() => new BehaviorService(
             _mockConfiguration.Object,
             _mockLogger.Object));
-            
+
         Assert.Null(exception);
     }
 

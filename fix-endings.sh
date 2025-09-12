@@ -13,15 +13,15 @@ NC='\033[0m' # No Color
 
 FIXED_COUNT=0
 
-# Function to fix a file's line ending compliance
+# Function to fix a file's line ending and whitespace compliance
 fix_line_endings() {
     local file="$1"
     local needs_fix=false
-    
+
     if [ ! -f "$file" ]; then
         return
     fi
-    
+
     # Check and fix CRLF line endings
     if file "$file" | grep -q "CRLF" 2>/dev/null; then
         echo -e "${YELLOW}  Converting CRLF→LF: $file${NC}"
@@ -32,17 +32,40 @@ fix_line_endings() {
         }
         needs_fix=true
     fi
-    
+
+    # For .cs files only: check and remove trailing whitespace + whitespace-only lines
+    if [[ "$file" == *.cs ]]; then
+        # Remove trailing whitespace
+        if grep -q '[[:space:]]\+$' "$file" 2>/dev/null; then
+            echo -e "${YELLOW}  Removing trailing whitespace: $file${NC}"
+            sed -i 's/[[:space:]]*$//' "$file" 2>/dev/null || {
+                # Fallback for systems where sed -i behaves differently
+                sed 's/[[:space:]]*$//' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+            }
+            needs_fix=true
+        fi
+        
+        # Remove whitespace-only lines (but preserve truly empty lines)
+        if grep -q '^[[:space:]]\+$' "$file" 2>/dev/null; then
+            echo -e "${YELLOW}  Cleaning whitespace-only lines: $file${NC}"
+            sed -i 's/^[[:space:]]*$//' "$file" 2>/dev/null || {
+                # Fallback for systems where sed -i behaves differently
+                sed 's/^[[:space:]]*$//' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+            }
+            needs_fix=true
+        fi
+    fi
+
     # Check and add final newline if missing
     if [ -s "$file" ] && [ "$(tail -c1 "$file" 2>/dev/null | wc -l)" -eq 0 ]; then
         echo -e "${YELLOW}  Adding final newline: $file${NC}"
         echo "" >> "$file"
         needs_fix=true
     fi
-    
+
     if [ "$needs_fix" = true ]; then
         ((FIXED_COUNT++))
-        echo -e "${GREEN}  ✅ Fixed line endings: $file${NC}"
+        echo -e "${GREEN}  ✅ Fixed whitespace issues: $file${NC}"
     fi
 }
 
@@ -51,7 +74,7 @@ echo "📋 Processing all text files (excluding build artifacts)..."
 # File patterns to fix line endings for
 FILE_PATTERNS=(
     "*.cs"      # C# source files
-    "*.md"      # Markdown files  
+    "*.md"      # Markdown files
     "*.json"    # JSON configuration files
     "*.yml"     # YAML files
     "*.yaml"    # YAML files

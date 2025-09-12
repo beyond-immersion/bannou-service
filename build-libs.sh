@@ -30,7 +30,7 @@ do
         source_dir="$project_name/bin/Release/$TARGET_FRAMEWORK/publish"
 
         echo "Building libs for project '$project_name'."
-        dotnet publish $proj --configuration Release --no-self-contained -nologo --verbosity quiet
+        dotnet publish $proj --configuration Release --no-self-contained -nologo --verbosity quiet -p:GenerateNewServices=false -p:GenerateUnitTests=false
 
         #echo "Files in '$source_dir' to be copied to '$LIBS_DIR' directory:"
         #ls "$source_dir"

@@ -26,11 +26,11 @@ namespace BeyondImmersion.BannouService.Connect
         // public async Task<(StatusCodes, CreateResponseModel?)> CreateAsync(
         //     CreateRequestModel request, CancellationToken cancellationToken = default)
         // {
-        //     try 
+        //     try
         //     {
         //         // Business logic implementation here
         //         _logger.LogDebug("Processing create request");
-        //         
+        //
         //         // Return success with response model
         //         return (StatusCodes.OK, new CreateResponseModel { /* ... */ });
         //     }

@@ -27,7 +27,7 @@ public class AuthServiceTests
         var exception = Record.Exception(() => new AuthService(
             _mockConfiguration.Object,
             _mockLogger.Object));
-            
+
         Assert.Null(exception);
     }
 

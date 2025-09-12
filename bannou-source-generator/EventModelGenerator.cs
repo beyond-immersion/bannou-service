@@ -12,11 +12,11 @@ namespace BeyondImmersion.BannouService.SourceGeneration;
 /// <summary>
 /// Source generator that creates event models and pub/sub handlers from OpenAPI event schemas.
 /// Generates event classes, publisher services, and subscriber handlers.
-/// 
+///
 /// ⚠️ DISABLED: NSwag already generates event models perfectly from schemas/*-events.yaml files.
 /// This generator was creating duplicate event model classes causing build conflicts.
 /// NSwag handles: AccountsEventsModels.cs with AccountCreatedEvent, ServiceMappingEvent, etc.
-/// 
+///
 /// Re-enable only if specialized pub/sub patterns are needed that NSwag cannot generate.
 /// </summary>
 // [Generator] - DISABLED: NSwag handles event models - see comment above
@@ -184,7 +184,7 @@ public class {{pascalCaseServiceName}}EventPublisher : I{{pascalCaseServiceName}
                 typeof(TEvent).Name, eventData.EventId);
 
             await _daprClient.PublishEventAsync(PUB_SUB_NAME, TOPIC_NAME, eventData, cancellationToken);
-            
+
             _logger.LogInformation("Successfully published {{pascalCaseServiceName}} event {EventType} with ID {EventId}",
                 typeof(TEvent).Name, eventData.EventId);
         }
@@ -243,7 +243,7 @@ public partial class {{pascalCaseServiceName}}EventSubscriber : ControllerBase
 
             // Route to specific handler based on event type
             var handled = await RouteEventAsync(eventData);
-            
+
             if (handled)
             {
                 _logger.LogInformation("Successfully handled {{pascalCaseServiceName}} event {EventType} with ID {EventId}",
@@ -302,7 +302,7 @@ public static partial class {{pascalCaseServiceName}}EventExtensions
     {
         services.AddScoped<I{{pascalCaseServiceName}}EventPublisher, {{pascalCaseServiceName}}EventPublisher>();
         services.AddScoped<{{pascalCaseServiceName}}EventSubscriber>();
-        
+
         return services;
     }
 }

@@ -69,9 +69,9 @@ public class AuthServiceToServiceCommunicationTests
         // ✅ CRITICAL: Verify that the generated client was used for service-to-service call
         mockAccountsClient.Verify(
             client => client.CreateAccountAsync(
-                It.Is<CreateAccountRequest>(req => 
-                    req.DisplayName == "testuser" && 
-                    req.Email == "test@example.com" && 
+                It.Is<CreateAccountRequest>(req =>
+                    req.DisplayName == "testuser" &&
+                    req.Email == "test@example.com" &&
                     req.Provider == Provider.Email),
                 It.IsAny<CancellationToken>()),
             Times.Once,
@@ -121,8 +121,8 @@ public class AuthServiceToServiceCommunicationTests
 
         // Act - Perform login operation
         var result = await authService.LoginWithCredentialsGetAsync(
-            "existing@example.com", 
-            "password", 
+            "existing@example.com",
+            "password",
             CancellationToken.None);
 
         // Assert - Verify successful authentication via client
@@ -172,8 +172,8 @@ public class AuthServiceToServiceCommunicationTests
 
         // Act - Attempt login with non-existent account
         var result = await authService.LoginWithCredentialsGetAsync(
-            "nonexistent@example.com", 
-            "password", 
+            "nonexistent@example.com",
+            "password",
             CancellationToken.None);
 
         // Assert - Verify proper error handling
@@ -182,7 +182,7 @@ public class AuthServiceToServiceCommunicationTests
 
         var unauthorizedResult = (UnauthorizedObjectResult)result.Result;
         var errorResponse = Assert.IsType<AuthErrorResponse>(unauthorizedResult.Value);
-        
+
         Assert.Equal(AuthErrorResponseError.AUTHENTICATION_FAILED, errorResponse.Error);
         Assert.Equal("Invalid credentials", errorResponse.Message);
 
@@ -198,7 +198,7 @@ public class AuthServiceToServiceCommunicationTests
 
 /// <summary>
 /// Architecture documentation embedded in test class:
-/// 
+///
 /// ✅ CORRECT Service-to-Service Communication Pattern:
 /// 1. Services inject generated clients (IAccountsClient, IAuthClient, etc.)
 /// 2. Generated clients inherit from DaprServiceClientBase
@@ -206,19 +206,19 @@ public class AuthServiceToServiceCommunicationTests
 /// 4. Clients automatically route to correct service instances via Dapr
 /// 5. In development: all clients route to "bannou" (single node)
 /// 6. In production: clients route to dedicated service instances
-/// 
+///
 /// ❌ WRONG Anti-Pattern:
 /// - Never inject service interfaces directly (IAccountsService) from other services
 /// - Never use HttpClient directly for service-to-service calls
 /// - Never bypass the generated client architecture
-/// 
+///
 /// Benefits of Generated Client Architecture:
 /// - Type-safe service-to-service communication
 /// - Automatic service discovery and routing
 /// - Schema-driven API contracts ensure consistency
 /// - Testable via mocking interfaces
 /// - Scales from single node to distributed deployment
-/// 
+///
 /// Service Dependency Pattern:
 /// - AuthService depends on AccountsService (can reference accounts client)
 /// - AccountsService does NOT depend on AuthService (cannot reference auth)

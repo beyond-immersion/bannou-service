@@ -21,14 +21,14 @@ echo "Found ${#CLIENT_FILES[@]} client files, ${#MODEL_FILES[@]} model files, ${
 # Generate the project file
 cat > "$SDK_PROJECT" << 'EOF'
 <Project Sdk="Microsoft.NET.Sdk">
-  
+
   <PropertyGroup>
     <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>BeyondImmersion.Bannou.Client.SDK</RootNamespace>
-    
+
     <!-- NuGet Package Metadata -->
     <PackageId>BeyondImmersion.Bannou.Client.SDK</PackageId>
     <Authors>BeyondImmersion</Authors>
@@ -75,7 +75,7 @@ for file in "${MODEL_FILES[@]}"; do
     echo "      <Compile Include=\"$rel_path\" />" >> "$SDK_PROJECT"
 done
 
-# Add event files  
+# Add event files
 for file in "${EVENT_FILES[@]}"; do
     rel_path="../${file#./}"
     echo "      <Compile Include=\"$rel_path\" />" >> "$SDK_PROJECT"
@@ -107,7 +107,7 @@ Auto-generated client SDK for the Bannou service platform.
 ## Features
 
 - Type-safe service clients generated from OpenAPI schemas
-- WebSocket protocol support for real-time communication  
+- WebSocket protocol support for real-time communication
 - Event models for pub/sub messaging
 - Multi-target framework support (.NET 6, 8, 9)
 
@@ -121,7 +121,7 @@ var accountsClient = new AccountsClient();
 var authClient = new AuthClient();
 
 // Create requests with generated models
-var request = new CreateAccountRequest 
+var request = new CreateAccountRequest
 {
     Username = "user",
     Password = "password"

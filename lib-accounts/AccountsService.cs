@@ -4,6 +4,7 @@ using Dapr.Client;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text.Json;
+using System.Collections.Generic;
 
 namespace BeyondImmersion.BannouService.Accounts
 {
@@ -30,93 +31,339 @@ namespace BeyondImmersion.BannouService.Accounts
             _daprClient = daprClient;
         }
 
-        // TODO: Implement actual service methods based on generated interface
-        // Following the Dapr-first pattern:
-        //
-        // Example implementation pattern:
-        // public async Task<(StatusCodes, CreateAccountResponse?)> CreateAccountAsync(
-        //     CreateAccountRequest request, CancellationToken cancellationToken = default)
-        // {
-        //     try 
-        //     {
-        //         _logger.LogDebug("Creating account for email: {Email}", request.Email);
-        //
-        //         // Create account entity
-        //         var accountId = Guid.NewGuid().ToString();
-        //         var account = new AccountModel
-        //         {
-        //             AccountId = accountId,
-        //             Email = request.Email,
-        //             DisplayName = request.DisplayName,
-        //             CreatedAt = DateTime.UtcNow,
-        //             UpdatedAt = DateTime.UtcNow
-        //         };
-        //
-        //         // Store in Dapr state store (replaces Entity Framework)
-        //         await _daprClient.SaveStateAsync(
-        //             ACCOUNTS_STATE_STORE, 
-        //             $"{ACCOUNTS_KEY_PREFIX}{accountId}", 
-        //             account, 
-        //             cancellationToken: cancellationToken);
-        //
-        //         _logger.LogInformation("Account created successfully: {AccountId}", accountId);
-        //
-        //         // Return success response
-        //         return (StatusCodes.Created, new CreateAccountResponse 
-        //         { 
-        //             AccountId = accountId,
-        //             Email = account.Email,
-        //             DisplayName = account.DisplayName,
-        //             CreatedAt = account.CreatedAt
-        //         });
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         _logger.LogError(ex, "Error creating account");
-        //         return (StatusCodes.InternalServerError, null);
-        //     }
-        // }
-        //
-        // public async Task<(StatusCodes, GetAccountResponse?)> GetAccountAsync(
-        //     string accountId, CancellationToken cancellationToken = default)
-        // {
-        //     try
-        //     {
-        //         _logger.LogDebug("Retrieving account: {AccountId}", accountId);
-        //
-        //         // Get from Dapr state store (replaces Entity Framework query)
-        //         var account = await _daprClient.GetStateAsync<AccountModel>(
-        //             ACCOUNTS_STATE_STORE,
-        //             $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-        //             cancellationToken: cancellationToken);
-        //
-        //         if (account == null)
-        //         {
-        //             _logger.LogWarning("Account not found: {AccountId}", accountId);
-        //             return (StatusCodes.NotFound, null);
-        //         }
-        //
-        //         return (StatusCodes.OK, new GetAccountResponse
-        //         {
-        //             AccountId = account.AccountId,
-        //             Email = account.Email,
-        //             DisplayName = account.DisplayName,
-        //             CreatedAt = account.CreatedAt,
-        //             UpdatedAt = account.UpdatedAt
-        //         });
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         _logger.LogError(ex, "Error retrieving account: {AccountId}", accountId);
-        //         return (StatusCodes.InternalServerError, null);
-        //     }
-        // }
+        public async Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(
+            string? email = null,
+            string? displayName = null,
+            Provider? provider = null,
+            bool? verified = null,
+            int? page = 1,
+            int? pageSize = 20,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogDebug("Listing accounts with filters - Email: {Email}, DisplayName: {DisplayName}, Provider: {Provider}, Verified: {Verified}",
+                    email, displayName, provider, verified);
 
-        // Add other methods following the same Dapr state management pattern
-        // - Use _daprClient.SaveStateAsync() instead of DbContext.SaveChanges()  
-        // - Use _daprClient.GetStateAsync() instead of DbContext queries
-        // - Use _daprClient.DeleteStateAsync() for soft/hard deletes
-        // - Publish events via _daprClient.PublishEventAsync() for state changes
+                // TODO: Implement pagination and filtering with Dapr state store queries
+                // For now, return empty list as placeholder
+                var response = new AccountListResponse
+                {
+                    Accounts = new List<AccountResponse>(),
+                    TotalCount = 0,
+                    Page = page ?? 1,
+                    PageSize = pageSize ?? 20
+                };
+
+                return (StatusCodes.OK, response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error listing accounts");
+                return (StatusCodes.InternalServerError, null);
+            }
+        }
+
+        public async Task<(StatusCodes, AccountResponse?)> CreateAccountAsync(
+            CreateAccountRequest body,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogDebug("Creating account for email: {Email}", body.Email);
+
+                // Create account entity
+                var accountId = Guid.NewGuid();
+                var account = new AccountModel
+                {
+                    AccountId = accountId.ToString(),
+                    Email = body.Email,
+                    DisplayName = body.DisplayName,
+                    IsVerified = body.EmailVerified == true,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow
+                };
+
+                // Store in Dapr state store (replaces Entity Framework)
+                await _daprClient.SaveStateAsync(
+                    ACCOUNTS_STATE_STORE,
+                    $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                    account);
+
+                _logger.LogInformation("Account created successfully: {AccountId}", accountId);
+
+                // Return success response
+                var response = new AccountResponse
+                {
+                    AccountId = accountId,
+                    Email = account.Email,
+                    DisplayName = account.DisplayName,
+                    EmailVerified = account.IsVerified,
+                    CreatedAt = account.CreatedAt,
+                    UpdatedAt = account.UpdatedAt,
+                    Roles = new List<string>(),
+                    AuthMethods = new List<AuthMethodInfo>()
+                };
+
+                return (StatusCodes.OK, response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating account");
+                return (StatusCodes.InternalServerError, null);
+            }
+        }
+
+        public async Task<(StatusCodes, AccountResponse?)> GetAccountAsync(
+            Guid accountId,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogDebug("Retrieving account: {AccountId}", accountId);
+
+                // Get from Dapr state store (replaces Entity Framework query)
+                var account = await _daprClient.GetStateAsync<AccountModel>(
+                    ACCOUNTS_STATE_STORE,
+                    $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                    cancellationToken: cancellationToken);
+
+                if (account == null)
+                {
+                    _logger.LogWarning("Account not found: {AccountId}", accountId);
+                    return (StatusCodes.NotFound, null);
+                }
+
+                var response = new AccountResponse
+                {
+                    AccountId = Guid.Parse(account.AccountId),
+                    Email = account.Email,
+                    DisplayName = account.DisplayName,
+                    EmailVerified = account.IsVerified,
+                    CreatedAt = account.CreatedAt,
+                    UpdatedAt = account.UpdatedAt,
+                    Roles = new List<string>(),
+                    AuthMethods = new List<AuthMethodInfo>()
+                };
+
+                return (StatusCodes.OK, response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving account: {AccountId}", accountId);
+                return (StatusCodes.InternalServerError, null);
+            }
+        }
+
+        public async Task<(StatusCodes, AccountResponse?)> UpdateAccountAsync(
+            Guid accountId,
+            UpdateAccountRequest body,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogDebug("Updating account: {AccountId}", accountId);
+
+                // Get existing account
+                var account = await _daprClient.GetStateAsync<AccountModel>(
+                    ACCOUNTS_STATE_STORE,
+                    $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                    cancellationToken: cancellationToken);
+
+                if (account == null)
+                {
+                    _logger.LogWarning("Account not found for update: {AccountId}", accountId);
+                    return (StatusCodes.NotFound, null);
+                }
+
+                // Update fields if provided
+                if (body.DisplayName != null)
+                    account.DisplayName = body.DisplayName;
+                // TODO: Handle roles and metadata from body
+
+                account.UpdatedAt = DateTimeOffset.UtcNow;
+
+                // Save updated account
+                await _daprClient.SaveStateAsync(
+                    ACCOUNTS_STATE_STORE,
+                    $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                    account);
+
+                _logger.LogInformation("Account updated successfully: {AccountId}", accountId);
+
+                var response = new AccountResponse
+                {
+                    AccountId = Guid.Parse(account.AccountId),
+                    Email = account.Email,
+                    DisplayName = account.DisplayName,
+                    EmailVerified = account.IsVerified,
+                    CreatedAt = account.CreatedAt,
+                    UpdatedAt = account.UpdatedAt,
+                    Roles = new List<string>(),
+                    AuthMethods = new List<AuthMethodInfo>()
+                };
+
+                return (StatusCodes.OK, response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating account: {AccountId}", accountId);
+                return (StatusCodes.InternalServerError, null);
+            }
+        }
+
+        public async Task<(StatusCodes, AccountResponse?)> GetAccountByEmailAsync(
+            string email,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogDebug("Retrieving account by email: {Email}", email);
+
+                // TODO: Implement email-based lookup with Dapr state store
+                // This requires either secondary indexing or scanning approach
+                _logger.LogWarning("GetAccountByEmail not fully implemented - requires email indexing");
+                return (StatusCodes.InternalServerError, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving account by email: {Email}", email);
+                return (StatusCodes.InternalServerError, null);
+            }
+        }
+
+        public async Task<(StatusCodes, AuthMethodsResponse?)> GetAuthMethodsAsync(
+            Guid accountId,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogDebug("Getting auth methods for account: {AccountId}", accountId);
+
+                // TODO: Implement auth methods retrieval
+                var response = new AuthMethodsResponse
+                {
+                    AuthMethods = new List<AuthMethodInfo>()
+                };
+
+                return (StatusCodes.OK, response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting auth methods: {AccountId}", accountId);
+                return (StatusCodes.InternalServerError, null);
+            }
+        }
+
+        public async Task<(StatusCodes, AuthMethodResponse?)> AddAuthMethodAsync(
+            Guid accountId,
+            AddAuthMethodRequest body,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogDebug("Adding auth method for account: {AccountId}, provider: {Provider}", accountId, body.Provider);
+
+                // TODO: Implement auth method addition
+                var response = new AuthMethodResponse
+                {
+                    MethodId = Guid.NewGuid(),
+                    Provider = AuthMethodResponseProvider.Google, // TODO: Parse body.Provider to enum
+                    ExternalId = body.ExternalId ?? string.Empty,
+                    LinkedAt = DateTimeOffset.UtcNow
+                };
+
+                return (StatusCodes.OK, response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding auth method: {AccountId}", accountId);
+                return (StatusCodes.InternalServerError, null);
+            }
+        }
+
+        public async Task<(StatusCodes, AccountResponse?)> GetAccountByProviderAsync(
+            Provider2 provider,
+            string externalId,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogDebug("Getting account by provider: {Provider}, externalId: {ExternalId}", provider, externalId);
+
+                // TODO: Implement provider-based account lookup
+                _logger.LogWarning("GetAccountByProvider not fully implemented - requires provider indexing");
+                return (StatusCodes.InternalServerError, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting account by provider: {Provider}", provider);
+                return (StatusCodes.InternalServerError, null);
+            }
+        }
+
+        public async Task<(StatusCodes, AccountResponse?)> UpdateProfileAsync(
+            Guid accountId,
+            UpdateProfileRequest body,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogDebug("Updating profile for account: {AccountId}", accountId);
+
+                // Handle profile update similar to account update
+                try
+                {
+                    var account = await _daprClient.GetStateAsync<AccountModel>(
+                        ACCOUNTS_STATE_STORE,
+                        $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                        cancellationToken: cancellationToken);
+
+                    if (account == null)
+                    {
+                        _logger.LogWarning("Account not found for profile update: {AccountId}", accountId);
+                        return (StatusCodes.NotFound, null);
+                    }
+
+                    // Update profile fields
+                    if (body.DisplayName != null)
+                        account.DisplayName = body.DisplayName;
+                    // TODO: Handle metadata from body
+
+                    account.UpdatedAt = DateTimeOffset.UtcNow;
+
+                    await _daprClient.SaveStateAsync(
+                        ACCOUNTS_STATE_STORE,
+                        $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                        account,
+                        cancellationToken: cancellationToken);
+
+                    var response = new AccountResponse
+                    {
+                        AccountId = Guid.Parse(account.AccountId),
+                        Email = account.Email,
+                        DisplayName = account.DisplayName,
+                        EmailVerified = account.IsVerified,
+                        CreatedAt = account.CreatedAt,
+                        UpdatedAt = account.UpdatedAt,
+                        Roles = new List<string>(),
+                        AuthMethods = new List<AuthMethodInfo>()
+                    };
+
+                    return (StatusCodes.OK, response);
+                }
+                catch (Exception innerEx)
+                {
+                    _logger.LogError(innerEx, "Inner exception updating profile: {AccountId}", accountId);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating profile: {AccountId}", accountId);
+                return (StatusCodes.InternalServerError, null);
+            }
+        }
     }
 
     /// <summary>
@@ -129,8 +376,8 @@ namespace BeyondImmersion.BannouService.Accounts
         public string Email { get; set; } = string.Empty;
         public string? DisplayName { get; set; }
         public bool IsVerified { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
-        public DateTime? DeletedAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
+        public DateTimeOffset? DeletedAt { get; set; }
     }
 }

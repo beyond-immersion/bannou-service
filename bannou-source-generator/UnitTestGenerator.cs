@@ -215,7 +215,7 @@ public class {className}ServiceTests
     public void SetUp()
     {{
         _mockLogger = new Mock<ILogger<{className}Service>>();
-        
+
         // Initialize service with dependencies
         _service = new {className}Service(_mockLogger.Object);
     }}
@@ -231,7 +231,7 @@ public class {className}ServiceTests
     {{
         // Arrange & Act
         var service = new {className}Service(_mockLogger.Object);
-        
+
         // Assert
         Assert.That(service, Is.Not.Null);
     }}
@@ -245,7 +245,7 @@ public class {className}ServiceTests
 
     // TODO: Add schema-specific tests based on OpenAPI specification
     // Schema file: {schemaFile?.Path ?? "Not found"}
-    
+
     [Test]
     [Category(""Integration"")]
     public async Task Service_ShouldIntegrateWithDaprCorrectly()
@@ -273,7 +273,7 @@ public class {className}ConfigurationTests
     {{
         // Arrange
         var config = new {className}ServiceConfiguration();
-        
+
         // Act & Assert
         Assert.That(config, Is.Not.Null);
     }}
@@ -304,7 +304,7 @@ public class {className}ServiceTests
     {{
         // Arrange & Act
         var service = new {className}Service(_mockLogger.Object);
-        
+
         // Assert
         Assert.That(service, Is.Not.Null);
     }}

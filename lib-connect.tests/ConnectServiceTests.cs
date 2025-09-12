@@ -27,7 +27,7 @@ public class ConnectServiceTests
         var exception = Record.Exception(() => new ConnectService(
             _mockConfiguration.Object,
             _mockLogger.Object));
-            
+
         Assert.Null(exception);
     }
 

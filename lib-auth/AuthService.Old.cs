@@ -88,7 +88,7 @@ public partial class AuthService : DaprService<AuthServiceConfiguration>, IAuthS
 
             // Get auth methods to check for password
             var authMethodsResult = await _accountsService.GetAuthMethodsAsync(account.AccountId, cancellationToken);
-            if (authMethodsResult.Result is not OkObjectResult authMethodsOkResult || 
+            if (authMethodsResult.Result is not OkObjectResult authMethodsOkResult ||
                 authMethodsOkResult.Value is not AuthMethodsResponse authMethods)
             {
                 IncrementLoginAttempts(rateLimitKey);
@@ -222,7 +222,7 @@ public partial class AuthService : DaprService<AuthServiceConfiguration>, IAuthS
             {
                 // TODO: Send verification email
                 _logger.LogInformation("Email verification required for {Email}", request.Email);
-                
+
                 return new AuthResponse
                 {
                     AccessToken = null,
@@ -301,7 +301,7 @@ public partial class AuthService : DaprService<AuthServiceConfiguration>, IAuthS
             {
                 // Remove old refresh token
                 RemoveRefreshTokenFromCache(request.RefreshToken, refreshTokenData.AccountId);
-                
+
                 // Generate new refresh token
                 newRefreshToken = _jwtTokenService.GenerateRefreshToken();
                 var refreshTokenKey = $"refresh_token_{account.AccountId}_{newRefreshToken}";

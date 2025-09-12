@@ -80,7 +80,7 @@ public class ClientConnection : IDisposable
     public void UpdateServiceMappings(IEnumerable<string> availableServices)
     {
         ServiceMappings.Clear();
-        
+
         foreach (var service in availableServices)
         {
             // Generate unique GUID for this client/service combination
@@ -197,7 +197,7 @@ public class ClientConnection : IDisposable
     /// <summary>
     /// Closes the WebSocket connection gracefully.
     /// </summary>
-    public async Task CloseAsync(WebSocketCloseStatus closeStatus = WebSocketCloseStatus.NormalClosure, 
+    public async Task CloseAsync(WebSocketCloseStatus closeStatus = WebSocketCloseStatus.NormalClosure,
         string? statusDescription = null, CancellationToken cancellationToken = default)
     {
         if (!_disposed && State == WebSocketState.Open)
@@ -219,7 +219,7 @@ public class ClientConnection : IDisposable
             return;
 
         _disposed = true;
-        
+
         try
         {
             if (State == WebSocketState.Open)
