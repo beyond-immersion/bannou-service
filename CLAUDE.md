@@ -84,7 +84,7 @@ lib-{service}/                 # Single consolidated service plugin
 ### Testing Policy
 - **Lint Testing**: Use MegaLinter command above
 - **Integration Testing**: `docker compose --env-file .env -f provisioning/docker-compose.yml -f provisioning/docker-compose.ci.yml up --exit-code-from=bannou-tester`
-- **Post-Generation**: Run `./fix-generated-line-endings.sh` after NSwag generation
+- **Post-Generation**: Run `./fix-endings.sh` after NSwag generation
 - **CI/CD Reproduction**: All GitHub Actions workflows can be reproduced locally using Docker Compose and commands in Makefile
 
 ### Commit Policy
@@ -102,7 +102,7 @@ lib-{service}/                 # Single consolidated service plugin
 1. **Read Schema First**: Always check `schemas/{service}-api.yaml`
 2. **Generate Code**: Run `nswag run` to generate controllers/models
 3. **Implement Logic**: Write business logic in service classes only
-4. **Fix Line Endings**: Run `./fix-generated-line-endings.sh` after generation
+4. **Fix Line Endings**: Run `./fix-endings.sh` after generation
 5. **Test**: Use dual-transport testing framework
 
 ### 2. Testing Strategy
@@ -140,7 +140,7 @@ Bannou uses **two complementary code generation systems** with distinct responsi
 
 # ALTERNATIVE: Individual generation (if needed)
 nswag run nswag.json                        # Main API schemas (accounts, auth, etc.)
-./fix-generated-line-endings.sh            # Fix line endings for EditorConfig compliance
+./fix-endings.sh                          # Fix line endings for EditorConfig compliance
 ```
 
 **Generated Files** (Current Status):
@@ -538,7 +538,7 @@ public class AccountCreatedEvent
 ## Error Handling & Debugging
 
 ### Common Issues
-1. **Generated file line endings**: Always run `./fix-generated-line-endings.sh` after NSwag
+1. **Generated file line endings**: Always run `./fix-endings.sh` after NSwag
 2. **EditorConfig violations**: Use `dotnet format` before committing
 3. **Schema mismatches**: Regenerate controllers with `nswag run`
 4. **Service registration**: Verify `[DaprService]` and `[ServiceConfiguration]` attributes
@@ -576,7 +576,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 #### NSwag Issues
 - **Controller not generated**: Check schema file exists at expected path, verify nswag.json output path
 - **Wrong working directory**: NSwag configs must be run from correct directory (bannou-service/ for most configs)
-- **Line ending issues**: Always run `./fix-generated-line-endings.sh` after generation
+- **Line ending issues**: Always run `./fix-endings.sh` after generation
 - **Missing models**: Verify OpenAPI schema has proper `operationId` and `components/schemas` sections
 
 #### Roslyn Generator Issues  
@@ -659,7 +659,7 @@ public async Task ProcessMessage(ReadOnlyMemory<byte> message)
 
 ### Build Issues
 - **NSwag errors**: Check OpenAPI schema syntax in `/schemas/`
-- **Line ending issues**: Run `./fix-generated-line-endings.sh`
+- **Line ending issues**: Run `./fix-endings.sh`
 - **Missing dependencies**: Check project references in `.csproj` files
 
 ### Runtime Issues  

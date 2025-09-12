@@ -551,9 +551,9 @@ generate_unit_test_projects
 # Fix line endings for all generated files
 echo -e "${YELLOW}📋 Fixing line endings for EditorConfig compliance...${NC}"
 
-if [ -f "../fix-generated-line-endings.sh" ]; then
-    chmod +x "../fix-generated-line-endings.sh"
-    if "../fix-generated-line-endings.sh"; then
+if [ -f "../fix-endings.sh" ]; then
+    chmod +x "../fix-endings.sh"
+    if "../fix-endings.sh"; then
         echo -e "${GREEN}    ✅ Line endings fixed${NC}"
     else
         echo -e "${RED}    ⚠️  Line ending fixes had issues${NC}"
