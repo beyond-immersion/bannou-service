@@ -4,14 +4,10 @@
 
 This file contains specific instructions for Claude Code when working on the Bannou service platform. These instructions work in conjunction with the broader Arcadia development context from the knowledge base memory files.
 
-**⚠️ IMPORTANT**: Always reference the core memory files for architectural context:
-- **@~/repos/arcadia-kb/ARCADIA_CORE_MEMORY.md** - Game design, world building, and development priorities
-- **@~/repos/arcadia-kb/BANNOU_CORE_MEMORY.md** - Service architecture, API specifications, and technical implementation
-
 ## Architecture Principles
 
 ### Schema-First Development (Critical)
-**ALWAYS reference [API-DESIGN.md](API-DESIGN.md) before making any service changes.**
+**Schema-first development is the foundational architectural pattern for all Bannou services. This section contains the complete standards previously documented in API-DESIGN.md.**
 
 **⚠️ CRITICAL DEVELOPMENT PROCESS - NEVER SKIP THESE STEPS:**
 
@@ -45,12 +41,15 @@ edit schemas/service-name-api.yaml
 - **1:1 Controller-Service Mapping**: Every controller method maps directly to service method
 - **No Manual Logic in Generated Classes**: Only service implementations can have additional logic
 - **NEVER CREATE ANY CLASSES MANUALLY** - controllers, interfaces, configurations, models ALL generated from schemas
+- **NEVER CREATE PROJECTS MANUALLY** - all projects (services, tests, etc.) must use code generation or templates unless explicitly instructed otherwise
+- **RESEARCH ALTERNATIVES WHEN REQUESTED** - when told to find an alternative to something, research multiple options and provide context/advice, even if an alternative is suggested simultaneously
+- **ASK FOR DIRECTION ON FAILURES** - when unable to accomplish a task, ask for direction instead of skipping ahead or piling additional changes on top of the failure
 
 ### WebSocket-First Architecture
 - **Connect service** provides zero-copy message routing via service GUIDs
 - **Binary protocol**: 24-byte header + JSON payload
 - **Dual transport**: HTTP for development, WebSocket for production
-- See **[WEBSOCKET-PROTOCOL.md](WEBSOCKET-PROTOCOL.md)** for complete protocol specification
+- For detailed protocol specifications, see WebSocket protocol documentation in arcadia-kb technical architecture
 
 ### Service Structure (Consolidated 2025)
 ```
@@ -62,6 +61,30 @@ lib-{service}/                 # Single consolidated service plugin
 ```
 
 ## Development Workflow
+
+### Development Environment
+- **MegaLinter**: Use `docker run --rm -v $(pwd):/tmp/lint:rw oxsecurity/megalinter-dotnet:v8 -e "ENABLE=EDITORCONFIG"`
+- **Line Endings**: Project uses LF (Unix) line endings consistently (.gitattributes configured)
+- **EditorConfig**: Enforces consistent formatting across all files
+- **NSwag**: Configured for LF line endings in generated code
+- **XML Documentation**: All public classes, methods, and properties MUST have comprehensive XML documentation (`<summary>` tags minimum)
+
+### Testing Policy
+- **Lint Testing**: Use MegaLinter command above
+- **Integration Testing**: `docker compose --env-file .env -f provisioning/docker-compose.yml -f provisioning/docker-compose.ci.yml up --exit-code-from=bannou-tester`
+- **Post-Generation**: Run `./fix-generated-line-endings.sh` after NSwag generation
+- **CI/CD Reproduction**: All GitHub Actions workflows can be reproduced locally using Docker Compose and commands in Makefile
+
+### Commit Policy
+- **NEVER commit changes** unless explicitly instructed by the user
+- Always make changes and present them for review first
+- The user will handle branch management and commits when ready
+
+### Development Workflow
+1. Analyze the code and make necessary changes
+2. Present changes to the user for review
+3. Let the user handle testing and committing when they're ready
+4. Focus on code quality and correctness rather than automated validation
 
 ### 1. Service Development
 1. **Read Schema First**: Always check `schemas/{service}-api.yaml`
@@ -95,13 +118,13 @@ make ci-test            # Matches GitHub Actions workflow
 Bannou uses **two complementary code generation systems** with distinct responsibilities:
 
 #### NSwag (Primary API Generation) ✅ WORKING PERFECTLY
-**Purpose**: Generate API contracts, controllers, models, and clients from OpenAPI schemas  
+**Purpose**: Generate API contracts, controllers, models, and **SERVICE CLIENTS** from OpenAPI schemas  
 **Input**: `schemas/*-api.yaml` files  
-**Output**: ASP.NET Core controllers, request/response models, client classes  
+**Output**: ASP.NET Core controllers, request/response models, **client classes for service-to-service calls**  
 
 ```bash
-# PREFERRED: Use unified generation script (bypasses config file issues)
-./generate-all-services.sh                  # Generates all 5 controllers + event models
+# PREFERRED: Use unified generation script (generates BOTH controllers AND clients)
+./generate-all-services.sh                  # Generates all 5 controllers + clients + event models
 
 # ALTERNATIVE: Individual generation (if needed)
 nswag run nswag.json                        # Main API schemas (accounts, auth, etc.)
@@ -114,12 +137,20 @@ nswag run nswag.json                        # Main API schemas (accounts, auth, 
 - ✅ `Controllers/Generated/WebsiteController.Generated.cs` (1104 lines) - WebsiteControllerBase
 - ✅ `Controllers/Generated/BehaviourController.Generated.cs` (498 lines) - BehaviourControllerBase
 - ✅ `Controllers/Generated/ConnectController.Generated.cs` (759 lines) - ConnectControllerBase
+- ✅ **SERVICE CLIENTS**: `lib-{service}/Generated/{Service}Client.cs` - DaprServiceClientBase clients for service-to-service calls
 - ✅ `lib-accounts-core/Generated/AccountsEventsModels.cs` - Event models from accounts-events.yaml
+
+**Critical Architecture Note**:
+- **Service Clients are REQUIRED** for service-to-service communication
+- **Never inject service interfaces directly** (e.g., `IAccountsService`) from other services
+- **Always use generated clients** (e.g., `IAccountsClient`) for distributed service calls
+- **Clients inherit from `DaprServiceClientBase`** for automatic app-id resolution
 
 **Resolved Issues**:
 - ✅ Duplicate ControllerBase conflicts fixed via unique `/ClassName` parameters
 - ✅ Configuration file execution issues bypassed with direct command approach
 - ✅ Event model generation working perfectly (4 event classes + enum)
+- ✅ **Service client generation added to unified script** - fixes service-to-service communication architecture
 
 **Build Integration**: Runs via MSBuild target when `GenerateNewServices=true` OR unified script
 
@@ -206,6 +237,40 @@ When adding new services to the codebase, ALWAYS update:
 
 ## Service Implementation Guidelines
 
+### 0. XML Documentation Requirements (MANDATORY)
+**All public classes, methods, properties, and parameters MUST have comprehensive XML documentation:**
+
+```csharp
+/// <summary>
+/// Brief description of what the class/method does.
+/// </summary>
+/// <param name="paramName">Description of the parameter.</param>
+/// <returns>Description of what is returned.</returns>
+/// <exception cref="ExceptionType">When this exception is thrown.</exception>
+public class ExampleClass
+{
+    /// <summary>
+    /// Gets or sets the example property description.
+    /// </summary>
+    public string ExampleProperty { get; set; }
+    
+    /// <summary>
+    /// Performs the example operation with the given input.
+    /// </summary>
+    /// <param name="input">The input data to process.</param>
+    /// <returns>The processed result.</returns>
+    public string ExampleMethod(string input) => input;
+}
+```
+
+**Documentation Standards:**
+- **Classes**: Describe purpose and primary responsibility
+- **Methods**: Describe what the method does (not how), include parameters and return values
+- **Properties**: Use "Gets or sets..." pattern for mutable properties, "Gets..." for read-only
+- **Parameters**: Be specific about expected values, formats, constraints
+- **Exceptions**: Document all thrown exceptions with conditions
+- **Return Values**: Describe what is returned and any special conditions
+
 ### 1. Service Attributes (Required)
 ```csharp
 [DaprService("service-name", typeof(IServiceInterface), lifetime: ServiceLifetime.Scoped)]
@@ -282,6 +347,182 @@ ARCADIA_SERVICES_ENABLED=false
 - **Memory Systems**: Multi-tiered memory with relationship awareness
 - **Economic Simulation**: Authentic physics-based crafting and trading
 
+## Current Implementation Status
+
+### ✅ Completed Services (Schema-First Migration Complete)
+Based on recent commits and current build status:
+
+- **✅ Accounts Service**: Schema-driven implementation with MySQL persistence
+- **✅ Auth Service**: Complete authentication system with JWT and multi-provider support
+- **✅ Behavior Service**: ABML YAML DSL foundation for character behaviors  
+- **✅ Connect Service**: WebSocket-first edge gateway with binary protocol
+- **✅ Website Service**: MVC integration with schema-driven APIs
+- **✅ Core Infrastructure**: Assembly loading, service discovery, Dapr integration
+
+### 🔧 Active Development Areas
+- **ABML YAML Parser**: YamlDotNet integration for behavior definition language
+- **Character Agent Services**: NPC lifecycle management and state persistence
+- **Cross-Service Integration**: Event-driven communication via RabbitMQ
+- **Performance Optimization**: Behavior compilation caching and scaling
+
+### 🎯 Implementation Standards Established
+- **Single Plugin Architecture**: One `lib-{service}` per service (consolidation complete)
+- **Schema-First Generation**: All controllers/models auto-generated from OpenAPI specs
+- **Tuple-Based Services**: `(StatusCodes, ResponseModel?)` pattern implemented across all services
+- **Documentation**: XML documentation warnings reduced to minimal levels
+- **Testing**: Dual-transport (HTTP + WebSocket) validation framework operational
+
+## 🎯 CRITICAL: Dapr-First Development Patterns
+
+### ⚠️ MANDATORY SERVICE IMPLEMENTATION APPROACH
+
+**Services MUST follow Dapr-first patterns - never use Entity Framework directly**
+
+#### **✅ Correct Dapr Patterns**:
+```csharp
+public class ExampleService : IExampleService
+{
+    private readonly DaprClient _daprClient;
+    private const string STATE_STORE = "service-store";
+    
+    // ✅ State Management via Dapr
+    await _daprClient.SaveStateAsync(STATE_STORE, key, data);
+    var data = await _daprClient.GetStateAsync<ModelType>(STATE_STORE, key);
+    await _daprClient.DeleteStateAsync(STATE_STORE, key);
+    
+    // ✅ Event Publishing via Dapr
+    await _daprClient.PublishEventAsync("pubsub", "topic", eventData);
+    
+    // ✅ Service-to-Service calls via Dapr (automatic routing)
+    var response = await _httpClient.PostAsync("/api/endpoint", content);
+    // ServiceAppMappingResolver automatically routes to correct node
+}
+```
+
+#### **❌ Anti-Patterns - NEVER DO THIS**:
+```csharp
+// ❌ WRONG: Direct Entity Framework usage
+private readonly DbContext _dbContext;
+await _dbContext.Entities.AddAsync(entity);
+await _dbContext.SaveChangesAsync();
+
+// ❌ WRONG: Direct SQL connections  
+private readonly IDbConnection _connection;
+
+// ❌ WRONG: Direct RabbitMQ usage
+private readonly IConnection _rabbitConnection;
+```
+
+### 🏗️ Service Architecture Requirements
+
+#### **1. Dependency Injection Pattern**:
+```csharp
+public class ServiceNameService : IServiceNameService
+{
+    private readonly DaprClient _daprClient;           // ✅ Required for all services
+    private readonly ILogger<ServiceNameService> _logger;
+    private readonly ServiceNameConfiguration _configuration;
+    
+    // Constructor injection only - no direct database/messaging dependencies
+}
+```
+
+#### **2. Configuration Schema-Driven**:
+- **All configuration** must be defined in OpenAPI schemas, NOT preserved manually
+- **Code generation** always regenerates configuration classes from schemas
+- **Environment variables** follow `SERVICENAME_PROPERTY` pattern
+- **Dapr components** handle external dependencies (Redis, MySQL, RabbitMQ)
+
+#### **3. State Management Strategy**:
+```csharp
+// State store naming convention
+private const string STATE_STORE = "{service-name}-store";
+private const string KEY_PREFIX = "{entity-type}-";
+
+// Storage pattern
+await _daprClient.SaveStateAsync(
+    STATE_STORE, 
+    $"{KEY_PREFIX}{entityId}", 
+    entityModel);
+```
+
+#### **4. Event-Driven Communication**:
+```csharp
+// Publish domain events for state changes
+await _daprClient.PublishEventAsync(
+    "bannou-pubsub",           // Pub/sub component name
+    "account-created",         // Event topic from schema
+    new AccountCreatedEvent    // Event model from schema
+    {
+        AccountId = accountId,
+        Email = email,
+        Timestamp = DateTime.UtcNow
+    });
+```
+
+### 🔄 Service Discovery & Request Routing
+
+#### **Automatic Dapr Service Resolution**:
+The `ServiceAppMappingResolver` automatically handles service-to-service calls:
+
+1. **Development Mode**: All services route to "bannou" (single node)
+2. **Production Mode**: Services route to appropriate distributed nodes
+3. **No Code Changes**: Same service call works in both modes
+
+#### **Service-to-Service Call Pattern**:
+```csharp
+// Service makes normal HTTP call - routing is automatic
+var response = await _httpClient.PostAsync("/api/accounts/create", jsonContent);
+
+// ServiceAppMappingResolver determines:
+// - Is "accounts" service on this node? → Direct call
+// - Is "accounts" service on another node? → Dapr invoke
+// - Developer doesn't need to know the difference
+```
+
+#### **Service Loading Mechanism**:
+Services are discovered via `[DaprService]` attributes:
+```csharp
+[DaprService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
+public class AccountsService : IAccountsService { }
+```
+
+The framework automatically:
+- Discovers all services via reflection
+- Registers them in DI container  
+- Maps them to app instances via configuration
+- Routes requests based on current deployment topology
+
+### 📋 Schema-First Event Definition
+
+#### **Event Schemas Required**:
+All events must be defined in `schemas/{service}-events.yaml`:
+```yaml
+# schemas/accounts-events.yaml
+AccountCreatedEvent:
+  type: object
+  properties:
+    accountId:
+      type: string
+    email:
+      type: string
+    timestamp:
+      type: string
+      format: date-time
+```
+
+#### **Generated Event Models**:
+NSwag automatically generates event classes from schemas:
+```csharp
+// Auto-generated from schema
+public class AccountCreatedEvent
+{
+    public string AccountId { get; set; }
+    public string Email { get; set; }
+    public DateTime Timestamp { get; set; }
+}
+```
+
 ## Error Handling & Debugging
 
 ### Common Issues
@@ -346,18 +587,44 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - **`UnitTestGenerator.cs`** ✅ WORKING - Available for comprehensive unit test generation
 - **Resolution**: EventModelGenerator disabled due to conflict with NSwag event models. Other generators functional.
 
-### Service Client Architecture
+### Service Client Architecture (CRITICAL for Service-to-Service Communication)
+
+**Generated Service Clients** - NSwag creates these automatically from schemas:
 ```csharp
-// Generated service clients with dynamic Dapr routing
-public class ServiceClient : IServiceClient
+// Generated by NSwag from schemas/{service}-api.yaml
+public partial class AccountsClient : DaprServiceClientBase, IAccountsClient
 {
     private readonly IServiceAppMappingResolver _resolver;
+    private readonly DaprClient _daprClient;
     
-    public async Task<Response> CallServiceAsync(Request request)
+    public async Task<CreateAccountResponse> CreateAccountAsync(CreateAccountRequest request)
     {
-        var appId = _resolver.GetAppIdForService("service-name"); // Defaults to "bannou"
-        return await _daprClient.InvokeMethodAsync<Request, Response>(appId, "method", request);
+        var appId = _resolver.GetAppIdForService("accounts"); // Defaults to "bannou"
+        return await _daprClient.InvokeMethodAsync<CreateAccountRequest, CreateAccountResponse>(
+            appId, "api/accounts/create", request);
     }
+}
+```
+
+**Service-to-Service Communication Pattern**:
+```csharp
+// ✅ CORRECT: Use generated client in AuthService
+public class AuthService : IAuthService
+{
+    private readonly IAccountsClient _accountsClient; // Generated client injection
+    
+    public async Task<(StatusCodes, LoginResponse?)> LoginAsync(LoginRequest request)
+    {
+        // Use generated client for service-to-service calls
+        var account = await _accountsClient.GetAccountByEmailAsync(request.Email);
+        // Business logic continues...
+    }
+}
+
+// ❌ WRONG: Never inject service interfaces directly from other services
+public class AuthService : IAuthService
+{
+    private readonly IAccountsService _accountsService; // WRONG - direct service injection
 }
 ```
 
@@ -440,5 +707,3 @@ make ci-test            # Full CI pipeline locally
 dotnet format               # Fix EditorConfig issues
 dotnet test                 # Run unit tests
 ```
-
-**Remember**: Always check the core memory files for current development phase and priorities before making significant architectural decisions.

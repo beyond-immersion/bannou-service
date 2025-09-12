@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Accounts.Client;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Controllers.Generated;
 using BeyondImmersion.BannouService.Services;
@@ -10,20 +11,21 @@ namespace BeyondImmersion.BannouService.Auth;
 /// <summary>
 /// Service implementation for authentication operations.
 /// Implements the schema-first generated interface methods.
+/// Uses generated AccountsClient for service-to-service communication.
 /// </summary>
 [DaprService("auth", typeof(IAuthService), lifetime: ServiceLifetime.Scoped)]
 public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
 {
-    private readonly IAccountsService _accountsService;
+    private readonly IAccountsClient _accountsClient; // ✅ CORRECT: Use generated client for service-to-service calls
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
-        IAccountsService accountsService,
+        IAccountsClient accountsClient, // ✅ CORRECT: Inject generated client
         AuthServiceConfiguration configuration,
         ILogger<AuthService> logger)
         : base(configuration, logger)
     {
-        _accountsService = accountsService ?? throw new ArgumentNullException(nameof(accountsService));
+        _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -67,8 +69,8 @@ public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
                 Roles = new[] { "user" }
             };
 
-            var createResult = await _accountsService.CreateAccountAsync(createAccountRequest, cancellationToken);
-            if (createResult.Result is not OkObjectResult okResult || okResult.Value is not AccountResponse account)
+            var account = await _accountsClient.CreateAccountAsync(createAccountRequest, cancellationToken);
+            if (account == null)
             {
                 return new BadRequestObjectResult(new AuthErrorResponse
                 {
@@ -269,8 +271,8 @@ public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
         }
 
         // Try to get account by email (assuming username is email)
-        var accountResult = await _accountsService.GetAccountByEmailAsync(username, cancellationToken);
-        if (accountResult.Result is not OkObjectResult okResult || okResult.Value is not AccountResponse account)
+        var account = await _accountsClient.GetAccountByEmailAsync(username, cancellationToken);
+        if (account == null)
         {
             return new UnauthorizedObjectResult(new AuthErrorResponse
             {

@@ -14,6 +14,7 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
     private readonly ILogger<ServiceAppMappingResolver> _logger;
     private const string DEFAULT_APP_ID = "bannou"; // "almighty" - handles everything locally
 
+    /// <inheritdoc/>
     public ServiceAppMappingResolver(ILogger<ServiceAppMappingResolver> logger)
     {
         _logger = logger;

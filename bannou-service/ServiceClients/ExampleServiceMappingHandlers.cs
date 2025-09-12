@@ -12,6 +12,7 @@ public class ExampleServiceMappingHandlers
 {
     private readonly ILogger<ExampleServiceMappingHandlers> _logger;
 
+    /// <inheritdoc/>
     public ExampleServiceMappingHandlers(ILogger<ExampleServiceMappingHandlers> logger)
     {
         _logger = logger;

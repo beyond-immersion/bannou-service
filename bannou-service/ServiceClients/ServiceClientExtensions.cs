@@ -26,6 +26,7 @@ public static class ServiceClientExtensions
     /// </summary>
     /// <typeparam name="TClient">The service client type (e.g., AccountsClient)</typeparam>
     /// <typeparam name="TInterface">The service interface type (e.g., IAccountsClient)</typeparam>
+    /// <param name="services">The service collection to add the client to.</param>
     /// <param name="serviceName">The service name for app-id resolution (e.g., "accounts")</param>
     /// <param name="configureClient">Optional HttpClient configuration</param>
     public static IServiceCollection AddDaprServiceClient<TClient, TInterface>(

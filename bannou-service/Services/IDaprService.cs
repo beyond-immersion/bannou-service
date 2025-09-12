@@ -13,6 +13,9 @@ namespace BeyondImmersion.BannouService.Services;
 public interface IDaprService
 {
     private static (Type, Type, DaprServiceAttribute)[]? _services;
+    /// <summary>
+    /// Gets all discovered service types with their attributes.
+    /// </summary>
     public static (Type, Type, DaprServiceAttribute)[] Services
     {
         get
@@ -79,6 +82,9 @@ public interface IDaprService
         }
     }
 
+    /// <summary>
+    /// Gets all enabled service types (not disabled via configuration).
+    /// </summary>
     public static (Type, Type, DaprServiceAttribute)[] EnabledServices
     {
         get
@@ -207,21 +213,36 @@ public interface IDaprService
         private set => _networkModePresets = value;
     }
 
+    /// <summary>
+    /// Called when the service is starting up. Override to implement custom startup logic.
+    /// </summary>
+    /// <param name="token">Cancellation token for startup timeout.</param>
     async Task OnStartAsync(CancellationToken token)
     {
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Called when the service is running and ready. Override to implement background processing.
+    /// </summary>
+    /// <param name="token">Cancellation token for shutdown.</param>
     async Task OnRunningAsync(CancellationToken token)
     {
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Called when the service is shutting down. Override to implement cleanup logic.
+    /// </summary>
     async Task OnShutdownAsync()
     {
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Gets the service name from the service type attributes.
+    /// </summary>
+    /// <returns>The service name if found, otherwise null.</returns>
     public string? GetName()
         => GetType().GetServiceName();
 
@@ -364,6 +385,11 @@ public interface IDaprService
     public static string GetPresetAppNameFromServiceName(string serviceName)
         => NetworkModePresets.TryGetValue(serviceName, out var presetAppName) ? presetAppName : "bannou";
 
+    /// <summary>
+    /// Gets all service names that should be handled by the given application name.
+    /// </summary>
+    /// <param name="appName">The application name to get services for.</param>
+    /// <returns>Array of service names handled by the application.</returns>
     public static string[] GetServicePresetsByAppName(string appName)
     {
         if (string.IsNullOrWhiteSpace(appName))

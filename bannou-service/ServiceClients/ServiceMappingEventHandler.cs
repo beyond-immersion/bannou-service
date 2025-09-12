@@ -17,6 +17,7 @@ public class ServiceMappingEventHandler : ControllerBase
     private readonly IServiceMappingEventDispatcher _eventDispatcher;
     private readonly ILogger<ServiceMappingEventHandler> _logger;
 
+    /// <inheritdoc/>
     public ServiceMappingEventHandler(
         IServiceAppMappingResolver mappingResolver,
         IServiceMappingEventDispatcher eventDispatcher,

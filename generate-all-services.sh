@@ -228,17 +228,16 @@ generate_service_configuration() {
         return 1
     fi
     
-    # Check if service configuration already exists - protect existing logic
-    if [ -f "$output_path" ]; then
-        echo -e "${YELLOW}    📝 Service configuration already exists, preserving existing logic${NC}"
-        return 0
-    fi
+    # Always regenerate service configuration from schema
+    # Configuration should be schema-driven, not preserved from manual changes
     
     mkdir -p "$(dirname "$output_path")"
     
     # Create configuration class template
     cat > "$output_path" << EOF
 using System.ComponentModel.DataAnnotations;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.${service_name^}
 {
@@ -273,6 +272,56 @@ EOF
     local file_size=$(wc -l < "$output_path" 2>/dev/null || echo "0")
     echo -e "${GREEN}    ✅ Generated service configuration template ($file_size lines)${NC}"
     return 0
+}
+
+# Function to generate service client from schema
+generate_client() {
+    local schema_file="$1"
+    local service_name="$2"
+    local service_plugin_dir="$3"
+    local client_name="${service_name^}Client.cs"
+    local output_path="$service_plugin_dir/Generated/$client_name"
+    
+    echo "    🔄 Generating service client $client_name..."
+    
+    if [ ! -f "$schema_file" ]; then
+        echo -e "${RED}    ⚠️  Schema file not found: $schema_file${NC}"
+        return 1
+    fi
+    
+    mkdir -p "$(dirname "$output_path")"
+    
+    # Generate service client using direct NSwag command (DaprServiceClientBase pattern)
+    "$NSWAG_EXE" openapi2csclient \
+        /input:"$schema_file" \
+        /output:"$output_path" \
+        /namespace:"BeyondImmersion.BannouService.${service_name^}.Client" \
+        /clientBaseClass:"BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase" \
+        /className:"${service_name^}Client" \
+        /generateClientClasses:true \
+        /generateClientInterfaces:true \
+        /injectHttpClient:true \
+        /disposeHttpClient:false \
+        /jsonLibrary:NewtonsoftJson \
+        /generateNullableReferenceTypes:true \
+        /newLineBehavior:LF \
+        /generateOptionalParameters:true \
+        /useHttpClientCreationMethod:false \
+        /additionalNamespaceUsages:"BeyondImmersion.BannouService.ServiceClients"
+    
+    # Check if NSwag client generation succeeded
+    if [ $? -eq 0 ]; then
+        if [ -f "$output_path" ]; then
+            local file_size=$(wc -l < "$output_path" 2>/dev/null || echo "0")
+            echo -e "${GREEN}    ✅ Generated service client $client_name ($file_size lines)${NC}"
+        else
+            echo -e "${YELLOW}    ⚠️  No client output file created (no change detected)${NC}"
+        fi
+        return 0
+    else
+        echo -e "${RED}    ❌ Failed to generate service client $client_name${NC}"
+        return 1
+    fi
 }
 
 # Function to generate controller from schema (consolidated service architecture)
@@ -315,6 +364,9 @@ generate_controller() {
         "/GenerateNullableReferenceTypes:true" \
         "/NewLineBehavior:LF" \
         "/GenerateOptionalParameters:true"
+        
+    # Generate service client from schema (CRITICAL for service-to-service communication)
+    generate_client "$schema_file" "$service_name" "$service_plugin_dir"
         
     # Generate service interface from schema
     generate_service_interface "$schema_file" "$service_name" "$service_plugin_dir"
@@ -384,16 +436,117 @@ else
     echo "  📝 No event schemas found, skipping event model generation"
 fi
 
-# Generate unit test projects using Roslyn (if enabled)
+# Generate unit test projects using dotnet new custom template
 echo -e "${YELLOW}📋 Generating unit test projects...${NC}"
 
-if dotnet build -p:GenerateUnitTests=true --verbosity quiet; then
-    echo -e "${GREEN}    ✅ Unit test projects generated successfully${NC}"
-    ((generated_count++))
-else
-    echo -e "${RED}    ❌ Failed to generate unit test projects${NC}"
-    ((failed_count++))
-fi
+generate_unit_test_projects() {
+    local test_generated=0
+    local test_failed=0
+    
+    for schema_entry in "${schemas[@]}"; do
+        IFS=':' read -r schema_file service_name <<< "$schema_entry"
+        local service_name_pascal="${service_name^}" # Capitalize first letter
+        local test_project_dir="../lib-${service_name}.tests"
+        
+        # Skip if test project already exists
+        if [ -d "$test_project_dir" ]; then
+            echo "    📝 Unit test project already exists: $test_project_dir"
+            continue
+        fi
+        
+        echo "    🧪 Creating unit test project for $service_name..."
+        
+        # Create test project directory
+        mkdir -p "$test_project_dir"
+        
+        # Use dotnet new with our custom template (fallback to manual creation if template fails)
+        if dotnet new bannou-test -n "lib-${service_name}.tests" -o "$test_project_dir" --ServiceName "$service_name" --force >/dev/null 2>&1; then
+            
+            # Fix the generated files (template has some quirks)
+            if [ -f "$test_project_dir/lib-${service_name}.tests.Tests.csproj" ]; then
+                mv "$test_project_dir/lib-${service_name}.tests.Tests.csproj" "$test_project_dir/lib-${service_name}.tests.csproj"
+            fi
+            
+            # Create proper test class file
+            cat > "$test_project_dir/${service_name_pascal}ServiceTests.cs" << EOF
+using BeyondImmersion.BannouService.${service_name_pascal};
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+
+namespace BeyondImmersion.BannouService.${service_name_pascal}.Tests;
+
+/// <summary>
+/// Unit tests for ${service_name_pascal}Service
+/// This test project can reference other service clients for integration testing.
+/// </summary>
+public class ${service_name_pascal}ServiceTests
+{
+    private readonly Mock<ILogger<${service_name_pascal}Service>> _mockLogger;
+    private readonly Mock<${service_name_pascal}ServiceConfiguration> _mockConfiguration;
+
+    public ${service_name_pascal}ServiceTests()
+    {
+        _mockLogger = new Mock<ILogger<${service_name_pascal}Service>>();
+        _mockConfiguration = new Mock<${service_name_pascal}ServiceConfiguration>();
+    }
+
+    [Fact]
+    public void Constructor_WithValidParameters_ShouldNotThrow()
+    {
+        // Arrange & Act & Assert
+        var exception = Record.Exception(() => new ${service_name_pascal}Service(
+            _mockConfiguration.Object,
+            _mockLogger.Object));
+            
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new ${service_name_pascal}Service(
+            null!,
+            _mockLogger.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new ${service_name_pascal}Service(
+            _mockConfiguration.Object,
+            null!));
+    }
+
+    // TODO: Add service-specific unit tests here
+    // For service-to-service communication tests, add references to other service client projects
+    // Example: Add reference to lib-accounts project to test AuthService → AccountsClient integration
+}
+EOF
+            
+            echo -e "${GREEN}        ✅ Generated unit test project for $service_name${NC}"
+            ((test_generated++))
+        else
+            echo -e "${RED}        ❌ Failed to generate unit test project for $service_name${NC}"
+            ((test_failed++))
+        fi
+    done
+    
+    echo "    📊 Unit test generation: $test_generated created, $test_failed failed"
+    if [ $test_failed -eq 0 ]; then
+        echo -e "${GREEN}    ✅ All unit test projects generated successfully${NC}"
+        ((generated_count++))
+        return 0
+    else
+        echo -e "${RED}    ❌ Some unit test projects failed to generate${NC}"
+        ((failed_count++))
+        return 1
+    fi
+}
+
+generate_unit_test_projects
 
 # Fix line endings for all generated files
 echo -e "${YELLOW}📋 Fixing line endings for EditorConfig compliance...${NC}"

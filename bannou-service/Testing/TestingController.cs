@@ -9,8 +9,10 @@ namespace BeyondImmersion.BannouService.Testing;
 [DaprController(typeof(TestingService))]
 public class TestingController : BaseDaprController
 {
+    /// <inheritdoc/>
     protected TestingService Service { get; }
 
+    /// <inheritdoc/>
     public TestingController(TestingService service)
     {
         Service = service;
@@ -96,6 +98,7 @@ public class TestingController : BaseDaprController
         return result ? Ok() : Conflict();
     }
 
+    /// <inheritdoc/>
     [HttpGet]
     [DaprRoute("dapr-test/{id}")]
     public async Task<IActionResult> TestGET_ID([FromRoute] string id)
@@ -108,6 +111,7 @@ public class TestingController : BaseDaprController
         return Ok();
     }
 
+    /// <inheritdoc/>
     [HttpGet]
     [DaprRoute("dapr-test/{service}/{id}")]
     public async Task<IActionResult> TestGET_Service_ID([FromRoute] string service, [FromRoute] string id)
@@ -123,6 +127,7 @@ public class TestingController : BaseDaprController
         return Ok();
     }
 
+    /// <inheritdoc/>
     [HttpPost]
     [DaprRoute("dapr-test")]
     [Consumes("application/json")]

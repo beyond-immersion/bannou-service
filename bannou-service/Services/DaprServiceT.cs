@@ -10,6 +10,7 @@ public abstract class DaprService<T> : DaprService
     where T : class, IServiceConfiguration, new()
 {
     private T? _configuration;
+    /// <inheritdoc/>
     public T Configuration
     {
         get

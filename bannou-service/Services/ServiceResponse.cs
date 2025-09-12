@@ -9,8 +9,10 @@ namespace BeyondImmersion.BannouService.Services;
 /// </summary>
 public struct ServiceResponse
 {
+    /// <inheritdoc/>
     public StatusCodes StatusCode { get; set; }
 
+    /// <inheritdoc/>
     public ServiceResponse(StatusCodes statusCode)
     {
         StatusCode = statusCode;

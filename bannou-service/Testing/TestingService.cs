@@ -8,10 +8,22 @@ namespace BeyondImmersion.BannouService.Testing;
 [DaprService("testing")]
 public sealed class TestingService : DaprService<TestingServiceConfiguration>
 {
+    /// <summary>
+    /// Dictionary mapping service names to their available test methods.
+    /// </summary>
     private Dictionary<string, Dictionary<string, Func<TestingService, Task<bool>>>> ServiceTests { get; set; }
 
+    /// <summary>
+    /// Gets the ID of the last test that was executed.
+    /// </summary>
     public string? LastTestID { get; private set; }
+    /// <summary>
+    /// Gets the name of the service for the last test that was executed.
+    /// </summary>
     public string? LastTestService { get; private set; }
+    /// <summary>
+    /// Gets the API request object from the last test that was executed.
+    /// </summary>
     public ApiRequest? LastTestRequest { get; private set; }
 
     /// <summary>
@@ -27,24 +39,27 @@ public sealed class TestingService : DaprService<TestingServiceConfiguration>
     /// <summary>
     /// Set last testID to come in to a test API.
     /// </summary>
-    /// <param name="id"></param>
+    /// <param name="id">The test ID to store.</param>
     public void SetLastTestID(string? id)
         => LastTestID = id;
 
     /// <summary>
     /// Set last test service to come in to a test API.
     /// </summary>
-    /// <param name="service"></param>
+    /// <param name="service">The service name to store.</param>
     public void SetLastTestService(string? service)
         => LastTestService = service;
 
     /// <summary>
     /// Set last POST request object to test API.
     /// </summary>
-    /// <param name="request"></param>
+    /// <param name="request">The API request to store.</param>
     public void SetLastPostRequest(ApiRequest? request)
         => LastTestRequest = request;
 
+    /// <summary>
+    /// Initializes a new instance of the TestingService and discovers all available test methods.
+    /// </summary>
     public TestingService()
     {
         ServiceTests = new Dictionary<string, Dictionary<string, Func<TestingService, Task<bool>>>>();

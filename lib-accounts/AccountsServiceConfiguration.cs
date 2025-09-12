@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Accounts
 {

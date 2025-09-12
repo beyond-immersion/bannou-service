@@ -6,9 +6,11 @@ namespace BeyondImmersion.BannouService.Testing.Messages;
 [JsonObject]
 public class TestingRunTestRequest : ApiRequest
 {
+    /// <inheritdoc/>
     [JsonProperty("id")]
     public string? ID { get; set; }
 
+    /// <inheritdoc/>
     [JsonProperty("service")]
     public string? Service { get; set; }
 }

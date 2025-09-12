@@ -37,6 +37,7 @@ public class ServiceMappingEventPublisher : IServiceMappingEventPublisher
     private const string PUB_SUB_NAME = "bannou-pubsub";
     private const string TOPIC_NAME = "bannou-service-mappings";
 
+    /// <inheritdoc/>
     public ServiceMappingEventPublisher(
         DaprClient daprClient,
         ILogger<ServiceMappingEventPublisher> logger)
@@ -45,6 +46,7 @@ public class ServiceMappingEventPublisher : IServiceMappingEventPublisher
         _logger = logger;
     }
 
+    /// <inheritdoc/>
     public async Task AnnounceServiceStartupAsync(string serviceName, string appId, CancellationToken cancellationToken = default)
     {
         var eventData = new ServiceMappingEvent
@@ -63,6 +65,7 @@ public class ServiceMappingEventPublisher : IServiceMappingEventPublisher
         _logger.LogInformation("Announced service startup: {ServiceName} -> {AppId}", serviceName, appId);
     }
 
+    /// <inheritdoc/>
     public async Task AnnounceServiceShutdownAsync(string serviceName, CancellationToken cancellationToken = default)
     {
         var eventData = new ServiceMappingEvent
@@ -80,6 +83,7 @@ public class ServiceMappingEventPublisher : IServiceMappingEventPublisher
         _logger.LogInformation("Announced service shutdown: {ServiceName}", serviceName);
     }
 
+    /// <inheritdoc/>
     public async Task UpdateServiceMappingAsync(string serviceName, string appId, Dictionary<string, object>? metadata = null, CancellationToken cancellationToken = default)
     {
         var eventData = new ServiceMappingEvent
@@ -125,6 +129,7 @@ public class ServiceMappingLifecycleService : BackgroundService
     private readonly string _serviceName;
     private readonly string _appId;
 
+    /// <inheritdoc/>
     public ServiceMappingLifecycleService(
         IServiceMappingEventPublisher eventPublisher,
         ILogger<ServiceMappingLifecycleService> logger,
@@ -140,6 +145,7 @@ public class ServiceMappingLifecycleService : BackgroundService
                 "bannou";
     }
 
+    /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try

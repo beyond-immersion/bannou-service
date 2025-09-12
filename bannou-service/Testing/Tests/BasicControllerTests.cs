@@ -16,6 +16,7 @@ public static class BasicControllerTests
     private const string CONTROLLER_NAME = "testing";
     private const string ACTION_NAME = "dapr-test";
 
+    /// <inheritdoc/>
     [ServiceTest(testName: "basic", serviceType: typeof(TestingService))]
     public static async Task<bool> Run(TestingService service)
         => await service.RunDelegates("basic", new List<Func<TestingService, Task<bool>>>()

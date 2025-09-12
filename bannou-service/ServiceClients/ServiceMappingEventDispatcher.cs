@@ -31,6 +31,7 @@ public class ServiceMappingEventDispatcher : IServiceMappingEventDispatcher
     private readonly ILogger<ServiceMappingEventDispatcher> _logger;
     private readonly List<ServiceMappingHandlerInfo> _handlers;
 
+    /// <inheritdoc/>
     public ServiceMappingEventDispatcher(
         IServiceProvider serviceProvider,
         ILogger<ServiceMappingEventDispatcher> logger)
@@ -42,6 +43,7 @@ public class ServiceMappingEventDispatcher : IServiceMappingEventDispatcher
         _logger.LogInformation("Discovered {HandlerCount} service mapping event handlers", _handlers.Count);
     }
 
+    /// <inheritdoc/>
     public async Task DispatchEventAsync(ServiceMappingEvent eventData, CancellationToken cancellationToken = default)
     {
         var matchingHandlers = GetMatchingHandlers(eventData)
@@ -75,6 +77,7 @@ public class ServiceMappingEventDispatcher : IServiceMappingEventDispatcher
         }
     }
 
+    /// <inheritdoc/>
     public IEnumerable<ServiceMappingHandlerInfo> GetRegisteredHandlers()
     {
         return _handlers.AsReadOnly();
@@ -221,12 +224,20 @@ public class ServiceMappingEventDispatcher : IServiceMappingEventDispatcher
 /// </summary>
 public class ServiceMappingHandlerInfo
 {
+    /// <inheritdoc/>
     public Type HandlerType { get; set; } = null!;
+    /// <inheritdoc/>
     public MethodInfo Method { get; set; } = null!;
+    /// <inheritdoc/>
     public string Name { get; set; } = "";
+    /// <inheritdoc/>
     public string Action { get; set; } = "*";
+    /// <inheritdoc/>
     public string? ServiceName { get; set; }
+    /// <inheritdoc/>
     public int Priority { get; set; } = 100;
+    /// <inheritdoc/>
     public bool RunAsync { get; set; }
+    /// <inheritdoc/>
     public string? Description { get; set; }
 }

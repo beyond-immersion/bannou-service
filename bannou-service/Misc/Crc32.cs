@@ -27,6 +27,12 @@ public static class Crc32
         }
     }
 
+    /// <summary>
+    /// Computes the CRC32 checksum for the given input string.
+    /// </summary>
+    /// <param name="input">The input string to compute CRC32 for.</param>
+    /// <returns>The 32-bit CRC checksum.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when input is null.</exception>
     public static uint ComputeCRC32(string input)
     {
         if (input == null)
