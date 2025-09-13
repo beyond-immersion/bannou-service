@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.Configuration;
 
@@ -8,7 +9,7 @@ public class Program
     private static TestConfiguration _configuration = null!;
     /// <summary>
     /// Client configuration.
-    /// Pull from Config.json, ENVs, and command line args.
+    /// Pull from .env files, Config.json, ENVs, and command line args using bannou-service configuration system.
     /// </summary>
     public static TestConfiguration Configuration
     {
@@ -17,11 +18,7 @@ public class Program
             if (_configuration != null)
                 return _configuration;
 
-            var configBuilder = new ConfigurationBuilder()
-                .AddJsonFile("Config.json", optional: true)
-                .AddEnvironmentVariables()
-                .AddCommandLine(Environment.GetCommandLineArgs());
-            var configRoot = configBuilder.Build();
+            var configRoot = IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
             _configuration = configRoot.Get<TestConfiguration>() ?? new TestConfiguration();
 
             return _configuration;

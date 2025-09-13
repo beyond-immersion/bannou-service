@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.WebSockets;
@@ -120,7 +121,7 @@ public class Program
     private static ClientConfiguration _configuration;
     /// <summary>
     /// Client configuration.
-    /// Pull from Config.json, ENVs, and command line args.
+    /// Pull from .env files, Config.json, ENVs, and command line args using bannou-service configuration system.
     /// </summary>
     public static ClientConfiguration Configuration
     {
@@ -129,8 +130,7 @@ public class Program
             if (_configuration != null)
                 return _configuration;
 
-            var configBuilder = new ConfigurationBuilder().AddJsonFile("Config.json").AddEnvironmentVariables().AddCommandLine(Environment.GetCommandLineArgs());
-            var configRoot = configBuilder.Build();
+            var configRoot = IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
             _configuration = configRoot.Get<ClientConfiguration>() ?? new ClientConfiguration();
 
             return _configuration;
