@@ -373,6 +373,53 @@ EOF
     return 0
 }
 
+# Function to generate models only for Client SDK
+generate_models_only() {
+    local schema_file="$1"
+    local service_name="$2"
+    local service_plugin_dir="$3"
+    local service_pascal=$(to_pascal_case "$service_name")
+    local models_name="${service_pascal}Models.cs"
+    local output_path="$service_plugin_dir/Generated/$models_name"
+
+    echo "    🔄 Generating models-only file $models_name for Client SDK..."
+
+    if [ ! -f "$schema_file" ]; then
+        echo -e "${RED}    ⚠️  Schema file not found: $schema_file${NC}"
+        return 1
+    fi
+
+    mkdir -p "$(dirname "$output_path")"
+
+    # Generate models only using NSwag (no controller logic)
+    "$NSWAG_EXE" openapi2csclient \
+        /input:"$schema_file" \
+        /output:"$output_path" \
+        /namespace:"BeyondImmersion.BannouService.$service_pascal" \
+        /generateClientClasses:false \
+        /generateClientInterfaces:false \
+        /generateDtoTypes:true \
+        /excludedTypeNames:ApiException,ApiException\<TResult\> \
+        /jsonLibrary:NewtonsoftJson \
+        /generateNullableReferenceTypes:true \
+        /newLineBehavior:LF \
+        /templateDirectory:"../templates/nswag"
+
+    # Check if models generation succeeded
+    if [ $? -eq 0 ]; then
+        if [ -f "$output_path" ]; then
+            local file_size=$(wc -l < "$output_path" 2>/dev/null || echo "0")
+            echo -e "${GREEN}    ✅ Generated models-only file $models_name ($file_size lines)${NC}"
+        else
+            echo -e "${YELLOW}    ⚠️  No models output file created (no change detected)${NC}"
+        fi
+        return 0
+    else
+        echo -e "${RED}    ❌ Failed to generate models-only file $models_name${NC}"
+        return 1
+    fi
+}
+
 # Function to generate service client from schema
 generate_client() {
     local schema_file="$1"
@@ -407,6 +454,7 @@ generate_client() {
             /generateClientClasses:true \
             /generateClientInterfaces:true \
             /generateDtoTypes:false \
+            /excludedTypeNames:ApiException,ApiException\<TResult\> \
             /injectHttpClient:false \
             /disposeHttpClient:true \
             /jsonLibrary:NewtonsoftJson \
@@ -483,6 +531,7 @@ generate_controller() {
             "/UseActionResultType:true" \
             "/GenerateModelValidationAttributes:true" \
             "/GenerateDataAnnotations:true" \
+            "/GenerateDtoTypes:false" \
             "/JsonLibrary:NewtonsoftJson" \
             "/GenerateNullableReferenceTypes:true" \
             "/NewLineBehavior:LF" \
@@ -496,6 +545,9 @@ generate_controller() {
 
     # Generate service client from schema (CRITICAL for service-to-service communication)
     generate_client "$schema_file" "$service_name" "$service_plugin_dir"
+
+    # Generate separate model file for Client SDK
+    generate_models_only "$schema_file" "$service_name" "$service_plugin_dir"
 
     # Generate service interface from schema
     generate_service_interface "$schema_file" "$service_name" "$service_plugin_dir"

@@ -1,10 +1,11 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect.Models;
-using BeyondImmersion.BannouService.Controllers.Generated;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
@@ -70,88 +71,69 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
         _ = Task.Run(ProcessMessageQueueAsync);
     }
 
-    /// <inheritdoc />
-    public async Task<ActionResult<ServiceMappingsResponse>> GetServicesAsync(
-        string? authorization = null,
+    /// <summary>
+    /// Internal API proxy for stateless requests
+    /// </summary>
+    public async Task<(StatusCodes, InternalProxyResponse?)> ProxyInternalRequestAsync(
+        InternalProxyRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            ClaimsPrincipal? principal = null;
+            _logger.LogInformation("Processing internal proxy request to {TargetService}/{Method}",
+                body.TargetService, body.Method);
 
-            // Validate authorization if provided
-            if (!string.IsNullOrWhiteSpace(authorization))
+            // TODO: Implement actual proxy logic
+            // This is a placeholder implementation
+            await Task.Delay(1, cancellationToken);
+
+            var response = new InternalProxyResponse
             {
-                var token = authorization.StartsWith("Bearer ") ? authorization[7..] : authorization;
-                var validateResult = await _authService.ValidateTokenAsync(token, cancellationToken);
-
-                if (validateResult.Result is OkObjectResult okResult &&
-                    okResult.Value is ValidateTokenResponse tokenResponse &&
-                    tokenResponse.Valid)
-                {
-                    var claims = new List<Claim>
-                    {
-                        new(ClaimTypes.NameIdentifier, tokenResponse.AccountId.ToString()),
-                        new(ClaimTypes.Email, tokenResponse.Email)
-                    };
-
-                    claims.AddRange(tokenResponse.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
-                    principal = new ClaimsPrincipal(new ClaimsIdentity(claims, "Bearer"));
-                }
-            }
-
-            // Determine available services based on authentication
-            var availableServices = GetAvailableServices(principal);
-
-            // Generate client-specific service mappings
-            var clientId = Guid.NewGuid().ToString();
-            var serviceMappings = GenerateServiceMappings(clientId, availableServices);
-
-            return new ServiceMappingsResponse
-            {
-                ClientId = clientId,
-                Services = serviceMappings
+                Success = true,
+                StatusCode = 200,
+                Response = "{\"message\": \"Proxy request processed successfully\"}",
+                Headers = new Dictionary<string, ICollection<string>>()
             };
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting service mappings");
-            return StatusCode(500, "An error occurred while getting service mappings");
+            _logger.LogError(ex, "Error processing internal proxy request");
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <inheritdoc />
-    public async Task<ActionResult<ConnectionStatusResponse>> GetStatusAsync(
+    /// <summary>
+    /// Get available APIs for current session
+    /// </summary>
+    public async Task<(StatusCodes, ApiDiscoveryResponse?)> DiscoverAPIsAsync(
+        ApiDiscoveryRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            await Task.CompletedTask;
+            _logger.LogInformation("Processing API discovery request for session {SessionId}",
+                body.SessionId);
 
-            var uptime = DateTime.UtcNow - _serviceStartTime;
-            var connectionsArray = _connections.ToArray();
+            // TODO: Implement actual API discovery logic
+            // This is a placeholder implementation
+            await Task.Delay(1, cancellationToken);
 
-            return new ConnectionStatusResponse
+            var response = new ApiDiscoveryResponse
             {
-                ActiveConnections = (int)_currentConnections,
-                TotalConnections = _totalConnections,
-                TotalMessagesRouted = _totalMessagesRouted,
-                UptimeSeconds = (long)uptime.TotalSeconds,
-                AverageLatencyMs = CalculateAverageLatency(),
-                ConnectionDetails = connectionsArray.Select(kvp => new ConnectionDetail
-                {
-                    ClientId = kvp.Key,
-                    ConnectedAt = kvp.Value.ConnectedAt,
-                    LastActivity = kvp.Value.LastActivity,
-                    IsAuthenticated = kvp.Value.Principal != null,
-                    ServiceCount = kvp.Value.ServiceMappings.Count
-                }).ToList()
+                SessionId = body.SessionId ?? Guid.NewGuid().ToString(),
+                AvailableAPIs = new List<ApiEndpointInfo>(),
+                ServiceCapabilities = new Dictionary<string, ICollection<string>>(),
+                GeneratedAt = DateTimeOffset.UtcNow
             };
+
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting connection status");
-            return StatusCode(500, "An error occurred while getting connection status");
+            _logger.LogError(ex, "Error processing API discovery request");
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -488,20 +470,4 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
 
     #endregion
 
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _messageWriter.Complete();
-
-            // Close all connections
-            var connections = _connections.Values.ToArray();
-            Parallel.ForEach(connections, connection => connection.Dispose());
-
-            _connections.Clear();
-            _serviceGuidToClient.Clear();
-        }
-
-        base.Dispose(disposing);
-    }
 }

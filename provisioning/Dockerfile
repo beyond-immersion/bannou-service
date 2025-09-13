@@ -1,10 +1,10 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 as intermediate
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS intermediate
 COPY ./ /app/
 
 RUN apt-get update && apt-get install -y libxml2-utils && apt-get install -y rsync
 
 WORKDIR /app
-RUN bash build-libs.sh
+RUN bash build-service-libs.sh
 WORKDIR /
 
 RUN dotnet dev-certs https

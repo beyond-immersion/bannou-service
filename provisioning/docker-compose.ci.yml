@@ -30,11 +30,11 @@ services:
       - celestial_network
     volumes:
       - "../wait-for-health.sh:/wait-for-health.sh"
-      - "../service-tests.sh:/service-tests.sh"
+      - "../infrastructure-tests.sh:/infrastructure-tests.sh"
     stdin_open: false
     depends_on:
       - bannou
-    command: sh -c "/wait-for-health.sh && /service-tests.sh"
+    command: sh -c "/wait-for-health.sh && /infrastructure-tests.sh"
 
   # silence filebeat during CI testing
   filebeat:

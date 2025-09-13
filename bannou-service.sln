@@ -47,8 +47,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{4F07AA77-C49C-498D-BFA1-B47D0139E021}"
 	ProjectSection(SolutionItems) = preProject
-		build-libs.sh = build-libs.sh
-		service-tests.sh = service-tests.sh
+		build-service-libs.sh = build-service-libs.sh
+		infrastructure-tests.sh = infrastructure-tests.sh
 		wait-for-health.sh = wait-for-health.sh
 	EndProjectSection
 EndProject

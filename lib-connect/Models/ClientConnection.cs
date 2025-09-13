@@ -224,7 +224,7 @@ public class ClientConnection : IDisposable
         {
             if (State == WebSocketState.Open)
             {
-                _webSocket.CloseAsync(WebSocketCloseStatus.Going Away, "Server shutdown", CancellationToken.None)
+                _webSocket.CloseAsync(WebSocketCloseStatus.GoingAway, "Server shutdown", CancellationToken.None)
                     .ConfigureAwait(false).GetAwaiter().GetResult();
             }
         }

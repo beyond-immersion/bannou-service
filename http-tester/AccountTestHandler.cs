@@ -1,5 +1,5 @@
-using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.Accounts.Client;
+using BeyondImmersion.BannouService.Testing;
 
 namespace BeyondImmersion.BannouService.HttpTester;
 

@@ -4,6 +4,38 @@
         <name>bannou-service</name>
     </assembly>
     <members>
+        <member name="T:BeyondImmersion.BannouService.ApiException">
+            <summary>
+            Single source of truth for API exceptions across all Bannou services
+            Used by all generated clients and service models
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ApiException.StatusCode">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ApiException.Response">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ApiException.Headers">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ApiException.#ctor(System.String,System.Int32,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},System.Exception)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ApiException.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ApiException`1">
+            <summary>
+            Generic API exception with typed result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ApiException`1.Result">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ApiException`1.#ctor(System.String,System.Int32,System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{System.String}},`0,System.Exception)">
+            <inheritdoc/>
+        </member>
         <member name="T:BeyondImmersion.BannouService.AppConstants">
             <summary>
             Application constants used throughout the Bannou service platform.

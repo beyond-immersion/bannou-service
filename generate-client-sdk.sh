@@ -11,7 +11,7 @@ SDK_PROJECT="$SDK_DIR/Bannou.Client.SDK.csproj"
 # Create SDK directory if it doesn't exist
 mkdir -p "$SDK_DIR"
 
-# Find all generated client files and models
+# Find all generated client files, models files, and events
 CLIENT_FILES=($(find . -path "./lib-*/Generated/*Client.cs" 2>/dev/null || true))
 MODEL_FILES=($(find . -path "./lib-*/Generated/*Models.cs" 2>/dev/null || true))
 EVENT_FILES=($(find . -path "./lib-*/Generated/*Events*.cs" 2>/dev/null || true))

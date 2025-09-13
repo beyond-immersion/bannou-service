@@ -94,8 +94,8 @@ jobs:
           # Wait for services to be ready
           sleep 15
 
-          # Run infrastructure tests via service-tests.sh
-          bash ./service-tests.sh
+          # Run infrastructure tests via infrastructure-tests.sh
+          bash ./infrastructure-tests.sh
 
           # Cleanup
           docker-compose -p bannou-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.openresty.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v
