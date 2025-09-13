@@ -7,6 +7,7 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Accounts;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -22,7 +23,7 @@ using BeyondImmersion.BannouService.ServiceClients;
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Accounts.Client;
+namespace BeyondImmersion.BannouService.Accounts;
 
 using System = global::System;
 
@@ -143,16 +144,14 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     private string _baseUrl;
     #pragma warning restore 8618
 
-    private System.Net.Http.HttpClient _httpClient;
     private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
     private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-    public AccountsClient(System.Net.Http.HttpClient httpClient)
+    public AccountsClient()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
         BaseUrl = "http://localhost:3500/v1.0/invoke/accounts/method";
-        _httpClient = httpClient;
         Initialize();
     }
 
@@ -180,6 +179,24 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
     partial void Initialize();
 
+    /// <summary>
+    /// Creates and configures an HttpClient instance for this service client.
+    /// Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+    /// </summary>
+    protected virtual System.Threading.Tasks.Task<System.Net.Http.HttpClient> CreateHttpClientAsync(System.Threading.CancellationToken cancellationToken)
+    {
+        // Create HttpClient with default configuration
+        var httpClient = new System.Net.Http.HttpClient();
+
+        // Set base address if specified
+        if (!string.IsNullOrEmpty("http://localhost:3500/v1.0/invoke/accounts/method"))
+        {
+            httpClient.BaseAddress = new System.Uri("http://localhost:3500/v1.0/invoke/accounts/method", System.UriKind.Absolute);
+        }
+
+        return System.Threading.Tasks.Task.FromResult(httpClient);
+    }
+
     partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
     partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
     partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
@@ -192,8 +209,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AccountListResponse> ListAccountsAsync(string? email = null, string? displayName = null, Provider? provider = null, bool? verified = null, int? page = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -295,8 +312,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -388,8 +405,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         if (accountId == null)
             throw new System.ArgumentNullException("accountId");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -475,8 +492,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -569,8 +586,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         if (accountId == null)
             throw new System.ArgumentNullException("accountId");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -653,8 +670,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         if (email == null)
             throw new System.ArgumentNullException("email");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -737,8 +754,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         if (accountId == null)
             throw new System.ArgumentNullException("accountId");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -825,8 +842,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -923,8 +940,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         if (methodId == null)
             throw new System.ArgumentNullException("methodId");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1012,8 +1029,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         if (externalId == null)
             throw new System.ArgumentNullException("externalId");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1101,8 +1118,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1193,8 +1210,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1279,8 +1296,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1443,7 +1460,7 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1455,7 +1472,7 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }
@@ -1481,408 +1498,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         var result = System.Convert.ToString(value, cultureInfo);
         return result == null ? "" : result;
     }
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CreateAccountRequest
-{
-    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Email { get; set; } = default!;
-
-    /// <summary>
-    /// Pre-hashed password from Auth service
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? PasswordHash { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? DisplayName { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool EmailVerified { get; set; } = false;
-
-    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object? Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class UpdateAccountRequest
-{
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? DisplayName { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object? Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class UpdateProfileRequest
-{
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? DisplayName { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object? Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class UpdatePasswordRequest
-{
-    /// <summary>
-    /// New pre-hashed password from Auth service
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string PasswordHash { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class UpdateVerificationRequest
-{
-    [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.Always)]
-    public bool EmailVerified { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AddAuthMethodRequest
-{
-    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public AddAuthMethodRequestProvider Provider { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string ExternalId { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? DisplayName { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AccountResponse
-{
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid AccountId { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Email { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? DisplayName { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("updatedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.Always)]
-    public bool EmailVerified { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.ICollection<string> Roles { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-    [Newtonsoft.Json.JsonProperty("authMethods", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<AuthMethodInfo> AuthMethods { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object? Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AuthMethodInfo
-{
-    [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Guid MethodId { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public AuthMethodInfoProvider Provider { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? ExternalId { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? DisplayName { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("linkedAt", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset LinkedAt { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AuthMethodResponse
-{
-    [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid MethodId { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public AuthMethodResponseProvider Provider { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string ExternalId { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? DisplayName { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("linkedAt", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset LinkedAt { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AuthMethodsResponse
-{
-    [Newtonsoft.Json.JsonProperty("authMethods", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.ICollection<AuthMethodInfo> AuthMethods { get; set; } = new System.Collections.ObjectModel.Collection<AuthMethodInfo>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AccountListResponse
-{
-    [Newtonsoft.Json.JsonProperty("accounts", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.ICollection<AccountResponse> Accounts { get; set; } = new System.Collections.ObjectModel.Collection<AccountResponse>();
-
-    [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.Always)]
-    public int TotalCount { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("page", Required = Newtonsoft.Json.Required.Always)]
-    public int Page { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("pageSize", Required = Newtonsoft.Json.Required.Always)]
-    public int PageSize { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("hasNextPage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool HasNextPage { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("hasPreviousPage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool HasPreviousPage { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Provider
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"email")]
-    Email = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
-    Google = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-    Discord = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-    Twitch = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-    Steam = 4,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Provider2
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
-    Google = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-    Discord = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-    Twitch = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-    Steam = 3,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AddAuthMethodRequestProvider
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
-    Google = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-    Discord = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-    Twitch = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-    Steam = 3,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AuthMethodInfoProvider
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"email")]
-    Email = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
-    Google = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-    Discord = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-    Twitch = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-    Steam = 4,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AuthMethodResponseProvider
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
-    Google = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-    Discord = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-    Twitch = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-    Steam = 3,
-
 }
 
 

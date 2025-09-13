@@ -7,6 +7,7 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Permissions;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -22,7 +23,7 @@ using BeyondImmersion.BannouService.ServiceClients;
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Permissions.Client;
+namespace BeyondImmersion.BannouService.Permissions;
 
 using System = global::System;
 
@@ -105,16 +106,14 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
     private string _baseUrl;
     #pragma warning restore 8618
 
-    private System.Net.Http.HttpClient _httpClient;
     private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
     private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-    public PermissionsClient(System.Net.Http.HttpClient httpClient)
+    public PermissionsClient()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
         BaseUrl = "http://localhost:3500/v1.0/invoke/permissions/method";
-        _httpClient = httpClient;
         Initialize();
     }
 
@@ -142,6 +141,24 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
 
     partial void Initialize();
 
+    /// <summary>
+    /// Creates and configures an HttpClient instance for this service client.
+    /// Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+    /// </summary>
+    protected virtual System.Threading.Tasks.Task<System.Net.Http.HttpClient> CreateHttpClientAsync(System.Threading.CancellationToken cancellationToken)
+    {
+        // Create HttpClient with default configuration
+        var httpClient = new System.Net.Http.HttpClient();
+
+        // Set base address if specified
+        if (!string.IsNullOrEmpty("http://localhost:3500/v1.0/invoke/permissions/method"))
+        {
+            httpClient.BaseAddress = new System.Uri("http://localhost:3500/v1.0/invoke/permissions/method", System.UriKind.Absolute);
+        }
+
+        return System.Threading.Tasks.Task.FromResult(httpClient);
+    }
+
     partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
     partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
     partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
@@ -160,8 +177,8 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -244,8 +261,8 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -328,8 +345,8 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -412,8 +429,8 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -496,8 +513,8 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -580,8 +597,8 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -742,7 +759,7 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -754,7 +771,7 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }
@@ -780,373 +797,6 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
         var result = System.Convert.ToString(value, cultureInfo);
         return result == null ? "" : result;
     }
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CapabilityRequest
-{
-    /// <summary>
-    /// Session ID for lookup in Redis
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Optional filter for specific services
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceIds", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> ServiceIds { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CapabilityResponse
-{
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Map of ServiceID -&gt; List of available methods
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("permissions", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
-
-    /// <summary>
-    /// When these permissions were compiled
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("generatedAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset GeneratedAt { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ValidationRequest
-{
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Target service ID
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Method name being accessed
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("method", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Method { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ValidationResponse
-{
-    /// <summary>
-    /// Whether access is permitted
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("allowed", Required = Newtonsoft.Json.Required.Always)]
-    public bool Allowed { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for denial (if applicable)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("reason", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Reason { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServicePermissionMatrix
-{
-    /// <summary>
-    /// Unique service identifier
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable service name
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string ServiceName { get; set; } = default!;
-
-    /// <summary>
-    /// Map of State -&gt; Role -&gt; Methods structure
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("permissions", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.IDictionary<string, StatePermissions> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, StatePermissions>();
-
-    /// <summary>
-    /// Service API version for change tracking
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Version { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Map of Role -&gt; List of Methods for this state
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class StatePermissions : System.Collections.Generic.Dictionary<string, System.Collections.ObjectModel.Collection<string>>
-{
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RegistrationResponse
-{
-    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Whether registration was successful
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("registered", Required = Newtonsoft.Json.Required.Always)]
-    public bool Registered { get; set; } = default!;
-
-    /// <summary>
-    /// Number of sessions that had permissions recompiled
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("affectedSessions", Required = Newtonsoft.Json.Required.Always)]
-    public int AffectedSessions { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("recompiledAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset RecompiledAt { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionStateUpdate
-{
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Service whose state is changing for this session
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// New state value (lobby, in_game, etc.)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string State { get; set; } = default!;
-
-    /// <summary>
-    /// Optional context data
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionRoleUpdate
-{
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// New role (user, admin, etc.)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("role", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Role { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionUpdateResponse
-{
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Whether update was successful
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("updated", Required = Newtonsoft.Json.Required.Always)]
-    public bool Updated { get; set; } = default!;
-
-    /// <summary>
-    /// Whether compiled permissions actually changed
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("permissionsChanged", Required = Newtonsoft.Json.Required.Always)]
-    public bool PermissionsChanged { get; set; } = default!;
-
-    /// <summary>
-    /// Updated ServiceID -&gt; Methods if permissions changed
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("newPermissions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> NewPermissions { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("updatedAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionInfoRequest
-{
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionInfo
-{
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Current session role
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("role", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Role { get; set; } = default!;
-
-    /// <summary>
-    /// Map of ServiceID -&gt; Current State
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("states", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.IDictionary<string, string> States { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
-
-    /// <summary>
-    /// Map of ServiceID -&gt; List of available methods
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("compiledPermissions", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> CompiledPermissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
-
-    /// <summary>
-    /// When permissions were last recompiled
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("lastUpdated", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset LastUpdated { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
 }
 
 

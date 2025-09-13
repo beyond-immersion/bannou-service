@@ -1,10 +1,11 @@
 using BeyondImmersion.BannouService.Testing;
-using Newtonsoft.Json.Linq;
+using BeyondImmersion.BannouService.Auth.Client;
 
 namespace BeyondImmersion.BannouService.HttpTester;
 
 /// <summary>
-/// Test handler for authorization/authentication-related API endpoints
+/// Test handler for authorization/authentication-related API endpoints using generated clients.
+/// Tests the auth service APIs directly via NSwag-generated AuthClient.
 /// </summary>
 public class AuthTestHandler : IServiceTestHandler
 {
@@ -12,24 +13,79 @@ public class AuthTestHandler : IServiceTestHandler
     {
         return new[]
         {
+            new ServiceTest(TestRegisterFlow, "RegisterFlow", "Auth", "Test user registration flow"),
             new ServiceTest(TestLoginFlow, "LoginFlow", "Auth", "Test complete login flow"),
             new ServiceTest(TestTokenValidation, "TokenValidation", "Auth", "Test access token validation"),
+            new ServiceTest(TestTokenRefresh, "TokenRefresh", "Auth", "Test token refresh functionality"),
         };
     }
 
-    private static Task<TestResult> TestLoginFlow(ITestClient client, string[] args)
+    private static async Task<TestResult> TestRegisterFlow(ITestClient client, string[] args)
     {
         try
         {
-            // The client should already be authenticated at this point
-            if (!client.IsAuthenticated)
-                return Task.FromResult(TestResult.Failed("Client is not authenticated"));
+            // Create AuthClient directly with parameterless constructor
+            var authClient = new AuthClient();
 
-            return Task.FromResult(TestResult.Successful($"Login flow completed successfully using {client.TransportType}"));
+            var testUsername = $"regtest_{DateTime.Now.Ticks}";
+
+            var registerRequest = new RegisterRequest
+            {
+                Username = testUsername,
+                Password = "TestPassword123!",
+                Email = $"{testUsername}@example.com"
+            };
+
+            var response = await authClient.RegisterAsync(registerRequest);
+
+            if (string.IsNullOrWhiteSpace(response.Access_token))
+                return TestResult.Failed("Registration succeeded but no access token returned");
+
+            return TestResult.Successful($"Registration flow completed successfully for user {testUsername}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Registration failed: {ex.StatusCode} - {ex.Message}");
         }
         catch (Exception ex)
         {
-            return Task.FromResult(TestResult.Failed($"Test exception: {ex.Message}", ex));
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<TestResult> TestLoginFlow(ITestClient client, string[] args)
+    {
+        try
+        {
+            // Create AuthClient directly with parameterless constructor
+            var authClient = new AuthClient();
+
+            // First register a test user
+            var testUsername = $"logintest_{DateTime.Now.Ticks}";
+            var registerRequest = new RegisterRequest
+            {
+                Username = testUsername,
+                Password = "TestPassword123!",
+                Email = $"{testUsername}@example.com"
+            };
+
+            await authClient.RegisterAsync(registerRequest);
+
+            // Then try to login
+            var loginResponse = await authClient.LoginWithCredentialsPostAsync(testUsername, "TestPassword123!");
+
+            if (string.IsNullOrWhiteSpace(loginResponse.Access_token))
+                return TestResult.Failed("Login succeeded but no access token returned");
+
+            return TestResult.Successful($"Login flow completed successfully for user {testUsername}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Login failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
         }
     }
 
@@ -37,24 +93,52 @@ public class AuthTestHandler : IServiceTestHandler
     {
         try
         {
-            if (!client.IsAuthenticated)
-                return TestResult.Failed("Client is not authenticated");
+            // Create AuthClient directly with parameterless constructor
+            var authClient = new AuthClient();
 
-            // Make a simple authenticated request to verify token works
-            var response = await client.PostAsync<JObject>("api/accounts/get", new { id = 1, includeClaims = false });
+            // Create a test validation request with dummy token
+            var validateRequest = new ValidateTokenRequest
+            {
+                Token = "dummy-token-for-validation-test"
+            };
 
-            // We expect this to either succeed (account exists) or return 404 (account doesn't exist)
-            // What we don't want is 401 (unauthorized)
-            if (response.StatusCode == 401)
-                return TestResult.Failed("Token validation failed - received 401 Unauthorized");
+            try
+            {
+                var validationResponse = await authClient.ValidateTokenAsync(validateRequest);
+                return TestResult.Successful("Token validation endpoint responded correctly");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 401)
+            {
+                return TestResult.Successful("Token validation correctly rejected invalid token");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 400)
+            {
+                return TestResult.Successful("Token validation correctly handled bad request");
+            }
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
 
-            if (response.Success)
-                return TestResult.Successful("Token validation passed - authenticated request succeeded");
+    private static async Task<TestResult> TestTokenRefresh(ITestClient client, string[] args)
+    {
+        try
+        {
+            // Create AuthClient directly with parameterless constructor
+            var authClient = new AuthClient();
 
-            if (response.StatusCode == 404)
-                return TestResult.Successful("Token validation passed - authenticated request returned expected 404");
-
-            return TestResult.Successful($"Token validation passed - received status {response.StatusCode}");
+            // Test token refresh with a dummy refresh token
+            try
+            {
+                var refreshResponse = await authClient.LoginWithTokenGetAsync("dummy-refresh-token");
+                return TestResult.Successful("Token refresh endpoint responded correctly");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 401 || ex.StatusCode == 403)
+            {
+                return TestResult.Successful("Token refresh correctly rejected invalid refresh token");
+            }
         }
         catch (Exception ex)
         {

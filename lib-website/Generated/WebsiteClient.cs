@@ -7,6 +7,7 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Website;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -22,7 +23,7 @@ using BeyondImmersion.BannouService.ServiceClients;
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Website.Client;
+namespace BeyondImmersion.BannouService.Website;
 
 using System = global::System;
 
@@ -179,16 +180,14 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
     private string _baseUrl;
     #pragma warning restore 8618
 
-    private System.Net.Http.HttpClient _httpClient;
     private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
     private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-    public WebsiteClient(System.Net.Http.HttpClient httpClient)
+    public WebsiteClient()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
         BaseUrl = "http://localhost:3500/v1.0/invoke/bannou/method";
-        _httpClient = httpClient;
         Initialize();
     }
 
@@ -216,6 +215,24 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
 
     partial void Initialize();
 
+    /// <summary>
+    /// Creates and configures an HttpClient instance for this service client.
+    /// Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+    /// </summary>
+    protected virtual System.Threading.Tasks.Task<System.Net.Http.HttpClient> CreateHttpClientAsync(System.Threading.CancellationToken cancellationToken)
+    {
+        // Create HttpClient with default configuration
+        var httpClient = new System.Net.Http.HttpClient();
+
+        // Set base address if specified
+        if (!string.IsNullOrEmpty("http://localhost:3500/v1.0/invoke/bannou/method"))
+        {
+            httpClient.BaseAddress = new System.Uri("http://localhost:3500/v1.0/invoke/bannou/method", System.UriKind.Absolute);
+        }
+
+        return System.Threading.Tasks.Task.FromResult(httpClient);
+    }
+
     partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
     partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
     partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
@@ -228,8 +245,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<StatusResponse> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -306,8 +323,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         if (slug == null)
             throw new System.ArgumentNullException("slug");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -393,8 +410,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<NewsResponse> GetNewsAsync(int? limit = null, int? offset = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -477,8 +494,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ServerStatusResponse> GetServerStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -552,8 +569,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<DownloadsResponse> GetDownloadsAsync(Platform? platform = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -635,8 +652,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -733,8 +750,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AccountProfile> GetAccountProfileAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -817,8 +834,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<CharacterListResponse> GetAccountCharactersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -901,8 +918,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<PageMetadata>> ListPagesAsync(bool? includeUnpublished = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -984,8 +1001,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1068,8 +1085,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1150,8 +1167,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         if (slug == null)
             throw new System.ArgumentNullException("slug");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1219,8 +1236,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<SiteSettings> GetSiteSettingsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1296,8 +1313,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1374,8 +1391,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<ThemeConfig> GetThemeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1451,8 +1468,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1523,8 +1540,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<SubscriptionResponse> GetSubscriptionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -1691,7 +1708,7 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1703,7 +1720,7 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }
@@ -1729,941 +1746,6 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         var result = System.Convert.ToString(value, cultureInfo);
         return result == null ? "" : result;
     }
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class StatusResponse
-{
-    [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public StatusResponseStatus Status { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Version { get; set; } = default!;
-
-    /// <summary>
-    /// Uptime in seconds
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("uptime", Required = Newtonsoft.Json.Required.Always)]
-    public int Uptime { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("maintenanceMessage", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? MaintenanceMessage { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PageContent
-{
-    [Newtonsoft.Json.JsonProperty("slug", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
-    public string Slug { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("title", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Title { get; set; } = default!;
-
-    /// <summary>
-    /// HTML, Markdown, or custom template content
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("content", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Content { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("contentType", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public PageContentContentType ContentType { get; set; } = default!;
-
-    /// <summary>
-    /// Template name for custom layouts
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("template", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Template { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("published", Required = Newtonsoft.Json.Required.Always)]
-    public bool Published { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("publishedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset? PublishedAt { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("lastModified", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset LastModified { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("author", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Author { get; set; } = default!;
-
-    /// <summary>
-    /// Custom metadata for the page
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object Metadata { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("seo", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public SEOMetadata Seo { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PageMetadata
-{
-    [Newtonsoft.Json.JsonProperty("slug", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Slug { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("title", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Title { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("published", Required = Newtonsoft.Json.Required.Always)]
-    public bool Published { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("publishedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset? PublishedAt { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("lastModified", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset LastModified { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("author", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Author { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SEOMetadata
-{
-    [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Description { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("keywords", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> Keywords { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("ogTitle", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? OgTitle { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("ogDescription", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? OgDescription { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("ogImage", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Uri? OgImage { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SiteSettings
-{
-    [Newtonsoft.Json.JsonProperty("siteName", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string SiteName { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("siteUrl", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Uri SiteUrl { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("tagline", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Tagline { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("defaultLanguage", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string DefaultLanguage { get; set; } = "en";
-
-    [Newtonsoft.Json.JsonProperty("supportedLanguages", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> SupportedLanguages { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("maintenanceMode", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool MaintenanceMode { get; set; } = false;
-
-    [Newtonsoft.Json.JsonProperty("maintenanceMessage", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? MaintenanceMessage { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("contactEmail", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string ContactEmail { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("socialLinks", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.IDictionary<string, System.Uri> SocialLinks { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("analytics", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public Analytics Analytics { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("customScripts", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public CustomScripts CustomScripts { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ThemeConfig
-{
-    [Newtonsoft.Json.JsonProperty("themeName", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ThemeName { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("primaryColor", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
-    public string PrimaryColor { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("secondaryColor", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
-    public string SecondaryColor { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("backgroundColor", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
-    public string BackgroundColor { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("textColor", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [System.ComponentModel.DataAnnotations.RegularExpression(@"^#[0-9A-Fa-f]{6}$")]
-    public string TextColor { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("fontFamily", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string FontFamily { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("customCSS", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? CustomCSS { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("logo", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public Logo Logo { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("favicon", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Uri? Favicon { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("navigation", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<NavigationItem> Navigation { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class NavigationItem
-{
-    [Newtonsoft.Json.JsonProperty("label", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Label { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("url", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Url { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("order", Required = Newtonsoft.Json.Required.Always)]
-    public int Order { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("target", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public NavigationItemTarget Target { get; set; } = BeyondImmersion.BannouService.Website.Client.NavigationItemTarget._self;
-
-    [Newtonsoft.Json.JsonProperty("children", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<NavigationItem> Children { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class NewsResponse
-{
-    [Newtonsoft.Json.JsonProperty("items", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.ICollection<NewsItem> Items { get; set; } = new System.Collections.ObjectModel.Collection<NewsItem>();
-
-    [Newtonsoft.Json.JsonProperty("total", Required = Newtonsoft.Json.Required.Always)]
-    public int Total { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("hasMore", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool HasMore { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class NewsItem
-{
-    [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Id { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("title", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Title { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("summary", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Summary { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("content", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Content { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("author", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Author { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("publishedAt", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset PublishedAt { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("tags", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("imageUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Uri? ImageUrl { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServerStatusResponse
-{
-    [Newtonsoft.Json.JsonProperty("globalStatus", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public ServerStatusResponseGlobalStatus GlobalStatus { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("realms", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.ICollection<RealmStatus> Realms { get; set; } = new System.Collections.ObjectModel.Collection<RealmStatus>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RealmStatus
-{
-    [Newtonsoft.Json.JsonProperty("realmId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string RealmId { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Name { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public RealmStatusStatus Status { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("population", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public RealmStatusPopulation Population { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("playerCount", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int? PlayerCount { get; set; } = default!;
-
-    /// <summary>
-    /// Latency in milliseconds
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("ping", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int? Ping { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DownloadsResponse
-{
-    [Newtonsoft.Json.JsonProperty("clients", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.ICollection<DownloadInfo> Clients { get; set; } = new System.Collections.ObjectModel.Collection<DownloadInfo>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DownloadInfo
-{
-    [Newtonsoft.Json.JsonProperty("platform", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public DownloadInfoPlatform Platform { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Version { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("url", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Uri Url { get; set; } = default!;
-
-    /// <summary>
-    /// File size in bytes
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("size", Required = Newtonsoft.Json.Required.Always)]
-    public int Size { get; set; } = default!;
-
-    /// <summary>
-    /// SHA256 checksum
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("checksum", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Checksum { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("releaseNotes", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? ReleaseNotes { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("minimumRequirements", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object MinimumRequirements { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContactRequest
-{
-    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Email { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Name { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("subject", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 5)]
-    public string Subject { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.ComponentModel.DataAnnotations.StringLength(2000, MinimumLength = 10)]
-    public string Message { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("category", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public ContactRequestCategory Category { get; set; } = BeyondImmersion.BannouService.Website.Client.ContactRequestCategory.General;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContactResponse
-{
-    [Newtonsoft.Json.JsonProperty("ticketId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid TicketId { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Message { get; set; } = "Thank you for contacting us. We will respond within 24-48 hours.";
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AccountProfile
-{
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid AccountId { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Email { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? DisplayName { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("lastLogin", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset? LastLogin { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("characterSlots", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int CharacterSlots { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("usedSlots", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int UsedSlots { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CharacterListResponse
-{
-    [Newtonsoft.Json.JsonProperty("characters", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.ICollection<CharacterSummary> Characters { get; set; } = new System.Collections.ObjectModel.Collection<CharacterSummary>();
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CharacterSummary
-{
-    [Newtonsoft.Json.JsonProperty("characterId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Name { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("realm", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Realm { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("level", Required = Newtonsoft.Json.Required.Always)]
-    public int Level { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("class", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Class { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("lastPlayed", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset? LastPlayed { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SubscriptionResponse
-{
-    [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public SubscriptionResponseStatus Status { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("type", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public SubscriptionResponseType Type { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("expiresAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("autoRenew", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool AutoRenew { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("benefits", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> Benefits { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ErrorResponse
-{
-    [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Error { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Message { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("details", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object? Details { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Platform
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"windows")]
-    Windows = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"macos")]
-    Macos = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"linux")]
-    Linux = 2,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum StatusResponseStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
-    Healthy = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
-    Degraded = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
-    Maintenance = 2,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PageContentContentType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"html")]
-    Html = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"markdown")]
-    Markdown = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"blazor")]
-    Blazor = 2,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Analytics
-{
-    [Newtonsoft.Json.JsonProperty("googleAnalyticsId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? GoogleAnalyticsId { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("otherTrackers", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object OtherTrackers { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CustomScripts
-{
-    [Newtonsoft.Json.JsonProperty("head", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Head { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("bodyStart", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? BodyStart { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("bodyEnd", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? BodyEnd { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Logo
-{
-    [Newtonsoft.Json.JsonProperty("url", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Uri Url { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("alt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Alt { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum NavigationItemTarget
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"_self")]
-    _self = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"_blank")]
-    _blank = 1,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ServerStatusResponseGlobalStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"online")]
-    Online = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"partial")]
-    Partial = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"offline")]
-    Offline = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
-    Maintenance = 3,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum RealmStatusStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"online")]
-    Online = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"offline")]
-    Offline = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"maintenance")]
-    Maintenance = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"full")]
-    Full = 3,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum RealmStatusPopulation
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"low")]
-    Low = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"medium")]
-    Medium = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"high")]
-    High = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"full")]
-    Full = 3,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DownloadInfoPlatform
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"windows")]
-    Windows = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"macos")]
-    Macos = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"linux")]
-    Linux = 2,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ContactRequestCategory
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"general")]
-    General = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"support")]
-    Support = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"bug")]
-    Bug = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"feedback")]
-    Feedback = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"business")]
-    Business = 4,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SubscriptionResponseStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"active")]
-    Active = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"inactive")]
-    Inactive = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"trial")]
-    Trial = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
-    Expired = 3,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SubscriptionResponseType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"free")]
-    Free = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"basic")]
-    Basic = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"premium")]
-    Premium = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"lifetime")]
-    Lifetime = 3,
-
 }
 
 

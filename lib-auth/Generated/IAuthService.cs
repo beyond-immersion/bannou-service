@@ -10,48 +10,38 @@ namespace BeyondImmersion.BannouService.Auth;
 public interface IAuthService
 {
         /// <summary>
+        /// Login operation
+        /// </summary>
+        Task<(StatusCodes, AuthResponse?)> LoginAsync(LoginRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// Register operation
         /// </summary>
         Task<(StatusCodes, RegisterResponse?)> RegisterAsync(RegisterRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// LoginWithCredentialsGet operation
+        /// CompleteOAuth operation
         /// </summary>
-        Task<(StatusCodes, LoginResponse?)> LoginWithCredentialsGetAsync(string username, string password, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, AuthResponse?)> CompleteOAuthAsync(Provider2 provider, OAuthCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// LoginWithCredentialsPost operation
+        /// VerifySteamAuth operation
         /// </summary>
-        Task<(StatusCodes, LoginResponse?)> LoginWithCredentialsPostAsync(string username, string password, LoginRequest? body = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, AuthResponse?)> VerifySteamAuthAsync(SteamVerifyRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// LoginWithTokenGet operation
+        /// RefreshToken operation
         /// </summary>
-        Task<(StatusCodes, LoginResponse?)> LoginWithTokenGetAsync(string token, CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
-        /// LoginWithTokenPost operation
-        /// </summary>
-        Task<(StatusCodes, LoginResponse?)> LoginWithTokenPostAsync(string token, LoginRequest? body = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, AuthResponse?)> RefreshTokenAsync(RefreshRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// ValidateToken operation
         /// </summary>
-        Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(ValidateTokenRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// GetOAuthProviders operation
+        /// GetSessions operation
         /// </summary>
-        Task<(StatusCodes, OAuthProvidersResponse?)> GetOAuthProvidersAsync(CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
-        /// HandleOAuthCallback operation
-        /// </summary>
-        Task<(StatusCodes, LoginResponse?)> HandleOAuthCallbackAsync(Provider provider, OAuthCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
-        /// UpdateRoutingPreference operation
-        /// </summary>
-        Task<(StatusCodes, RoutingPreferenceResponse?)> UpdateRoutingPreferenceAsync(RoutingPreferenceRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, SessionsResponse?)> GetSessionsAsync(CancellationToken cancellationToken = default(CancellationToken));
 
 }

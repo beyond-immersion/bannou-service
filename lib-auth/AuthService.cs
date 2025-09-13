@@ -1,6 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Accounts;
-using BeyondImmersion.BannouService.Accounts.Client;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
@@ -8,36 +8,93 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace BeyondImmersion.BannouService.Auth;
 
 /// <summary>
-/// Auth service implementation with complete OAuth, routing, and JWT functionality.
-/// Follows the comprehensive design from API-DESIGN.md including NGINX+Redis integration.
+/// Auth service implementation focused on authentication, token management, and OAuth provider integration.
+/// Follows schema-first architecture - implements generated IAuthService interface.
 /// </summary>
 [DaprService("auth", typeof(IAuthService), lifetime: ServiceLifetime.Scoped)]
-public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
+public class AuthService : IAuthService
 {
     private readonly IAccountsClient _accountsClient;
     private readonly DaprClient _daprClient;
     private readonly ILogger<AuthService> _logger;
+    private readonly AuthServiceConfiguration _configuration;
     private const string REDIS_STATE_STORE = "bannou-redis-store";
+
+    // Hardcoded configuration for now - can be moved to config later
+    private const string JWT_SECRET = "your-256-bit-secret-key-here-must-be-32-chars";
+    private const string JWT_ISSUER = "bannou-auth-service";
+    private const string JWT_AUDIENCE = "bannou-clients";
+    private const int JWT_EXPIRATION_MINUTES = 60;
 
     public AuthService(
         IAccountsClient accountsClient,
         DaprClient daprClient,
         AuthServiceConfiguration configuration,
         ILogger<AuthService> logger)
-        : base(configuration, logger)
     {
         _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    #region Registration & Basic Auth
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, AuthResponse?)> LoginAsync(
+        LoginRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing login request for email: {Email}", body.Email);
+
+            if (string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Get account by email
+            var account = await _accountsClient.GetAccountByEmailAsync(body.Email, cancellationToken);
+            if (account == null)
+            {
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            // Verify password (simplified - use proper bcrypt in production)
+            if (!VerifyPassword(body.Password, account.PasswordHash))
+            {
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            // Generate tokens
+            var accessToken = GenerateAccessToken(account);
+            var refreshToken = GenerateRefreshToken();
+
+            // Store refresh token
+            await StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
+
+            _logger.LogInformation("Successfully authenticated user: {Email} (ID: {AccountId})",
+                body.Email, account.AccountId);
+
+            return (StatusCodes.OK, new AuthResponse
+            {
+                AccountId = Guid.Parse(account.AccountId),
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                ExpiresIn = JWT_EXPIRATION_MINUTES * 60
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during login for email: {Email}", body.Email);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
 
     /// <inheritdoc/>
     public async Task<(StatusCodes, RegisterResponse?)> RegisterAsync(
@@ -48,13 +105,7 @@ public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
         {
             _logger.LogInformation("Processing registration request for username: {Username}", body.Username);
 
-            // Validate request
-            if (string.IsNullOrWhiteSpace(body.Username))
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            if (string.IsNullOrWhiteSpace(body.Password))
+            if (string.IsNullOrWhiteSpace(body.Username) || string.IsNullOrWhiteSpace(body.Password))
             {
                 return (StatusCodes.BadRequest, null);
             }
@@ -72,25 +123,26 @@ public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
             };
 
             var accountResult = await _accountsClient.CreateAccountAsync(createAccountRequest, cancellationToken);
-            if (accountResult?.AccountId == null)
+            if (accountResult == null || string.IsNullOrEmpty(accountResult.AccountId))
             {
-                return (StatusCodes.Forbidden, null);
+                return (StatusCodes.Conflict, null);
             }
 
             // Generate tokens
-            var accessToken = await GenerateAccessTokenAsync(accountResult);
+            var accessToken = GenerateAccessToken(accountResult);
             var refreshToken = GenerateRefreshToken();
 
-            // Store refresh token in Redis
-            await StoreRefreshTokenAsync(accountResult.AccountId, refreshToken);
+            // Store refresh token
+            await StoreRefreshTokenAsync(accountResult.AccountId, refreshToken, cancellationToken);
 
             _logger.LogInformation("Successfully registered user: {Username} with ID: {AccountId}",
                 body.Username, accountResult.AccountId);
 
             return (StatusCodes.OK, new RegisterResponse
             {
-                Access_token = accessToken,
-                Refresh_token = refreshToken
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                UserId = Guid.Parse(accountResult.AccountId)
             });
         }
         catch (Exception ex)
@@ -101,104 +153,8 @@ public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, LoginResponse?)> LoginWithCredentialsGetAsync(
-        string username,
-        string password,
-        CancellationToken cancellationToken = default)
-    {
-        return await PerformLoginAsync(username, password, cancellationToken);
-    }
-
-    /// <inheritdoc/>
-    public async Task<(StatusCodes, LoginResponse?)> LoginWithCredentialsPostAsync(
-        string username,
-        string password,
-        LoginRequest? body = null,
-        CancellationToken cancellationToken = default)
-    {
-        return await PerformLoginAsync(username, password, cancellationToken);
-    }
-
-    /// <inheritdoc/>
-    public async Task<(StatusCodes, LoginResponse?)> LoginWithTokenGetAsync(
-        string token,
-        CancellationToken cancellationToken = default)
-    {
-        return await RefreshTokenAsync(token, cancellationToken);
-    }
-
-    /// <inheritdoc/>
-    public async Task<(StatusCodes, LoginResponse?)> LoginWithTokenPostAsync(
-        string token,
-        LoginRequest? body = null,
-        CancellationToken cancellationToken = default)
-    {
-        return await RefreshTokenAsync(token, cancellationToken);
-    }
-
-    /// <inheritdoc/>
-    public async Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(
-        ValidateTokenRequest body,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(body.Token))
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var validationResult = await ValidateJwtTokenAsync(body.Token);
-            if (validationResult == null)
-            {
-                return (StatusCodes.Unauthorized, null);
-            }
-
-            return (StatusCodes.OK, validationResult);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during token validation");
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    #endregion
-
-    #region OAuth Implementation
-
-    /// <inheritdoc/>
-    public async Task<(StatusCodes, OAuthProvidersResponse?)> GetOAuthProvidersAsync(
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var providers = new List<OAuthProvider>
-            {
-                new OAuthProvider
-                {
-                    Name = Provider2.Steam,
-                    Display_name = "Steam",
-                    Authorization_url = BuildSteamAuthUrl(),
-                    Scopes = new[] { "openid" }
-                }
-            };
-
-            return (StatusCodes.OK, new OAuthProvidersResponse
-            {
-                Providers = providers
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting OAuth providers");
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task<(StatusCodes, LoginResponse?)> HandleOAuthCallbackAsync(
-        Provider provider,
+    public async Task<(StatusCodes, AuthResponse?)> CompleteOAuthAsync(
+        Provider2 provider,
         OAuthCallbackRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -209,23 +165,37 @@ public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
             if (body.Error != null)
             {
                 _logger.LogWarning("OAuth error from provider {Provider}: {Error} - {Description}",
-                    provider, body.Error, body.Error_description);
-                return (StatusCodes.Forbidden, null);
+                    provider, body.Error, body.ErrorDescription);
+                return (StatusCodes.BadRequest, null);
             }
 
-            if (string.IsNullOrWhiteSpace(body.Authorization_code))
+            if (string.IsNullOrWhiteSpace(body.Code))
             {
                 return (StatusCodes.BadRequest, null);
             }
 
-            switch (provider)
+            // TODO: Implement actual OAuth provider integration
+            // For now, return mock implementation
+            _logger.LogInformation("Mock OAuth callback processing for provider: {Provider}", provider);
+
+            var mockAccount = new AccountResponse
             {
-                case Provider.Steam:
-                    return await HandleSteamCallbackAsync(body, cancellationToken);
-                default:
-                    _logger.LogWarning("Unsupported OAuth provider: {Provider}", provider);
-                    return (StatusCodes.BadRequest, null);
-            }
+                AccountId = Guid.NewGuid().ToString(),
+                Email = $"oauth-user@{provider.ToString().ToLower()}.com",
+                DisplayName = $"OAuth User ({provider})",
+                Roles = new[] { "user" }
+            };
+
+            var accessToken = GenerateAccessToken(mockAccount);
+            var refreshToken = GenerateRefreshToken();
+
+            return (StatusCodes.OK, new AuthResponse
+            {
+                AccountId = Guid.Parse(mockAccount.AccountId),
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                ExpiresIn = JWT_EXPIRATION_MINUTES * 60
+            });
         }
         catch (Exception ex)
         {
@@ -234,144 +204,92 @@ public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
         }
     }
 
-    #endregion
-
-    #region Routing Preferences (Internal)
-
     /// <inheritdoc/>
-    public async Task<(StatusCodes, RoutingPreferenceResponse?)> UpdateRoutingPreferenceAsync(
-        RoutingPreferenceRequest body,
+    public async Task<(StatusCodes, AuthResponse?)> VerifySteamAuthAsync(
+        SteamVerifyRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Updating routing preference for user {UserId} to {Instance}",
-                body.User_id, body.Preferred_instance);
+            _logger.LogInformation("Processing Steam authentication verification");
 
-            // Store routing preference in Redis with TTL
-            var redisKey = $"user:{body.User_id}:preferred_{body.Service_type}";
-            var expirationSeconds = body.Expires_in_seconds ?? 86400; // Default 24 hours
-
-            await _daprClient.SaveStateAsync(
-                REDIS_STATE_STORE,
-                redisKey,
-                body.Preferred_instance,
-                metadata: new Dictionary<string, string> { { "ttl", expirationSeconds.ToString() } },
-                cancellationToken: cancellationToken);
-
-            var expiresAt = DateTimeOffset.UtcNow.AddSeconds(expirationSeconds);
-
-            _logger.LogInformation("Successfully updated routing preference for user {UserId}", body.User_id);
-
-            return (StatusCodes.OK, new RoutingPreferenceResponse
-            {
-                Success = true,
-                User_id = body.User_id,
-                Service_type = body.Service_type,
-                Preferred_instance = body.Preferred_instance,
-                Expires_at = expiresAt
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating routing preference for user: {UserId}", body.User_id);
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
-
-    #endregion
-
-    #region Private Implementation Methods
-
-    private async Task<(StatusCodes, LoginResponse?)> PerformLoginAsync(
-        string username,
-        string password,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            _logger.LogInformation("Processing credential login for username: {Username}", username);
-
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(body.IdentityUrl))
             {
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Get account by email
-            var account = await _accountsClient.GetAccountByEmailAsync(username, cancellationToken);
-            if (account == null)
-            {
-                return (StatusCodes.Forbidden, null);
-            }
+            // TODO: Implement actual Steam OpenID verification
+            // For now, return mock implementation
+            _logger.LogInformation("Mock Steam verification processing");
 
-            // Verify password hash (simplified for demo)
-            if (!VerifyPassword(password, account.PasswordHash))
+            var mockAccount = new AccountResponse
             {
-                return (StatusCodes.Forbidden, null);
-            }
+                AccountId = Guid.NewGuid().ToString(),
+                Email = "steam-user@example.com",
+                DisplayName = "Steam User",
+                Roles = new[] { "user" }
+            };
 
-            // Generate tokens
-            var accessToken = await GenerateAccessTokenAsync(account);
+            var accessToken = GenerateAccessToken(mockAccount);
             var refreshToken = GenerateRefreshToken();
 
-            // Store refresh token
-            await StoreRefreshTokenAsync(account.AccountId, refreshToken);
-
-            _logger.LogInformation("Successfully authenticated user: {Username} (ID: {AccountId})",
-                username, account.AccountId);
-
-            return (StatusCodes.OK, new LoginResponse
+            return (StatusCodes.OK, new AuthResponse
             {
-                Access_token = accessToken,
-                Refresh_token = refreshToken
+                AccountId = Guid.Parse(mockAccount.AccountId),
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                ExpiresIn = JWT_EXPIRATION_MINUTES * 60
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during credential login for username: {Username}", username);
+            _logger.LogError(ex, "Error during Steam authentication verification");
             return (StatusCodes.InternalServerError, null);
         }
     }
 
-    private async Task<(StatusCodes, LoginResponse?)> RefreshTokenAsync(
-        string refreshToken,
-        CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, AuthResponse?)> RefreshTokenAsync(
+        RefreshRequest body,
+        CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing token refresh");
+            _logger.LogInformation("Processing token refresh request");
 
-            if (string.IsNullOrWhiteSpace(refreshToken))
+            if (string.IsNullOrWhiteSpace(body.RefreshToken))
             {
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Validate refresh token exists in Redis
-            var accountId = await ValidateRefreshTokenAsync(refreshToken);
+            // Validate refresh token
+            var accountId = await ValidateRefreshTokenAsync(body.RefreshToken, cancellationToken);
             if (string.IsNullOrEmpty(accountId))
             {
-                return (StatusCodes.Forbidden, null);
+                return (StatusCodes.Unauthorized, null);
             }
 
             // Get account
             var account = await _accountsClient.GetAccountAsync(accountId, cancellationToken);
             if (account == null)
             {
-                return (StatusCodes.Forbidden, null);
+                return (StatusCodes.Unauthorized, null);
             }
 
             // Generate new tokens
-            var accessToken = await GenerateAccessTokenAsync(account);
+            var accessToken = GenerateAccessToken(account);
             var newRefreshToken = GenerateRefreshToken();
 
             // Store new refresh token and remove old one
-            await StoreRefreshTokenAsync(accountId, newRefreshToken);
-            await RemoveRefreshTokenAsync(refreshToken);
+            await StoreRefreshTokenAsync(accountId, newRefreshToken, cancellationToken);
+            await RemoveRefreshTokenAsync(body.RefreshToken, cancellationToken);
 
-            return (StatusCodes.OK, new LoginResponse
+            return (StatusCodes.OK, new AuthResponse
             {
-                Access_token = accessToken,
-                Refresh_token = newRefreshToken
+                AccountId = Guid.Parse(accountId),
+                AccessToken = accessToken,
+                RefreshToken = newRefreshToken,
+                ExpiresIn = JWT_EXPIRATION_MINUTES * 60
             });
         }
         catch (Exception ex)
@@ -381,49 +299,67 @@ public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
         }
     }
 
-    private async Task<(StatusCodes, LoginResponse?)> HandleSteamCallbackAsync(
-        OAuthCallbackRequest body,
-        CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(
+        CancellationToken cancellationToken = default)
     {
-        // Steam OpenID implementation would go here
-        // For now, return a mock implementation
-        _logger.LogInformation("Mock Steam OAuth callback processing");
-
-        // In real implementation:
-        // 1. Validate the Steam OpenID response
-        // 2. Get Steam user data
-        // 3. Link to existing account or create new one
-        // 4. Generate JWT tokens
-
-        var mockAccount = new AccountResponse
+        try
         {
-            AccountId = Guid.NewGuid().ToString(),
-            Email = "steam-user@example.com",
-            DisplayName = "Steam User",
-            Provider = Provider.Steam,
-            Roles = new[] { "user" }
-        };
+            // TODO: Extract JWT token from HTTP context/headers
+            // For now, return mock validation
+            _logger.LogInformation("Token validation requested");
 
-        var accessToken = await GenerateAccessTokenAsync(mockAccount);
-        var refreshToken = GenerateRefreshToken();
-
-        return (StatusCodes.OK, new LoginResponse
+            return (StatusCodes.OK, new ValidateTokenResponse
+            {
+                Valid = true,
+                UserId = Guid.NewGuid(),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(JWT_EXPIRATION_MINUTES)
+            });
+        }
+        catch (Exception ex)
         {
-            Access_token = accessToken,
-            Refresh_token = refreshToken
-        });
+            _logger.LogError(ex, "Error during token validation");
+            return (StatusCodes.InternalServerError, null);
+        }
     }
 
-    private string BuildSteamAuthUrl()
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, SessionsResponse?)> GetSessionsAsync(
+        CancellationToken cancellationToken = default)
     {
-        var returnUrl = "https://your-domain.com/auth/steam/callback"; // Configure in settings
-        return $"https://steamcommunity.com/openid/login?openid.return_to={Uri.EscapeDataString(returnUrl)}&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.mode=checkid_setup&openid.ns=http://specs.openid.net/auth/2.0";
+        try
+        {
+            // TODO: Get sessions for authenticated user from Redis
+            // For now, return mock sessions
+            _logger.LogInformation("Sessions requested");
+
+            return (StatusCodes.OK, new SessionsResponse
+            {
+                Sessions = new[]
+                {
+                    new SessionInfo
+                    {
+                        SessionId = "mock-session-1",
+                        CreatedAt = DateTime.UtcNow.AddHours(-2),
+                        LastActivity = DateTime.UtcNow.AddMinutes(-5),
+                        UserAgent = "Mock User Agent"
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting sessions");
+            return (StatusCodes.InternalServerError, null);
+        }
     }
+
+    #region Private Helper Methods
 
     private string HashPassword(string password)
     {
         // Simplified password hashing - use BCrypt in production
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(password + Configuration.JwtSecret));
+        return Convert.ToBase64String(Encoding.UTF8.GetBytes(password + JWT_SECRET));
     }
 
     private bool VerifyPassword(string password, string? hash)
@@ -432,17 +368,16 @@ public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
         return HashPassword(password) == hash;
     }
 
-    private async Task<string> GenerateAccessTokenAsync(BeyondImmersion.BannouService.Accounts.Client.AccountResponse account)
+    private string GenerateAccessToken(AccountResponse account)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(Configuration.JwtSecret);
+        var key = Encoding.ASCII.GetBytes(JWT_SECRET);
 
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, account.AccountId),
             new Claim(ClaimTypes.Email, account.Email ?? ""),
-            new Claim(ClaimTypes.Name, account.DisplayName ?? ""),
-            new Claim("provider", account.Provider.ToString())
+            new Claim(ClaimTypes.Name, account.DisplayName ?? "")
         };
 
         // Add roles
@@ -457,10 +392,10 @@ public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(Configuration.JwtExpirationMinutes),
+            Expires = DateTime.UtcNow.AddMinutes(JWT_EXPIRATION_MINUTES),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-            Issuer = Configuration.JwtIssuer,
-            Audience = Configuration.JwtAudience
+            Issuer = JWT_ISSUER,
+            Audience = JWT_AUDIENCE
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -472,59 +407,23 @@ public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
         return Guid.NewGuid().ToString("N");
     }
 
-    private async Task<ValidateTokenResponse?> ValidateJwtTokenAsync(string token)
-    {
-        try
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(Configuration.JwtSecret);
-
-            var validationParameters = new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = true,
-                ValidIssuer = Configuration.JwtIssuer,
-                ValidateAudience = true,
-                ValidAudience = Configuration.JwtAudience,
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
-
-            var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
-            var jwtToken = (JwtSecurityToken)validatedToken;
-
-            return new ValidateTokenResponse
-            {
-                Valid = true,
-                Expires_at = jwtToken.ValidTo,
-                Subject = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value,
-                Claims = principal.Claims.ToDictionary(c => c.Type, c => c.Value)
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Token validation failed");
-            return new ValidateTokenResponse { Valid = false };
-        }
-    }
-
-    private async Task StoreRefreshTokenAsync(string accountId, string refreshToken)
+    private async Task StoreRefreshTokenAsync(string accountId, string refreshToken, CancellationToken cancellationToken)
     {
         var redisKey = $"refresh_token:{refreshToken}";
         await _daprClient.SaveStateAsync(
             REDIS_STATE_STORE,
             redisKey,
             accountId,
-            metadata: new Dictionary<string, string> { { "ttl", "2592000" } }); // 30 days
+            metadata: new Dictionary<string, string> { { "ttl", "604800" } }, // 7 days
+            cancellationToken: cancellationToken);
     }
 
-    private async Task<string?> ValidateRefreshTokenAsync(string refreshToken)
+    private async Task<string?> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
     {
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            var accountId = await _daprClient.GetStateAsync<string>(REDIS_STATE_STORE, redisKey);
+            var accountId = await _daprClient.GetStateAsync<string>(REDIS_STATE_STORE, redisKey, cancellationToken: cancellationToken);
             return accountId;
         }
         catch
@@ -533,12 +432,12 @@ public class AuthService : DaprService<AuthServiceConfiguration>, IAuthService
         }
     }
 
-    private async Task RemoveRefreshTokenAsync(string refreshToken)
+    private async Task RemoveRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
     {
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
-            await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, redisKey);
+            await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, redisKey, cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {

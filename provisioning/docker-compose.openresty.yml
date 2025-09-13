@@ -1,0 +1,60 @@
+services:
+
+  bannou:
+    depends_on:
+      - openresty
+      - routing-redis
+    labels:
+      # Remove Traefik labels - using OpenResty instead
+      - "openresty.enable=true"
+      - "openresty.backend.auth=/authorization"
+      - "openresty.backend.connect=/connect"
+
+  # OpenResty with Lua + Redis for complex queue routing
+  openresty:
+    image: openresty/openresty:1.21.4.2-0-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Admin/status interface
+    volumes:
+      - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ./openresty/lua:/usr/local/openresty/lua:ro
+      - ./certificates:/certs:ro
+    depends_on:
+      - routing-redis
+    environment:
+      - REDIS_HOST=routing-redis
+      - REDIS_PORT=6379
+      - SERVICE_DOMAIN=${SERVICE_DOMAIN}
+    networks:
+      - default
+      - celestial_network
+      - routing_network
+    restart: unless-stopped
+
+  # Redis for OpenResty routing decisions and queue management
+  routing-redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - routing-redis-data:/data
+    networks:
+      - routing_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
+      interval: 5s
+
+networks:
+  celestial_network:
+    driver: bridge
+    external: true
+  routing_network:
+    driver: bridge
+    internal: false  # OpenResty needs external access for routing
+
+volumes:
+  routing-redis-data:

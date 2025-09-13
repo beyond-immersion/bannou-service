@@ -7,6 +7,7 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Connect;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -22,7 +23,7 @@ using BeyondImmersion.BannouService.ServiceClients;
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Connect.Client;
+namespace BeyondImmersion.BannouService.Connect;
 
 using System = global::System;
 
@@ -98,16 +99,14 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
     private string _baseUrl;
     #pragma warning restore 8618
 
-    private System.Net.Http.HttpClient _httpClient;
     private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
     private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-    public ConnectClient(System.Net.Http.HttpClient httpClient)
+    public ConnectClient()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
         BaseUrl = "http://localhost/api/connect";
-        _httpClient = httpClient;
         Initialize();
     }
 
@@ -135,6 +134,24 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
 
     partial void Initialize();
 
+    /// <summary>
+    /// Creates and configures an HttpClient instance for this service client.
+    /// Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+    /// </summary>
+    protected virtual System.Threading.Tasks.Task<System.Net.Http.HttpClient> CreateHttpClientAsync(System.Threading.CancellationToken cancellationToken)
+    {
+        // Create HttpClient with default configuration
+        var httpClient = new System.Net.Http.HttpClient();
+
+        // Set base address if specified
+        if (!string.IsNullOrEmpty("http://localhost/api/connect"))
+        {
+            httpClient.BaseAddress = new System.Uri("http://localhost/api/connect", System.UriKind.Absolute);
+        }
+
+        return System.Threading.Tasks.Task.FromResult(httpClient);
+    }
+
     partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
     partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
     partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
@@ -155,8 +172,8 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -254,8 +271,8 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
         if (body == null)
             throw new System.ArgumentNullException("body");
 
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -349,8 +366,8 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task ConnectWebSocketAsync(Connection connection, Upgrade upgrade, string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -472,8 +489,8 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task ConnectWebSocketPostAsync(Connection2 connection, Upgrade2 upgrade, string authorization, ConnectRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        var client_ = _httpClient;
-        var disposeClient_ = false;
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
@@ -678,7 +695,7 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -690,7 +707,7 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }
@@ -716,664 +733,6 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
         var result = System.Convert.ToString(value, cultureInfo);
         return result == null ? "" : result;
     }
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class InternalProxyRequest
-{
-    /// <summary>
-    /// Unique identifier for the requesting agent (NPC ID, system ID, etc.)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("agentId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string AgentId { get; set; } = default!;
-
-    /// <summary>
-    /// Role of the agent for permission validation
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("agentRole", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string AgentRole { get; set; } = default!;
-
-    /// <summary>
-    /// Associated account ID if agent represents a user
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Guid AccountId { get; set; } = default!;
-
-    /// <summary>
-    /// Target service ID or name
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("targetService", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string TargetService { get; set; } = default!;
-
-    /// <summary>
-    /// Target API endpoint path
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("targetEndpoint", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string TargetEndpoint { get; set; } = default!;
-
-    /// <summary>
-    /// HTTP method for the target endpoint
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("method", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public InternalProxyRequestMethod Method { get; set; } = default!;
-
-    /// <summary>
-    /// Request payload to forward to target service
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("requestData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object RequestData { get; set; } = default!;
-
-    /// <summary>
-    /// Agent context for permission evaluation (location, state, relationships, etc.)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("contextData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object ContextData { get; set; } = default!;
-
-    /// <summary>
-    /// Custom rate limit key (defaults to agentRole)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("rateLimitKey", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string RateLimitKey { get; set; } = default!;
-
-    /// <summary>
-    /// Additional metadata for logging/monitoring
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object Metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class InternalProxyResponse
-{
-    [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
-    /// Echo of the requesting agent ID
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("agentId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string AgentId { get; set; } = default!;
-
-    /// <summary>
-    /// Service that handled the request
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("targetService", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string TargetService { get; set; } = default!;
-
-    /// <summary>
-    /// Response from the target service
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("responseData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object ResponseData { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("permissionInfo", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public PermissionInfo PermissionInfo { get; set; } = default!;
-
-    /// <summary>
-    /// Request execution time in milliseconds
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("executionTime", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int ExecutionTime { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ApiDiscoveryRequest
-{
-    /// <summary>
-    /// Current WebSocket session ID
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Additional context (game session, character, etc.)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("contextData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object ContextData { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ApiDiscoveryResponse
-{
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// All APIs currently accessible to this session
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("availableAPIs", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.ICollection<AvailableAPI> AvailableAPIs { get; set; } = new System.Collections.ObjectModel.Collection<AvailableAPI>();
-
-    /// <summary>
-    /// Version number for capability updates
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.Always)]
-    public int Version { get; set; } = default!;
-
-    /// <summary>
-    /// When this API list expires
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("expiresAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AvailableAPI
-{
-    /// <summary>
-    /// Service GUID for routing via binary protocol
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable service name
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceName", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceName { get; set; } = default!;
-
-    /// <summary>
-    /// API endpoint path
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("endpoint", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Endpoint { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("method", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public AvailableAPIMethod Method { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable endpoint description
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Description { get; set; } = default!;
-
-    /// <summary>
-    /// Permissions that enabled this API
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("requiredPermissions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> RequiredPermissions { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("rateLimits", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public ApiRateLimit RateLimits { get; set; } = default!;
-
-    /// <summary>
-    /// API category (auth, game, social, etc.)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("category", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Category { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ApiRateLimit
-{
-    [Newtonsoft.Json.JsonProperty("requestsPerMinute", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int RequestsPerMinute { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("requestsPerHour", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int RequestsPerHour { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("burstLimit", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int BurstLimit { get; set; } = default!;
-
-    /// <summary>
-    /// Current remaining requests
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("remaining", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int Remaining { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Request model for WebSocket connection establishment.
-/// <br/>Currently contains no specific fields but extends the base ApiRequest.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ConnectRequest
-{
-
-}
-
-/// <summary>
-/// Connection state data returned for connection service requests.
-/// <br/>Currently a placeholder for future connection metadata.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ConnectionData
-{
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ConnectErrorResponse
-{
-    /// <summary>
-    /// Error type identifier
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public ConnectErrorResponseError Error { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable error description
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Message { get; set; } = default!;
-
-    /// <summary>
-    /// HTTP status code
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("status_code", Required = Newtonsoft.Json.Required.Always)]
-    public ConnectErrorResponseStatus_code Status_code { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Response codes used in the binary protocol.
-/// <br/>
-/// <br/>**Success:**
-/// <br/>- 0: OK
-/// <br/>
-/// <br/>**Request Errors (10-19):**
-/// <br/>- 10: RequestError
-/// <br/>- 11: RequestTooLarge
-/// <br/>- 12: TooManyRequests
-/// <br/>- 13: InvalidRequestChannel
-/// <br/>
-/// <br/>**Authorization Errors (20-29):**
-/// <br/>- 20: Unauthorized
-/// <br/>
-/// <br/>**Not Found Errors (30-39):**
-/// <br/>- 30: ServiceNotFound
-/// <br/>- 31: ClientNotFound
-/// <br/>- 32: MessageNotFound
-/// <br/>
-/// <br/>**Service Errors (50-60):**
-/// <br/>- 50: Service_BadRequest
-/// <br/>- 51: Service_NotFound
-/// <br/>- 52: Service_Unauthorized
-/// <br/>- 60: Service_InternalServerError
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ResponseCodes
-{
-
-    _0 = 0,
-
-    _10 = 10,
-
-    _11 = 11,
-
-    _12 = 12,
-
-    _13 = 13,
-
-    _20 = 20,
-
-    _30 = 30,
-
-    _31 = 31,
-
-    _32 = 32,
-
-    _50 = 50,
-
-    _51 = 51,
-
-    _52 = 52,
-
-    _60 = 60,
-
-}
-
-/// <summary>
-/// Structure of a service request message in the binary protocol.
-/// <br/>This schema is for documentation - actual messages are binary.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServiceRequestMessage
-{
-    [Newtonsoft.Json.JsonProperty("flags", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Range(0D, 255D)]
-    public byte Flags { get; set; } = default!;
-
-    /// <summary>
-    /// Unique identifier for request/response matching
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("message_id", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Message_id { get; set; } = default!;
-
-    /// <summary>
-    /// Channel for sequential message processing (0 = no channel)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("message_channel", Required = Newtonsoft.Json.Required.Always)]
-    public int Message_channel { get; set; } = default!;
-
-    /// <summary>
-    /// Target service UUID for routing
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("service_id", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Service_id { get; set; } = default!;
-
-    /// <summary>
-    /// Message payload (JSON or binary data)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("content", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public byte[] Content { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Structure of a service response message in the binary protocol.
-/// <br/>This schema is for documentation - actual messages are binary.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServiceResponseMessage
-{
-    [Newtonsoft.Json.JsonProperty("flags", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Range(0D, 255D)]
-    public byte Flags { get; set; } = default!;
-
-    /// <summary>
-    /// Matches the request message ID
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("message_id", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Message_id { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("response_code", Required = Newtonsoft.Json.Required.Always)]
-    public ResponseCodes Response_code { get; set; } = default!;
-
-    /// <summary>
-    /// Optional response payload
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("content", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public byte[]? Content { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Configuration options for the connect service.
-/// <br/>These are server-side settings and not directly exposed via API.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ConnectionConfiguration
-{
-    /// <summary>
-    /// Return Unauthorized instead of NotFound for better security
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("obfuscate_not_found_response", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool Obfuscate_not_found_response { get; set; } = true;
-
-    /// <summary>
-    /// Maximum size for client requests in bytes
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("client_request_max_size", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int Client_request_max_size { get; set; } = 16384;
-
-    /// <summary>
-    /// Maximum size for client responses in bytes
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("client_response_max_size", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int Client_response_max_size { get; set; } = 16384;
-
-    /// <summary>
-    /// Time in seconds to allow client reconnection
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("client_reconnection_time", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int Client_reconnection_time { get; set; } = 30;
-
-    /// <summary>
-    /// Redis connection string for session management
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("redis_connection_string", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Redis_connection_string { get; set; } = default!;
-
-    /// <summary>
-    /// Base64-encoded RSA public key for JWT validation
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("token_public_key", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Token_public_key { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Connection
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Upgrade")]
-    Upgrade = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Upgrade
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"websocket")]
-    Websocket = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Connection2
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Upgrade")]
-    Upgrade = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Upgrade2
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"websocket")]
-    Websocket = 0,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum InternalProxyRequestMethod
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"GET")]
-    GET = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"POST")]
-    POST = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"PUT")]
-    PUT = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"DELETE")]
-    DELETE = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
-    PATCH = 4,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PermissionInfo
-{
-    [Newtonsoft.Json.JsonProperty("granted", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool Granted { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("requiredPermissions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> RequiredPermissions { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("rateLimitRemaining", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int RateLimitRemaining { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AvailableAPIMethod
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"GET")]
-    GET = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"POST")]
-    POST = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"PUT")]
-    PUT = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"DELETE")]
-    DELETE = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
-    PATCH = 4,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ConnectErrorResponseError
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"BadRequest")]
-    BadRequest = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Forbidden")]
-    Forbidden = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"InternalServerError")]
-    InternalServerError = 2,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ConnectErrorResponseStatus_code
-{
-
-    _400 = 400,
-
-    _403 = 403,
-
-    _500 = 500,
-
 }
 
 

@@ -122,6 +122,28 @@
 
     partial void Initialize();
 
+{% if UseHttpClientCreationMethod -%}
+    /// <summary>
+    /// Creates and configures an HttpClient instance for this service client.
+    /// Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+    /// </summary>
+    protected virtual System.Threading.Tasks.Task<{{ HttpClientType }}> CreateHttpClientAsync(System.Threading.CancellationToken cancellationToken)
+    {
+        // Create HttpClient with default configuration
+        var httpClient = new {{ HttpClientType }}();
+
+{% if UseBaseUrl and HasBaseUrl -%}
+        // Set base address if specified
+        if (!string.IsNullOrEmpty("{{ BaseUrl }}"))
+        {
+            httpClient.BaseAddress = new System.Uri("{{ BaseUrl }}", System.UriKind.Absolute);
+        }
+{% endif -%}
+
+        return System.Threading.Tasks.Task.FromResult(httpClient);
+    }
+{% endif -%}
+
 {% if GeneratePrepareRequestAndProcessResponseAsAsyncMethods == false -%}
     partial void PrepareRequest({{ HttpClientType }} client, System.Net.Http.HttpRequestMessage request, string url);
     partial void PrepareRequest({{ HttpClientType }} client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);

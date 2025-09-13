@@ -77,18 +77,28 @@ jobs:
           echo "🧪 Running unit tests..."
           dotnet test --configuration Release --no-build
           
-      # Step 7: Infrastructure Tests - Basic service availability
-      - name: 7️⃣ Infrastructure Tests (Docker Setup)
+      # Step 7: Infrastructure Tests - lib-testing with minimal Dapr infrastructure
+      - name: 7️⃣ Infrastructure Tests (Setup)
         run: |
-          echo "🐳 Installing Docker Compose and setting up infrastructure tests..."
+          echo "🐳 Installing Docker Compose for infrastructure testing..."
           sudo apt-get update
           sudo apt-get install -y docker-compose
-          
+
       - name: 7️⃣ Infrastructure Tests (Execution)
         run: |
-          echo "🏗️ Running infrastructure tests (service availability)..."
-          docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
-          docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
+          echo "🏗️ Running infrastructure tests (OpenResty + Redis + basic connectivity)..."
+          # Run minimal infrastructure setup for service-tests.sh
+          docker-compose -p bannou-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.openresty.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
+          docker-compose -p bannou-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.openresty.yml" -f "./provisioning/docker-compose.ci.yml" up -d
+
+          # Wait for services to be ready
+          sleep 15
+
+          # Run infrastructure tests via service-tests.sh
+          bash ./service-tests.sh
+
+          # Cleanup
+          docker-compose -p bannou-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.openresty.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v
 
       # Step 8: HTTP Integration Tests - http-tester using newly generated client types
       - name: 8️⃣ HTTP Integration Tests (Generated Clients)
@@ -116,8 +126,8 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          echo "🧹 Cleaning up Docker resources..."
-          docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v
+          echo "🧹 Cleaning up Docker resources (including OpenResty)..."
+          docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.openresty.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v
           docker container prune -f
           docker image prune -f
           docker volume prune -f

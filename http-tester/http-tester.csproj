@@ -29,6 +29,9 @@
   <ItemGroup>
     <ProjectReference Include="..\bannou-service\bannou-service.csproj" />
     <ProjectReference Include="..\lib-testing\lib-testing.csproj" />
+    <ProjectReference Include="..\lib-accounts\lib-accounts.csproj" />
+    <ProjectReference Include="..\lib-auth\lib-auth.csproj" />
+    <ProjectReference Include="..\lib-connect\lib-connect.csproj" />
   </ItemGroup>
 
 </Project>

@@ -401,19 +401,20 @@ generate_client() {
         "$NSWAG_EXE" openapi2csclient \
             /input:"$schema_file" \
             /output:"$output_path" \
-            /namespace:"BeyondImmersion.BannouService.$service_pascal.Client" \
+            /namespace:"BeyondImmersion.BannouService.$service_pascal" \
             /clientBaseClass:"BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase" \
             /className:"${service_pascal}Client" \
             /generateClientClasses:true \
             /generateClientInterfaces:true \
-            /injectHttpClient:true \
-            /disposeHttpClient:false \
+            /generateDtoTypes:false \
+            /injectHttpClient:false \
+            /disposeHttpClient:true \
             /jsonLibrary:NewtonsoftJson \
             /generateNullableReferenceTypes:true \
             /newLineBehavior:LF \
             /generateOptionalParameters:true \
-            /useHttpClientCreationMethod:false \
-            /additionalNamespaceUsages:"BeyondImmersion.BannouService.ServiceClients" \
+            /useHttpClientCreationMethod:true \
+            /additionalNamespaceUsages:"BeyondImmersion.BannouService.ServiceClients,BeyondImmersion.BannouService.$service_pascal" \
             /templateDirectory:"../templates/nswag"
 
         # Check if NSwag client generation succeeded

@@ -566,3 +566,18 @@ components:
           type: boolean
         hasPreviousPage:
           type: boolean
+
+x-service-configuration:
+  properties:
+    DefaultPageSize:
+      type: integer
+      description: Default page size for account listings
+      default: 20
+    MaxPageSize:
+      type: integer
+      description: Maximum allowed page size for account listings
+      default: 100
+    AccountRetentionDays:
+      type: integer
+      description: Number of days to retain deleted account data
+      default: 30

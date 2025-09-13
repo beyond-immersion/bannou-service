@@ -26,7 +26,8 @@ public static class TestClientFactory
         if (!configuration.HasWebSocketRequired())
             throw new ArgumentException("WebSocket test configuration is incomplete");
 
-        return new WebSocketTestClient(configuration);
+        // Note: WebSocketTestClient moved to edge-tester for service integration testing
+        throw new NotImplementedException("WebSocketTestClient belongs in service integration testing (edge-tester)");
     }
 
     /// <summary>

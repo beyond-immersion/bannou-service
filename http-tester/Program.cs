@@ -79,30 +79,10 @@ public class Program
             Console.WriteLine($"Base URL: {Configuration.Http_Base_Url}");
             Console.WriteLine();
 
-            // Create HTTP client for testing
-            using var httpClient = new HttpTestClient(Configuration);
+            Console.WriteLine("Testing service-to-service communication via NSwag-generated clients...");
 
-            Console.WriteLine("Attempting to authenticate...");
-
-            // Try login first, then registration if that fails
-            bool authenticated = await httpClient.LoginAsync(Configuration.Client_Username!, Configuration.Client_Password!);
-            if (!authenticated)
-            {
-                Console.WriteLine("Login failed, attempting registration...");
-                authenticated = await httpClient.RegisterAsync(Configuration.Client_Username!, Configuration.Client_Password!);
-
-                if (!authenticated)
-                    throw new InvalidOperationException("Failed to authenticate or register user account.");
-
-                Console.WriteLine("Registration and login successful.");
-            }
-            else
-            {
-                Console.WriteLine("Login successful.");
-            }
-
-            // Start the interactive test console
-            await RunInteractiveTestConsole(httpClient, args);
+            // Start the interactive test console - no client abstraction needed
+            await RunInteractiveTestConsole(args);
         }
         catch (Exception exc)
         {
@@ -117,8 +97,7 @@ public class Program
     /// <summary>
     /// Runs the test console that allows users to select and execute tests, or runs all tests in daemon mode
     /// </summary>
-    /// <param name="testClient">The test client to use for executing tests</param>
-    private static async Task RunInteractiveTestConsole(ITestClient testClient, string[] args)
+    private static async Task RunInteractiveTestConsole(string[] args)
     {
         LoadServiceTests();
 
@@ -134,10 +113,11 @@ public class Program
             Console.WriteLine("Running in daemon mode - executing all tests automatically...");
             foreach (var kvp in sTestRegistry)
             {
-                Console.WriteLine($"Running test: {kvp.Value.Name} ({testClient.TransportType})");
+                Console.WriteLine($"Running test: {kvp.Value.Name}");
                 try
                 {
-                    var result = await kvp.Value.TestAction(testClient, Array.Empty<string>());
+                    // Tests no longer need a client parameter - they create their own generated clients
+                    var result = await kvp.Value.TestAction(null!, Array.Empty<string>());
                     if (result.Success)
                     {
                         Console.WriteLine($"✅ Test {kvp.Value.Name} completed successfully: {result.Message}");
@@ -182,12 +162,13 @@ public class Program
                 if (sTestRegistry.TryGetValue(command, out ServiceTest? testTarget))
                 {
                     Console.Clear();
-                    Console.WriteLine($"Running test: {testTarget.Name} ({testClient.TransportType})");
+                    Console.WriteLine($"Running test: {testTarget.Name}");
                     Console.WriteLine(new string('-', 50));
 
                     try
                     {
-                        var result = await testTarget.TestAction(testClient, commandArgs.ToArray());
+                        // Tests no longer need a client parameter - they create their own generated clients
+                        var result = await testTarget.TestAction(null!, commandArgs.ToArray());
 
                         if (result.Success)
                         {
@@ -236,6 +217,7 @@ public class Program
         {
             new AccountTestHandler(),
             new AuthTestHandler(),
+            new OpenRestyAuthTestHandler(),  // OpenResty-specific auth and queue system tests
             new DaprServiceMappingTestHandler()
             // Add more test handlers as needed
         };
@@ -250,7 +232,7 @@ public class Program
     /// <summary>
     /// Executes all registered tests in sequence and reports overall results
     /// </summary>
-    /// <param name="testClient">The test client to use for executing tests</param>
+    /// <param name="testClient">Not used - tests create their own clients</param>
     /// <param name="args">Command line arguments passed to each test</param>
     /// <returns>A TestResult indicating whether all tests passed</returns>
     private static async Task<TestResult> RunAllTests(ITestClient testClient, string[] args)
@@ -266,7 +248,8 @@ public class Program
             Console.WriteLine($"Running: {kvp.Value.Name}");
             try
             {
-                var result = await kvp.Value.TestAction(testClient, args);
+                // Tests no longer need a client parameter - they create their own generated clients
+                var result = await kvp.Value.TestAction(null!, args);
                 if (result.Success)
                 {
                     Console.WriteLine($"  ✓ PASSED: {result.Message}");
