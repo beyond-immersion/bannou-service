@@ -2,13 +2,13 @@ using BeyondImmersion.BannouService;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BeyondImmersion.BannouService.Connect
+namespace BeyondImmersion.BannouService.Connect;
+
+/// <summary>
+/// Service interface for Connect API - generated from controller
+/// </summary>
+public interface IConnectService
 {
-    /// <summary>
-    /// Service interface for Connect API - generated from controller
-    /// </summary>
-    public interface IConnectService
-    {
         /// <summary>
         /// ProxyInternalRequest operation
         /// </summary>
@@ -19,5 +19,4 @@ namespace BeyondImmersion.BannouService.Connect
         /// </summary>
         Task<(StatusCodes, ApiDiscoveryResponse?)> DiscoverAPIsAsync(ApiDiscoveryRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
-    }
 }

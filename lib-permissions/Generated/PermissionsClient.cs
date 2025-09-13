@@ -22,92 +22,84 @@ using BeyondImmersion.BannouService.ServiceClients;
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Behavior.Client;
+namespace BeyondImmersion.BannouService.Permissions.Client;
 
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial interface IBehaviorClient
+public partial interface IPermissionsClient
 {
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Compile ABML behavior definition
+    /// Get available API methods for session
     /// </summary>
     /// <remarks>
-    /// Compiles a YAML-based ABML behavior definition into executable behavior trees.
-    /// <br/>Handles stackable behavior sets, cultural adaptations, and context variable resolution.
+    /// Returns compiled list of methods available to this session
     /// </remarks>
-    /// <returns>ABML behavior compiled successfully</returns>
+    /// <returns>Session capabilities retrieved from Redis</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<CompileBehaviorResponse> CompileAbmlBehaviorAsync(string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<CapabilityResponse> GetCapabilitiesAsync(CapabilityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Compile stackable behavior sets
+    /// Validate specific API access for session
     /// </summary>
     /// <remarks>
-    /// Compiles multiple ABML behavior sets with priority-based merging.
-    /// <br/>Handles cultural adaptations, profession specializations, and context resolution.
+    /// Fast O(1) validation using Redis lookup
     /// </remarks>
-    /// <returns>Behavior stack compiled successfully</returns>
+    /// <returns>Permission validation result</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<CompileBehaviorResponse> CompileBehaviorStackAsync(BehaviorStackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<ValidationResponse> ValidateApiAccessAsync(ValidationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Validate ABML definition
+    /// Register or update service permission matrix
     /// </summary>
     /// <remarks>
-    /// Validates ABML YAML against schema and checks for semantic correctness.
-    /// <br/>Includes context variable validation and service dependency checking.
+    /// Updates Redis with ServiceID -&gt; State -&gt; Role -&gt; Methods structure
     /// </remarks>
-    /// <returns>Validation completed</returns>
+    /// <returns>Service permissions registered and sessions recompiled</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<ValidateAbmlResponse> ValidateAbmlAsync(string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<RegistrationResponse> RegisterServicePermissionsAsync(ServicePermissionMatrix body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Get cached compiled behavior
+    /// Update session state for specific service
     /// </summary>
     /// <remarks>
-    /// Retrieves a previously compiled behavior from the cache.
-    /// <br/>Used for performance optimization in high-frequency behavior execution.
+    /// Updates SessionID -&gt; ServiceID -&gt; State and recompiles permissions
     /// </remarks>
-    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
-    /// <returns>Cached behavior retrieved successfully</returns>
+    /// <returns>Session state updated and permissions recompiled</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<CachedBehaviorResponse> GetCachedBehaviorAsync(string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<SessionUpdateResponse> UpdateSessionStateAsync(SessionStateUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Invalidate cached behavior
+    /// Update session role (affects all services)
     /// </summary>
     /// <remarks>
-    /// Removes a behavior from the cache, forcing recompilation on next access.
-    /// <br/>Used when behavior definitions are updated.
+    /// Updates SessionID -&gt; Role and recompiles all service permissions
     /// </remarks>
-    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
-    /// <returns>Cache invalidated successfully</returns>
+    /// <returns>Session role updated and all permissions recompiled</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task InvalidateCachedBehaviorAsync(string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<SessionUpdateResponse> UpdateSessionRoleAsync(SessionRoleUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Resolve context variables
+    /// Get complete session information
     /// </summary>
     /// <remarks>
-    /// Resolves context variables in ABML definitions against character and world state.
-    /// <br/>Used for dynamic behavior adaptation based on current game state.
+    /// Returns current states, role, and compiled permissions
     /// </remarks>
-    /// <returns>Context variables resolved successfully</returns>
+    /// <returns>Complete session information</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<ResolveContextResponse> ResolveContextVariablesAsync(ResolveContextRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<SessionInfo> GetSessionInfoAsync(SessionInfoRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IBehaviorClient
+public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IPermissionsClient
 {
     #pragma warning disable 8618
     private string _baseUrl;
@@ -118,10 +110,10 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
     private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-    public BehaviorClient(System.Net.Http.HttpClient httpClient)
+    public PermissionsClient(System.Net.Http.HttpClient httpClient)
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
-        BaseUrl = "http://localhost/api/behavior";
+        BaseUrl = "http://localhost:3500/v1.0/invoke/permissions/method";
         _httpClient = httpClient;
         Initialize();
     }
@@ -156,130 +148,14 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Compile ABML behavior definition
+    /// Get available API methods for session
     /// </summary>
     /// <remarks>
-    /// Compiles a YAML-based ABML behavior definition into executable behavior trees.
-    /// <br/>Handles stackable behavior sets, cultural adaptations, and context variable resolution.
+    /// Returns compiled list of methods available to this session
     /// </remarks>
-    /// <returns>ABML behavior compiled successfully</returns>
+    /// <returns>Session capabilities retrieved from Redis</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<CompileBehaviorResponse> CompileAbmlBehaviorAsync(string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        if (body == null)
-            throw new System.ArgumentNullException("body");
-
-        var client_ = _httpClient;
-        var disposeClient_ = false;
-        try
-        {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
-            {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/yaml");
-                request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("POST");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                // Operation Path: "compile"
-                urlBuilder_.Append("compile");
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    ProcessResponse(client_, response_);
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<CompileBehaviorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AbmlErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AbmlErrorResponse>("Invalid ABML definition or compilation error", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 403)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AbmlErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AbmlErrorResponse>("Forbidden - insufficient permissions", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 500)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AbmlErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AbmlErrorResponse>("Internal server error", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
-        }
-    }
-
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Compile stackable behavior sets
-    /// </summary>
-    /// <remarks>
-    /// Compiles multiple ABML behavior sets with priority-based merging.
-    /// <br/>Handles cultural adaptations, profession specializations, and context resolution.
-    /// </remarks>
-    /// <returns>Behavior stack compiled successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<CompileBehaviorResponse> CompileBehaviorStackAsync(BehaviorStackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<CapabilityResponse> GetCapabilitiesAsync(CapabilityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -299,8 +175,8 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                 if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                // Operation Path: "stack/compile"
-                urlBuilder_.Append("stack/compile");
+                // Operation Path: "permissions/capabilities"
+                urlBuilder_.Append("permissions/capabilities");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -327,102 +203,7 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<CompileBehaviorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AbmlErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AbmlErrorResponse>("Invalid behavior stack or compilation error", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
-        }
-    }
-
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Validate ABML definition
-    /// </summary>
-    /// <remarks>
-    /// Validates ABML YAML against schema and checks for semantic correctness.
-    /// <br/>Includes context variable validation and service dependency checking.
-    /// </remarks>
-    /// <returns>Validation completed</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<ValidateAbmlResponse> ValidateAbmlAsync(string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        if (body == null)
-            throw new System.ArgumentNullException("body");
-
-        var client_ = _httpClient;
-        var disposeClient_ = false;
-        try
-        {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
-            {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/yaml");
-                request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("POST");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                // Operation Path: "validate"
-                urlBuilder_.Append("validate");
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    ProcessResponse(client_, response_);
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<ValidateAbmlResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<CapabilityResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -451,191 +232,14 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Get cached compiled behavior
+    /// Validate specific API access for session
     /// </summary>
     /// <remarks>
-    /// Retrieves a previously compiled behavior from the cache.
-    /// <br/>Used for performance optimization in high-frequency behavior execution.
+    /// Fast O(1) validation using Redis lookup
     /// </remarks>
-    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
-    /// <returns>Cached behavior retrieved successfully</returns>
+    /// <returns>Permission validation result</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<CachedBehaviorResponse> GetCachedBehaviorAsync(string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        if (behavior_id == null)
-            throw new System.ArgumentNullException("behavior_id");
-
-        var client_ = _httpClient;
-        var disposeClient_ = false;
-        try
-        {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
-            {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                // Operation Path: "cache/{behavior_id}"
-                urlBuilder_.Append("cache/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(behavior_id, System.Globalization.CultureInfo.InvariantCulture)));
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    ProcessResponse(client_, response_);
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<CachedBehaviorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 404)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AbmlErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AbmlErrorResponse>("Behavior not found in cache", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
-        }
-    }
-
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Invalidate cached behavior
-    /// </summary>
-    /// <remarks>
-    /// Removes a behavior from the cache, forcing recompilation on next access.
-    /// <br/>Used when behavior definitions are updated.
-    /// </remarks>
-    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
-    /// <returns>Cache invalidated successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task InvalidateCachedBehaviorAsync(string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        if (behavior_id == null)
-            throw new System.ArgumentNullException("behavior_id");
-
-        var client_ = _httpClient;
-        var disposeClient_ = false;
-        try
-        {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
-            {
-                request_.Method = new System.Net.Http.HttpMethod("DELETE");
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                // Operation Path: "cache/{behavior_id}"
-                urlBuilder_.Append("cache/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(behavior_id, System.Globalization.CultureInfo.InvariantCulture)));
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    ProcessResponse(client_, response_);
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
-                    {
-                        return;
-                    }
-                    else
-                    if (status_ == 404)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                        throw new ApiException("Behavior not found in cache", status_, responseText_, headers_, null);
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
-        }
-    }
-
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Resolve context variables
-    /// </summary>
-    /// <remarks>
-    /// Resolves context variables in ABML definitions against character and world state.
-    /// <br/>Used for dynamic behavior adaptation based on current game state.
-    /// </remarks>
-    /// <returns>Context variables resolved successfully</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<ResolveContextResponse> ResolveContextVariablesAsync(ResolveContextRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<ValidationResponse> ValidateApiAccessAsync(ValidationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -655,8 +259,8 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                 if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                // Operation Path: "context/resolve"
-                urlBuilder_.Append("context/resolve");
+                // Operation Path: "permissions/validate"
+                urlBuilder_.Append("permissions/validate");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -683,7 +287,343 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ResolveContextResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<ValidationResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Register or update service permission matrix
+    /// </summary>
+    /// <remarks>
+    /// Updates Redis with ServiceID -&gt; State -&gt; Role -&gt; Methods structure
+    /// </remarks>
+    /// <returns>Service permissions registered and sessions recompiled</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<RegistrationResponse> RegisterServicePermissionsAsync(ServicePermissionMatrix body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "permissions/register-service"
+                urlBuilder_.Append("permissions/register-service");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<RegistrationResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update session state for specific service
+    /// </summary>
+    /// <remarks>
+    /// Updates SessionID -&gt; ServiceID -&gt; State and recompiles permissions
+    /// </remarks>
+    /// <returns>Session state updated and permissions recompiled</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<SessionUpdateResponse> UpdateSessionStateAsync(SessionStateUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "permissions/update-session-state"
+                urlBuilder_.Append("permissions/update-session-state");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<SessionUpdateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update session role (affects all services)
+    /// </summary>
+    /// <remarks>
+    /// Updates SessionID -&gt; Role and recompiles all service permissions
+    /// </remarks>
+    /// <returns>Session role updated and all permissions recompiled</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<SessionUpdateResponse> UpdateSessionRoleAsync(SessionRoleUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "permissions/update-session-role"
+                urlBuilder_.Append("permissions/update-session-role");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<SessionUpdateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get complete session information
+    /// </summary>
+    /// <remarks>
+    /// Returns current states, role, and compiled permissions
+    /// </remarks>
+    /// <returns>Complete session information</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<SessionInfo> GetSessionInfoAsync(SessionInfoRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "permissions/get-session-info"
+                urlBuilder_.Append("permissions/get-session-info");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<SessionInfo>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -843,20 +783,20 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CompileBehaviorRequest
+public partial class CapabilityRequest
 {
     /// <summary>
-    /// Raw ABML YAML content to compile
+    /// Session ID for lookup in Redis
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("abml_content", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Abml_content { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("character_context", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public CharacterContext Character_context { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("compilation_options", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public CompilationOptions Compilation_options { get; set; } = default!;
+    /// <summary>
+    /// Optional filter for specific services
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceIds", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> ServiceIds { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -870,20 +810,24 @@ public partial class CompileBehaviorRequest
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BehaviorStackRequest
+public partial class CapabilityResponse
 {
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid SessionId { get; set; } = default!;
+
     /// <summary>
-    /// Array of behavior sets to compile together
+    /// Map of ServiceID -&gt; List of available methods
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("behavior_sets", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("permissions", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.ICollection<BehaviorSetDefinition> Behavior_sets { get; set; } = new System.Collections.ObjectModel.Collection<BehaviorSetDefinition>();
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
 
-    [Newtonsoft.Json.JsonProperty("character_context", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public CharacterContext Character_context { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("compilation_options", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public CompilationOptions Compilation_options { get; set; } = default!;
+    /// <summary>
+    /// When these permissions were compiled
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("generatedAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset GeneratedAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -897,20 +841,25 @@ public partial class BehaviorStackRequest
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ValidateAbmlRequest
+public partial class ValidationRequest
 {
-    /// <summary>
-    /// Raw ABML YAML content to validate
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("abml_content", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Abml_content { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Enable strict validation mode with enhanced checking
+    /// Target service ID
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("strict_mode", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool Strict_mode { get; set; } = false;
+    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Method name being accessed
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("method", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Method { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -924,18 +873,63 @@ public partial class ValidateAbmlRequest
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ResolveContextRequest
+public partial class ValidationResponse
 {
     /// <summary>
-    /// Context variable expression to resolve
+    /// Whether access is permitted
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("context_expression", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Context_expression { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("allowed", Required = Newtonsoft.Json.Required.Always)]
+    public bool Allowed { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("character_context", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for denial (if applicable)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("reason", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Reason { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServicePermissionMatrix
+{
+    /// <summary>
+    /// Unique service identifier
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable service name
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Map of State -&gt; Role -&gt; Methods structure
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("permissions", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required]
-    public CharacterContext Character_context { get; set; } = new CharacterContext();
+    public System.Collections.Generic.IDictionary<string, StatePermissions> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, StatePermissions>();
+
+    /// <summary>
+    /// Service API version for change tracking
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Version { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -948,42 +942,36 @@ public partial class ResolveContextRequest
 
 }
 
+/// <summary>
+/// Map of Role -&gt; List of Methods for this state
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CompileBehaviorResponse
+public partial class StatePermissions : System.Collections.Generic.Dictionary<string, System.Collections.ObjectModel.Collection<string>>
 {
-    /// <summary>
-    /// Whether compilation was successful
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
-    public bool Success { get; set; } = default!;
 
-    /// <summary>
-    /// Unique identifier for the compiled behavior
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("behavior_id", Required = Newtonsoft.Json.Required.Always)]
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RegistrationResponse
+{
+    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Behavior_id { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("compiled_behavior", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public CompiledBehavior Compiled_behavior { get; set; } = default!;
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Time taken to compile the behavior
+    /// Whether registration was successful
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("compilation_time_ms", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int Compilation_time_ms { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("registered", Required = Newtonsoft.Json.Required.Always)]
+    public bool Registered { get; set; } = default!;
 
     /// <summary>
-    /// Key for caching the compiled behavior
+    /// Number of sessions that had permissions recompiled
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("cache_key", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Cache_key { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("affectedSessions", Required = Newtonsoft.Json.Required.Always)]
+    public int AffectedSessions { get; set; } = default!;
 
-    /// <summary>
-    /// Non-fatal warnings during compilation
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("warnings", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> Warnings { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("recompiledAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset RecompiledAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -997,147 +985,28 @@ public partial class CompileBehaviorResponse
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ValidateAbmlResponse
+public partial class SessionStateUpdate
 {
-    /// <summary>
-    /// Whether the ABML definition is valid
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("is_valid", Required = Newtonsoft.Json.Required.Always)]
-    public bool Is_valid { get; set; } = default!;
-
-    /// <summary>
-    /// List of validation errors if invalid
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("validation_errors", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<ValidationError> Validation_errors { get; set; } = default!;
-
-    /// <summary>
-    /// Semantic warnings that don't prevent compilation
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("semantic_warnings", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> Semantic_warnings { get; set; } = default!;
-
-    /// <summary>
-    /// ABML schema version used for validation
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("schema_version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Schema_version { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CachedBehaviorResponse
-{
-    /// <summary>
-    /// Unique identifier for the cached behavior
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("behavior_id", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Behavior_id { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("compiled_behavior", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public CompiledBehavior Compiled_behavior { get; set; } = new CompiledBehavior();
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// When the behavior was cached
+    /// Service whose state is changing for this session
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("cache_timestamp", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset Cache_timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this was a cache hit or miss
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("cache_hit", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool Cache_hit { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ResolveContextResponse
-{
-    /// <summary>
-    /// The resolved value of the context expression
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("resolved_value", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public object Resolved_value { get; set; } = default!;
-
-    /// <summary>
-    /// Type of the resolved value
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("resolved_type", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public ResolveContextResponseResolved_type Resolved_type { get; set; } = default!;
-
-    /// <summary>
-    /// List of context variables referenced in the expression
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("context_variables_used", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> Context_variables_used { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BehaviorSetDefinition
-{
-    /// <summary>
-    /// Unique identifier for the behavior set
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Id { get; set; } = default!;
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Priority level for merging (higher priority overrides lower)
+    /// New state value (lobby, in_game, etc.)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("priority", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Range(1, 100)]
-    public int Priority { get; set; } = default!;
-
-    /// <summary>
-    /// Category of the behavior set
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("category", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public BehaviorSetDefinitionCategory Category { get; set; } = default!;
-
-    /// <summary>
-    /// Raw ABML YAML content for this behavior set
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("abml_content", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Abml_content { get; set; } = default!;
+    public string State { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata for the behavior set
+    /// Optional context data
     /// </summary>
     [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
     public object Metadata { get; set; } = default!;
@@ -1154,52 +1023,18 @@ public partial class BehaviorSetDefinition
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CharacterContext
+public partial class SessionRoleUpdate
 {
-    /// <summary>
-    /// Unique identifier for the NPC
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("npc_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Npc_id { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Cultural background identifier
+    /// New role (user, admin, etc.)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("culture", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Culture { get; set; } = default!;
-
-    /// <summary>
-    /// Character profession identifier
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("profession", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Profession { get; set; } = default!;
-
-    /// <summary>
-    /// Character statistics and attributes
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("stats", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.IDictionary<string, double> Stats { get; set; } = default!;
-
-    /// <summary>
-    /// Character skill levels
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("skills", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.IDictionary<string, double> Skills { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("location", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public Location Location { get; set; } = default!;
-
-    /// <summary>
-    /// Relationship values with other characters
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("relationships", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.IDictionary<string, double> Relationships { get; set; } = default!;
-
-    /// <summary>
-    /// Relevant world state information
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("world_state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object World_state { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("role", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Role { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1213,372 +1048,95 @@ public partial class CharacterContext
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CompiledBehavior
+public partial class SessionUpdateResponse
 {
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid SessionId { get; set; } = default!;
+
     /// <summary>
-    /// Compiled executable behavior tree structure
+    /// Whether update was successful
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("behavior_tree", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("updated", Required = Newtonsoft.Json.Required.Always)]
+    public bool Updated { get; set; } = default!;
+
+    /// <summary>
+    /// Whether compiled permissions actually changed
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("permissionsChanged", Required = Newtonsoft.Json.Required.Always)]
+    public bool PermissionsChanged { get; set; } = default!;
+
+    /// <summary>
+    /// Updated ServiceID -&gt; Methods if permissions changed
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("newPermissions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> NewPermissions { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("updatedAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionInfoRequest
+{
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid SessionId { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionInfo
+{
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Current session role
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("role", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Role { get; set; } = default!;
+
+    /// <summary>
+    /// Map of ServiceID -&gt; Current State
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("states", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required]
-    public object Behavior_tree { get; set; } = new object();
+    public System.Collections.Generic.IDictionary<string, string> States { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
 
     /// <summary>
-    /// Schema defining required context variables
+    /// Map of ServiceID -&gt; List of available methods
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("context_schema", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("compiledPermissions", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required]
-    public object Context_schema { get; set; } = new object();
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> CompiledPermissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
 
     /// <summary>
-    /// List of required services for this behavior
+    /// When permissions were last recompiled
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("service_dependencies", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> Service_dependencies { get; set; } = default!;
-
-    /// <summary>
-    /// GOAP goals extracted from the behavior
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("goap_goals", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<GoapGoal> Goap_goals { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("execution_metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public Execution_metadata Execution_metadata { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GoapGoal
-{
-    /// <summary>
-    /// Name of the goal
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable description of the goal
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Description { get; set; } = default!;
-
-    /// <summary>
-    /// World state conditions that satisfy this goal
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("conditions", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.IDictionary<string, double> Conditions { get; set; } = new System.Collections.Generic.Dictionary<string, double>();
-
-    /// <summary>
-    /// Priority of this goal relative to others
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("priority", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Range(1, 100)]
-    public int Priority { get; set; } = default!;
-
-    /// <summary>
-    /// World state conditions required to pursue this goal
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("preconditions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.IDictionary<string, double> Preconditions { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CompilationOptions
-{
-    /// <summary>
-    /// Enable behavior tree optimizations
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("enable_optimizations", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool Enable_optimizations { get; set; } = true;
-
-    /// <summary>
-    /// Cache the compiled behavior for reuse
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("cache_compiled_result", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool Cache_compiled_result { get; set; } = true;
-
-    /// <summary>
-    /// Enable strict validation mode
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("strict_validation", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool Strict_validation { get; set; } = false;
-
-    /// <summary>
-    /// Apply cultural adaptations during compilation
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("cultural_adaptations", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool Cultural_adaptations { get; set; } = true;
-
-    /// <summary>
-    /// Generate GOAP goals from behaviors
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("goap_integration", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool Goap_integration { get; set; } = true;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ValidationError
-{
-    /// <summary>
-    /// Type of validation error
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("type", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public ValidationErrorType Type { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable error message
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Message { get; set; } = default!;
-
-    /// <summary>
-    /// Line number where the error occurred (if applicable)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("line_number", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int Line_number { get; set; } = default!;
-
-    /// <summary>
-    /// Column number where the error occurred (if applicable)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("column_number", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int Column_number { get; set; } = default!;
-
-    /// <summary>
-    /// YAML path to the problematic element
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("yaml_path", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Yaml_path { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AbmlErrorResponse
-{
-    /// <summary>
-    /// Error message
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Error { get; set; } = default!;
-
-    /// <summary>
-    /// Specific error code for programmatic handling
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("error_code", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Error_code { get; set; } = default!;
-
-    /// <summary>
-    /// Detailed error information
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("details", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> Details { get; set; } = default!;
-
-    /// <summary>
-    /// Validation errors encountered
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("validation_errors", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<ValidationError> Validation_errors { get; set; } = default!;
-
-    /// <summary>
-    /// Line number in YAML where error occurred
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("yaml_line", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int Yaml_line { get; set; } = default!;
-
-    /// <summary>
-    /// Additional context about the error
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("context", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object Context { get; set; } = default!;
-
-    /// <summary>
-    /// When the error occurred
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Unique identifier for the failed request
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("request_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Request_id { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ResolveContextResponseResolved_type
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"boolean")]
-    Boolean = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"string")]
-    String = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"number")]
-    Number = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"object")]
-    Object = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"array")]
-    Array = 4,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum BehaviorSetDefinitionCategory
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"base")]
-    Base = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"cultural")]
-    Cultural = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"professional")]
-    Professional = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"personal")]
-    Personal = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"situational")]
-    Situational = 4,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Location
-{
-    [Newtonsoft.Json.JsonProperty("current", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Current { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("region", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string Region { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("coordinates", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public Coordinates Coordinates { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Execution_metadata
-{
-    /// <summary>
-    /// Estimated execution time in seconds
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("estimated_duration", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int Estimated_duration { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("resource_requirements", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.IDictionary<string, double> Resource_requirements { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("interrupt_conditions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> Interrupt_conditions { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ValidationErrorType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"syntax")]
-    Syntax = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"semantic")]
-    Semantic = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"schema")]
-    Schema = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"context")]
-    Context = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"service_dependency")]
-    Service_dependency = 4,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Coordinates
-{
-    [Newtonsoft.Json.JsonProperty("x", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public double X { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("y", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public double Y { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("z", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public double Z { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("lastUpdated", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset LastUpdated { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

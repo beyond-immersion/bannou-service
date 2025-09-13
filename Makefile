@@ -109,6 +109,27 @@ ci-test-v2:
 test-all-v2: test-unit test-http test-websocket test-integration-v2
 	@echo "✅ All tests completed with Docker Compose V2"
 
+# GitHub Actions 10-step pipeline (local reproduction)
+ci-full-pipeline: generate-services test-unit ci-test-v2 test-http-daemon test-websocket-daemon
+	@echo "🚀 Complete CI pipeline executed locally (matches GitHub Actions)"
+
+# HTTP testing with daemon mode (matches step 8)
+test-http-daemon:
+	@echo "🧪 Running HTTP integration tests (daemon mode)..."
+	DAEMON_MODE=true dotnet run --project http-tester --configuration Release
+
+# WebSocket testing with daemon mode (matches steps 9-10)  
+test-websocket-daemon:
+	@echo "🧪 Running WebSocket protocol tests (daemon mode)..."
+	DAEMON_MODE=true dotnet run --project edge-tester --configuration Release
+
+# Service generation consistency check (matches steps 4-5)
+test-generation-consistency:
+	@echo "🔍 Testing service generation consistency..."
+	./generate-all-services.sh
+	git diff --exit-code || (echo "❌ Service generation created changes" && exit 1)
+	@echo "✅ Service generation is consistent"
+
 tagname := $(shell date -u +%FT%H-%M-%SZ)
 tag:
 	git tag $(tagname) -a -m '$(msg)'

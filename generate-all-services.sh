@@ -13,6 +13,13 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# Helper function to convert hyphenated names to PascalCase  
+to_pascal_case() {
+    local input="$1"
+    # Split by hyphens and capitalize each part
+    echo "$input" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))} 1' | sed 's/ //g'
+}
+
 # Set working directory to bannou-service
 cd "$(dirname "$0")/bannou-service"
 
@@ -94,7 +101,7 @@ create_service_plugin() {
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>BeyondImmersion.BannouService.${service_name^}</RootNamespace>
+    <RootNamespace>BeyondImmersion.BannouService.$(to_pascal_case "$service_name")</RootNamespace>
     <ServiceLib>${service_name}</ServiceLib>
   </PropertyGroup>
 
@@ -112,6 +119,14 @@ create_service_plugin() {
 </Project>
 EOF
         echo -e "${GREEN}    ✅ Created service plugin project${NC}"
+        
+        # Automatically add new project to solution
+        echo "  🔗 Adding project to solution..."
+        if dotnet sln add "$project_file" --verbosity quiet 2>/dev/null; then
+            echo -e "${GREEN}    ✅ Added to solution${NC}"
+        else
+            echo -e "${YELLOW}    ⚠️  Project might already be in solution${NC}"
+        fi
     fi
 }
 
@@ -120,9 +135,10 @@ generate_service_interface() {
     local schema_file="$1"
     local service_name="$2"
     local service_plugin_dir="$3"
-    local interface_name="I${service_name^}Service.cs"
+    local service_pascal=$(to_pascal_case "$service_name")
+    local interface_name="I${service_pascal}Service.cs"
     local output_path="$service_plugin_dir/Generated/$interface_name"
-    local controller_file="$service_plugin_dir/Generated/${service_name^}Controller.Generated.cs"
+    local controller_file="$service_plugin_dir/Generated/${service_pascal}Controller.Generated.cs"
 
     echo "    🔄 Generating service interface $interface_name..."
 
@@ -145,13 +161,13 @@ using BeyondImmersion.BannouService;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BeyondImmersion.BannouService.${service_name^}
+namespace BeyondImmersion.BannouService.$service_pascal;
+
+/// <summary>
+/// Service interface for $service_pascal API - generated from controller
+/// </summary>
+public interface I${service_pascal}Service
 {
-    /// <summary>
-    /// Service interface for ${service_name^} API - generated from controller
-    /// </summary>
-    public interface I${service_name^}Service
-    {
 EOF
 
     # Extract full method signatures from controller and convert to service interface methods
@@ -192,7 +208,6 @@ for return_type, method_name, params in matches:
 
     # Close the interface
     cat >> "$output_path" << EOF
-    }
 }
 EOF
 
@@ -206,7 +221,8 @@ generate_service_implementation() {
     local schema_file="$1"
     local service_name="$2"
     local service_plugin_dir="$3"
-    local service_name_pascal="${service_name^}Service.cs"
+    local service_pascal=$(to_pascal_case "$service_name")
+    local service_name_pascal="${service_pascal}Service.cs"
     local output_path="$service_plugin_dir/$service_name_pascal"
 
     echo "    🔄 Generating service implementation $service_name_pascal..."
@@ -224,51 +240,70 @@ generate_service_implementation() {
 
     mkdir -p "$(dirname "$output_path")"
 
-    # Create service implementation template that returns tuples
+    # Create service implementation with actual method stubs (including NotImplementedException)
     cat > "$output_path" << EOF
 using BeyondImmersion.BannouService;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BeyondImmersion.BannouService.${service_name^}
+namespace BeyondImmersion.BannouService.$service_pascal;
+
+/// <summary>
+/// Generated service implementation for $service_pascal API
+/// </summary>
+public class ${service_pascal}Service : I${service_pascal}Service
 {
-    /// <summary>
-    /// Generated service implementation for ${service_name^} API
-    /// </summary>
-    public class ${service_name^}Service : I${service_name^}Service
+    private readonly ILogger<${service_pascal}Service> _logger;
+    private readonly ${service_pascal}ServiceConfiguration _configuration;
+
+    public ${service_pascal}Service(
+        ILogger<${service_pascal}Service> logger,
+        ${service_pascal}ServiceConfiguration configuration)
     {
-        private readonly ILogger<${service_name^}Service> _logger;
-        private readonly ${service_name^}ServiceConfiguration _configuration;
-
-        public ${service_name^}Service(
-            ILogger<${service_name^}Service> logger,
-            ${service_name^}ServiceConfiguration configuration)
-        {
-            _logger = logger;
-            _configuration = configuration;
-        }
-
-        // TODO: Implement service methods that return (StatusCodes, ResponseModel?) tuples
-        // Example method signature:
-        // public async Task<(StatusCodes, CreateResponseModel?)> CreateAsync(
-        //     CreateRequestModel request, CancellationToken cancellationToken = default)
-        // {
-        //     try
-        //     {
-        //         // Business logic implementation here
-        //         _logger.LogDebug("Processing create request");
-        //
-        //         // Return success with response model
-        //         return (StatusCodes.OK, new CreateResponseModel { /* ... */ });
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         _logger.LogError(ex, "Error processing create request");
-        //         return (StatusCodes.InternalServerError, null);
-        //     }
-        // }
+        _logger = logger;
+        _configuration = configuration;
     }
+EOF
+
+    # Generate NotImplementedException method stubs from interface
+    local interface_file="$service_plugin_dir/Generated/I${service_pascal}Service.cs"
+    if [ -f "$interface_file" ]; then
+        # Extract method signatures from interface and generate stub implementations
+        python3 -c "
+import re
+import sys
+
+with open('$interface_file', 'r') as f:
+    content = f.read()
+
+# Find all method declarations in the interface
+method_pattern = r'Task<\(StatusCodes, ([^)]+)\)>\s+(\w+)\(([^;]*)\);'
+
+matches = re.findall(method_pattern, content, re.MULTILINE | re.DOTALL)
+
+for return_type, method_name, params in matches:
+    # Clean up parameters for implementation
+    clean_params = re.sub(r'\s+', ' ', params).strip()
+    
+    print(f'''
+    /// <summary>
+    /// {method_name} implementation - TODO: Add business logic
+    /// </summary>
+    public async Task<(StatusCodes, {return_type})> {method_name}({clean_params})
+    {{
+        _logger.LogWarning(\"Method {method_name} called but not implemented\");
+        await Task.Delay(1); // Avoid async warning
+        throw new NotImplementedException(\"Method {method_name} is not implemented\");
+    }}''')
+" >> "$output_path"
+    else
+        echo "    // Interface file not found, no method stubs generated" >> "$output_path"
+    fi
+
+    # Close the class
+    cat >> "$output_path" << EOF
 }
 EOF
 
@@ -282,8 +317,9 @@ generate_service_configuration() {
     local schema_file="$1"
     local service_name="$2"
     local service_plugin_dir="$3"
-    local config_name="${service_name^}ServiceConfiguration.cs"
-    local output_path="$service_plugin_dir/$config_name"
+    local service_pascal=$(to_pascal_case "$service_name")
+    local config_name="${service_pascal}ServiceConfiguration.cs"
+    local output_path="$service_plugin_dir/Generated/$config_name"
 
     echo "    🔄 Generating service configuration $config_name..."
 
@@ -303,33 +339,32 @@ using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 
-namespace BeyondImmersion.BannouService.${service_name^}
+namespace BeyondImmersion.BannouService.$service_pascal;
+
+/// <summary>
+/// Generated configuration for $service_pascal service
+/// </summary>
+[ServiceConfiguration(typeof(${service_pascal}Service), envPrefix: "$(echo "$service_name" | tr '[:lower:]' '[:upper:]' | tr '-' '_')_")]
+public class ${service_pascal}ServiceConfiguration : IServiceConfiguration
 {
     /// <summary>
-    /// Generated configuration for ${service_name^} service
+    /// Force specific service ID (optional)
     /// </summary>
-    [ServiceConfiguration(typeof(${service_name^}Service), envPrefix: "${service_name^^}_")]
-    public class ${service_name^}ServiceConfiguration : IServiceConfiguration
-    {
-        /// <summary>
-        /// Force specific service ID (optional)
-        /// </summary>
-        public string? Force_Service_ID { get; set; }
+    public string? Force_Service_ID { get; set; }
 
-        /// <summary>
-        /// Disable this service (optional)
-        /// </summary>
-        public bool? Service_Disabled { get; set; }
+    /// <summary>
+    /// Disable this service (optional)
+    /// </summary>
+    public bool? Service_Disabled { get; set; }
 
-        // TODO: Add service-specific configuration properties from schema
-        // Example properties:
-        // [Required]
-        // public string ConnectionString { get; set; } = string.Empty;
-        //
-        // public int MaxRetries { get; set; } = 3;
-        //
-        // public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
-    }
+    // TODO: Add service-specific configuration properties from schema
+    // Example properties:
+    // [Required]
+    // public string ConnectionString { get; set; } = string.Empty;
+    //
+    // public int MaxRetries { get; set; } = 3;
+    //
+    // public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 }
 EOF
 
@@ -343,7 +378,8 @@ generate_client() {
     local schema_file="$1"
     local service_name="$2"
     local service_plugin_dir="$3"
-    local client_name="${service_name^}Client.cs"
+    local service_pascal=$(to_pascal_case "$service_name")
+    local client_name="${service_pascal}Client.cs"
     local output_path="$service_plugin_dir/Generated/$client_name"
 
     echo "    🔄 Generating service client $client_name..."
@@ -365,9 +401,9 @@ generate_client() {
         "$NSWAG_EXE" openapi2csclient \
             /input:"$schema_file" \
             /output:"$output_path" \
-            /namespace:"BeyondImmersion.BannouService.${service_name^}.Client" \
+            /namespace:"BeyondImmersion.BannouService.$service_pascal.Client" \
             /clientBaseClass:"BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase" \
-            /className:"${service_name^}Client" \
+            /className:"${service_pascal}Client" \
             /generateClientClasses:true \
             /generateClientInterfaces:true \
             /injectHttpClient:true \
@@ -400,7 +436,8 @@ generate_client() {
 generate_controller() {
     local schema_file="$1"
     local service_name="$2"
-    local controller_name="${service_name^}Controller.Generated.cs"  # Capitalize first letter
+    local service_pascal=$(to_pascal_case "$service_name")
+    local controller_name="${service_pascal}Controller.Generated.cs"
 
     # Consolidated architecture: generate in service plugin directory
     local service_plugin_dir="../lib-${service_name}"
@@ -437,10 +474,10 @@ generate_controller() {
         "$NSWAG_EXE" openapi2cscontroller \
             "/input:$schema_file" \
             "/output:$output_path" \
-            "/namespace:BeyondImmersion.BannouService.${service_name^}" \
+            "/namespace:BeyondImmersion.BannouService.$service_pascal" \
             "/ControllerStyle:Abstract" \
             "/ControllerBaseClass:Microsoft.AspNetCore.Mvc.ControllerBase" \
-            "/ClassName:${service_name^}ControllerBase" \
+            "/ClassName:${service_pascal}ControllerBase" \
             "/UseCancellationToken:true" \
             "/UseActionResultType:true" \
             "/GenerateModelValidationAttributes:true" \
@@ -496,14 +533,15 @@ fi
 generated_count=0
 failed_count=0
 
-# Define all available schemas
-all_schemas=(
-    "../schemas/accounts-api.yaml:accounts"
-    "../schemas/auth-api.yaml:auth"
-    "../schemas/website-api.yaml:website"
-    "../schemas/behavior-api.yaml:behavior"
-    "../schemas/connect-api.yaml:connect"
-)
+# Dynamically discover all available schemas
+all_schemas=()
+while IFS= read -r -d '' schema_file; do
+    if [[ "$schema_file" == *"-api.yaml" ]]; then
+        # Extract service name from filename (remove path and -api.yaml suffix)
+        service_name=$(basename "$schema_file" "-api.yaml")
+        all_schemas+=("$schema_file:$service_name")
+    fi
+done < <(find ../schemas -name "*-api.yaml" -print0 2>/dev/null)
 
 # Check if specific service was requested
 if [ "$1" ]; then
@@ -522,7 +560,14 @@ if [ "$1" ]; then
     done
 
     if [ "$found" = false ]; then
-        echo -e "${RED}❌ Service '$requested_service' not found. Available services: accounts, auth, website, behavior, connect${NC}"
+        # Dynamically build available services list
+        available_services=""
+        for schema_entry in "${all_schemas[@]}"; do
+            IFS=':' read -r schema_file service_name <<< "$schema_entry"
+            available_services+="$service_name, "
+        done
+        available_services=${available_services%, }  # Remove trailing comma and space
+        echo -e "${RED}❌ Service '$requested_service' not found. Available services: $available_services${NC}"
         exit 1
     fi
 else
@@ -570,7 +615,7 @@ generate_unit_test_projects() {
 
     for schema_entry in "${schemas[@]}"; do
         IFS=':' read -r schema_file service_name <<< "$schema_entry"
-        local service_name_pascal="${service_name^}" # Capitalize first letter
+        local service_name_pascal=$(to_pascal_case "$service_name")
         local test_project_dir="../lib-${service_name}.tests"
 
         # Skip if test project already exists
@@ -652,6 +697,11 @@ public class ${service_name_pascal}ServiceTests
 EOF
 
             echo -e "${GREEN}        ✅ Generated unit test project for $service_name${NC}"
+            
+            # Automatically add test project to solution
+            if dotnet sln add "$test_project_dir/lib-$service_name.tests.csproj" --verbosity quiet 2>/dev/null; then
+                echo -e "${GREEN}        ✅ Added test project to solution${NC}"
+            fi
             ((test_generated++))
         else
             echo -e "${RED}        ❌ Failed to generate unit test project for $service_name${NC}"

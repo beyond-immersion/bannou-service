@@ -14,7 +14,8 @@ namespace BeyondImmersion.BannouService.SourceGeneration;
 /// Generates controllers, service interfaces, and client registrations while preserving existing implementations.
 /// Controlled by MSBuild property GenerateNewServices.
 /// </summary>
-[Generator]
+// DISABLED: Conflicts with NSwag generation - NSwag handles all service scaffolding
+// [Generator]
 public class ServiceScaffoldGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)

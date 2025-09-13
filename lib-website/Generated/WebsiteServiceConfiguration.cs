@@ -1,14 +1,14 @@
+using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
-using System.ComponentModel.DataAnnotations;
 
-namespace BeyondImmersion.BannouService.Behavior;
+namespace BeyondImmersion.BannouService.Website;
 
 /// <summary>
-/// Generated configuration for Behavior service
+/// Generated configuration for Website service
 /// </summary>
-[ServiceConfiguration(typeof(BehaviorService), envPrefix: "BEHAVIOR_")]
-public class BehaviorServiceConfiguration : IServiceConfiguration
+[ServiceConfiguration(typeof(WebsiteService), envPrefix: "WEBSITE_")]
+public class WebsiteServiceConfiguration : IServiceConfiguration
 {
     /// <summary>
     /// Force specific service ID (optional)

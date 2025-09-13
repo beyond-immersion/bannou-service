@@ -2,13 +2,13 @@ using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 
-namespace BeyondImmersion.BannouService.Connect;
+namespace BeyondImmersion.BannouService.Accounts;
 
 /// <summary>
-/// Generated configuration for Connect service
+/// Generated configuration for Accounts service
 /// </summary>
-[ServiceConfiguration(typeof(ConnectService), envPrefix: "CONNECT_")]
-public class ConnectServiceConfiguration : IServiceConfiguration
+[ServiceConfiguration(typeof(AccountsService), envPrefix: "ACCOUNTS_")]
+public class AccountsServiceConfiguration : IServiceConfiguration
 {
     /// <summary>
     /// Force specific service ID (optional)

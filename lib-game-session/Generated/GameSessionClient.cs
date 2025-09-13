@@ -22,104 +22,82 @@ using BeyondImmersion.BannouService.ServiceClients;
 #pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
 #pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
-namespace BeyondImmersion.BannouService.Auth.Client;
+namespace BeyondImmersion.BannouService.GameSession.Client;
 
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial interface IAuthClient
+public partial interface IGameSessionClient
 {
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Register new user account
+    /// List available game sessions
     /// </summary>
-    /// <remarks>
-    /// Creates a new user account with username and password authentication.
-    /// <br/>Returns JWT access token and refresh token on successful registration.
-    /// <br/>Email is optional but recommended for account recovery.
-    /// </remarks>
-    /// <returns>User registered successfully</returns>
+    /// <returns>Game sessions retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<RegisterResponse> RegisterAsync(RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<GameSessionListResponse> ListGameSessionsAsync(GameType? gameType = null, Status? status = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Login with username and password (GET)
+    /// Create new game session
     /// </summary>
-    /// <remarks>
-    /// Authenticate user with username and password provided via headers.
-    /// <br/>Returns JWT access token and refresh token on successful authentication.
-    /// <br/>Uses GET method for simple credential-based login.
-    /// </remarks>
-    /// <param name="username">Username for authentication</param>
-    /// <param name="password">Password for authentication</param>
-    /// <returns>Login successful</returns>
+    /// <returns>Game session created successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<LoginResponse> LoginWithCredentialsGetAsync(string username, string password, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<GameSessionResponse> CreateGameSessionAsync(CreateGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Login with username and password (POST)
+    /// Get game session details
     /// </summary>
-    /// <remarks>
-    /// Authenticate user with username and password provided via headers.
-    /// <br/>Returns JWT access token and refresh token on successful authentication.
-    /// <br/>Uses POST method for credential-based login with potential request body.
-    /// </remarks>
-    /// <param name="username">Username for authentication</param>
-    /// <param name="password">Password for authentication</param>
-    /// <param name="body">Optional login request body (currently unused)</param>
-    /// <returns>Login successful</returns>
+    /// <returns>Game session retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<LoginResponse> LoginWithCredentialsPostAsync(string username, string password, LoginRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<GameSessionResponse> GetGameSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Login with refresh token (GET)
+    /// Join a game session
     /// </summary>
-    /// <remarks>
-    /// Authenticate user with a refresh token provided via header.
-    /// <br/>Returns new JWT access token and potentially new refresh token.
-    /// <br/>Used for token refresh flows without requiring password re-entry.
-    /// </remarks>
-    /// <param name="token">Refresh token for authentication</param>
-    /// <returns>Token refresh successful</returns>
+    /// <returns>Successfully joined game session</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<LoginResponse> LoginWithTokenGetAsync(string token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<JoinGameSessionResponse> JoinGameSessionAsync(System.Guid sessionId, JoinGameSessionRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Login with refresh token (POST)
+    /// Leave a game session
     /// </summary>
-    /// <remarks>
-    /// Authenticate user with a refresh token provided via header.
-    /// <br/>Returns new JWT access token and potentially new refresh token.
-    /// <br/>Uses POST method for token refresh with potential request body.
-    /// </remarks>
-    /// <param name="token">Refresh token for authentication</param>
-    /// <param name="body">Optional login request body (currently unused)</param>
-    /// <returns>Token refresh successful</returns>
+    /// <returns>Successfully left game session</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<LoginResponse> LoginWithTokenPostAsync(string token, LoginRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task LeaveGameSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Validate JWT access token
+    /// Kick player from game session (admin only)
     /// </summary>
-    /// <remarks>
-    /// Validates a JWT access token and returns token status information.
-    /// <br/>Can be used to check if a token is valid, expired, or contains specific claims.
-    /// <br/>Currently returns basic validation response.
-    /// </remarks>
-    /// <returns>Token validation completed</returns>
+    /// <returns>Player kicked successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<ValidateTokenResponse> ValidateTokenAsync(ValidateTokenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task KickPlayerAsync(System.Guid sessionId, KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Send chat message to game session
+    /// </summary>
+    /// <returns>Chat message sent successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task SendChatMessageAsync(System.Guid sessionId, ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Perform game action (enhanced permissions after joining)
+    /// </summary>
+    /// <returns>Game action performed successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<GameActionResponse> PerformGameActionAsync(System.Guid sessionId, GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IAuthClient
+public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IGameSessionClient
 {
     #pragma warning disable 8618
     private string _baseUrl;
@@ -130,10 +108,10 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
     private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-    public AuthClient(System.Net.Http.HttpClient httpClient)
+    public GameSessionClient(System.Net.Http.HttpClient httpClient)
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
-        BaseUrl = "http://localhost/api/authorization";
+        BaseUrl = "http://localhost:3500/v1.0/invoke/game-session/method";
         _httpClient = httpClient;
         Initialize();
     }
@@ -168,16 +146,95 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Register new user account
+    /// List available game sessions
     /// </summary>
-    /// <remarks>
-    /// Creates a new user account with username and password authentication.
-    /// <br/>Returns JWT access token and refresh token on successful registration.
-    /// <br/>Email is optional but recommended for account recovery.
-    /// </remarks>
-    /// <returns>User registered successfully</returns>
+    /// <returns>Game sessions retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<RegisterResponse> RegisterAsync(RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<GameSessionListResponse> ListGameSessionsAsync(GameType? gameType = null, Status? status = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "sessions"
+                urlBuilder_.Append("sessions");
+                urlBuilder_.Append('?');
+                if (gameType != null)
+                {
+                    urlBuilder_.Append(System.Uri.EscapeDataString("gameType")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(gameType, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                }
+                if (status != null)
+                {
+                    urlBuilder_.Append(System.Uri.EscapeDataString("status")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(status, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                }
+                urlBuilder_.Length--;
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<GameSessionListResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Create new game session
+    /// </summary>
+    /// <returns>Game session created successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<GameSessionResponse> CreateGameSessionAsync(CreateGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -197,8 +254,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                 if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                // Operation Path: "register"
-                urlBuilder_.Append("register");
+                // Operation Path: "sessions"
+                urlBuilder_.Append("sessions");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -223,44 +280,14 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                     ProcessResponse(client_, response_);
 
                     var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
+                    if (status_ == 201)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<RegisterResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<GameSessionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Invalid request data (missing username/password)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 403)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Registration forbidden (username taken, policy violation)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 500)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Internal server error", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                     }
                     else
                     {
@@ -284,40 +311,29 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Login with username and password (GET)
+    /// Get game session details
     /// </summary>
-    /// <remarks>
-    /// Authenticate user with username and password provided via headers.
-    /// <br/>Returns JWT access token and refresh token on successful authentication.
-    /// <br/>Uses GET method for simple credential-based login.
-    /// </remarks>
-    /// <param name="username">Username for authentication</param>
-    /// <param name="password">Password for authentication</param>
-    /// <returns>Login successful</returns>
+    /// <returns>Game session retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<LoginResponse> LoginWithCredentialsGetAsync(string username, string password, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<GameSessionResponse> GetGameSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (sessionId == null)
+            throw new System.ArgumentNullException("sessionId");
+
         var client_ = _httpClient;
         var disposeClient_ = false;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-
-                if (username == null)
-                    throw new System.ArgumentNullException("username");
-                request_.Headers.TryAddWithoutValidation("username", ConvertToString(username, System.Globalization.CultureInfo.InvariantCulture));
-
-                if (password == null)
-                    throw new System.ArgumentNullException("password");
-                request_.Headers.TryAddWithoutValidation("password", ConvertToString(password, System.Globalization.CultureInfo.InvariantCulture));
                 request_.Method = new System.Net.Http.HttpMethod("GET");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                 if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                // Operation Path: "login/credentials"
-                urlBuilder_.Append("login/credentials");
+                // Operation Path: "sessions/{sessionId}"
+                urlBuilder_.Append("sessions/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -344,42 +360,12 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<LoginResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<GameSessionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Missing username or password", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 403)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Authentication failed (invalid credentials)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 500)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Internal server error", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                     }
                     else
                     {
@@ -403,34 +389,21 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Login with username and password (POST)
+    /// Join a game session
     /// </summary>
-    /// <remarks>
-    /// Authenticate user with username and password provided via headers.
-    /// <br/>Returns JWT access token and refresh token on successful authentication.
-    /// <br/>Uses POST method for credential-based login with potential request body.
-    /// </remarks>
-    /// <param name="username">Username for authentication</param>
-    /// <param name="password">Password for authentication</param>
-    /// <param name="body">Optional login request body (currently unused)</param>
-    /// <returns>Login successful</returns>
+    /// <returns>Successfully joined game session</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<LoginResponse> LoginWithCredentialsPostAsync(string username, string password, LoginRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<JoinGameSessionResponse> JoinGameSessionAsync(System.Guid sessionId, JoinGameSessionRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (sessionId == null)
+            throw new System.ArgumentNullException("sessionId");
+
         var client_ = _httpClient;
         var disposeClient_ = false;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-
-                if (username == null)
-                    throw new System.ArgumentNullException("username");
-                request_.Headers.TryAddWithoutValidation("username", ConvertToString(username, System.Globalization.CultureInfo.InvariantCulture));
-
-                if (password == null)
-                    throw new System.ArgumentNullException("password");
-                request_.Headers.TryAddWithoutValidation("password", ConvertToString(password, System.Globalization.CultureInfo.InvariantCulture));
                 var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
                 var content_ = new System.Net.Http.StringContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
@@ -440,8 +413,10 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                 if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                // Operation Path: "login/credentials"
-                urlBuilder_.Append("login/credentials");
+                // Operation Path: "sessions/{sessionId}/join"
+                urlBuilder_.Append("sessions/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/join");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -468,42 +443,12 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<LoginResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<JoinGameSessionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Missing username or password", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 403)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Authentication failed (invalid credentials)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 500)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Internal server error", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                     }
                     else
                     {
@@ -527,35 +472,30 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Login with refresh token (GET)
+    /// Leave a game session
     /// </summary>
-    /// <remarks>
-    /// Authenticate user with a refresh token provided via header.
-    /// <br/>Returns new JWT access token and potentially new refresh token.
-    /// <br/>Used for token refresh flows without requiring password re-entry.
-    /// </remarks>
-    /// <param name="token">Refresh token for authentication</param>
-    /// <returns>Token refresh successful</returns>
+    /// <returns>Successfully left game session</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<LoginResponse> LoginWithTokenGetAsync(string token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task LeaveGameSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (sessionId == null)
+            throw new System.ArgumentNullException("sessionId");
+
         var client_ = _httpClient;
         var disposeClient_ = false;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-
-                if (token == null)
-                    throw new System.ArgumentNullException("token");
-                request_.Headers.TryAddWithoutValidation("token", ConvertToString(token, System.Globalization.CultureInfo.InvariantCulture));
-                request_.Method = new System.Net.Http.HttpMethod("GET");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+                request_.Content = new System.Net.Http.StringContent(string.Empty, System.Text.Encoding.UTF8, "application/json");
+                request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                 if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                // Operation Path: "login/token"
-                urlBuilder_.Append("login/token");
+                // Operation Path: "sessions/{sessionId}/leave"
+                urlBuilder_.Append("sessions/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/leave");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -582,42 +522,7 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<LoginResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Missing or invalid token format", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 403)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Token invalid or expired", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 500)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Internal server error", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        return;
                     }
                     else
                     {
@@ -641,40 +546,36 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Login with refresh token (POST)
+    /// Kick player from game session (admin only)
     /// </summary>
-    /// <remarks>
-    /// Authenticate user with a refresh token provided via header.
-    /// <br/>Returns new JWT access token and potentially new refresh token.
-    /// <br/>Uses POST method for token refresh with potential request body.
-    /// </remarks>
-    /// <param name="token">Refresh token for authentication</param>
-    /// <param name="body">Optional login request body (currently unused)</param>
-    /// <returns>Token refresh successful</returns>
+    /// <returns>Player kicked successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<LoginResponse> LoginWithTokenPostAsync(string token, LoginRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task KickPlayerAsync(System.Guid sessionId, KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (sessionId == null)
+            throw new System.ArgumentNullException("sessionId");
+
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
         var client_ = _httpClient;
         var disposeClient_ = false;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-
-                if (token == null)
-                    throw new System.ArgumentNullException("token");
-                request_.Headers.TryAddWithoutValidation("token", ConvertToString(token, System.Globalization.CultureInfo.InvariantCulture));
                 var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
                 var content_ = new System.Net.Http.StringContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                 if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                // Operation Path: "login/token"
-                urlBuilder_.Append("login/token");
+                // Operation Path: "sessions/{sessionId}/kick"
+                urlBuilder_.Append("sessions/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/kick");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -701,42 +602,7 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<LoginResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Missing or invalid token format", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 403)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Token invalid or expired", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 500)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Internal server error", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        return;
                     }
                     else
                     {
@@ -760,17 +626,95 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Validate JWT access token
+    /// Send chat message to game session
     /// </summary>
-    /// <remarks>
-    /// Validates a JWT access token and returns token status information.
-    /// <br/>Can be used to check if a token is valid, expired, or contains specific claims.
-    /// <br/>Currently returns basic validation response.
-    /// </remarks>
-    /// <returns>Token validation completed</returns>
+    /// <returns>Chat message sent successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<ValidateTokenResponse> ValidateTokenAsync(ValidateTokenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task SendChatMessageAsync(System.Guid sessionId, ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (sessionId == null)
+            throw new System.ArgumentNullException("sessionId");
+
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = _httpClient;
+        var disposeClient_ = false;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                // Operation Path: "sessions/{sessionId}/chat"
+                urlBuilder_.Append("sessions/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/chat");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Perform game action (enhanced permissions after joining)
+    /// </summary>
+    /// <returns>Game action performed successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<GameActionResponse> PerformGameActionAsync(System.Guid sessionId, GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (sessionId == null)
+            throw new System.ArgumentNullException("sessionId");
+
         if (body == null)
             throw new System.ArgumentNullException("body");
 
@@ -789,8 +733,10 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                 if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                // Operation Path: "validate"
-                urlBuilder_.Append("validate");
+                // Operation Path: "sessions/{sessionId}/actions"
+                urlBuilder_.Append("sessions/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/actions");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -817,42 +763,12 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ValidateTokenResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<GameActionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Invalid request (missing token)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 401)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Token invalid or expired", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                    }
-                    else
-                    if (status_ == 500)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<AuthErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        throw new ApiException<AuthErrorResponse>("Internal server error", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                     }
                     else
                     {
@@ -1006,35 +922,127 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
     }
 }
 
-/// <summary>
-/// Request to register a new user account
-/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RegisterRequest
+public partial class CreateGameSessionRequest
+{
+    [Newtonsoft.Json.JsonProperty("gameType", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public CreateGameSessionRequestGameType GameType { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("maxPlayers", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Range(1, 100)]
+    public int MaxPlayers { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("sessionName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string SessionName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("isPrivate", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool IsPrivate { get; set; } = false;
+
+    [Newtonsoft.Json.JsonProperty("gameSettings", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object GameSettings { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GameSessionResponse
+{
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid SessionId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("gameType", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public GameSessionResponseGameType GameType { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("sessionName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string SessionName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public GameSessionResponseStatus Status { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("maxPlayers", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int MaxPlayers { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("currentPlayers", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int CurrentPlayers { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("isPrivate", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool IsPrivate { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("owner", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Guid Owner { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("players", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<GamePlayer> Players { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("gameSettings", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object GameSettings { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GameSessionListResponse
+{
+    [Newtonsoft.Json.JsonProperty("sessions", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<GameSessionResponse> Sessions { get; set; } = new System.Collections.ObjectModel.Collection<GameSessionResponse>();
+
+    [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int TotalCount { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class JoinGameSessionRequest
 {
     /// <summary>
-    /// Unique username for the account
+    /// Password for private sessions
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("username", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.ComponentModel.DataAnnotations.StringLength(32, MinimumLength = 3)]
-    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-zA-Z0-9_]+$")]
-    public string Username { get; set; } = default!;
-
-    /// <summary>
-    /// Password for the account (will be securely hashed)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("password", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 8)]
+    [Newtonsoft.Json.JsonProperty("password", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
     public string Password { get; set; } = default!;
 
     /// <summary>
-    /// Email address for the account (optional but recommended)
+    /// Game-specific character data
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [System.ComponentModel.DataAnnotations.StringLength(255)]
-    public string? Email { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("characterData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object CharacterData { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1047,210 +1055,32 @@ public partial class RegisterRequest
 
 }
 
-/// <summary>
-/// Response from successful user registration
-/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RegisterResponse
+public partial class JoinGameSessionResponse
 {
-    /// <summary>
-    /// JWT access token for immediate authentication
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("access_token", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
+    public bool Success { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Access_token { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
-    /// <summary>
-    /// Refresh token for obtaining new access tokens
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("refresh_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Refresh_token { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Login request body (currently unused - credentials passed via headers).
-/// <br/>Provided for future extensibility and consistency with API patterns.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LoginRequest
-{
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Response from successful user login
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LoginResponse
-{
-    /// <summary>
-    /// JWT access token for authentication
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("access_token", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Access_token { get; set; } = default!;
-
-    /// <summary>
-    /// Refresh token for obtaining new access tokens
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("refresh_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Refresh_token { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Request to validate a JWT access token
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ValidateTokenRequest
-{
-    /// <summary>
-    /// JWT access token to validate
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("token", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required]
-    public string Token { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Response from token validation (currently minimal implementation).
-/// <br/>Future versions may include token claims, expiration info, and validation details.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ValidateTokenResponse
-{
-    /// <summary>
-    /// Whether the token is valid
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("valid", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool Valid { get; set; } = default!;
-
-    /// <summary>
-    /// Token expiration timestamp
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("expires_at", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.DateTimeOffset? Expires_at { get; set; } = default!;
-
-    /// <summary>
-    /// Token subject (user identifier)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("subject", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Subject { get; set; } = default!;
-
-    /// <summary>
-    /// Token claims (roles, permissions, etc.)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("claims", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object? Claims { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Internal access data structure containing authentication tokens.
-/// <br/>Used by service implementations but not directly exposed in API responses.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AccessData
-{
-    /// <summary>
-    /// JWT access token
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("access_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Access_token { get; set; } = default!;
-
-    /// <summary>
-    /// Refresh token for token renewal
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("refresh_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Refresh_token { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Error response for failed requests
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AuthErrorResponse
-{
-    /// <summary>
-    /// Error type identifier
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("playerRole", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public AuthErrorResponseError Error { get; set; } = default!;
+    public JoinGameSessionResponsePlayerRole PlayerRole { get; set; } = default!;
 
     /// <summary>
-    /// Human-readable error message
+    /// Initial game state data
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Message { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("gameData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object GameData { get; set; } = default!;
 
     /// <summary>
-    /// Additional error context and details
+    /// Additional permissions granted by joining
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("details", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object? Details { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("newPermissions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> NewPermissions { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1264,29 +1094,285 @@ public partial class AuthErrorResponse
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AuthErrorResponseError
+public partial class GamePlayer
+{
+    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid AccountId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string DisplayName { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("role", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public GamePlayerRole Role { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("joinedAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset JoinedAt { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("characterData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object CharacterData { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class KickPlayerRequest
+{
+    [Newtonsoft.Json.JsonProperty("targetAccountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid TargetAccountId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("reason", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
+    public string Reason { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChatMessageRequest
+{
+    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string Message { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("messageType", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public ChatMessageRequestMessageType MessageType { get; set; } = BeyondImmersion.BannouService.GameSession.Client.ChatMessageRequestMessageType.Public;
+
+    /// <summary>
+    /// For whisper messages
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("targetPlayerId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Guid TargetPlayerId { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GameActionRequest
+{
+    [Newtonsoft.Json.JsonProperty("actionType", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public GameActionRequestActionType ActionType { get; set; } = default!;
+
+    /// <summary>
+    /// Action-specific data
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("actionData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object ActionData { get; set; } = default!;
+
+    /// <summary>
+    /// Target of the action (if applicable)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("targetId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Guid TargetId { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GameActionResponse
+{
+    [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
+    public bool Success { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("actionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid ActionId { get; set; } = default!;
+
+    /// <summary>
+    /// Action result data
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("result", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object Result { get; set; } = default!;
+
+    /// <summary>
+    /// Updated game state (if applicable)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("newGameState", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object NewGameState { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum GameType
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"INVALID_REQUEST")]
-    INVALID_REQUEST = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"arcadia")]
+    Arcadia = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"MISSING_CREDENTIALS")]
-    MISSING_CREDENTIALS = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"generic")]
+    Generic = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"AUTHENTICATION_FAILED")]
-    AUTHENTICATION_FAILED = 2,
+}
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TOKEN_INVALID")]
-    TOKEN_INVALID = 3,
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum Status
+{
 
-    [System.Runtime.Serialization.EnumMember(Value = @"TOKEN_EXPIRED")]
-    TOKEN_EXPIRED = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"waiting")]
+    Waiting = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"USER_EXISTS")]
-    USER_EXISTS = 5,
+    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    Active = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"INTERNAL_ERROR")]
-    INTERNAL_ERROR = 6,
+    [System.Runtime.Serialization.EnumMember(Value = @"full")]
+    Full = 2,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CreateGameSessionRequestGameType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"arcadia")]
+    Arcadia = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"generic")]
+    Generic = 1,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum GameSessionResponseGameType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"arcadia")]
+    Arcadia = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"generic")]
+    Generic = 1,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum GameSessionResponseStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"waiting")]
+    Waiting = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"active")]
+    Active = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"full")]
+    Full = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"finished")]
+    Finished = 3,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum JoinGameSessionResponsePlayerRole
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"player")]
+    Player = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"spectator")]
+    Spectator = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"moderator")]
+    Moderator = 2,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum GamePlayerRole
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"player")]
+    Player = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"spectator")]
+    Spectator = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"moderator")]
+    Moderator = 2,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ChatMessageRequestMessageType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"public")]
+    Public = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"whisper")]
+    Whisper = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"system")]
+    System = 2,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum GameActionRequestActionType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"move")]
+    Move = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"interact")]
+    Interact = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"attack")]
+    Attack = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cast_spell")]
+    Cast_spell = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"use_item")]
+    Use_item = 4,
 
 }
 

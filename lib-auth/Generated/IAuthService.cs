@@ -2,13 +2,13 @@ using BeyondImmersion.BannouService;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BeyondImmersion.BannouService.Auth
+namespace BeyondImmersion.BannouService.Auth;
+
+/// <summary>
+/// Service interface for Auth API - generated from controller
+/// </summary>
+public interface IAuthService
 {
-    /// <summary>
-    /// Service interface for Auth API - generated from controller
-    /// </summary>
-    public interface IAuthService
-    {
         /// <summary>
         /// Register operation
         /// </summary>
@@ -39,5 +39,4 @@ namespace BeyondImmersion.BannouService.Auth
         /// </summary>
         Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(ValidateTokenRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
-    }
 }

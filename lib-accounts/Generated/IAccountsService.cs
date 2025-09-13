@@ -2,13 +2,13 @@ using BeyondImmersion.BannouService;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BeyondImmersion.BannouService.Accounts
+namespace BeyondImmersion.BannouService.Accounts;
+
+/// <summary>
+/// Service interface for Accounts API - generated from controller
+/// </summary>
+public interface IAccountsService
 {
-    /// <summary>
-    /// Service interface for Accounts API - generated from controller
-    /// </summary>
-    public interface IAccountsService
-    {
         /// <summary>
         /// ListAccounts operation
         /// </summary>
@@ -54,5 +54,4 @@ namespace BeyondImmersion.BannouService.Accounts
         /// </summary>
         Task<(StatusCodes, AccountResponse?)> UpdateProfileAsync(Guid accountId, UpdateProfileRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
-    }
 }
