@@ -4,7 +4,7 @@
 
 Bannou Service is a versatile ASP.NET Core application designed to provide a WebSocket-first microservices architecture for massively multiplayer online games. Featuring an intelligent Connect service edge gateway that routes messages via service GUIDs without payload inspection, Bannou enables zero-copy message routing and seamless dual-transport communication (HTTP for development, WebSocket for production). The platform uses schema-driven development with NSwag code generation to ensure API consistency across all services. Primarily designed to support Arcadia, a revolutionary MMORPG with AI-driven NPCs, Bannou becomes the foundation of the universal cloud-based platform for developing and hosting multiplayer video games, tentatively called "CelestialLink".
 
-**⚠️ IMPORTANT**: For all Bannou development tasks, always reference [**API-DESIGN.md**](API-DESIGN.md) first. This document defines the authoritative schema-driven development approach, consolidated service architecture (one plugin per service), and implementation patterns that must be followed for all Bannou services.
+**⚠️ IMPORTANT**: For all Bannou development tasks, always reference **API-DESIGN.md** (available in Technical Architecture knowledge base section) first. This document defines the authoritative schema-driven development approach, consolidated service architecture (one plugin per service), and implementation patterns that must be followed for all Bannou services.
 
 ## Table of Contents
 
@@ -87,7 +87,7 @@ Bannou uses **contract-first development** where OpenAPI specifications define t
 4. Generated tests validate schema compliance
 5. TypeScript clients enable type-safe game integration
 
-See [API-DESIGN.md](API-DESIGN.md) for detailed implementation guide.
+See API-DESIGN.md (Technical Architecture knowledge base section) for detailed implementation guide.
 
 ### Development Workflow
 After updating schemas or regenerating NSwag code:
@@ -236,7 +236,7 @@ The separation between enabling services/controllers (via ENVs) and mapping serv
 ## Generated Docs
 
 - [WebSocket Protocol Architecture](WEBSOCKET-PROTOCOL.md) - Complete binary protocol specification
-- [API Design & Schema-Driven Development](API-DESIGN.md) - Contract-first development guide
+- API Design & Schema-Driven Development (Technical Architecture knowledge base) - Contract-first development guide
 - [Testing Architecture](TESTING.md) - Dual-transport and schema-driven testing
 - [Service Configuration](documentation/configuration.md) - Environment and deployment configuration
 - [Service APIs](documentation/services.md) - Generated API documentation

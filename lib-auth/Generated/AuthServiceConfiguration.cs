@@ -20,12 +20,41 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// </summary>
     public bool? Service_Disabled { get; set; }
 
-    // TODO: Add service-specific configuration properties from schema
-    // Example properties:
-    // [Required]
-    // public string ConnectionString { get; set; } = string.Empty;
-    //
-    // public int MaxRetries { get; set; } = 3;
-    //
-    // public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
+    /// <summary>
+    /// JWT secret key for token signing and validation
+    /// </summary>
+    [Required]
+    public string JwtSecret { get; set; } = string.Empty;
+
+    /// <summary>
+    /// JWT token issuer
+    /// </summary>
+    [Required]
+    public string JwtIssuer { get; set; } = "bannou-auth";
+
+    /// <summary>
+    /// JWT token audience
+    /// </summary>
+    [Required]
+    public string JwtAudience { get; set; } = "bannou-api";
+
+    /// <summary>
+    /// JWT access token expiration time in minutes
+    /// </summary>
+    public int JwtExpirationMinutes { get; set; } = 60;
+
+    /// <summary>
+    /// OAuth callback base URL for external providers
+    /// </summary>
+    public string OAuthCallbackBaseUrl { get; set; } = "https://localhost/auth/callback";
+
+    /// <summary>
+    /// Maximum login attempts before rate limiting
+    /// </summary>
+    public int MaxLoginAttempts { get; set; } = 5;
+
+    /// <summary>
+    /// Rate limit window in minutes
+    /// </summary>
+    public int RateLimitWindowMinutes { get; set; } = 15;
 }

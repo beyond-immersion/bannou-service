@@ -130,6 +130,7 @@ test-generation-consistency:
 	git diff --exit-code || (echo "❌ Service generation created changes" && exit 1)
 	@echo "✅ Service generation is consistent"
 
+
 tagname := $(shell date -u +%FT%H-%M-%SZ)
 tag:
 	git tag $(tagname) -a -m '$(msg)'

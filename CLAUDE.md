@@ -1,6 +1,45 @@
 # Bannou Service Development Instructions
 
+## ⚠️ MANDATORY REFERENCE
+
+**For ALL Bannou service design and development tasks**, you MUST reference the comprehensive architectural documentation available in the knowledge base:
+
+**API-DESIGN.md** (located in Technical Architecture knowledge base section)
+
+This document defines the authoritative schema-driven development approach, consolidated service architecture patterns, WebSocket-first integration, and complete implementation workflows that must be followed for all Bannou services.
+
+**When to Reference API-DESIGN.md**:
+- Creating new services or modifying existing service architecture
+- Questions about schema-first development patterns
+- Service integration with Dapr, WebSocket protocols, or client generation
+- Debugging service implementation issues
+- Understanding event types, datastore requirements, or testing strategies
+
 ## Critical Development Rules
+
+### NEVER Export Environment Variables
+**MANDATORY**: Never use `export` commands to set environment variables on the local machine. This confuses containerization workflows and creates debugging issues.
+- **Correct**: Use .env files and Docker Compose environment configuration
+- **Incorrect**: `export VARIABLE=value` commands
+- **Principle**: We use containerization workflows - configuration belongs in containers, not host environments
+
+### Always Check GitHub Actions for Testing Workflows
+**MANDATORY**: Before attempting any integration testing work, ALWAYS check `.github/workflows/ci.integration.yml` first to understand the proper testing approach.
+- The GitHub Actions workflow defines the authoritative 10-step testing pipeline
+- Local testing should mirror the CI approach, not invent new approaches
+- Infrastructure testing, HTTP testing, and WebSocket testing all have established patterns
+
+### Always Reference the Makefile
+**MANDATORY**: The Makefile contains all established commands and patterns. Always check it before creating new commands or approaches.
+
+**Available Makefile Commands**:
+@~/repos/bannou/Makefile
+
+### Prefer .env Files Over Other Configuration
+**MANDATORY**: In our containerization workflow, always prefer .env files over other configuration methods:
+- **Use**: .env files for environment configuration
+- **Avoid**: appsettings.json, Config.json, hardcoded configuration
+- **Principle**: Container-first configuration management
 
 ### Schema-First Development (MANDATORY)
 **ALL development follows schema-first architecture - never edit generated code manually.**
@@ -70,6 +109,43 @@ make ci-test-v2               # Full CI pipeline locally
 ### **MANDATORY**: Reference Detailed Procedures
 **When testing fails or debugging complex issues**, you MUST reference the detailed development procedures documentation in the knowledge base for troubleshooting guides, Docker Compose configurations, and step-by-step debugging procedures.
 
+### Environment Configuration
+
+**Local Development with .env Files**:
+- **Primary Configuration**: Use `.env` file in repository root for all environment variables
+- **Service Prefix**: Use `BANNOU_` prefix for service-specific variables (e.g., `BANNOU_HTTP_Web_Host_Port=5012`)
+- **Non-Prefixed Support**: Maintain backwards compatibility with non-prefixed variables
+- **Configuration Loading**: System automatically loads .env files from current or parent directories
+
+**Environment Variable Patterns**:
+```bash
+# Port Configuration
+HTTP_Web_Host_Port=5012
+HTTPS_Web_Host_Port=5013
+BANNOU_HTTP_Web_Host_Port=5012    # Service-specific with prefix
+BANNOU_HTTPS_Web_Host_Port=5013
+
+# Service Configuration
+BANNOU_EmulateDapr=True           # Enables Dapr emulation for local development
+SERVICE_DOMAIN=beyond-immersion.com
+
+# Database Configuration
+ACCOUNT_DB_USER=Franklin
+ACCOUNT_DB_PASSWORD=DevPassword
+
+# Auth Configuration
+AUTH_JWT_SECRET=bannou-dev-secret-key-2025-please-change-in-production
+AUTH_JWT_ISSUER=bannou-auth-dev
+AUTH_JWT_AUDIENCE=bannou-api-dev
+AUTH_JWT_EXPIRATION_MINUTES=60
+```
+
+**Configuration Implementation Details**:
+- **DotNetEnv Integration**: Automatic .env file loading via DotNetEnv package (3.1.1)
+- **Service-Specific Binding**: `[ServiceConfiguration(envPrefix: "BANNOU_")]` attribute on configuration classes
+- **Hierarchy**: .env files checked in current directory, then parent directory
+- **Fallback**: Non-prefixed variables maintained for backwards compatibility
+
 ### Code Generation Systems
 
 **NSwag (Primary)**: Generates controllers, models, and service clients from OpenAPI schemas
@@ -77,7 +153,7 @@ make ci-test-v2               # Full CI pipeline locally
 - **Generated Files**: Controllers, request/response models, event models, client classes
 - **Command**: `./generate-all-services.sh` (unified script)
 
-**Roslyn (Specialized)**: Generates patterns NSwag cannot handle  
+**Roslyn (Specialized)**: Generates patterns NSwag cannot handle
 - Service scaffolding, unit test projects, DI registrations
 - **EventModelGenerator**: ✅ DISABLED (NSwag handles events)
 - **ServiceScaffoldGenerator**: ✅ WORKING

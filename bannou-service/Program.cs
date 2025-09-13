@@ -46,7 +46,7 @@ public static class Program
     /// </summary>
     public static AppConfiguration Configuration
     {
-        get => _configuration ??= ConfigurationRoot.Get<AppConfiguration>() ?? new AppConfiguration();
+        get => _configuration ??= IServiceConfiguration.BuildConfiguration<AppConfiguration>(Environment.GetCommandLineArgs());
         internal set => _configuration = value;
     }
 
@@ -92,6 +92,7 @@ public static class Program
             Logger.Log(LogLevel.Error, null, "Service configuration missing- exiting application.");
             return;
         }
+
 
         // load the assemblies
         LoadAssemblies();

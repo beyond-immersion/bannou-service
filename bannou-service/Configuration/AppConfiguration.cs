@@ -3,7 +3,7 @@ namespace BeyondImmersion.BannouService.Configuration;
 /// <summary>
 /// Main application configuration for the Bannou service platform.
 /// </summary>
-[ServiceConfiguration]
+[ServiceConfiguration(envPrefix: "BANNOU_")]
 public class AppConfiguration : BaseServiceConfiguration
 {
     /// <summary>

@@ -1,4 +1,6 @@
 using Dapr.Extensions.Configuration;
+using DotNetEnv;
+using System.IO;
 using System.Reflection;
 using System.Text.Json;
 
@@ -81,10 +83,27 @@ public interface IServiceConfiguration
     }
 
     /// <summary>
-    /// Builds the service configuration root from available Config.json, ENVs, and command line switches.
+    /// Builds the service configuration root from available .env files, Config.json, ENVs, and command line switches.
     /// </summary>
     public static IConfigurationRoot BuildConfigurationRoot(string[]? args = null, string? envPrefix = null)
     {
+        // Load .env file first for local development support
+        try
+        {
+            if (File.Exists("../.env"))
+            {
+                Env.Load("../.env");
+            }
+            else if (File.Exists(".env"))
+            {
+                Env.Load();
+            }
+        }
+        catch (Exception)
+        {
+            // .env file is optional, ignore if not present
+        }
+
         IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
             .AddJsonFile("Config.json", true)
             .AddEnvironmentVariables(envPrefix)

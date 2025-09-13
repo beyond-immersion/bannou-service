@@ -39,4 +39,19 @@ public interface IAuthService
         /// </summary>
         Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(ValidateTokenRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// GetOAuthProviders operation
+        /// </summary>
+        Task<(StatusCodes, OAuthProvidersResponse?)> GetOAuthProvidersAsync(CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// HandleOAuthCallback operation
+        /// </summary>
+        Task<(StatusCodes, LoginResponse?)> HandleOAuthCallbackAsync(Provider provider, OAuthCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// UpdateRoutingPreference operation
+        /// </summary>
+        Task<(StatusCodes, RoutingPreferenceResponse?)> UpdateRoutingPreferenceAsync(RoutingPreferenceRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

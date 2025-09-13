@@ -4,12 +4,15 @@ info:
   version: 1.0.0
   description: |
     User authentication and authorization for Bannou services.
-    
+
     This API handles:
     - User registration with username/password authentication
-    - User login with credentials (username/password) 
+    - User login with credentials (username/password)
+    - OAuth2 provider integration (Steam OpenID and others)
     - Token-based authentication using JWT access tokens and refresh tokens
     - Token validation and refresh flows
+    - Internal routing preference management for session stickiness
+    - Integration with NGINX+Redis dynamic routing layer
     - Integration with Dapr service mesh
 
 servers:
@@ -287,7 +290,7 @@ paths:
       description: |
         Validates a JWT access token and returns token status information.
         Can be used to check if a token is valid, expired, or contains specific claims.
-        Currently returns basic validation response.
+        Used by other services for token verification.
       operationId: ValidateToken
       tags:
         - Authorization
@@ -317,6 +320,138 @@ paths:
                 $ref: '#/components/schemas/AuthErrorResponse'
         '401':
           description: Token invalid or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+  /oauth/providers:
+    get:
+      summary: Get available OAuth providers
+      description: |
+        Returns list of available OAuth providers with their authorization URLs.
+        Clients use this to initiate OAuth flows with external providers like Steam.
+      operationId: GetOAuthProviders
+      tags:
+        - OAuth
+      responses:
+        '200':
+          description: List of available OAuth providers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthProvidersResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+  /oauth/callback/{provider}:
+    post:
+      summary: Handle OAuth provider callback
+      description: |
+        Processes OAuth callback from external providers (Steam, etc.).
+        Exchanges authorization code for user data and creates/links account.
+        Returns JWT tokens for authenticated user.
+      operationId: HandleOAuthCallback
+      tags:
+        - OAuth
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          description: OAuth provider name
+          schema:
+            type: string
+            enum: [steam]
+            example: "steam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuthCallbackRequest'
+            examples:
+              steam-callback:
+                summary: Steam OAuth callback
+                value:
+                  authorization_code: "abc123xyz789"
+                  state: "random_state_token"
+      responses:
+        '200':
+          description: OAuth authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid callback request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '403':
+          description: OAuth authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+  /internal/routing/update-preference:
+    post:
+      summary: Update user routing preference (Internal)
+      description: |
+        Internal endpoint for Connect service to update user routing preferences.
+        Updates Redis with user's preferred Connect service instance for session stickiness.
+        Not exposed to external clients.
+      operationId: UpdateRoutingPreference
+      tags:
+        - Internal
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutingPreferenceRequest'
+            examples:
+              update-preference:
+                summary: Update Connect service preference
+                value:
+                  user_id: "user123"
+                  service_type: "connect"
+                  preferred_instance: "connect-service-01"
+                  session_id: "session_abc123"
+      responses:
+        '200':
+          description: Routing preference updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutingPreferenceResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '401':
+          description: Unauthorized request
           content:
             application/json:
               schema:
@@ -454,6 +589,139 @@ components:
           nullable: true
           example: "refresh_token_abc123xyz"
 
+    OAuthProvidersResponse:
+      type: object
+      description: Response containing available OAuth providers
+      required:
+        - providers
+      properties:
+        providers:
+          type: array
+          description: List of available OAuth providers
+          items:
+            $ref: '#/components/schemas/OAuthProvider'
+
+    OAuthProvider:
+      type: object
+      description: OAuth provider information
+      required:
+        - name
+        - authorization_url
+      properties:
+        name:
+          type: string
+          description: Provider identifier
+          enum: [steam]
+          example: "steam"
+        display_name:
+          type: string
+          description: Human-readable provider name
+          example: "Steam"
+        authorization_url:
+          type: string
+          description: OAuth authorization URL for this provider
+          format: uri
+          example: "https://steamcommunity.com/openid/login?openid.return_to=..."
+        scopes:
+          type: array
+          description: Required OAuth scopes
+          items:
+            type: string
+          example: ["openid"]
+
+    OAuthCallbackRequest:
+      type: object
+      description: OAuth callback request from external provider
+      required:
+        - authorization_code
+      properties:
+        authorization_code:
+          type: string
+          description: Authorization code from OAuth provider
+          minLength: 1
+          example: "abc123xyz789"
+        state:
+          type: string
+          description: State parameter for CSRF protection
+          nullable: true
+          example: "random_state_token"
+        error:
+          type: string
+          description: Error code from OAuth provider (if any)
+          nullable: true
+        error_description:
+          type: string
+          description: Error description from OAuth provider (if any)
+          nullable: true
+
+    RoutingPreferenceRequest:
+      type: object
+      description: Request to update user routing preference
+      required:
+        - user_id
+        - service_type
+        - preferred_instance
+      properties:
+        user_id:
+          type: string
+          description: User identifier
+          minLength: 1
+          example: "user123"
+        service_type:
+          type: string
+          description: Type of service for routing preference
+          enum: [connect]
+          example: "connect"
+        preferred_instance:
+          type: string
+          description: Preferred service instance identifier
+          minLength: 1
+          example: "connect-service-01"
+        session_id:
+          type: string
+          description: Current session identifier
+          nullable: true
+          example: "session_abc123"
+        expires_in_seconds:
+          type: integer
+          description: Preference expiration time in seconds
+          minimum: 60
+          maximum: 86400
+          default: 86400
+          example: 3600
+
+    RoutingPreferenceResponse:
+      type: object
+      description: Response from routing preference update
+      required:
+        - success
+        - user_id
+        - service_type
+      properties:
+        success:
+          type: boolean
+          description: Whether the preference was updated successfully
+          example: true
+        user_id:
+          type: string
+          description: User identifier
+          example: "user123"
+        service_type:
+          type: string
+          description: Service type that was updated
+          example: "connect"
+        preferred_instance:
+          type: string
+          description: Updated preferred instance
+          nullable: true
+          example: "connect-service-01"
+        expires_at:
+          type: string
+          description: When the preference expires
+          format: date-time
+          nullable: true
+          example: "2024-01-01T15:00:00Z"
+
     AuthErrorResponse:
       type: object
       description: Error response for failed requests
@@ -471,6 +739,8 @@ components:
             - TOKEN_INVALID
             - TOKEN_EXPIRED
             - USER_EXISTS
+            - OAUTH_ERROR
+            - PROVIDER_ERROR
             - INTERNAL_ERROR
           example: "AUTHENTICATION_FAILED"
         message:
@@ -496,3 +766,7 @@ security:
 tags:
   - name: Authorization
     description: User authentication and authorization operations
+  - name: OAuth
+    description: OAuth provider integration and external authentication
+  - name: Internal
+    description: Internal service-to-service endpoints (not for external clients)
