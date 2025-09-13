@@ -154,9 +154,9 @@ AUTH_JWT_EXPIRATION_MINUTES=60
 - **Command**: `./generate-all-services.sh` (unified script)
 
 **Roslyn (Specialized)**: Generates patterns NSwag cannot handle
-- Service scaffolding, unit test projects, DI registrations
+- Unit test projects, DI registrations
 - **EventModelGenerator**: ✅ DISABLED (NSwag handles events)
-- **ServiceScaffoldGenerator**: ✅ WORKING
+- **ServiceScaffoldGenerator**: ✅ DISABLED (NSwag handles service scaffolding)
 - **UnitTestGenerator**: ✅ WORKING
 
 ## Service Implementation Patterns
