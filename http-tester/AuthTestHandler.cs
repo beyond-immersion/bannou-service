@@ -171,7 +171,7 @@ public class AuthTestHandler : IServiceTestHandler
 
             try
             {
-                var oauthResponse = await authClient.CompleteOAuthAsync(Provider2.Discord, oauthRequest);
+                var oauthResponse = await authClient.CompleteOAuthAsync(Provider.Discord, oauthRequest);
                 return TestResult.Successful($"OAuth flow completed successfully for Discord with AccountId: {oauthResponse.AccountId}");
             }
             catch (ApiException ex) when (ex.StatusCode == 400)

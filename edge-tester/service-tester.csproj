@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
+    <ProjectReference Include="../lib-connect/lib-connect.csproj" />
   </ItemGroup>
 
   <!-- Backwards Compatibility Testing: Use Published NuGet SDK -->

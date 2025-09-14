@@ -10,21 +10,68 @@ namespace BeyondImmersion.BannouService.Connect;
 /// </summary>
 public class ConnectController : ConnectControllerBase
 {
+    private readonly IConnectService _connectService;
+
     public ConnectController(IConnectService connectService) : base(connectService)
     {
+        _connectService = connectService;
     }
 
-    public override System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocket([Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection connection, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade upgrade, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public override async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocket([Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection connection, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade upgrade, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        // TODO: Implement ConnectWebSocket - WebSocket connection handling
-        throw new System.NotImplementedException("ConnectWebSocket requires manual implementation for WebSocket functionality");
+        return await HandleWebSocketConnectionAsync(authorization, cancellationToken);
     }
 
-    public override System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public override async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        // TODO: Implement ConnectWebSocketPost - WebSocket connection handling
-        throw new System.NotImplementedException("ConnectWebSocketPost requires manual implementation for WebSocket functionality");
+        return await HandleWebSocketConnectionAsync(authorization, cancellationToken);
     }
 
+    /// <summary>
+    /// Common WebSocket connection handling logic.
+    /// </summary>
+    private async Task<IActionResult> HandleWebSocketConnectionAsync(
+        string authorization,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Validate WebSocket upgrade request
+            if (!HttpContext.WebSockets.IsWebSocketRequest)
+            {
+                return BadRequest("This endpoint only accepts WebSocket connections");
+            }
+
+            // Cast to concrete service type for WebSocket handling
+            var connectService = _connectService as ConnectService;
+            if (connectService == null)
+            {
+                return StatusCode(500, "Service implementation not available");
+            }
+
+            // Validate and parse JWT token
+            var sessionId = await connectService.ValidateJWTAndExtractSessionAsync(authorization, cancellationToken);
+            if (sessionId == null)
+            {
+                return Unauthorized("Invalid or expired JWT token");
+            }
+
+            // Accept WebSocket connection
+            var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+
+            // Handle WebSocket communication with binary protocol
+            await connectService.HandleWebSocketCommunicationAsync(webSocket, sessionId, cancellationToken);
+
+            return Ok();
+        }
+        catch (OperationCanceledException)
+        {
+            return NoContent();
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "WebSocket connection failed");
+        }
+    }
 }
 

@@ -543,32 +543,37 @@ components:
     ResponseCodes:
       type: integer
       format: byte
+      enum:
+        - 0   # OK
+        - 10  # RequestError
+        - 11  # RequestTooLarge
+        - 12  # TooManyRequests
+        - 13  # InvalidRequestChannel
+        - 20  # Unauthorized
+        - 30  # ServiceNotFound
+        - 31  # ClientNotFound
+        - 32  # MessageNotFound
+        - 50  # Service_BadRequest
+        - 51  # Service_NotFound
+        - 52  # Service_Unauthorized
+        - 60  # Service_InternalServerError
+      x-enumNames:
+        - "OK"
+        - "RequestError"
+        - "RequestTooLarge"
+        - "TooManyRequests"
+        - "InvalidRequestChannel"
+        - "Unauthorized"
+        - "ServiceNotFound"
+        - "ClientNotFound"
+        - "MessageNotFound"
+        - "Service_BadRequest"
+        - "Service_NotFound"
+        - "Service_Unauthorized"
+        - "Service_InternalServerError"
       description: |
-        Response codes used in the binary protocol.
-        
-        **Success:**
-        - 0: OK
-        
-        **Request Errors (10-19):**
-        - 10: RequestError
-        - 11: RequestTooLarge
-        - 12: TooManyRequests
-        - 13: InvalidRequestChannel
-        
-        **Authorization Errors (20-29):**
-        - 20: Unauthorized
-        
-        **Not Found Errors (30-39):**
-        - 30: ServiceNotFound
-        - 31: ClientNotFound
-        - 32: MessageNotFound
-        
-        **Service Errors (50-60):**
-        - 50: Service_BadRequest
-        - 51: Service_NotFound
-        - 52: Service_Unauthorized
-        - 60: Service_InternalServerError
-      enum: [0, 10, 11, 12, 13, 20, 30, 31, 32, 50, 51, 52, 60]
+        Response codes used in the binary protocol for success/error indication.
+        Provides fine-grained error reporting for different failure scenarios.
       example: 0
 
     ServiceRequestMessage:

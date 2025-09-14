@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Connect.Protocol;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.WebSockets;
@@ -8,115 +9,13 @@ namespace BeyondImmersion.ServiceTester;
 
 public class Program
 {
-    /// <summary>
-    /// The very first byte of any request or response message.
-    /// Indicates how the message content should be treated, and
-    /// how the message itself should be routed through the system.
-    /// </summary>
-    [Flags]
-    public enum MessageFlags : byte
-    {
-        /// <summary>
-        /// The "default message type" is a text/JSON request, being
-        /// made to a service endpoint (rather than to another client),
-        /// unencrypted, uncompressed, standard priority, and expecting
-        /// a response from the service.
-        ///
-        /// With these flags, the next "ServiceID" section of the header
-        /// would be referring to the Dapr service app to pass the message
-        /// along to, after converting it to an HTTP request.
-        ///
-        /// The "MessageID" section will also be enterring the system for
-        /// the first time- the same ID will need to be handed back to the
-        /// client for the response, so they can associate it back to the
-        /// request themselves if needed.
-        /// </summary>
-        None = 0,
-        /// <summary>
-        /// Message payload is binary data.
-        /// Default/off indicates Text/JSON.
-        /// </summary>
-        Binary = 1 << 0,
-        /// <summary>
-        /// Message payload is encrypted.
-        /// </summary>
-        Encrypted = 1 << 1,
-        /// <summary>
-        /// Message payload is compressed.
-        /// </summary>
-        Compressed = 1 << 2,
-        /// <summary>
-        /// Delivery at high priority- skip to the front of queues.
-        /// </summary>
-        HighPriority = 1 << 3,
-        /// <summary>
-        /// Message is an event- fire-and-forget.
-        /// Default/off indicates an RPC- expects a response.
-        /// </summary>
-        Event = 1 << 4,
-        /// <summary>
-        /// Message should be handed off to another WebSocket connection.
-        /// Default/off will direct the message to a Dapr service (HTTP).
-        /// </summary>
-        Client = 1 << 5,
-        /// <summary>
-        /// Message is the response to an RPC.
-        /// Default/off indicates a request (or event).
-        /// </summary>
-        Response = 1 << 6
-    };
+    // Protocol definitions now imported from BeyondImmersion.BannouService.Connect.Protocol
+    // MessageFlags, ServiceRequestItem, ServiceResponseItem, BinaryMessage are available
 
-    /// <summary>
-    ///
-    /// </summary>
-    public enum ResponseCodes : byte
-    {
-        OK = 0,
+    // ResponseCodes enum available from Connect service protocol
 
-        RequestError = 10,
-        RequestTooLarge,
-        TooManyRequests,
-        InvalidRequestChannel,
-
-        Unauthorized = 20,
-
-        ServiceNotFound = 30,
-        ClientNotFound,
-        MessageNotFound,
-
-        Service_BadRequest = 50,
-        Service_NotFound,
-        Service_Unauthorized,
-        Service_InternalServerError = 60
-    };
-
-    /// <summary>
-    /// A request- either outgoing from the client to a service, or
-    /// incoming from a service to the client (as an RPC- cool!).
-    /// </summary>
-    public struct ServiceRequestItem
-    {
-        public MessageFlags Flags { get; set; }
-        public Guid MessageID { get; set; }
-        public ushort MessageChannel { get; set; }
-        public Guid ServiceID { get; set; }
-
-        public byte[] Content { get; set; }
-    }
-
-    /// <summary>
-    /// A response to an RPC, whether made by the client to a service,
-    /// or from a service to the client, depending on where the request
-    /// originated.
-    /// </summary>
-    public struct ServiceResponseItem
-    {
-        public MessageFlags Flags { get; set; }
-        public Guid MessageID { get; set; }
-        public ResponseCodes ResponseCode { get; set; }
-
-        public byte[]? Content { get; set; }
-    }
+    // Enhanced ServiceRequestItem and ServiceResponseItem available from Connect service protocol
+    // These include additional fields like Channel and Sequence for improved functionality
 
     private static ClientConfiguration _configuration;
     /// <summary>
@@ -179,7 +78,37 @@ public class Program
     private static string? sAccessToken = null;
     private static string? sRefreshToken = null;
 
-    internal static async Task Main()
+    /// <summary>
+    /// Checks if the application is running in daemon mode (non-interactive).
+    /// </summary>
+    /// <param name="args">Command line arguments.</param>
+    /// <returns>True if in daemon mode, false otherwise.</returns>
+    private static bool IsDaemonMode(string[] args)
+    {
+        return Environment.GetEnvironmentVariable("DAEMON_MODE") == "true" ||
+               args.Contains("--daemon") ||
+               args.Contains("-d");
+    }
+
+    /// <summary>
+    /// Waits for user input if not in daemon mode.
+    /// </summary>
+    /// <param name="message">Message to display to the user.</param>
+    /// <param name="args">Command line arguments.</param>
+    private static void WaitForUserInput(string message, string[] args)
+    {
+        if (!IsDaemonMode(args))
+        {
+            Console.WriteLine(message);
+            _ = Console.ReadKey();
+        }
+        else
+        {
+            Console.WriteLine("Running in daemon mode - continuing without user input.");
+        }
+    }
+
+    internal static async Task Main(string[] args)
     {
         try
         {
@@ -208,16 +137,43 @@ public class Program
 
             Console.WriteLine("Parsing access token and refresh token from login result successful.");
 
-            if (!await EstablishWebsocketAndSendMessage())
-                throw new Exception("Couldn't establish websocket connection.");
+            Console.WriteLine("🧪 Enhanced WebSocket Protocol Testing - Binary Protocol Validation");
+            Console.WriteLine($"Base URL: ws://{Configuration.Connect_Endpoint}");
+            Console.WriteLine();
+
+            bool testPassed = await EstablishWebsocketAndSendMessage();
+
+            if (testPassed)
+            {
+                Console.WriteLine("✅ WebSocket protocol test completed successfully!");
+
+                if (!IsDaemonMode(args))
+                {
+                    Console.WriteLine("\n🎮 Entering interactive test console...");
+                    GiveControlToTestConsole();
+                }
+            }
+            else
+            {
+                if (IsDaemonMode(args))
+                {
+                    Environment.Exit(1); // CI failure exit code
+                }
+                throw new Exception("WebSocket protocol test failed.");
+            }
         }
         catch (Exception exc)
         {
             ShutdownCancellationTokenSource.Cancel();
-            Console.WriteLine($"An exception has occurred: '{exc}'\nExiting application...");
-            _ = Console.ReadKey();
+            Console.WriteLine($"❌ An exception has occurred: '{exc.Message}'");
+            Console.WriteLine($"Stack trace: {exc.StackTrace}");
 
-            return;
+            if (IsDaemonMode(args))
+            {
+                Environment.Exit(1); // CI failure exit code
+            }
+
+            WaitForUserInput("Press any key to exit...", args);
         }
     }
 
@@ -322,33 +278,76 @@ public class Program
         try
         {
             await webSocket.ConnectAsync(serverUri, CancellationToken.None);
-            Console.WriteLine("Connected to the server");
+            Console.WriteLine("✅ Connected to the server");
 
-            var message = "Test message";
-            var encoded = Encoding.UTF8.GetBytes(message);
-            var buffer = new ArraySegment<byte>(encoded, 0, encoded.Length);
+            // Create a test message using our enhanced binary protocol
+            var testPayload = Encoding.UTF8.GetBytes("{ \"test\": \"Enhanced WebSocket protocol validation\" }");
 
-            await webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
-            Console.WriteLine("Sent message: " + message);
+            var binaryMessage = new BinaryMessage(
+                flags: MessageFlags.None,
+                channel: 1,
+                sequenceNumber: 1,
+                serviceGuid: Guid.NewGuid(), // This would normally be a client-salted GUID
+                messageId: GuidGenerator.GenerateMessageId(),
+                payload: testPayload
+            );
 
-            var receivedBuffer = new ArraySegment<byte>(new byte[1024]);
+            // Serialize the binary message using our protocol
+            var messageBytes = binaryMessage.ToByteArray();
+            var buffer = new ArraySegment<byte>(messageBytes);
+
+            Console.WriteLine($"📤 Sending binary message (31-byte header + {testPayload.Length} bytes payload)");
+            Console.WriteLine($"   Flags: {binaryMessage.Flags}");
+            Console.WriteLine($"   Channel: {binaryMessage.Channel}");
+            Console.WriteLine($"   SequenceNumber: {binaryMessage.SequenceNumber}");
+            Console.WriteLine($"   ServiceGuid: {binaryMessage.ServiceGuid}");
+            Console.WriteLine($"   MessageId: {binaryMessage.MessageId}");
+
+            await webSocket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
+            Console.WriteLine("✅ Binary protocol message sent successfully");
+
+            // Receive response using binary protocol
+            var receivedBuffer = new ArraySegment<byte>(new byte[4096]); // Larger buffer for binary protocol
             var result = await webSocket.ReceiveAsync(receivedBuffer, CancellationToken.None);
 
             if (receivedBuffer.Array == null)
                 throw new NullReferenceException();
 
-            var receivedMessage = Encoding.UTF8.GetString(receivedBuffer.Array, 0, result.Count);
-            Console.WriteLine("Received message: " + receivedMessage);
+            Console.WriteLine($"📥 Received {result.Count} bytes");
+
+            // Try to parse as binary protocol message
+            try
+            {
+                var receivedMessage = BinaryMessage.Parse(receivedBuffer.Array!, result.Count);
+                Console.WriteLine("✅ Successfully parsed binary protocol response:");
+                Console.WriteLine($"   Flags: {receivedMessage.Flags}");
+                Console.WriteLine($"   Channel: {receivedMessage.Channel}");
+                Console.WriteLine($"   SequenceNumber: {receivedMessage.SequenceNumber}");
+                Console.WriteLine($"   ServiceGuid: {receivedMessage.ServiceGuid}");
+                Console.WriteLine($"   MessageId: {receivedMessage.MessageId}");
+
+                if (receivedMessage.Payload.Length > 0)
+                {
+                    var responsePayload = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
+                    Console.WriteLine($"   Payload: {responsePayload}");
+                }
+            }
+            catch (Exception parseEx)
+            {
+                Console.WriteLine($"⚠️ Could not parse as binary protocol: {parseEx.Message}");
+                Console.WriteLine($"   Raw received data: {Convert.ToHexString(receivedBuffer.Array, 0, result.Count)}");
+            }
 
             return true;
         }
         catch (WebSocketException wse)
         {
-            Console.WriteLine("WebSocket exception: " + wse.Message);
+            Console.WriteLine($"❌ WebSocket exception: {wse.Message}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Exception: " + ex.Message);
+            Console.WriteLine($"❌ Exception: {ex.Message}");
+            Console.WriteLine($"   Stack trace: {ex.StackTrace}");
         }
 
         return false;

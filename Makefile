@@ -59,9 +59,15 @@ generate-all:
 
 # Regenerate all plugins/types but service implementations from schema
 generate-services:
-	@echo "🔧 Generating all services (NSwag + Roslyn)..."
-	scripts/generate-all-services.sh
-	@echo "✅ Service generation completed"
+	@if [ "$(PLUGIN)" ]; then \
+		echo "🔧 Generating plugin: $(PLUGIN)..."; \
+		scripts/generate-all-services.sh $(PLUGIN); \
+		echo "✅ Service generation completed for plugin: $(PLUGIN)"; \
+	else \
+		echo "🔧 Generating all services (NSwag + Roslyn)..."; \
+		scripts/generate-all-services.sh; \
+		echo "✅ Service generation completed"; \
+	fi
 
 # Generate Client SDK from generated services
 generate-sdk:

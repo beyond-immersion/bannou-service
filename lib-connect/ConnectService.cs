@@ -4,7 +4,9 @@ using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Connect.Protocol;
 using Dapr.Client;
+using StackExchange.Redis;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -28,10 +30,13 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
     private readonly DaprClient _daprClient;
     private readonly IServiceAppMappingResolver _appMappingResolver;
     private readonly ILogger<ConnectService> _logger;
+    private readonly WebSocketConnectionManager _connectionManager;
+    private readonly RedisSessionManager? _sessionManager;
 
-    // Session to service GUID mappings
+    // Session to service GUID mappings (legacy - moving to Redis)
     private readonly ConcurrentDictionary<string, Dictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
+    private readonly string _instanceId;
 
     public ConnectService(
         IAuthClient authClient,
@@ -39,7 +44,8 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
         DaprClient daprClient,
         IServiceAppMappingResolver appMappingResolver,
         ConnectServiceConfiguration configuration,
-        ILogger<ConnectService> logger)
+        ILogger<ConnectService> logger,
+        RedisSessionManager? sessionManager = null)
         : base()
     {
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
@@ -47,11 +53,19 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _sessionManager = sessionManager; // Optional Redis session management
 
         _sessionServiceMappings = new ConcurrentDictionary<string, Dictionary<string, Guid>>();
+        _connectionManager = new WebSocketConnectionManager();
 
-        // Generate server salt for GUID generation
-        _serverSalt = Guid.NewGuid().ToString();
+        // Generate server salt for GUID generation (use cryptographic salt)
+        _serverSalt = GuidGenerator.GenerateServerSalt();
+
+        // Generate unique instance ID for distributed deployment
+        _instanceId = Environment.MachineName + "-" + Guid.NewGuid().ToString("N")[..8];
+
+        _logger.LogInformation("Connect service initialized with instance ID: {InstanceId}, Redis: {RedisEnabled}",
+            _instanceId, sessionManager != null ? "Enabled" : "Disabled");
     }
 
     /// <summary>
@@ -293,7 +307,8 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
                 var methods = servicePermission.Value;
 
                 // Generate client-salted GUID for this service
-                var serviceGuid = GenerateServiceGuid(body.SessionId.ToString(), serviceName);
+                var serviceGuid = GuidGenerator.GenerateServiceGuid(
+                    body.SessionId.ToString(), serviceName, _serverSalt);
                 serviceMappings[serviceName] = serviceGuid;
 
                 // Create API endpoint info for each method
@@ -328,7 +343,16 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
             }
 
             // Store service mappings for this session (for reverse lookup during routing)
-            _sessionServiceMappings[body.SessionId.ToString()] = serviceMappings;
+            if (_sessionManager != null)
+            {
+                // Use Redis for distributed session management
+                await _sessionManager.SetSessionServiceMappingsAsync(body.SessionId.ToString(), serviceMappings);
+            }
+            else
+            {
+                // Fallback to in-memory storage
+                _sessionServiceMappings[body.SessionId.ToString()] = serviceMappings;
+            }
 
             var response = new ApiDiscoveryResponse
             {
@@ -349,21 +373,6 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
         }
     }
 
-    /// <summary>
-    /// Generate a client-salted GUID for a service.
-    /// Uses SHA256 for better security than MD5.
-    /// </summary>
-    private Guid GenerateServiceGuid(string sessionId, string serviceName)
-    {
-        var input = $"{serviceName}:{sessionId}:{_serverSalt}";
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-
-        // Use first 16 bytes of hash as GUID
-        var guidBytes = new byte[16];
-        Array.Copy(hash, guidBytes, 16);
-
-        return new Guid(guidBytes);
-    }
 
     /// <summary>
     /// Parse HTTP method string to enum.
@@ -505,18 +514,55 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
     }
 
     /// <summary>
-    /// Handles WebSocket communication using the 31-byte binary protocol.
-    /// Protocol: [MessageFlags:1][Channel:2][Sequence:4][ServiceGUID:16][MessageID:8][JSONPayload:variable]
+    /// Handles WebSocket communication using the enhanced 31-byte binary protocol.
+    /// Creates persistent connection state and processes messages with proper routing.
     /// </summary>
     public async Task HandleWebSocketCommunicationAsync(
         WebSocket webSocket,
         string sessionId,
         CancellationToken cancellationToken)
     {
-        var buffer = new byte[4096]; // Buffer for receiving messages
+        // Create connection state with service mappings from discovery
+        var connectionState = new ConnectionState(sessionId);
+
+        // Transfer service mappings from session discovery to connection state
+        Dictionary<string, Guid>? sessionMappings = null;
+
+        if (_sessionManager != null)
+        {
+            // Try to get mappings from Redis first
+            sessionMappings = await _sessionManager.GetSessionServiceMappingsAsync(sessionId);
+        }
+
+        if (sessionMappings == null && _sessionServiceMappings.TryGetValue(sessionId, out var fallbackMappings))
+        {
+            // Fallback to in-memory mappings
+            sessionMappings = fallbackMappings;
+        }
+
+        if (sessionMappings != null)
+        {
+            foreach (var mapping in sessionMappings)
+            {
+                connectionState.AddServiceMapping(mapping.Key, mapping.Value);
+            }
+        }
+
+        // Add connection to manager
+        _connectionManager.AddConnection(sessionId, webSocket, connectionState);
+
+        var buffer = new byte[65536]; // Larger buffer for binary protocol
 
         try
         {
+            _logger.LogInformation("WebSocket connection established for session {SessionId}", sessionId);
+
+            // Update session heartbeat in Redis
+            if (_sessionManager != null)
+            {
+                await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, _instanceId);
+            }
+
             while (webSocket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
             {
                 var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
@@ -529,21 +575,24 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
                     break;
                 }
 
+                connectionState.UpdateActivity();
+
+                // Periodic heartbeat update (every 30 seconds)
+                if (_sessionManager != null &&
+                    (DateTimeOffset.UtcNow - connectionState.LastActivity).TotalSeconds >= 30)
+                {
+                    await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, _instanceId);
+                }
+
                 if (result.MessageType == WebSocketMessageType.Binary)
                 {
-                    await HandleBinaryMessageAsync(webSocket, sessionId, buffer, result.Count, cancellationToken);
+                    await HandleBinaryMessageAsync(sessionId, connectionState, buffer, result.Count, cancellationToken);
                 }
                 else if (result.MessageType == WebSocketMessageType.Text)
                 {
-                    // For backwards compatibility, also handle text messages
-                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    _logger.LogDebug("Received text message from session {SessionId}: {Message}",
-                        sessionId, message);
-
-                    // Echo back for now (implement JSON-RPC later)
-                    var echo = Encoding.UTF8.GetBytes($"Echo: {message}");
-                    await webSocket.SendAsync(new ArraySegment<byte>(echo),
-                        WebSocketMessageType.Text, true, cancellationToken);
+                    // For backwards compatibility, handle text messages as JSON-wrapped binary
+                    var textMessage = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    await HandleLegacyTextMessageAsync(sessionId, connectionState, textMessage, cancellationToken);
                 }
             }
         }
@@ -562,154 +611,269 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
         }
         finally
         {
+            // Remove from connection manager
+            _connectionManager.RemoveConnection(sessionId);
+
+            // Clean up Redis session data
+            if (_sessionManager != null)
+            {
+                await _sessionManager.RemoveSessionAsync(sessionId);
+                await _sessionManager.PublishSessionEventAsync("disconnect", sessionId, new { instanceId = _instanceId });
+            }
+
             if (webSocket.State == WebSocketState.Open)
             {
                 try
                 {
-                    await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError,
-                        "Server error", CancellationToken.None);
+                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure,
+                        "Session ended", CancellationToken.None);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Error closing WebSocket for session {SessionId}", sessionId);
                 }
             }
+
+            _logger.LogInformation("WebSocket session {SessionId} cleanup completed", sessionId);
         }
     }
 
     /// <summary>
-    /// Handles binary messages using the 31-byte header protocol.
+    /// Handles binary messages using the enhanced 31-byte protocol with proper routing.
     /// </summary>
     private async Task HandleBinaryMessageAsync(
-        WebSocket webSocket,
         string sessionId,
+        ConnectionState connectionState,
         byte[] buffer,
         int messageLength,
         CancellationToken cancellationToken)
     {
         try
         {
-            // Validate minimum message length (31-byte header + at least some JSON)
-            if (messageLength < 32)
+            // Parse binary message using protocol class
+            var message = BinaryMessage.Parse(buffer, messageLength);
+
+            _logger.LogDebug("Binary message from session {SessionId}: {Message}",
+                sessionId, message.ToString());
+
+            // Analyze message for routing
+            var routeInfo = MessageRouter.AnalyzeMessage(message, connectionState);
+
+            if (!routeInfo.IsValid)
             {
-                _logger.LogWarning("Received binary message too short ({Length} bytes) from session {SessionId}",
-                    messageLength, sessionId);
+                _logger.LogWarning("Invalid message from session {SessionId}: {Error}",
+                    sessionId, routeInfo.ErrorMessage);
+
+                var errorResponse = MessageRouter.CreateErrorResponse(
+                    message, routeInfo.ErrorCode, routeInfo.ErrorMessage);
+
+                await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
                 return;
             }
 
-            // Parse 31-byte header
-            var messageFlags = buffer[0];                           // Byte 0: Message flags
-            var channel = BitConverter.ToUInt16(buffer, 1);         // Bytes 1-2: Channel
-            var sequence = BitConverter.ToUInt32(buffer, 3);        // Bytes 3-6: Sequence number
-            var serviceGuidBytes = new byte[16];                    // Bytes 7-22: Service GUID
-            Array.Copy(buffer, 7, serviceGuidBytes, 0, 16);
-            var serviceGuid = new Guid(serviceGuidBytes);
-            var messageId = BitConverter.ToUInt64(buffer, 23);      // Bytes 23-30: Message ID
+            // Check rate limiting
+            var rateLimitResult = MessageRouter.CheckRateLimit(connectionState);
+            if (!rateLimitResult.IsAllowed)
+            {
+                _logger.LogWarning("Rate limit exceeded for session {SessionId}", sessionId);
 
-            // Extract JSON payload (remaining bytes after 31-byte header)
-            var jsonLength = messageLength - 31;
-            var jsonPayload = Encoding.UTF8.GetString(buffer, 31, jsonLength);
+                var rateLimitResponse = MessageRouter.CreateErrorResponse(
+                    message, ResponseCodes.TooManyRequests, "Rate limit exceeded");
 
-            _logger.LogDebug("Binary message from session {SessionId}: Flags={Flags}, Channel={Channel}, " +
-                           "Sequence={Sequence}, ServiceGUID={ServiceGuid}, MessageID={MessageId}, PayloadLength={Length}",
-                           sessionId, messageFlags, channel, sequence, serviceGuid, messageId, jsonLength);
+                await _connectionManager.SendMessageAsync(sessionId, rateLimitResponse, cancellationToken);
+                return;
+            }
 
-            // TODO: Implement message routing logic
-            // 1. Look up service name from serviceGuid using session mappings
-            // 2. Route JSON payload to appropriate service via Dapr
-            // 3. Handle response and send back with same messageId
-
-            // For now, send a simple acknowledgment
-            await SendBinaryAckAsync(webSocket, messageId, sequence, cancellationToken);
+            // Route message to appropriate handler
+            if (routeInfo.RouteType == RouteType.Service)
+            {
+                await RouteToServiceAsync(message, routeInfo, sessionId, connectionState, cancellationToken);
+            }
+            else if (routeInfo.RouteType == RouteType.Client)
+            {
+                await RouteToClientAsync(message, routeInfo, sessionId, cancellationToken);
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling binary message from session {SessionId}", sessionId);
+
+            // Send generic error response if we can parse the message
+            try
+            {
+                var message = BinaryMessage.Parse(buffer, messageLength);
+                var errorResponse = MessageRouter.CreateErrorResponse(
+                    message, ResponseCodes.RequestError, "Internal server error");
+
+                await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+            }
+            catch
+            {
+                // If we can't even parse the message, just ignore it
+            }
         }
     }
 
     /// <summary>
-    /// Sends a binary acknowledgment message.
+    /// Routes a message to a Dapr service and handles the response.
     /// </summary>
-    private async Task SendBinaryAckAsync(
-        WebSocket webSocket,
-        ulong originalMessageId,
-        uint originalSequence,
+    private async Task RouteToServiceAsync(
+        BinaryMessage message,
+        MessageRouteInfo routeInfo,
+        string sessionId,
+        ConnectionState connectionState,
         CancellationToken cancellationToken)
     {
         try
         {
-            // Create acknowledgment payload
-            var ackPayload = new { status = "received", messageId = originalMessageId };
-            var jsonPayload = System.Text.Json.JsonSerializer.Serialize(ackPayload);
-            var jsonBytes = Encoding.UTF8.GetBytes(jsonPayload);
+            // Add to pending messages for response correlation
+            if (routeInfo.RequiresResponse)
+            {
+                connectionState.AddPendingMessage(message.MessageId, routeInfo.ServiceName!, DateTimeOffset.UtcNow);
+            }
 
-            // Create 31-byte header for acknowledgment
-            var header = new byte[31];
-            header[0] = 0x01;                                      // Flags: ACK message
-            BitConverter.GetBytes((ushort)0).CopyTo(header, 1);    // Channel 0
-            BitConverter.GetBytes(originalSequence).CopyTo(header, 3); // Same sequence
-            // Service GUID: all zeros for system messages
-            BitConverter.GetBytes(originalMessageId).CopyTo(header, 23); // Same message ID
+            // Get JSON payload for service call
+            var jsonPayload = message.GetJsonPayload();
 
-            // Combine header and payload
-            var response = new byte[31 + jsonBytes.Length];
-            Array.Copy(header, 0, response, 0, 31);
-            Array.Copy(jsonBytes, 0, response, 31, jsonBytes.Length);
+            // Use ServiceAppMappingResolver for dynamic app-id resolution
+            var appId = _appMappingResolver.GetAppIdForService(routeInfo.ServiceName!);
 
-            await webSocket.SendAsync(new ArraySegment<byte>(response),
-                WebSocketMessageType.Binary, true, cancellationToken);
+            _logger.LogDebug("Routing WebSocket message to service {Service} via app-id {AppId}",
+                routeInfo.ServiceName, appId);
 
-            _logger.LogDebug("Sent binary ACK for message {MessageId}", originalMessageId);
+            // TODO: Parse the JSON payload to determine the specific API endpoint
+            // For now, this is a placeholder - we need to implement proper JSON-RPC or similar
+            // to determine which endpoint and HTTP method to call
+
+            // Create a simple service response for now
+            if (routeInfo.RequiresResponse)
+            {
+                var responsePayload = new
+                {
+                    status = "success",
+                    message = "Service routing not fully implemented yet",
+                    originalMessageId = message.MessageId,
+                    targetService = routeInfo.ServiceName
+                };
+
+                var responseJson = JsonSerializer.Serialize(responsePayload);
+                var responseMessage = BinaryMessage.CreateResponse(
+                    message, ResponseCodes.OK, Encoding.UTF8.GetBytes(responseJson));
+
+                await _connectionManager.SendMessageAsync(sessionId, responseMessage, cancellationToken);
+            }
+
+            // Remove from pending messages
+            connectionState.RemovePendingMessage(message.MessageId);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to send binary acknowledgment for message {MessageId}", originalMessageId);
+            _logger.LogError(ex, "Error routing message to service {Service}", routeInfo.ServiceName);
+
+            if (routeInfo.RequiresResponse)
+            {
+                var errorResponse = MessageRouter.CreateErrorResponse(
+                    message, ResponseCodes.Service_InternalServerError, "Service routing failed");
+
+                await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                connectionState.RemovePendingMessage(message.MessageId);
+            }
         }
     }
 
     /// <summary>
-    /// Common WebSocket connection handling logic.
+    /// Routes a message to another WebSocket client (client-to-client communication).
     /// </summary>
-    private async Task<IActionResult> HandleWebSocketConnectionAsync(
-        string authorization,
-        CancellationToken cancellationToken = default)
+    private async Task RouteToClientAsync(
+        BinaryMessage message,
+        MessageRouteInfo routeInfo,
+        string sessionId,
+        CancellationToken cancellationToken)
     {
         try
         {
-            // Validate WebSocket upgrade request
-            if (!HttpContext.WebSockets.IsWebSocketRequest)
+            var targetSessionId = routeInfo.TargetId;
+            if (string.IsNullOrEmpty(targetSessionId))
             {
-                return BadRequest("This endpoint only accepts WebSocket connections");
+                var errorResponse = MessageRouter.CreateErrorResponse(
+                    message, ResponseCodes.ClientNotFound, "Target client ID not specified");
+
+                await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+                return;
             }
 
-            // Validate and parse JWT token
-            var sessionId = await ValidateJWTAndExtractSessionAsync(authorization, cancellationToken);
-            if (sessionId == null)
+            // Try to send message to target client
+            var sent = await _connectionManager.SendMessageAsync(targetSessionId, message, cancellationToken);
+
+            if (!sent)
             {
-                return Unauthorized("Invalid or expired JWT token");
+                var errorResponse = MessageRouter.CreateErrorResponse(
+                    message, ResponseCodes.ClientNotFound, $"Target client {targetSessionId} not connected");
+
+                await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
             }
+            else if (message.ExpectsResponse)
+            {
+                // For client-to-client, we send an acknowledgment that the message was delivered
+                var ackPayload = new
+                {
+                    status = "delivered",
+                    targetClient = targetSessionId,
+                    originalMessageId = message.MessageId
+                };
 
-            _logger.LogInformation("WebSocket connection request from session {SessionId}", sessionId);
+                var ackMessage = BinaryMessage.CreateResponse(
+                    message, ResponseCodes.OK, Encoding.UTF8.GetBytes(JsonSerializer.Serialize(ackPayload)));
 
-            // Accept WebSocket connection
-            var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            _logger.LogInformation("WebSocket connection established for session {SessionId}", sessionId);
-
-            // Handle WebSocket communication with binary protocol
-            await HandleWebSocketCommunicationAsync(webSocket, sessionId, cancellationToken);
-
-            return Ok();
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogInformation("WebSocket connection cancelled");
-            return NoContent();
+                await _connectionManager.SendMessageAsync(sessionId, ackMessage, cancellationToken);
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling WebSocket connection");
-            return StatusCode(500, "WebSocket connection failed");
+            _logger.LogError(ex, "Error routing message to client {TargetClient}", routeInfo.TargetId);
+
+            if (message.ExpectsResponse)
+            {
+                var errorResponse = MessageRouter.CreateErrorResponse(
+                    message, ResponseCodes.RequestError, "Client routing failed");
+
+                await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
+            }
         }
     }
+
+    /// <summary>
+    /// Handles legacy text messages by wrapping them in binary protocol format.
+    /// </summary>
+    private async Task HandleLegacyTextMessageAsync(
+        string sessionId,
+        ConnectionState connectionState,
+        string textMessage,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogDebug("Received legacy text message from session {SessionId}: {Message}",
+                sessionId, textMessage);
+
+            // For now, just echo back the message wrapped in a binary response
+            var echo = $"Echo: {textMessage}";
+            var messageId = MessageRouter.GenerateMessageId();
+            var channel = connectionState.GetNextSequenceNumber(0);
+
+            var binaryMessage = BinaryMessage.FromJson(
+                0, // Default channel
+                channel,
+                Guid.Empty, // System message
+                messageId,
+                echo);
+
+            await _connectionManager.SendMessageAsync(sessionId, binaryMessage, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling legacy text message from session {SessionId}", sessionId);
+        }
+    }
+
 }

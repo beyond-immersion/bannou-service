@@ -406,61 +406,39 @@ public partial class ServiceMappingsResponse
 }
 
 /// <summary>
-/// Response codes used in the binary protocol.
-/// <br/>
-/// <br/>**Success:**
-/// <br/>- 0: OK
-/// <br/>
-/// <br/>**Request Errors (10-19):**
-/// <br/>- 10: RequestError
-/// <br/>- 11: RequestTooLarge
-/// <br/>- 12: TooManyRequests
-/// <br/>- 13: InvalidRequestChannel
-/// <br/>
-/// <br/>**Authorization Errors (20-29):**
-/// <br/>- 20: Unauthorized
-/// <br/>
-/// <br/>**Not Found Errors (30-39):**
-/// <br/>- 30: ServiceNotFound
-/// <br/>- 31: ClientNotFound
-/// <br/>- 32: MessageNotFound
-/// <br/>
-/// <br/>**Service Errors (50-60):**
-/// <br/>- 50: Service_BadRequest
-/// <br/>- 51: Service_NotFound
-/// <br/>- 52: Service_Unauthorized
-/// <br/>- 60: Service_InternalServerError
+/// Response codes used in the binary protocol for success/error indication.
+/// <br/>Provides fine-grained error reporting for different failure scenarios.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ResponseCodes
 {
 
-    _0 = 0,
+    OK = 0,
 
-    _10 = 10,
+    RequestError = 10,
 
-    _11 = 11,
+    RequestTooLarge = 11,
 
-    _12 = 12,
+    TooManyRequests = 12,
 
-    _13 = 13,
+    InvalidRequestChannel = 13,
 
-    _20 = 20,
+    Unauthorized = 20,
 
-    _30 = 30,
+    ServiceNotFound = 30,
 
-    _31 = 31,
+    ClientNotFound = 31,
 
-    _32 = 32,
+    MessageNotFound = 32,
 
-    _50 = 50,
+    Service_BadRequest = 50,
 
-    _51 = 51,
+    Service_NotFound = 51,
 
-    _52 = 52,
+    Service_Unauthorized = 52,
 
-    _60 = 60,
+    Service_InternalServerError = 60,
 
 }
 
