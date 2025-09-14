@@ -1,8 +1,0 @@
-NSwag command line tool for .NET Core Net90, toolchain v14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))
-Visit http://NSwag.org for more information.
-NSwag bin directory: /home/lysander/.nuget/packages/nswag.msbuild/14.2.0/tools/Net90
-
-Executing file 'nswag.json' with variables ''...
-Done.
-
-Duration: 00:00:00.3135008

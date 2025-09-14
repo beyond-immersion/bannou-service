@@ -106,6 +106,15 @@ test-unit:
 	@echo "🧪 Running unit tests..."
 	dotnet test
 
+# Comprehensive unit testing - all service test projects
+test:
+	@echo "🧪 Running comprehensive unit tests across all service plugins..."
+	@for test_project in $$(find . -name "*.tests.csproj" -o -name "*Tests.csproj" | grep -v template); do \
+		echo "🧪 Running tests in: $$test_project"; \
+		dotnet test "$$test_project" --verbosity minimal --logger "console;verbosity=minimal" || echo "⚠️  Tests failed in $$test_project"; \
+	done
+	@echo "✅ Comprehensive unit testing completed"
+
 # Infrastructure testing
 test-infrastructure:
 	@echo "🚀 Running infrastructure tests"

@@ -25,6 +25,7 @@ if [ $# -lt 1 ]; then
     echo "  interface      - Generate service interface from controller"
     echo "  config         - Generate service configuration class"
     echo "  implementation - Generate service implementation template"
+    echo "  tests          - Generate unit test project with solution integration"
     echo "  all            - Generate all components (default)"
     echo ""
     echo "Examples:"
@@ -115,6 +116,7 @@ declare -a GENERATION_ORDER=(
     "interface"
     "config"
     "implementation"
+    "tests"
 )
 
 # Generate components in dependency order
