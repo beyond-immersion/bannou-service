@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Auth.Client;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Testing;
 
 namespace BeyondImmersion.BannouService.HttpTester;

@@ -80,6 +80,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiDiscoveryResponse'
 
+  /service-mappings:
+    get:
+      summary: Get current service routing mappings
+      operationId: getServiceMappings
+      tags:
+        - Service Discovery
+      description: |
+        Returns current service-to-app-id routing mappings for monitoring and debugging.
+        Shows how services are mapped in the current deployment topology.
+      responses:
+        '200':
+          description: Service mappings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceMappingsResponse'
+        '500':
+          description: Error retrieving service mappings
+
   /connect:
     get:
       summary: Establish WebSocket connection
@@ -99,6 +118,7 @@ paths:
       operationId: ConnectWebSocket
       tags:
         - WebSocket Connection
+      x-manual-implementation: true
       parameters:
         - name: Connection
           in: header
@@ -203,6 +223,7 @@ paths:
       operationId: ConnectWebSocketPost
       tags:
         - WebSocket Connection
+      x-manual-implementation: true
       parameters:
         - name: Connection
           in: header
@@ -466,6 +487,36 @@ components:
           type: integer
           description: HTTP status code
           enum: [400, 403, 500]
+      additionalProperties: false
+
+    ServiceMappingsResponse:
+      type: object
+      required:
+        - mappings
+        - defaultMapping
+        - generatedAt
+      properties:
+        mappings:
+          type: object
+          additionalProperties:
+            type: string
+          description: Map of service names to app-id routing destinations
+          example:
+            accounts: "bannou"
+            auth: "bannou"
+            behavior: "npc-processing-01"
+        defaultMapping:
+          type: string
+          description: Default app-id used when no specific mapping exists
+          default: "bannou"
+        generatedAt:
+          type: string
+          format: date-time
+          description: When this mapping information was generated
+        totalServices:
+          type: integer
+          description: Total number of services with routing mappings
+          minimum: 0
       additionalProperties: false
 
     # Binary Protocol Schemas (for documentation purposes)

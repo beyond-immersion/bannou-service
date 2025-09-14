@@ -71,4 +71,34 @@ public class GameSessionService : IGameSessionService
         await Task.Delay(1); // Avoid async warning
         throw new NotImplementedException("Method PerformGameActionAsync is not implemented");
     }
+
+    /// <summary>
+    /// LeaveGameSessionAsync implementation - TODO: Add business logic
+    /// </summary>
+    public async Task<(StatusCodes, object?)> LeaveGameSessionAsync(Guid sessionId, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        _logger.LogWarning("Method LeaveGameSessionAsync called but not implemented");
+        await Task.Delay(1); // Avoid async warning
+        return (StatusCodes.OK, null);
+    }
+
+    /// <summary>
+    /// KickPlayerAsync implementation - TODO: Add business logic
+    /// </summary>
+    public async Task<(StatusCodes, object?)> KickPlayerAsync(Guid sessionId, KickPlayerRequest body, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        _logger.LogWarning("Method KickPlayerAsync called but not implemented");
+        await Task.Delay(1); // Avoid async warning
+        return (StatusCodes.OK, null);
+    }
+
+    /// <summary>
+    /// SendChatMessageAsync implementation - TODO: Add business logic
+    /// </summary>
+    public async Task<(StatusCodes, object?)> SendChatMessageAsync(Guid sessionId, ChatMessageRequest body, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        _logger.LogWarning("Method SendChatMessageAsync called but not implemented");
+        await Task.Delay(1); // Avoid async warning
+        return (StatusCodes.OK, null);
+    }
 }

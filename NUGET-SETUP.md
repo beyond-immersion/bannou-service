@@ -114,7 +114,7 @@ To test your NuGet configuration locally:
 
 ```bash
 # Generate SDK
-./generate-client-sdk.sh
+scripts/generate-client-sdk.sh
 
 # Build and pack
 dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=1.0.0-test --output ./test-packages

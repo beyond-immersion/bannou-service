@@ -369,6 +369,39 @@ public partial class ConnectErrorResponse
 
 }
 
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServiceMappingsResponse
+{
+    /// <summary>
+    /// Map of service names to app-id routing destinations
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("mappings", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.IDictionary<string, string> Mappings { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
+
+    /// <summary>
+    /// Default app-id used when no specific mapping exists
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("defaultMapping", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string DefaultMapping { get; set; } = "bannou";
+
+    /// <summary>
+    /// When this mapping information was generated
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("generatedAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset GeneratedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of services with routing mappings
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("totalServices", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int TotalServices { get; set; } = default!;
+
+}
+
 /// <summary>
 /// Response codes used in the binary protocol.
 /// <br/>

@@ -59,10 +59,18 @@ Reference the Makefile in the repository root for all available commands and est
 ### Schema-First Development (MANDATORY)
 **ALL development follows schema-first architecture - never edit generated code manually.**
 
+**🚨 CRITICAL RULE - SERVICE IMPLEMENTATION ONLY**:
+**NEVER edit ANY file in a service plugin except the service implementation class (e.g., `ConnectService.cs`)**
+- **Generated Files**: NEVER edit any files in `*/Generated/` directories or `.Generated.cs` files
+- **Controllers**: NEVER create or edit controller files - they are auto-generated wrappers
+- **Interfaces**: NEVER edit generated interfaces - service implementation is the source of truth
+- **Models**: NEVER edit generated models - they come from OpenAPI schemas
+- **Service Implementation Authority**: If there are conflicts between service implementation and generated types, the service implementation is authoritative
+
 **Required Workflow**:
 1. **Schema First**: Edit OpenAPI YAML in `/schemas/` directory
-2. **Generate**: Run `./generate-all-services.sh` to create controllers/models/clients
-3. **Implement**: Write business logic ONLY in service implementation classes
+2. **Generate**: Run `scripts/generate-all-services.sh` to create controllers/models/clients
+3. **Implement**: Write business logic ONLY in service implementation classes (e.g., `SomeService.cs`)
 4. **Format**: Run `make format` to fix line endings and C# syntax
 
 **Architecture Rules**:
@@ -70,6 +78,7 @@ Reference the Makefile in the repository root for all available commands and est
 - **Never Edit Generated Files**: Any `*/Generated/` or `.Generated.cs` files are auto-generated
 - **Use Generated Clients**: Service-to-service calls use NSwag-generated clients, not direct interfaces
 - **Dapr-First Patterns**: Use DaprClient for state/events, never Entity Framework directly
+- **Controller = Service Wrapper**: Generated controllers are just wrappers around service implementations
 
 ### Shared Class Architecture (MANDATORY)
 **For classes shared across multiple services, follow the established pattern:**
@@ -86,7 +95,7 @@ Reference the Makefile in the repository root for all available commands and est
 
 **Implementation Pattern**:
 1. Create shared class in `bannou-service/` project with proper namespace
-2. Add exclusion to both controller generation AND model generation in `generate-all-services.sh`
+2. Add exclusion to both controller generation AND model generation in `scripts/generate-all-services.sh`
 3. All services reference `bannou-service` project, so shared classes are available
 4. Never duplicate shared classes across multiple service projects
 
@@ -118,7 +127,7 @@ lib-{service}/                        # Single consolidated service plugin
 ### Essential Commands
 ```bash
 # Service Development
-./generate-all-services.sh     # Generate controllers/models/clients from schemas
+scripts/generate-all-services.sh     # Generate controllers/models/clients from schemas
 make format                    # Fix line endings + C# formatting
 make build                     # Build all services
 make test-all-v2              # Run all tests (unit + integration + websocket)
@@ -187,7 +196,7 @@ AUTH_JWT_EXPIRATION_MINUTES=60
 **NSwag (Primary)**: Generates controllers, models, and service clients from OpenAPI schemas
 - Uses custom file-scoped namespace templates in `templates/nswag/`
 - **Generated Files**: Controllers, request/response models, event models, client classes
-- **Command**: `./generate-all-services.sh` (unified script)
+- **Command**: `scripts/generate-all-services.sh` (unified script)
 
 **Roslyn (Specialized)**: Generates patterns NSwag cannot handle
 - Unit test projects, DI registrations

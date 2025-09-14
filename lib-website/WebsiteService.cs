@@ -58,7 +58,7 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// GetNews operation implementation
     /// </summary>
-    public Task<(StatusCodes, NewsResponse?)> GetNewsAsync(int? limit = 10, int? offset = 0, CancellationToken cancellationToken = default)
+    public Task<(StatusCodes, NewsResponse?)> GetNewsAsync(int limit, int offset, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -246,17 +246,17 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// UpdateTheme operation implementation
     /// </summary>
-    public Task<(StatusCodes, ThemeConfig?)> UpdateThemeAsync(ThemeConfig body, CancellationToken cancellationToken = default)
+    public Task<(StatusCodes, object?)> UpdateThemeAsync(ThemeConfig body, CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogDebug("Processing update theme request");
-            return Task.FromResult<(StatusCodes, ThemeConfig?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating theme");
-            return Task.FromResult<(StatusCodes, ThemeConfig?)>((StatusCodes.InternalServerError, null));
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
         }
     }
 
@@ -274,6 +274,40 @@ public class WebsiteService : IWebsiteService
         {
             _logger.LogError(ex, "Error getting subscription");
             return Task.FromResult<(StatusCodes, SubscriptionResponse?)>((StatusCodes.InternalServerError, null));
+        }
+    }
+
+    /// <summary>
+    /// DeletePage operation implementation
+    /// </summary>
+    public Task<(StatusCodes, object?)> DeletePageAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Processing delete page request for slug: {Slug}", slug);
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null)); // TODO: Return actual response
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting page");
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+        }
+    }
+
+    /// <summary>
+    /// ListPages operation implementation
+    /// </summary>
+    public Task<(StatusCodes, System.Collections.Generic.ICollection<PageMetadata>?)> ListPagesAsync(bool includeUnpublished, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Processing list pages request");
+            return Task.FromResult<(StatusCodes, System.Collections.Generic.ICollection<PageMetadata>?)>((StatusCodes.OK, null)); // TODO: Return actual response
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing pages");
+            return Task.FromResult<(StatusCodes, System.Collections.Generic.ICollection<PageMetadata>?)>((StatusCodes.InternalServerError, null));
         }
     }
 }

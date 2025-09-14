@@ -171,6 +171,7 @@ paths:
     post:
       summary: Validate access token
       operationId: validateToken
+      x-controller-only: true
       tags:
         - Tokens
       security:
@@ -421,12 +422,16 @@ components:
       required:
         - valid
         - accountId
+        - sessionId
       properties:
         valid:
           type: boolean
         accountId:
           type: string
           format: uuid
+        sessionId:
+          type: string
+          description: Session identifier for WebSocket connections and service routing
         roles:
           type: array
           items:

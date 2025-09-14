@@ -70,7 +70,7 @@ public class AuthService : IAuthService
             _logger.LogInformation("Mock password verification for email: {Email}", body.Email);
 
             // Generate tokens
-            var accessToken = GenerateAccessToken(account);
+            var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
             var refreshToken = GenerateRefreshToken();
 
             // Store refresh token
@@ -123,7 +123,7 @@ public class AuthService : IAuthService
             }
 
             // Generate tokens
-            var accessToken = GenerateAccessToken(accountResult);
+            var accessToken = await GenerateAccessTokenAsync(accountResult, cancellationToken);
             var refreshToken = GenerateRefreshToken();
 
             // Store refresh token
@@ -146,7 +146,7 @@ public class AuthService : IAuthService
     }
 
     /// <inheritdoc/>
-    public Task<(StatusCodes, AuthResponse?)> CompleteOAuthAsync(
+    public async Task<(StatusCodes, AuthResponse?)> CompleteOAuthAsync(
         Provider2 provider,
         OAuthCallbackRequest body,
         CancellationToken cancellationToken = default)
@@ -157,7 +157,7 @@ public class AuthService : IAuthService
 
             if (string.IsNullOrWhiteSpace(body.Code))
             {
-                return Task.FromResult<(StatusCodes, AuthResponse?)>((StatusCodes.BadRequest, null));
+                return (StatusCodes.BadRequest, null);
             }
 
             // TODO: Implement actual OAuth provider integration
@@ -171,26 +171,26 @@ public class AuthService : IAuthService
                 DisplayName = $"OAuth User ({provider})"
             };
 
-            var accessToken = GenerateAccessToken(mockAccount);
+            var accessToken = await GenerateAccessTokenAsync(mockAccount, cancellationToken);
             var refreshToken = GenerateRefreshToken();
 
-            return Task.FromResult<(StatusCodes, AuthResponse?)>((StatusCodes.OK, new AuthResponse
+            return (StatusCodes.OK, new AuthResponse
             {
                 AccountId = mockAccount.AccountId,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresIn = JWT_EXPIRATION_MINUTES * 60
-            }));
+            });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during OAuth callback for provider: {Provider}", provider);
-            return Task.FromResult<(StatusCodes, AuthResponse?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <inheritdoc/>
-    public Task<(StatusCodes, AuthResponse?)> VerifySteamAuthAsync(
+    public async Task<(StatusCodes, AuthResponse?)> VerifySteamAuthAsync(
         SteamVerifyRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -200,7 +200,7 @@ public class AuthService : IAuthService
 
             if (string.IsNullOrWhiteSpace(body.Ticket))
             {
-                return Task.FromResult<(StatusCodes, AuthResponse?)>((StatusCodes.BadRequest, null));
+                return (StatusCodes.BadRequest, null);
             }
 
             // TODO: Implement actual Steam OpenID verification
@@ -214,21 +214,21 @@ public class AuthService : IAuthService
                 DisplayName = "Steam User"
             };
 
-            var accessToken = GenerateAccessToken(mockAccount);
+            var accessToken = await GenerateAccessTokenAsync(mockAccount, cancellationToken);
             var refreshToken = GenerateRefreshToken();
 
-            return Task.FromResult<(StatusCodes, AuthResponse?)>((StatusCodes.OK, new AuthResponse
+            return (StatusCodes.OK, new AuthResponse
             {
                 AccountId = mockAccount.AccountId,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresIn = JWT_EXPIRATION_MINUTES * 60
-            }));
+            });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during Steam authentication verification");
-            return Task.FromResult<(StatusCodes, AuthResponse?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -261,7 +261,7 @@ public class AuthService : IAuthService
             }
 
             // Generate new tokens
-            var accessToken = GenerateAccessToken(account);
+            var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
             var newRefreshToken = GenerateRefreshToken();
 
             // Store new refresh token and remove old one
@@ -283,27 +283,134 @@ public class AuthService : IAuthService
         }
     }
 
+
     /// <inheritdoc/>
-    public Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(
+    public Task<(StatusCodes, object?)> InitOAuthAsync(
+        Provider provider,
+        Uri redirectUri,
+        string? state,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            // TODO: Extract JWT token from HTTP context/headers
-            // For now, return mock validation
-            _logger.LogInformation("Token validation requested");
+            _logger.LogInformation("Initializing OAuth for provider: {Provider}", provider);
 
-            return Task.FromResult<(StatusCodes, ValidateTokenResponse?)>((StatusCodes.OK, new ValidateTokenResponse
-            {
-                Valid = true,
-                AccountId = Guid.NewGuid(),
-                RemainingTime = JWT_EXPIRATION_MINUTES * 60
-            }));
+            // TODO: Implement actual OAuth initialization
+            // For now, return mock authorization URL
+            var authUrl = $"https://oauth.{provider.ToString().ToLower()}.com/authorize?redirect_uri={redirectUri}&state={state}";
+
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { AuthorizationUrl = authUrl }));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during token validation");
-            return Task.FromResult<(StatusCodes, ValidateTokenResponse?)>((StatusCodes.InternalServerError, null));
+            _logger.LogError(ex, "Error initializing OAuth for provider: {Provider}", provider);
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+        }
+    }
+
+    /// <inheritdoc/>
+    public Task<(StatusCodes, object?)> InitSteamAuthAsync(
+        Uri returnUrl,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Initializing Steam authentication");
+
+            // TODO: Implement actual Steam OpenID initialization
+            // For now, return mock Steam URL
+            var steamUrl = $"https://steamcommunity.com/openid/login?openid.return_to={returnUrl}";
+
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { AuthorizationUrl = steamUrl }));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error initializing Steam authentication");
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+        }
+    }
+
+    /// <inheritdoc/>
+    public Task<(StatusCodes, object?)> LogoutAsync(
+        LogoutRequest? body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing logout request");
+
+            // TODO: Invalidate session based on user context
+            // For now, return success
+
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { Message = "Logout successful" }));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during logout");
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+        }
+    }
+
+    /// <inheritdoc/>
+    public Task<(StatusCodes, object?)> TerminateSessionAsync(
+        Guid sessionId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Terminating session: {SessionId}", sessionId);
+
+            // TODO: Remove session from Redis
+            // For now, return success
+
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { Message = "Session terminated successfully" }));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error terminating session: {SessionId}", sessionId);
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+        }
+    }
+
+    /// <inheritdoc/>
+    public Task<(StatusCodes, object?)> RequestPasswordResetAsync(
+        PasswordResetRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing password reset request for email: {Email}", body.Email);
+
+            // TODO: Generate reset token and send email
+            // For now, return success
+
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { Message = "Password reset email sent" }));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error requesting password reset for email: {Email}", body.Email);
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+        }
+    }
+
+    /// <inheritdoc/>
+    public Task<(StatusCodes, object?)> ConfirmPasswordResetAsync(
+        PasswordResetConfirmRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing password reset confirmation");
+
+            // TODO: Validate reset token and update password
+            // For now, return success
+
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { Message = "Password reset successful" }));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error confirming password reset");
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
         }
     }
 
@@ -352,26 +459,40 @@ public class AuthService : IAuthService
         return HashPassword(password) == hash;
     }
 
-    private string GenerateAccessToken(AccountResponse account)
+    private async Task<string> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
     {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(JWT_SECRET);
+        // Generate opaque session key (per API-DESIGN.md security pattern)
+        var sessionKey = Guid.NewGuid().ToString("N");
+        var sessionId = Guid.NewGuid().ToString();
 
-        var claims = new List<Claim>
+        // Store session data in Redis with opaque key
+        var sessionData = new
         {
-            new Claim(ClaimTypes.NameIdentifier, account.AccountId.ToString()),
-            new Claim(ClaimTypes.Email, account.Email ?? ""),
-            new Claim(ClaimTypes.Name, account.DisplayName ?? "")
+            AccountId = account.AccountId,
+            Email = account.Email,
+            DisplayName = account.DisplayName,
+            Roles = account.Roles ?? new List<string>(),
+            SessionId = sessionId,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(JWT_EXPIRATION_MINUTES)
         };
 
-        // Add roles
-        if (account.Roles != null)
+        await _daprClient.SaveStateAsync(
+            REDIS_STATE_STORE,
+            $"session:{sessionKey}",
+            sessionData,
+            metadata: new Dictionary<string, string> { { "ttl", (JWT_EXPIRATION_MINUTES * 60).ToString() } },
+            cancellationToken: cancellationToken);
+
+        // JWT contains only opaque session key - no sensitive data
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.ASCII.GetBytes(JWT_SECRET);
+        var claims = new List<Claim>
         {
-            foreach (var role in account.Roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
-        }
+            new Claim("session_key", sessionKey), // Opaque key for Redis lookup
+            new Claim("sub", account.AccountId.ToString()), // Standard subject claim
+            new Claim("jti", Guid.NewGuid().ToString()) // JWT ID for tracking
+        };
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {

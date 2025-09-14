@@ -68,13 +68,25 @@ public enum StatusCodes
     /// </summary>
     OK = 200,
     /// <summary>
+    /// Resource created successfully (201).
+    /// </summary>
+    Created = 201,
+    /// <summary>
     /// Request accepted for processing (202).
     /// </summary>
     Accepted = 202,
     /// <summary>
+    /// No content to return (204).
+    /// </summary>
+    NoContent = 204,
+    /// <summary>
     /// Bad request due to invalid input (400).
     /// </summary>
     BadRequest = 400,
+    /// <summary>
+    /// Authentication required (401).
+    /// </summary>
+    Unauthorized = 401,
     /// <summary>
     /// Access forbidden (403).
     /// </summary>

@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Accounts.Client;
+using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Testing;
 
 namespace BeyondImmersion.BannouService.HttpTester;
@@ -32,16 +32,12 @@ public class AccountTestHandler : IServiceTestHandler
             var createRequest = new CreateAccountRequest
             {
                 DisplayName = testUsername,
-                Email = $"{testUsername}@example.com",
-                Provider = Provider.Email,
-                ExternalId = testUsername,
-                EmailVerified = false,
-                Roles = new[] { "user" }
+                Email = $"{testUsername}@example.com"
             };
 
             var response = await accountsClient.CreateAccountAsync(createRequest);
 
-            if (response.AccountId == null || response.AccountId == Guid.Empty)
+            if (response.AccountId == Guid.Empty)
                 return TestResult.Failed("Account creation returned invalid account ID");
 
             return TestResult.Successful($"Account created successfully: ID={response.AccountId}, Email={response.Email}");
@@ -68,18 +64,14 @@ public class AccountTestHandler : IServiceTestHandler
             var createRequest = new CreateAccountRequest
             {
                 DisplayName = testUsername,
-                Email = $"{testUsername}@example.com",
-                Provider = Provider.Email,
-                ExternalId = testUsername,
-                EmailVerified = false,
-                Roles = new[] { "user" }
+                Email = $"{testUsername}@example.com"
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);
-            if (createResponse.AccountId == null || createResponse.AccountId == Guid.Empty)
+            if (createResponse.AccountId == Guid.Empty)
                 return TestResult.Failed("Failed to create test account for retrieval test");
 
-            var accountId = createResponse.AccountId.Value;
+            var accountId = createResponse.AccountId;
 
             // Now test retrieving the account
             var response = await accountsClient.GetAccountAsync(accountId);
@@ -132,18 +124,14 @@ public class AccountTestHandler : IServiceTestHandler
             var createRequest = new CreateAccountRequest
             {
                 DisplayName = testUsername,
-                Email = $"{testUsername}@example.com",
-                Provider = Provider.Email,
-                ExternalId = testUsername,
-                EmailVerified = false,
-                Roles = new[] { "user" }
+                Email = $"{testUsername}@example.com"
             };
 
             var createResponse = await accountsClient.CreateAccountAsync(createRequest);
-            if (createResponse.AccountId == null || createResponse.AccountId == Guid.Empty)
+            if (createResponse.AccountId == Guid.Empty)
                 return TestResult.Failed("Failed to create test account for update test");
 
-            var accountId = createResponse.AccountId.Value;
+            var accountId = createResponse.AccountId;
             var newDisplayName = $"Updated Test User {DateTime.Now.Ticks}";
 
             // Now test updating the account

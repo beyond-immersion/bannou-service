@@ -45,13 +45,13 @@ jobs:
       - name: 1️⃣ Generate Services (Initial)
         run: |
           echo "🔧 Generating all service controllers, models, and clients..."
-          ./generate-all-services.sh
+          scripts/generate-all-services.sh
           
       # Step 2: Generate SDK - Create client SDK from current service definitions
       - name: 2️⃣ Generate Client SDK (Initial) 
         run: |
           echo "📦 Generating Client SDK from current services..."
-          ./generate-client-sdk.sh
+          scripts/generate-client-sdk.sh
           
       # Step 3: Build - Compile everything with fresh generated code
       - name: 3️⃣ Build All Projects
@@ -63,13 +63,13 @@ jobs:
       - name: 4️⃣ Generate Services (Conflict Detection)
         run: |
           echo "🔍 Re-generating services to detect conflicts..."
-          ./generate-all-services.sh
+          scripts/generate-all-services.sh
           
       # Step 5: Generate SDK (again) - Ensure SDK consistency after conflict resolution
       - name: 5️⃣ Generate Client SDK (Consistency Check)
         run: |
           echo "🔄 Re-generating Client SDK for consistency..."
-          ./generate-client-sdk.sh
+          scripts/generate-client-sdk.sh
           
       # Step 6: Unit Tests - Test individual components
       - name: 6️⃣ Unit Tests
@@ -95,7 +95,7 @@ jobs:
           sleep 15
 
           # Run infrastructure tests via infrastructure-tests.sh
-          bash ./infrastructure-tests.sh
+          bash scripts/infrastructure-tests.sh
 
           # Cleanup
           docker-compose -p bannou-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.openresty.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v

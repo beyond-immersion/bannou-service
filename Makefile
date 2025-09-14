@@ -24,36 +24,55 @@ elk-down-compose:
 	docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.elk.yml --project-name cl down --remove-orphans
 
 # Cleans caches, generated files, and clears up resources from git, docker, and dotnet
+# Usage: make clean [PLUGIN=plugin-name] - if PLUGIN is specified, only cleans that plugin
 clean:
-	@echo "🧹 Cleaning generated files..."
-	find . -path "./lib-*/Generated" -type d -exec rm -rf {} + 2>/dev/null || true
-	rm -rf Bannou.Client.SDK 2>/dev/null || true
-	@echo "🧹 Cleaning caches and resources..."
-	git submodule foreach --recursive git clean -fdx && docker container prune -f && docker image prune -f && docker volume prune -f && dotnet clean
-	@echo "✅ Clean completed"
+	@if [ "$(PLUGIN)" ]; then \
+		echo "🧹 Cleaning plugin: $(PLUGIN)..."; \
+		if [ -d "./lib-$(PLUGIN)/Generated" ]; then \
+			rm -rf "./lib-$(PLUGIN)/Generated"; \
+			echo "  Removed lib-$(PLUGIN)/Generated"; \
+		else \
+			echo "  No Generated directory found for lib-$(PLUGIN)"; \
+		fi; \
+		echo "✅ Clean completed for plugin: $(PLUGIN)"; \
+	else \
+		echo "🧹 Cleaning all generated files..."; \
+		find . -path "./lib-*/Generated" -type d -exec rm -rf {} + 2>/dev/null || true; \
+		rm -rf Bannou.Client.SDK 2>/dev/null || true; \
+		echo "🧹 Cleaning caches and resources..."; \
+		git submodule foreach --recursive git clean -fdx && docker container prune -f && docker image prune -f && docker volume prune -f && dotnet clean; \
+		echo "✅ Clean completed"; \
+	fi
 
 # Builds all libs with xml service tags and copies the DLLs to /libs directory
 build-service-libs:
 	@echo "🔧 Building service libs for docker container"
-	bash ./build-service-libs.sh
+	bash scripts/build-service-libs.sh
 	@echo "✅ Service libs built for inclusion in docker container"
+
+# Regenerate all services and SDK
+generate-all:
+	@echo "🔧 Generating everything"
+	scripts/generate-all-services.sh
+	scripts/generate-client-sdk.sh
+	@echo "✅ All generations completed"
 
 # Regenerate all plugins/types but service implementations from schema
 generate-services:
 	@echo "🔧 Generating all services (NSwag + Roslyn)..."
-	./generate-all-services.sh
+	scripts/generate-all-services.sh
 	@echo "✅ Service generation completed"
 
 # Generate Client SDK from generated services
 generate-sdk:
 	@echo "🔧 Generating Bannou Client SDK..."
-	./generate-client-sdk.sh
+	scripts/generate-client-sdk.sh
 	@echo "✅ Client SDK generation completed"
 
 # Fix line endings and final newlines for all project files
 fix-endings:
 	@echo "🔧 Fixing line endings for all project files..."
-	./fix-endings.sh
+	scripts/fix-endings.sh
 
 # Complete formatting workflow
 format: fix-endings
@@ -84,7 +103,7 @@ test-unit:
 # Infrastructure testing
 test-infrastructure:
 	@echo "🚀 Running infrastructure tests"
-	bash ./infrastructure-tests.sh
+	bash scripts/infrastructure-tests.sh
 
 # Infrastructure testing (matches step 7)
 test-infrastructure-compose:

@@ -126,4 +126,25 @@ public class BehaviorService : IBehaviorService
             return Task.FromResult<(StatusCodes, ResolveContextResponse?)>((StatusCodes.InternalServerError, null));
         }
     }
+
+    /// <summary>
+    /// InvalidateCachedBehavior operation implementation
+    /// </summary>
+    public Task<(StatusCodes, object?)> InvalidateCachedBehaviorAsync(string behavior_id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Processing cached behavior invalidation request for: {BehaviorId}", behavior_id);
+
+            // TODO: Implement cached behavior invalidation logic
+            // This should remove compiled behaviors from cache (Redis)
+
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error invalidating cached behavior: {BehaviorId}", behavior_id);
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+        }
+    }
 }

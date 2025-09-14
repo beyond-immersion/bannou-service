@@ -2,8 +2,8 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Permissions;
-using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -426,28 +426,34 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
     /// Gets current service routing information for monitoring/debugging.
     /// Shows how services are mapped to app-ids in the current deployment.
     /// </summary>
-    public Task<(StatusCodes, Dictionary<string, string>?)> GetServiceMappingsAsync(
+    public Task<(StatusCodes, ServiceMappingsResponse?)> GetServiceMappingsAsync(
         CancellationToken cancellationToken = default)
     {
         try
         {
             var mappings = _appMappingResolver.GetAllMappings();
-            var result = new Dictionary<string, string>(mappings);
+
+            var response = new ServiceMappingsResponse
+            {
+                Mappings = new Dictionary<string, string>(mappings),
+                DefaultMapping = "bannou",
+                GeneratedAt = DateTimeOffset.UtcNow,
+                TotalServices = mappings.Count
+            };
 
             // Add default mapping info if no custom mappings exist
-            if (result.Count == 0)
+            if (response.Mappings.Count == 0)
             {
-                result["_default"] = "bannou";
-                result["_info"] = "All services routing to default 'bannou' app-id";
+                response.Mappings["_info"] = "All services routing to default 'bannou' app-id";
             }
 
-            _logger.LogDebug("Returning {Count} service mappings", result.Count);
-            return Task.FromResult<(StatusCodes, Dictionary<string, string>?)>((StatusCodes.OK, result));
+            _logger.LogDebug("Returning {Count} service mappings", response.TotalServices);
+            return Task.FromResult<(StatusCodes, ServiceMappingsResponse?)>((StatusCodes.OK, response));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving service mappings");
-            return Task.FromResult<(StatusCodes, Dictionary<string, string>?)>((StatusCodes.InternalServerError, null));
+            return Task.FromResult<(StatusCodes, ServiceMappingsResponse?)>((StatusCodes.InternalServerError, null));
         }
     }
 }

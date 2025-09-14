@@ -21,14 +21,19 @@ to_pascal_case() {
 }
 
 # Set working directory to bannou-service
-cd "$(dirname "$0")/bannou-service"
+cd "$(dirname "$0")/../bannou-service"
 
 # Function to find NSwag executable
 find_nswag_exe() {
-    # Try multiple possible locations for NSwag executable
+    # Try multiple possible locations for NSwag executable (prioritize 14.2.0 to avoid CS1737 bug)
     local possible_paths=(
         "$HOME/.nuget/packages/nswag.msbuild/14.2.0/tools/Net90/dotnet-nswag.exe"
-        "$HOME/.nuget/packages/nswag.msbuild/14.1.0/tools/Net90/dotnet-nswag.exe" 
+        "$HOME/.nuget/packages/nswag.msbuild/14.1.0/tools/Net90/dotnet-nswag.exe"
+        "$HOME/.nuget/packages/nswag.msbuild/14.0.7/tools/Net90/dotnet-nswag.exe"
+        "$HOME/.nuget/packages/nswag.msbuild/14.5.0/tools/Net90/dotnet-nswag.exe"
+        "$HOME/.nuget/packages/nswag.msbuild/14.4.0/tools/Net90/dotnet-nswag.exe"
+        "$HOME/.nuget/packages/nswag.msbuild/14.3.0/tools/Net90/dotnet-nswag.exe"
+        "$HOME/.nuget/packages/nswag.msbuild/14.1.0/tools/Net90/dotnet-nswag.exe"
         "$HOME/.nuget/packages/nswag.msbuild/14.0.7/tools/Net90/dotnet-nswag.exe"
         "$(find $HOME/.nuget/packages/nswag.msbuild -name "dotnet-nswag.exe" 2>/dev/null | head -1)"
         # Try global tool installation
@@ -138,7 +143,7 @@ generate_service_interface() {
     local service_pascal=$(to_pascal_case "$service_name")
     local interface_name="I${service_pascal}Service.cs"
     local output_path="$service_plugin_dir/Generated/$interface_name"
-    local controller_file="$service_plugin_dir/Generated/${service_pascal}Controller.Generated.cs"
+    local controller_file="$service_plugin_dir/Generated/${service_pascal}Controller.cs"
 
     echo "    🔄 Generating service interface $interface_name..."
 
@@ -170,40 +175,132 @@ public interface I${service_pascal}Service
 {
 EOF
 
-    # Extract full method signatures from controller and convert to service interface methods
-    # Parse controller methods to extract complete signatures including parameters
+    # Extract full method signatures from I{Service}Controller interface and convert to service interface methods
+    # Parse I{Service}Controller interface methods to extract complete signatures including parameters
+    # EXCLUDE methods marked with x-controller-only: true in schema and extract parameter defaults
     python3 -c "
 import re
 import sys
+import yaml
+
+# Get service name from command line args
+service_pascal = '$service_pascal'
+
+# Load schema file to check for x-controller-only flags and parameter defaults
+controller_only_methods = set()
+method_parameter_defaults = {}
+try:
+    with open('$schema_file', 'r') as schema_f:
+        schema = yaml.safe_load(schema_f)
+        if 'paths' in schema:
+            for path, path_data in schema['paths'].items():
+                for method, method_data in path_data.items():
+                    if isinstance(method_data, dict):
+                        operation_id = method_data.get('operationId', '')
+                        if operation_id:
+                            # Convert operationId to method name (camelCase to PascalCase)
+                            method_name = operation_id[0].upper() + operation_id[1:] if operation_id else ''
+
+                            # Check for controller-only methods
+                            if method_data.get('x-controller-only') is True:
+                                controller_only_methods.add(method_name)
+                                print(f'    # Excluding controller-only method: {method_name}', file=sys.stderr)
+
+                            # Extract parameter defaults
+                            if 'parameters' in method_data:
+                                param_defaults = {}
+                                for param in method_data['parameters']:
+                                    param_name = param.get('name', '')
+                                    if 'schema' in param and 'default' in param['schema']:
+                                        default_value = param['schema']['default']
+                                        # Convert Python boolean values to C# equivalents
+                                        if isinstance(default_value, bool):
+                                            default_value = 'true' if default_value else 'false'
+                                        elif isinstance(default_value, str):
+                                            # Ensure string defaults are quoted
+                                            default_value = f'\"{default_value}\"'
+                                        param_defaults[param_name] = default_value
+                                if param_defaults:
+                                    method_parameter_defaults[method_name] = param_defaults
+except Exception as e:
+    print(f'    # Warning: Could not parse schema for x-controller-only flags and defaults: {e}', file=sys.stderr)
 
 with open('$controller_file', 'r') as f:
     content = f.read()
 
-# Find all abstract methods with multiline handling
-method_pattern = r'public abstract System\.Threading\.Tasks\.Task<Microsoft\.AspNetCore\.Mvc\.ActionResult<([^>]+)>>\s+(\w+)\(([^;]+)\);'
+# Extract I{Service}Controller interface and find all its methods
+interface_pattern = fr'public interface I{service_pascal}Controller\\s*\\{{([^}}]*)}}'
+interface_match = re.search(interface_pattern, content, re.MULTILINE | re.DOTALL)
 
-matches = re.findall(method_pattern, content, re.MULTILINE | re.DOTALL)
+if interface_match:
+    interface_body = interface_match.group(1)
 
-for return_type, method_name, params in matches:
-    # Convert controller parameters to service parameters
-    # Remove ASP.NET Core specific attributes and system types
-    clean_params = re.sub(r'\[Microsoft\.AspNetCore\.Mvc\.[^\]]+\]\s*', '', params)
-    clean_params = re.sub(r'\[Microsoft\.AspNetCore\.Mvc\.ModelBinding\.[^\]]+\]\s*', '', clean_params)
-    clean_params = re.sub(r'System\.Threading\.', '', clean_params)
-    clean_params = re.sub(r'System\.', '', clean_params)
+    # Find all method declarations in the interface (handle multiline signatures and nested generics)
+    # Use a different approach: match everything between ActionResult< and the first >;
+    method_pattern = r'System\.Threading\.Tasks\.Task<Microsoft\.AspNetCore\.Mvc\.ActionResult<(.+?)>>\s+(\w+)Async\(([^;]*)\);|System\.Threading\.Tasks\.Task<Microsoft\.AspNetCore\.Mvc\.IActionResult>\s+(\w+)Async\(([^;]*)\);'
 
-    # Clean up extra whitespace and newlines
-    clean_params = re.sub(r'\s+', ' ', clean_params).strip()
+    matches = re.findall(method_pattern, interface_body, re.MULTILINE | re.DOTALL)
 
-    # Handle specific type conversions - fix any remaining issues
-    clean_params = clean_params.replace('Provider?', 'Provider?')
-    clean_params = clean_params.replace('Provider2', 'Provider2')
+    for match in matches:
+        # Handle different match groups - ActionResult vs IActionResult
+        if match[0]:  # ActionResult pattern matched
+            return_type, method_name, params = match[0], match[1], match[2]
+        else:  # IActionResult pattern matched
+            return_type, method_name, params = 'object', match[3], match[4]
+        # Skip methods marked as controller-only in schema
+        if method_name in controller_only_methods:
+            print(f'    # Skipping controller-only method: {method_name}', file=sys.stderr)
+            continue
 
-    print(f'''        /// <summary>
+        # Handle IActionResult methods (return_type will be empty)
+        if not return_type:
+            return_type = 'object'  # Generic return type for IActionResult
+
+        # Convert controller parameters to service parameters
+        # Remove ASP.NET Core specific attributes and system types
+        clean_params = re.sub(r'\[Microsoft\.AspNetCore\.Mvc\.[^\]]+\]\s*', '', params)
+        clean_params = re.sub(r'\[Microsoft\.AspNetCore\.Mvc\.ModelBinding\.[^\]]+\]\s*', '', clean_params)
+        clean_params = re.sub(r'System\.Threading\.', '', clean_params)
+        clean_params = re.sub(r'System\.', '', clean_params)
+
+        # Clean up extra whitespace and newlines
+        clean_params = re.sub(r'\s+', ' ', clean_params).strip()
+
+        # Handle specific type conversions - fix any remaining issues
+        clean_params = clean_params.replace('Provider?', 'Provider?')
+        clean_params = clean_params.replace('Provider2', 'Provider2')
+
+        # Apply default values from schema
+        if method_name in method_parameter_defaults:
+            param_defaults = method_parameter_defaults[method_name]
+            # Split parameters and apply defaults where applicable
+            param_parts = []
+            for param in clean_params.split(','):
+                param = param.strip()
+                if param:
+                    # Extract parameter name (handle complex types)
+                    param_match = re.search(r'(\w+)\s*(?:=|$)', param)
+                    if param_match:
+                        param_name = param_match.group(1)
+                        if param_name in param_defaults:
+                            default_val = param_defaults[param_name]
+                            # Remove existing default and apply schema default
+                            base_param = re.sub(r'\s*=\s*[^,]*', '', param)
+                            param = f'{base_param} = {default_val}'
+                        elif param_name != 'cancellationToken' and '=' not in param:
+                            # Add null default for optional parameters without defaults
+                            if param.endswith('?') or 'string?' in param or 'bool?' in param or 'Provider?' in param:
+                                param = f'{param} = null'
+                    param_parts.append(param)
+            clean_params = ', '.join(param_parts)
+
+        print(f'''        /// <summary>
         /// {method_name} operation
         /// </summary>
         Task<(StatusCodes, {return_type}?)> {method_name}Async({clean_params});
 ''')
+else:
+    print('    # Warning: Could not find I${service_pascal}Controller interface in generated controller file', file=sys.stderr)
 " >> "$output_path"
 
     # Close the interface
@@ -462,7 +559,7 @@ generate_client() {
             /newLineBehavior:LF \
             /generateOptionalParameters:true \
             /useHttpClientCreationMethod:true \
-            /additionalNamespaceUsages:"BeyondImmersion.BannouService.ServiceClients,BeyondImmersion.BannouService.$service_pascal" \
+            /additionalNamespaceUsages:"BeyondImmersion.BannouService,BeyondImmersion.BannouService.ServiceClients,BeyondImmersion.BannouService.$service_pascal" \
             /templateDirectory:"../templates/nswag"
 
         # Check if NSwag client generation succeeded
@@ -481,12 +578,79 @@ generate_client() {
     fi
 }
 
+# Function to post-process generated controller for partial class support
+post_process_partial_controller() {
+    local controller_file="$1"
+    local service_plugin_dir="$2"
+    local service_pascal="$3"
+
+    if [ ! -f "$controller_file" ]; then
+        echo "      ❌ Controller file not found for post-processing: $controller_file"
+        return 1
+    fi
+
+    echo "      🔧 Converting generated controller to partial class..."
+
+    # Convert the class declaration to partial
+    sed -i 's/public abstract class \([^:]*\)ControllerBase/public abstract partial class \1ControllerBase/' "$controller_file"
+
+    echo "      📝 Creating empty partial controller in parent directory..."
+    create_empty_partial_controller "$service_plugin_dir" "$service_pascal"
+
+    echo "      ✅ Partial controller post-processing complete"
+    return 0
+}
+
+# Function to create empty partial controller implementation template
+create_empty_partial_controller() {
+    local service_plugin_dir="$1"
+    local service_pascal="$2"
+    local partial_controller_file="$service_plugin_dir/${service_pascal}Controller.cs"
+
+    # Don't overwrite existing manual implementation
+    if [ -f "$partial_controller_file" ]; then
+        echo "      📝 Manual partial controller already exists: $partial_controller_file"
+        return 0
+    fi
+
+    echo "      📝 Creating empty partial controller: $partial_controller_file"
+
+    # Create the empty partial controller implementation
+    cat > "$partial_controller_file" << EOF
+using Microsoft.AspNetCore.Mvc;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace BeyondImmersion.BannouService.$service_pascal;
+
+/// <summary>
+/// Manual implementation for endpoints that require custom logic.
+/// This partial class extends the generated ${service_pascal}ControllerBase.
+/// </summary>
+public partial class ${service_pascal}Controller : ${service_pascal}ControllerBase
+{
+    private readonly I${service_pascal}Service _${service_pascal,,}Service;
+
+    public ${service_pascal}Controller(I${service_pascal}Service ${service_pascal,,}Service)
+    {
+        _${service_pascal,,}Service = ${service_pascal,,}Service;
+    }
+
+    // TODO: Implement abstract methods marked with x-manual-implementation: true
+    // The generated controller base class contains abstract methods that require manual implementation
+}
+EOF
+
+    echo "      ✅ Created empty partial controller template"
+    return 0
+}
+
 # Function to generate controller from schema (consolidated service architecture)
 generate_controller() {
     local schema_file="$1"
     local service_name="$2"
     local service_pascal=$(to_pascal_case "$service_name")
-    local controller_name="${service_pascal}Controller.Generated.cs"
+    local controller_name="${service_pascal}Controller.cs"
 
     # Consolidated architecture: generate in service plugin directory
     local service_plugin_dir="../lib-${service_name}"
@@ -506,9 +670,28 @@ generate_controller() {
     # Create Generated directory if it doesn't exist
     mkdir -p "$(dirname "$output_path")"
 
+    # Check for x-manual-implementation flag in schema
+    local has_manual_implementation=false
+    if grep -q "x-manual-implementation:\s*true" "$schema_file"; then
+        has_manual_implementation=true
+        echo "      🔧 Schema contains x-manual-implementation: true - generating partial controller"
+    fi
+
+    # Check for controller-only and service-only flags for selective generation
+    local controller_only_methods=()
+    local service_only_methods=()
+
+    # Extract methods marked with x-controller-only: true
+    if grep -q "x-controller-only:\s*true" "$schema_file"; then
+        echo "      🔧 Schema contains x-controller-only methods - selective generation enabled"
+        # Automatically enable manual implementation for controller-only methods
+        has_manual_implementation=true
+        echo "      🔧 Enabling manual implementation due to x-controller-only methods"
+    fi
+
     # Generate controller using appropriate method
     local nswag_success=false
-    
+
     if [ "$USE_DOTNET_BUILD" = "true" ]; then
         # Use dotnet build approach - trigger NSwag via MSBuild
         echo "      🔧 Using dotnet build approach for NSwag generation..."
@@ -524,9 +707,8 @@ generate_controller() {
             "/input:$schema_file" \
             "/output:$output_path" \
             "/namespace:BeyondImmersion.BannouService.$service_pascal" \
-            "/ControllerStyle:Abstract" \
             "/ControllerBaseClass:Microsoft.AspNetCore.Mvc.ControllerBase" \
-            "/ClassName:${service_pascal}ControllerBase" \
+            "/ClassName:${service_pascal}" \
             "/UseCancellationToken:true" \
             "/UseActionResultType:true" \
             "/GenerateModelValidationAttributes:true" \
@@ -535,12 +717,18 @@ generate_controller() {
             "/JsonLibrary:NewtonsoftJson" \
             "/GenerateNullableReferenceTypes:true" \
             "/NewLineBehavior:LF" \
-            "/GenerateOptionalParameters:true" \
+            "/GenerateOptionalParameters:false" \
             "/TemplateDirectory:../templates/nswag"
-        
+
         if [ $? -eq 0 ]; then
             nswag_success=true
         fi
+    fi
+
+    # Post-process controller for partial class support if manual implementation is needed
+    if [ "$nswag_success" = true ] && [ "$has_manual_implementation" = true ]; then
+        echo "      🔧 Post-processing controller for partial class support..."
+        post_process_partial_controller "$output_path" "$service_plugin_dir" "$service_pascal"
     fi
 
     # Generate service client from schema (CRITICAL for service-to-service communication)

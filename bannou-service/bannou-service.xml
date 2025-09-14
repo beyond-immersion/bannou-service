@@ -883,14 +883,29 @@
             Request succeeded (200).
             </summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.StatusCodes.Created">
+            <summary>
+            Resource created successfully (201).
+            </summary>
+        </member>
         <member name="F:BeyondImmersion.BannouService.StatusCodes.Accepted">
             <summary>
             Request accepted for processing (202).
             </summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.StatusCodes.NoContent">
+            <summary>
+            No content to return (204).
+            </summary>
+        </member>
         <member name="F:BeyondImmersion.BannouService.StatusCodes.BadRequest">
             <summary>
             Bad request due to invalid input (400).
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.StatusCodes.Unauthorized">
+            <summary>
+            Authentication required (401).
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.StatusCodes.Forbidden">

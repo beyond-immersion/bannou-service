@@ -36,14 +36,18 @@ public class AccountsService : IAccountsService
         string? displayName = null,
         Provider? provider = null,
         bool? verified = null,
-        int? page = 1,
-        int? pageSize = 20,
+        int page = 1,
+        int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Listing accounts with filters - Email: {Email}, DisplayName: {DisplayName}, Provider: {Provider}, Verified: {Verified}",
-                email, displayName, provider, verified);
+            // Apply default values for pagination parameters
+            if (page <= 0) page = 1;
+            if (pageSize <= 0) pageSize = 20;
+
+            _logger.LogDebug("Listing accounts with filters - Email: {Email}, DisplayName: {DisplayName}, Provider: {Provider}, Verified: {Verified}, Page: {Page}, PageSize: {PageSize}",
+                email, displayName, provider, verified, page, pageSize);
 
             // TODO: Implement pagination and filtering with Dapr state store queries
             // For now, return empty list as placeholder
@@ -51,8 +55,8 @@ public class AccountsService : IAccountsService
             {
                 Accounts = new List<AccountResponse>(),
                 TotalCount = 0,
-                Page = page ?? 1,
-                PageSize = pageSize ?? 20
+                Page = page,
+                PageSize = pageSize
             };
 
             return Task.FromResult<(StatusCodes, AccountListResponse?)>((StatusCodes.OK, response));
@@ -362,6 +366,82 @@ public class AccountsService : IAccountsService
         {
             _logger.LogError(ex, "Error updating profile: {AccountId}", accountId);
             return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    // Add missing methods from interface
+    public Task<(StatusCodes, object?)> DeleteAccountAsync(
+        Guid accountId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Deleting account: {AccountId}", accountId);
+            // TODO: Implement account deletion with Dapr state store
+            _logger.LogWarning("DeleteAccount not fully implemented");
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting account: {AccountId}", accountId);
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+        }
+    }
+
+    public Task<(StatusCodes, object?)> RemoveAuthMethodAsync(
+        Guid accountId,
+        Guid methodId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Removing auth method {MethodId} for account: {AccountId}", methodId, accountId);
+            // TODO: Implement auth method removal
+            _logger.LogWarning("RemoveAuthMethod not fully implemented");
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing auth method: {AccountId}", accountId);
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+        }
+    }
+
+    public Task<(StatusCodes, object?)> UpdatePasswordHashAsync(
+        Guid accountId,
+        UpdatePasswordRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Updating password hash for account: {AccountId}", accountId);
+            // TODO: Implement password hash update with secure hashing
+            _logger.LogWarning("UpdatePasswordHash not fully implemented");
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating password hash: {AccountId}", accountId);
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+        }
+    }
+
+    public Task<(StatusCodes, object?)> UpdateVerificationStatusAsync(
+        Guid accountId,
+        UpdateVerificationRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Updating verification status for account: {AccountId}", accountId);
+            // TODO: Implement verification status update
+            _logger.LogWarning("UpdateVerificationStatus not fully implemented");
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating verification status: {AccountId}", accountId);
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
         }
     }
 }
