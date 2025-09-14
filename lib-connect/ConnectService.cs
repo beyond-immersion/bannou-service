@@ -1,78 +1,60 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
-using BeyondImmersion.BannouService.Connect.Models;
+using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
+using BeyondImmersion.BannouService.ServiceClients;
+using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using System.Net.WebSockets;
-using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
-using System.Threading.Channels;
 
 namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
 /// WebSocket-first edge gateway service providing zero-copy message routing.
-/// Handles client connections, service discovery, and message routing between clients and services.
+/// Uses Permissions service for dynamic API discovery and capability management.
 /// </summary>
 [DaprService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
 public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnectService
 {
-    private readonly IAuthService _authService;
-    private readonly IMemoryCache _cache;
+    private readonly IAuthClient _authClient;
+    private readonly IPermissionsClient _permissionsClient;
+    private readonly DaprClient _daprClient;
+    private readonly IServiceAppMappingResolver _appMappingResolver;
     private readonly ILogger<ConnectService> _logger;
 
-    // Thread-safe collections for connection management
-    private readonly ConcurrentDictionary<string, ClientConnection> _connections;
-    private readonly ConcurrentDictionary<Guid, string> _serviceGuidToClient;
-    private readonly Channel<BinaryMessage> _messageQueue;
-    private readonly ChannelWriter<BinaryMessage> _messageWriter;
-    private readonly ChannelReader<BinaryMessage> _messageReader;
-
-    // Metrics
-    private long _totalConnections;
-    private long _currentConnections;
-    private long _totalMessagesRouted;
-    private readonly DateTime _serviceStartTime;
+    // Session to service GUID mappings
+    private readonly ConcurrentDictionary<string, Dictionary<string, Guid>> _sessionServiceMappings;
+    private readonly string _serverSalt;
 
     public ConnectService(
-        IAuthService authService,
-        IMemoryCache cache,
+        IAuthClient authClient,
+        IPermissionsClient permissionsClient,
+        DaprClient daprClient,
+        IServiceAppMappingResolver appMappingResolver,
         ConnectServiceConfiguration configuration,
         ILogger<ConnectService> logger)
-        : base(configuration, logger)
+        : base()
     {
-        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
-        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+        _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
+        _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
+        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        _connections = new ConcurrentDictionary<string, ClientConnection>();
-        _serviceGuidToClient = new ConcurrentDictionary<Guid, string>();
+        _sessionServiceMappings = new ConcurrentDictionary<string, Dictionary<string, Guid>>();
 
-        // Create message processing queue
-        var channelOptions = new BoundedChannelOptions(10000)
-        {
-            FullMode = BoundedChannelFullMode.Wait,
-            SingleReader = false,
-            SingleWriter = false
-        };
-
-        _messageQueue = Channel.CreateBounded<BinaryMessage>(channelOptions);
-        _messageWriter = _messageQueue.Writer;
-        _messageReader = _messageQueue.Reader;
-
-        _serviceStartTime = DateTime.UtcNow;
-
-        // Start background message processing
-        _ = Task.Run(ProcessMessageQueueAsync);
+        // Generate server salt for GUID generation
+        _serverSalt = Guid.NewGuid().ToString();
     }
 
     /// <summary>
-    /// Internal API proxy for stateless requests
+    /// Internal API proxy for stateless requests.
+    /// Routes requests through Dapr to the appropriate service.
     /// </summary>
     public async Task<(StatusCodes, InternalProxyResponse?)> ProxyInternalRequestAsync(
         InternalProxyRequest body,
@@ -80,22 +62,140 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
     {
         try
         {
-            _logger.LogInformation("Processing internal proxy request to {TargetService}/{Method}",
-                body.TargetService, body.Method);
+            _logger.LogInformation("Processing internal proxy request to {TargetService}/{Method} {Endpoint}",
+                body.TargetService, body.Method, body.TargetEndpoint);
 
-            // TODO: Implement actual proxy logic
-            // This is a placeholder implementation
-            await Task.Delay(1, cancellationToken);
-
-            var response = new InternalProxyResponse
+            // Validate session has access to this API
+            var validationRequest = new ValidationRequest
             {
-                Success = true,
-                StatusCode = 200,
-                Response = "{\"message\": \"Proxy request processed successfully\"}",
-                Headers = new Dictionary<string, ICollection<string>>()
+                SessionId = body.SessionId,
+                ServiceId = body.TargetService,
+                Method = $"{body.Method}:{body.TargetEndpoint}"
             };
 
-            return (StatusCodes.OK, response);
+            var validationResponse = await _permissionsClient.ValidateApiAccessAsync(
+                validationRequest, cancellationToken);
+
+            if (!validationResponse.Allowed)
+            {
+                _logger.LogWarning("Session {SessionId} denied access to {Service}/{Method}",
+                    body.SessionId, body.TargetService, body.Method);
+
+                return (StatusCodes.Forbidden, new InternalProxyResponse
+                {
+                    Success = false,
+                    StatusCode = 403,
+                    Error = validationResponse.Reason ?? "Access denied"
+                });
+            }
+
+            // Build the full URL path with path parameters
+            var endpoint = body.TargetEndpoint;
+            if (body.PathParameters != null)
+            {
+                foreach (var param in body.PathParameters)
+                {
+                    endpoint = endpoint.Replace($"{{{param.Key}}}", param.Value);
+                }
+            }
+
+            // Add query parameters
+            if (body.QueryParameters != null && body.QueryParameters.Count > 0)
+            {
+                var queryString = string.Join("&",
+                    body.QueryParameters.Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value)}"));
+                endpoint = $"{endpoint}?{queryString}";
+            }
+
+            // Use ServiceAppMappingResolver for dynamic app-id resolution
+            // This enables distributed deployment where services can run on different nodes
+            var appId = _appMappingResolver.GetAppIdForService(body.TargetService);
+
+            _logger.LogDebug("Routing request to service {Service} via app-id {AppId}",
+                body.TargetService, appId);
+
+            // Create HTTP request
+            var httpMethod = body.Method switch
+            {
+                InternalProxyRequestMethod.GET => HttpMethod.Get,
+                InternalProxyRequestMethod.POST => HttpMethod.Post,
+                InternalProxyRequestMethod.PUT => HttpMethod.Put,
+                InternalProxyRequestMethod.DELETE => HttpMethod.Delete,
+                InternalProxyRequestMethod.PATCH => HttpMethod.Patch,
+                _ => HttpMethod.Get
+            };
+
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                // Route through Dapr service invocation
+                HttpResponseMessage httpResponse;
+
+                if (body.Method == InternalProxyRequestMethod.GET ||
+                    body.Method == InternalProxyRequestMethod.DELETE)
+                {
+                    // For GET/DELETE, no body
+                    var request = _daprClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
+                    httpResponse = await _daprClient.InvokeMethodWithResponseAsync(request, cancellationToken);
+                }
+                else
+                {
+                    // For POST/PUT/PATCH, include body
+                    var jsonBody = body.Body != null ? JsonSerializer.Serialize(body.Body) : null;
+
+                    var content = jsonBody != null ?
+                        new StringContent(jsonBody, Encoding.UTF8, "application/json") : null;
+                    var request = _daprClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
+                    if (content != null)
+                    {
+                        request.Content = content;
+                    }
+                    httpResponse = await _daprClient.InvokeMethodWithResponseAsync(request, cancellationToken);
+                }
+
+                // Read response
+                var responseContent = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
+
+                // Convert headers
+                var responseHeaders = new Dictionary<string, ICollection<string>>();
+                foreach (var header in httpResponse.Headers)
+                {
+                    responseHeaders[header.Key] = header.Value.ToList();
+                }
+                foreach (var header in httpResponse.Content.Headers)
+                {
+                    responseHeaders[header.Key] = header.Value.ToList();
+                }
+
+                var executionTime = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                var response = new InternalProxyResponse
+                {
+                    Success = httpResponse.IsSuccessStatusCode,
+                    StatusCode = (int)httpResponse.StatusCode,
+                    Response = responseContent,
+                    Headers = responseHeaders,
+                    ExecutionTime = executionTime
+                };
+
+                return (StatusCodes.OK, response);
+            }
+            catch (Exception daprEx)
+            {
+                _logger.LogError(daprEx, "Dapr service invocation failed for {Service}/{Endpoint}",
+                    body.TargetService, endpoint);
+
+                var errorResponse = new InternalProxyResponse
+                {
+                    Success = false,
+                    StatusCode = 503,
+                    Error = $"Service invocation failed: {daprEx.Message}",
+                    ExecutionTime = (int)(DateTime.UtcNow - startTime).TotalMilliseconds
+                };
+
+                return (StatusCodes.InternalServerError, errorResponse);
+            }
         }
         catch (Exception ex)
         {
@@ -105,7 +205,45 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
     }
 
     /// <summary>
-    /// Get available APIs for current session
+    /// Publishes a service mapping update event to notify all services of routing changes.
+    /// Used when services come online or change their deployment topology.
+    /// </summary>
+    private async Task PublishServiceMappingUpdateAsync(string serviceName, string appId, string action = "update")
+    {
+        try
+        {
+            var mappingEvent = new
+            {
+                EventId = Guid.NewGuid().ToString(),
+                Timestamp = DateTime.UtcNow,
+                ServiceName = serviceName,
+                AppId = appId,
+                Action = action,
+                Metadata = new Dictionary<string, object>
+                {
+                    { "source", "connect-service" },
+                    { "region", Environment.GetEnvironmentVariable("SERVICE_REGION") ?? "default" }
+                }
+            };
+
+            await _daprClient.PublishEventAsync(
+                "bannou-pubsub",
+                "bannou-service-mappings",
+                mappingEvent);
+
+            _logger.LogInformation("Published service mapping update: {Service} -> {AppId} ({Action})",
+                serviceName, appId, action);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish service mapping update for {Service}", serviceName);
+            // Non-critical - continue operation even if event publishing fails
+        }
+    }
+
+    /// <summary>
+    /// Get available APIs for current session using Permissions service.
+    /// Returns client-salted GUIDs for security isolation.
     /// </summary>
     public async Task<(StatusCodes, ApiDiscoveryResponse?)> DiscoverAPIsAsync(
         ApiDiscoveryRequest body,
@@ -116,16 +254,88 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
             _logger.LogInformation("Processing API discovery request for session {SessionId}",
                 body.SessionId);
 
-            // TODO: Implement actual API discovery logic
-            // This is a placeholder implementation
-            await Task.Delay(1, cancellationToken);
+            // Get capabilities from Permissions service
+            var capabilityRequest = new CapabilityRequest
+            {
+                SessionId = body.SessionId,
+                ServiceIds = new List<string>() // Get all available services
+            };
+
+            CapabilityResponse capabilities;
+            try
+            {
+                capabilities = await _permissionsClient.GetCapabilitiesAsync(
+                    capabilityRequest, cancellationToken);
+            }
+            catch (ApiException apiEx)
+            {
+                _logger.LogWarning("Failed to get capabilities for session {SessionId}: {Error}",
+                    body.SessionId, apiEx.Message);
+
+                if (apiEx.StatusCode == 404)
+                {
+                    return (StatusCodes.NotFound, null);
+                }
+
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Build available APIs with client-salted GUIDs
+            var availableApis = new List<ApiEndpointInfo>();
+            var serviceCapabilities = new Dictionary<string, ICollection<string>>();
+            var serviceMappings = new Dictionary<string, Guid>();
+
+            foreach (var servicePermission in capabilities.Permissions)
+            {
+                var serviceName = servicePermission.Key;
+                var methods = servicePermission.Value;
+
+                // Generate client-salted GUID for this service
+                var serviceGuid = GenerateServiceGuid(body.SessionId.ToString(), serviceName);
+                serviceMappings[serviceName] = serviceGuid;
+
+                // Create API endpoint info for each method
+                foreach (var method in methods)
+                {
+                    // Parse method format (e.g., "GET:/accounts/{id}")
+                    var parts = method.Split(':', 2);
+                    if (parts.Length != 2) continue;
+
+                    var httpMethod = ParseMethod(parts[0]);
+                    var endpoint = parts[1];
+
+                    availableApis.Add(new ApiEndpointInfo
+                    {
+                        ServiceGuid = serviceGuid,
+                        ServiceName = serviceName,
+                        Endpoint = endpoint,
+                        Method = httpMethod,
+                        Description = $"{httpMethod} {endpoint} on {serviceName}",
+                        RequiredPermissions = new List<string> { $"{serviceName}:{parts[0].ToLower()}" },
+                        Category = GetServiceCategory(serviceName),
+                        Channel = GetPreferredChannel(serviceName, endpoint)
+                    });
+                }
+
+                // Add to service capabilities map
+                if (!serviceCapabilities.ContainsKey(serviceName))
+                {
+                    serviceCapabilities[serviceName] = new List<string>();
+                }
+                ((List<string>)serviceCapabilities[serviceName]).AddRange(methods);
+            }
+
+            // Store service mappings for this session (for reverse lookup during routing)
+            _sessionServiceMappings[body.SessionId.ToString()] = serviceMappings;
 
             var response = new ApiDiscoveryResponse
             {
-                SessionId = body.SessionId ?? Guid.NewGuid().ToString(),
-                AvailableAPIs = new List<ApiEndpointInfo>(),
-                ServiceCapabilities = new Dictionary<string, ICollection<string>>(),
-                GeneratedAt = DateTimeOffset.UtcNow
+                SessionId = body.SessionId,
+                AvailableAPIs = availableApis,
+                ServiceCapabilities = serviceCapabilities,
+                Version = 1, // Default version for now
+                GeneratedAt = DateTimeOffset.UtcNow,
+                ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(60) // Default 60 minute expiry
             };
 
             return (StatusCodes.OK, response);
@@ -137,337 +347,107 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
         }
     }
 
-    /// <inheritdoc />
-    public async Task HandleWebSocketAsync(
-        WebSocket webSocket,
-        string? authorization = null,
-        CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Generate a client-salted GUID for a service.
+    /// Uses SHA256 for better security than MD5.
+    /// </summary>
+    private Guid GenerateServiceGuid(string sessionId, string serviceName)
     {
-        var clientId = await RegisterClientAsync(webSocket, authorization, cancellationToken);
-        var connection = _connections[clientId];
+        var input = $"{serviceName}:{sessionId}:{_serverSalt}";
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
 
-        _logger.LogInformation("WebSocket connection established for client {ClientId}", clientId);
+        // Use first 16 bytes of hash as GUID
+        var guidBytes = new byte[16];
+        Array.Copy(hash, guidBytes, 16);
 
-        try
-        {
-            // Send initial service discovery response
-            await SendServiceDiscoveryResponse(connection, cancellationToken);
-
-            // Message handling loop
-            var buffer = new byte[Configuration.BufferSize];
-            var messageBuffer = new List<byte>();
-
-            while (webSocket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
-            {
-                var result = await connection.ReceiveAsync(buffer.AsMemory(), cancellationToken);
-                if (result == null)
-                    break;
-
-                if (result.MessageType == WebSocketMessageType.Close)
-                {
-                    await connection.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client requested close", cancellationToken);
-                    break;
-                }
-
-                if (result.MessageType == WebSocketMessageType.Binary)
-                {
-                    // Accumulate message data
-                    messageBuffer.AddRange(buffer.AsSpan(0, result.Count).ToArray());
-
-                    if (result.EndOfMessage)
-                    {
-                        // Process complete message
-                        var messageData = messageBuffer.ToArray();
-                        messageBuffer.Clear();
-
-                        await ProcessClientMessage(clientId, messageData, cancellationToken);
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling WebSocket for client {ClientId}", clientId);
-        }
-        finally
-        {
-            await UnregisterClientAsync(clientId, cancellationToken);
-            _logger.LogInformation("WebSocket connection closed for client {ClientId}", clientId);
-        }
+        return new Guid(guidBytes);
     }
 
-    /// <inheritdoc />
-    public async Task<string> RegisterClientAsync(
-        WebSocket webSocket,
-        string? authorization = null,
-        CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Parse HTTP method string to enum.
+    /// </summary>
+    private ApiEndpointInfoMethod ParseMethod(string method)
     {
-        var clientId = Guid.NewGuid().ToString();
-
-        // Validate authorization and create principal
-        ClaimsPrincipal? principal = null;
-        if (!string.IsNullOrWhiteSpace(authorization))
+        return method.ToUpperInvariant() switch
         {
-            principal = await ValidateAuthorizationAsync(authorization, cancellationToken);
-        }
-
-        // Create connection
-        var connection = new ClientConnection(clientId, webSocket, principal);
-
-        // Update service mappings based on authentication
-        var availableServices = GetAvailableServices(principal);
-        connection.UpdateServiceMappings(availableServices);
-
-        // Register service GUID mappings for reverse lookup
-        foreach (var mapping in connection.ServiceMappings)
-        {
-            _serviceGuidToClient[mapping.Value] = clientId;
-        }
-
-        // Add to connections
-        _connections[clientId] = connection;
-
-        Interlocked.Increment(ref _totalConnections);
-        Interlocked.Increment(ref _currentConnections);
-
-        _logger.LogDebug("Registered client {ClientId} with {ServiceCount} available services",
-            clientId, connection.ServiceMappings.Count);
-
-        return clientId;
-    }
-
-    /// <inheritdoc />
-    public async Task UnregisterClientAsync(string clientId, CancellationToken cancellationToken = default)
-    {
-        if (_connections.TryRemove(clientId, out var connection))
-        {
-            // Remove service GUID mappings
-            foreach (var mapping in connection.ServiceMappings)
-            {
-                _serviceGuidToClient.TryRemove(mapping.Value, out _);
-            }
-
-            // Close connection if still open
-            await connection.CloseAsync(cancellationToken: cancellationToken);
-            connection.Dispose();
-
-            Interlocked.Decrement(ref _currentConnections);
-
-            _logger.LogDebug("Unregistered client {ClientId}", clientId);
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<bool> RouteMessageAsync(
-        ReadOnlyMemory<byte> message,
-        string clientId,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            if (message.Length < 24) // Minimum header size
-            {
-                _logger.LogWarning("Received malformed message from client {ClientId} (size: {Size})", clientId, message.Length);
-                return false;
-            }
-
-            var binaryMessage = new BinaryMessage(message);
-
-            // Check if this is a client-to-client message
-            if (Configuration.EnableClientToClientRouting &&
-                _serviceGuidToClient.TryGetValue(binaryMessage.ServiceGuid, out var targetClientId) &&
-                targetClientId != clientId)
-            {
-                return await SendToClientAsync(targetClientId, message, cancellationToken);
-            }
-
-            // Otherwise, route to service via Dapr
-            return await RouteToServiceAsync(binaryMessage, clientId, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error routing message from client {ClientId}", clientId);
-            return false;
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<bool> SendToClientAsync(
-        string clientId,
-        ReadOnlyMemory<byte> message,
-        CancellationToken cancellationToken = default)
-    {
-        if (_connections.TryGetValue(clientId, out var connection))
-        {
-            return await connection.SendAsync(message, cancellationToken);
-        }
-
-        _logger.LogWarning("Attempted to send message to non-existent client {ClientId}", clientId);
-        return false;
-    }
-
-    /// <inheritdoc />
-    public async Task BroadcastAsync(ReadOnlyMemory<byte> message, CancellationToken cancellationToken = default)
-    {
-        var connections = _connections.Values.ToArray();
-        var tasks = connections.Select(conn => conn.SendAsync(message, cancellationToken));
-
-        var results = await Task.WhenAll(tasks);
-        var successCount = results.Count(r => r);
-
-        _logger.LogDebug("Broadcast message to {Total} clients, {Success} successful",
-            connections.Length, successCount);
-    }
-
-    #region Private Helper Methods
-
-    private async Task<ClaimsPrincipal?> ValidateAuthorizationAsync(string authorization, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var token = authorization.StartsWith("Bearer ") ? authorization[7..] : authorization;
-            var validateResult = await _authService.ValidateTokenAsync(token, cancellationToken);
-
-            if (validateResult.Result is OkObjectResult okResult &&
-                okResult.Value is ValidateTokenResponse tokenResponse &&
-                tokenResponse.Valid)
-            {
-                var claims = new List<Claim>
-                {
-                    new(ClaimTypes.NameIdentifier, tokenResponse.AccountId.ToString()),
-                    new(ClaimTypes.Email, tokenResponse.Email)
-                };
-
-                claims.AddRange(tokenResponse.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
-                return new ClaimsPrincipal(new ClaimsIdentity(claims, "Bearer"));
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to validate authorization token");
-        }
-
-        return null;
-    }
-
-    private List<string> GetAvailableServices(ClaimsPrincipal? principal)
-    {
-        var services = new List<string>(Configuration.DefaultServices);
-
-        if (principal?.Identity?.IsAuthenticated == true)
-        {
-            services.AddRange(Configuration.AuthenticatedServices);
-        }
-
-        return services;
-    }
-
-    private Dictionary<string, string> GenerateServiceMappings(string clientId, IEnumerable<string> services)
-    {
-        var mappings = new Dictionary<string, string>();
-
-        foreach (var service in services)
-        {
-            // Generate unique GUID for this client/service combination
-            var salt = $"{clientId}:{service}:{DateTime.UtcNow:O}";
-            var guidBytes = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(salt));
-            var serviceGuid = new Guid(guidBytes);
-            mappings[service] = serviceGuid.ToString();
-        }
-
-        return mappings;
-    }
-
-    private async Task SendServiceDiscoveryResponse(ClientConnection connection, CancellationToken cancellationToken)
-    {
-        var response = new
-        {
-            type = "service_discovery",
-            client_id = connection.ClientId,
-            services = connection.ServiceMappings.ToDictionary(
-                kvp => kvp.Key,
-                kvp => kvp.Value.ToString())
+            "GET" => ApiEndpointInfoMethod.GET,
+            "POST" => ApiEndpointInfoMethod.POST,
+            "PUT" => ApiEndpointInfoMethod.PUT,
+            "DELETE" => ApiEndpointInfoMethod.DELETE,
+            "PATCH" => ApiEndpointInfoMethod.PATCH,
+            _ => ApiEndpointInfoMethod.GET
         };
-
-        var jsonResponse = JsonSerializer.Serialize(response);
-        var responseMessage = BinaryMessage.Create(Guid.Empty, 0, jsonResponse);
-
-        await connection.SendAsync(responseMessage.Data, cancellationToken);
     }
 
-    private async Task ProcessClientMessage(string clientId, byte[] messageData, CancellationToken cancellationToken)
+    /// <summary>
+    /// Get service category for grouping in discovery response.
+    /// </summary>
+    private string GetServiceCategory(string serviceName)
     {
-        if (!_connections.TryGetValue(clientId, out var connection))
-            return;
-
-        // Check rate limiting
-        if (connection.IsRateLimited(Configuration.MaxMessagesPerMinute, Configuration.RateLimitWindowMinutes))
+        return serviceName.ToLowerInvariant() switch
         {
-            _logger.LogWarning("Rate limit exceeded for client {ClientId}", clientId);
-            return;
-        }
-
-        connection.IncrementMessageCount();
-
-        // Queue message for processing
-        var binaryMessage = new BinaryMessage(messageData);
-
-        if (!await _messageWriter.WaitToWriteAsync(cancellationToken))
-            return;
-
-        await _messageWriter.WriteAsync(binaryMessage, cancellationToken);
+            "auth" => "authentication",
+            "accounts" => "accounts",
+            "behavior" => "game",
+            "gamesession" => "game",
+            "permissions" => "system",
+            "website" => "public",
+            "connect" => "infrastructure",
+            _ => "general"
+        };
     }
 
-    private async Task ProcessMessageQueueAsync()
+    /// <summary>
+    /// Get preferred channel for message ordering.
+    /// Higher channels guarantee sequential processing.
+    /// </summary>
+    private int GetPreferredChannel(string serviceName, string endpoint)
     {
-        await foreach (var message in _messageReader.ReadAllAsync())
+        // Assign channels based on service criticality and message ordering needs
+        // Channel 0 = default/unordered
+        // Higher channels = sequential processing guaranteed
+
+        if (serviceName == "auth" || endpoint.Contains("/login") || endpoint.Contains("/logout"))
+            return 1; // Auth operations on channel 1
+
+        if (serviceName == "gamesession" || endpoint.Contains("/join") || endpoint.Contains("/leave"))
+            return 2; // Game session operations on channel 2
+
+        if (serviceName == "behavior")
+            return 3; // Behavior operations on channel 3
+
+        if (serviceName == "permissions")
+            return 4; // Permission operations on channel 4
+
+        return 0; // Default channel for everything else
+    }
+
+    /// <summary>
+    /// Gets current service routing information for monitoring/debugging.
+    /// Shows how services are mapped to app-ids in the current deployment.
+    /// </summary>
+    public Task<(StatusCodes, Dictionary<string, string>?)> GetServiceMappingsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
         {
-            try
+            var mappings = _appMappingResolver.GetAllMappings();
+            var result = new Dictionary<string, string>(mappings);
+
+            // Add default mapping info if no custom mappings exist
+            if (result.Count == 0)
             {
-                // Process message routing logic here
-                Interlocked.Increment(ref _totalMessagesRouted);
+                result["_default"] = "bannou";
+                result["_info"] = "All services routing to default 'bannou' app-id";
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error processing message from queue");
-            }
+
+            _logger.LogDebug("Returning {Count} service mappings", result.Count);
+            return Task.FromResult<(StatusCodes, Dictionary<string, string>?)>((StatusCodes.OK, result));
         }
-    }
-
-    private async Task<bool> RouteToServiceAsync(BinaryMessage message, string clientId, CancellationToken cancellationToken)
-    {
-        // Get the service name from the GUID
-        if (!_connections.TryGetValue(clientId, out var connection))
-            return false;
-
-        var serviceName = connection.GetServiceForGuid(message.ServiceGuid);
-        if (string.IsNullOrEmpty(serviceName))
+        catch (Exception ex)
         {
-            _logger.LogWarning("Unknown service GUID {ServiceGuid} from client {ClientId}",
-                message.ServiceGuid, clientId);
-            return false;
+            _logger.LogError(ex, "Error retrieving service mappings");
+            return Task.FromResult<(StatusCodes, Dictionary<string, string>?)>((StatusCodes.InternalServerError, null));
         }
-
-        // TODO: Route to actual Dapr service
-        // This is where we would call the appropriate service via Dapr
-        _logger.LogDebug("Routing message to service {ServiceName} for client {ClientId}",
-            serviceName, clientId);
-
-        await Task.CompletedTask;
-        return true;
     }
-
-    private double CalculateAverageLatency()
-    {
-        // Placeholder for latency calculation
-        return 0.0;
-    }
-
-    private ActionResult<T> StatusCode<T>(int statusCode, string message)
-    {
-        return new ObjectResult(new { error = message }) { StatusCode = statusCode };
-    }
-
-    #endregion
-
 }

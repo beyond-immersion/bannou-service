@@ -28,34 +28,21 @@ using System = global::System;
 public partial class InternalProxyRequest
 {
     /// <summary>
-    /// Unique identifier for the requesting agent (NPC ID, system ID, etc.)
+    /// WebSocket session ID making the request
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("agentId", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string AgentId { get; set; } = default!;
+    public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Role of the agent for permission validation
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("agentRole", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string AgentRole { get; set; } = default!;
-
-    /// <summary>
-    /// Associated account ID if agent represents a user
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Guid AccountId { get; set; } = default!;
-
-    /// <summary>
-    /// Target service ID or name
+    /// Target service name (e.g., "accounts", "auth", "behavior")
     /// </summary>
     [Newtonsoft.Json.JsonProperty("targetService", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string TargetService { get; set; } = default!;
 
     /// <summary>
-    /// Target API endpoint path
+    /// Target API endpoint path (e.g., "/accounts/{id}")
     /// </summary>
     [Newtonsoft.Json.JsonProperty("targetEndpoint", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -70,28 +57,28 @@ public partial class InternalProxyRequest
     public InternalProxyRequestMethod Method { get; set; } = default!;
 
     /// <summary>
-    /// Request payload to forward to target service
+    /// Additional headers to forward to the service
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("requestData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object RequestData { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("headers", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.IDictionary<string, string> Headers { get; set; } = default!;
 
     /// <summary>
-    /// Agent context for permission evaluation (location, state, relationships, etc.)
+    /// Request body to forward to target service
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("contextData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object ContextData { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("body", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object Body { get; set; } = default!;
 
     /// <summary>
-    /// Custom rate limit key (defaults to agentRole)
+    /// Path parameters for the endpoint
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("rateLimitKey", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string RateLimitKey { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("pathParameters", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.IDictionary<string, string> PathParameters { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata for logging/monitoring
+    /// Query string parameters for the endpoint
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object Metadata { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("queryParameters", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.IDictionary<string, string> QueryParameters { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -107,30 +94,35 @@ public partial class InternalProxyRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InternalProxyResponse
 {
+    /// <summary>
+    /// Whether the proxy request was successful
+    /// </summary>
     [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
     public bool Success { get; set; } = default!;
 
     /// <summary>
-    /// Echo of the requesting agent ID
+    /// HTTP status code from the target service
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("agentId", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string AgentId { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("statusCode", Required = Newtonsoft.Json.Required.Always)]
+    public int StatusCode { get; set; } = default!;
 
     /// <summary>
-    /// Service that handled the request
+    /// JSON response from the target service (as string)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("targetService", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string TargetService { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("response", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Response { get; set; } = default!;
 
     /// <summary>
-    /// Response from the target service
+    /// Response headers from the target service
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("responseData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public object ResponseData { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("headers", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Headers { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("permissionInfo", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public PermissionInfo PermissionInfo { get; set; } = default!;
+    /// <summary>
+    /// Error message if the request failed
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Error { get; set; } = default!;
 
     /// <summary>
     /// Request execution time in milliseconds
@@ -179,25 +171,42 @@ public partial class ApiDiscoveryRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ApiDiscoveryResponse
 {
+    /// <summary>
+    /// Current WebSocket session ID
+    /// </summary>
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// All APIs currently accessible to this session
+    /// All APIs currently accessible to this session with client-salted GUIDs
     /// </summary>
     [Newtonsoft.Json.JsonProperty("availableAPIs", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.ICollection<AvailableAPI> AvailableAPIs { get; set; } = new System.Collections.ObjectModel.Collection<AvailableAPI>();
+    public System.Collections.Generic.ICollection<ApiEndpointInfo> AvailableAPIs { get; set; } = new System.Collections.ObjectModel.Collection<ApiEndpointInfo>();
 
     /// <summary>
-    /// Version number for capability updates
+    /// Map of service names to their available endpoints
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("serviceCapabilities", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> ServiceCapabilities { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
+
+    /// <summary>
+    /// Version number for capability updates (increments on permission changes)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
     public int Version { get; set; } = default!;
 
     /// <summary>
-    /// When this API list expires
+    /// When this API discovery response was generated
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("generatedAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset GeneratedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When this API list expires and should be refreshed
     /// </summary>
     [Newtonsoft.Json.JsonProperty("expiresAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
     public System.DateTimeOffset ExpiresAt { get; set; } = default!;
@@ -214,33 +223,36 @@ public partial class ApiDiscoveryResponse
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AvailableAPI
+public partial class ApiEndpointInfo
 {
     /// <summary>
-    /// Service GUID for routing via binary protocol
+    /// Client-salted GUID for this service/endpoint combination
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("serviceGuid", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceId { get; set; } = default!;
+    public System.Guid ServiceGuid { get; set; } = default!;
 
     /// <summary>
-    /// Human-readable service name
+    /// Service name (e.g., "accounts", "auth", "behavior")
     /// </summary>
     [Newtonsoft.Json.JsonProperty("serviceName", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string ServiceName { get; set; } = default!;
 
     /// <summary>
-    /// API endpoint path
+    /// API endpoint path (e.g., "/accounts/{id}")
     /// </summary>
     [Newtonsoft.Json.JsonProperty("endpoint", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Endpoint { get; set; } = default!;
 
+    /// <summary>
+    /// HTTP method for this endpoint
+    /// </summary>
     [Newtonsoft.Json.JsonProperty("method", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    public AvailableAPIMethod Method { get; set; } = default!;
+    public ApiEndpointInfoMethod Method { get; set; } = default!;
 
     /// <summary>
     /// Human-readable endpoint description
@@ -249,7 +261,7 @@ public partial class AvailableAPI
     public string Description { get; set; } = default!;
 
     /// <summary>
-    /// Permissions that enabled this API
+    /// Permissions required to access this endpoint
     /// </summary>
     [Newtonsoft.Json.JsonProperty("requiredPermissions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
     public System.Collections.Generic.ICollection<string> RequiredPermissions { get; set; } = default!;
@@ -258,10 +270,16 @@ public partial class AvailableAPI
     public ApiRateLimit RateLimits { get; set; } = default!;
 
     /// <summary>
-    /// API category (auth, game, social, etc.)
+    /// API category (auth, accounts, game, social, etc.)
     /// </summary>
     [Newtonsoft.Json.JsonProperty("category", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
     public string Category { get; set; } = default!;
+
+    /// <summary>
+    /// Preferred channel for sequential message processing (0-65535)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("channel", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int Channel { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -411,8 +429,16 @@ public enum ResponseCodes
 }
 
 /// <summary>
-/// Structure of a service request message in the binary protocol.
+/// Structure of a service request message in the enhanced 31-byte binary protocol.
 /// <br/>This schema is for documentation - actual messages are binary.
+/// <br/>
+/// <br/>**Binary Header Layout (31 bytes):**
+/// <br/>- Bytes 0: Message Flags (1 byte)
+/// <br/>- Bytes 1-2: Channel ID (2 bytes, big-endian)
+/// <br/>- Bytes 3-6: Sequence Number (4 bytes, big-endian)
+/// <br/>- Bytes 7-22: Service GUID (16 bytes)
+/// <br/>- Bytes 23-30: Message ID (8 bytes)
+/// <br/>- Bytes 31+: Payload (variable length)
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -423,31 +449,36 @@ public partial class ServiceRequestMessage
     public byte Flags { get; set; } = default!;
 
     /// <summary>
-    /// Unique identifier for request/response matching
+    /// Channel for sequential message processing (0-65535, 0 = default)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("message_id", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Message_id { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("channel", Required = Newtonsoft.Json.Required.Always)]
+    public int Channel { get; set; } = default!;
 
     /// <summary>
-    /// Channel for sequential message processing (0 = no channel)
+    /// Per-channel sequence number for message ordering
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("message_channel", Required = Newtonsoft.Json.Required.Always)]
-    public int Message_channel { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("sequenceNumber", Required = Newtonsoft.Json.Required.Always)]
+    public int SequenceNumber { get; set; } = default!;
 
     /// <summary>
-    /// Target service UUID for routing
+    /// Client-salted service GUID for routing
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("service_id", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("serviceGuid", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Service_id { get; set; } = default!;
+    public System.Guid ServiceGuid { get; set; } = default!;
 
     /// <summary>
-    /// Message payload (JSON or binary data)
+    /// Unique message ID for request/response correlation
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("content", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("messageId", Required = Newtonsoft.Json.Required.Always)]
+    public long MessageId { get; set; } = default!;
+
+    /// <summary>
+    /// Message payload (JSON or binary data based on flags)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("payload", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public byte[] Content { get; set; } = default!;
+    public byte[] Payload { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -461,32 +492,56 @@ public partial class ServiceRequestMessage
 }
 
 /// <summary>
-/// Structure of a service response message in the binary protocol.
+/// Structure of a service response message in the enhanced 31-byte binary protocol.
 /// <br/>This schema is for documentation - actual messages are binary.
+/// <br/>
+/// <br/>**Binary Header Layout (31 bytes):**
+/// <br/>- Same as ServiceRequestMessage but with Response flag (0x40) set
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ServiceResponseMessage
 {
+    /// <summary>
+    /// Must have Response flag (0x40) set
+    /// </summary>
     [Newtonsoft.Json.JsonProperty("flags", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Range(0D, 255D)]
     public byte Flags { get; set; } = default!;
 
     /// <summary>
+    /// Matches the request channel
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("channel", Required = Newtonsoft.Json.Required.Always)]
+    public int Channel { get; set; } = default!;
+
+    /// <summary>
+    /// Matches the request sequence number
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("sequenceNumber", Required = Newtonsoft.Json.Required.Always)]
+    public int SequenceNumber { get; set; } = default!;
+
+    /// <summary>
+    /// Matches the request service GUID
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceGuid", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid ServiceGuid { get; set; } = default!;
+
+    /// <summary>
     /// Matches the request message ID
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("message_id", Required = Newtonsoft.Json.Required.Always)]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid Message_id { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("messageId", Required = Newtonsoft.Json.Required.Always)]
+    public long MessageId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("response_code", Required = Newtonsoft.Json.Required.Always)]
-    public ResponseCodes Response_code { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("responseCode", Required = Newtonsoft.Json.Required.Always)]
+    public ResponseCodes ResponseCode { get; set; } = default!;
 
     /// <summary>
     /// Optional response payload
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("content", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public byte[]? Content { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("payload", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public byte[]? Payload { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -612,30 +667,7 @@ public enum InternalProxyRequestMethod
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PermissionInfo
-{
-    [Newtonsoft.Json.JsonProperty("granted", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public bool Granted { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("requiredPermissions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> RequiredPermissions { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("rateLimitRemaining", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int RateLimitRemaining { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AvailableAPIMethod
+public enum ApiEndpointInfoMethod
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"GET")]
