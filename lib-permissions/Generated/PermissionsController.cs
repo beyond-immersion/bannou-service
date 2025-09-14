@@ -28,7 +28,6 @@ using System = global::System;
 public interface IPermissionsController
 {
 
-
     /// <summary>
     /// Get available API methods for session
     /// </summary>
@@ -40,7 +39,6 @@ public interface IPermissionsController
     /// <returns>Session capabilities retrieved from Redis</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CapabilityResponse>> GetCapabilitiesAsync(CapabilityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Validate specific API access for session
@@ -54,7 +52,6 @@ public interface IPermissionsController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidationResponse>> ValidateApiAccessAsync(ValidationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Register or update service permission matrix
     /// </summary>
@@ -66,7 +63,6 @@ public interface IPermissionsController
     /// <returns>Service permissions registered and sessions recompiled</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegistrationResponse>> RegisterServicePermissionsAsync(ServicePermissionMatrix body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Update session state for specific service
@@ -80,7 +76,6 @@ public interface IPermissionsController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> UpdateSessionStateAsync(SessionStateUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Update session role (affects all services)
     /// </summary>
@@ -92,7 +87,6 @@ public interface IPermissionsController
     /// <returns>Session role updated and all permissions recompiled</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> UpdateSessionRoleAsync(SessionRoleUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Get complete session information
@@ -168,6 +162,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     /// </remarks>
     /// <returns>Session capabilities retrieved from Redis</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("permissions/capabilities")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CapabilityResponse>> GetCapabilities([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CapabilityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -183,6 +178,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     /// </remarks>
     /// <returns>Permission validation result</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("permissions/validate")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidationResponse>> ValidateApiAccess([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ValidationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -198,6 +194,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     /// </remarks>
     /// <returns>Service permissions registered and sessions recompiled</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("permissions/register-service")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegistrationResponse>> RegisterServicePermissions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ServicePermissionMatrix body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -213,6 +210,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     /// </remarks>
     /// <returns>Session state updated and permissions recompiled</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("permissions/update-session-state")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> UpdateSessionState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SessionStateUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -228,6 +226,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     /// </remarks>
     /// <returns>Session role updated and all permissions recompiled</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("permissions/update-session-role")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> UpdateSessionRole([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SessionRoleUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -243,6 +242,7 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     /// </remarks>
     /// <returns>Complete session information</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("permissions/get-session-info")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionInfo>> GetSessionInfo([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SessionInfoRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 

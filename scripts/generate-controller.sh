@@ -74,27 +74,21 @@ fi
 
 echo -e "${GREEN}✅ Found NSwag at: $NSWAG_EXE${NC}"
 
-# Check for x-manual-implementation flag in schema
-HAS_MANUAL_IMPLEMENTATION=false
-if grep -q "x-manual-implementation:\s*true" "$SCHEMA_FILE"; then
-    HAS_MANUAL_IMPLEMENTATION=true
-    echo -e "${YELLOW}🔧 Schema contains x-manual-implementation: true${NC}"
+# Check for controller-only methods (including legacy x-manual-implementation flag)
+HAS_CONTROLLER_ONLY_METHODS=false
+if grep -q "x-controller-only:\s*true\|x-manual-implementation:\s*true" "$SCHEMA_FILE"; then
+    HAS_CONTROLLER_ONLY_METHODS=true
+    echo -e "${YELLOW}🔧 Schema contains controller-only methods (requires partial controller implementation)${NC}"
 fi
 
-# Check for controller-only methods for selective generation
-if grep -q "x-controller-only:\s*true" "$SCHEMA_FILE"; then
-    echo -e "${YELLOW}🔧 Schema contains x-controller-only methods${NC}"
-    HAS_MANUAL_IMPLEMENTATION=true
-fi
-
-# Create filtered schema if x-controller-only or x-manual-implementation methods exist
+# Create filtered schema for content type and URI format fixes ONLY
+# Keep ALL methods including x-controller-only - Liquid template handles the conditional logic
 FILTERED_SCHEMA_FILE="$SCHEMA_FILE"
-if grep -q "x-controller-only:\s*true\|x-manual-implementation:\s*true" "$SCHEMA_FILE" || grep -q "application/yaml" "$SCHEMA_FILE"; then
-    echo -e "${YELLOW}🔧 Creating filtered schema excluding x-controller-only and x-manual-implementation methods and prioritizing JSON content types...${NC}"
+if grep -q "application/yaml" "$SCHEMA_FILE" || grep -q 'format: uri' "$SCHEMA_FILE"; then
+    echo -e "${YELLOW}🔧 Creating filtered schema for content type and URI format fixes...${NC}"
     FILTERED_SCHEMA_FILE="/tmp/${SERVICE_NAME}-filtered-schema.yaml"
 
-    # Use Python to remove x-controller-only and x-manual-implementation methods from schema
-    # Also prioritize JSON content types over YAML for consistent controller generation
+    # Use Python to fix content types and URI formats, but KEEP controller-only methods
     python3 -c "
 import yaml
 import sys
@@ -103,16 +97,9 @@ with open('$SCHEMA_FILE', 'r') as f:
     schema = yaml.safe_load(f)
 
 if 'paths' in schema:
-    paths_to_remove = []
     for path, path_data in schema['paths'].items():
-        methods_to_remove = []
         for method, method_data in path_data.items():
             if isinstance(method_data, dict):
-                # Remove x-controller-only and x-manual-implementation methods
-                if method_data.get('x-controller-only') is True or method_data.get('x-manual-implementation') is True:
-                    methods_to_remove.append(method)
-                    continue
-
                 # Fix dual content-type issue: prefer JSON over YAML for consistent controller generation
                 if 'requestBody' in method_data and 'content' in method_data['requestBody']:
                     content = method_data['requestBody']['content']
@@ -128,19 +115,7 @@ if 'paths' in schema:
                             print(f'Removing format: uri from {path} {method} parameter {param.get(\"name\", \"unknown\")} to maintain string type', file=sys.stderr)
                             del param['schema']['format']
 
-        # Remove controller-only and manual-implementation methods
-        for method in methods_to_remove:
-            del path_data[method]
-
-        # If path has no methods left, mark for removal
-        if not any(isinstance(v, dict) for v in path_data.values()):
-            paths_to_remove.append(path)
-
-    # Remove empty paths
-    for path in paths_to_remove:
-        del schema['paths'][path]
-
-# Write filtered schema
+# Write filtered schema - KEEP ALL METHODS including x-controller-only
 with open('$FILTERED_SCHEMA_FILE', 'w') as f:
     yaml.dump(schema, f, default_flow_style=False, sort_keys=False)
 
@@ -175,20 +150,51 @@ if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
     FILE_SIZE=$(wc -l < "$OUTPUT_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated controller ($FILE_SIZE lines)${NC}"
 
-    # Post-process for partial class support if needed
-    if [ "$HAS_MANUAL_IMPLEMENTATION" = true ]; then
-        echo -e "${YELLOW}🔧 Post-processing for partial class support...${NC}"
-
-        # Convert the class declaration to partial
-        sed -i 's/public abstract class \([^:]*\)ControllerBase/public abstract partial class \1ControllerBase/' "$OUTPUT_FILE"
-
-        # Create empty partial controller if it doesn't exist
+    # Create empty partial controller if it doesn't exist and we have controller-only methods
+    if [ "$HAS_CONTROLLER_ONLY_METHODS" = true ]; then
         PARTIAL_CONTROLLER="../lib-${SERVICE_NAME}/${SERVICE_PASCAL}Controller.cs"
         if [ ! -f "$PARTIAL_CONTROLLER" ]; then
-            echo -e "${YELLOW}📝 Creating empty partial controller: $PARTIAL_CONTROLLER${NC}"
+            echo -e "${YELLOW}📝 Creating partial controller for x-controller-only methods: $PARTIAL_CONTROLLER${NC}"
 
-            cat > "$PARTIAL_CONTROLLER" << EOF
-using Microsoft.AspNetCore.Mvc;
+            # Generate the controller class with method overrides by parsing the generated base controller
+            python3 -c "
+import re
+import sys
+
+# Read the generated base controller to extract abstract method signatures
+try:
+    with open('$OUTPUT_FILE', 'r') as f:
+        base_controller_content = f.read()
+except:
+    print('Error: Could not read generated base controller file', file=sys.stderr)
+    sys.exit(1)
+
+# Find abstract method signatures
+abstract_methods = []
+lines = base_controller_content.split('\n')
+i = 0
+while i < len(lines):
+    line = lines[i].strip()
+    if 'public abstract' in line and ('Task<' in line or 'Task ' in line):
+        # This is an abstract method declaration, capture the full signature
+        method_sig = line
+
+        # If the method signature spans multiple lines, capture them
+        while not method_sig.rstrip().endswith(');'):
+            i += 1
+            if i < len(lines):
+                method_sig += ' ' + lines[i].strip()
+            else:
+                break
+
+        # Remove the trailing semicolon for abstract methods
+        method_sig = method_sig.rstrip().rstrip(';')
+
+        abstract_methods.append(method_sig)
+    i += 1
+
+# Generate the controller class content
+controller_content = '''using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -196,27 +202,42 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 
 /// <summary>
 /// Manual implementation for endpoints that require custom logic.
-/// This partial class extends the generated ${SERVICE_PASCAL}ControllerBase.
+/// This class extends the generated ${SERVICE_PASCAL}ControllerBase.
 /// </summary>
-public partial class ${SERVICE_PASCAL}Controller : ${SERVICE_PASCAL}ControllerBase
+public class ${SERVICE_PASCAL}Controller : ${SERVICE_PASCAL}ControllerBase
 {
-    private readonly I${SERVICE_PASCAL}Service _${SERVICE_NAME}Service;
-
-    public ${SERVICE_PASCAL}Controller(I${SERVICE_PASCAL}Service ${SERVICE_NAME}Service)
+    public ${SERVICE_PASCAL}Controller(I${SERVICE_PASCAL}Service ${SERVICE_NAME}Service) : base(${SERVICE_NAME}Service)
     {
-        _${SERVICE_NAME}Service = ${SERVICE_NAME}Service;
     }
+'''
 
-    // TODO: Implement abstract methods marked with x-manual-implementation: true
-    // The generated controller base class contains abstract methods that require manual implementation
+# Generate override methods for each abstract method
+for method_sig in abstract_methods:
+    # Convert 'public abstract' to 'public override' and add method body
+    override_sig = method_sig.replace('public abstract', 'public override')
+
+    # Extract method name for TODO comment
+    method_name_match = re.search(r'(\w+)\s*\(', override_sig)
+    method_name = method_name_match.group(1) if method_name_match else 'Unknown'
+
+    controller_content += f'''
+    {override_sig}
+    {{
+        // TODO: Implement {method_name} - WebSocket connection handling
+        throw new System.NotImplementedException(\"{method_name} requires manual implementation for WebSocket functionality\");
+    }}
+'''
+
+controller_content += '''
 }
-EOF
+'''
+
+print(controller_content)
+" > "$PARTIAL_CONTROLLER"
             echo -e "${GREEN}✅ Created partial controller template${NC}"
         else
             echo -e "${YELLOW}📝 Manual partial controller already exists${NC}"
         fi
-
-        echo -e "${GREEN}✅ Partial controller post-processing complete${NC}"
     fi
 
     # Cleanup temporary filtered schema file

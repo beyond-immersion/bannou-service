@@ -28,8 +28,6 @@ using System = global::System;
 public interface IGameSessionController
 {
 
-
-
     /// <summary>
     /// List available game sessions
     /// </summary>
@@ -38,8 +36,6 @@ public interface IGameSessionController
     /// <returns>Game sessions retrieved successfully</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionListResponse>> ListGameSessionsAsync(GameType? gameType, Status? status, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-
 
     /// <summary>
     /// Create new game session
@@ -50,8 +46,6 @@ public interface IGameSessionController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> CreateGameSessionAsync(CreateGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
-
     /// <summary>
     /// Get game session details
     /// </summary>
@@ -60,8 +54,6 @@ public interface IGameSessionController
     /// <returns>Game session retrieved successfully</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> GetGameSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-
 
     /// <summary>
     /// Join a game session
@@ -72,8 +64,6 @@ public interface IGameSessionController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSessionAsync(System.Guid sessionId, JoinGameSessionRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
-
     /// <summary>
     /// Leave a game session
     /// </summary>
@@ -82,8 +72,6 @@ public interface IGameSessionController
     /// <returns>Successfully left game session</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-
 
     /// <summary>
     /// Kick player from game session (admin only)
@@ -94,8 +82,6 @@ public interface IGameSessionController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> KickPlayerAsync(System.Guid sessionId, KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
-
     /// <summary>
     /// Send chat message to game session
     /// </summary>
@@ -104,8 +90,6 @@ public interface IGameSessionController
     /// <returns>Chat message sent successfully</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SendChatMessageAsync(System.Guid sessionId, ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-
 
     /// <summary>
     /// Perform game action (enhanced permissions after joining)
@@ -175,6 +159,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// </summary>
     /// <returns>Game sessions retrieved successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionListResponse>> ListGameSessions([Microsoft.AspNetCore.Mvc.FromQuery] GameType? gameType, [Microsoft.AspNetCore.Mvc.FromQuery] Status? status, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -187,6 +172,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// </summary>
     /// <returns>Game session created successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> CreateGameSession([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -199,6 +185,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// </summary>
     /// <returns>Game session retrieved successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/{sessionId}")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> GetGameSession([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -211,6 +198,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// </summary>
     /// <returns>Successfully joined game session</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/{sessionId}/join")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSession([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, [Microsoft.AspNetCore.Mvc.FromBody] JoinGameSessionRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -223,6 +211,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// </summary>
     /// <returns>Successfully left game session</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/{sessionId}/leave")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSession([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -235,6 +224,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// </summary>
     /// <returns>Player kicked successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/{sessionId}/kick")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> KickPlayer([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -247,6 +237,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// </summary>
     /// <returns>Chat message sent successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/{sessionId}/chat")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SendChatMessage([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -259,6 +250,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// </summary>
     /// <returns>Game action performed successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/{sessionId}/actions")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameActionResponse>> PerformGameAction([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 

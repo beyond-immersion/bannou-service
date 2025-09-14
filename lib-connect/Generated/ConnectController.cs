@@ -28,7 +28,6 @@ using System = global::System;
 public interface IConnectController
 {
 
-
     /// <summary>
     /// Internal API proxy for stateless requests
     /// </summary>
@@ -43,7 +42,6 @@ public interface IConnectController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InternalProxyResponse>> ProxyInternalRequestAsync(InternalProxyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Get available APIs for current session
     /// </summary>
@@ -52,7 +50,6 @@ public interface IConnectController
     /// <returns>Available APIs discovered successfully</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ApiDiscoveryResponse>> DiscoverAPIsAsync(ApiDiscoveryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Get current service routing mappings
@@ -67,16 +64,60 @@ public interface IConnectController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceMappingsResponse>> GetServiceMappingsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Establish WebSocket connection
+    /// </summary>
+
+    /// <remarks>
+    /// Initiates a WebSocket connection for real-time communication.
+    /// <br/>Requires JWT authentication via Authorization header.
+    /// <br/>
+    /// <br/>**Connection Flow:**
+    /// <br/>1. Send HTTP GET request with `Connection: Upgrade` and `Upgrade: websocket` headers
+    /// <br/>2. Include `Authorization: Bearer &lt;jwt_token&gt;` header for authentication
+    /// <br/>3. Server validates JWT and extracts user claims (roles, scopes, services)
+    /// <br/>4. Connection upgrades to WebSocket protocol
+    /// <br/>5. Client can send binary messages using the custom protocol
+    /// <br/>
+    /// <br/>**Reconnection:**
+    /// <br/>For existing sessions, use `Authorization: Reconnect &lt;reconnect_token&gt;` instead.
+    /// </remarks>
+
+    /// <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
+
+    /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
+
+    /// <param name="authorization">JWT Bearer token for new connections: "Bearer &lt;jwt_token&gt;"
+    /// <br/>Reconnect token for existing sessions: "Reconnect &lt;reconnect_token&gt;"</param>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketAsync(Connection connection, Upgrade upgrade, string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Establish WebSocket connection (POST variant)
+    /// </summary>
+
+    /// <remarks>
+    /// Alternative POST method for establishing WebSocket connections.
+    /// <br/>Functionally identical to the GET method but supports clients that
+    /// <br/>require POST for WebSocket upgrades.
+    /// </remarks>
+
+
+
+    /// <param name="body">Optional connection parameters</param>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPostAsync(Connection2 connection, Upgrade2 upgrade, string authorization, ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
 [Microsoft.AspNetCore.Mvc.Route("api/connect")]
 
-public partial class ConnectController : Microsoft.AspNetCore.Mvc.ControllerBase
+public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IConnectService _implementation;
 
-    public ConnectController(IConnectService implementation)
+    public ConnectControllerBase(IConnectService implementation)
     {
         _implementation = implementation;
     }
@@ -131,6 +172,7 @@ public partial class ConnectController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </remarks>
     /// <returns>Request proxied successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("internal/proxy")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InternalProxyResponse>> ProxyInternalRequest([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InternalProxyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -143,6 +185,7 @@ public partial class ConnectController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Available APIs discovered successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("api-discovery")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ApiDiscoveryResponse>> DiscoverAPIs([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ApiDiscoveryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -159,12 +202,51 @@ public partial class ConnectController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </remarks>
     /// <returns>Service mappings retrieved successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service-mappings")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceMappingsResponse>> GetServiceMappings(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         var (statusCode, result) = await _implementation.GetServiceMappingsAsync(cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
+
+    /// <summary>
+    /// Establish WebSocket connection
+    /// </summary>
+    /// <remarks>
+    /// Initiates a WebSocket connection for real-time communication.
+    /// <br/>Requires JWT authentication via Authorization header.
+    /// <br/>
+    /// <br/>**Connection Flow:**
+    /// <br/>1. Send HTTP GET request with `Connection: Upgrade` and `Upgrade: websocket` headers
+    /// <br/>2. Include `Authorization: Bearer &lt;jwt_token&gt;` header for authentication
+    /// <br/>3. Server validates JWT and extracts user claims (roles, scopes, services)
+    /// <br/>4. Connection upgrades to WebSocket protocol
+    /// <br/>5. Client can send binary messages using the custom protocol
+    /// <br/>
+    /// <br/>**Reconnection:**
+    /// <br/>For existing sessions, use `Authorization: Reconnect &lt;reconnect_token&gt;` instead.
+    /// </remarks>
+    /// <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
+    /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
+    /// <param name="authorization">JWT Bearer token for new connections: "Bearer &lt;jwt_token&gt;"
+    /// <br/>Reconnect token for existing sessions: "Reconnect &lt;reconnect_token&gt;"</param>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("connect")]
+
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocket([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection connection, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade upgrade, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Establish WebSocket connection (POST variant)
+    /// </summary>
+    /// <remarks>
+    /// Alternative POST method for establishing WebSocket connections.
+    /// <br/>Functionally identical to the GET method but supports clients that
+    /// <br/>require POST for WebSocket upgrades.
+    /// </remarks>
+    /// <param name="body">Optional connection parameters</param>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("connect")]
+
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 

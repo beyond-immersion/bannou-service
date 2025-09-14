@@ -1,5 +1,27 @@
 # Bannou Service Development Instructions
 
+## 🚨 CRITICAL DEVELOPMENT CONSTRAINTS
+
+**MANDATORY**: Never declare success or move to the next step until the current task is 100% complete and verified.
+
+**COMPLETION VERIFICATION RULES**:
+- All code must compile without errors
+- All tests must pass
+- All generated files must work together correctly
+- Architectural problems must be fully resolved, not worked around
+
+**STEP-BY-STEP ENFORCEMENT**:
+- Complete each step fully before proceeding
+- Verify each step works in isolation
+- Never skip ahead due to complexity or difficulty
+- Ask for clarification rather than making assumptions that break the architecture
+
+**SUCCESS DECLARATION PROHIBITION**:
+- Never claim success when compilation errors remain
+- Never call a task "complete" when core functionality is broken
+- Never mark todos as complete when issues persist
+- Always demonstrate working functionality before claiming success
+
 ## ⚠️ MANDATORY REFERENCE - API-DESIGN.md
 
 **CRITICAL**: For ALL Bannou service design and development tasks, you MUST ALWAYS reference the authoritative API-DESIGN.md documentation FIRST before proceeding with any work.
@@ -66,6 +88,11 @@ Reference the Makefile in the repository root for all available commands and est
 - **Interfaces**: NEVER edit generated interfaces - service implementation is the source of truth
 - **Models**: NEVER edit generated models - they come from OpenAPI schemas
 - **Service Implementation Authority**: If there are conflicts between service implementation and generated types, the service implementation is authoritative
+
+**🎯 Schema Design Best Practices**:
+- **Enum Consolidation**: Use shared enum definitions in `components/schemas` section with `$ref` references to avoid duplication (e.g., Provider enum)
+- **$ref Resolution**: Interface generation properly handles `$ref` enum parameters - never fallback to string types
+- **Duplicate Prevention**: Fix schema duplications at source rather than using exclusions in generation scripts
 
 **Required Workflow**:
 1. **Schema First**: Edit OpenAPI YAML in `/schemas/` directory
@@ -260,6 +287,9 @@ await _daprClient.PublishEventAsync("bannou-pubsub", "event-topic", eventModel);
 - **Line ending issues**: Run `make format` after code generation
 - **Service registration**: Verify `[DaprService]` and `[ServiceConfiguration]` attributes
 - **Build failures**: Check schema syntax in `/schemas/` directory
+- **Enum duplicate errors**: Use consolidated enum definitions in schema `components/schemas` with `$ref` references
+- **Parameter type mismatches**: Ensure interface generation properly handles `$ref` parameters (Provider not string)
+- **Script not found errors**: All generation scripts moved to `scripts/` directory - use `scripts/generate-all-services.sh`
 
 ### Debugging Tools
 - **Swagger UI**: Available at `/swagger` in development

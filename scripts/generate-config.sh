@@ -118,6 +118,7 @@ try:
     print(f'''using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.{service_pascal};
 
@@ -126,8 +127,14 @@ namespace BeyondImmersion.BannouService.{service_pascal};
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(envPrefix: \"BANNOU_\")]
-public class {service_pascal}ServiceConfiguration
-{{''')
+public class {service_pascal}ServiceConfiguration : IServiceConfiguration
+{{
+    /// <inheritdoc />
+    public string? Force_Service_ID {{ get; set; }}
+
+    /// <inheritdoc />
+    public bool? Service_Disabled {{ get; set; }}
+''')
 
     if config_properties:
         for prop in config_properties:

@@ -28,7 +28,6 @@ using System = global::System;
 public interface IWebsiteController
 {
 
-
     /// <summary>
     /// Get website status and version
     /// </summary>
@@ -36,7 +35,6 @@ public interface IWebsiteController
     /// <returns>Website service status</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusResponse>> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Get dynamic page content from CMS
@@ -47,7 +45,6 @@ public interface IWebsiteController
     /// <returns>Page content retrieved</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> GetPageContentAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Get latest news and announcements
@@ -61,7 +58,6 @@ public interface IWebsiteController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NewsResponse>> GetNewsAsync(int limit, int offset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Get game server status for all realms
     /// </summary>
@@ -69,7 +65,6 @@ public interface IWebsiteController
     /// <returns>Server status information</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServerStatusResponse>> GetServerStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Get download links for game clients
@@ -81,7 +76,6 @@ public interface IWebsiteController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DownloadsResponse>> GetDownloadsAsync(Platform? platform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Submit contact form
     /// </summary>
@@ -91,7 +85,6 @@ public interface IWebsiteController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContactResponse>> SubmitContactAsync(ContactRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Get account profile for logged-in user
     /// </summary>
@@ -100,7 +93,6 @@ public interface IWebsiteController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountProfile>> GetAccountProfileAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Get character list for logged-in user
     /// </summary>
@@ -108,7 +100,6 @@ public interface IWebsiteController
     /// <returns>Character list retrieved</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterListResponse>> GetAccountCharactersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// List all CMS pages
@@ -119,7 +110,6 @@ public interface IWebsiteController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<System.Collections.Generic.ICollection<PageMetadata>>> ListPagesAsync(bool includeUnpublished, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Create new CMS page
     /// </summary>
@@ -128,7 +118,6 @@ public interface IWebsiteController
     /// <returns>Page created</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> CreatePageAsync(PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Update CMS page
@@ -139,7 +128,6 @@ public interface IWebsiteController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> UpdatePageAsync(string slug, PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Delete CMS page
     /// </summary>
@@ -149,7 +137,6 @@ public interface IWebsiteController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeletePageAsync(string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Get site configuration
     /// </summary>
@@ -157,7 +144,6 @@ public interface IWebsiteController
     /// <returns>Site settings retrieved</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SiteSettings>> GetSiteSettingsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Update site configuration
@@ -168,7 +154,6 @@ public interface IWebsiteController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SiteSettings>> UpdateSiteSettingsAsync(SiteSettings body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Get current theme configuration
     /// </summary>
@@ -176,7 +161,6 @@ public interface IWebsiteController
     /// <returns>Theme configuration retrieved</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ThemeConfig>> GetThemeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Update theme configuration
@@ -186,7 +170,6 @@ public interface IWebsiteController
     /// <returns>Theme updated</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateThemeAsync(ThemeConfig body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Get subscription status
@@ -255,6 +238,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Website service status</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/status")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusResponse>> GetStatus(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -268,6 +252,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <param name="slug">Page slug identifier</param>
     /// <returns>Page content retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/content/{slug}")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> GetPageContent([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -282,6 +267,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <param name="offset">Pagination offset</param>
     /// <returns>News items retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/news")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NewsResponse>> GetNews([Microsoft.AspNetCore.Mvc.FromQuery] int? limit, [Microsoft.AspNetCore.Mvc.FromQuery] int? offset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -294,6 +280,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Server status information</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/server-status")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServerStatusResponse>> GetServerStatus(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -307,6 +294,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <param name="platform">Filter by platform</param>
     /// <returns>Download links retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/downloads")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DownloadsResponse>> GetDownloads([Microsoft.AspNetCore.Mvc.FromQuery] Platform? platform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -319,6 +307,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Contact form submitted</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("website/contact")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContactResponse>> SubmitContact([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ContactRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -331,6 +320,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Account profile retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/profile")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountProfile>> GetAccountProfile(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -343,6 +333,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Character list retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/characters")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterListResponse>> GetAccountCharacters(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -355,6 +346,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Page list retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/pages")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<System.Collections.Generic.ICollection<PageMetadata>>> ListPages([Microsoft.AspNetCore.Mvc.FromQuery] bool? includeUnpublished, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -367,6 +359,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Page created</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("website/cms/pages")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> CreatePage([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -379,6 +372,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Page updated</returns>
     [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/{slug}")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PageContent>> UpdatePage([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string slug, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PageContent body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -391,6 +385,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Page deleted</returns>
     [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("website/cms/pages/{slug}")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeletePage([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string slug, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -403,6 +398,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Site settings retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/site-settings")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SiteSettings>> GetSiteSettings(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -415,6 +411,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Settings updated</returns>
     [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("website/cms/site-settings")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SiteSettings>> UpdateSiteSettings([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SiteSettings body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -427,6 +424,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Theme configuration retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/cms/theme")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ThemeConfig>> GetTheme(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -439,6 +437,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Theme updated</returns>
     [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("website/cms/theme")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateTheme([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ThemeConfig body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -451,6 +450,7 @@ public partial class WebsiteController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Subscription information retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("website/account/subscription")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SubscriptionResponse>> GetSubscription(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 

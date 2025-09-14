@@ -1,6 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Website;
 
@@ -9,8 +10,14 @@ namespace BeyondImmersion.BannouService.Website;
 /// Properties are automatically bound from environment variables.
 /// </summary>
 [ServiceConfiguration(envPrefix: "BANNOU_")]
-public class WebsiteServiceConfiguration
+public class WebsiteServiceConfiguration : IServiceConfiguration
 {
+    /// <inheritdoc />
+    public string? Force_Service_ID { get; set; }
+
+    /// <inheritdoc />
+    public bool? Service_Disabled { get; set; }
+
     /// <summary>
     /// Default configuration property - can be removed if not needed.
     /// Environment variable: WEBSITE_ENABLED or BANNOU_WEBSITE_ENABLED

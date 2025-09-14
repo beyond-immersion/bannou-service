@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Generate service interface from generated controller
+# Generate service interface from schema
 # Usage: ./generate-interface.sh <service-name> [schema-file]
 
 set -e  # Exit on any error
@@ -44,7 +44,7 @@ fi
 # Ensure output directory exists
 mkdir -p "$OUTPUT_DIR"
 
-echo -e "${YELLOW}🔄 Extracting interface from controller...${NC}"
+echo -e "${YELLOW}🔄 Extracting interface from schema...${NC}"
 
 # Create base interface structure
 cat > "$OUTPUT_FILE" << EOF
@@ -55,7 +55,7 @@ using System.Threading.Tasks;
 namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 
 /// <summary>
-/// Service interface for $SERVICE_PASCAL API - generated from controller
+/// Service interface for $SERVICE_PASCAL API
 /// </summary>
 public interface I${SERVICE_PASCAL}Service
 {

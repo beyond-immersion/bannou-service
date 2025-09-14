@@ -118,7 +118,7 @@ paths:
       operationId: ConnectWebSocket
       tags:
         - WebSocket Connection
-      x-manual-implementation: true
+      x-controller-only: true
       parameters:
         - name: Connection
           in: header
@@ -223,7 +223,7 @@ paths:
       operationId: ConnectWebSocketPost
       tags:
         - WebSocket Connection
-      x-manual-implementation: true
+      x-controller-only: true
       parameters:
         - name: Connection
           in: header

@@ -28,7 +28,6 @@ using System = global::System;
 public interface IBehaviorController
 {
 
-
     /// <summary>
     /// Compile ABML behavior definition
     /// </summary>
@@ -41,7 +40,6 @@ public interface IBehaviorController
     /// <returns>ABML behavior compiled successfully</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileAbmlBehaviorAsync(CompileBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Compile stackable behavior sets
@@ -56,7 +54,6 @@ public interface IBehaviorController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileBehaviorStackAsync(BehaviorStackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Validate ABML definition
     /// </summary>
@@ -69,7 +66,6 @@ public interface IBehaviorController
     /// <returns>Validation completed</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateAbmlResponse>> ValidateAbmlAsync(ValidateAbmlRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Get cached compiled behavior
@@ -86,7 +82,6 @@ public interface IBehaviorController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CachedBehaviorResponse>> GetCachedBehaviorAsync(string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Invalidate cached behavior
     /// </summary>
@@ -101,7 +96,6 @@ public interface IBehaviorController
     /// <returns>Cache invalidated successfully</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InvalidateCachedBehaviorAsync(string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Resolve context variables
@@ -179,6 +173,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// </remarks>
     /// <returns>ABML behavior compiled successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("compile")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileAbmlBehavior([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CompileBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -195,6 +190,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// </remarks>
     /// <returns>Behavior stack compiled successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("stack/compile")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileBehaviorStack([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BehaviorStackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -211,6 +207,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// </remarks>
     /// <returns>Validation completed</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("validate")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateAbmlResponse>> ValidateAbml([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ValidateAbmlRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -228,6 +225,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// <param name="behavior_id">Unique identifier for the cached behavior</param>
     /// <returns>Cached behavior retrieved successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("cache/{behavior_id}")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CachedBehaviorResponse>> GetCachedBehavior([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -245,6 +243,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// <param name="behavior_id">Unique identifier for the cached behavior</param>
     /// <returns>Cache invalidated successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("cache/{behavior_id}")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InvalidateCachedBehavior([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -261,6 +260,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// </remarks>
     /// <returns>Context variables resolved successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("context/resolve")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ResolveContextResponse>> ResolveContextVariables([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ResolveContextRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 

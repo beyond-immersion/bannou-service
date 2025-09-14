@@ -28,7 +28,6 @@ using System = global::System;
 public interface IAuthController
 {
 
-
     /// <summary>
     /// Login with email/password
     /// </summary>
@@ -37,7 +36,6 @@ public interface IAuthController
     /// <returns>Login successful</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> LoginAsync(LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Register new user account
@@ -48,7 +46,6 @@ public interface IAuthController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterResponse>> RegisterAsync(RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Initialize OAuth2 flow
     /// </summary>
@@ -56,7 +53,6 @@ public interface IAuthController
 
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuthAsync(Provider provider, string redirectUri, string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Complete OAuth2 flow
@@ -67,14 +63,12 @@ public interface IAuthController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Initialize Steam authentication
     /// </summary>
 
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitSteamAuthAsync(string returnUrl, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Verify Steam authentication response
@@ -85,7 +79,6 @@ public interface IAuthController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifySteamAuthAsync(SteamVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Refresh access token
     /// </summary>
@@ -95,6 +88,13 @@ public interface IAuthController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> RefreshTokenAsync(RefreshRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Validate access token
+    /// </summary>
+
+    /// <returns>Token is valid</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateTokenAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Logout and invalidate tokens
@@ -105,7 +105,6 @@ public interface IAuthController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LogoutAsync(LogoutRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Get active sessions for account
     /// </summary>
@@ -113,7 +112,6 @@ public interface IAuthController
     /// <returns>Active sessions retrieved</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionsResponse>> GetSessionsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Terminate specific session
@@ -124,7 +122,6 @@ public interface IAuthController
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-
     /// <summary>
     /// Request password reset
     /// </summary>
@@ -133,7 +130,6 @@ public interface IAuthController
     /// <returns>Reset email sent if account exists</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RequestPasswordResetAsync(PasswordResetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 
     /// <summary>
     /// Confirm password reset with token
@@ -149,11 +145,11 @@ public interface IAuthController
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
 [Microsoft.AspNetCore.Mvc.Route("v1.0/invoke/bannou/method")]
 
-public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
+public abstract class AuthControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IAuthService _implementation;
 
-    public AuthController(IAuthService implementation)
+    public AuthControllerBase(IAuthService implementation)
     {
         _implementation = implementation;
     }
@@ -203,6 +199,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Login successful</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/login")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> Login([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -215,6 +212,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Registration successful</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/register")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterResponse>> Register([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -226,6 +224,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Initialize OAuth2 flow
     /// </summary>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/init")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuth([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider provider, [Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string redirectUri, [Microsoft.AspNetCore.Mvc.FromQuery] string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -238,6 +237,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>OAuth authentication successful</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/callback")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> CompleteOAuth([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider provider, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -249,6 +249,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Initialize Steam authentication
     /// </summary>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/steam/init")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitSteamAuth([Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string returnUrl, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -261,6 +262,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Steam authentication successful</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/steam/verify")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifySteamAuth([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SteamVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -273,6 +275,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Token refreshed successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/refresh")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> RefreshToken([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RefreshRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -281,10 +284,19 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
+    /// Validate access token
+    /// </summary>
+    /// <returns>Token is valid</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/validate")]
+
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateToken(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Logout and invalidate tokens
     /// </summary>
     /// <returns>Logged out successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/logout")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Logout([Microsoft.AspNetCore.Mvc.FromBody] LogoutRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -297,6 +309,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Active sessions retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/sessions")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionsResponse>> GetSessions(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -309,6 +322,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Session terminated</returns>
     [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("auth/sessions/{sessionId}")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSession([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -321,6 +335,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Reset email sent if account exists</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/password/reset")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RequestPasswordReset([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PasswordResetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
@@ -333,6 +348,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>Password reset successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/password/confirm")]
+
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConfirmPasswordReset([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PasswordResetConfirmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
