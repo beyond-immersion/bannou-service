@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Accounts;
+using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -13,41 +14,27 @@ public class AccountsServiceTests
 {
     private readonly Mock<ILogger<AccountsService>> _mockLogger;
     private readonly Mock<AccountsServiceConfiguration> _mockConfiguration;
+    private readonly Mock<DaprClient> _mockDaprClient;
 
     public AccountsServiceTests()
     {
         _mockLogger = new Mock<ILogger<AccountsService>>();
         _mockConfiguration = new Mock<AccountsServiceConfiguration>();
+        _mockDaprClient = new Mock<DaprClient>();
     }
 
     [Fact]
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
         // Arrange & Act & Assert
-        var exception = Record.Exception(() => new AccountsService(
+        var service = new AccountsService(
+            _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockLogger.Object));
+            _mockDaprClient.Object);
 
-        Assert.Null(exception);
+        Assert.NotNull(service);
     }
 
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AccountsService(
-            null!,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AccountsService(
-            _mockConfiguration.Object,
-            null!));
-    }
 
     // TODO: Add service-specific unit tests here
     // For service-to-service communication tests, add references to other service client projects

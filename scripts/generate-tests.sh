@@ -69,9 +69,12 @@ if [ ! -f "$TEST_PROJECT_FILE" ]; then
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="NUnit" Version="4.0.1" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
-    <PackageReference Include="NUnit.Analyzers" Version="3.9.0">
+    <PackageReference Include="xunit" Version="2.4.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeInTargetFramework>false</IncludeInTargetFramework>
+    </PackageReference>
+    <PackageReference Include="xunit.analyzers" Version="1.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeInTargetFramework>false</IncludeInTargetFramework>
     </PackageReference>
@@ -97,6 +100,7 @@ EOF
 
     # Add project to solution
     echo -e "${YELLOW}🔗 Adding test project to solution...${NC}"
+    ORIGINAL_DIR="$(pwd)"
     cd "$(dirname "$0")/.."
 
     if dotnet sln add "$TEST_PROJECT_FILE" --verbosity quiet 2>/dev/null; then
@@ -105,29 +109,49 @@ EOF
         echo -e "${YELLOW}⚠️  Test project might already be in solution${NC}"
     fi
 
+    # Return to original directory to ensure relative paths work correctly
+    cd "$ORIGINAL_DIR"
+
 else
     echo -e "${YELLOW}📝 Test project file already exists: $TEST_PROJECT_FILE${NC}"
 
     # Still try to add to solution in case it's not there
+    ORIGINAL_DIR="$(pwd)"
     cd "$(dirname "$0")/.."
     if dotnet sln add "$TEST_PROJECT_FILE" --verbosity quiet 2>/dev/null; then
         echo -e "${GREEN}✅ Added existing test project to solution${NC}"
     fi
+    # Return to original directory to ensure relative paths work correctly
+    cd "$ORIGINAL_DIR"
 fi
 
 # Create GlobalUsings.cs if it doesn't exist
 GLOBAL_USINGS_FILE="$TEST_PROJECT_DIR/GlobalUsings.cs"
 if [ ! -f "$GLOBAL_USINGS_FILE" ]; then
     echo -e "${YELLOW}📝 Creating GlobalUsings.cs...${NC}"
-    cat > "$GLOBAL_USINGS_FILE" << 'EOF'
-global using NUnit.Framework;
-global using Microsoft.Extensions.Logging;
-global using Microsoft.Extensions.DependencyInjection;
-global using Moq;
-global using System;
-global using System.Threading.Tasks;
-EOF
-    echo -e "${GREEN}✅ Created GlobalUsings.cs${NC}"
+
+    # Ensure the target directory exists and has proper permissions
+    if [ ! -d "$TEST_PROJECT_DIR" ]; then
+        echo -e "${RED}❌ Test project directory does not exist: $TEST_PROJECT_DIR${NC}"
+        exit 1
+    fi
+
+    # Create the file using printf to avoid heredoc redirection issues
+    printf '%s\n' \
+        'global using Xunit;' \
+        'global using Microsoft.Extensions.Logging;' \
+        'global using Microsoft.Extensions.DependencyInjection;' \
+        'global using Moq;' \
+        'global using System;' \
+        'global using System.Threading.Tasks;' \
+        > "$GLOBAL_USINGS_FILE"
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✅ Created GlobalUsings.cs${NC}"
+    else
+        echo -e "${RED}❌ Failed to create GlobalUsings.cs${NC}"
+        exit 1
+    fi
 fi
 
 # Create basic service tests if they don't exist
@@ -139,49 +163,55 @@ using BeyondImmersion.BannouService.$SERVICE_PASCAL;
 
 namespace BeyondImmersion.BannouService.$SERVICE_PASCAL.Tests;
 
-[TestFixture]
 public class ${SERVICE_PASCAL}ServiceTests
 {
     private Mock<ILogger<${SERVICE_PASCAL}Service>> _mockLogger = null!;
+    private Mock<${SERVICE_PASCAL}ServiceConfiguration> _mockConfiguration = null!;
 
-    [SetUp]
-    public void SetUp()
+    public ${SERVICE_PASCAL}ServiceTests()
     {
         _mockLogger = new Mock<ILogger<${SERVICE_PASCAL}Service>>();
+        _mockConfiguration = new Mock<${SERVICE_PASCAL}ServiceConfiguration>();
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
         // Arrange & Act
-        var service = new ${SERVICE_PASCAL}Service(_mockLogger.Object);
+        var service = new ${SERVICE_PASCAL}Service(_mockLogger.Object, _mockConfiguration.Object);
 
         // Assert
-        Assert.That(service, Is.Not.Null);
+        Assert.NotNull(service);
     }
 
-    [Test]
+    [Fact]
     public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ${SERVICE_PASCAL}Service(null!));
+        Assert.Throws<ArgumentNullException>(() => new ${SERVICE_PASCAL}Service(null!, _mockConfiguration.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new ${SERVICE_PASCAL}Service(_mockLogger.Object, null!));
     }
 
     // TODO: Add service-specific tests based on schema operations
     // Schema file: $SCHEMA_FILE
 }
 
-[TestFixture]
 public class ${SERVICE_PASCAL}ConfigurationTests
 {
-    [Test]
+    [Fact]
     public void Configuration_WithValidSettings_ShouldInitializeCorrectly()
     {
         // Arrange
         var config = new ${SERVICE_PASCAL}ServiceConfiguration();
 
         // Act & Assert
-        Assert.That(config, Is.Not.Null);
+        Assert.NotNull(config);
     }
 
     // TODO: Add configuration-specific tests

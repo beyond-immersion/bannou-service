@@ -107,13 +107,26 @@ test-unit:
 	dotnet test
 
 # Comprehensive unit testing - all service test projects
+# Usage: make test [PLUGIN=plugin-name] - if PLUGIN is specified, only tests that plugin
 test:
-	@echo "🧪 Running comprehensive unit tests across all service plugins..."
-	@for test_project in $$(find . -name "*.tests.csproj" -o -name "*Tests.csproj" | grep -v template); do \
-		echo "🧪 Running tests in: $$test_project"; \
-		dotnet test "$$test_project" --verbosity minimal --logger "console;verbosity=minimal" || echo "⚠️  Tests failed in $$test_project"; \
-	done
-	@echo "✅ Comprehensive unit testing completed"
+	@if [ "$(PLUGIN)" ]; then \
+		echo "🧪 Running unit tests for plugin: $(PLUGIN)..."; \
+		if [ -f "./lib-$(PLUGIN).tests/lib-$(PLUGIN).tests.csproj" ]; then \
+			echo "🧪 Running tests in: ./lib-$(PLUGIN).tests/lib-$(PLUGIN).tests.csproj"; \
+			dotnet test "./lib-$(PLUGIN).tests/lib-$(PLUGIN).tests.csproj" --verbosity minimal --logger "console;verbosity=minimal"; \
+		else \
+			echo "❌ Test project not found: ./lib-$(PLUGIN).tests/lib-$(PLUGIN).tests.csproj"; \
+			exit 1; \
+		fi; \
+		echo "✅ Unit testing completed for plugin: $(PLUGIN)"; \
+	else \
+		echo "🧪 Running comprehensive unit tests across all service plugins..."; \
+		for test_project in $$(find . -name "*.tests.csproj" -o -name "*Tests.csproj" | grep -v template); do \
+			echo "🧪 Running tests in: $$test_project"; \
+			dotnet test "$$test_project" --verbosity minimal --logger "console;verbosity=minimal" || echo "⚠️  Tests failed in $$test_project"; \
+		done; \
+		echo "✅ Comprehensive unit testing completed"; \
+	fi
 
 # Infrastructure testing
 test-infrastructure:

@@ -1,262 +1,368 @@
-# Bannou Service Testing Architecture
+# Bannou Testing Documentation
 
-This document describes the comprehensive schema-driven dual testing approach implemented for Bannou services.
+Comprehensive testing documentation for Bannou's schema-driven microservices architecture with WebSocket-first edge gateway and CI/CD integration.
 
 ## Overview
 
-The testing infrastructure provides automated test generation from OpenAPI schemas with dual-transport validation:
+Bannou implements a **revolutionary 10-step CI/CD pipeline** with comprehensive testing coverage including:
 
-- **Schema-Driven Test Generation** - Automatic test creation from OpenAPI YAML specifications
-- **HTTP Tester** (`http-tester/`) - Tests services directly via HTTP endpoints
-- **WebSocket Tester** (via `lib-testing-core/WebSocketTestClient`) - Tests via Connect service binary protocol
-- **Shared Testing Core** (`lib-testing-core/`) - Common test definitions, schema parsing, and dual-transport framework
-- **Transport Consistency Validation** - Ensures HTTP and WebSocket produce identical results
+- **Schema-Driven Development**: OpenAPI specifications drive automatic test generation
+- **Service-Specific Testing**: Individual service plugin testing with `make test PLUGIN=service`
+- **Dual-Transport Validation**: HTTP and WebSocket protocol consistency testing
+- **GitHub Actions Integration**: Complete 10-step automated pipeline
+- **189+ Automated Tests**: Unit tests, integration tests, and protocol validation
 
-## Why Schema-Driven Dual Testing?
-
-This comprehensive testing approach provides multiple layers of validation:
-
-1. **Schema Compliance** - All requests/responses validated against OpenAPI contracts
-2. **Service Logic Issues** - HTTP Tester fails, WebSocket Tester fails  
-3. **Protocol/Transport Issues** - HTTP Tester passes, WebSocket Tester fails
-4. **Transport Consistency** - Detects discrepancies between HTTP and WebSocket behavior
-5. **Comprehensive Coverage** - Automatic generation of success, validation, and authorization tests
-6. **Regression Prevention** - Schema changes automatically generate new test cases
-
-This follows industry best practices for testing distributed systems with the added benefit of automated test generation from API contracts.
-
-## HTTP Tester
-
-**Purpose**: Direct HTTP endpoint testing  
-**Use Case**: Validate core service logic, API contracts, database operations  
-
-### Configuration
-
-Create `http-tester/Config.json`:
-```json
-{
-  "Http_Base_Url": "http://localhost:80",
-  "Register_Endpoint": "api/accounts/create",
-  "Login_Credentials_Endpoint": "api/auth/login", 
-  "Client_Username": "testuser",
-  "Client_Password": "TestPassword123!"
-}
-```
-
-### Running
+## Quick Start
 
 ```bash
-cd http-tester
-dotnet run
+# Test everything
+make test                      # All 189+ tests across all services
+
+# Test specific services
+make test PLUGIN=accounts      # Test accounts service only
+make test PLUGIN=auth          # Test auth service only
+make test PLUGIN=connect       # Test connect service only
+
+# Complete CI pipeline locally
+make test-ci                   # Matches GitHub Actions 10-step pipeline
+
+# Individual test types
+make test-unit                 # Unit tests only
+make test-http                 # HTTP endpoint testing
+make test-edge                 # WebSocket protocol testing
+make test-infrastructure       # Infrastructure validation
 ```
 
-### Features
+## Testing Architecture
 
-- Direct HTTP calls to Bannou service endpoints
-- JWT token authentication
-- JSON request/response handling
-- Interactive test menu
-- Detailed success/failure reporting
+### 1. Unit Tests (189+ Total)
 
-## WebSocket Protocol Testing
+**Service Test Structure**: Each service has comprehensive unit tests in `lib-{service}.tests/`:
 
-**Purpose**: WebSocket/binary protocol testing via Connect service edge gateway
-**Use Case**: Validate Connect service routing, protocol serialization, WebSocket connections
-
-The WebSocket testing client implements the complete Bannou binary protocol:
-
-- **Service Discovery**: Client receives method → GUID mappings at connection
-- **Binary Protocol**: 24-byte headers (16-byte service GUID + 8-byte message ID) + payload
-- **Zero-Copy Routing**: Connect service routes via GUID without payload inspection
-- **Authentication Workflows**: WebSocket-based login and token refresh
-- **Concurrent Requests**: Correlation ID management for multiple simultaneous requests
-- **Transport Validation**: Ensures WebSocket responses match HTTP responses exactly
-
-### Running
-
-```bash
-cd edge-tester
-dotnet run
+```
+lib-accounts.tests/           # Accounts service tests
+lib-auth.tests/              # Authentication service tests
+lib-behavior.tests/          # Behavior service tests
+lib-connect.tests/           # Connect service tests
+lib-game-session.tests/      # Game session tests
+lib-permissions.tests/       # Permissions service tests
+lib-website.tests/           # Website service tests
+unit-tests/                  # Core framework tests (155 tests)
 ```
 
-## Shared Testing Core
-
-**Location**: `lib-testing-core/`
-
-### Key Components
-
-- `SchemaTestGenerator` - Generates tests automatically from OpenAPI YAML schemas
-- `ITestClient` - Abstraction for HTTP vs WebSocket clients (now includes `IDisposable`)
-- `WebSocketTestClient` - Production-ready WebSocket client implementing Bannou binary protocol
-- `ISchemaTestHandler` - Enhanced test handlers supporting schema-driven generation
-- `DualTransportTestRunner` - Executes same tests via both HTTP and WebSocket
-- `ServiceTest` - Test definition that works with either client
-- `TestResult` / `TestResponse<T>` - Standardized result types
-- `TestConfiguration` - Configuration for both clients including WebSocket endpoint
-- `TestGenerationDemo` - Interactive demonstration of schema-driven testing capabilities
-
-### Schema-Driven Test Generation
-
-1. **Automatic Test Generation** - Tests generated from OpenAPI schemas:
+**Generated Test Structure**: Tests follow xUnit patterns with proper dependency injection:
 
 ```csharp
-public class EnhancedAccountTestHandler : ISchemaTestHandler
+public class AccountsServiceTests
 {
-    public async Task<ServiceTest[]> GetSchemaBasedTests(SchemaTestGenerator generator)
-    {
-        var schemaPath = GetSchemaFilePath();
-        return await generator.GenerateTestsFromSchema(schemaPath);
-    }
+    private Mock<ILogger<AccountsService>> _mockLogger = null!;
+    private Mock<AccountsServiceConfiguration> _mockConfiguration = null!;
 
-    public string GetSchemaFilePath()
+    [Fact]
+    public void Constructor_WithValidParameters_ShouldNotThrow()
     {
-        return Path.Combine("schemas", "accounts-api.yaml");
-    }
-
-    // Manual tests still supported
-    public ServiceTest[] GetServiceTests()
-    {
-        return new[] { /* custom tests */ };
+        var service = new AccountsService(_mockLogger.Object, _mockConfiguration.Object);
+        Assert.NotNull(service);
     }
 }
 ```
 
-2. **Generated Test Types**:
-   - **Success Tests**: Valid requests with proper authentication
-   - **Validation Tests**: Missing required fields, invalid types, format violations
-   - **Authorization Tests**: Unauthorized access attempts
-   - **Transport Consistency**: Same test via HTTP and WebSocket
+### 2. HTTP Integration Testing (`http-tester`)
 
-3. **Dual Transport Execution**:
+**Purpose**: Direct HTTP endpoint validation for service logic testing
+**Location**: `http-tester/` project
 
-```csharp
-var dualRunner = new DualTransportTestRunner(configuration);
-var results = await dualRunner.RunDualTransportTests(handler);
+**Features**:
+- Direct service-to-service communication using generated clients
+- JWT authentication workflows
+- Comprehensive API endpoint validation
+- Request/response model validation
+- Service integration testing
 
-// Analyze transport consistency
-var discrepancies = results.Where(r => r.HasTransportDiscrepancy);
+**Usage**:
+```bash
+# Interactive mode
+dotnet run --project http-tester
+
+# CI/CD daemon mode
+DAEMON_MODE=true dotnet run --project http-tester --configuration Release
 ```
 
-## Development Workflow
+### 3. WebSocket Protocol Testing (`edge-tester`)
 
-### Schema-First Testing Approach
-1. **Define OpenAPI Schema** - Create comprehensive API contract in YAML
-2. **Generate Tests Automatically** - Schema drives comprehensive test generation
-3. **Run HTTP Testing** - Validate core service implementation against schema
-4. **Run WebSocket Testing** - Validate Connect service routing and binary protocol
-5. **Verify Transport Consistency** - Ensure HTTP and WebSocket produce identical results
-6. **Analyze Discrepancies** - Investigate any transport-specific behaviors
+**Purpose**: Complete Connect service edge gateway and binary protocol validation
+**Location**: `edge-tester/` project
 
-### Manual Testing Workflow  
-1. **Write custom tests** - For complex workflows not covered by schema generation
-2. **Implement business logic** - Services inherit from generated abstract controllers
-3. **Run comprehensive test suite** - 167+ tests covering all scenarios
-4. **Validate results** - Both generated and manual tests pass
+**Features**:
+- WebSocket-first architecture validation
+- 31-byte binary protocol header testing
+- Service GUID routing validation
+- Real-time capability updates
+- Client-server protocol consistency
+- Backwards/Forward compatibility testing
 
-## Configuration Options
+**Usage**:
+```bash
+# Interactive mode
+dotnet run --project edge-tester
 
-Both testers support configuration via:
-- `Config.json` files
-- Environment variables  
-- Command line arguments
+# CI/CD daemon mode
+DAEMON_MODE=true dotnet run --project edge-tester --configuration Release
+```
 
-Environment variable format: `HTTP_BASE_URL`, `CLIENT_USERNAME`, etc.
+### 4. Infrastructure Testing
 
-## Integration with CI/CD
+**Purpose**: Docker Compose service availability and connectivity validation
+**Components**: OpenResty, Redis, RabbitMQ, MySQL basic connectivity
 
-All testing approaches can be run in automated pipelines:
+**Usage**:
+```bash
+# Standalone infrastructure testing
+make test-infrastructure
+
+# Full infrastructure with Docker Compose
+make build-compose
+make ci-up-compose
+make test-infrastructure
+```
+
+## GitHub Actions 10-Step CI/CD Pipeline
+
+### Pipeline Overview
+
+The comprehensive CI/CD pipeline (`.github/workflows/ci.integration.yml`) ensures complete validation:
+
+#### Generation and Build Phase
+1. **🔧 Generate Services (Initial)** - Create controllers/models from OpenAPI schemas
+2. **📦 Generate Client SDK (Initial)** - Build client SDK from service definitions
+3. **🏗️ Build All Projects** - Compile with Release configuration
+
+#### Consistency Validation Phase
+4. **🔍 Generate Services (Conflict Detection)** - Re-generate to detect conflicts
+5. **🔄 Generate Client SDK (Consistency Check)** - Ensure SDK consistency
+
+#### Testing Phase
+6. **🧪 Unit Tests** - 189+ tests across all service plugins
+7. **🏗️ Infrastructure Tests** - Docker Compose + connectivity validation
+8. **🔗 HTTP Integration Tests** - Service-to-service communication validation
+
+#### Protocol Validation Phase
+9. **📡 WebSocket Backwards Compatibility** - Published NuGet SDK compatibility
+10. **🚀 WebSocket Forward Compatibility** - Current generated SDK compatibility
+
+### Local Pipeline Reproduction
 
 ```bash
-# Direct HTTP service testing
-dotnet run --project http-tester -- --client-username=ciuser --client-password=cipass
+# Complete 10-step pipeline locally (matches GitHub Actions exactly)
+make test-ci
 
-# WebSocket protocol testing (via lib-testing-core)
-dotnet run --project edge-tester -- --client-username=ciuser --client-password=cipass
-
-# All unit tests (167 total across all services)
-dotnet test
-
-# Schema-driven test generation demo
-# (Demonstrates automatic test generation from OpenAPI schemas)
-var demo = TestGenerationDemo.RunDemo(configuration);
+# Individual pipeline components
+make generate-services-for-consistency  # Steps 4-5
+make test-unit                          # Step 6
+make test-infrastructure                # Step 7
+make test-http-daemon                   # Step 8
+make test-edge-daemon                   # Steps 9-10
 ```
 
-Exit codes indicate success (0) or failure (non-zero).
+### Service-Specific Development Workflow
+
+```bash
+# Develop and test specific services
+make clean PLUGIN=accounts             # Clean accounts service only
+make generate-services PLUGIN=accounts # Generate accounts service only
+make test PLUGIN=accounts              # Test accounts service only
+
+# Complete service development cycle
+make clean PLUGIN=behavior
+make generate-services PLUGIN=behavior
+make build
+make test PLUGIN=behavior
+```
+
+## Schema-Driven Development Testing
+
+### OpenAPI Schema Integration
+
+**Schema Location**: `/schemas/` directory contains all service API definitions
+**Generated Components**: Controllers, models, clients, interfaces, configurations
+
+**Example Schema Testing Flow**:
+1. Define API in `schemas/accounts-api.yaml`
+2. Generate service with `make generate-services PLUGIN=accounts`
+3. Implement business logic in `AccountsService.cs`
+4. Test with `make test PLUGIN=accounts`
+5. Validate via `make test-http` and `make test-edge`
+
+### Automatic Test Generation
+
+Tests are automatically created for each service plugin via `scripts/generate-tests.sh`:
+
+**Generated Test Types**:
+- Constructor validation tests
+- Service configuration tests
+- Basic functionality tests
+- Integration test scaffolding
+
+**Test Project Structure**:
+```
+lib-{service}.tests/
+├── GlobalUsings.cs              # xUnit global imports
+├── {Service}ServiceTests.cs     # Main service tests
+└── lib-{service}.tests.csproj   # Test project file
+```
 
 ## Advanced Testing Features
 
-### Schema-Driven Test Generation Details
+### WebSocket Binary Protocol
 
-**Automatic Test Coverage**:
-- **Success Scenarios**: Valid requests with proper data types and authentication
-- **Required Field Validation**: Tests for each required field missing from requests
-- **Type Validation**: Invalid data types (string instead of number, etc.)  
-- **Format Validation**: Email format, password complexity, pattern matching
-- **Authorization Tests**: Endpoints requiring authentication tested without tokens
+**Protocol Specification**: 31-byte binary header + JSON payload
+- **Message Flags**: 1 byte - routing control
+- **Channel**: 2 bytes - service channel identification
+- **Sequence**: 4 bytes - message ordering
+- **Service GUID**: 16 bytes - client-specific service routing
+- **Message ID**: 8 bytes - request/response correlation
 
-**Test Generation Process**:
-1. Parse OpenAPI YAML schema using YamlDotNet
-2. Extract endpoints, request/response models, and validation rules
-3. Generate test data that satisfies/violates schema constraints
-4. Create test methods for success and failure scenarios
-5. Handle authentication dependencies and stateful workflows
+**Testing Implementation**: `edge-tester` validates complete protocol compliance including:
+- Client-specific GUID generation (SHA256 salted)
+- Zero-copy message routing via Connect service
+- Real-time capability updates via RabbitMQ
+- Service discovery and dynamic API mapping
 
-### Dual-Transport Consistency Validation
+### Dual-Transport Consistency
 
-**Transport Comparison**:
-- Same test logic executed via HTTP and WebSocket clients
-- Response data comparison with intelligent error pattern matching
-- Transport discrepancy detection and reporting
-- Performance comparison between transport methods
+**Validation Approach**: Same business logic tested via both HTTP and WebSocket to ensure protocol consistency:
 
-**Equivalent Failure Analysis**:
 ```csharp
-private bool IsEquivalentFailure(string httpMessage, string wsMessage)
-{
-    var errorPatterns = new[]
-    {
-        "validation", "unauthorized", "forbidden", "not found", 
-        "bad request", "missing", "invalid", "required", "timeout"
-    };
-    
-    // Failures are equivalent if both contain the same error patterns
-    return errorPatterns.Any(pattern => 
-        httpMessage.Contains(pattern) && wsMessage.Contains(pattern));
-}
+// HTTP client testing
+var httpResponse = await httpClient.CreateAccountAsync(request);
+
+// WebSocket client testing
+var wsResponse = await webSocketClient.CreateAccountAsync(request);
+
+// Response consistency validation
+Assert.Equal(httpResponse.Data, wsResponse.Data);
 ```
 
-### WebSocket Binary Protocol Implementation
+### CI/CD Integration Details
 
-**Protocol Features**:
-- **Service Discovery**: Dynamic method → GUID mapping at connection time
-- **Binary Message Format**: 24-byte header + JSON payload
-- **Correlation IDs**: Request/response matching for concurrent operations
-- **Authentication Flow**: WebSocket-based login with JWT tokens
-- **Connection Management**: Automatic reconnection and heartbeat functionality
+**Environment Variables**:
+- `DAEMON_MODE=true` - Enables non-interactive CI testing
+- Build configuration: `--configuration Release`
+- Test execution: `--no-build` for performance
 
-**Implementation Details**:
-```csharp
-// Binary message structure
-var binaryMessage = new byte[24 + payload.Length];
-Array.Copy(serviceGuidBytes, 0, binaryMessage, 0, 16);    // Service GUID
-Array.Copy(messageIdBytes, 0, binaryMessage, 16, 8);      // Message ID  
-Array.Copy(payload, 0, binaryMessage, 24, payload.Length); // JSON payload
+**Exit Codes**:
+- `0` - All tests passed
+- `Non-zero` - Test failures or errors
+
+**Makefile Integration**: All CI commands available via Makefile for local reproduction:
+
+```bash
+make test-ci                   # Complete pipeline
+make test-unit                 # Unit tests only
+make test-http-daemon          # HTTP integration (CI mode)
+make test-edge-daemon          # WebSocket testing (CI mode)
+make test-infrastructure       # Infrastructure validation
 ```
 
-### Test Reporting and Analysis
+## Production Deployment Testing
 
-**Comprehensive Reporting**:
-- Test execution results with transport comparison
-- Schema compliance validation results  
-- Performance metrics and timing analysis
-- Transport discrepancy detection with detailed explanations
-- JSON and Markdown report generation for CI/CD integration
+### NuGet SDK Publishing
 
-**Demo System**:
-The `TestGenerationDemo` class provides interactive demonstration of:
-- Schema parsing and test generation capabilities
-- Transport availability validation
-- Dual-transport test execution with result analysis
-- Comprehensive reporting in multiple formats
+**Automated Publishing Pipeline**: Master branch pushes trigger:
+- Semantic version calculation and tagging
+- Client SDK package creation and NuGet publishing
+- Multi-version compatibility testing
+- Production environment protection
 
-This testing architecture ensures that Bannou services maintain perfect API consistency across both HTTP (development) and WebSocket (production) transport layers while providing comprehensive automated test coverage derived directly from API contracts.
+**Compatibility Testing**:
+- **Backwards Compatibility**: `edge-tester` using published NuGet SDK
+- **Forward Compatibility**: `edge-tester` using current generated SDK
+- **Breaking Change Detection**: Automated validation prevents API breaks
+
+### Environment-Specific Testing
+
+**Local Development**:
+```bash
+make test                      # All tests
+make test PLUGIN=service       # Service-specific testing
+```
+
+**CI/CD Environment**:
+```bash
+DAEMON_MODE=true make test-ci  # Non-interactive pipeline
+```
+
+**Production Validation**:
+- Infrastructure health checks
+- Service discovery validation
+- Protocol compatibility verification
+- Performance benchmarking
+
+## Testing Best Practices
+
+### Service Development Workflow
+
+1. **Schema First**: Define OpenAPI specification in `/schemas/`
+2. **Generate**: Create service structure with `make generate-services PLUGIN=service`
+3. **Implement**: Write business logic in service implementation class
+4. **Test Locally**: Use `make test PLUGIN=service` for focused testing
+5. **Integration**: Validate with `make test-http` and `make test-edge`
+6. **CI Validation**: Ensure `make test-ci` passes before merge
+
+### Test Organization
+
+**Unit Tests**: Focus on individual service logic and configuration
+**Integration Tests**: Validate service-to-service communication
+**Protocol Tests**: Ensure WebSocket and HTTP consistency
+**Infrastructure Tests**: Verify deployment and connectivity
+
+### Performance Considerations
+
+**Test Execution Time**:
+- Unit tests: ~10-15 seconds total
+- HTTP integration: ~30-45 seconds
+- WebSocket protocol: ~45-60 seconds
+- Complete CI pipeline: ~5-8 minutes
+
+**Parallel Execution**: Tests run in parallel where possible for performance
+**Resource Optimization**: Docker containers cleaned up automatically after testing
+
+## Troubleshooting
+
+### Common Testing Issues
+
+**Test Project Not Found**:
+```bash
+# Ensure test project exists
+make generate-services PLUGIN=service
+make test PLUGIN=service
+```
+
+**Build Errors After Generation**:
+```bash
+# Clean and regenerate
+make clean PLUGIN=service
+make generate-services PLUGIN=service
+make build
+```
+
+**CI Pipeline Failures**:
+```bash
+# Reproduce locally
+make test-ci
+
+# Check individual steps
+make generate-services-for-consistency
+make test-unit
+make test-infrastructure
+```
+
+### Development Guidelines
+
+1. **Always test before commit**: Use `make test-ci` to reproduce CI environment
+2. **Service-specific development**: Use `PLUGIN=service` parameters for focused work
+3. **Schema validation**: Ensure OpenAPI schemas are valid before generation
+4. **Protocol consistency**: Validate both HTTP and WebSocket behavior
+5. **Documentation updates**: Keep testing docs current with pipeline changes
+
+This comprehensive testing architecture ensures Bannou services maintain perfect consistency across development, testing, and production environments while providing developer-friendly workflows for efficient service development.

@@ -12,8 +12,14 @@ namespace BeyondImmersion.BannouService.SourceGeneration;
 /// <summary>
 /// Source generator that creates comprehensive unit test projects for schema-driven services.
 /// Generates test classes, fixtures, and configuration based on OpenAPI schemas and service implementations.
+///
+/// ⚠️ DISABLED: Manual test projects already exist for all services (lib-*.tests).
+/// This generator was creating duplicate test projects causing build conflicts.
+/// Use generate-tests.sh script for manual test project management instead.
+///
+/// Re-enable only if automated test generation is needed that manual projects cannot provide.
 /// </summary>
-[Generator]
+// [Generator] - DISABLED: Manual test projects exist - see comment above
 public class UnitTestGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)

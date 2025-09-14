@@ -102,39 +102,54 @@ nswag run
 docker run --rm -v $(pwd):/tmp/lint:rw oxsecurity/megalinter-dotnet:v8 -e "ENABLE=EDITORCONFIG"
 ```
 
-## Testing Architecture
+## Testing & Development Commands
 
-Bannou implements a comprehensive **dual-transport testing** system with automatic test generation:
+Bannou provides comprehensive testing via Makefile commands and automated CI/CD pipeline:
 
-### Schema-Driven Test Generation
-- **Automatic Coverage**: Tests generated for success, validation, and authorization scenarios
-- **OpenAPI Integration**: YAML schemas drive comprehensive test case creation
-- **Failure Scenarios**: Missing required fields, invalid types, unauthorized access automatically tested
+### Essential Makefile Commands
 
-### Dual-Transport Validation
-- **HTTP Testing**: Direct service endpoint validation (development/debugging)
-- **WebSocket Testing**: Complete Connect service protocol validation (production experience)
-- **Consistency Verification**: Same tests run via both transports to ensure identical behavior
-- **Transport Discrepancy Detection**: Identifies inconsistencies between HTTP and WebSocket responses
-
-### Testing Clients
-- **Shared Interface**: `ITestClient` abstraction works with both HTTP and WebSocket
-- **Schema Integration**: `ISchemaTestHandler` enables automatic test generation from OpenAPI specs
-- **Comprehensive Reporting**: Test results include transport comparison and discrepancy analysis
-
-Run tests via:
 ```bash
-# HTTP direct testing
-dotnet run --project http-tester
+# Development Workflow
+make build                      # Build all projects
+make generate-all              # Regenerate all services and SDK
+make generate-services         # Regenerate services only
+make generate-services PLUGIN=accounts  # Regenerate specific service
+make format                    # Fix line endings and run code formatting
+make clean                     # Clean all generated files
+make clean PLUGIN=accounts     # Clean specific service
 
-# WebSocket protocol testing  
-dotnet run --project edge-tester
+# Testing Commands
+make test                      # Run all unit tests across all services
+make test PLUGIN=accounts      # Run tests for specific service only
+make test-ci                   # Complete CI pipeline (matches GitHub Actions)
+make test-unit                 # Basic unit tests only
+make test-http                 # HTTP endpoint testing
+make test-edge                 # WebSocket protocol testing
+make test-infrastructure       # Infrastructure validation
 
-# All unit tests (167 total)
-dotnet test
+# Docker Compose
+make build-compose             # Build Docker containers
+make up-compose                # Start services locally
+make down-compose              # Stop and cleanup
 ```
 
-See [TESTING.md](TESTING.md) for complete testing documentation.
+### Testing Architecture
+
+Bannou implements a **comprehensive 10-step CI/CD pipeline** with dual-transport testing:
+
+- **Schema-Driven Test Generation**: Automatic test creation from OpenAPI specifications
+- **Dual-Transport Validation**: HTTP and WebSocket testing ensure protocol consistency
+- **Service-Specific Testing**: Use `make test PLUGIN=service` for focused testing
+- **CI/CD Integration**: Complete GitHub Actions pipeline with 189+ automated tests
+
+**Quick Testing:**
+```bash
+make test                      # All tests (189 total across all services)
+make test PLUGIN=accounts      # Specific service tests only
+make test-ci                   # Full CI pipeline locally
+```
+
+See **[TESTING.md](TESTING.md)** for complete testing documentation, CI/CD pipeline details, and advanced testing workflows.
 
 ## Local Deploy (Compose)
 

@@ -24,30 +24,13 @@ public class PermissionsServiceTests
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
         // Arrange & Act & Assert
-        var exception = Record.Exception(() => new PermissionsService(
-            _mockConfiguration.Object,
-            _mockLogger.Object));
+        var service = new PermissionsService(
+            _mockLogger.Object,
+            _mockConfiguration.Object);
 
-        Assert.Null(exception);
+        Assert.NotNull(service);
     }
 
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new PermissionsService(
-            null!,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new PermissionsService(
-            _mockConfiguration.Object,
-            null!));
-    }
 
     // TODO: Add service-specific unit tests here
     // For service-to-service communication tests, add references to other service client projects

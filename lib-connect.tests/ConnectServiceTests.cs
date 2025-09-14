@@ -325,10 +325,7 @@ public class ConnectServiceTests
             Assert.True(messageIds.Add(messageId), $"Duplicate message ID generated: {messageId}");
 
             // Small delay to ensure timestamp-based uniqueness
-            if (i % 10 == 9) // Only delay every 10th iteration for efficiency
-            {
-                Thread.Sleep(1);
-            }
+            Thread.Sleep(1); // Consistent delay for all iterations to prevent timing collisions
         }
 
         // Assert
