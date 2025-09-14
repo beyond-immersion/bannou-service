@@ -1,19 +1,34 @@
 # Bannou Service Development Instructions
 
-## ⚠️ MANDATORY REFERENCE
+## ⚠️ MANDATORY REFERENCE - API-DESIGN.md
 
-**For ALL Bannou service design and development tasks**, you MUST reference the comprehensive architectural documentation available in the knowledge base:
+**CRITICAL**: For ALL Bannou service design and development tasks, you MUST ALWAYS reference the authoritative API-DESIGN.md documentation FIRST before proceeding with any work.
 
-**API-DESIGN.md** (located in Technical Architecture knowledge base section)
+**Location**: Technical Architecture knowledge base section (API-DESIGN.md)
 
-This document defines the authoritative schema-driven development approach, consolidated service architecture patterns, WebSocket-first integration, and complete implementation workflows that must be followed for all Bannou services.
+This document defines the single source of truth for schema-driven development approach, consolidated service architecture patterns, WebSocket-first integration, and complete implementation workflows that must be followed for all Bannou services.
 
-**When to Reference API-DESIGN.md**:
+**⚠️ MANDATORY REFERENCE TRIGGERS** - You MUST reference API-DESIGN.md for:
+- ANY service API design or modification tasks
 - Creating new services or modifying existing service architecture
-- Questions about schema-first development patterns
 - Service integration with Dapr, WebSocket protocols, or client generation
-- Debugging service implementation issues
+- Debugging service implementation issues or schema generation problems
+- Questions about schema-first development patterns or validation
 - Understanding event types, datastore requirements, or testing strategies
+- API versioning, breaking changes, or backwards compatibility
+- Service testing strategies and deployment patterns
+
+**⚠️ MANDATORY UPDATE REQUIREMENT**:
+When making changes to service APIs or architectural patterns, you MUST update API-DESIGN.md to reflect:
+- New architectural decisions or patterns
+- Changes to schema-first development workflow
+- Service integration pattern modifications
+- Testing strategy updates
+- Any deviations from established patterns
+
+**IMPLEMENTATION GUIDES**: For specific service implementation details beyond API-DESIGN.md, consult dedicated implementation guides in the knowledge base:
+- **Behavior Service APIs**: Reference NPC-Behavior-Service-APIs-and-Testing.md for ABML and character behavior implementation
+- **Service-Specific Guides**: Reference implementation guides when working on complex service-specific patterns
 
 ## Critical Development Rules
 
@@ -33,7 +48,7 @@ This document defines the authoritative schema-driven development approach, cons
 **MANDATORY**: The Makefile contains all established commands and patterns. Always check it before creating new commands or approaches.
 
 **Available Makefile Commands**:
-@~/repos/bannou/Makefile
+Reference the Makefile in the repository root for all available commands and established patterns.
 
 ### Prefer .env Files Over Other Configuration
 **MANDATORY**: In our containerization workflow, always prefer .env files over other configuration methods:
@@ -55,6 +70,27 @@ This document defines the authoritative schema-driven development approach, cons
 - **Never Edit Generated Files**: Any `*/Generated/` or `.Generated.cs` files are auto-generated
 - **Use Generated Clients**: Service-to-service calls use NSwag-generated clients, not direct interfaces
 - **Dapr-First Patterns**: Use DaprClient for state/events, never Entity Framework directly
+
+### Shared Class Architecture (MANDATORY)
+**For classes shared across multiple services, follow the established pattern:**
+
+**Shared Class Location**: `bannou-service/` project (single source of truth)
+- **ApiException Classes**: Located in `bannou-service/ApiException.cs`
+- **Common Models**: Any model used by multiple services goes in `bannou-service/`
+- **Shared Interfaces**: Cross-service interfaces belong in `bannou-service/`
+
+**NSwag Exclusion Requirements**:
+- **Exclude shared classes from generation**: Use `excludedTypeNames:ApiException,ApiException\<TResult\>` format
+- **Syntax**: Comma-delimited unquoted format with escaped angle brackets for generics
+- **Never use**: Semicolon-separated or quoted formats (causes shell parsing errors)
+
+**Implementation Pattern**:
+1. Create shared class in `bannou-service/` project with proper namespace
+2. Add exclusion to both controller generation AND model generation in `generate-all-services.sh`
+3. All services reference `bannou-service` project, so shared classes are available
+4. Never duplicate shared classes across multiple service projects
+
+**Example**: `bannou-service/ApiException.cs` provides `ApiException` and `ApiException<TResult>` for all services
 
 ### Safety Protocols
 **Before Any Code Changes**:
