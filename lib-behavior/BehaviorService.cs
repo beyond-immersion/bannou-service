@@ -25,7 +25,7 @@ public class BehaviorService : IBehaviorService
     /// <summary>
     /// CompileAbmlBehavior operation implementation
     /// </summary>
-    public Task<(StatusCodes, CompileBehaviorResponse?)> CompileAbmlBehaviorAsync(string body, CancellationToken cancellationToken = default)
+    public Task<(StatusCodes, CompileBehaviorResponse?)> CompileAbmlBehaviorAsync(CompileBehaviorRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -67,7 +67,7 @@ public class BehaviorService : IBehaviorService
     /// <summary>
     /// ValidateAbml operation implementation
     /// </summary>
-    public Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(string body, CancellationToken cancellationToken = default)
+    public Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(ValidateAbmlRequest body, CancellationToken cancellationToken = default)
     {
         try
         {

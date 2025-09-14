@@ -14,9 +14,9 @@ namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
 /// Manual implementation for endpoints that require custom logic.
-/// This partial class extends the generated ConnectControllerBase.
+/// This partial class implements the generated IConnectController interface.
 /// </summary>
-public partial class ConnectController : ConnectControllerBaseControllerBase
+public partial class ConnectController : Microsoft.AspNetCore.Mvc.ControllerBase, IConnectController
 {
     private readonly IConnectService _connectService;
     private readonly IAuthClient _authClient;
@@ -35,7 +35,7 @@ public partial class ConnectController : ConnectControllerBaseControllerBase
     /// <summary>
     /// Proxies internal HTTP requests through Dapr with permission validation.
     /// </summary>
-    public override async Task<ActionResult<InternalProxyResponse>> ProxyInternalRequest(
+    public async Task<ActionResult<InternalProxyResponse>> ProxyInternalRequestAsync(
         InternalProxyRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -52,7 +52,7 @@ public partial class ConnectController : ConnectControllerBaseControllerBase
     /// <summary>
     /// Discovers available APIs for the current session using Permissions service.
     /// </summary>
-    public override async Task<ActionResult<ApiDiscoveryResponse>> DiscoverAPIs(
+    public async Task<ActionResult<ApiDiscoveryResponse>> DiscoverAPIsAsync(
         ApiDiscoveryRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -68,7 +68,7 @@ public partial class ConnectController : ConnectControllerBaseControllerBase
     /// <summary>
     /// Returns current service routing mappings for monitoring and debugging.
     /// </summary>
-    public override async Task<ActionResult<ServiceMappingsResponse>> GetServiceMappings(
+    public async Task<ActionResult<ServiceMappingsResponse>> GetServiceMappingsAsync(
         CancellationToken cancellationToken = default)
     {
         var result = await _connectService.GetServiceMappingsAsync(cancellationToken);
@@ -83,7 +83,7 @@ public partial class ConnectController : ConnectControllerBaseControllerBase
     /// Establishes WebSocket connection with JWT authentication.
     /// Implements the 31-byte binary protocol for zero-copy message routing.
     /// </summary>
-    public override async Task<IActionResult> ConnectWebSocket(
+    public async Task<IActionResult> ConnectWebSocketAsync(
         Connection connection,
         Upgrade upgrade,
         string authorization,
@@ -95,7 +95,7 @@ public partial class ConnectController : ConnectControllerBaseControllerBase
     /// <summary>
     /// Alternative POST method for WebSocket connections (same implementation).
     /// </summary>
-    public override async Task<IActionResult> ConnectWebSocketPost(
+    public async Task<IActionResult> ConnectWebSocketPostAsync(
         Connection2 connection,
         Upgrade2 upgrade,
         string authorization,

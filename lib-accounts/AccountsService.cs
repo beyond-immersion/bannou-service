@@ -36,8 +36,8 @@ public class AccountsService : IAccountsService
         string? displayName = null,
         Provider? provider = null,
         bool? verified = null,
-        int page = 1,
-        int pageSize = 20,
+        int? page = 1,
+        int? pageSize = 20,
         CancellationToken cancellationToken = default)
     {
         try
@@ -55,8 +55,8 @@ public class AccountsService : IAccountsService
             {
                 Accounts = new List<AccountResponse>(),
                 TotalCount = 0,
-                Page = page,
-                PageSize = pageSize
+                Page = page ?? 1,
+                PageSize = pageSize ?? 20
             };
 
             return Task.FromResult<(StatusCodes, AccountListResponse?)>((StatusCodes.OK, response));

@@ -25,7 +25,7 @@ public class GameSessionService : IGameSessionService
     /// <summary>
     /// ListGameSessionsAsync implementation - TODO: Add business logic
     /// </summary>
-    public async Task<(StatusCodes, GameSessionListResponse?)> ListGameSessionsAsync(GameType? gameType = null, Status? status = null, CancellationToken cancellationToken = default(CancellationToken))
+    public async Task<(StatusCodes, GameSessionListResponse?)> ListGameSessionsAsync(GameType? gameType, Status? status, CancellationToken cancellationToken = default(CancellationToken))
     {
         _logger.LogWarning("Method ListGameSessionsAsync called but not implemented");
         await Task.Delay(1); // Avoid async warning
@@ -55,7 +55,7 @@ public class GameSessionService : IGameSessionService
     /// <summary>
     /// JoinGameSessionAsync implementation - TODO: Add business logic
     /// </summary>
-    public async Task<(StatusCodes, JoinGameSessionResponse?)> JoinGameSessionAsync(Guid sessionId, JoinGameSessionRequest? body = null, CancellationToken cancellationToken = default(CancellationToken))
+    public async Task<(StatusCodes, JoinGameSessionResponse?)> JoinGameSessionAsync(Guid sessionId, JoinGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
         _logger.LogWarning("Method JoinGameSessionAsync called but not implemented");
         await Task.Delay(1); // Avoid async warning

@@ -6,6 +6,9 @@
 
 #nullable enable
 
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Auth;
+
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
 #pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
@@ -23,6 +26,24 @@
 namespace BeyondImmersion.BannouService.Auth;
 
 using System = global::System;
+
+/// <summary>
+/// OAuth provider type
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum Provider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 2,
+
+}
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LoginRequest
@@ -491,36 +512,6 @@ public partial class RoutingPreferenceResponse
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Provider
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
-    Google = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-    Discord = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-    Twitch = 2,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Provider2
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
-    Google = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-    Discord = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-    Twitch = 2,
 
 }
 

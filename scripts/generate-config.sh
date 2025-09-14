@@ -117,6 +117,7 @@ try:
     # Generate the configuration class
     print(f'''using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.{service_pascal};
 

@@ -40,7 +40,7 @@ public interface IBehaviorController
 
     /// <returns>ABML behavior compiled successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileAbmlBehaviorAsync(string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileAbmlBehaviorAsync(CompileBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
     /// <summary>
@@ -68,7 +68,7 @@ public interface IBehaviorController
 
     /// <returns>Validation completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateAbmlResponse>> ValidateAbmlAsync(string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateAbmlResponse>> ValidateAbmlAsync(ValidateAbmlRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
     /// <summary>
@@ -179,7 +179,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// </remarks>
     /// <returns>ABML behavior compiled successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("compile")]
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileAbmlBehavior([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompileBehaviorResponse>> CompileAbmlBehavior([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CompileBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         var (statusCode, result) = await _implementation.CompileAbmlBehaviorAsync(body, cancellationToken);
@@ -211,7 +211,7 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// </remarks>
     /// <returns>Validation completed</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("validate")]
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateAbmlResponse>> ValidateAbml([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateAbmlResponse>> ValidateAbml([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ValidateAbmlRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         var (statusCode, result) = await _implementation.ValidateAbmlAsync(body, cancellationToken);

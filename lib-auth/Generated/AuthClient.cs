@@ -61,7 +61,7 @@ public partial interface IAuthClient
     /// </summary>
     /// <returns>OAuth authentication successful</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<AuthResponse> CompleteOAuthAsync(Provider2 provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<AuthResponse> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -482,7 +482,7 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
     /// </summary>
     /// <returns>OAuth authentication successful</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<AuthResponse> CompleteOAuthAsync(Provider2 provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<AuthResponse> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (provider == null)
             throw new System.ArgumentNullException("provider");
@@ -1340,7 +1340,7 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1352,7 +1352,7 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

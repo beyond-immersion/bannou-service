@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -58,7 +59,7 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// GetNews operation implementation
     /// </summary>
-    public Task<(StatusCodes, NewsResponse?)> GetNewsAsync(int limit, int offset, CancellationToken cancellationToken = default)
+    public Task<(StatusCodes, NewsResponse?)> GetNewsAsync(int? limit = 10, int? offset = 0, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -297,12 +298,12 @@ public class WebsiteService : IWebsiteService
     /// <summary>
     /// ListPages operation implementation
     /// </summary>
-    public Task<(StatusCodes, System.Collections.Generic.ICollection<PageMetadata>?)> ListPagesAsync(bool includeUnpublished, CancellationToken cancellationToken = default)
+    public Task<(StatusCodes, ICollection<PageMetadata>?)> ListPagesAsync(bool? includeUnpublished = false, CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogDebug("Processing list pages request");
-            return Task.FromResult<(StatusCodes, System.Collections.Generic.ICollection<PageMetadata>?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            return Task.FromResult<(StatusCodes, ICollection<PageMetadata>?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
         {

@@ -91,6 +91,7 @@ cat >> "$SDK_PROJECT" << 'EOF'
     <Compile Include="../bannou-service/ServiceClients/DaprServiceClientBase.cs" Condition="Exists('../bannou-service/ServiceClients/DaprServiceClientBase.cs')" />
     <Compile Include="../bannou-service/ServiceClients/IServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/ServiceClients/IServiceAppMappingResolver.cs')" />
     <Compile Include="../bannou-service/ServiceClients/ServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/ServiceClients/ServiceAppMappingResolver.cs')" />
+    <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
   </ItemGroup>
 
 </Project>

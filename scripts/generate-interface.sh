@@ -67,11 +67,36 @@ import re
 import sys
 import yaml
 
-# Get service name from command line args
 service_pascal = '$SERVICE_PASCAL'
 schema_file = '$SCHEMA_FILE'
 
-def convert_openapi_type_to_csharp(openapi_type, format_type=None, nullable=False, items=None):
+def discover_generated_enums(service_pascal):
+    service_kebab = ''.join(['-' + c.lower() if c.isupper() and i > 0 else c.lower() for i, c in enumerate(service_pascal)])
+    models_file = f'../lib-{service_kebab}/Generated/{service_pascal}Models.cs'
+    discovered_enums = {}
+
+    try:
+        with open(models_file, 'r') as f:
+            content = f.read()
+
+        enum_matches = re.findall(r'public enum (\w+)\s*\{([^}]+)\}', content, re.DOTALL)
+
+        for enum_name, enum_body in enum_matches:
+            pattern = r'EnumMember\(Value = @\"([^\"]+)\"\)'
+            value_matches = re.findall(pattern, enum_body)
+            if value_matches:
+                value_set = frozenset(value_matches)
+                # Prefer shorter enum names (likely base enums vs response-specific enums)
+                if value_set not in discovered_enums or len(enum_name) < len(discovered_enums[value_set]):
+                    discovered_enums[value_set] = enum_name
+
+        # print(f'DEBUG: Discovered enums: {discovered_enums}', file=sys.stderr)
+        return discovered_enums
+    except Exception as e:
+        print(f'DEBUG: Could not parse models file: {e}', file=sys.stderr)
+        return {}
+
+def convert_openapi_type_to_csharp(openapi_type, format_type=None, nullable=False, items=None, enum_values=None, discovered_enums=None):
     '''Convert OpenAPI type to C# type'''
     type_mapping = {
         'string': 'string',
@@ -82,17 +107,35 @@ def convert_openapi_type_to_csharp(openapi_type, format_type=None, nullable=Fals
         'object': 'object'
     }
 
-    if openapi_type == 'string' and format_type == 'uuid':
+    # Check for enum types first by matching against discovered NSwag enums
+    if openapi_type == 'string' and enum_values and discovered_enums:
+        enum_set = frozenset(enum_values)
+        if enum_set in discovered_enums:
+            base_type = discovered_enums[enum_set]
+            pass  # Successfully matched enum
+        else:
+            print(f'DEBUG: No enum match for: {enum_values}', file=sys.stderr)
+            base_type = 'string'  # Fallback to string if no enum found
+    elif openapi_type == 'string' and format_type == 'uuid':
         base_type = 'Guid'
     elif openapi_type == 'array' and items:
-        item_type = convert_openapi_type_to_csharp(items.get('type', 'object'))
+        # Handle array items with $ref (model references) or primitive types
+        if '\$ref' in items:
+            # Extract model name from reference
+            ref_parts = items['\$ref'].split('/')
+            item_type = ref_parts[-1] if ref_parts else 'object'
+        else:
+            item_type = convert_openapi_type_to_csharp(items.get('type', 'object'))
         base_type = f'ICollection<{item_type}>'
     else:
         base_type = type_mapping.get(openapi_type, 'object')
 
     # Handle nullable types
-    if nullable and base_type not in ['string', 'object'] and not base_type.startswith('ICollection'):
-        base_type += '?'
+    if nullable:
+        if base_type == 'string':
+            base_type = 'string?'  # String needs explicit nullable marker in C# nullable reference types
+        elif base_type not in ['object'] and not base_type.startswith('ICollection'):
+            base_type += '?'
 
     return base_type
 
@@ -103,6 +146,9 @@ def convert_operation_id_to_method_name(operation_id):
 try:
     with open(schema_file, 'r') as schema_f:
         schema = yaml.safe_load(schema_f)
+
+    # Discover enum types from generated models
+    discovered_enums = discover_generated_enums(service_pascal)
 
     if 'paths' not in schema:
         print('    # Warning: No paths found in schema', file=sys.stderr)
@@ -120,9 +166,9 @@ try:
 
             method_name = convert_operation_id_to_method_name(operation_id)
 
-            # Skip methods marked as controller-only
-            if method_data.get('x-controller-only') is True:
-                print(f'    # Excluding controller-only method: {method_name}', file=sys.stderr)
+            # Skip methods marked as controller-only or manual-implementation
+            if method_data.get('x-controller-only') is True or method_data.get('x-manual-implementation') is True:
+                print(f'    # Excluding controller-only or manual-implementation method: {method_name}', file=sys.stderr)
                 continue
 
             # Determine return type from responses
@@ -134,9 +180,9 @@ try:
                         response = method_data['responses'][status_code]
                         if 'content' in response and 'application/json' in response['content']:
                             content_schema = response['content']['application/json'].get('schema', {})
-                            if '$ref' in content_schema:
+                            if '\$ref' in content_schema:
                                 # Extract model name from reference
-                                ref_parts = content_schema['$ref'].split('/')
+                                ref_parts = content_schema['\$ref'].split('/')
                                 return_type = ref_parts[-1] if ref_parts else 'object'
                             elif 'type' in content_schema:
                                 return_type = convert_openapi_type_to_csharp(
@@ -153,12 +199,25 @@ try:
                 for param in method_data['parameters']:
                     param_name = param.get('name', '')
                     param_schema = param.get('schema', {})
-                    param_type = convert_openapi_type_to_csharp(
-                        param_schema.get('type', 'string'),
-                        param_schema.get('format'),
-                        not param.get('required', True),  # If not required, make nullable
-                        param_schema.get('items')
-                    )
+                    is_required = param.get('required', False)  # Default to False for query params
+
+                    # Handle $ref parameters (like enum references)
+                    if '\$ref' in param_schema:
+                        # Extract model name from reference
+                        ref_parts = param_schema['\$ref'].split('/')
+                        param_type = ref_parts[-1] if ref_parts else 'object'
+                        # Make nullable if not required
+                        if not is_required and param_type not in ['object', 'string']:
+                            param_type += '?'
+                    else:
+                        param_type = convert_openapi_type_to_csharp(
+                            param_schema.get('type', 'string'),
+                            param_schema.get('format'),
+                            not is_required,  # If not required, make nullable
+                            param_schema.get('items'),
+                            param_schema.get('enum'),  # Pass enum values
+                            discovered_enums  # Pass discovered enums from models
+                        )
 
                     # Add default value if specified
                     param_str = f'{param_type} {param_name}'
@@ -172,7 +231,7 @@ try:
                             param_str += f' = {default_val}'
                     elif not param.get('required', True):
                         # Optional parameter without default
-                        param_str += ' = null' if '?' in param_type or param_type == 'string' else ''
+                        param_str += ' = null' if '?' in param_type else ''
 
                     param_parts.append(param_str)
 
@@ -181,9 +240,9 @@ try:
                 request_body = method_data['requestBody']
                 if 'content' in request_body and 'application/json' in request_body['content']:
                     content_schema = request_body['content']['application/json'].get('schema', {})
-                    if '$ref' in content_schema:
+                    if '\$ref' in content_schema:
                         # Extract model name from reference
-                        ref_parts = content_schema['$ref'].split('/')
+                        ref_parts = content_schema['\$ref'].split('/')
                         body_type = ref_parts[-1] if ref_parts else 'object'
                         param_parts.append(f'{body_type} body')
 

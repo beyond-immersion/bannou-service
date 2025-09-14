@@ -1,31 +1,20 @@
-using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Configuration;
 using System.ComponentModel.DataAnnotations;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
 
 namespace BeyondImmersion.BannouService.Permissions;
 
 /// <summary>
-/// Generated configuration for Permissions service
+/// Configuration class for Permissions service.
+/// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(PermissionsService), envPrefix: "PERMISSIONS_")]
-public class PermissionsServiceConfiguration : IServiceConfiguration
+[ServiceConfiguration(envPrefix: "BANNOU_")]
+public class PermissionsServiceConfiguration
 {
     /// <summary>
-    /// Force specific service ID (optional)
+    /// Default configuration property - can be removed if not needed.
+    /// Environment variable: PERMISSIONS_ENABLED or BANNOU_PERMISSIONS_ENABLED
     /// </summary>
-    public string? Force_Service_ID { get; set; }
+    public bool Enabled { get; set; } = true;
 
-    /// <summary>
-    /// Disable this service (optional)
-    /// </summary>
-    public bool? Service_Disabled { get; set; }
-
-    // TODO: Add service-specific configuration properties from schema
-    // Example properties:
-    // [Required]
-    // public string ConnectionString { get; set; } = string.Empty;
-    //
-    // public int MaxRetries { get; set; } = 3;
-    //
-    // public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 }

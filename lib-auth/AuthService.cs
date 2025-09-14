@@ -147,7 +147,7 @@ public class AuthService : IAuthService
 
     /// <inheritdoc/>
     public async Task<(StatusCodes, AuthResponse?)> CompleteOAuthAsync(
-        Provider2 provider,
+        Provider provider,
         OAuthCallbackRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -287,7 +287,7 @@ public class AuthService : IAuthService
     /// <inheritdoc/>
     public Task<(StatusCodes, object?)> InitOAuthAsync(
         Provider provider,
-        Uri redirectUri,
+        string redirectUri,
         string? state,
         CancellationToken cancellationToken = default)
     {
@@ -310,7 +310,7 @@ public class AuthService : IAuthService
 
     /// <inheritdoc/>
     public Task<(StatusCodes, object?)> InitSteamAuthAsync(
-        Uri returnUrl,
+        string returnUrl,
         CancellationToken cancellationToken = default)
     {
         try

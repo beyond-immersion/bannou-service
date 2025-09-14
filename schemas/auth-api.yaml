@@ -67,8 +67,7 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            enum: [google, discord, twitch]
+            $ref: '#/components/schemas/Provider'
         - name: redirectUri
           in: query
           required: true
@@ -94,8 +93,7 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            enum: [google, discord, twitch]
+            $ref: '#/components/schemas/Provider'
       requestBody:
         required: true
         content:
@@ -276,6 +274,11 @@ components:
       bearerFormat: JWT
 
   schemas:
+    Provider:
+      type: string
+      enum: [google, discord, twitch]
+      description: OAuth provider type
+
     LoginRequest:
       type: object
       required:

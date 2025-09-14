@@ -55,7 +55,7 @@ public interface IAuthController
 
 
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuthAsync(Provider provider, System.Uri redirectUri, string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuthAsync(Provider provider, string redirectUri, string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
     /// <summary>
@@ -65,7 +65,7 @@ public interface IAuthController
 
     /// <returns>OAuth authentication successful</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> CompleteOAuthAsync(Provider2 provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
     /// <summary>
@@ -73,7 +73,7 @@ public interface IAuthController
     /// </summary>
 
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitSteamAuthAsync(System.Uri returnUrl, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitSteamAuthAsync(string returnUrl, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
     /// <summary>
@@ -94,16 +94,6 @@ public interface IAuthController
     /// <returns>Token refreshed successfully</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> RefreshTokenAsync(RefreshRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-
-
-    /// <summary>
-    /// Validate access token
-    /// </summary>
-
-    /// <returns>Token is valid</returns>
-
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateTokenAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
     /// <summary>
@@ -236,7 +226,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Initialize OAuth2 flow
     /// </summary>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/init")]
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuth([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider provider, [Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Uri redirectUri, [Microsoft.AspNetCore.Mvc.FromQuery] string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuth([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider provider, [Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string redirectUri, [Microsoft.AspNetCore.Mvc.FromQuery] string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         var (statusCode, result) = await _implementation.InitOAuthAsync(provider, redirectUri, state, cancellationToken);
@@ -248,7 +238,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <returns>OAuth authentication successful</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/callback")]
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> CompleteOAuth([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider2 provider, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> CompleteOAuth([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider provider, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         var (statusCode, result) = await _implementation.CompleteOAuthAsync(provider, body, cancellationToken);
@@ -259,7 +249,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Initialize Steam authentication
     /// </summary>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/steam/init")]
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitSteamAuth([Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Uri returnUrl, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitSteamAuth([Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string returnUrl, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         var (statusCode, result) = await _implementation.InitSteamAuthAsync(returnUrl, cancellationToken);
@@ -287,18 +277,6 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     {
 
         var (statusCode, result) = await _implementation.RefreshTokenAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
-    }
-
-    /// <summary>
-    /// Validate access token
-    /// </summary>
-    /// <returns>Token is valid</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/validate")]
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateToken(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-
-        var (statusCode, result) = await _implementation.ValidateTokenAsync(cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

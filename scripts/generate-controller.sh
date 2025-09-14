@@ -87,13 +87,14 @@ if grep -q "x-controller-only:\s*true" "$SCHEMA_FILE"; then
     HAS_MANUAL_IMPLEMENTATION=true
 fi
 
-# Create filtered schema if x-controller-only methods exist
+# Create filtered schema if x-controller-only or x-manual-implementation methods exist
 FILTERED_SCHEMA_FILE="$SCHEMA_FILE"
-if grep -q "x-controller-only:\s*true" "$SCHEMA_FILE"; then
-    echo -e "${YELLOW}🔧 Creating filtered schema excluding x-controller-only methods...${NC}"
+if grep -q "x-controller-only:\s*true\|x-manual-implementation:\s*true" "$SCHEMA_FILE" || grep -q "application/yaml" "$SCHEMA_FILE"; then
+    echo -e "${YELLOW}🔧 Creating filtered schema excluding x-controller-only and x-manual-implementation methods and prioritizing JSON content types...${NC}"
     FILTERED_SCHEMA_FILE="/tmp/${SERVICE_NAME}-filtered-schema.yaml"
 
-    # Use Python to remove x-controller-only methods from schema
+    # Use Python to remove x-controller-only and x-manual-implementation methods from schema
+    # Also prioritize JSON content types over YAML for consistent controller generation
     python3 -c "
 import yaml
 import sys
@@ -106,10 +107,28 @@ if 'paths' in schema:
     for path, path_data in schema['paths'].items():
         methods_to_remove = []
         for method, method_data in path_data.items():
-            if isinstance(method_data, dict) and method_data.get('x-controller-only') is True:
-                methods_to_remove.append(method)
+            if isinstance(method_data, dict):
+                # Remove x-controller-only and x-manual-implementation methods
+                if method_data.get('x-controller-only') is True or method_data.get('x-manual-implementation') is True:
+                    methods_to_remove.append(method)
+                    continue
 
-        # Remove controller-only methods
+                # Fix dual content-type issue: prefer JSON over YAML for consistent controller generation
+                if 'requestBody' in method_data and 'content' in method_data['requestBody']:
+                    content = method_data['requestBody']['content']
+                    # If both application/json and application/yaml exist, remove application/yaml
+                    if 'application/json' in content and 'application/yaml' in content:
+                        print(f'Removing application/yaml from {path} {method} to prioritize JSON', file=sys.stderr)
+                        del content['application/yaml']
+
+                # Fix URI format issue: remove format: uri to prevent NSwag from generating Uri types
+                if 'parameters' in method_data:
+                    for param in method_data['parameters']:
+                        if 'schema' in param and param['schema'].get('type') == 'string' and param['schema'].get('format') == 'uri':
+                            print(f'Removing format: uri from {path} {method} parameter {param.get(\"name\", \"unknown\")} to maintain string type', file=sys.stderr)
+                            del param['schema']['format']
+
+        # Remove controller-only and manual-implementation methods
         for method in methods_to_remove:
             del path_data[method]
 
@@ -147,6 +166,8 @@ echo -e "${YELLOW}🔄 Running NSwag controller generation...${NC}"
     "/GenerateNullableReferenceTypes:true" \
     "/NewLineBehavior:LF" \
     "/GenerateOptionalParameters:false" \
+    "/DateType:System.DateTime" \
+    "/DateTimeType:System.DateTime" \
     "/TemplateDirectory:../templates/nswag"
 
 # Check if generation succeeded
