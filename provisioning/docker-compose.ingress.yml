@@ -1,9 +1,6 @@
 services:
 
   bannou:
-    depends_on:
-      - openresty
-      - routing-redis
     labels:
       - "openresty.enable=true"
       - "openresty.backend.auth=/authorization"
@@ -21,7 +18,10 @@ services:
       - ./openresty/lua:/usr/local/openresty/lua:ro
       - ./certificates:/certs:ro
     depends_on:
-      - routing-redis
+      bannou:
+        condition: service_healthy
+      routing-redis:
+        condition: service_healthy
     environment:
       - REDIS_HOST=routing-redis
       - REDIS_PORT=6379
@@ -31,6 +31,12 @@ services:
       - celestial_network
       - routing_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:80/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+      start_period: 60s
 
   # Redis for OpenResty routing decisions and queue management
   routing-redis:
@@ -40,6 +46,8 @@ services:
       - routing-redis-data:/data
     networks:
       - celestial_network
+    ports:
+      - "6380:6379"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]

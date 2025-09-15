@@ -8,8 +8,8 @@ local function check_redis_health()
     local red = redis:new()
     red:set_timeouts(1000, 1000, 1000)
 
-    local redis_host = ngx.shared.service_routes:get("redis_host") or "routing-redis"
-    local redis_port = ngx.shared.service_routes:get("redis_port") or 6379
+    local redis_host = os.getenv("REDIS_HOST") or "routing-redis"
+    local redis_port = tonumber(os.getenv("REDIS_PORT") or "6379")
 
     local ok, err = red:connect(redis_host, redis_port)
     if not ok then
@@ -17,7 +17,11 @@ local function check_redis_health()
         ngx.header.content_type = "application/json"
         ngx.say(cjson.encode({
             status = "error",
-            message = "Redis connection failed: " .. (err or "unknown error")
+            message = "Redis connection failed: " .. (err or "unknown error"),
+            debug = {
+                redis_host = redis_host,
+                redis_port = redis_port
+            }
         }))
         return
     end

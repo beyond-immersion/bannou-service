@@ -10,12 +10,16 @@ services:
       dockerfile: provisioning/Dockerfile
     volumes:
       - "./certificates:/certificates"
-      - "logs-volume:/app/logs/"
+      - "logs-data:/app/logs/"
     depends_on:
-      - placement
-      - account-db
-      - bannou-redis
-      - rabbitmq
+      placement:
+        condition: service_started
+      account-db:
+        condition: service_healthy
+      bannou-redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "8080:80"
       - "8443:443"
@@ -29,6 +33,12 @@ services:
       - CONNECT_REDIS_CONNECTION_STRING=bannou-redis:6379
     networks:
       - celestial_network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+      start_period: 60s
 
   # attach the dapr sidecar to the monoservice
   bannou-dapr:
@@ -47,7 +57,11 @@ services:
     environment:
       - "SSL_CERT_DIR=/certificates"
     depends_on:
-      - bannou
+      bannou:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    restart: on-failure
     network_mode: "service:bannou"
 
   # placement service for coordinating dapr actors
@@ -66,7 +80,7 @@ services:
     command: sh -c "chmod go-w /usr/share/filebeat/filebeat.yml && filebeat -e"
     volumes:
       - ./filebeat/filebeat.console.yml:/usr/share/filebeat/filebeat.yml
-      - logs-volume:/app/logs/
+      - logs-data:/app/logs/
     environment:
       - "FILEBEAT_INPUTS_PATHS=/app/logs/*"
 
@@ -80,9 +94,15 @@ services:
       - MYSQL_PASSWORD=${ACCOUNT_DB_PASSWORD}
       - MYSQL_RANDOM_ROOT_PASSWORD=true
     volumes:
-      - account-volume:/var/lib/mysql
+      - account-data:/var/lib/mysql
       - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
       - ./mysql/run-init/:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${ACCOUNT_DB_USER}", "-p${ACCOUNT_DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   bannou-redis:
     image: redis:latest
@@ -92,7 +112,12 @@ services:
       - "6379:6379"  # For development access
     command: redis-server --databases 16 --appendonly yes
     volumes:
-      - bannou-redis-volume:/data
+      - bannou-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   auth-redis:
     image: redis:latest
@@ -100,7 +125,7 @@ services:
       - celestial_network
     command: redis-server --databases 16 --appendonly yes
     volumes:
-      - auth-redis-volume:/data
+      - auth-redis-data:/data
 
   rabbitmq:
     image: rabbitmq:3.12-management
@@ -113,12 +138,13 @@ services:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
     volumes:
-      - rabbitmq-volume:/var/lib/rabbitmq
+      - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      timeout: 30s
-      retries: 10
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
       interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
 networks:
   celestial_network:
@@ -126,8 +152,8 @@ networks:
     internal: true
 
 volumes:
-  logs-volume:
-  account-volume:
-  bannou-redis-volume:
-  auth-redis-volume:
-  rabbitmq-volume:
+  logs-data:
+  account-data:
+  bannou-redis-data:
+  auth-redis-data:
+  rabbitmq-data:

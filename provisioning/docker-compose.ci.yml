@@ -7,14 +7,6 @@ services:
       - APP_LOGGING_LEVEL=Information
       - ASPNETCORE_ENVIRONMENT=Development
 
-  # Add healthcheck to MySQL service for better startup coordination
-  account-db:
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${ACCOUNT_DB_USER}", "-p${ACCOUNT_DB_PASSWORD}"]
-      timeout: 20s
-      retries: 10
-      interval: 10s
-
   # add the CI components to the dapr sidecar attached to the monoservice
   # Use CI components for integration testing
   bannou-dapr:
@@ -33,7 +25,10 @@ services:
       - "../scripts/infrastructure-tests.sh:/infrastructure-tests.sh"
     stdin_open: false
     depends_on:
-      - bannou
+      bannou:
+        condition: service_healthy
+      openresty:
+        condition: service_healthy
     command: sh -c "/wait-for-health.sh && /infrastructure-tests.sh"
 
   # silence filebeat during CI testing

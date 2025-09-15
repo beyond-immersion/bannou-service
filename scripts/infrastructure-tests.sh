@@ -47,7 +47,7 @@ run_test "Bannou service direct health check" "curl --fail --max-time 10 http://
 # Test 5-6: Queue system infrastructure
 echo "🔍 Testing Queue System Infrastructure..."
 run_test "Queue status endpoint" "curl --fail --max-time 5 -X POST -H 'Content-Type: application/json' -d '{\"queue_id\":\"test\",\"user_id\":\"user1\"}' http://openresty/queue/status"
-run_test "Admin heartbeats endpoint" "curl --fail --max-time 5 http://openresty:8080/admin/heartbeats"
+run_test "Admin heartbeats endpoint" "curl --fail --max-time 5 http://openresty:8081/admin/heartbeats"
 
 # Test 7: Configuration validation
 echo "🔍 Testing Configuration..."
