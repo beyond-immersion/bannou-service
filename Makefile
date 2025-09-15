@@ -218,12 +218,12 @@ test-infrastructure-compose:
 	@echo "✅ Infrastructure integration tests (docker compose) completed"
 
 # Infrastructure integration testing for OpenResty local development
-# Uses local Dapr components (no MySQL dependencies) and proper environment isolation
+# Uses minimal service configuration (TESTING service only) to reduce dependencies
 # The bannou-tester container runs infrastructure-tests.sh inside the Docker network
 test-infrastructure-openresty:
-	@echo "🚀 Running OpenResty infrastructure integration tests (local development)..."
+	@echo "🚀 Running OpenResty infrastructure integration tests (TESTING service only)..."
 	if [ ! -f .env ]; then touch .env; fi
-	docker compose --env-file .env -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" up --exit-code-from=bannou-tester
+	docker compose --env-file .env -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" up --exit-code-from=bannou-tester
 	@echo "✅ OpenResty infrastructure integration tests completed"
 
 # HTTP integration testing
