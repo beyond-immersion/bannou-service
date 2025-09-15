@@ -246,13 +246,13 @@ public static partial class ExtensionMethods
 
             if (timeoutTime < 1)
             {
-                await serviceInst.OnStartAsync(cancellationToken);
+                await serviceInst.OnStartAsync(webApp, cancellationToken);
                 continue;
             }
 
             try
             {
-                var startTask = serviceInst.OnStartAsync(cancellationToken);
+                var startTask = serviceInst.OnStartAsync(webApp, cancellationToken);
                 var timeoutTask = Task.Delay(timeoutTime);
 
                 if (await Task.WhenAny(startTask, timeoutTask) == startTask)

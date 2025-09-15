@@ -217,6 +217,7 @@ public class Program
         {
             new AccountTestHandler(),
             new AuthTestHandler(),
+            new ConnectTestHandler(),
             new OpenRestyAuthTestHandler(),  // OpenResty-specific auth and queue system tests
             new DaprServiceMappingTestHandler()
             // Add more test handlers as needed

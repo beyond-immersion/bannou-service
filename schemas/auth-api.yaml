@@ -470,7 +470,6 @@ components:
       properties:
         sessionId:
           type: string
-          format: uuid
         deviceInfo:
           $ref: '#/components/schemas/DeviceInfo'
         createdAt:

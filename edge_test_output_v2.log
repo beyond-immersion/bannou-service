@@ -1,0 +1,21 @@
+Using launch settings from edge-tester/Properties/launchSettings.json...
+Building...
+Attempting to log in.
+Credential login Uri: http://localhost:5012/api/auth/login
+❌ An exception has occurred: 'Connection refused (localhost:5012)'
+Stack trace:    at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.CreateHttp11ConnectionAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.InjectNewHttp11ConnectionAsync(QueueItem queueItem)
+   at System.Threading.Tasks.TaskCompletionSourceWithCancellation`1.WaitWithCancellationAsync(CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+   at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at BeyondImmersion.ServiceTester.Program.LoginWithCredentials() in /home/lysander/repos/bannou/edge-tester/Program.cs:line 224
+   at BeyondImmersion.ServiceTester.Program.Main(String[] args) in /home/lysander/repos/bannou/edge-tester/Program.cs:line 121
+Press any key to exit...
+Unhandled exception. System.InvalidOperationException: Cannot read keys when either application does not have a console or when console input has been redirected. Try Console.Read.
+   at System.ConsolePal.ReadKey(Boolean intercept)
+   at BeyondImmersion.ServiceTester.Program.WaitForUserInput(String message, String[] args) in /home/lysander/repos/bannou/edge-tester/Program.cs:line 103
+   at BeyondImmersion.ServiceTester.Program.Main(String[] args) in /home/lysander/repos/bannou/edge-tester/Program.cs:line 176
+   at BeyondImmersion.ServiceTester.Program.<Main>(String[] args)

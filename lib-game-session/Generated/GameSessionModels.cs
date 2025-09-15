@@ -65,7 +65,7 @@ public partial class GameSessionResponse
 {
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     [Newtonsoft.Json.JsonProperty("gameType", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -168,7 +168,7 @@ public partial class JoinGameSessionResponse
 
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     [Newtonsoft.Json.JsonProperty("playerRole", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

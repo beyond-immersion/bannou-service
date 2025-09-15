@@ -7,10 +7,10 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "CLIENT_USERNAME": "TestClient",
         "CLIENT_PASSWORD": "SimpleTestPassword",
-        "CONNECT_ENDPOINT": "connect.beyond-immersion.com/connect",
-        "REGISTER_ENDPOINT": "auth.beyond-immersion.com/register",
-        "LOGIN_CREDENTIALS_ENDPOINT": "auth.beyond-immersion.com/login/credentials",
-        "LOGIN_TOKEN_ENDPOINT": "auth.beyond-immersion.com/login/token"
+        "CONNECT_ENDPOINT": "localhost:5012/connect",
+        "REGISTER_ENDPOINT": "localhost:5012/api/auth/register",
+        "LOGIN_CREDENTIALS_ENDPOINT": "localhost:5012/api/auth/login/credentials",
+        "LOGIN_TOKEN_ENDPOINT": "localhost:5012/api/auth/login/token"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5012"

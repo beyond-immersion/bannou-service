@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Configuration;
+using Microsoft.AspNetCore.Builder;
 
 namespace BeyondImmersion.BannouService.Services;
 
@@ -220,6 +221,18 @@ public interface IDaprService
     async Task OnStartAsync(CancellationToken token)
     {
         await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Called when the service is starting up with access to the WebApplication.
+    /// Override to register minimal API endpoints or other startup logic requiring the web app.
+    /// </summary>
+    /// <param name="webApp">The WebApplication instance for registering endpoints.</param>
+    /// <param name="token">Cancellation token for startup timeout.</param>
+    async Task OnStartAsync(WebApplication webApp, CancellationToken token)
+    {
+        // Default implementation calls the simpler OnStartAsync
+        await OnStartAsync(token);
     }
 
     /// <summary>

@@ -59,6 +59,8 @@ using BeyondImmersion.BannouService;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 
+[assembly: InternalsVisibleTo("lib-${SERVICE_NAME}.tests")]
+
 namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 
 /// <summary>

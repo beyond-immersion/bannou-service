@@ -10,6 +10,8 @@ using System.Text;
 using System.Text.Json;
 using Dapr.Client;
 using StackExchange.Redis;
+using Microsoft.AspNetCore.Builder;
+using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Connect.Tests;
 
@@ -416,6 +418,184 @@ public class ConnectServiceTests
 
     #endregion
 
+    #region RabbitMQ Event Handler Tests
+
+    [Fact]
+    public async Task ProcessSessionCapabilityUpdateAsync_WithValidEvent_ShouldProcessSuccessfully()
+    {
+        // Arrange
+        var service = CreateConnectServiceWithConnectionManager();
+        var eventData = new SessionCapabilityUpdateEvent
+        {
+            SessionId = "test-session-123",
+            AddedCapabilities = new List<string> { "accounts:read", "auth:login" },
+            RemovedCapabilities = new List<string> { "admin:delete" },
+            Version = 42
+        };
+
+        // Act
+        var result = await service.ProcessSessionCapabilityUpdateAsync(eventData);
+
+        // Assert
+        Assert.NotNull(result);
+        var resultJson = JsonSerializer.Serialize(result);
+        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        Assert.Equal("processed", resultDict!["status"].ToString());
+        Assert.Equal("test-session-123", resultDict["sessionId"].ToString());
+    }
+
+    [Fact]
+    public async Task ProcessAuthEventAsync_WithLoginEvent_ShouldRefreshCapabilities()
+    {
+        // Arrange
+        var service = CreateConnectServiceWithConnectionManager();
+        var eventData = new AuthEvent
+        {
+            SessionId = "test-session-456",
+            EventType = AuthEventType.Login,
+            UserId = "user-123",
+            Timestamp = DateTimeOffset.UtcNow
+        };
+
+        // Act
+        var result = await service.ProcessAuthEventAsync(eventData);
+
+        // Assert
+        Assert.NotNull(result);
+        var resultJson = JsonSerializer.Serialize(result);
+        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        Assert.Equal("processed", resultDict!["status"].ToString());
+        Assert.Equal("test-session-456", resultDict["sessionId"].ToString());
+    }
+
+    [Fact]
+    public async Task ProcessServiceRegistrationAsync_WithValidEvent_ShouldPublishRecompileEvent()
+    {
+        // Arrange
+        var service = CreateConnectService();
+        var eventData = new ServiceRegistrationEvent
+        {
+            ServiceId = "new-service-123",
+            Timestamp = DateTimeOffset.UtcNow
+        };
+
+        // Act
+        var result = await service.ProcessServiceRegistrationAsync(eventData);
+
+        // Assert
+        Assert.NotNull(result);
+        var resultJson = JsonSerializer.Serialize(result);
+        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        Assert.Equal("processed", resultDict!["status"].ToString());
+        Assert.Equal("new-service-123", resultDict["serviceId"].ToString());
+
+        // Verify that PublishEventAsync was called for permission recompilation
+        _mockDaprClient.Verify(x => x.PublishEventAsync(
+            "bannou-pubsub",
+            "bannou-permission-recompile",
+            It.IsAny<PermissionRecompileEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessClientMessageEventAsync_WithConnectedClient_ShouldDeliverMessage()
+    {
+        // Arrange
+        var service = CreateConnectServiceWithConnectionManager();
+        var eventData = new ClientMessageEvent
+        {
+            ClientId = "client-789",
+            ServiceName = "TestService",
+            ServiceGuid = Guid.NewGuid(),
+            MessageId = 12345,
+            Channel = 1,
+            Payload = new byte[] { 1, 2, 3, 4 },
+            Flags = 0
+        };
+
+        // Act
+        var result = await service.ProcessClientMessageEventAsync(eventData);
+
+        // Assert
+        Assert.NotNull(result);
+        var resultJson = JsonSerializer.Serialize(result);
+        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        Assert.Equal("delivered", resultDict!["status"].ToString());
+        Assert.Equal("client-789", resultDict["clientId"].ToString());
+    }
+
+    [Fact]
+    public async Task ProcessClientRPCEventAsync_WithConnectedClient_ShouldSendRPCMessage()
+    {
+        // Arrange
+        var service = CreateConnectServiceWithConnectionManager();
+        var eventData = new ClientRPCEvent
+        {
+            ClientId = "client-rpc-999",
+            ServiceName = "RPCService",
+            ServiceGuid = Guid.NewGuid(),
+            MessageId = 67890,
+            Channel = 2,
+            Payload = new byte[] { 5, 6, 7, 8 },
+            Flags = 0
+        };
+
+        // Act
+        var result = await service.ProcessClientRPCEventAsync(eventData);
+
+        // Assert
+        Assert.NotNull(result);
+        var resultJson = JsonSerializer.Serialize(result);
+        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
+        Assert.Equal("sent", resultDict!["status"].ToString());
+        Assert.Equal("client-rpc-999", resultDict["clientId"].ToString());
+    }
+
+    [Fact]
+    public void HasConnection_WithExistingConnection_ShouldReturnTrue()
+    {
+        // Arrange
+        var service = CreateConnectServiceWithConnectionManager();
+        var sessionId = "existing-session";
+
+        // Act
+        var result = service.HasConnection(sessionId);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void HasConnection_WithNonExistentConnection_ShouldReturnFalse()
+    {
+        // Arrange
+        var service = CreateConnectServiceWithConnectionManager(false);
+        var sessionId = "non-existent-session";
+
+        // Act
+        var result = service.HasConnection(sessionId);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task SendMessageAsync_WithValidConnection_ShouldReturnTrue()
+    {
+        // Arrange
+        var service = CreateConnectServiceWithConnectionManager();
+        var sessionId = "test-session";
+        var message = BinaryMessage.FromJson(1, 0, Guid.NewGuid(), 123, "{\"test\": true}");
+
+        // Act
+        var result = await service.SendMessageAsync(sessionId, message, CancellationToken.None);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private ConnectService CreateConnectService()
@@ -429,6 +609,28 @@ public class ConnectServiceTests
             _mockLogger.Object
         );
     }
+
+    private ConnectService CreateConnectServiceWithConnectionManager(bool hasConnection = true)
+    {
+        // Create a mock connection manager that simulates having connections
+        var mockConnectionManager = new Mock<WebSocketConnectionManager>();
+        var mockConnection = hasConnection ? new Mock<WebSocketConnection>("test", null!, null!) : null;
+
+        mockConnectionManager.Setup(x => x.GetConnection(It.IsAny<string>()))
+            .Returns(hasConnection ? mockConnection?.Object : null);
+
+        mockConnectionManager.Setup(x => x.SendMessageAsync(It.IsAny<string>(), It.IsAny<BinaryMessage>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(hasConnection);
+
+        // Use reflection to create service with mocked connection manager
+        var service = CreateConnectService();
+        var connectionManagerField = typeof(ConnectService).GetField("_connectionManager",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        connectionManagerField?.SetValue(service, mockConnectionManager.Object);
+
+        return service;
+    }
+
 
     #endregion
 }

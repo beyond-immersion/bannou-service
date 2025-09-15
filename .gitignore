@@ -49,5 +49,9 @@ msbuild.wrn
 # MegaLinter reports
 megalinter-reports/
 
+# Test output and log files
+*.log
+edge_test_output*.log
+
 # Empty files
 bannou-service/{}

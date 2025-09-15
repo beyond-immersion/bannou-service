@@ -144,7 +144,6 @@ components:
       properties:
         sessionId:
           type: string
-          format: uuid
           description: Session ID for lookup in Redis
         serviceIds:
           type: array
@@ -160,7 +159,6 @@ components:
       properties:
         sessionId:
           type: string
-          format: uuid
         permissions:
           type: object
           additionalProperties:
@@ -182,7 +180,6 @@ components:
       properties:
         sessionId:
           type: string
-          format: uuid
         serviceId:
           type: string
           description: Target service ID
@@ -201,7 +198,6 @@ components:
           description: Whether access is permitted
         sessionId:
           type: string
-          format: uuid
         reason:
           type: string
           description: Reason for denial (if applicable)
@@ -268,7 +264,6 @@ components:
       properties:
         sessionId:
           type: string
-          format: uuid
         serviceId:
           type: string
           description: Service whose state is changing for this session
@@ -288,7 +283,6 @@ components:
       properties:
         sessionId:
           type: string
-          format: uuid
         role:
           type: string
           description: New role (user, admin, etc.)
@@ -302,7 +296,6 @@ components:
       properties:
         sessionId:
           type: string
-          format: uuid
         updated:
           type: boolean
           description: Whether update was successful
@@ -328,7 +321,6 @@ components:
       properties:
         sessionId:
           type: string
-          format: uuid
 
     SessionInfo:
       type: object
@@ -340,7 +332,6 @@ components:
       properties:
         sessionId:
           type: string
-          format: uuid
         role:
           type: string
           description: Current session role

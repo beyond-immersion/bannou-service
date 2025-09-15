@@ -35,7 +35,7 @@ public partial class CapabilityRequest
     /// </summary>
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Optional filter for specific services
@@ -59,7 +59,7 @@ public partial class CapabilityResponse
 {
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Map of ServiceID -&gt; List of available methods
@@ -90,7 +90,7 @@ public partial class ValidationRequest
 {
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Target service ID
@@ -128,7 +128,7 @@ public partial class ValidationResponse
 
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Reason for denial (if applicable)
@@ -234,7 +234,7 @@ public partial class SessionStateUpdate
 {
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Service whose state is changing for this session
@@ -272,7 +272,7 @@ public partial class SessionRoleUpdate
 {
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// New role (user, admin, etc.)
@@ -297,7 +297,7 @@ public partial class SessionUpdateResponse
 {
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Whether update was successful
@@ -336,7 +336,7 @@ public partial class SessionInfoRequest
 {
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -354,7 +354,7 @@ public partial class SessionInfo
 {
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Current session role

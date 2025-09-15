@@ -35,7 +35,7 @@ public partial class InternalProxyRequest
     /// </summary>
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Target service name (e.g., "accounts", "auth", "behavior")
@@ -152,7 +152,7 @@ public partial class ApiDiscoveryRequest
     /// </summary>
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Additional context (game session, character, etc.)
@@ -179,7 +179,7 @@ public partial class ApiDiscoveryResponse
     /// </summary>
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// All APIs currently accessible to this session with client-salted GUIDs
@@ -623,6 +623,392 @@ public partial class ConnectionConfiguration
 
 }
 
+/// <summary>
+/// Event published when a session's capabilities change (permissions, role changes, etc.).
+/// <br/>Triggers real-time WebSocket updates to connected clients.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionCapabilityUpdateEvent
+{
+    /// <summary>
+    /// Session ID that had capability changes
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// New capabilities added to the session
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("addedCapabilities", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> AddedCapabilities { get; set; } = default!;
+
+    /// <summary>
+    /// Capabilities removed from the session
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("removedCapabilities", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> RemovedCapabilities { get; set; } = default!;
+
+    /// <summary>
+    /// Services that had permission changes
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("updatedServices", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> UpdatedServices { get; set; } = default!;
+
+    /// <summary>
+    /// New capability version number
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.Always)]
+    public int Version { get; set; } = default!;
+
+    /// <summary>
+    /// When these capabilities expire and need refresh
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("expiresAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Authentication state change events (login, logout, token refresh).
+/// <br/>Triggers session capability updates for connected clients.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthEvent
+{
+    /// <summary>
+    /// Session ID affected by the auth event
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string SessionId { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("eventType", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public AuthEventType EventType { get; set; } = default!;
+
+    /// <summary>
+    /// When the auth event occurred
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// User ID associated with the session (optional for some events)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("userId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string UserId { get; set; } = default!;
+
+    /// <summary>
+    /// Additional event metadata (device info, location, etc.)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Type of authentication event that occurred
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthEventType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Login")]
+    Login = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Logout")]
+    Logout = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"TokenRefresh")]
+    TokenRefresh = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PermissionChange")]
+    PermissionChange = 3,
+
+}
+
+/// <summary>
+/// Event published when a service registers new API endpoints.
+/// <br/>Triggers permission recompilation for all active sessions.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServiceRegistrationEvent
+{
+    /// <summary>
+    /// Unique identifier for this registration event
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("eventId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the service registration occurred
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Service ID that registered (e.g., "behavior", "accounts")
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Service version that was registered
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Version { get; set; } = default!;
+
+    /// <summary>
+    /// New API endpoints registered by the service
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("endpoints", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> Endpoints { get; set; } = default!;
+
+    /// <summary>
+    /// Additional service registration metadata
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Event for server-to-client push messaging.
+/// <br/>Allows services to send messages directly to connected WebSocket clients.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ClientMessageEvent
+{
+    /// <summary>
+    /// Target client session ID
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("clientId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ClientId { get; set; } = default!;
+
+    /// <summary>
+    /// Name of the service sending the message
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Service GUID for routing
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceGuid", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid ServiceGuid { get; set; } = default!;
+
+    /// <summary>
+    /// Unique message ID for correlation
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("messageId", Required = Newtonsoft.Json.Required.Always)]
+    public long MessageId { get; set; } = default!;
+
+    /// <summary>
+    /// Message payload (binary data)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("payload", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public byte[] Payload { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("flags", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.Range(0D, 255D)]
+    public byte Flags { get; set; } = default!;
+
+    /// <summary>
+    /// Channel for message routing
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("channel", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int Channel { get; set; } = 0;
+
+    /// <summary>
+    /// When the message was sent
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Event for bidirectional RPC where services call clients and expect responses.
+/// <br/>Extends ClientMessageEvent with response handling.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ClientRPCEvent
+{
+    /// <summary>
+    /// Target client session ID
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("clientId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ClientId { get; set; } = default!;
+
+    /// <summary>
+    /// Name of the service making the RPC call
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Service GUID for routing
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceGuid", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid ServiceGuid { get; set; } = default!;
+
+    /// <summary>
+    /// Unique message ID for correlation
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("messageId", Required = Newtonsoft.Json.Required.Always)]
+    public long MessageId { get; set; } = default!;
+
+    /// <summary>
+    /// RPC request payload (binary data)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("payload", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public byte[] Payload { get; set; } = default!;
+
+    [Newtonsoft.Json.JsonProperty("flags", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.ComponentModel.DataAnnotations.Range(0D, 255D)]
+    public byte Flags { get; set; } = default!;
+
+    /// <summary>
+    /// Channel for message routing
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("channel", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int Channel { get; set; } = 0;
+
+    /// <summary>
+    /// RabbitMQ channel for sending response back to service
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("responseChannel", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ResponseChannel { get; set; } = default!;
+
+    /// <summary>
+    /// RPC timeout in seconds
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("timeoutSeconds", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int TimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// When the RPC was initiated
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Event to trigger permission recompilation for all sessions.
+/// <br/>Published when services register new APIs or permission rules change.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PermissionRecompileEvent
+{
+    /// <summary>
+    /// Unique identifier for this recompilation event
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("eventId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the recompilation was triggered
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for triggering permission recompilation
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("reason", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public PermissionRecompileEventReason Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Service ID that triggered the recompilation (if applicable)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string ServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Additional context for the recompilation
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum Connection
 {
@@ -725,6 +1111,24 @@ public enum ConnectErrorResponseStatus_code
     _403 = 403,
 
     _500 = 500,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum PermissionRecompileEventReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"service_registered")]
+    Service_registered = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"permission_rules_changed")]
+    Permission_rules_changed = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"role_definitions_updated")]
+    Role_definitions_updated = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"manual_trigger")]
+    Manual_trigger = 3,
 
 }
 

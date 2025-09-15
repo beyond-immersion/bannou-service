@@ -430,7 +430,7 @@ public class AuthService : IAuthService
                 {
                     new SessionInfo
                     {
-                        SessionId = Guid.NewGuid(),
+                        SessionId = Guid.NewGuid().ToString(),
                         CreatedAt = DateTimeOffset.UtcNow.AddHours(-2),
                         LastActive = DateTimeOffset.UtcNow.AddMinutes(-5),
                         DeviceInfo = new DeviceInfo()

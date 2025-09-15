@@ -287,7 +287,6 @@ components:
       properties:
         sessionId:
           type: string
-          format: uuid
           description: WebSocket session ID making the request
         targetService:
           type: string
@@ -355,7 +354,6 @@ components:
       properties:
         sessionId:
           type: string
-          format: uuid
           description: Current WebSocket session ID
         contextData:
           type: object
@@ -372,7 +370,6 @@ components:
       properties:
         sessionId:
           type: string
-          format: uuid
           description: Current WebSocket session ID
         availableAPIs:
           type: array
@@ -694,6 +691,252 @@ components:
         token_public_key:
           type: string
           description: Base64-encoded RSA public key for JWT validation
+
+    # RabbitMQ Event Models for Real-time Communication
+    SessionCapabilityUpdateEvent:
+      type: object
+      description: |
+        Event published when a session's capabilities change (permissions, role changes, etc.).
+        Triggers real-time WebSocket updates to connected clients.
+      required:
+        - sessionId
+        - version
+      properties:
+        sessionId:
+          type: string
+          description: Session ID that had capability changes
+        addedCapabilities:
+          type: array
+          items:
+            type: string
+          description: New capabilities added to the session
+        removedCapabilities:
+          type: array
+          items:
+            type: string
+          description: Capabilities removed from the session
+        updatedServices:
+          type: array
+          items:
+            type: string
+          description: Services that had permission changes
+        version:
+          type: integer
+          description: New capability version number
+        expiresAt:
+          type: string
+          format: date-time
+          description: When these capabilities expire and need refresh
+
+    AuthEvent:
+      type: object
+      description: |
+        Authentication state change events (login, logout, token refresh).
+        Triggers session capability updates for connected clients.
+      required:
+        - sessionId
+        - eventType
+        - timestamp
+      properties:
+        sessionId:
+          type: string
+          description: Session ID affected by the auth event
+        eventType:
+          $ref: '#/components/schemas/AuthEventType'
+        timestamp:
+          type: string
+          format: date-time
+          description: When the auth event occurred
+        userId:
+          type: string
+          description: User ID associated with the session (optional for some events)
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional event metadata (device info, location, etc.)
+
+    AuthEventType:
+      type: string
+      enum:
+        - Login
+        - Logout
+        - TokenRefresh
+        - PermissionChange
+      description: Type of authentication event that occurred
+
+    ServiceRegistrationEvent:
+      type: object
+      description: |
+        Event published when a service registers new API endpoints.
+        Triggers permission recompilation for all active sessions.
+      required:
+        - serviceId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this registration event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the service registration occurred
+        serviceId:
+          type: string
+          description: Service ID that registered (e.g., "behavior", "accounts")
+        version:
+          type: string
+          description: Service version that was registered
+        endpoints:
+          type: array
+          items:
+            type: string
+          description: New API endpoints registered by the service
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional service registration metadata
+
+    ClientMessageEvent:
+      type: object
+      description: |
+        Event for server-to-client push messaging.
+        Allows services to send messages directly to connected WebSocket clients.
+      required:
+        - clientId
+        - serviceGuid
+        - messageId
+        - payload
+      properties:
+        clientId:
+          type: string
+          description: Target client session ID
+        serviceName:
+          type: string
+          description: Name of the service sending the message
+        serviceGuid:
+          type: string
+          format: uuid
+          description: Service GUID for routing
+        messageId:
+          type: integer
+          format: int64
+          description: Unique message ID for correlation
+        payload:
+          type: string
+          format: byte
+          description: Message payload (binary data)
+        flags:
+          $ref: '#/components/schemas/MessageFlags'
+        channel:
+          type: integer
+          format: uint16
+          description: Channel for message routing
+          default: 0
+        timestamp:
+          type: string
+          format: date-time
+          description: When the message was sent
+
+    ClientRPCEvent:
+      type: object
+      description: |
+        Event for bidirectional RPC where services call clients and expect responses.
+        Extends ClientMessageEvent with response handling.
+      required:
+        - clientId
+        - serviceGuid
+        - messageId
+        - payload
+        - responseChannel
+      properties:
+        clientId:
+          type: string
+          description: Target client session ID
+        serviceName:
+          type: string
+          description: Name of the service making the RPC call
+        serviceGuid:
+          type: string
+          format: uuid
+          description: Service GUID for routing
+        messageId:
+          type: integer
+          format: int64
+          description: Unique message ID for correlation
+        payload:
+          type: string
+          format: byte
+          description: RPC request payload (binary data)
+        flags:
+          $ref: '#/components/schemas/MessageFlags'
+        channel:
+          type: integer
+          format: uint16
+          description: Channel for message routing
+          default: 0
+        responseChannel:
+          type: string
+          description: RabbitMQ channel for sending response back to service
+        timeoutSeconds:
+          type: integer
+          description: RPC timeout in seconds
+          default: 30
+        timestamp:
+          type: string
+          format: date-time
+          description: When the RPC was initiated
+
+    MessageFlags:
+      type: integer
+      format: byte
+      description: |
+        Bit flags for binary protocol message control.
+
+        Bit meanings:
+        - 0x01: Binary payload (vs JSON)
+        - 0x02: Encrypted payload
+        - 0x04: Compressed payload
+        - 0x08: Priority message
+        - 0x10: Requires acknowledgment
+        - 0x20: Broadcast message
+        - 0x40: Response message
+        - 0x80: Control message
+      minimum: 0
+      maximum: 255
+      default: 0
+
+    PermissionRecompileEvent:
+      type: object
+      description: |
+        Event to trigger permission recompilation for all sessions.
+        Published when services register new APIs or permission rules change.
+      required:
+        - eventId
+        - timestamp
+        - reason
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this recompilation event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the recompilation was triggered
+        reason:
+          type: string
+          enum:
+            - service_registered
+            - permission_rules_changed
+            - role_definitions_updated
+            - manual_trigger
+          description: Reason for triggering permission recompilation
+        serviceId:
+          type: string
+          description: Service ID that triggered the recompilation (if applicable)
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional context for the recompilation
 
   securitySchemes:
     BearerAuth:

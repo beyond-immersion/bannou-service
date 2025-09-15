@@ -57,9 +57,10 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
+  <!-- Roslyn source generators removed - NSwag handles all code generation -->
+  <!-- <ItemGroup>
     <ProjectReference Include="../bannou-source-generator/bannou-source-generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-  </ItemGroup>
+  </ItemGroup> -->
 
   <ItemGroup>
     <AdditionalFiles Include="../schemas/*.yaml" />

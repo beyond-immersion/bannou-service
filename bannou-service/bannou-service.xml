@@ -1648,6 +1648,14 @@
             </summary>
             <param name="token">Cancellation token for startup timeout.</param>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.OnStartAsync(Microsoft.AspNetCore.Builder.WebApplication,System.Threading.CancellationToken)">
+            <summary>
+            Called when the service is starting up with access to the WebApplication.
+            Override to register minimal API endpoints or other startup logic requiring the web app.
+            </summary>
+            <param name="webApp">The WebApplication instance for registering endpoints.</param>
+            <param name="token">Cancellation token for startup timeout.</param>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Services.IDaprService.OnRunningAsync(System.Threading.CancellationToken)">
             <summary>
             Called when the service is running and ready. Override to implement background processing.

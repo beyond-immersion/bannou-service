@@ -147,6 +147,7 @@ public static class Program
                 {
                     manager.FeatureProviders.Add(new DaprControllersFeatureProvider());
                 })
+                .AddDapr() // Add Dapr pub/sub support
                 .AddNewtonsoftJson(jsonSettings =>
                 {
                     jsonSettings.SerializerSettings.ConstructorHandling = ConstructorHandling.Default;
@@ -230,10 +231,14 @@ public static class Program
                 KeepAliveInterval = TimeSpan.FromMinutes(2)
             });
 
-            // map controller routes
+            // Add CloudEvents support for Dapr pub/sub
+            webApp.UseCloudEvents();
+
+            // map controller routes and subscription handlers
             _ = webApp.UseRouting().UseEndpoints(endpointOptions =>
             {
                 endpointOptions.MapDefaultControllerRoute();
+                endpointOptions.MapSubscribeHandler(); // Required for Dapr pub/sub
             });
 
             // invoke all Service.Start() methods on enabled service handlers

@@ -420,6 +420,11 @@ public class Program
         foreach (ServiceTest serviceTest in templateTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
+        // load connect websocket tests
+        var connectTestHandler = new ConnectWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in connectTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
     }
 
     private static void RunEntireTestSuite(string[] args)

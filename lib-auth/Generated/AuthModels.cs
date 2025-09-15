@@ -367,7 +367,7 @@ public partial class SessionInfo
 {
     [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.Guid SessionId { get; set; } = default!;
+    public string SessionId { get; set; } = default!;
 
     [Newtonsoft.Json.JsonProperty("deviceInfo", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
     public DeviceInfo DeviceInfo { get; set; } = default!;

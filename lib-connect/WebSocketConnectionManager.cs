@@ -57,7 +57,7 @@ public class WebSocketConnectionManager
     /// <summary>
     /// Gets a WebSocket connection by session ID.
     /// </summary>
-    public WebSocketConnection? GetConnection(string sessionId)
+    public virtual WebSocketConnection? GetConnection(string sessionId)
     {
         return _connections.TryGetValue(sessionId, out var connection) ? connection : null;
     }
@@ -65,7 +65,7 @@ public class WebSocketConnectionManager
     /// <summary>
     /// Removes a WebSocket connection.
     /// </summary>
-    public bool RemoveConnection(string sessionId)
+    public virtual bool RemoveConnection(string sessionId)
     {
         return _connections.TryRemove(sessionId, out _);
     }
@@ -86,7 +86,7 @@ public class WebSocketConnectionManager
     /// <summary>
     /// Sends a message to a specific session.
     /// </summary>
-    public async Task<bool> SendMessageAsync(string sessionId, BinaryMessage message, CancellationToken cancellationToken = default)
+    public virtual async Task<bool> SendMessageAsync(string sessionId, BinaryMessage message, CancellationToken cancellationToken = default)
     {
         var connection = GetConnection(sessionId);
         if (connection?.WebSocket.State != WebSocketState.Open)

@@ -5,8 +5,10 @@ using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Connect.Protocol;
+using Dapr;
 using Dapr.Client;
 using StackExchange.Redis;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,6 +17,9 @@ using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("lib-connect.tests")]
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -875,5 +880,436 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
             _logger.LogError(ex, "Error handling legacy text message from session {SessionId}", sessionId);
         }
     }
+
+    #region Service Lifecycle
+
+    /// <summary>
+    /// Service startup method - registers RabbitMQ event handler endpoints.
+    /// </summary>
+    public async Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
+
+        // Register session capability update handler
+        webApp.MapPost("/events/session-capabilities", ProcessSessionCapabilityUpdateAsync)
+            .WithTopic("bannou-pubsub", "bannou-session-capabilities")
+            .WithMetadata("Connect service capability update handler");
+
+        // Register auth event handler
+        webApp.MapPost("/events/auth-events", ProcessAuthEventAsync)
+            .WithTopic("bannou-pubsub", "bannou-auth-events")
+            .WithMetadata("Connect service auth event handler");
+
+        // Register service registration handler
+        webApp.MapPost("/events/service-registered", ProcessServiceRegistrationAsync)
+            .WithTopic("bannou-pubsub", "bannou-service-registered")
+            .WithMetadata("Connect service registration handler");
+
+        // Register client message handler
+        webApp.MapPost("/events/client-messages", ProcessClientMessageEventAsync)
+            .WithTopic("bannou-pubsub", "bannou-client-messages")
+            .WithMetadata("Connect service client message handler");
+
+        // Register client RPC handler
+        webApp.MapPost("/events/client-rpc", ProcessClientRPCEventAsync)
+            .WithTopic("bannou-pubsub", "bannou-client-rpc")
+            .WithMetadata("Connect service client RPC handler");
+
+        _logger.LogInformation("Connect service RabbitMQ event handlers registered successfully");
+    }
+
+    #endregion
+
+    #region RabbitMQ Event Processing Methods
+
+    /// <summary>
+    /// Processes session capability updates from Permission service.
+    /// Triggers real-time capability updates for connected WebSocket clients.
+    /// </summary>
+    internal async Task<object> ProcessSessionCapabilityUpdateAsync(SessionCapabilityUpdateEvent eventData)
+    {
+        try
+        {
+            _logger.LogInformation("Processing capability update for session {SessionId}: Added={Added}, Removed={Removed}",
+                eventData.SessionId, eventData.AddedCapabilities?.Count ?? 0, eventData.RemovedCapabilities?.Count ?? 0);
+
+            // Check if the session has an active WebSocket connection
+            if (HasConnection(eventData.SessionId))
+            {
+                // Regenerate service discovery for the session
+                var discoveryRequest = new ApiDiscoveryRequest { SessionId = eventData.SessionId };
+                var (statusCode, discoveryResponse) = await DiscoverAPIsAsync(discoveryRequest, CancellationToken.None);
+
+                if (statusCode == StatusCodes.OK && discoveryResponse != null)
+                {
+                    // Create capability update message
+                    var updatePayload = new
+                    {
+                        type = "capability_update",
+                        sessionId = eventData.SessionId,
+                        version = eventData.Version,
+                        addedCapabilities = eventData.AddedCapabilities,
+                        removedCapabilities = eventData.RemovedCapabilities,
+                        availableAPIs = discoveryResponse.AvailableAPIs,
+                        updatedAt = DateTimeOffset.UtcNow
+                    };
+
+                    // Send real-time update via WebSocket
+                    var messageId = MessageRouter.GenerateMessageId();
+                    var updateMessage = BinaryMessage.FromJson(
+                        channel: 4, // Permissions channel
+                        sequenceNumber: 0, // Event message (no sequence)
+                        serviceGuid: Guid.Empty, // System message
+                        messageId: messageId,
+                        JsonSerializer.Serialize(updatePayload)
+                    );
+
+                    var sent = await SendMessageAsync(eventData.SessionId, updateMessage, CancellationToken.None);
+
+                    if (sent)
+                    {
+                        _logger.LogInformation("Sent capability update to session {SessionId}", eventData.SessionId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to send capability update to session {SessionId} - connection not found", eventData.SessionId);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to regenerate API discovery for session {SessionId}", eventData.SessionId);
+                }
+            }
+            else
+            {
+                _logger.LogDebug("Session {SessionId} not connected to this instance, skipping capability update", eventData.SessionId);
+            }
+
+            return new { status = "processed", sessionId = eventData.SessionId };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process capability update for session {SessionId}", eventData.SessionId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Processes authentication events (login/logout) from Auth service.
+    /// Updates session capabilities when authentication state changes.
+    /// </summary>
+    internal async Task<object> ProcessAuthEventAsync(AuthEvent eventData)
+    {
+        try
+        {
+            _logger.LogInformation("Processing auth event {EventType} for session {SessionId}",
+                eventData.EventType, eventData.SessionId);
+
+            // Check if the session has an active WebSocket connection
+            if (HasConnection(eventData.SessionId))
+            {
+                if (eventData.EventType == AuthEventType.Login)
+                {
+                    // User logged in - regenerate capabilities with authenticated permissions
+                    await RefreshSessionCapabilitiesAsync(eventData.SessionId, "authenticated");
+                }
+                else if (eventData.EventType == AuthEventType.Logout)
+                {
+                    // User logged out - downgrade to anonymous permissions
+                    await RefreshSessionCapabilitiesAsync(eventData.SessionId, "anonymous");
+
+                    // Optionally close the WebSocket connection on logout
+                    // await DisconnectAsync(eventData.SessionId, "User logged out");
+                }
+                else if (eventData.EventType == AuthEventType.TokenRefresh)
+                {
+                    // Token refreshed - validate session still exists
+                    var sessionValid = await ValidateSessionAsync(eventData.SessionId);
+                    if (!sessionValid)
+                    {
+                        _logger.LogWarning("Session {SessionId} invalid after token refresh, disconnecting", eventData.SessionId);
+                        await DisconnectAsync(eventData.SessionId, "Session invalid");
+                    }
+                }
+            }
+            else
+            {
+                _logger.LogDebug("Session {SessionId} not connected to this instance, skipping auth event", eventData.SessionId);
+            }
+
+            return new { status = "processed", sessionId = eventData.SessionId, eventType = eventData.EventType };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process auth event for session {SessionId}", eventData.SessionId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Processes service registration events for permission recompilation.
+    /// When services register new APIs, update permission cache and notify clients.
+    /// </summary>
+    internal async Task<object> ProcessServiceRegistrationAsync(ServiceRegistrationEvent eventData)
+    {
+        try
+        {
+            _logger.LogInformation("Processing service registration for {ServiceId}", eventData.ServiceId);
+
+            // Notify permission service that a new service was registered
+            // This will trigger permission recompilation for all sessions
+            await _daprClient.PublishEventAsync(
+                "bannou-pubsub",
+                "bannou-permission-recompile",
+                new PermissionRecompileEvent
+                {
+                    EventId = Guid.NewGuid().ToString(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Reason = PermissionRecompileEventReason.Service_registered,
+                    ServiceId = eventData.ServiceId,
+                    Metadata = new Dictionary<string, object>
+                    {
+                        { "triggeredBy", "connect-service" },
+                        { "instanceId", _instanceId }
+                    }
+                });
+
+            _logger.LogInformation("Triggered permission recompilation for service registration: {ServiceId}", eventData.ServiceId);
+
+            return new { status = "processed", serviceId = eventData.ServiceId };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process service registration event for {ServiceId}", eventData.ServiceId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Processes client message events for server-to-client push messaging.
+    /// Allows services to send messages directly to connected WebSocket clients.
+    /// </summary>
+    internal async Task<object> ProcessClientMessageEventAsync(ClientMessageEvent eventData)
+    {
+        try
+        {
+            _logger.LogDebug("Received client message event for {ClientId} from service {ServiceName}",
+                eventData.ClientId, eventData.ServiceName);
+
+            // Find target client connection
+            if (HasConnection(eventData.ClientId))
+            {
+                // Create binary message from event data
+                var message = BinaryMessage.FromBinary(
+                    channel: (ushort)eventData.Channel,
+                    sequenceNumber: 0, // Server-initiated event
+                    serviceGuid: eventData.ServiceGuid,
+                    messageId: (ulong)eventData.MessageId,
+                    eventData.Payload,
+                    (MessageFlags)eventData.Flags | MessageFlags.Event // Mark as server event
+                );
+
+                // Send to client
+                var sent = await SendMessageAsync(eventData.ClientId, message, CancellationToken.None);
+
+                if (sent)
+                {
+                    _logger.LogDebug("Forwarded event message to client {ClientId}", eventData.ClientId);
+                    return new { status = "delivered", clientId = eventData.ClientId };
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to deliver message to client {ClientId} - connection issue", eventData.ClientId);
+                    return new { error = "delivery_failed", clientId = eventData.ClientId };
+                }
+            }
+            else
+            {
+                _logger.LogDebug("Target client {ClientId} not connected to this instance", eventData.ClientId);
+                return new { error = "client_not_found", clientId = eventData.ClientId };
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process client message event for {ClientId}", eventData.ClientId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Processes bidirectional RPC events where services call clients and expect responses.
+    /// </summary>
+    internal async Task<object> ProcessClientRPCEventAsync(ClientRPCEvent eventData)
+    {
+        try
+        {
+            _logger.LogDebug("Received client RPC event for {ClientId} from service {ServiceName}",
+                eventData.ClientId, eventData.ServiceName);
+
+            // Find target client connection
+            if (HasConnection(eventData.ClientId))
+            {
+                // Create binary message for RPC call
+                var message = BinaryMessage.FromBinary(
+                    channel: (ushort)eventData.Channel,
+                    sequenceNumber: 0, // Server-initiated RPC
+                    serviceGuid: eventData.ServiceGuid,
+                    messageId: (ulong)eventData.MessageId,
+                    eventData.Payload,
+                    MessageFlags.None // Regular RPC - expects response
+                );
+
+                // Send to client
+                var sent = await SendMessageAsync(eventData.ClientId, message, CancellationToken.None);
+
+                if (sent)
+                {
+                    _logger.LogDebug("Sent RPC message to client {ClientId}, waiting for response", eventData.ClientId);
+
+                    // TODO: Implement response timeout and forwarding back to service
+                    // The client response will come back through the normal WebSocket message handling
+                    // and should be routed back to the originating service via RabbitMQ
+
+                    return new { status = "sent", clientId = eventData.ClientId, messageId = eventData.MessageId };
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to send RPC to client {ClientId} - connection issue", eventData.ClientId);
+                    return new { error = "delivery_failed", clientId = eventData.ClientId };
+                }
+            }
+            else
+            {
+                _logger.LogDebug("Target client {ClientId} not connected to this instance", eventData.ClientId);
+                return new { error = "client_not_found", clientId = eventData.ClientId };
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process client RPC event for {ClientId}", eventData.ClientId);
+            throw;
+        }
+    }
+
+    #endregion
+
+    #region Helper Methods for Event Handling
+
+    /// <summary>
+    /// Checks if a session has an active WebSocket connection.
+    /// </summary>
+    internal bool HasConnection(string sessionId)
+    {
+        try
+        {
+            return _connectionManager.GetConnection(sessionId) != null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error checking connection for session {SessionId}", sessionId);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Sends a binary message to a specific session's WebSocket connection.
+    /// </summary>
+    internal async Task<bool> SendMessageAsync(string sessionId, BinaryMessage message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _connectionManager.SendMessageAsync(sessionId, message, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending message to session {SessionId}", sessionId);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Disconnects a session's WebSocket connection with a reason.
+    /// </summary>
+    internal async Task DisconnectAsync(string sessionId, string reason)
+    {
+        try
+        {
+            var connection = _connectionManager.GetConnection(sessionId);
+            if (connection?.WebSocket != null && connection.WebSocket.State == System.Net.WebSockets.WebSocketState.Open)
+            {
+                await connection.WebSocket.CloseAsync(
+                    System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
+                    reason,
+                    CancellationToken.None);
+            }
+            _connectionManager.RemoveConnection(sessionId);
+            _logger.LogInformation("Disconnected session {SessionId}: {Reason}", sessionId, reason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error disconnecting session {SessionId}: {Reason}", sessionId, reason);
+        }
+    }
+
+    /// <summary>
+    /// Refreshes session capabilities and sends real-time update to client.
+    /// </summary>
+    private async Task RefreshSessionCapabilitiesAsync(string sessionId, string newState)
+    {
+        try
+        {
+            var discoveryRequest = new ApiDiscoveryRequest { SessionId = sessionId };
+            var (statusCode, discoveryResponse) = await DiscoverAPIsAsync(discoveryRequest, CancellationToken.None);
+
+            if (statusCode == StatusCodes.OK && discoveryResponse != null)
+            {
+                var updatePayload = new
+                {
+                    type = "auth_state_change",
+                    sessionId = sessionId,
+                    newState = newState,
+                    availableAPIs = discoveryResponse.AvailableAPIs,
+                    serviceCapabilities = discoveryResponse.ServiceCapabilities,
+                    updatedAt = DateTimeOffset.UtcNow
+                };
+
+                var messageId = MessageRouter.GenerateMessageId();
+                var updateMessage = BinaryMessage.FromJson(
+                    channel: 1, // Auth channel
+                    sequenceNumber: 0, // Event message
+                    serviceGuid: Guid.Empty, // System message
+                    messageId: messageId,
+                    JsonSerializer.Serialize(updatePayload)
+                );
+
+                await _connectionManager.SendMessageAsync(sessionId, updateMessage, CancellationToken.None);
+                _logger.LogInformation("Sent auth state change update to session {SessionId}: {NewState}", sessionId, newState);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to refresh capabilities for session {SessionId}", sessionId);
+        }
+    }
+
+    /// <summary>
+    /// Validates that a session still exists and is valid.
+    /// </summary>
+    private async Task<bool> ValidateSessionAsync(string sessionId)
+    {
+        try
+        {
+            // Use Auth service to validate the session
+            var validationResponse = await _authClient.ValidateTokenAsync(CancellationToken.None);
+            return validationResponse.Valid && validationResponse.SessionId == sessionId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Session validation failed for {SessionId}", sessionId);
+            return false;
+        }
+    }
+
+    #endregion
 
 }
