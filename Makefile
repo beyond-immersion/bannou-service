@@ -1,3 +1,21 @@
+# =============================================================================
+# ENVIRONMENT MANAGEMENT
+# =============================================================================
+# Standards for environment-specific Docker Compose configurations:
+# - docker-compose.yml: Base services (bannou, databases, core infrastructure)
+# - docker-compose.local.yml: Local development overrides (env files, local dapr components)
+# - docker-compose.ci.yml: CI/CD environment (CI Dapr components, test configurations)
+# - docker-compose.ingress.yml: OpenResty edge proxy + routing infrastructure
+# - docker-compose.ingress.local.yml: Local ingress overrides (volumes, certificates)
+# - docker-compose.elk.yml: Elasticsearch + Kibana logging stack
+#
+# Environment Patterns:
+# - Local Dev: base + local + dev + [feature-specific]
+# - Local Test: base + local + test-local + [feature-specific]
+# - CI/CD: base + ci + [feature-specific]
+# - Production: base + production + [region-specific] + [feature-specific]
+# =============================================================================
+
 build:
 	dotnet build
 
@@ -7,7 +25,11 @@ build-compose:
 
 up-compose:
 	if [ ! -f .env ]; then touch .env; fi
-	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.ingress.yml --project-name cl up -d
+	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml --project-name cl up -d
+
+up-openresty:
+	if [ ! -f .env ]; then touch .env; fi
+	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.ingress.yml -f provisioning/docker-compose.ingress.local.yml --project-name cl up -d
 
 ci-up-compose:
 	if [ ! -f .env ]; then touch .env; fi
@@ -19,6 +41,9 @@ elk-up-compose:
 
 down-compose:
 	docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml --project-name cl down --remove-orphans
+
+down-openresty:
+	docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.ingress.yml -f provisioning/docker-compose.ingress.local.yml --project-name cl down --remove-orphans
 
 elk-down-compose:
 	docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.elk.yml --project-name cl down --remove-orphans
@@ -183,11 +208,23 @@ test-infrastructure:
 	@echo "✅ Infrastructure integration tests completed"
 
 # Infrastructure integration testing (matches step 7)
+# This runs infrastructure-tests.sh inside a bannou-tester container that has network access
+# to all service containers (bannou, openresty, routing-redis). The --exit-code-from flag
+# ensures the make command fails if the infrastructure tests fail inside the container.
 test-infrastructure-compose:
 	@echo "🚀 Running infrastructure integration tests (docker compose)..."
 	if [ ! -f .env ]; then touch .env; fi
-	set -a && . ./.env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
+	docker compose --env-file .env -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" up --exit-code-from=bannou-tester
 	@echo "✅ Infrastructure integration tests (docker compose) completed"
+
+# Infrastructure integration testing for OpenResty local development
+# Uses local Dapr components (no MySQL dependencies) and proper environment isolation
+# The bannou-tester container runs infrastructure-tests.sh inside the Docker network
+test-infrastructure-openresty:
+	@echo "🚀 Running OpenResty infrastructure integration tests (local development)..."
+	if [ ! -f .env ]; then touch .env; fi
+	docker compose --env-file .env -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" up --exit-code-from=bannou-tester
+	@echo "✅ OpenResty infrastructure integration tests completed"
 
 # HTTP integration testing
 test-http:

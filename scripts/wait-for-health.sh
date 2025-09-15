@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ENDPOINT="http://bannou/health"
+ENDPOINT="http://bannou:8080/health"
 MAX_RETRIES=60
 RETRY_TIME=5
 COUNT=0

@@ -1,0 +1,8 @@
+services:
+
+  # Using local OpenResty configuration
+  openresty:
+    volumes:
+      - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ./openresty/lua:/usr/local/openresty/lua:ro
+      - ./certificates:/certs:ro

@@ -41,8 +41,8 @@ run_test "Redis connectivity via OpenResty" "curl --fail --max-time 5 http://ope
 
 # Test 3-4: Basic service availability (infrastructure level only)
 echo "🔍 Testing Basic Service Availability..."
-run_test "Bannou service basic availability" "curl --fail --max-time 10 http://bannou/testing/run-enabled"
-run_test "Bannou service alternative port" "curl --fail --max-time 10 http://bannou:80/testing/run-enabled || true"
+run_test "Bannou service basic availability" "curl --fail --max-time 10 http://bannou:8080/testing/run-enabled"
+run_test "Bannou service direct health check" "curl --fail --max-time 10 http://bannou:8080/health || true"
 
 # Test 5-6: Queue system infrastructure
 echo "🔍 Testing Queue System Infrastructure..."

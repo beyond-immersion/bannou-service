@@ -65,6 +65,12 @@ public class AppConfiguration : BaseServiceConfiguration
     public int Service_Start_Timeout { get; set; } = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
 
     /// <summary>
+    /// Time in milliseconds to wait for Dapr to be ready before failing startup.
+    /// Set to 0 to disable Dapr readiness checks.
+    /// </summary>
+    public int Dapr_Readiness_Timeout { get; set; } = (int)TimeSpan.FromMinutes(2).TotalMilliseconds;
+
+    /// <summary>
     /// The port the HTTP webhost is listening on.
     /// </summary>
     public int HTTP_Web_Host_Port { get; set; } = 80;

@@ -118,6 +118,13 @@ public static class Program
             .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig)
             .Build();
 
+        // ensure dapr is ready before continuing
+        if (!await WaitForDaprReadiness())
+        {
+            Logger.Log(LogLevel.Error, null, "Dapr readiness check failed- exiting application.");
+            return;
+        }
+
         // prepare to build the application
         WebApplicationBuilder? webAppBuilder = WebApplication.CreateBuilder(Environment.GetCommandLineArgs());
         if (webAppBuilder == null)
@@ -459,4 +466,47 @@ public static class Program
     /// Will stop the webhost and initiate a service shutdown.
     /// </summary>
     public static void InitiateShutdown() => ShutdownCancellationTokenSource.Cancel();
+
+    /// <summary>
+    /// Waits for Dapr to be ready before proceeding with service startup.
+    /// Uses configurable timeout from Dapr_Readiness_Timeout.
+    /// </summary>
+    /// <returns>True if Dapr is ready, false if timeout or error occurs.</returns>
+    private static async Task<bool> WaitForDaprReadiness()
+    {
+        if (Configuration.Dapr_Readiness_Timeout <= 0)
+        {
+            Logger.Log(LogLevel.Information, null, "Dapr readiness check disabled (timeout = 0)");
+            return true;
+        }
+
+        var timeout = TimeSpan.FromMilliseconds(Configuration.Dapr_Readiness_Timeout);
+        var checkInterval = TimeSpan.FromSeconds(1);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        Logger.Log(LogLevel.Information, null, $"Waiting for Dapr to be ready (timeout: {timeout.TotalSeconds}s)...");
+
+        while (stopwatch.Elapsed < timeout)
+        {
+            try
+            {
+                // Try to get Dapr metadata as a basic connectivity check
+                var metadata = await DaprClient.GetMetadataAsync();
+                if (metadata != null)
+                {
+                    Logger.Log(LogLevel.Information, null, $"Dapr is ready (sidecar ID: {metadata.Id})");
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log(LogLevel.Debug, ex, $"Dapr readiness check failed, retrying... ({stopwatch.Elapsed.TotalSeconds:F1}s elapsed)");
+            }
+
+            await Task.Delay(checkInterval);
+        }
+
+        Logger.Log(LogLevel.Error, null, $"Dapr readiness check timed out after {timeout.TotalSeconds}s. Ensure Dapr sidecar is running.");
+        return false;
+    }
 }

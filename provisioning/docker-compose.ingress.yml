@@ -2,45 +2,56 @@ services:
 
   bannou:
     depends_on:
-      - traefik
+      - openresty
+      - routing-redis
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=celestial_network"
-      - "traefik.http.middlewares.auth-prefix.addprefix.prefix=/authorization"
-      - "traefik.http.middlewares.connect-prefix.addprefix.prefix=/connect"
-      - "traefik.http.services.auth-service.loadbalancer.server.port=80"
-      - "traefik.http.services.connect-service.loadbalancer.server.port=80"
-      - "traefik.http.routers.auth-service.middlewares=auth-prefix@docker"
-      - "traefik.http.routers.auth-service.rule=Host(`auth.${SERVICE_DOMAIN}`)"
-      - "traefik.http.routers.auth-service.entrypoints=web,websecure"
-      - "traefik.http.routers.auth-service.service=auth-service"
-      - "traefik.http.routers.connect-service.middlewares=connect-prefix@docker"
-      - "traefik.http.routers.connect-service.rule=Host(`connect.${SERVICE_DOMAIN}`)"
-      - "traefik.http.routers.connect-service.entrypoints=web,websecure"
-      - "traefik.http.routers.connect-service.service=connect-service"
+      - "openresty.enable=true"
+      - "openresty.backend.auth=/authorization"
+      - "openresty.backend.connect=/connect"
 
-  traefik:
-    image: traefik:v2.5
-    command:
-      - --api.insecure=true
-      - --providers.docker
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-      - --log.level=DEBUG
-      - --accesslog=true
+  # OpenResty with Lua + Redis for complex queue routing
+  openresty:
+    image: openresty/openresty:1.21.4.2-0-alpine
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
+      - "8081:8080"  # Admin/status interface (avoid conflict with bannou)
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./certificates:/certs
+      - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ./openresty/lua:/usr/local/openresty/lua:ro
+      - ./certificates:/certs:ro
+    depends_on:
+      - routing-redis
+    environment:
+      - REDIS_HOST=routing-redis
+      - REDIS_PORT=6379
+      - SERVICE_DOMAIN=${SERVICE_DOMAIN}
     networks:
       - default
       - celestial_network
+      - routing_network
+    restart: unless-stopped
+
+  # Redis for OpenResty routing decisions and queue management
+  routing-redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - routing-redis-data:/data
+    networks:
+      - celestial_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
+      interval: 5s
 
 networks:
   celestial_network:
+  routing_network:
     driver: bridge
-    external: true
+    internal: false  # OpenResty needs external access for routing
+
+volumes:
+  routing-redis-data:

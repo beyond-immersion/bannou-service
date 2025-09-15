@@ -434,6 +434,12 @@
             throw an error and start application shutdown.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Dapr_Readiness_Timeout">
+            <summary>
+            Time in milliseconds to wait for Dapr to be ready before failing startup.
+            Set to 0 to disable Dapr readiness checks.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.HTTP_Web_Host_Port">
             <summary>
             The port the HTTP webhost is listening on.
@@ -1203,6 +1209,13 @@
             <summary>
             Will stop the webhost and initiate a service shutdown.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Program.WaitForDaprReadiness">
+            <summary>
+            Waits for Dapr to be ready before proceeding with service startup.
+            Uses configurable timeout from Dapr_Readiness_Timeout.
+            </summary>
+            <returns>True if Dapr is ready, false if timeout or error occurs.</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase">
             <summary>

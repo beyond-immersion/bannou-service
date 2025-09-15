@@ -199,11 +199,11 @@ BANNOU_HTTPS_Web_Host_Port=5013
 
 # Service Configuration
 BANNOU_EmulateDapr=True           # Enables Dapr emulation for local development
-SERVICE_DOMAIN=beyond-immersion.com
+SERVICE_DOMAIN=example.com
 
 # Database Configuration
-ACCOUNT_DB_USER=Franklin
-ACCOUNT_DB_PASSWORD=DevPassword
+ACCOUNT_DB_USER=testuser
+ACCOUNT_DB_PASSWORD=testpassword
 
 # Auth Configuration
 AUTH_JWT_SECRET=bannou-dev-secret-key-2025-please-change-in-production

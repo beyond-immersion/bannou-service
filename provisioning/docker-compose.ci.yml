@@ -10,7 +10,7 @@ services:
   # Add healthcheck to MySQL service for better startup coordination
   account-db:
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "Franklin", "-pDevPassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${ACCOUNT_DB_USER}", "-p${ACCOUNT_DB_PASSWORD}"]
       timeout: 20s
       retries: 10
       interval: 10s
@@ -29,8 +29,8 @@ services:
     networks:
       - celestial_network
     volumes:
-      - "../wait-for-health.sh:/wait-for-health.sh"
-      - "../infrastructure-tests.sh:/infrastructure-tests.sh"
+      - "../scripts/wait-for-health.sh:/wait-for-health.sh"
+      - "../scripts/infrastructure-tests.sh:/infrastructure-tests.sh"
     stdin_open: false
     depends_on:
       - bannou
