@@ -1144,6 +1144,212 @@
             </summary>
             <returns>The current number of items in the bucket after adding.</returns>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin">
+            <summary>
+            Base implementation of IBannouPlugin that provides default behavior
+            and integrates with existing IDaprService implementations.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.Logger">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.PluginName">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.DisplayName">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.Version">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.ConfigureApplication(Microsoft.AspNetCore.Builder.WebApplication)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.InitializeAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.StartAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.RunningAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.ShutdownAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.ValidatePlugin">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.OnInitializeAsync">
+            <summary>
+            Override this method to perform plugin-specific initialization.
+            </summary>
+            <returns>True if initialization succeeded</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.OnStartAsync">
+            <summary>
+            Override this method to perform plugin-specific startup.
+            </summary>
+            <returns>True if startup succeeded</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.OnRunningAsync">
+            <summary>
+            Override this method to perform plugin-specific running operations.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.OnShutdownAsync">
+            <summary>
+            Override this method to perform plugin-specific shutdown.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.OnValidatePlugin">
+            <summary>
+            Override this method to perform plugin-specific validation.
+            </summary>
+            <returns>True if plugin is valid</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin.GetLoggerFactory">
+            <summary>
+            Get logger factory from service provider if available.
+            </summary>
+            <returns>Logger factory or null if not available</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Plugins.IBannouPlugin">
+            <summary>
+            Interface for Bannou service plugins that can be dynamically loaded and registered.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Plugins.IBannouPlugin.PluginName">
+            <summary>
+            Unique name identifier for this plugin.
+            Should match the service name from ServiceLib property.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Plugins.IBannouPlugin.DisplayName">
+            <summary>
+            Human-readable display name for this plugin.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Plugins.IBannouPlugin.Version">
+            <summary>
+            Version of this plugin.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.IBannouPlugin.ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Configure services for dependency injection.
+            Called during application startup before building the application.
+            </summary>
+            <param name="services">Service collection to register dependencies</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.IBannouPlugin.ConfigureApplication(Microsoft.AspNetCore.Builder.WebApplication)">
+            <summary>
+            Configure the application pipeline.
+            Called after the application is built but before it starts running.
+            </summary>
+            <param name="app">Web application to configure</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.IBannouPlugin.InitializeAsync">
+            <summary>
+            Initialize the plugin.
+            Called when the plugin is first loaded and validated.
+            </summary>
+            <returns>True if initialization succeeded, false otherwise</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.IBannouPlugin.StartAsync">
+            <summary>
+            Start the plugin.
+            Called when all plugins have been loaded and the application is starting.
+            </summary>
+            <returns>True if startup succeeded, false otherwise</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.IBannouPlugin.RunningAsync">
+            <summary>
+            Called when the plugin is running and all startup processes are complete.
+            Can be used for background tasks or periodic operations.
+            </summary>
+            <returns>Task that represents the running operation</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.IBannouPlugin.ShutdownAsync">
+            <summary>
+            Shutdown the plugin gracefully.
+            Called when the application is shutting down.
+            </summary>
+            <returns>Task that completes when shutdown is finished</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.IBannouPlugin.ValidatePlugin">
+            <summary>
+            Validate that this plugin can operate with the current configuration.
+            Called during plugin discovery before initialization.
+            </summary>
+            <returns>True if plugin is valid and can be loaded, false otherwise</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Plugins.PluginLoader">
+            <summary>
+            Responsible for discovering, loading, and managing Bannou service plugins.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Plugins.PluginLoader})">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Plugins.PluginLoader.LoadedPlugins">
+            <summary>
+            Get all currently loaded plugins.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.LoadPluginsAsync(System.String,System.Collections.Generic.IList{System.String})">
+            <summary>
+            Discover and load plugins from the specified directory based on configuration.
+            </summary>
+            <param name="pluginsDirectory">Root plugins directory</param>
+            <param name="requestedPlugins">List of specific plugins to load, or null for all</param>
+            <returns>Number of plugins successfully loaded</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Configure services for all loaded plugins.
+            </summary>
+            <param name="services">Service collection</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.ConfigureApplication(Microsoft.AspNetCore.Builder.WebApplication)">
+            <summary>
+            Configure application pipeline for all loaded plugins.
+            </summary>
+            <param name="app">Web application</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.InitializePluginsAsync">
+            <summary>
+            Initialize all loaded plugins.
+            </summary>
+            <returns>True if all plugins initialized successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.StartPluginsAsync">
+            <summary>
+            Start all loaded plugins.
+            </summary>
+            <returns>True if all plugins started successfully</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.InvokeRunningAsync">
+            <summary>
+            Invoke running methods for all loaded plugins.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.ShutdownPluginsAsync">
+            <summary>
+            Shutdown all loaded plugins gracefully.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.LoadPluginFromDirectoryAsync(System.String,System.String)">
+            <summary>
+            Load a plugin from a specific directory.
+            </summary>
+            <param name="pluginDirectory">Directory containing the plugin</param>
+            <param name="expectedPluginName">Expected name of the plugin</param>
+            <returns>Loaded plugin instance or null if loading failed</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Program">
             <summary>
             Main program class for the Bannou service platform.
@@ -1182,10 +1388,26 @@
             Shared dapr client interface, used by all enabled service handlers.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Program.PluginLoader">
+            <summary>
+            Plugin loader for managing service plugins.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Program.ShutdownCancellationTokenSource">
             <summary>
             Token source for initiating a clean shutdown.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Program.LoadPlugins">
+            <summary>
+            Load and initialize plugins based on current application configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Program.GetRequestedPlugins">
+            <summary>
+            Get the list of requested plugins based on Include_Assemblies configuration.
+            </summary>
+            <returns>List of plugin names to load, or null for all plugins</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Program.EnabledServicesHaveRequiredConfiguration">
             <summary>
@@ -1194,7 +1416,7 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Program.LoadAssemblies">
              <summary>
-             Load appropriate sets of libs in /libs/ and subdirectories
+             Load appropriate sets of plugins in /plugins/ and subdirectories
              based on current application configuration.
             
              <seealso cref="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Include_Assemblies"/>
@@ -1202,7 +1424,7 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Program.OnAssemblyResolve(System.Object,System.ResolveEventArgs)">
             <summary>
-            Include /libs/ and subdirectories in resolving .dll dependencies.
+            Include /plugins/ and subdirectories in resolving .dll dependencies.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Program.InitiateShutdown">

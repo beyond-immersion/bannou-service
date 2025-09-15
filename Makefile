@@ -1,4 +1,17 @@
 # =============================================================================
+# BANNOU DEVELOPMENT MAKEFILE
+# =============================================================================
+# Schema-driven microservices platform with WebSocket-first edge gateway
+# Run 'make help' or 'make' to see all available commands
+# =============================================================================
+
+# Default target - show help
+.DEFAULT_GOAL := help
+
+help: ## Show this help message
+	@scripts/show-help.sh
+
+# =============================================================================
 # ENVIRONMENT MANAGEMENT
 # =============================================================================
 # Standards for environment-specific Docker Compose configurations:
@@ -16,41 +29,39 @@
 # - Production: base + production + [region-specific] + [feature-specific]
 # =============================================================================
 
-build:
+build: ## Build all .NET projects
 	dotnet build
 
-build-compose:
+build-compose: ## Build Docker containers (all services)
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml --project-name cl build
 
-up-compose:
+up-compose: ## Start services locally
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml --project-name cl up -d
 
-up-openresty:
+up-openresty: ## Start with OpenResty edge proxy
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.ingress.yml -f provisioning/docker-compose.ingress.local.yml --project-name cl up -d
 
-ci-up-compose:
+ci-up-compose: ## Start with CI configuration
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.ci.yml -f provisioning/docker-compose.ingress.yml --project-name cl up -d
 
-elk-up-compose:
+elk-up-compose: ## Start with ELK logging stack
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.elk.yml --project-name cl up -d
 
-down-compose:
+down-compose: ## Stop and cleanup containers
 	docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml --project-name cl down --remove-orphans
 
-down-openresty:
+down-openresty: ## Stop OpenResty setup
 	docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.ingress.yml -f provisioning/docker-compose.ingress.local.yml --project-name cl down --remove-orphans
 
-elk-down-compose:
+elk-down-compose: ## Stop ELK setup
 	docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.elk.yml --project-name cl down --remove-orphans
 
-# Cleans caches, generated files, and clears up resources from git, docker, and dotnet
-# Usage: make clean [PLUGIN=plugin-name] - if PLUGIN is specified, only cleans that plugin
-clean:
+clean: ## Clean generated files and caches (add PLUGIN=name for specific plugin)
 	@if [ "$(PLUGIN)" ]; then \
 		echo "🧹 Cleaning plugin: $(PLUGIN)..."; \
 		if [ -d "./lib-$(PLUGIN)/Generated" ]; then \
@@ -69,11 +80,42 @@ clean:
 		echo "✅ Clean completed"; \
 	fi
 
-# Builds all libs with xml service tags and copies the DLLs to /libs directory
-build-service-libs:
-	@echo "🔧 Building service libs for docker container"
+build-service-libs: ## Build all service plugins for Docker
+	@echo "🔧 Building service plugins for docker container"
 	bash scripts/build-service-libs.sh
-	@echo "✅ Service libs built for inclusion in docker container"
+	@echo "✅ Service plugins built for inclusion in docker container"
+
+build-plugins: ## Build specific plugins only (requires SERVICES="name1 name2")
+	@if [ "$(SERVICES)" ]; then \
+		echo "🔧 Building specific plugins: $(SERVICES)"; \
+		bash scripts/build-service-libs.sh $(SERVICES); \
+		echo "✅ Service plugins built: $(SERVICES)"; \
+	else \
+		echo "❌ Error: SERVICES parameter required. Example: make build-plugins SERVICES=\"auth accounts\""; \
+		exit 1; \
+	fi
+
+# Build Docker image with specific services only
+# Usage: make build-compose-services SERVICES="auth accounts connect"
+build-compose-services:
+	@if [ "$(SERVICES)" ]; then \
+		echo "🐳 Building Docker image with specific services: $(SERVICES)"; \
+		if [ ! -f .env ]; then touch .env; fi; \
+		docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml --project-name cl build --build-arg BANNOU_SERVICES="$(SERVICES)"; \
+		echo "✅ Docker image built with services: $(SERVICES)"; \
+	else \
+		echo "❌ Error: SERVICES parameter required. Example: make build-compose-services SERVICES=\"auth accounts\""; \
+		exit 1; \
+	fi
+
+# Show available services that can be built
+list-services:
+	@scripts/list-services.sh
+
+# Validate that specific services are included in the latest Docker image
+# Usage: make validate-compose-services SERVICES="auth accounts connect"
+validate-compose-services:
+	@scripts/validate-compose-services.sh $(SERVICES)
 
 # Regenerate all services and SDK
 generate:
@@ -129,11 +171,7 @@ fix-endings:
 
 # Comprehensive EditorConfig fixing using eclint
 fix-config:
-	@echo "🔧 Fixing common EditorConfig issues with eclint..."
-	@find . -name "*.cs" -not -path "./bin/*" -not -path "./obj/*" -not -path "./**/Generated/*" -not -path "./Bannou.Client.SDK/*" -not -path "./**/obj/*" -not -path "./**/bin/*" | xargs eclint fix
-	@find . -name "*.md" -not -path "./bin/*" -not -path "./obj/*" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./**/Generated/*" -not -path "./Bannou.Client.SDK/*" | xargs eclint fix
-	@find . -name "*.yml" -o -name "*.yaml" | grep -v "/bin/" | grep -v "/obj/" | grep -v "/.git/" | xargs eclint fix
-	@echo "✅ EditorConfig issues fixed"
+	@scripts/fix-config.sh
 
 # Typical dotnet format
 fix-format:
@@ -176,24 +214,7 @@ generate-services-for-consistency:
 # Comprehensive unit testing - all service test projects
 # Usage: make test [PLUGIN=plugin-name] - if PLUGIN is specified, only tests that plugin
 test:
-	@if [ "$(PLUGIN)" ]; then \
-		echo "🧪 Running unit tests for plugin: $(PLUGIN)..."; \
-		if [ -f "./lib-$(PLUGIN).tests/lib-$(PLUGIN).tests.csproj" ]; then \
-			echo "🧪 Running tests in: ./lib-$(PLUGIN).tests/lib-$(PLUGIN).tests.csproj"; \
-			dotnet test "./lib-$(PLUGIN).tests/lib-$(PLUGIN).tests.csproj" --verbosity minimal --logger "console;verbosity=minimal"; \
-		else \
-			echo "❌ Test project not found: ./lib-$(PLUGIN).tests/lib-$(PLUGIN).tests.csproj"; \
-			exit 1; \
-		fi; \
-		echo "✅ Unit testing completed for plugin: $(PLUGIN)"; \
-	else \
-		echo "🧪 Running comprehensive unit tests across all service plugins..."; \
-		for test_project in $$(find . -name "*.tests.csproj" -o -name "*Tests.csproj" | grep -v template); do \
-			echo "🧪 Running tests in: $$test_project"; \
-			dotnet test "$$test_project" --verbosity minimal --logger "console;verbosity=minimal" || echo "⚠️  Tests failed in $$test_project"; \
-		done; \
-		echo "✅ Comprehensive unit testing completed"; \
-	fi
+	@scripts/run-tests.sh $(PLUGIN)
 
 # .NET unit testing (matches steps 6)
 test-unit:

@@ -3,8 +3,22 @@ COPY ./ /app/
 
 RUN apt-get update && apt-get install -y libxml2-utils && apt-get install -y rsync
 
+# Support build-time service selection
+# Usage: docker build --build-arg BANNOU_SERVICES="auth accounts connect" .
+# Default: builds all services if not specified
+ARG BANNOU_SERVICES=""
+
 WORKDIR /app
-RUN bash scripts/build-service-libs.sh
+
+# Build plugins based on BANNOU_SERVICES argument
+RUN if [ -z "$BANNOU_SERVICES" ]; then \
+        echo "🔧 Building all available services (no BANNOU_SERVICES specified)"; \
+        bash scripts/build-service-libs.sh; \
+    else \
+        echo "🔧 Building specific services: $BANNOU_SERVICES"; \
+        bash scripts/build-service-libs.sh $BANNOU_SERVICES; \
+    fi
+
 WORKDIR /
 
 RUN dotnet dev-certs https
@@ -12,7 +26,8 @@ RUN dotnet publish -o /app/bannou-service/publish -c Release /app/bannou-service
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 COPY --from=intermediate /app/bannou-service/publish /app
-COPY --from=intermediate /app/libs /app/libs
+COPY --from=intermediate /app/plugins /app/plugins
+COPY --from=intermediate /app/plugins/PLUGIN_MANIFEST.txt /PLUGIN_MANIFEST.txt
 COPY --from=intermediate /root/.dotnet/corefx/cryptography/x509stores/my/* /root/.dotnet/corefx/cryptography/x509stores/my/
 COPY --from=intermediate /root/.dotnet/corefx/cryptography/x509stores/my/* /certificates/
 

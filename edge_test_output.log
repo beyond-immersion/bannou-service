@@ -1,9 +1,0 @@
-Using launch settings from edge-tester/Properties/launchSettings.json...
-Building...
-Attempting to log in.
-Credential login Uri: http://auth.beyond-immersion.com/login/credentials
-Server responded with: NotFound, Reason: Not Found
-Registration Uri: http://auth.beyond-immersion.com/register
-Server responded with: NotFound, Reason: Not Found
-❌ An exception has occurred: 'Failed to register user account.'
-Stack trace:    at BeyondImmersion.ServiceTester.Program.Main(String[] args) in /home/lysander/repos/bannou/edge-tester/Program.cs:line 126
