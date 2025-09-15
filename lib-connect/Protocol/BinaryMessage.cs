@@ -226,6 +226,6 @@ public readonly struct BinaryMessage
     public override string ToString()
     {
         return $"BinaryMessage(Flags={Flags}, Channel={Channel}, Seq={SequenceNumber}, " +
-               $"ServiceGuid={ServiceGuid}, MessageId={MessageId}, PayloadSize={Payload.Length})";
+                $"ServiceGuid={ServiceGuid}, MessageId={MessageId}, PayloadSize={Payload.Length})";
     }
 }

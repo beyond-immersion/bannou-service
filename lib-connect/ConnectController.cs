@@ -17,11 +17,13 @@ public class ConnectController : ConnectControllerBase
         _connectService = connectService;
     }
 
+    [Obsolete]
     public override async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocket([Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection connection, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade upgrade, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         return await HandleWebSocketConnectionAsync(authorization, cancellationToken);
     }
 
+    [Obsolete]
     public override async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         return await HandleWebSocketConnectionAsync(authorization, cancellationToken);
@@ -30,6 +32,7 @@ public class ConnectController : ConnectControllerBase
     /// <summary>
     /// Common WebSocket connection handling logic.
     /// </summary>
+    [Obsolete]
     private async Task<IActionResult> HandleWebSocketConnectionAsync(
         string authorization,
         CancellationToken cancellationToken = default)
@@ -74,4 +77,3 @@ public class ConnectController : ConnectControllerBase
         }
     }
 }
-

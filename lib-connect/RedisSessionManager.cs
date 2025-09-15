@@ -1,7 +1,7 @@
 using BeyondImmersion.BannouService.Connect.Protocol;
+using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -199,7 +199,7 @@ public class RedisSessionManager
     /// <summary>
     /// Removes session data from Redis (cleanup on disconnect).
     /// </summary>
-    public async Task RemoveSessionAsync(string sessionId)
+    public Task RemoveSessionAsync(string sessionId)
     {
         try
         {
@@ -223,11 +223,14 @@ public class RedisSessionManager
             _logger.LogWarning(ex, "Failed to remove session data for {SessionId}", sessionId);
             // Don't throw - cleanup failures shouldn't break main functionality
         }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
     /// Publishes a session event to Redis pub/sub for cross-instance communication.
     /// </summary>
+    [Obsolete]
     public async Task PublishSessionEventAsync(string eventType, string sessionId, object? eventData = null)
     {
         try

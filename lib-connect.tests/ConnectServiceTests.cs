@@ -1,17 +1,17 @@
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Connect.Protocol;
-using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
+using Dapr.Client;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
+using StackExchange.Redis;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using Dapr.Client;
-using StackExchange.Redis;
-using Microsoft.AspNetCore.Builder;
-using System.Reflection;
+using Xunit;
 
 namespace BeyondImmersion.BannouService.Connect.Tests;
 

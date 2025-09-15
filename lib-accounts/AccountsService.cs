@@ -59,7 +59,7 @@ public class AccountsService : IAccountsService
                 PageSize = pageSize ?? 20
             };
 
-            return Task.FromResult<(StatusCodes, AccountListResponse?)>((StatusCodes.OK, response));
+            return Task.FromResult<(StatusCodes, AccountListResponse?)>(((StatusCodes, AccountListResponse?))(StatusCodes.OK, response));
         }
         catch (Exception ex)
         {
@@ -250,7 +250,7 @@ public class AccountsService : IAccountsService
                 AuthMethods = new List<AuthMethodInfo>()
             };
 
-            return Task.FromResult<(StatusCodes, AuthMethodsResponse?)>((StatusCodes.OK, response));
+            return Task.FromResult<(StatusCodes, AuthMethodsResponse?)>(((StatusCodes, AuthMethodsResponse?))(StatusCodes.OK, response));
         }
         catch (Exception ex)
         {
@@ -277,7 +277,7 @@ public class AccountsService : IAccountsService
                 LinkedAt = DateTimeOffset.UtcNow
             };
 
-            return Task.FromResult<(StatusCodes, AuthMethodResponse?)>((StatusCodes.OK, response));
+            return Task.FromResult<(StatusCodes, AuthMethodResponse?)>(((StatusCodes, AuthMethodResponse?))(StatusCodes.OK, response));
         }
         catch (Exception ex)
         {

@@ -3,8 +3,6 @@
 # Handles .cs, .md, .json, .yml, .yaml, .sh, and other text files
 # Converts CRLF to LF and adds final newlines where needed
 
-echo "🔧 Fixing line endings and final newlines for all project files..."
-
 # Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -107,11 +105,3 @@ echo -e "${GREEN}📊 Line ending fixes completed!${NC}"
 echo -e "  📁 Total files processed: $TOTAL_FILES"
 echo -e "  🎯 File types: .cs, .md, .json, .yml/.yaml, .sh, .txt, .xml, .csproj, .sln"
 echo -e "  ✅ All files now have LF line endings and proper final newlines"
-
-echo ""
-echo -e "${GREEN}💡 Why this script is needed alongside dotnet format:${NC}"
-echo "  • dotnet format: Handles C# code formatting (spacing, braces, etc.)"
-echo "  • fix-endings.sh: Handles line endings and final newlines for ALL file types"
-echo "  • Git/EditorConfig requires consistent line endings across entire repository"
-
-echo -e "${GREEN}🎉 All project files now have consistent line endings!${NC}"

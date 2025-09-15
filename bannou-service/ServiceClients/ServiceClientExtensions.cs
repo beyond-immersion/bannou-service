@@ -79,7 +79,7 @@ public static class ServiceClientExtensions
                     args[i] = serviceName;
                 else
                     args[i] = serviceProvider.GetService(paramType) ??
-                              throw new InvalidOperationException($"Cannot resolve parameter {parameters[i].Name} of type {paramType.Name}");
+                            throw new InvalidOperationException($"Cannot resolve parameter {parameters[i].Name} of type {paramType.Name}");
             }
 
             return (TInterface)Activator.CreateInstance(typeof(TClient), args)!;

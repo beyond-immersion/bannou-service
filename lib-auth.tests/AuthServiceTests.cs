@@ -1,5 +1,5 @@
-using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Auth;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;

@@ -58,7 +58,7 @@ public class OpenRestyAuthTestHandler : IServiceTestHandler
 
             // We don't care about the specific responses, just that routing works
             bool routingWorking = (response1.StatusCode != 500 && response1.StatusCode != 502) &&
-                                  (response2.StatusCode != 500 && response2.StatusCode != 502);
+                                (response2.StatusCode != 500 && response2.StatusCode != 502);
 
             if (routingWorking)
                 return TestResult.Successful("Authenticated requests routing correctly through OpenResty");

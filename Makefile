@@ -51,8 +51,8 @@ build-service-libs:
 	@echo "✅ Service libs built for inclusion in docker container"
 
 # Regenerate all services and SDK
-generate-all:
-	@echo "🔧 Generating everything"
+generate:
+	@echo "🔧 Generating everything that can be generated: projects, service files, client SDK"
 	scripts/generate-all-services.sh
 	scripts/generate-client-sdk.sh
 	@echo "✅ All generations completed"
@@ -75,20 +75,67 @@ generate-sdk:
 	scripts/generate-client-sdk.sh
 	@echo "✅ Client SDK generation completed"
 
+# Fast EditorConfig checking (recommended for development)
+check:
+	@echo "🔧 Running lightweight EditorConfig checks..."
+	@echo "💡 For comprehensive validation, use 'make check-ci'"
+	@scripts/check-editorconfig.sh
+	@echo "✅ Lightweight EditorConfig checks complete"
+
+# EditorConfig validation using Super Linter (matches GitHub Actions exactly, optimized for speed)
+check-ci:
+	@echo "🔧 Running EditorConfig validation using Super Linter..."
+	@echo "📋 This matches the exact validation used in GitHub Actions CI"
+	@echo "⚡ Optimized: Only EditorConfig validation enabled for faster execution"
+	@docker run --rm \
+		-e RUN_LOCAL=true \
+		-e USE_FIND_ALGORITHM=true \
+		-e VALIDATE_EDITORCONFIG=true \
+		-v $(PWD):/tmp/lint \
+		ghcr.io/super-linter/super-linter:slim-v5 \
+		|| (echo "❌ EditorConfig validation failed. Run 'make fix-config' to fix." && exit 1)
+	@echo "✅ EditorConfig validation passed"
+
 # Fix line endings and final newlines for all project files
 fix-endings:
 	@echo "🔧 Fixing line endings for all project files..."
 	scripts/fix-endings.sh
+	@echo "✅ Line endings fixed"
 
-# Complete formatting workflow
-format: fix-endings
-	@echo "🔧 Running complete code formatting..."
+# Comprehensive EditorConfig fixing using eclint
+fix-config:
+	@echo "🔧 Fixing common EditorConfig issues with eclint..."
+	@find . -name "*.cs" -not -path "./bin/*" -not -path "./obj/*" -not -path "./**/Generated/*" -not -path "./Bannou.Client.SDK/*" -not -path "./**/obj/*" -not -path "./**/bin/*" | xargs eclint fix
+	@find . -name "*.md" -not -path "./bin/*" -not -path "./obj/*" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./**/Generated/*" -not -path "./Bannou.Client.SDK/*" | xargs eclint fix
+	@find . -name "*.yml" -o -name "*.yaml" | grep -v "/bin/" | grep -v "/obj/" | grep -v "/.git/" | xargs eclint fix
+	@echo "✅ EditorConfig issues fixed"
+
+# Typical dotnet format
+fix-format:
+	@echo "🔧 Running .NET format..."
 	dotnet format
-	@echo "✅ All formatting completed"
+	@echo "✅ .NET formatting completed"
+
+# Enhanced formatting that ensures EditorConfig compliance
+fix:
+	@echo "🔧 Running complete code formatting..."
+	@$(MAKE) fix-format
+	@$(MAKE) fix-endings
+	@$(MAKE) fix-config
+	@echo "✅ All formatting tasks complete"
+
+# Pre-push validation (recommended workflow)
+validate:
+	@echo "🔧 Running comprehensive pre-push validation..."
+	@$(MAKE) check
+	@$(MAKE) test > /dev/null
+	@echo "✅ All validation passed - safe to push!"
 
 # Bring project and all submodules up to latest
 sync:
+	@echo "🔧 Syncing project and modules..."
 	git pull && git submodule update --init --recursive
+	@echo "✅ Project and module syncing complete"
 
 # GitHub Actions 10-step pipeline (local reproduction)
 test-ci: generate-services-for-consistency test-unit build-compose ci-up-compose test-infrastructure test-http-daemon test-edge-daemon
@@ -100,11 +147,6 @@ generate-services-for-consistency:
 	$(MAKE) generate-services
 	git diff --exit-code || (echo "❌ Service generation created changes" && exit 1)
 	@echo "✅ Service generation is consistent"
-
-# Unit testing (matches steps 6)
-test-unit:
-	@echo "🧪 Running unit tests..."
-	dotnet test
 
 # Comprehensive unit testing - all service test projects
 # Usage: make test [PLUGIN=plugin-name] - if PLUGIN is specified, only tests that plugin
@@ -128,36 +170,48 @@ test:
 		echo "✅ Comprehensive unit testing completed"; \
 	fi
 
-# Infrastructure testing
-test-infrastructure:
-	@echo "🚀 Running infrastructure tests"
-	bash scripts/infrastructure-tests.sh
+# .NET unit testing (matches steps 6)
+test-unit:
+	@echo "🧪 Running .NET unit tests..."
+	dotnet test
+	@echo "✅ .NET unit tests completed"
 
-# Infrastructure testing (matches step 7)
+# Infrastructure integration testing
+test-infrastructure:
+	@echo "🚀 Running infrastructure integration tests"
+	bash scripts/infrastructure-tests.sh
+	@echo "✅ Infrastructure integration tests completed"
+
+# Infrastructure integration testing (matches step 7)
 test-infrastructure-compose:
-	@echo "🚀 Running infrastructure tests with Docker Compose..."
+	@echo "🚀 Running infrastructure integration tests (docker compose)..."
 	if [ ! -f .env ]; then touch .env; fi
 	set -a && . ./.env && set +a && docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
+	@echo "✅ Infrastructure integration tests (docker compose) completed"
 
-# HTTP testing
+# HTTP integration testing
 test-http:
-	@echo "🧪 Running HTTP endpoint tests..."
+	@echo "🧪 Running HTTP integration tests..."
 	dotnet run --project http-tester
+	@echo "✅ HTTP integration tests completed"
 
-# HTTP testing with daemon mode (matches step 8)
+# HTTP integration testing with daemon mode (matches step 8)
 test-http-daemon:
 	@echo "🧪 Running HTTP integration tests (daemon mode)..."
 	DAEMON_MODE=true dotnet run --project http-tester --configuration Release
+	@echo "✅ HTTP integration tests (daemon mode) completed"
 
-# WebSocket testing
+# WebSocket/edge integration testing
 test-edge:
-	@echo "🧪 Running WebSocket protocol tests..."
+	@echo "🧪 Running WebSocket/Edge integration tests..."
 	dotnet run --project edge-tester
+	@echo "✅ WebSocket/edge integration tests completed"
 
-# WebSocket testing with daemon mode (matches steps 9-10)  
+# WebSocket/edge testing with daemon mode (matches steps 9-10)  
 test-edge-daemon:
 	@echo "🧪 Running WebSocket protocol tests (daemon mode)..."
 	DAEMON_MODE=true dotnet run --project edge-tester --configuration Release
+	@echo "✅ WebSocket/edge integration tests (daemon mode) completed"
 
 tagname := $(shell date -u +%FT%H-%M-%SZ)
 tag:

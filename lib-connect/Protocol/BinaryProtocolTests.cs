@@ -72,7 +72,7 @@ public static class BinaryProtocolTests
     private static bool TestNetworkByteOrderSupport()
     {
         return NetworkByteOrder.IsNetworkByteOrderSupported() &&
-               NetworkByteOrder.TestNetworkByteOrderCompatibility();
+                NetworkByteOrder.TestNetworkByteOrderCompatibility();
     }
 
     private static bool TestNetworkByteOrderOperations()
@@ -123,11 +123,11 @@ public static class BinaryProtocolTests
 
         // Verify all fields match exactly
         return deserialized.Flags == originalMessage.Flags &&
-               deserialized.Channel == originalMessage.Channel &&
-               deserialized.SequenceNumber == originalMessage.SequenceNumber &&
-               deserialized.ServiceGuid == originalMessage.ServiceGuid &&
-               deserialized.MessageId == originalMessage.MessageId &&
-               deserialized.Payload.Span.SequenceEqual(originalMessage.Payload.Span);
+                deserialized.Channel == originalMessage.Channel &&
+                deserialized.SequenceNumber == originalMessage.SequenceNumber &&
+                deserialized.ServiceGuid == originalMessage.ServiceGuid &&
+                deserialized.MessageId == originalMessage.MessageId &&
+                deserialized.Payload.Span.SequenceEqual(originalMessage.Payload.Span);
     }
 
     private static bool TestBinaryMessageEdgeCases()
@@ -162,10 +162,10 @@ public static class BinaryProtocolTests
         var maxDeserialized = BinaryMessage.Parse(maxSerialized, maxSerialized.Length);
 
         return maxDeserialized.Flags == maxMessage.Flags &&
-               maxDeserialized.Channel == maxMessage.Channel &&
-               maxDeserialized.SequenceNumber == maxMessage.SequenceNumber &&
-               maxDeserialized.ServiceGuid == maxMessage.ServiceGuid &&
-               maxDeserialized.MessageId == maxMessage.MessageId;
+                maxDeserialized.Channel == maxMessage.Channel &&
+                maxDeserialized.SequenceNumber == maxMessage.SequenceNumber &&
+                maxDeserialized.ServiceGuid == maxMessage.ServiceGuid &&
+                maxDeserialized.MessageId == maxMessage.MessageId;
     }
 
     private static bool TestSimulatedCrossEndianness()
@@ -192,10 +192,10 @@ public static class BinaryProtocolTests
         var receivedJson = receivedMessage.GetJsonPayload();
 
         return message.Channel == receivedMessage.Channel &&
-               message.SequenceNumber == receivedMessage.SequenceNumber &&
-               message.ServiceGuid == receivedMessage.ServiceGuid &&
-               message.MessageId == receivedMessage.MessageId &&
-               originalJson == receivedJson;
+                message.SequenceNumber == receivedMessage.SequenceNumber &&
+                message.ServiceGuid == receivedMessage.ServiceGuid &&
+                message.MessageId == receivedMessage.MessageId &&
+                originalJson == receivedJson;
     }
 
     private static bool TestGuidNetworkOrderConsistency()
@@ -267,10 +267,10 @@ public static class BinaryProtocolTests
     private static bool AreMessagesEqual(BinaryMessage a, BinaryMessage b)
     {
         return a.Flags == b.Flags &&
-               a.Channel == b.Channel &&
-               a.SequenceNumber == b.SequenceNumber &&
-               a.ServiceGuid == b.ServiceGuid &&
-               a.MessageId == b.MessageId &&
-               a.Payload.Span.SequenceEqual(b.Payload.Span);
+                a.Channel == b.Channel &&
+                a.SequenceNumber == b.SequenceNumber &&
+                a.ServiceGuid == b.ServiceGuid &&
+                a.MessageId == b.MessageId &&
+                a.Payload.Span.SequenceEqual(b.Payload.Span);
     }
 }

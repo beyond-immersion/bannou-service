@@ -86,8 +86,8 @@ public class Program
     private static bool IsDaemonMode(string[] args)
     {
         return Environment.GetEnvironmentVariable("DAEMON_MODE") == "true" ||
-               args.Contains("--daemon") ||
-               args.Contains("-d");
+                args.Contains("--daemon") ||
+                args.Contains("-d");
     }
 
     /// <summary>

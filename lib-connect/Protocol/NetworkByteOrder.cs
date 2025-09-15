@@ -174,9 +174,9 @@ public static class NetworkByteOrder
             var readGuid = ReadGuid(buffer.Slice(14, 16));
 
             return readUInt16 == 0x1234 &&
-                   readUInt32 == 0x12345678 &&
-                   readUInt64 == 0x123456789ABCDEF0 &&
-                   readGuid == testGuid;
+                    readUInt32 == 0x12345678 &&
+                    readUInt64 == 0x123456789ABCDEF0 &&
+                    readGuid == testGuid;
         }
         catch
         {

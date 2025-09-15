@@ -115,6 +115,10 @@ make generate-all              # Regenerate all services and SDK
 make generate-services         # Regenerate services only
 make generate-services PLUGIN=accounts  # Regenerate specific service
 make format                    # Fix line endings and run code formatting
+make format-strict             # Enhanced formatting with CI EditorConfig validation
+make lint-editorconfig         # Run exact CI EditorConfig validation (Docker)
+make lint-editorconfig-fast    # Quick EditorConfig check (no Docker needed)
+make validate                  # Complete pre-push validation (format + tests)
 make clean                     # Clean all generated files
 make clean PLUGIN=accounts     # Clean specific service
 
@@ -253,6 +257,7 @@ The separation between enabling services/controllers (via ENVs) and mapping serv
 - [WebSocket Protocol Architecture](WEBSOCKET-PROTOCOL.md) - Complete binary protocol specification
 - API Design & Schema-Driven Development (Technical Architecture knowledge base) - Contract-first development guide
 - [Testing Architecture](TESTING.md) - Dual-transport and schema-driven testing
+- [EditorConfig and Linting Guide](LINTING.md) - CI-compatible formatting and validation
 - [Service Configuration](documentation/configuration.md) - Environment and deployment configuration
 - [Service APIs](documentation/services.md) - Generated API documentation
 

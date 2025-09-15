@@ -1,23 +1,23 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.Connect.Protocol;
 using Dapr;
 using Dapr.Client;
-using StackExchange.Redis;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("lib-connect.tests")]
 
@@ -464,7 +464,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
             }
 
             _logger.LogDebug("Returning {Count} service mappings", response.TotalServices);
-            return Task.FromResult<(StatusCodes, ServiceMappingsResponse?)>((StatusCodes.OK, response));
+            return Task.FromResult<(StatusCodes, ServiceMappingsResponse?)>(((StatusCodes, ServiceMappingsResponse?))(StatusCodes.OK, response));
         }
         catch (Exception ex)
         {
@@ -522,6 +522,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
     /// Handles WebSocket communication using the enhanced 31-byte binary protocol.
     /// Creates persistent connection state and processes messages with proper routing.
     /// </summary>
+    [Obsolete]
     public async Task HandleWebSocketCommunicationAsync(
         WebSocket webSocket,
         string sessionId,
@@ -886,7 +887,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
     /// <summary>
     /// Service startup method - registers RabbitMQ event handler endpoints.
     /// </summary>
-    public async Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
+    public Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
 
@@ -916,6 +917,7 @@ public class ConnectService : DaprService<ConnectServiceConfiguration>, IConnect
             .WithMetadata("Connect service client RPC handler");
 
         _logger.LogInformation("Connect service RabbitMQ event handlers registered successfully");
+        return Task.CompletedTask;
     }
 
     #endregion
