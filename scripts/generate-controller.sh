@@ -47,6 +47,16 @@ mkdir -p "$OUTPUT_DIR"
 
 # Function to find NSwag executable
 find_nswag_exe() {
+    # On Linux/macOS, prefer the global dotnet tool over Windows executables
+    if [[ "$OSTYPE" == "linux-gnu"* ]] || [[ "$OSTYPE" == "darwin"* ]]; then
+        local nswag_global=$(which nswag 2>/dev/null)
+        if [ -n "$nswag_global" ]; then
+            echo "$nswag_global"
+            return 0
+        fi
+    fi
+
+    # Windows or fallback: try MSBuild package paths first
     local possible_paths=(
         "$HOME/.nuget/packages/nswag.msbuild/14.2.0/tools/Net90/dotnet-nswag.exe"
         "$HOME/.nuget/packages/nswag.msbuild/14.1.0/tools/Net90/dotnet-nswag.exe"
@@ -57,6 +67,10 @@ find_nswag_exe() {
 
     for path in "${possible_paths[@]}"; do
         if [ -n "$path" ] && [ -f "$path" ]; then
+            # On Linux, skip .exe files as they won't execute
+            if [[ "$OSTYPE" == "linux-gnu"* ]] && [[ "$path" == *.exe ]]; then
+                continue
+            fi
             echo "$path"
             return 0
         fi
@@ -73,6 +87,20 @@ if [ -z "$NSWAG_EXE" ]; then
 fi
 
 echo -e "${GREEN}✅ Found NSwag at: $NSWAG_EXE${NC}"
+
+# Ensure DOTNET_ROOT is set for NSwag global tool to work properly
+if [ -z "$DOTNET_ROOT" ]; then
+    # Try to find dotnet installation
+    if [ -d "/usr/local/share/dotnet" ]; then
+        export DOTNET_ROOT="/usr/local/share/dotnet"
+    elif [ -d "/usr/share/dotnet" ]; then
+        export DOTNET_ROOT="/usr/share/dotnet"
+    elif command -v dotnet >/dev/null 2>&1; then
+        # Get dotnet installation path
+        DOTNET_PATH=$(dirname "$(readlink -f "$(which dotnet)")")
+        export DOTNET_ROOT="$DOTNET_PATH"
+    fi
+fi
 
 # Check for controller-only methods (including legacy x-manual-implementation flag)
 HAS_CONTROLLER_ONLY_METHODS=false
