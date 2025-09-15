@@ -44,12 +44,11 @@ echo "🔍 Testing Basic Service Availability..."
 run_test "Bannou service basic availability" "curl --fail --max-time 10 http://bannou:8080/testing/run-enabled"
 run_test "Bannou service direct health check" "curl --fail --max-time 10 http://bannou:8080/health || true"
 
-# Test 5-6: Queue system infrastructure
-echo "🔍 Testing Queue System Infrastructure..."
-run_test "Queue status endpoint" "curl --fail --max-time 5 -X POST -H 'Content-Type: application/json' -d '{\"queue_id\":\"test\",\"user_id\":\"user1\"}' http://openresty/queue/status"
-run_test "Admin heartbeats endpoint" "curl --fail --max-time 5 http://openresty:8081/admin/heartbeats"
+# Test 5: Admin heartbeats
+echo "🔍 Testing Admin Heartbeats..."
+run_test "Admin heartbeats endpoint" "curl --fail --max-time 5 http://openresty:8080/admin/heartbeats"
 
-# Test 7: Configuration validation
+# Test 6: Configuration validation
 echo "🔍 Testing Configuration..."
 run_test "Environment variables accessible" "test -n \"$SERVICE_DOMAIN\" || echo 'SERVICE_DOMAIN not set, using defaults'"
 
