@@ -4,12 +4,12 @@ Comprehensive testing documentation for Bannou's schema-driven microservices arc
 
 ## Overview
 
-Bannou implements a **revolutionary 10-step CI/CD pipeline** with comprehensive testing coverage including:
+Bannou implements a **progressive CI/CD pipeline** with comprehensive testing coverage including:
 
 - **Schema-Driven Development**: OpenAPI specifications drive automatic test generation
 - **Service-Specific Testing**: Individual service plugin testing with `make test PLUGIN=service`
 - **Dual-Transport Validation**: HTTP and WebSocket protocol consistency testing
-- **GitHub Actions Integration**: Complete 10-step automated pipeline
+- **GitHub Actions Integration**: Complete progressive automated pipeline
 - **189+ Automated Tests**: Unit tests, integration tests, and protocol validation
 
 ## Quick Start
@@ -24,7 +24,7 @@ make test PLUGIN=auth          # Test auth service only
 make test PLUGIN=connect       # Test connect service only
 
 # Complete CI pipeline locally
-make test-ci                   # Matches GitHub Actions 10-step pipeline
+make test-ci                   # Matches GitHub Actions progressive pipeline
 
 # Individual test types
 make test-unit                 # Unit tests only
@@ -126,42 +126,44 @@ make ci-up-compose
 make test-infrastructure
 ```
 
-## GitHub Actions 10-Step CI/CD Pipeline
+## GitHub Actions Progressive CI/CD Pipeline
 
 ### Pipeline Overview
 
-The comprehensive CI/CD pipeline (`.github/workflows/ci.integration.yml`) ensures complete validation:
+The comprehensive CI/CD pipeline (`.github/workflows/ci.integration.yml`) ensures complete validation through progressive testing phases:
 
 #### Generation and Build Phase
-1. **🔧 Generate Services (Initial)** - Create controllers/models from OpenAPI schemas
-2. **📦 Generate Client SDK (Initial)** - Build client SDK from service definitions
-3. **🏗️ Build All Projects** - Compile with Release configuration
+- **🔧 Generate Services (Initial)** - Create controllers/models from OpenAPI schemas
+- **📦 Generate Client SDK (Initial)** - Build client SDK from service definitions
+- **🏗️ Build All Projects** - Compile with Release configuration
 
 #### Consistency Validation Phase
-4. **🔍 Generate Services (Conflict Detection)** - Re-generate to detect conflicts
-5. **🔄 Generate Client SDK (Consistency Check)** - Ensure SDK consistency
+- **🔍 Generate Services (Conflict Detection)** - Re-generate to detect conflicts
+- **🔄 Generate Client SDK (Consistency Check)** - Ensure SDK consistency
 
-#### Testing Phase
-6. **🧪 Unit Tests** - 189+ tests across all service plugins
-7. **🏗️ Infrastructure Tests** - Docker Compose + connectivity validation
-8. **🔗 HTTP Integration Tests** - Service-to-service communication validation
+#### Infrastructure Testing Phase
+- **🧪 Unit Tests** - 189+ tests across all service plugins
+- **🏗️ Infrastructure Tests (Minimal)** - TESTING service only for reduced dependencies
+- **🛑 Container Restart** - Clean separation between infrastructure and integration testing
 
-#### Protocol Validation Phase
-9. **📡 WebSocket Backwards Compatibility** - Published NuGet SDK compatibility
-10. **🚀 WebSocket Forward Compatibility** - Current generated SDK compatibility
+#### Integration Testing Phase
+- **🚀 Service Startup (Full)** - All services enabled for comprehensive integration testing
+- **🔗 HTTP Integration Tests** - Service-to-service communication validation
+- **📡 WebSocket Backwards Compatibility** - Published NuGet SDK compatibility
+- **🚀 WebSocket Forward Compatibility** - Current generated SDK compatibility
 
 ### Local Pipeline Reproduction
 
 ```bash
-# Complete 10-step pipeline locally (matches GitHub Actions exactly)
+# Complete progressive pipeline locally (matches GitHub Actions exactly)
 make test-ci
 
 # Individual pipeline components
-make generate-services-for-consistency  # Steps 4-5
-make test-unit                          # Step 6
-make test-infrastructure                # Step 7
-make test-http-daemon                   # Step 8
-make test-edge-daemon                   # Steps 9-10
+make generate-services-for-consistency  # Consistency validation
+make test-unit                          # Unit testing
+make test-infrastructure                # Infrastructure testing (minimal deps)
+make test-http-daemon                   # HTTP integration testing
+make test-edge-daemon                   # WebSocket protocol testing
 ```
 
 ### Service-Specific Development Workflow
