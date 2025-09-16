@@ -1,17 +1,5 @@
 services:
 
-  # Infrastructure testing configuration for bannou service
-  # Only enables the TESTING service to minimize dependencies
-  bannou:
-    environment:
-      # Disable all services by default
-      - Services_Enabled=false
-      # Only enable the testing service for infrastructure tests
-      - TESTING_SERVICE_ENABLED=true
-      # Set minimal logging for cleaner infrastructure test output
-      - APP_LOGGING_LEVEL=Information
-      - ASPNETCORE_ENVIRONMENT=Development
-
   # Infrastructure testing configuration for bannou-dapr
   bannou-dapr:
     # Use minimal restart policy for infrastructure testing
