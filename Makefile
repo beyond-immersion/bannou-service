@@ -244,6 +244,9 @@ test-infrastructure-compose:
 test-infrastructure-openresty:
 	@echo "🚀 Running OpenResty infrastructure integration tests (TESTING service only)..."
 	if [ ! -f .env ]; then touch .env; fi
+	@echo "🔧 Building Docker image with TESTING service only..."
+	docker compose --env-file .env -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" build --build-arg BANNOU_SERVICES="testing"
+	@echo "🚀 Starting infrastructure tests..."
 	docker compose --env-file .env -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" up --exit-code-from=bannou-tester
 	@echo "✅ OpenResty infrastructure integration tests completed"
 

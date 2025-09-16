@@ -71,6 +71,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y docker-compose
 
+      - name: 7️⃣ Infrastructure Tests (Build with TESTING service only)
+        env:
+          ACCOUNT_DB_USER: ${{ secrets.ACCOUNT_DB_USER }}
+          ACCOUNT_DB_PASSWORD: ${{ secrets.ACCOUNT_DB_PASSWORD }}
+          AUTH_TOKEN_PUBLIC_KEY: ${{ secrets.AUTH_TOKEN_PUBLIC_KEY }}
+          AUTH_TOKEN_PRIVATE_KEY: ${{ secrets.AUTH_TOKEN_PRIVATE_KEY }}
+        run: |
+          echo "🔧 Building Docker image with TESTING service only..."
+          # Create .env file if not exists for environment variables
+          if [ ! -f .env ]; then touch .env; fi
+
+          # Build Docker image with only TESTING service to minimize dependencies
+          docker compose --env-file ./.env -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" build --build-arg BANNOU_SERVICES="testing"
+
       - name: 7️⃣ Infrastructure Tests (Execution)
         env:
           ACCOUNT_DB_USER: ${{ secrets.ACCOUNT_DB_USER }}
@@ -90,6 +104,20 @@ jobs:
           docker compose -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" down --remove-orphans -v
 
       # Step 6: Start Services for Integration Testing - full service configuration for HTTP/WebSocket tests
+      - name: 8️⃣ Build Services for Integration Testing (All Services)
+        env:
+          ACCOUNT_DB_USER: ${{ secrets.ACCOUNT_DB_USER }}
+          ACCOUNT_DB_PASSWORD: ${{ secrets.ACCOUNT_DB_PASSWORD }}
+          AUTH_TOKEN_PUBLIC_KEY: ${{ secrets.AUTH_TOKEN_PUBLIC_KEY }}
+          AUTH_TOKEN_PRIVATE_KEY: ${{ secrets.AUTH_TOKEN_PRIVATE_KEY }}
+        run: |
+          echo "🔧 Building Docker image with all services for integration testing..."
+          # Create .env file if not exists for environment variables
+          if [ ! -f .env ]; then touch .env; fi
+
+          # Build Docker image with all services (no BANNOU_SERVICES restriction)
+          docker compose --env-file ./.env -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" build
+
       - name: 8️⃣ Start Services for Integration Testing
         env:
           ACCOUNT_DB_USER: ${{ secrets.ACCOUNT_DB_USER }}
