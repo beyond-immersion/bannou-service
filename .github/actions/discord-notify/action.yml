@@ -43,6 +43,6 @@ runs:
         embed-url: "${{ inputs.run-url }}"
         embed-description: ${{ inputs.status == 'success' && 'Stage completed successfully' || inputs.status == 'failure' && 'Stage failed - check logs for details' || 'Stage was cancelled' }}
         embed-color: ${{ inputs.status == 'success' && '65280' || inputs.status == 'failure' && '16711680' || '16776960' }}
-        embed-footer-text: ${{ inputs.commit-message != '' && format('Commit: {0}', inputs.commit-message) || 'No commit message' }}
+        embed-footer-text: "${{ inputs.commit-message != '' && inputs.commit-message || 'No commit message' }}"
         embed-author-name: ${{ inputs.commit-author }}
         embed-author-url: "${{ inputs.repository-url }}"
