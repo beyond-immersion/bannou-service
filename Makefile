@@ -211,12 +211,8 @@ sync:
 	git pull && git submodule update --init --recursive
 	@echo "✅ Project and module syncing complete"
 
-# GitHub Actions 10-step pipeline (local reproduction)
-test-ci: generate-services-for-consistency test-unit build-compose ci-up-compose test-infrastructure test-http-daemon test-edge-daemon
-	@echo "🚀 Complete CI pipeline executed locally (matches GitHub Actions)"
-
-# Service generation consistency check (matches steps 4-5)
-generate-services-for-consistency:
+# Service generation consistency check
+generate-services-diff:
 	@echo "🔍 Testing service generation consistency..."
 	$(MAKE) generate-services
 	git diff --exit-code || (echo "❌ Service generation created changes" && exit 1)
@@ -227,7 +223,7 @@ generate-services-for-consistency:
 test:
 	@scripts/run-tests.sh $(PLUGIN)
 
-# .NET unit testing (matches steps 6)
+# .NET unit testing (matches CI workflow)
 test-unit:
 	@echo "🧪 Running .NET unit tests..."
 	dotnet test
@@ -239,19 +235,8 @@ test-infrastructure:
 	bash scripts/infrastructure-tests.sh
 	@echo "✅ Infrastructure integration tests completed"
 
-# Infrastructure integration testing (matches step 7)
-# This runs infrastructure-tests.sh inside a bannou-tester container that has network access
-# to all service containers (bannou, openresty, routing-redis). The --exit-code-from flag
-# ensures the make command fails if the infrastructure tests fail inside the container.
-test-infrastructure-compose:
-	@echo "🚀 Running infrastructure integration tests (docker compose)..."
-	if [ ! -f .env ]; then touch .env; fi
-	docker compose --env-file .env -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" up --exit-code-from=bannou-tester
-	@echo "✅ Infrastructure integration tests (docker compose) completed"
-
-# Infrastructure integration testing for OpenResty local development
+# Infrastructure integration testing (matches CI workflow)
 # Uses minimal service configuration (TESTING service only) to reduce dependencies
-# The bannou-tester container runs infrastructure-tests.sh inside the Docker network
 test-infrastructure-openresty:
 	@echo "🚀 Running OpenResty infrastructure integration tests (TESTING service only)..."
 	if [ ! -f .env ]; then touch .env; fi
@@ -267,7 +252,7 @@ test-http:
 	dotnet run --project http-tester
 	@echo "✅ HTTP integration tests completed"
 
-# HTTP integration testing with daemon mode (matches step 8)
+# HTTP integration testing with daemon mode (matches CI workflow)
 test-http-daemon:
 	@echo "🧪 Running HTTP integration tests (daemon mode)..."
 	DAEMON_MODE=true dotnet run --project http-tester --configuration Release
@@ -279,7 +264,7 @@ test-edge:
 	dotnet run --project edge-tester
 	@echo "✅ WebSocket/edge integration tests completed"
 
-# WebSocket/edge testing with daemon mode (matches steps 9-10)  
+# WebSocket/edge testing with daemon mode (matches CI workflow)
 test-edge-daemon:
 	@echo "🧪 Running WebSocket protocol tests (daemon mode)..."
 	DAEMON_MODE=true dotnet run --project edge-tester --configuration Release

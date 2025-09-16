@@ -5,6 +5,8 @@ project.lock.json
 *.pyc
 nupkg/
 .env
+# Allow CI-specific environment files (non-sensitive)
+!.env.ci.*
 
 # Generated Client SDK (regenerated on build)
 Bannou.Client.SDK/

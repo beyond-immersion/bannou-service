@@ -1,0 +1,34 @@
+name: 'HTTP Integration Tests'
+description: 'Run HTTP integration tests with coordinator service configuration'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Build Integration Services (All Services)
+      shell: bash
+      run: |
+        echo "🔧 Building Docker image with all services for HTTP integration testing..."
+        echo "📋 Using .env.ci.http configuration for coordinator mode..."
+        docker compose --env-file ./.env.ci.http -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" build
+
+    - name: Start Coordinator Services for HTTP Testing
+      shell: bash
+      run: |
+        echo "🚀 Starting coordinator services for HTTP integration testing..."
+        echo "📋 Coordinator will manage test subject services as needed..."
+        docker compose --env-file ./.env.ci.http -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" up -d
+        echo "⏳ Waiting for coordinator services to be ready..."
+        sleep 30
+
+    - name: Execute HTTP Integration Tests
+      shell: bash
+      run: |
+        echo "🔗 Running HTTP integration tests with generated client types..."
+        DAEMON_MODE=true dotnet run --project http-tester --configuration Release --no-build
+
+    - name: Cleanup Integration Services
+      if: always()
+      shell: bash
+      run: |
+        echo "🛑 Stopping integration testing services..."
+        docker compose -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" down --remove-orphans -v

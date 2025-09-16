@@ -1,0 +1,29 @@
+name: 'WebSocket Backward Compatibility Tests'
+description: 'Run WebSocket tests with published NuGet SDK for backward compatibility'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Transition to Edge Testing Configuration
+      shell: bash
+      run: |
+        echo "🔄 Transitioning to WebSocket/Edge testing configuration..."
+        echo "📋 Stopping HTTP testing services..."
+        docker compose -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" down --remove-orphans
+        echo "🚀 Starting coordinator services for WebSocket backward compatibility testing..."
+        echo "📋 Using .env.ci.edge configuration for WebSocket testing..."
+        docker compose --env-file ./.env.ci.edge -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" up -d
+        echo "⏳ Waiting for WebSocket coordinator services to be ready..."
+        sleep 30
+
+    - name: Build Edge Tester with Published SDK
+      shell: bash
+      run: |
+        echo "🔧 Building edge-tester with published NuGet dependency..."
+        dotnet build edge-tester --configuration Release -p:UsePublishedSDK=true --no-dependencies
+
+    - name: Execute WebSocket Backward Compatibility Tests
+      shell: bash
+      run: |
+        echo "📡 Running WebSocket tests with published NuGet SDK (backwards compatibility)..."
+        DAEMON_MODE=true dotnet run --project edge-tester --configuration Release --no-build

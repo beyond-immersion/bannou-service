@@ -1,0 +1,66 @@
+name: 'Setup Bannou Development Environment'
+description: 'Common setup steps for Bannou CI/CD pipeline'
+
+inputs:
+  dotnet-version:
+    description: '.NET version to install'
+    required: false
+    default: '9.0.x'
+
+outputs:
+  commit-message:
+    description: 'Git commit message'
+    value: ${{ steps.commit-info.outputs.commit-message }}
+  commit-author:
+    description: 'Git commit author'
+    value: ${{ steps.commit-info.outputs.commit-author }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ inputs.dotnet-version }}
+
+    - name: Restore NuGet Packages
+      shell: bash
+      run: |
+        echo "📦 Restoring NuGet packages (including NSwag.MSBuild)..."
+        dotnet restore
+
+    - name: Install NSwag Global Tool
+      shell: bash
+      run: |
+        echo "🔧 Installing NSwag as global tool (fallback for CI environments)..."
+        dotnet tool install --global NSwag.ConsoleCore --version 14.2.0 || echo "NSwag tool already installed or MSBuild package sufficient"
+
+    - name: Generate Services (Initial)
+      shell: bash
+      run: |
+        echo "🔧 Generating all service controllers, models, and clients..."
+        scripts/generate-all-services.sh
+
+    - name: Generate Client SDK (Initial)
+      shell: bash
+      run: |
+        echo "📦 Generating Client SDK from current services..."
+        scripts/generate-client-sdk.sh
+
+    - name: Build All Projects
+      shell: bash
+      run: |
+        echo "🏗️ Building all projects with generated code..."
+        dotnet build --configuration Release
+
+    - name: Extract Commit Information
+      id: commit-info
+      shell: bash
+      run: |
+        echo "commit-message=$(git log -1 --pretty=format:'%s')" >> $GITHUB_OUTPUT
+        echo "commit-author=$(git log -1 --pretty=format:'%an')" >> $GITHUB_OUTPUT
