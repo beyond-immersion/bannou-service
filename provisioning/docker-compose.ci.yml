@@ -31,11 +31,6 @@ services:
         condition: service_healthy
     command: sh -c "/wait-for-health.sh && /infrastructure-tests.sh"
 
-  # silence filebeat during CI testing and fix permission issues
-  filebeat:
-    command: sh -c "(chmod go-w /usr/share/filebeat/filebeat.yml 2>/dev/null || echo 'Cannot chmod in CI, continuing...') && filebeat -e"
-    logging:
-      driver: none
 
 networks:
   celestial_network:
