@@ -4,6 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ServiceLib>testing</ServiceLib>
     <RootNamespace>BeyondImmersion.BannouService.Testing</RootNamespace>
     <Configurations>Debug;Release;Development</Configurations>
   </PropertyGroup>
