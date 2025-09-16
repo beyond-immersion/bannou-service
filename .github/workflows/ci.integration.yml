@@ -79,11 +79,9 @@ jobs:
           AUTH_TOKEN_PRIVATE_KEY: ${{ secrets.AUTH_TOKEN_PRIVATE_KEY }}
         run: |
           echo "🔧 Building Docker image with TESTING service only..."
-          # Create .env file if not exists for environment variables
-          if [ ! -f .env ]; then touch .env; fi
-
           # Build Docker image with only TESTING service to minimize dependencies
-          docker compose --env-file ./.env -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" build --build-arg BANNOU_SERVICES="testing"
+          # Environment variables are passed through from GitHub Actions environment
+          docker compose -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" build --build-arg BANNOU_SERVICES="testing"
 
       - name: 7️⃣ Infrastructure Tests (Execution)
         env:
@@ -93,11 +91,9 @@ jobs:
           AUTH_TOKEN_PRIVATE_KEY: ${{ secrets.AUTH_TOKEN_PRIVATE_KEY }}
         run: |
           echo "🏗️ Running infrastructure tests with minimal service configuration (TESTING service only)..."
-          # Create .env file if not exists for environment variables
-          if [ ! -f .env ]; then touch .env; fi
-
           # Use infrastructure configuration to test only TESTING service (minimal dependencies)
-          docker compose --env-file ./.env -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" up --exit-code-from=bannou-tester
+          # Environment variables are passed through from GitHub Actions environment
+          docker compose -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" up --exit-code-from=bannou-tester
 
           # Stop containers after infrastructure tests
           echo "🛑 Stopping containers after infrastructure tests..."
@@ -112,11 +108,9 @@ jobs:
           AUTH_TOKEN_PRIVATE_KEY: ${{ secrets.AUTH_TOKEN_PRIVATE_KEY }}
         run: |
           echo "🔧 Building Docker image with all services for integration testing..."
-          # Create .env file if not exists for environment variables
-          if [ ! -f .env ]; then touch .env; fi
-
           # Build Docker image with all services (no BANNOU_SERVICES restriction)
-          docker compose --env-file ./.env -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" build
+          # Environment variables are passed through from GitHub Actions environment
+          docker compose -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" build
 
       - name: 8️⃣ Start Services for Integration Testing
         env:
@@ -126,11 +120,9 @@ jobs:
           AUTH_TOKEN_PRIVATE_KEY: ${{ secrets.AUTH_TOKEN_PRIVATE_KEY }}
         run: |
           echo "🚀 Starting services with full configuration for integration testing..."
-          # Create .env file if not exists for environment variables
-          if [ ! -f .env ]; then touch .env; fi
-
           # Start services with default configuration (all services enabled)
-          docker compose --env-file ./.env -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" up -d
+          # Environment variables are passed through from GitHub Actions environment
+          docker compose -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" up -d
 
           # Wait for services to be ready
           echo "⏳ Waiting for services to be ready..."

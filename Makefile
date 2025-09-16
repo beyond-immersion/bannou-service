@@ -11,6 +11,17 @@
 help: ## Show this help message
 	@scripts/show-help.sh
 
+all: ## Complete development cycle - clean, generate, format, build, test, docker build, infrastructure test
+	@echo "🚀 Running complete development cycle..."
+	@$(MAKE) clean
+	@$(MAKE) generate
+	@$(MAKE) fix
+	@$(MAKE) build
+	@$(MAKE) test
+	@$(MAKE) build-compose
+	@$(MAKE) test-infrastructure-openresty
+	@echo "✅ Complete development cycle finished successfully"
+
 # =============================================================================
 # ENVIRONMENT MANAGEMENT
 # =============================================================================
