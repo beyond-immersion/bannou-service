@@ -83,7 +83,7 @@ jobs:
           if [ ! -f .env ]; then touch .env; fi
 
           # Use infrastructure configuration to test only TESTING service (minimal dependencies)
-          docker compose --env-file ./.env -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" up --exit-code-from=bannou-tester --abort-on-container-exit
+          docker compose --env-file ./.env -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" up --exit-code-from=bannou-tester
 
           # Stop containers after infrastructure tests
           echo "🛑 Stopping containers after infrastructure tests..."
