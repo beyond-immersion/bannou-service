@@ -1,32 +1,12 @@
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Testing;
+using BeyondImmersion.BannouService.Testing.Tests;
 using Microsoft.Extensions.Configuration;
 
 namespace BeyondImmersion.BannouService.HttpTester;
 
 public class Program
 {
-    private static TestConfiguration _configuration = null!;
-    /// <summary>
-    /// Client configuration.
-    /// Pull from .env files, Config.json, ENVs, and command line args using bannou-service configuration system.
-    /// </summary>
-    public static TestConfiguration Configuration
-    {
-        get
-        {
-            if (_configuration != null)
-                return _configuration;
-
-            var configRoot = IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
-            _configuration = configRoot.Get<TestConfiguration>() ?? new TestConfiguration();
-
-            return _configuration;
-        }
-
-        internal set => _configuration = value;
-    }
-
     /// <summary>
     /// Token source for initiating a clean shutdown.
     /// </summary>
@@ -71,14 +51,6 @@ public class Program
     {
         try
         {
-            // configuration is auto-created on first get, so this call creates the config too
-            if (Configuration == null || !Configuration.HasHttpRequired())
-                throw new InvalidOperationException("Required HTTP testing configuration missing.");
-
-            Console.WriteLine("HTTP Service Tester - Direct endpoint testing");
-            Console.WriteLine($"Base URL: {Configuration.Http_Base_Url}");
-            Console.WriteLine();
-
             Console.WriteLine("Testing service-to-service communication via NSwag-generated clients...");
 
             // Start the interactive test console - no client abstraction needed

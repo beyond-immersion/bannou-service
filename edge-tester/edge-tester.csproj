@@ -29,6 +29,12 @@
   <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
     <ProjectReference Include="../lib-connect/lib-connect.csproj" />
+    <ProjectReference Include="..\lib-accounts\lib-accounts.csproj" />
+    <ProjectReference Include="..\lib-auth\lib-auth.csproj" />
+    <ProjectReference Include="..\lib-behavior\lib-behavior.csproj" />
+    <ProjectReference Include="..\lib-game-session\lib-game-session.csproj" />
+    <ProjectReference Include="..\lib-permissions\lib-permissions.csproj" />
+    <ProjectReference Include="..\lib-website\lib-website.csproj" />
   </ItemGroup>
 
   <!-- Backwards Compatibility Testing: Use Published NuGet SDK -->

@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 using System.Net.WebSockets;
 using System.Text;
 
-namespace BeyondImmersion.ServiceTester;
+namespace BeyondImmersion.EdgeTester;
 
 public class Program
 {

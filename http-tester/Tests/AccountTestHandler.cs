@@ -1,7 +1,7 @@
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Testing;
 
-namespace BeyondImmersion.BannouService.HttpTester;
+namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
 /// <summary>
 /// Test handler for account-related API endpoints using generated clients.

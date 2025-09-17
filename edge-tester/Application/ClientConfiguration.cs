@@ -1,4 +1,4 @@
-namespace BeyondImmersion.ServiceTester.Application;
+namespace BeyondImmersion.EdgeTester.Application;
 
 public sealed class ClientConfiguration
 {

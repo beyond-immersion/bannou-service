@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using System.Net.WebSockets;
 using System.Text;
 
-namespace BeyondImmersion.ServiceTester.Tests;
+namespace BeyondImmersion.EdgeTester.Tests;
 
 public class ConnectWebSocketTestHandler : IServiceTestHandler
 {

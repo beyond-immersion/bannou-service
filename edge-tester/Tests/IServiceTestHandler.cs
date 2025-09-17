@@ -1,4 +1,4 @@
-namespace BeyondImmersion.ServiceTester.Tests;
+namespace BeyondImmersion.EdgeTester.Tests;
 
 public interface IServiceTestHandler
 {

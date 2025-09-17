@@ -2,7 +2,7 @@ using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Testing;
 using System.Text.Json;
 
-namespace BeyondImmersion.BannouService.HttpTester;
+namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
 /// <summary>
 /// Test handler for Connect service HTTP API endpoints using generated clients.

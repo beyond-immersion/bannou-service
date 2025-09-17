@@ -1,7 +1,7 @@
 using BeyondImmersion.BannouService.Testing;
 using Newtonsoft.Json.Linq;
 
-namespace BeyondImmersion.BannouService.HttpTester;
+namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
 /// <summary>
 /// Test handler for validating that auth flows work correctly with OpenResty routing
@@ -57,8 +57,8 @@ public class OpenRestyAuthTestHandler : IServiceTestHandler
             var response2 = await client.GetAsync<JObject>("api/accounts/list");
 
             // We don't care about the specific responses, just that routing works
-            bool routingWorking = (response1.StatusCode != 500 && response1.StatusCode != 502) &&
-                                (response2.StatusCode != 500 && response2.StatusCode != 502);
+            var routingWorking = response1.StatusCode != 500 && response1.StatusCode != 502 &&
+                                response2.StatusCode != 500 && response2.StatusCode != 502;
 
             if (routingWorking)
                 return TestResult.Successful("Authenticated requests routing correctly through OpenResty");
@@ -82,7 +82,7 @@ public class OpenRestyAuthTestHandler : IServiceTestHandler
                 "api/accounts/list"
             };
 
-            int accessibleEndpoints = 0;
+            var accessibleEndpoints = 0;
             foreach (var endpoint in testEndpoints)
             {
                 try
