@@ -1,4 +1,35 @@
 services:
 
+  # build the monoservice with all libs
   bannou:
+    image: bannou:latest
+    build:
+      context: ../
+      dockerfile: provisioning/Dockerfile
+      args:
+        BANNOU_SERVICES: "all"
     env_file: ../.env.ci.http
+
+  # HTTP testing configuration for bannou-dapr
+  bannou-dapr:
+    # Use minimal restart policy for HTTP testing
+    restart: "no"
+
+  # HTTP integration testing container - mirrors infrastructure testing pattern
+  # This container runs ON THE INTERNAL NETWORK and can access Dapr services directly
+  bannou-http-tester:
+    build:
+      context: ..
+      dockerfile: http-tester/Dockerfile
+    network_mode: service:bannou
+    env_file: ../.env.ci.http
+    stdin_open: false
+    depends_on:
+      bannou:
+        condition: service_healthy
+      openresty:
+        condition: service_healthy
+    command: ["dotnet", "run", "--project", "http-tester", "--configuration", "Release", "--no-build"]
+
+networks:
+  celestial_network:

@@ -11,20 +11,11 @@ runs:
         echo "📋 Using .env.ci.http configuration for coordinator mode..."
         docker compose -p bannou-ci-http -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.http.yml" build
 
-    - name: Start Coordinator Services for HTTP Integration Testing
-      shell: bash
-      run: |
-        echo "🚀 Starting coordinator services for HTTP integration testing..."
-        echo "📋 Coordinator will manage test subject services as needed..."
-        docker compose -p bannou-ci-http -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml"  -f "./provisioning/docker-compose.ci.http.yml" up -d
-        echo "⏳ Waiting for coordinator services to be ready..."
-        sleep 30
-
     - name: Execute HTTP Integration Tests
       shell: bash
       run: |
-        echo "🔗 Running HTTP integration tests with generated client types..."
-        DAEMON_MODE=true dotnet run --project http-tester --configuration Release --no-build
+        echo "🔗 Running HTTP integration tests via containerized service-to-service testing..."
+        docker compose -p bannou-ci-http -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.http.yml" up --exit-code-from=bannou-http-tester
 
     - name: Cleanup HTTP Integration Services
       if: always()

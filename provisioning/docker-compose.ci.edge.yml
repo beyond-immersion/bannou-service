@@ -1,4 +1,33 @@
 services:
 
+  # build the monoservice with all libs
   bannou:
+    image: bannou:latest
+    build:
+      context: ../
+      dockerfile: provisioning/Dockerfile
     env_file: ../.env.ci.edge
+
+  # Edge testing configuration for bannou-dapr
+  bannou-dapr:
+    # Use minimal restart policy for HTTP testing
+    restart: "no"
+
+  # Edge integration testing container
+  bannou-edge-tester:
+    build:
+      context: ..
+      dockerfile: edge-tester/Dockerfile
+    networks:
+      - routing_network
+    env_file: ../.env.ci.edge
+    stdin_open: false
+    depends_on:
+      bannou:
+        condition: service_healthy
+      openresty:
+        condition: service_healthy
+    command: ["dotnet", "run", "--project", "edge-tester", "--configuration", "Release", "--no-build"]
+
+networks:
+  routing_network:

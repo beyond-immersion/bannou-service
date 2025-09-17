@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>BeyondImmersion.BannouService.ServiceTester</RootNamespace>
+    <RootNamespace>BeyondImmersion.BannouService.EdgeTester</RootNamespace>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <OutputType>Exe</OutputType>
     <Configurations>Debug;Release;Development</Configurations>

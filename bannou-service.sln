@@ -5,7 +5,7 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bannou-service", "bannou-service\bannou-service.csproj", "{FD238707-4552-4A0E-8F17-6A12CC731B86}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "service-tester", "edge-tester\service-tester.csproj", "{3E450249-3580-4178-BB5E-7F36D254D38E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "edge-tester", "edge-tester\edge-tester.csproj", "{3E450249-3580-4178-BB5E-7F36D254D38E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "http-tester", "http-tester\http-tester.csproj", "{A1B2C3D4-E5F6-7890-1234-567890ABCDEF}"
 EndProject

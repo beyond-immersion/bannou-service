@@ -18,8 +18,9 @@ all: ## Complete development cycle - clean, generate, format, build, test, docke
 	@$(MAKE) fix
 	@$(MAKE) build
 	@$(MAKE) test
-	@$(MAKE) build-compose
-	@$(MAKE) test-infrastructure-openresty
+	@$(MAKE) test-infrastructure
+	@$(MAKE) test-http
+	@$(MAKE) test-edge
 	@echo "✅ Complete development cycle finished successfully"
 
 # =============================================================================
@@ -229,44 +230,30 @@ test-unit:
 	dotnet test
 	@echo "✅ .NET unit tests completed"
 
-# Infrastructure integration testing
-test-infrastructure:
-	@echo "🚀 Running infrastructure integration tests"
-	bash scripts/infrastructure-tests.sh
-	@echo "✅ Infrastructure integration tests completed"
-
 # Infrastructure integration testing (matches CI workflow)
 # Uses minimal service configuration (TESTING service only) to reduce dependencies
-test-infrastructure-openresty:
-	@echo "🚀 Building OpenResty infrastructure test services (TESTING service only)..."
-	docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" build --build-arg BANNOU_SERVICES="testing"
-	@echo "🚀 Starting infrastructure tests..."
-	docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" up --exit-code-from=bannou-tester
+test-infrastructure:
+	@echo "🚀 Running OpenResty infrastructure tests (TESTING service only) via containerized testing..."
+	docker compose -p bannou-infra-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" build
+	docker compose -p bannou-infra-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" up --exit-code-from=bannou-infra-tester
+	docker compose -p bannou-infra-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" down --remove-orphans -v
 	@echo "✅ OpenResty infrastructure integration tests completed"
 
-# HTTP integration testing
+# HTTP integration testing (matches CI workflow)
 test-http:
-	@echo "🧪 Running HTTP integration tests..."
-	dotnet run --project http-tester
+	@echo "🧪 Running HTTP integration tests via containerized service-to-service testing..."
+	docker compose -p bannou-http-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.http.yml" build
+	docker compose -p bannou-http-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.http.yml" up --exit-code-from=bannou-http-tester
+	docker compose -p bannou-http-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.http.yml" down --remove-orphans -v
 	@echo "✅ HTTP integration tests completed"
 
-# HTTP integration testing with daemon mode (matches CI workflow)
-test-http-daemon:
-	@echo "🧪 Running HTTP integration tests (daemon mode)..."
-	DAEMON_MODE=true dotnet run --project http-tester --configuration Release
-	@echo "✅ HTTP integration tests (daemon mode) completed"
-
-# WebSocket/edge integration testing
+# WebSocket/edge integration testing (matches CI workflow)
 test-edge:
-	@echo "🧪 Running WebSocket/Edge integration tests..."
-	dotnet run --project edge-tester
-	@echo "✅ WebSocket/edge integration tests completed"
-
-# WebSocket/edge testing with daemon mode (matches CI workflow)
-test-edge-daemon:
-	@echo "🧪 Running WebSocket protocol tests (daemon mode)..."
-	DAEMON_MODE=true dotnet run --project edge-tester --configuration Release
-	@echo "✅ WebSocket/edge integration tests (daemon mode) completed"
+	@echo "🧪 Running Edge integration tests..."
+	docker compose -p bannou-edge-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.edge.yml" build
+	docker compose -p bannou-edge-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.edge.yml" up --exit-code-from=bannou-edge-tester
+	docker compose -p bannou-edge-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.edge.yml" down --remove-orphans -v
+	@echo "✅ Edge integration tests completed"
 
 tagname := $(shell date -u +%FT%H-%M-%SZ)
 tag:
