@@ -7,9 +7,8 @@ runs:
     - name: Ensure WebSocket Services Running
       shell: bash
       run: |
-        echo "🔄 Ensuring WebSocket coordinator services are running for forward compatibility testing..."
-        echo "📋 Services should be running from backward compatibility stage with .env.ci.edge configuration..."
-        docker compose --env-file ./.env.ci.edge -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" ps
+        echo "📋 Using .env.ci.edge configuration for forward-compatibility WebSocket testing..."
+        docker compose -p bannou-ci-edge -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.edge.yml" ps
 
     - name: Build Edge Tester with Current SDK
       shell: bash
@@ -28,7 +27,8 @@ runs:
       shell: bash
       run: |
         echo "🛑 Final cleanup of all integration testing services..."
-        docker compose -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" down --remove-orphans -v
+        docker compose -p bannou-ci-edge -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.edge.yml" down --remove-orphans -v
+
         echo "🧹 Cleaning up Docker resources..."
         docker container prune -f
         docker image prune -f

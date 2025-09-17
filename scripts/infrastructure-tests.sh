@@ -36,17 +36,17 @@ run_test() {
 
 # Test 1-2: OpenResty Infrastructure
 echo "🔍 Testing OpenResty Infrastructure..."
-run_test "OpenResty health endpoint" "curl --fail --max-time 5 http://openresty/health"
-run_test "Redis connectivity via OpenResty" "curl --fail --max-time 5 http://openresty/health/redis"
+run_test "OpenResty health endpoint" "curl --verbose --fail --max-time 5 http://openresty/health"
+run_test "Redis connectivity via OpenResty" "curl --verbose --fail --max-time 5 http://openresty/health/redis"
 
 # Test 3-4: Basic service availability (infrastructure level only)
 echo "🔍 Testing Basic Service Availability..."
-run_test "Bannou service basic availability" "curl --fail --max-time 10 http://bannou:8080/testing/run-enabled"
-run_test "Bannou service direct health check" "curl --fail --max-time 10 http://bannou:8080/health || true"
+run_test "Bannou service basic availability" "curl --verbose --fail --max-time 10 http://bannou:80/testing/run-enabled"
+run_test "Bannou service direct health check" "curl --verbose --fail --max-time 10 http://bannou:80/health || true"
 
 # Test 5: Admin heartbeats
 echo "🔍 Testing Admin Heartbeats..."
-run_test "Admin heartbeats endpoint" "curl --fail --max-time 5 http://openresty:8080/admin/heartbeats"
+run_test "Admin heartbeats endpoint" "curl --verbose --fail --max-time 5 http://openresty:8080/admin/heartbeats"
 
 # Test 6: Configuration validation
 echo "🔍 Testing Configuration..."

@@ -1,11 +1,7 @@
 services:
 
-  # modifies the monoservice startup to include a bunch of ENVs for testing
-  # and telling it wait for backing datastores, etc to start first
   bannou:
-    environment:
-      - APP_LOGGING_LEVEL=Information
-      - ASPNETCORE_ENVIRONMENT=Development
+    env_file: ../.env.ci
 
   # add the CI components to the dapr sidecar attached to the monoservice
   # Use CI components for integration testing
@@ -13,24 +9,6 @@ services:
     volumes:
       - "./dapr/components/ci/:/components"
     restart: "no"
-
-  # adds a new sidecar to the monoservice, just to run the shell script
-  # which CURLs an API to trigger all of the integration tests to run
-  bannou-tester:
-    image: curlimages/curl:latest
-    networks:
-      - celestial_network
-    volumes:
-      - "../scripts/wait-for-health.sh:/wait-for-health.sh"
-      - "../scripts/infrastructure-tests.sh:/infrastructure-tests.sh"
-    stdin_open: false
-    depends_on:
-      bannou:
-        condition: service_healthy
-      openresty:
-        condition: service_healthy
-    command: sh -c "/wait-for-health.sh && /infrastructure-tests.sh"
-
 
 networks:
   celestial_network:

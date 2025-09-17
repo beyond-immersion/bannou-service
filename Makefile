@@ -239,9 +239,9 @@ test-infrastructure:
 # Uses minimal service configuration (TESTING service only) to reduce dependencies
 test-infrastructure-openresty:
 	@echo "🚀 Building OpenResty infrastructure test services (TESTING service only)..."
-	docker compose --env-file .env.ci.infrastructure -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" build --build-arg BANNOU_SERVICES="testing"
+	docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" build --build-arg BANNOU_SERVICES="testing"
 	@echo "🚀 Starting infrastructure tests..."
-	docker compose --env-file .env.ci.infrastructure -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.infrastructure.yml" up --exit-code-from=bannou-tester
+	docker compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" up --exit-code-from=bannou-tester
 	@echo "✅ OpenResty infrastructure integration tests completed"
 
 # HTTP integration testing

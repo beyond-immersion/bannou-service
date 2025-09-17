@@ -21,18 +21,10 @@ services:
     ports:
       - "8080:80"
       - "8443:443"
-    environment:
-      - ACCOUNT_DATABASE_USER=${ACCOUNT_DB_USER}
-      - ACCOUNT_DATABASE_PASSWORD=${ACCOUNT_DB_PASSWORD}
-      - AUTHORIZATION_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
-      - AUTHORIZATION_TOKEN_PRIVATE_KEY=${AUTH_TOKEN_PRIVATE_KEY}
-      - AUTHORIZATION_REDIS_CONNECTION_STRING=bannou-redis:6379
-      - CONNECT_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
-      - CONNECT_REDIS_CONNECTION_STRING=bannou-redis:6379
     networks:
       - celestial_network
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "--fail", "http://localhost:80/health"]
       interval: 30s
       timeout: 3s
       retries: 5
@@ -44,7 +36,7 @@ services:
     command: [
       "./daprd",
       "--app-id", "bannou",
-      "--app-port", "8080",
+      "--app-port", "80",
       "--app-protocol", "http",
       "--dapr-http-port", "3500",
       "--placement-host-address", "placement:50006",
@@ -73,27 +65,6 @@ services:
     networks:
       - celestial_network
 
-
-  account-db:
-    image: mysql:8.1.0
-    networks:
-      - celestial_network
-    environment:
-      - MYSQL_DATABASE=accounts
-      - MYSQL_USER=${ACCOUNT_DB_USER}
-      - MYSQL_PASSWORD=${ACCOUNT_DB_PASSWORD}
-      - MYSQL_RANDOM_ROOT_PASSWORD=true
-    volumes:
-      - account-data:/var/lib/mysql
-      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
-      - ./mysql/run-init/:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${ACCOUNT_DB_USER}", "-p${ACCOUNT_DB_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-
   bannou-redis:
     image: redis:latest
     networks:
@@ -108,14 +79,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
-
-  auth-redis:
-    image: redis:latest
-    networks:
-      - celestial_network
-    command: redis-server --databases 16 --appendonly yes
-    volumes:
-      - auth-redis-data:/data
 
   rabbitmq:
     image: rabbitmq:3.12-management
@@ -135,6 +98,34 @@ services:
       timeout: 10s
       retries: 10
       start_period: 30s
+
+  account-db:
+    image: mysql:8.1.0
+    networks:
+      - celestial_network
+    environment:
+      - MYSQL_DATABASE=accounts
+      - MYSQL_USER=guest
+      - MYSQL_PASSWORD=guest
+      - MYSQL_RANDOM_ROOT_PASSWORD=true
+    volumes:
+      - account-data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./mysql/run-init/:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "guest", "-pguest"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  auth-redis:
+    image: redis:latest
+    networks:
+      - celestial_network
+    command: redis-server --databases 16 --appendonly yes
+    volumes:
+      - auth-redis-data:/data
 
 networks:
   celestial_network:

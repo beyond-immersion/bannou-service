@@ -1,0 +1,28 @@
+services:
+
+  bannou:
+    env_file: ../.env.ci.infrastructure
+
+  # Infrastructure testing configuration for bannou-dapr
+  bannou-dapr:
+    # Use minimal restart policy for infrastructure testing
+    restart: "no"
+
+  # adds a new sidecar to the monoservice, just to run the shell script
+  # which CURLs an API to trigger all of the integration tests to run
+  bannou-tester:
+    image: curlimages/curl:latest
+    network_mode: service:bannou
+    volumes:
+      - "../scripts/wait-for-health.sh:/wait-for-health.sh"
+      - "../scripts/infrastructure-tests.sh:/infrastructure-tests.sh"
+    stdin_open: false
+    depends_on:
+      bannou:
+        condition: service_healthy
+      openresty:
+        condition: service_healthy
+    command: sh -c "/wait-for-health.sh && /infrastructure-tests.sh"
+
+networks:
+  celestial_network:

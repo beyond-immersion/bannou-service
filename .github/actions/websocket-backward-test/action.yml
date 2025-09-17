@@ -4,15 +4,12 @@ description: 'Run WebSocket tests with published NuGet SDK for backward compatib
 runs:
   using: 'composite'
   steps:
-    - name: Transition to Edge Testing Configuration
+    - name: Start WebSocket Services
       shell: bash
       run: |
-        echo "🔄 Transitioning to WebSocket/Edge testing configuration..."
-        echo "📋 Stopping HTTP testing services..."
-        docker compose -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" down --remove-orphans
-        echo "🚀 Starting coordinator services for WebSocket backward compatibility testing..."
-        echo "📋 Using .env.ci.edge configuration for WebSocket testing..."
-        docker compose --env-file ./.env.ci.edge -p bannou-ci-integration -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ingress.yml" up -d
+        echo "📋 Using .env.ci.edge configuration for backward-compatibility WebSocket testing..."
+        docker compose -p bannou-ci-edge -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.edge.yml" up -d
+
         echo "⏳ Waiting for WebSocket coordinator services to be ready..."
         sleep 30
 

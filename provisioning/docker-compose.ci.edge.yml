@@ -1,0 +1,4 @@
+services:
+
+  bannou:
+    env_file: ../.env.ci.edge

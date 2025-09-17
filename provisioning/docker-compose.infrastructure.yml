@@ -1,6 +1,0 @@
-services:
-
-  # Infrastructure testing configuration for bannou-dapr
-  bannou-dapr:
-    # Use minimal restart policy for infrastructure testing
-    restart: "no"
