@@ -100,22 +100,23 @@ public static class Program
         }
 
 
+        // TODO: DEPRECATED - Replace with Plugin system
         // load the assemblies (backward compatibility for existing IDaprService implementations)
-        LoadAssemblies();
+        // LoadAssemblies();
 
         // get info for dapr services in loaded assemblies
-        if (!IDaprService.EnabledServices.Any())
-        {
-            Logger.Log(LogLevel.Error, null, "No services have been enabled- exiting application.");
-            return;
-        }
+        // if (!IDaprService.EnabledServices.Any())
+        // {
+        //     Logger.Log(LogLevel.Error, null, "No services have been enabled- exiting application.");
+        //     return;
+        // }
 
         // ensure dapr services have their required configuration
-        if (!EnabledServicesHaveRequiredConfiguration())
-        {
-            Logger.Log(LogLevel.Error, null, "Required configuration missing for enabled services- exiting application.");
-            return;
-        }
+        // if (!EnabledServicesHaveRequiredConfiguration())
+        // {
+        //     Logger.Log(LogLevel.Error, null, "Required configuration missing for enabled services- exiting application.");
+        //     return;
+        // }
 
         Logger.Log(LogLevel.Information, null, "Configuration built and validated.");
 
@@ -147,10 +148,11 @@ public static class Program
             // configure services
             _ = webAppBuilder.Services.AddAuthentication();
 
+            // TODO: DEPRECATED - Replace with Plugin system controller registration
             // get all loaded assemblies hosting enabled DaprController types
-            IEnumerable<Assembly>? daprControllerAssemblies = IDaprController.EnabledServiceControllers
-                .Where(t => t.Item1.Assembly != Assembly.GetEntryAssembly())
-                .Select(t => t.Item1.Assembly);
+            // IEnumerable<Assembly>? daprControllerAssemblies = IDaprController.EnabledServiceControllers
+            //     .Where(t => t.Item1.Assembly != Assembly.GetEntryAssembly())
+            //     .Select(t => t.Item1.Assembly);
 
             _ = webAppBuilder.Services
                 .AddControllers(mvcOptions =>
@@ -158,11 +160,12 @@ public static class Program
                     mvcOptions.Filters.Add(typeof(HeaderArrayActionFilter));
                     mvcOptions.Filters.Add(typeof(HeaderArrayResultFilter));
                 })
-                .AddApplicationParts(daprControllerAssemblies)
-                .ConfigureApplicationPartManager(manager =>
-                {
-                    manager.FeatureProviders.Add(new DaprControllersFeatureProvider());
-                })
+                // TODO: Plugin system will handle controller registration
+                // .AddApplicationParts(daprControllerAssemblies)
+                // .ConfigureApplicationPartManager(manager =>
+                // {
+                //     manager.FeatureProviders.Add(new DaprControllersFeatureProvider());
+                // })
                 .AddDapr() // Add Dapr pub/sub support
                 .AddNewtonsoftJson(jsonSettings =>
                 {
@@ -273,12 +276,13 @@ public static class Program
                 }
             }
 
+            // TODO: DEPRECATED - Replace with Plugin system lifecycle
             // invoke all Service.Start() methods on enabled service handlers
-            if (!await webApp.InvokeAllServiceStartMethods())
-            {
-                Logger.Log(LogLevel.Error, "An enabled service handler has failed to start- exiting application.");
-                return;
-            }
+            // if (!await webApp.InvokeAllServiceStartMethods())
+            // {
+            //     Logger.Log(LogLevel.Error, "An enabled service handler has failed to start- exiting application.");
+            //     return;
+            // }
 
             // Start plugins
             if (PluginLoader != null)
@@ -296,8 +300,9 @@ public static class Program
             var webHostTask = webApp.RunAsync(ShutdownCancellationTokenSource.Token);
             await Task.Delay(TimeSpan.FromSeconds(1));
 
+            // TODO: DEPRECATED - Replace with Plugin system lifecycle
             // invoke all Service.Running() methods on enabled service handlers
-            await webApp.InvokeAllServiceRunningMethods();
+            // await webApp.InvokeAllServiceRunningMethods();
 
             // Invoke plugin running methods
             if (PluginLoader != null)
@@ -314,9 +319,10 @@ public static class Program
 
             Logger.Log(LogLevel.Information, null, "WebHost stopped- starting controlled application shutdown.");
 
+            // TODO: DEPRECATED - Replace with Plugin system lifecycle
             // invoke all Service.Shutdown() methods on enabled service handlers
-            if (webApp != null)
-                await webApp.InvokeAllServiceShutdownMethods();
+            // if (webApp != null)
+            //     await webApp.InvokeAllServiceShutdownMethods();
 
             // Shutdown plugins
             if (PluginLoader != null)
@@ -398,28 +404,29 @@ public static class Program
         return assemblyNames.Select(name => name.Trim()).ToList();
     }
 
-    /// <summary>
-    /// Returns whether all enabled services have their required configuration set.
-    /// </summary>
-    private static bool EnabledServicesHaveRequiredConfiguration()
-    {
-        foreach (var serviceInfo in IDaprService.EnabledServices)
-        {
-            Type interfaceType = serviceInfo.Item1;
-            Type implementationType = serviceInfo.Item2;
-            Type serviceConfig = IDaprService.GetConfigurationType(implementationType);
-            if (serviceConfig == null)
-                continue;
+    // TODO: DEPRECATED - Replace with Plugin system configuration validation
+    // /// <summary>
+    // /// Returns whether all enabled services have their required configuration set.
+    // /// </summary>
+    // private static bool EnabledServicesHaveRequiredConfiguration()
+    // {
+    //     foreach (var serviceInfo in IDaprService.EnabledServices)
+    //     {
+    //         Type interfaceType = serviceInfo.Item1;
+    //         Type implementationType = serviceInfo.Item2;
+    //         Type serviceConfig = IDaprService.GetConfigurationType(implementationType);
+    //         if (serviceConfig == null)
+    //             continue;
 
-            if (!IServiceConfiguration.HasRequiredForType(serviceConfig))
-            {
-                Logger.Log(LogLevel.Error, null, $"Required configuration is missing for the '{serviceInfo.Item3.Name}' service.");
-                return false;
-            }
-        }
+    //         if (!IServiceConfiguration.HasRequiredForType(serviceConfig))
+    //         {
+    //             Logger.Log(LogLevel.Error, null, $"Required configuration is missing for the '{serviceInfo.Item3.Name}' service.");
+    //             return false;
+    //         }
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
     /// <summary>
     /// Load appropriate sets of plugins in /plugins/ and subdirectories

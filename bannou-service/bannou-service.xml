@@ -1409,11 +1409,6 @@
             </summary>
             <returns>List of plugin names to load, or null for all plugins</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Program.EnabledServicesHaveRequiredConfiguration">
-            <summary>
-            Returns whether all enabled services have their required configuration set.
-            </summary>
-        </member>
         <member name="M:BeyondImmersion.BannouService.Program.LoadAssemblies">
              <summary>
              Load appropriate sets of plugins in /plugins/ and subdirectories
