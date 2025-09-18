@@ -18,35 +18,19 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     private GameSessionService? _service;
     private IServiceProvider? _serviceProvider;
 
-    /// <summary>
-    /// Validate that this plugin should be loaded based on environment configuration.
-    /// </summary>
-    protected override bool OnValidatePlugin()
-    {
-        var enabled = Environment.GetEnvironmentVariable("GAME-SESSION_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("🔍 GameSession service enabled check: {EnabledValue}", enabled);
-        return enabled == "true";
-    }
 
     /// <summary>
     /// Configure services for dependency injection - mimics existing [DaprService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("⏭️  GameSession service disabled, skipping service registration");
-            return;
-        }
-
         Logger?.LogInformation("🔧 Configuring GameSession service dependencies");
 
-        // Register the service implementation (existing pattern from [DaprService] attribute)
-        services.AddScoped<IGameSessionService, GameSessionService>();
-        services.AddScoped<GameSessionService>();
+        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // No need to register IGameSessionService and GameSessionService here
 
-        // Register generated configuration class
-        services.AddScoped<GameSessionServiceConfiguration>();
+        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
+        // No need to register GameSessionServiceConfiguration here
 
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
@@ -59,12 +43,6 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("⏭️  GameSession service disabled, skipping application configuration");
-            return;
-        }
-
         Logger?.LogInformation("🔧 Configuring GameSession service application pipeline");
 
         // The generated GameSessionController should already be discovered via standard ASP.NET Core controller discovery
@@ -81,8 +59,6 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        if (!OnValidatePlugin()) return true;
-
         Logger?.LogInformation("▶️  Starting GameSession service");
 
         try
@@ -118,7 +94,7 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogDebug("🏃 GameSession service running");
 
@@ -142,7 +118,7 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogInformation("🛑 Shutting down GameSession service");
 

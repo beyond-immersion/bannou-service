@@ -88,6 +88,7 @@ cat >> "$SDK_PROJECT" << 'EOF'
 
   <!-- Include only client-safe files from ServiceClients -->
   <ItemGroup>
+    <Compile Include="../bannou-service/ServiceClients/IDaprClient.cs" Condition="Exists('../bannou-service/ServiceClients/IDaprClient.cs')" />
     <Compile Include="../bannou-service/ServiceClients/DaprServiceClientBase.cs" Condition="Exists('../bannou-service/ServiceClients/DaprServiceClientBase.cs')" />
     <Compile Include="../bannou-service/ServiceClients/IServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/ServiceClients/IServiceAppMappingResolver.cs')" />
     <Compile Include="../bannou-service/ServiceClients/ServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/ServiceClients/ServiceAppMappingResolver.cs')" />

@@ -1,4 +1,7 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
@@ -9,7 +12,8 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// <summary>
 /// Generated service implementation for GameSession API
 /// </summary>
-public class GameSessionService : IGameSessionService
+[DaprService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped)]
+public class GameSessionService : IGameSessionService, IDaprService
 {
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionServiceConfiguration _configuration;

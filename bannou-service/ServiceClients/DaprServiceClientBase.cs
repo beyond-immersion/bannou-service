@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.ServiceClients;
 /// Base class for all Dapr-aware service clients.
 /// Handles dynamic app-id resolution and Dapr routing.
 /// </summary>
-public abstract class DaprServiceClientBase
+public abstract class DaprServiceClientBase : IDaprClient
 {
     /// <summary>
     /// HTTP client for making service requests.
@@ -29,6 +29,12 @@ public abstract class DaprServiceClientBase
     /// Name of the target service.
     /// </summary>
     protected readonly string? _serviceName;
+
+    /// <summary>
+    /// The name of the service this client communicates with.
+    /// Should match the service name in the corresponding DaprServiceAttribute.
+    /// </summary>
+    public virtual string ServiceName => _serviceName ?? GetType().Name.Replace("Client", "").ToLowerInvariant();
 
     /// <summary>
     /// Parameterless constructor for NSwag generated clients that handle their own dependency injection.

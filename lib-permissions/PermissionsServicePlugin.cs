@@ -19,34 +19,18 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Validate that this plugin should be loaded based on environment configuration.
-    /// </summary>
-    protected override bool OnValidatePlugin()
-    {
-        var enabled = Environment.GetEnvironmentVariable("PERMISSIONS_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("🔍 Permissions service enabled check: {EnabledValue}", enabled);
-        return enabled == "true";
-    }
-
-    /// <summary>
     /// Configure services for dependency injection - mimics existing [DaprService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("⏭️  Permissions service disabled, skipping service registration");
-            return;
-        }
 
         Logger?.LogInformation("🔧 Configuring Permissions service dependencies");
 
-        // Register the service implementation (existing pattern from [DaprService] attribute)
-        services.AddScoped<IPermissionsService, PermissionsService>();
-        services.AddScoped<PermissionsService>();
+        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // No need to register IPermissionsService and PermissionsService here
 
-        // Register generated configuration class
-        services.AddScoped<PermissionsServiceConfiguration>();
+        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
+        // No need to register PermissionsServiceConfiguration here
 
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
@@ -59,11 +43,6 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("⏭️  Permissions service disabled, skipping application configuration");
-            return;
-        }
 
         Logger?.LogInformation("🔧 Configuring Permissions service application pipeline");
 
@@ -81,8 +60,6 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        if (!OnValidatePlugin()) return true;
-
         Logger?.LogInformation("▶️  Starting Permissions service");
 
         try
@@ -118,7 +95,7 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogDebug("🏃 Permissions service running");
 
@@ -142,7 +119,7 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogInformation("🛑 Shutting down Permissions service");
 

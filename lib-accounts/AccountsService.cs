@@ -1,5 +1,8 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -12,7 +15,8 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// Dapr-first implementation for Accounts service following schema-first architecture
 /// Uses Dapr state management for persistence instead of Entity Framework
 /// </summary>
-public class AccountsService : IAccountsService
+[DaprService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
+public class AccountsService : IAccountsService, IDaprService
 {
     private readonly ILogger<AccountsService> _logger;
     private readonly AccountsServiceConfiguration _configuration;

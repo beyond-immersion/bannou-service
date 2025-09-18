@@ -44,12 +44,16 @@ build_all_services_efficiently() {
 
     echo "🔨 Building all services efficiently..."
 
-    # Build each service project explicitly to ensure all DLLs are created
+    # First restore all dependencies
+    echo "📦 Restoring dependencies..."
+    dotnet restore --verbosity quiet
+
+    # Publish each service project to ensure all dependencies are copied
     for service in "${services_to_build[@]}"; do
-        echo "🔨 Building lib-$service..."
-        dotnet build "lib-$service/lib-$service.csproj" --configuration Release -nologo --verbosity quiet -p:GenerateNewServices=false -p:GenerateUnitTests=false
+        echo "🔨 Publishing lib-$service..."
+        dotnet publish "lib-$service/lib-$service.csproj" --configuration Release -nologo --verbosity quiet -p:GenerateNewServices=false -p:GenerateUnitTests=false --no-restore
         if [ $? -ne 0 ]; then
-            echo "❌ Failed to build lib-$service"
+            echo "❌ Failed to publish lib-$service"
             exit 1
         fi
     done
@@ -58,13 +62,13 @@ build_all_services_efficiently() {
     sleep 1
 
     # Verify all expected DLLs exist before trying to copy
-    echo "🔍 Verifying DLLs were built..."
+    echo "🔍 Verifying DLLs were published..."
     for service in "${services_to_build[@]}"; do
-        service_dll="lib-$service/bin/Release/$TARGET_FRAMEWORK/lib-$service.dll"
+        service_dll="lib-$service/bin/Release/$TARGET_FRAMEWORK/publish/lib-$service.dll"
         if [[ ! -f "$service_dll" ]]; then
-            echo "❌ Expected DLL not found after build: $service_dll"
-            echo "📁 Contents of lib-$service/bin/Release/$TARGET_FRAMEWORK/:"
-            ls -la "lib-$service/bin/Release/$TARGET_FRAMEWORK/" 2>/dev/null || echo "Directory does not exist"
+            echo "❌ Expected DLL not found after publish: $service_dll"
+            echo "📁 Contents of lib-$service/bin/Release/$TARGET_FRAMEWORK/publish/:"
+            ls -la "lib-$service/bin/Release/$TARGET_FRAMEWORK/publish/" 2>/dev/null || echo "Directory does not exist"
             exit 1
         fi
     done
@@ -90,7 +94,8 @@ copy_service_dll() {
 
     # Find the service project directory
     local service_proj_dir="lib-$service_name"
-    local service_dll="$service_proj_dir/bin/Release/$TARGET_FRAMEWORK/lib-$service_name.dll"
+    local service_publish_dir="$service_proj_dir/bin/Release/$TARGET_FRAMEWORK/publish"
+    local service_dll="$service_publish_dir/lib-$service_name.dll"
 
     if [[ ! -f "$service_dll" ]]; then
         echo "❌ Service DLL not found: $service_dll"
@@ -101,8 +106,14 @@ copy_service_dll() {
     service_dir="$PLUGINS_DIR/$service_name"
     mkdir -p "$service_dir"
 
-    # Copy only the service DLL (not all dependencies)
+    # Copy the service DLL and all its dependencies to avoid assembly loading conflicts
+    # Use the publish directory which contains all dependencies
+
+    # Copy main service DLL
     cp "$service_dll" "$service_dir/"
+
+    # Copy all dependencies (all DLLs in the publish directory except the main service DLL)
+    find "$service_publish_dir" -name "*.dll" ! -name "lib-$service_name.dll" -exec cp {} "$service_dir/" \;
 
     echo "✅ Service '$service_name' DLL copied -> $service_dir"
     services_built+=("$service_name")
@@ -131,6 +142,105 @@ echo "📋 Services to build: ${all_services[*]}"
 
 # Use efficient build approach - build all at once, then copy individual DLLs
 build_all_services_efficiently "${all_services[@]}"
+
+# Deduplicate identical DLLs to reduce image size
+deduplicate_dlls() {
+    echo "🔍 Scanning for duplicate DLLs to deduplicate..."
+
+    # Create common directory for shared DLLs
+    common_dir="$PLUGINS_DIR/common"
+    mkdir -p "$common_dir"
+
+    # Hash to track DLLs by name and size
+    declare -A dll_info
+    declare -A dll_locations
+
+    # First pass: collect all DLL information
+    for service_dir in "$PLUGINS_DIR"/*/; do
+        if [[ "$(basename "$service_dir")" == "common" ]]; then
+            continue  # Skip the common directory itself
+        fi
+
+        for dll_file in "$service_dir"*.dll; do
+            if [[ -f "$dll_file" ]]; then
+                dll_name=$(basename "$dll_file")
+
+                # NEVER move main plugin DLLs - they must stay in their service directories
+                if [[ "$dll_name" =~ ^lib-.*\.dll$ ]]; then
+                    echo "🔒 Preserving plugin DLL in service directory: $dll_name"
+                    continue
+                fi
+
+                dll_size=$(stat -c%s "$dll_file" 2>/dev/null || stat -f%z "$dll_file" 2>/dev/null)
+                dll_key="${dll_name}_${dll_size}"
+
+                if [[ -n "${dll_info[$dll_key]}" ]]; then
+                    # Found a duplicate - add to the list
+                    dll_info[$dll_key]="${dll_info[$dll_key]}|$dll_file"
+                else
+                    # First occurrence
+                    dll_info[$dll_key]="$dll_file"
+                fi
+            fi
+        done
+    done
+
+    duplicates_found=0
+    space_saved=0
+
+    # Second pass: move duplicates to common directory
+    for dll_key in "${!dll_info[@]}"; do
+        IFS='|' read -ra dll_files <<< "${dll_info[$dll_key]}"
+
+        if [[ ${#dll_files[@]} -gt 1 ]]; then
+            # We have duplicates
+            dll_name=$(basename "${dll_files[0]}")
+            dll_size=$(echo "$dll_key" | cut -d'_' -f2-)
+
+            echo "📦 Found ${#dll_files[@]} copies of $dll_name (${dll_size} bytes each)"
+
+            # Move the first copy to common directory
+            first_dll="${dll_files[0]}"
+            cp "$first_dll" "$common_dir/"
+
+            # Remove all copies from service directories
+            for dll_file in "${dll_files[@]}"; do
+                rm "$dll_file"
+                ((duplicates_found++))
+            done
+
+            # Calculate space saved (size * (copies - 1))
+            copies_removed=$((${#dll_files[@]} - 1))
+            space_saved_this_dll=$((dll_size * copies_removed))
+            space_saved=$((space_saved + space_saved_this_dll))
+
+            echo "   Moved to common/, removed $copies_removed duplicates, saved $space_saved_this_dll bytes"
+        fi
+    done
+
+    if [[ $duplicates_found -gt 0 ]]; then
+        # Convert bytes to human readable format
+        if [[ $space_saved -gt 1048576 ]]; then
+            space_mb=$((space_saved / 1048576))
+            echo "✅ Deduplicated $duplicates_found DLL files, saved approximately ${space_mb}MB"
+        elif [[ $space_saved -gt 1024 ]]; then
+            space_kb=$((space_saved / 1024))
+            echo "✅ Deduplicated $duplicates_found DLL files, saved approximately ${space_kb}KB"
+        else
+            echo "✅ Deduplicated $duplicates_found DLL files, saved ${space_saved} bytes"
+        fi
+
+        echo "📁 Common DLLs moved to: $common_dir"
+        echo "ℹ️  Assembly resolution in Program.cs will check common/ directory for shared dependencies"
+    else
+        echo "ℹ️  No duplicate DLLs found to deduplicate"
+        # Remove empty common directory
+        rmdir "$common_dir" 2>/dev/null || true
+    fi
+}
+
+# Run deduplication
+deduplicate_dlls
 
 # Summary
 echo ""

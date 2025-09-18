@@ -22,7 +22,6 @@ public static class ServiceClientsDependencyInjection
         services.AddSingleton<IServiceMappingEventPublisher, ServiceMappingEventPublisher>();
         services.AddScoped<IServiceMappingEventDispatcher, ServiceMappingEventDispatcher>();
         services.AddScoped<ServiceMappingEventHandler>();
-        services.AddScoped<ExampleServiceMappingHandlers>();
 
         // Lifecycle management for automatic service announcements
         services.AddHostedService<ServiceMappingLifecycleService>();

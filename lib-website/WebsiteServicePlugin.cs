@@ -19,34 +19,18 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Validate that this plugin should be loaded based on environment configuration.
-    /// </summary>
-    protected override bool OnValidatePlugin()
-    {
-        var enabled = Environment.GetEnvironmentVariable("WEBSITE_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("🔍 Website service enabled check: {EnabledValue}", enabled);
-        return enabled == "true";
-    }
-
-    /// <summary>
     /// Configure services for dependency injection - mimics existing [DaprService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("⏭️  Website service disabled, skipping service registration");
-            return;
-        }
 
         Logger?.LogInformation("🔧 Configuring Website service dependencies");
 
-        // Register the service implementation (existing pattern from [DaprService] attribute)
-        services.AddScoped<IWebsiteService, WebsiteService>();
-        services.AddScoped<WebsiteService>();
+        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // No need to register IWebsiteService and WebsiteService here
 
-        // Register generated configuration class
-        services.AddScoped<WebsiteServiceConfiguration>();
+        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
+        // No need to register WebsiteServiceConfiguration here
 
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
@@ -59,11 +43,6 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("⏭️  Website service disabled, skipping application configuration");
-            return;
-        }
 
         Logger?.LogInformation("🔧 Configuring Website service application pipeline");
 
@@ -77,16 +56,53 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Start the service - calls existing IDaprService lifecycle if present.
+    /// Start the service - uses centrally resolved service from PluginLoader.
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        if (!OnValidatePlugin()) return true;
-
+        Console.WriteLine("🔍 DEBUG: WebsiteServicePlugin.OnStartAsync() called");
         Logger?.LogInformation("▶️  Starting Website service");
 
         try
         {
+            // Get centrally resolved service from PluginLoader
+            var pluginLoader = BeyondImmersion.BannouService.Program.PluginLoader;
+            if (pluginLoader != null)
+            {
+                var resolvedService = pluginLoader.GetResolvedService("website");
+                if (resolvedService != null)
+                {
+                    _service = resolvedService as WebsiteService;
+                    Logger?.LogInformation("✅ Using centrally resolved WebsiteService");
+
+                    // Service lifecycle is now handled centrally by PluginLoader
+                    // No need to call IDaprService methods here
+                    Logger?.LogInformation("✅ Website service started successfully (centrally managed)");
+                    return true;
+                }
+                else
+                {
+                    Logger?.LogWarning("⚠️  No centrally resolved service found for 'website' plugin");
+                }
+            }
+            else
+            {
+                Logger?.LogWarning("⚠️  PluginLoader not available for central service resolution");
+            }
+
+            // Fallback to manual service resolution (legacy approach)
+            Logger?.LogInformation("🔄 Falling back to manual service resolution");
+
+            // Debug: Check if service provider is available
+            if (_serviceProvider == null)
+            {
+                Console.WriteLine("❌ DEBUG: Service provider is null!");
+                Logger?.LogError("❌ Service provider is null - ConfigureApplication may not have been called");
+                return false;
+            }
+
+            Logger?.LogInformation("🔍 Service provider available, resolving WebsiteService...");
+
             // Get service instance from DI container
             _service = _serviceProvider?.GetService<WebsiteService>();
 
@@ -95,6 +111,8 @@ public class WebsiteServicePlugin : BaseBannouPlugin
                 Logger?.LogError("❌ Failed to resolve WebsiteService from DI container");
                 return false;
             }
+
+            Logger?.LogInformation("✅ WebsiteService resolved successfully (fallback)");
 
             // Call existing IDaprService.OnStartAsync if the service implements it
             if (_service is IDaprService daprService)
@@ -108,7 +126,8 @@ public class WebsiteServicePlugin : BaseBannouPlugin
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "❌ Failed to start Website service");
+            Logger?.LogError(ex, "❌ Failed to start Website service - Exception details: {ExceptionType}: {Message}", ex.GetType().Name, ex.Message);
+            Logger?.LogError("❌ Stack trace: {StackTrace}", ex.StackTrace);
             return false;
         }
     }
@@ -118,7 +137,7 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogDebug("🏃 Website service running");
 
@@ -142,7 +161,7 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogInformation("🛑 Shutting down Website service");
 

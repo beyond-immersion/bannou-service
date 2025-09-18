@@ -1,4 +1,7 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,7 +12,8 @@ namespace BeyondImmersion.BannouService.Website;
 /// <summary>
 /// Service implementation for Website API
 /// </summary>
-public class WebsiteService : IWebsiteService
+[DaprService("website", typeof(IWebsiteService), lifetime: ServiceLifetime.Scoped)]
+public class WebsiteService : IWebsiteService, IDaprService
 {
     private readonly ILogger<WebsiteService> _logger;
     private readonly WebsiteServiceConfiguration _configuration;
@@ -311,4 +315,11 @@ public class WebsiteService : IWebsiteService
             return Task.FromResult<(StatusCodes, System.Collections.Generic.ICollection<PageMetadata>?)>((StatusCodes.InternalServerError, null));
         }
     }
+
+    #region IDaprService Implementation
+
+    // IDaprService lifecycle methods are implemented by the default interface implementations
+    // No need to override unless custom logic is required beyond the default logging
+
+    #endregion
 }

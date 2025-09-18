@@ -273,16 +273,17 @@
             Can be null.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Attributes.ServiceConfigurationAttribute.#ctor">
+        <member name="M:BeyondImmersion.BannouService.Attributes.ServiceConfigurationAttribute.#ctor(System.String)">
             <summary>
-            Initializes a new instance of the ServiceConfigurationAttribute with default values.
+            Initializes a new instance of the ServiceConfigurationAttribute for app-level configuration (no associated service).
             </summary>
+            <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
         </member>
         <member name="M:BeyondImmersion.BannouService.Attributes.ServiceConfigurationAttribute.#ctor(System.Type,System.String)">
             <summary>
             Initializes a new instance of the ServiceConfigurationAttribute with the specified configuration.
             </summary>
-            <param name="serviceImplementation">The service implementation type this configuration is for.</param>
+            <param name="serviceImplementation">The service implementation type this configuration is for (required).</param>
             <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
         </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.ServiceMappingEventAttribute">
@@ -476,14 +477,6 @@
             If not set, will generate a new GUID automatically on service startup.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.BaseServiceConfiguration.Service_Disabled">
-            <summary>
-            Whether the service has been disabled.
-            Services are enabled by default, and the attempt should be made to
-            include/exclude by assemblies instead. This means services are enabled
-            so long as their assemblies are loaded.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Configuration.IServiceConfiguration">
             <summary>
             Interface for service configuration with support for environment variables, JSON files, and command line arguments.
@@ -498,14 +491,6 @@
             <summary>
             Set to override GUID for administrative service endpoints.
             If not set, will generate a new GUID automatically on service startup.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.Service_Disabled">
-            <summary>
-            Whether the service has been disabled.
-            Services are enabled by default, and the attempt should be made to
-            include/exclude by assemblies instead. This means services are enabled
-            so long as their assemblies are loaded.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Configuration.IServiceConfiguration.HasRequired">
@@ -1087,63 +1072,6 @@
             Create a simple logger for the given service type.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Misc.Crc32">
-            <summary>
-            Static helper for CRC encoding strings.
-            Used in routing by service names.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Misc.Crc32.ComputeCRC32(System.String)">
-            <summary>
-            Computes the CRC32 checksum for the given input string.
-            </summary>
-            <param name="input">The input string to compute CRC32 for.</param>
-            <returns>The 32-bit CRC checksum.</returns>
-            <exception cref="T:System.ArgumentNullException">Thrown when input is null.</exception>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Misc.LeakyBucket">
-            <summary>
-            Implements a leaky bucket rate limiting algorithm using a concurrent queue.
-            Items are added to the bucket and automatically leak out at a configured rate.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Misc.LeakyBucket.BucketConfiguration">
-            <summary>
-            Configuration settings for the leaky bucket behavior.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Misc.LeakyBucket.BucketConfiguration.LeakRateTimeSpan">
-            <summary>
-            Time interval between leak operations.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Misc.LeakyBucket.BucketConfiguration.LeakRate">
-            <summary>
-            Number of items to leak out per leak operation.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Misc.LeakyBucket.IsReadOnly">
-            <summary>
-            Gets a value indicating whether the bucket is read-only (always false).
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Misc.LeakyBucket.Dispose">
-            <summary>
-            Releases all resources used by the LeakyBucket.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Misc.LeakyBucket.#ctor(BeyondImmersion.BannouService.Misc.LeakyBucket.BucketConfiguration)">
-            <summary>
-            Initializes a new instance of the LeakyBucket with the specified configuration.
-            </summary>
-            <param name="bucketConfiguration">Configuration for leak rate and timing.</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Misc.LeakyBucket.Increment">
-            <summary>
-            Adds a new item to the bucket with the current timestamp.
-            </summary>
-            <returns>The current number of items in the bucket after adding.</returns>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin">
             <summary>
             Base implementation of IBannouPlugin that provides default behavior
@@ -1290,56 +1218,148 @@
         <member name="T:BeyondImmersion.BannouService.Plugins.PluginLoader">
             <summary>
             Responsible for discovering, loading, and managing Bannou service plugins.
+            Centrally handles the complete service lifecycle: assembly loading -> type registration ->
+            service resolution -> initialization -> startup -> running.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Plugins.PluginLoader})">
             <inheritdoc/>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Plugins.PluginLoader.LoadedPlugins">
+        <member name="P:BeyondImmersion.BannouService.Plugins.PluginLoader.AllPlugins">
             <summary>
-            Get all currently loaded plugins.
+            Get all discovered plugins (enabled and disabled).
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.LoadPluginsAsync(System.String,System.Collections.Generic.IList{System.String})">
+        <member name="P:BeyondImmersion.BannouService.Plugins.PluginLoader.EnabledPlugins">
             <summary>
-            Discover and load plugins from the specified directory based on configuration.
+            Get only enabled plugins that will have services started.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.DiscoverAndLoadPluginsAsync(System.String,System.Collections.Generic.IList{System.String})">
+            <summary>
+            Discover and load all plugins from the specified directory.
+            This follows the proper flow: 1) Load assemblies for ALL plugins, 2) Determine which services are enabled,
+            3) Register types in DI appropriately (all client types + enabled service types only).
             </summary>
             <param name="pluginsDirectory">Root plugins directory</param>
             <param name="requestedPlugins">List of specific plugins to load, or null for all</param>
-            <returns>Number of plugins successfully loaded</returns>
+            <returns>Number of enabled plugins successfully loaded</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.IsServiceEnabled(System.String)">
+            <summary>
+            Check if a service should be enabled based on SERVICES_ENABLED and {SERVICE}_SERVICE_DISABLED/ENABLED environment variables.
+            Two modes:
+            - SERVICES_ENABLED=true: All services enabled by default, use {SERVICE}_SERVICE_DISABLED to disable individual services
+            - SERVICES_ENABLED=false: All services disabled by default, use {SERVICE}_SERVICE_ENABLED to enable individual services
+            </summary>
+            <param name="serviceName">Name of the service (e.g., "auth", "accounts")</param>
+            <returns>True if service should be enabled, false if disabled</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.DiscoverTypesForRegistration">
+            <summary>
+            Discover types from all loaded assemblies that need to be registered in DI.
+            This includes ALL client types (even from disabled plugins) and service types from enabled plugins only.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.DiscoverClientTypes(System.Reflection.Assembly,System.String)">
+            <summary>
+            Discover client types that implement IDaprClient interface.
+            Pure interface-based discovery - no naming conventions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.DiscoverServiceTypes(System.Reflection.Assembly,System.String)">
+            <summary>
+            Discover service types using IDaprService interface and DaprServiceAttribute.
+            Pure interface/attribute-based discovery from the specific assembly.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.DiscoverConfigurationTypes(System.Reflection.Assembly,System.String)">
+            <summary>
+            Discover configuration types with [ServiceConfiguration] attributes from an assembly.
+            Configuration lifetimes match their corresponding service lifetimes.
+            Pure attribute-based discovery - configurations must have ServiceImplementationType specified.
+            </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
             <summary>
-            Configure services for all loaded plugins.
+            Register all discovered types in the DI container.
+            This must be called BEFORE the web application is built.
             </summary>
             <param name="services">Service collection</param>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.RegisterClientTypes(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Register all discovered client types in DI with matching service lifetimes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.GetClientLifetime(System.Type)">
+            <summary>
+            Determine the appropriate lifetime for a client based on its corresponding service.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.RegisterServiceTypes(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Register all discovered service types in DI.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.RegisterConfigurationTypes(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Register all discovered configuration types in DI with matching service lifetimes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.ResolveServices(System.IServiceProvider)">
+            <summary>
+            Resolve and store service instances centrally for enabled plugins only.
+            This happens AFTER the web application is built and DI container is ready.
+            </summary>
+            <param name="serviceProvider">Service provider to resolve services from</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.GetServiceNameFromType(System.Type)">
+            <summary>
+            Extract service name from a service type using DaprService attribute.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.GetResolvedService(System.String)">
+            <summary>
+            Get a centrally resolved service for a plugin.
+            </summary>
+            <param name="pluginName">Name of the plugin</param>
+            <returns>Resolved service instance or null if not found</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.GetControllerAssemblies">
+            <summary>
+            Get assemblies containing controllers for all loaded plugins.
+            Controllers are available for all plugins (enabled and disabled) for client generation.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.ConfigureApplication(Microsoft.AspNetCore.Builder.WebApplication)">
             <summary>
-            Configure application pipeline for all loaded plugins.
+            Configure application pipeline for enabled plugins only.
             </summary>
             <param name="app">Web application</param>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.InitializePluginsAsync">
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.InitializeAsync">
             <summary>
-            Initialize all loaded plugins.
+            Initialize enabled plugins and their resolved services.
+            This follows the proper lifecycle: plugins first, then services.
             </summary>
-            <returns>True if all plugins initialized successfully</returns>
+            <returns>True if all plugins and services initialized successfully</returns>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.StartPluginsAsync">
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.StartAsync">
             <summary>
-            Start all loaded plugins.
+            Start enabled plugins and their resolved services.
+            This follows the proper lifecycle: plugins first, then services.
             </summary>
-            <returns>True if all plugins started successfully</returns>
+            <returns>True if all plugins and services started successfully</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.InvokeRunningAsync">
             <summary>
-            Invoke running methods for all loaded plugins.
+            Invoke running methods for enabled plugins and resolved services.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.ShutdownPluginsAsync">
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.ShutdownAsync">
             <summary>
-            Shutdown all loaded plugins gracefully.
+            Shutdown enabled plugins and resolved services gracefully.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.LoadPluginFromDirectoryAsync(System.String,System.String)">
@@ -1460,6 +1480,12 @@
             Name of the target service.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ServiceName">
+            <summary>
+            The name of the service this client communicates with.
+            Should match the service name in the corresponding DaprServiceAttribute.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.#ctor">
             <summary>
             Parameterless constructor for NSwag generated clients that handle their own dependency injection.
@@ -1497,38 +1523,16 @@
             Processes the HTTP response from Dapr service invocation.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers">
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IDaprClient">
             <summary>
-            Example service mapping event handlers showing how to use the attribute system.
-            These handlers demonstrate various patterns for responding to service mapping changes.
+            Marker interface for Dapr service clients.
+            Provides explicit identification of client types without relying on naming conventions.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers})">
-            <inheritdoc/>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers.OnServiceRegistrationAsync(BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent,System.Threading.CancellationToken)">
+        <member name="P:BeyondImmersion.BannouService.ServiceClients.IDaprClient.ServiceName">
             <summary>
-            Handles all service registrations with high priority logging.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers.OnServiceUnregistrationAsync(BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent,System.Threading.CancellationToken)">
-            <summary>
-            Handles service unregistrations.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers.OnAccountsServiceEventAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
-            <summary>
-            Specifically handles accounts service events with custom logic.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers.OnServiceUpdateAsync(BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent)">
-            <summary>
-            Asynchronous handler for service updates (runs in parallel with other async handlers).
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ExampleServiceMappingHandlers.OnAnyServiceEventAsync(BeyondImmersion.BannouService.ServiceClients.ServiceMappingEvent)">
-            <summary>
-            Catch-all handler for any service mapping events (low priority).
+            The name of the service this client communicates with.
+            Should match the service name in the corresponding DaprServiceAttribute.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceAppMappingResolver">
@@ -1627,7 +1631,7 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions.AddAllDaprServiceClients(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
             <summary>
-            Auto-registers all service clients found in the current assembly.
+            Auto-registers all service clients found in the current assembly and plugin assemblies.
             Follows naming convention: {Service}Client implements I{Service}Client.
             Service name is derived by removing "Client" suffix and converting to lowercase.
             </summary>
@@ -1908,37 +1912,6 @@
             Returns whether the configuration indicates the service should be disabled.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetConfigurationType">
-            <summary>
-            Returns the best configuration type for this service type.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.HasRequiredConfiguration">
-            <summary>
-            Returns whether the configuration is provided for a service to run properly.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.HasRequiredConfiguration``1">
-            <summary>
-            Returns whether the configuration is provided for a given service type to run properly.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.HasRequiredConfiguration(System.Type)">
-            <summary>
-            Returns whether the configuration is provided for a given service type to run properly.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetConfigurationType(System.Type)">
-            <summary>
-            Returns the best service configuration type for the given service type.
-            Returned type is based on DaprServiceAttribute service target type.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.IsAnyEnabled">
-            <summary>
-            Returns whether the configuration indicates ANY services should be enabled.
-            </summary>
-        </member>
         <member name="M:BeyondImmersion.BannouService.Services.IDaprService.IsDisabled``1">
             <summary>
             Returns whether the configuration indicates the service should be enabled.
@@ -1952,6 +1925,7 @@
         <member name="M:BeyondImmersion.BannouService.Services.IDaprService.IsDisabled(System.String)">
             <summary>
             Returns whether the configuration indicates the service should be disabled.
+            Uses the two-mode enable/disable system based on SERVICES_ENABLED environment variable.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetServiceInfo(System.String)">
@@ -1965,40 +1939,6 @@
             Find the implementation for the given service handler.
             </summary>
             <returns>Interface Type, Implementation Type, Service Attribute</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetPresetAppNameFromServiceName(System.String)">
-             <summary>
-             Returns the application name mapped for the given service name, from the
-             network mode preset.
-            
-             Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
-             mappings to use.
-             </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetServicePresetsByAppName(System.String)">
-            <summary>
-            Gets all service names that should be handled by the given application name.
-            </summary>
-            <param name="appName">The application name to get services for.</param>
-            <returns>Array of service names handled by the application.</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetAppByServiceInterfaceType(System.Type)">
-            <summary>
-            Get the app name for the given service interface type.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetAppByServiceImplementationType(System.Type)">
-            <summary>
-            Get the app name for the given service implementation type.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.GetAppByServiceName(System.String)">
-             <summary>
-             Get the app name for the given service name.
-            
-             The service name is primarily obtained from the DaprService
-             attribute attached to the implementation type.
-             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceResponse">
             <summary>
@@ -2031,155 +1971,6 @@
             <inheritdoc/>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceResponse`1.#ctor(BeyondImmersion.BannouService.StatusCodes,`0)">
-            <inheritdoc/>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Testing.Messages.TestingRunTestRequest">
-            <summary>
-            The request model for service API calls to `/testing/run-test`.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Testing.Messages.TestingRunTestRequest.ID">
-            <inheritdoc/>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Testing.Messages.TestingRunTestRequest.Service">
-            <inheritdoc/>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Testing.TestingController">
-            <summary>
-            Test APIs- backed by the Testing service.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Testing.TestingController.Service">
-            <inheritdoc/>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingController.#ctor(BeyondImmersion.BannouService.Testing.TestingService)">
-            <inheritdoc/>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingController.RunAll">
-            <summary>
-            API to run all tests.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingController.RunEnabled">
-            <summary>
-            API to run all tests against all enabled services.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingController.Run(System.String)">
-            <summary>
-            API to run a given test by ID.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingController.Run(System.String,System.String)">
-            <summary>
-            API to run a given test by ID.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingController.Run(BeyondImmersion.BannouService.Testing.Messages.TestingRunTestRequest)">
-            <summary>
-            API to run a given test by ID.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingController.TestGET_ID(System.String)">
-            <inheritdoc/>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingController.TestGET_Service_ID(System.String,System.String)">
-            <inheritdoc/>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingController.TestPOST_Model(BeyondImmersion.BannouService.Testing.Messages.TestingRunTestRequest)">
-            <inheritdoc/>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Testing.TestingService">
-            <summary>
-            Service handler responsible for testing service APIs.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Testing.TestingService.ServiceTests">
-            <summary>
-            Dictionary mapping service names to their available test methods.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Testing.TestingService.LastTestID">
-            <summary>
-            Gets the ID of the last test that was executed.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Testing.TestingService.LastTestService">
-            <summary>
-            Gets the name of the service for the last test that was executed.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Testing.TestingService.LastTestRequest">
-            <summary>
-            Gets the API request object from the last test that was executed.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingService.ResetTestVars">
-            <summary>
-            Resets all testing variables.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingService.SetLastTestID(System.String)">
-            <summary>
-            Set last testID to come in to a test API.
-            </summary>
-            <param name="id">The test ID to store.</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingService.SetLastTestService(System.String)">
-            <summary>
-            Set last test service to come in to a test API.
-            </summary>
-            <param name="service">The service name to store.</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingService.SetLastPostRequest(BeyondImmersion.BannouService.Controllers.Messages.ApiRequest)">
-            <summary>
-            Set last POST request object to test API.
-            </summary>
-            <param name="request">The API request to store.</param>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingService.#ctor">
-            <summary>
-            Initializes a new instance of the TestingService and discovers all available test methods.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingService.Run(System.String,System.String,System.Boolean)">
-            <summary>
-            API to run a given test.
-            ServiceName can be null if unknown.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingService.RunDelegates(System.String,System.Collections.Generic.IEnumerable{System.Func{BeyondImmersion.BannouService.Testing.TestingService,System.Threading.Tasks.Task{System.Boolean}}})">
-            <summary>
-            Run a specific collection of tests from delegate functions.
-            </summary>
-            <param name="testLabel">The test group label to use for logging.</param>
-            <param name="testDelegates">The list of delegate functions to run as integration tests.</param>
-            <returns></returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingService.RunAllForService(System.String,System.Boolean,System.Boolean)">
-            <summary>
-            API to run all tests against a given service.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingService.RunAllEnabled(System.Boolean,System.Boolean)">
-            <summary>
-            API to run all tests against all enabled services.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.TestingService.RunAll(System.Boolean,System.Boolean)">
-            <summary>
-            API to run all tests.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Testing.TestingServiceConfiguration">
-            <inheritdoc/>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Testing.Tests.BasicControllerTests">
-            <summary>
-            Tests that only require the testing service itself.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Testing.Tests.BasicControllerTests.Run(BeyondImmersion.BannouService.Testing.TestingService)">
             <inheritdoc/>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0">

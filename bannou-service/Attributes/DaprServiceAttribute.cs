@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Attributes;
 
@@ -51,8 +52,10 @@ public sealed class DaprServiceAttribute : BaseServiceAttribute
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentNullException(nameof(name));
 
-        if (interfaceType != null && !interfaceType.IsAssignableTo(typeof(IDaprService)))
-            throw new InvalidCastException($"Dapr service type specified must implement {nameof(IDaprService)}.");
+        // Note: We don't require the interface type to implement IDaprService
+        // because the interface is for registration, and the implementation class
+        // will implement IDaprService. The validation should be on the implementation type,
+        // not the interface type used for DI registration.
 
         Name = name;
         Priority = priority;

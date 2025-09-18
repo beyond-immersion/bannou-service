@@ -1,6 +1,5 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Testing;
-using BeyondImmersion.BannouService.Testing.Tests;
 using Microsoft.Extensions.Configuration;
 
 namespace BeyondImmersion.BannouService.HttpTester;

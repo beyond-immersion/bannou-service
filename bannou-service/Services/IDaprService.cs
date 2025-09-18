@@ -220,6 +220,8 @@ public interface IDaprService
     /// <param name="token">Cancellation token for startup timeout.</param>
     async Task OnStartAsync(CancellationToken token)
     {
+        var serviceName = GetName() ?? GetType().Name;
+        Program.Logger?.Log(LogLevel.Information, "🚀 {ServiceName} service starting up", serviceName);
         await Task.CompletedTask;
     }
 
@@ -231,6 +233,8 @@ public interface IDaprService
     /// <param name="token">Cancellation token for startup timeout.</param>
     async Task OnStartAsync(WebApplication webApp, CancellationToken token)
     {
+        var serviceName = GetName() ?? GetType().Name;
+        Program.Logger?.Log(LogLevel.Information, "🚀 {ServiceName} service starting up with WebApplication", serviceName);
         // Default implementation calls the simpler OnStartAsync
         await OnStartAsync(token);
     }
@@ -241,6 +245,8 @@ public interface IDaprService
     /// <param name="token">Cancellation token for shutdown.</param>
     async Task OnRunningAsync(CancellationToken token)
     {
+        var serviceName = GetName() ?? GetType().Name;
+        Program.Logger?.Log(LogLevel.Debug, "🏃 {ServiceName} service running", serviceName);
         await Task.CompletedTask;
     }
 
@@ -249,6 +255,8 @@ public interface IDaprService
     /// </summary>
     async Task OnShutdownAsync()
     {
+        var serviceName = GetName() ?? GetType().Name;
+        Program.Logger?.Log(LogLevel.Information, "🛑 {ServiceName} service shutting down", serviceName);
         await Task.CompletedTask;
     }
 
@@ -264,66 +272,6 @@ public interface IDaprService
     /// </summary>
     public bool IsDisabled()
         => IsDisabled(GetType());
-
-    /// <summary>
-    /// Returns the best configuration type for this service type.
-    /// </summary>
-    public Type GetConfigurationType()
-        => GetConfigurationType(GetType());
-
-    /// <summary>
-    /// Returns whether the configuration is provided for a service to run properly.
-    /// </summary>
-    public bool HasRequiredConfiguration()
-        => IServiceConfiguration.HasRequiredForType(GetConfigurationType());
-
-    /// <summary>
-    /// Returns whether the configuration is provided for a given service type to run properly.
-    /// </summary>
-    public static bool HasRequiredConfiguration<T>()
-        where T : class, IDaprService
-        => HasRequiredConfiguration(typeof(T));
-
-    /// <summary>
-    /// Returns whether the configuration is provided for a given service type to run properly.
-    /// </summary>
-    public static bool HasRequiredConfiguration(Type implementationType)
-    {
-        return typeof(IDaprService).IsAssignableFrom(implementationType)
-            && IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>()
-                .Where(t => t.Item2.ServiceImplementationType == implementationType)
-                .All(t => IServiceConfiguration.HasRequiredForType(t.Item1));
-    }
-
-    /// <summary>
-    /// Returns the best service configuration type for the given service type.
-    /// Returned type is based on DaprServiceAttribute service target type.
-    /// </summary>
-    public static Type GetConfigurationType(Type implementationType)
-    {
-        if (!typeof(IDaprService).IsAssignableFrom(implementationType))
-            throw new InvalidCastException($"Type provided does not implement {nameof(IDaprService)}");
-
-        Type? serviceConfigType = null;
-        foreach ((Type, ServiceConfigurationAttribute) configAttr in IServiceAttribute.GetClassesWithAttribute<ServiceConfigurationAttribute>())
-        {
-            if (implementationType == configAttr.Item2.ServiceImplementationType)
-            {
-                if (serviceConfigType != null)
-                    continue;
-
-                serviceConfigType = configAttr.Item1;
-            }
-        }
-
-        return serviceConfigType ?? typeof(AppConfiguration);
-    }
-
-    /// <summary>
-    /// Returns whether the configuration indicates ANY services should be enabled.
-    /// </summary>
-    public static bool IsAnyEnabled()
-        => EnabledServices.Any();
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be enabled.
@@ -345,14 +293,35 @@ public interface IDaprService
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be disabled.
+    /// Uses the two-mode enable/disable system based on SERVICES_ENABLED environment variable.
     /// </summary>
     public static bool IsDisabled(string? serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
             return !Program.Configuration.Services_Enabled;
 
-        var config = IServiceConfiguration.BuildConfiguration(typeof(BaseServiceConfiguration), null, serviceName.ToUpper() + "_");
-        return config?.Service_Disabled == null ? !Program.Configuration.Services_Enabled : config.Service_Disabled.Value;
+        // Use the same two-mode logic as PluginLoader.IsServiceEnabled, but inverted
+        var servicesEnabledEnv = Environment.GetEnvironmentVariable("SERVICES_ENABLED");
+        var globalServicesEnabled = string.IsNullOrWhiteSpace(servicesEnabledEnv) ?
+            Program.Configuration.Services_Enabled :
+            string.Equals(servicesEnabledEnv, "true", StringComparison.OrdinalIgnoreCase);
+
+        var serviceNameUpper = serviceName.ToUpper();
+
+        if (globalServicesEnabled)
+        {
+            // Mode 1: SERVICES_ENABLED=true → all services enabled by default, use X_SERVICE_DISABLED to disable individual
+            var disabledEnv = Environment.GetEnvironmentVariable($"{serviceNameUpper}_SERVICE_DISABLED");
+            var isDisabled = string.Equals(disabledEnv, "true", StringComparison.OrdinalIgnoreCase);
+            return isDisabled;
+        }
+        else
+        {
+            // Mode 2: SERVICES_ENABLED=false → all services disabled by default, use X_SERVICE_ENABLED to enable individual
+            var enabledEnv = Environment.GetEnvironmentVariable($"{serviceNameUpper}_SERVICE_ENABLED");
+            var isEnabled = string.Equals(enabledEnv, "true", StringComparison.OrdinalIgnoreCase);
+            return !isEnabled; // Inverted because this method returns "IsDisabled"
+        }
     }
 
     /// <summary>
@@ -384,114 +353,6 @@ public interface IDaprService
             if (serviceInfo.Item1 == interfaceType)
                 return serviceInfo;
         }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Returns the application name mapped for the given service name, from the
-    /// network mode preset.
-    ///
-    /// Set the `NETWORK_MODE` ENV or `--network-mode` switch to select the preset
-    /// mappings to use.
-    /// </summary>
-    public static string GetPresetAppNameFromServiceName(string serviceName)
-        => NetworkModePresets.TryGetValue(serviceName, out var presetAppName) ? presetAppName : "bannou";
-
-    /// <summary>
-    /// Gets all service names that should be handled by the given application name.
-    /// </summary>
-    /// <param name="appName">The application name to get services for.</param>
-    /// <returns>Array of service names handled by the application.</returns>
-    public static string[] GetServicePresetsByAppName(string appName)
-    {
-        if (string.IsNullOrWhiteSpace(appName))
-            return Array.Empty<string>();
-
-        // list all possible services, then determine which ones are handled
-        // - the rest are all handled by "bannou"
-        if (string.Equals("bannou", appName, StringComparison.InvariantCultureIgnoreCase))
-        {
-            var serviceList = new List<string>();
-            foreach (var serviceInfo in IDaprService.Services)
-                serviceList.Add(serviceInfo.Item3.Name);
-
-            var unhandledServiceList = new List<string>();
-            foreach (var serviceItem in serviceList)
-                if (!NetworkModePresets.ContainsKey(serviceItem))
-                    unhandledServiceList.Add(serviceItem);
-
-            return unhandledServiceList.ToArray();
-        }
-
-        var presetList = NetworkModePresets.Where(t => t.Value.Equals(appName, StringComparison.InvariantCultureIgnoreCase)).Select(t => t.Key).ToArray();
-        return presetList;
-    }
-
-    /// <summary>
-    /// Get the app name for the given service interface type.
-    /// </summary>
-    public static string? GetAppByServiceInterfaceType(Type interfaceType)
-    {
-        if (!interfaceType.IsAssignableTo(typeof(IDaprService)))
-            return null;
-
-        var serviceAppList = ServiceAppMappings.Where(t => t.Value.Any(s => s.Item1 == interfaceType));
-        if (serviceAppList.Any())
-            return serviceAppList.First().Key;
-
-        var serviceName = interfaceType.GetServiceName();
-        if (!string.IsNullOrWhiteSpace(serviceName))
-        {
-            var serviceApp = GetPresetAppNameFromServiceName(serviceName);
-            if (!string.IsNullOrWhiteSpace(serviceApp))
-                return serviceApp;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Get the app name for the given service implementation type.
-    /// </summary>
-    public static string? GetAppByServiceImplementationType(Type implementationType)
-    {
-        if (!implementationType.IsAssignableTo(typeof(IDaprService)))
-            return null;
-
-        var serviceAppList = ServiceAppMappings.Where(t => t.Value.Any(s => s.Item2 == implementationType));
-        if (serviceAppList.Any())
-            return serviceAppList.First().Key;
-
-        var serviceName = implementationType.GetServiceName();
-        if (!string.IsNullOrWhiteSpace(serviceName))
-        {
-            var serviceApp = GetPresetAppNameFromServiceName(serviceName);
-            if (!string.IsNullOrWhiteSpace(serviceApp))
-                return serviceApp;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Get the app name for the given service name.
-    ///
-    /// The service name is primarily obtained from the DaprService
-    /// attribute attached to the implementation type.
-    /// </summary>
-    public static string? GetAppByServiceName(string serviceName)
-    {
-        if (string.IsNullOrWhiteSpace(serviceName))
-            return null;
-
-        var serviceAppList = ServiceAppMappings.Where(t => t.Value.Any(s => string.Equals(serviceName, s.Item3.Name, StringComparison.InvariantCultureIgnoreCase)));
-        if (serviceAppList.Any())
-            return serviceAppList.First().Key;
-
-        var serviceApp = GetPresetAppNameFromServiceName(serviceName);
-        if (!string.IsNullOrWhiteSpace(serviceApp))
-            return serviceApp;
 
         return null;
     }

@@ -18,35 +18,19 @@ public class AccountsServicePlugin : BaseBannouPlugin
     private AccountsService? _service;
     private IServiceProvider? _serviceProvider;
 
-    /// <summary>
-    /// Validate that this plugin should be loaded based on environment configuration.
-    /// </summary>
-    protected override bool OnValidatePlugin()
-    {
-        var enabled = Environment.GetEnvironmentVariable("ACCOUNTS_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("🔍 Accounts service enabled check: {EnabledValue}", enabled);
-        return enabled == "true";
-    }
 
     /// <summary>
     /// Configure services for dependency injection - mimics existing [DaprService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("⏭️  Accounts service disabled, skipping service registration");
-            return;
-        }
-
         Logger?.LogInformation("🔧 Configuring Accounts service dependencies");
 
-        // Register the service implementation (existing pattern from [DaprService] attribute)
-        services.AddScoped<IAccountsService, AccountsService>();
-        services.AddScoped<AccountsService>();
+        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // No need to register IAccountsService and AccountsService here
 
-        // Register generated configuration class
-        services.AddScoped<AccountsServiceConfiguration>();
+        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
+        // No need to register AccountsServiceConfiguration here
 
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
@@ -59,12 +43,6 @@ public class AccountsServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("⏭️  Accounts service disabled, skipping application configuration");
-            return;
-        }
-
         Logger?.LogInformation("🔧 Configuring Accounts service application pipeline");
 
         // The generated AccountsController should already be discovered via standard ASP.NET Core controller discovery
@@ -81,8 +59,6 @@ public class AccountsServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        if (!OnValidatePlugin()) return true;
-
         Logger?.LogInformation("▶️  Starting Accounts service");
 
         try
@@ -118,7 +94,7 @@ public class AccountsServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogDebug("🏃 Accounts service running");
 
@@ -142,7 +118,7 @@ public class AccountsServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogInformation("🛑 Shutting down Accounts service");
 

@@ -126,14 +126,11 @@ namespace BeyondImmersion.BannouService.{service_pascal};
 /// Configuration class for {service_pascal} service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(envPrefix: \"BANNOU_\")]
+[ServiceConfiguration(typeof({service_pascal}Service), envPrefix: \"BANNOU_\")]
 public class {service_pascal}ServiceConfiguration : IServiceConfiguration
 {{
     /// <inheritdoc />
     public string? Force_Service_ID {{ get; set; }}
-
-    /// <inheritdoc />
-    public bool? Service_Disabled {{ get; set; }}
 ''')
 
     if config_properties:

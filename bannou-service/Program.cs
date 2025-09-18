@@ -160,12 +160,18 @@ public static class Program
                     mvcOptions.Filters.Add(typeof(HeaderArrayActionFilter));
                     mvcOptions.Filters.Add(typeof(HeaderArrayResultFilter));
                 })
-                // TODO: Plugin system will handle controller registration
-                // .AddApplicationParts(daprControllerAssemblies)
-                // .ConfigureApplicationPartManager(manager =>
-                // {
-                //     manager.FeatureProviders.Add(new DaprControllersFeatureProvider());
-                // })
+                // Add plugin controller assemblies dynamically
+                .ConfigureApplicationPartManager(manager =>
+                {
+                    if (PluginLoader != null)
+                    {
+                        var pluginAssemblies = PluginLoader.GetControllerAssemblies();
+                        foreach (var assembly in pluginAssemblies)
+                        {
+                            manager.ApplicationParts.Add(new Microsoft.AspNetCore.Mvc.ApplicationParts.AssemblyPart(assembly));
+                        }
+                    }
+                })
                 .AddDapr() // Add Dapr pub/sub support
                 .AddNewtonsoftJson(jsonSettings =>
                 {
@@ -191,9 +197,11 @@ public static class Program
                 .AddDaprServices();
 
             webAppBuilder.Services.AddDaprClient();
-            webAppBuilder.Services.AddAllBannouServiceClients();
 
-            // Configure plugin services
+            // Add core service infrastructure (but not clients - PluginLoader handles those)
+            webAppBuilder.Services.AddBannouServiceClients();
+
+            // Configure plugin services (includes centralized client, service, and configuration registration)
             PluginLoader?.ConfigureServices(webAppBuilder.Services);
 
             // Configure OpenAPI documentation with NSwag
@@ -236,7 +244,26 @@ public static class Program
         }
 
         // build the application
-        WebApplication webApp = webAppBuilder.Build();
+        Logger.Log(LogLevel.Information, null, "🔧 About to build WebApplication - checking for DI conflicts...");
+
+        WebApplication webApp;
+        try
+        {
+            webApp = webAppBuilder.Build();
+            Logger.Log(LogLevel.Information, null, "✅ WebApplication built successfully - no DI validation errors detected");
+        }
+        catch (Exception ex)
+        {
+            Logger.Log(LogLevel.Error, ex, "❌ Failed to build WebApplication - DI validation error detected");
+            Logger.Log(LogLevel.Error, null, "Exception type: {ExceptionType}", ex?.GetType()?.Name ?? "null");
+            Logger.Log(LogLevel.Error, null, "Exception message: {ExceptionMessage}", ex?.Message ?? "null");
+            if (ex?.InnerException != null)
+            {
+                Logger.Log(LogLevel.Error, null, "Inner exception type: {InnerExceptionType}", ex.InnerException?.GetType()?.Name ?? "null");
+                Logger.Log(LogLevel.Error, null, "Inner exception message: {InnerExceptionMessage}", ex.InnerException?.Message ?? "null");
+            }
+            throw; // Re-throw to maintain original behavior
+        }
         try
         {
             // Configure OpenAPI documentation in development
@@ -266,10 +293,13 @@ public static class Program
             // Configure plugin application pipeline
             PluginLoader?.ConfigureApplication(webApp);
 
+            // Resolve services centrally for plugins
+            PluginLoader?.ResolveServices(webApp.Services);
+
             // Initialize plugins
             if (PluginLoader != null)
             {
-                if (!await PluginLoader.InitializePluginsAsync())
+                if (!await PluginLoader.InitializeAsync())
                 {
                     Logger.Log(LogLevel.Error, "Plugin initialization failed- exiting application.");
                     return;
@@ -287,7 +317,7 @@ public static class Program
             // Start plugins
             if (PluginLoader != null)
             {
-                if (!await PluginLoader.StartPluginsAsync())
+                if (!await PluginLoader.StartAsync())
                 {
                     Logger.Log(LogLevel.Error, "Plugin startup failed- exiting application.");
                     return;
@@ -327,7 +357,7 @@ public static class Program
             // Shutdown plugins
             if (PluginLoader != null)
             {
-                await PluginLoader.ShutdownPluginsAsync();
+                await PluginLoader.ShutdownAsync();
             }
         }
         catch (Exception exc)
@@ -353,6 +383,9 @@ public static class Program
     /// </summary>
     private static async Task LoadPlugins()
     {
+        // Enable assembly resolution for plugin dependencies
+        AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
+
         // Create plugin loader
         using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         var pluginLogger = loggerFactory.CreateLogger<PluginLoader>();
@@ -365,7 +398,7 @@ public static class Program
         var appDirectory = Directory.GetCurrentDirectory();
         var pluginsDirectory = Path.Combine(appDirectory, "plugins");
 
-        var pluginsLoaded = await PluginLoader.LoadPluginsAsync(pluginsDirectory, requestedPlugins);
+        var pluginsLoaded = await PluginLoader.DiscoverAndLoadPluginsAsync(pluginsDirectory, requestedPlugins);
 
         if (pluginsLoaded == 0)
         {

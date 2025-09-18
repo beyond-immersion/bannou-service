@@ -9,14 +9,11 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// Configuration class for Accounts service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(AccountsService), envPrefix: "BANNOU_")]
 public class AccountsServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
     public string? Force_Service_ID { get; set; }
-
-    /// <inheritdoc />
-    public bool? Service_Disabled { get; set; }
 
     /// <summary>
     /// properties configuration property

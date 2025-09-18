@@ -35,13 +35,6 @@ public interface IServiceConfiguration
     /// </summary>
     public string? Force_Service_ID { get; }
 
-    /// <summary>
-    /// Whether the service has been disabled.
-    /// Services are enabled by default, and the attempt should be made to
-    /// include/exclude by assemblies instead. This means services are enabled
-    /// so long as their assemblies are loaded.
-    /// </summary>
-    public bool? Service_Disabled { get; set; }
 
     /// <summary>
     /// Returns whether this configuration has values set for all required properties.

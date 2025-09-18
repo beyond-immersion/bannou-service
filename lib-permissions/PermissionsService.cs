@@ -1,4 +1,7 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
@@ -9,7 +12,8 @@ namespace BeyondImmersion.BannouService.Permissions;
 /// <summary>
 /// Generated service implementation for Permissions API
 /// </summary>
-public class PermissionsService : IPermissionsService
+[DaprService("permissions", typeof(IPermissionsService), lifetime: ServiceLifetime.Scoped)]
+public class PermissionsService : IPermissionsService, IDaprService
 {
     private readonly ILogger<PermissionsService> _logger;
     private readonly PermissionsServiceConfiguration _configuration;

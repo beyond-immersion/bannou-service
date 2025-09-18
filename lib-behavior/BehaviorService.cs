@@ -1,5 +1,8 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +12,8 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// <summary>
 /// Generated service implementation for Behavior API
 /// </summary>
-public class BehaviorService : IBehaviorService
+[DaprService("behavior", typeof(IBehaviorService), lifetime: ServiceLifetime.Scoped)]
+public class BehaviorService : IBehaviorService, IDaprService
 {
     private readonly ILogger<BehaviorService> _logger;
     private readonly BehaviorServiceConfiguration _configuration;

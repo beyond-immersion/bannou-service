@@ -19,34 +19,18 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Validate that this plugin should be loaded based on environment configuration.
-    /// </summary>
-    protected override bool OnValidatePlugin()
-    {
-        var enabled = Environment.GetEnvironmentVariable("BEHAVIOR_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("🔍 Behavior service enabled check: {EnabledValue}", enabled);
-        return enabled == "true";
-    }
-
-    /// <summary>
     /// Configure services for dependency injection - mimics existing [DaprService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("⏭️  Behavior service disabled, skipping service registration");
-            return;
-        }
 
         Logger?.LogInformation("🔧 Configuring Behavior service dependencies");
 
-        // Register the service implementation (existing pattern from [DaprService] attribute)
-        services.AddScoped<IBehaviorService, BehaviorService>();
-        services.AddScoped<BehaviorService>();
+        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // No need to register IBehaviorService and BehaviorService here
 
-        // Register generated configuration class
-        services.AddScoped<BehaviorServiceConfiguration>();
+        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
+        // No need to register BehaviorServiceConfiguration here
 
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
@@ -59,11 +43,6 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("⏭️  Behavior service disabled, skipping application configuration");
-            return;
-        }
 
         Logger?.LogInformation("🔧 Configuring Behavior service application pipeline");
 
@@ -81,8 +60,6 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        if (!OnValidatePlugin()) return true;
-
         Logger?.LogInformation("▶️  Starting Behavior service");
 
         try
@@ -118,7 +95,7 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogDebug("🏃 Behavior service running");
 
@@ -142,7 +119,7 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogInformation("🛑 Shutting down Behavior service");
 

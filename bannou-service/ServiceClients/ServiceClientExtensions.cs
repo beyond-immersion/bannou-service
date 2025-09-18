@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http;
 using System.Net.Http;
+using System.Reflection;
 
 namespace BeyondImmersion.BannouService.ServiceClients;
 
@@ -109,35 +110,46 @@ public static class ServiceClientExtensions
     }
 
     /// <summary>
-    /// Auto-registers all service clients found in the current assembly.
+    /// Auto-registers all service clients found in the current assembly and plugin assemblies.
     /// Follows naming convention: {Service}Client implements I{Service}Client.
     /// Service name is derived by removing "Client" suffix and converting to lowercase.
     /// </summary>
     public static IServiceCollection AddAllDaprServiceClients(this IServiceCollection services)
     {
-        var assembly = typeof(ServiceClientExtensions).Assembly;
-        var clientTypes = assembly.GetTypes()
-            .Where(t => t.IsClass && !t.IsAbstract && t.Name.EndsWith("Client"))
-            .ToList();
+        var assemblies = new List<Assembly> { typeof(ServiceClientExtensions).Assembly };
 
-        foreach (var clientType in clientTypes)
+        // Add plugin assemblies if PluginLoader is available
+        var pluginLoader = Program.PluginLoader;
+        if (pluginLoader != null)
         {
-            var interfaceName = $"I{clientType.Name}";
-            var interfaceType = assembly.GetType($"{clientType.Namespace}.{interfaceName}");
+            assemblies.AddRange(pluginLoader.GetControllerAssemblies());
+        }
 
-            if (interfaceType == null)
-                continue;
+        foreach (var assembly in assemblies)
+        {
+            var clientTypes = assembly.GetTypes()
+                .Where(t => t.IsClass && !t.IsAbstract && t.Name.EndsWith("Client"))
+                .ToList();
 
-            // Derive service name from client type name
-            var serviceName = clientType.Name
-                .Replace("Client", "")
-                .ToLowerInvariant();
+            foreach (var clientType in clientTypes)
+            {
+                var interfaceName = $"I{clientType.Name}";
+                var interfaceType = assembly.GetType($"{clientType.Namespace}.{interfaceName}");
 
-            var method = typeof(ServiceClientExtensions)
-                .GetMethod(nameof(AddDaprServiceClient))!
-                .MakeGenericMethod(clientType, interfaceType);
+                if (interfaceType == null)
+                    continue;
 
-            method.Invoke(null, new object?[] { services, serviceName, null });
+                // Derive service name from client type name
+                var serviceName = clientType.Name
+                    .Replace("Client", "")
+                    .ToLowerInvariant();
+
+                var method = typeof(ServiceClientExtensions)
+                    .GetMethod(nameof(AddDaprServiceClient))!
+                    .MakeGenericMethod(clientType, interfaceType);
+
+                method.Invoke(null, new object?[] { services, serviceName, null });
+            }
         }
 
         return services;

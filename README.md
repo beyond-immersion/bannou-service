@@ -186,51 +186,324 @@ Alternatively, the following make commands have been provided to simplify the pr
 2. `make up -d`
 3. `make down`
 
+## How Plugins Work
+
+Bannou uses a revolutionary schema-first plugin architecture that enables rapid service development and deployment flexibility. The entire system is designed around OpenAPI specifications that automatically generate complete, production-ready service plugins.
+
+### Schema-First Development Workflow
+
+**1. Define Your Service API**
+Start by creating an OpenAPI specification in the `/schemas/` directory:
+
+```yaml
+# schemas/example-api.yaml
+openapi: 3.0.1
+info:
+  title: Example Service API
+  version: 1.0.0
+paths:
+  /example/hello:
+    post:
+      summary: Say hello
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HelloRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HelloResponse'
+components:
+  schemas:
+    HelloRequest:
+      type: object
+      properties:
+        name:
+          type: string
+      required: [name]
+    HelloResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+  x-service-configuration:
+    properties:
+      MaxConcurrentRequests:
+        type: integer
+        default: 100
+      EnableCaching:
+        type: boolean
+        default: true
+```
+
+**2. Generate Complete Plugin Structure**
+Run the code generation system to create your complete plugin:
+
+```bash
+scripts/generate-all-services.sh
+```
+
+This automatically creates:
+```
+lib-example/
+├── Generated/                              # Auto-generated files (never edit manually)
+│   ├── ExampleController.Generated.cs      # ASP.NET Core controller implementation
+│   ├── IExampleService.cs                  # Service interface with method signatures
+│   ├── ExampleClient.cs                    # Typed client for service-to-service calls
+│   ├── ExampleModels.cs                    # Request/response/event model classes
+│   └── ExampleServiceConfiguration.cs      # Configuration class from schema
+├── ExampleService.cs                       # Your business logic implementation (only manual file)
+├── ExampleServicePlugin.cs                 # Plugin registration and lifecycle
+└── lib-example.csproj                      # Project file with dependencies
+```
+
+**3. Implement Business Logic**
+The only file you need to edit is the service implementation. Everything else is generated:
+
+```csharp
+// ExampleService.cs - The ONLY manual file in your plugin
+[DaprService("example", typeof(IExampleService), lifetime: ServiceLifetime.Scoped)]
+public class ExampleService : IExampleService
+{
+    private readonly DaprClient _daprClient;
+    private readonly ILogger<ExampleService> _logger;
+    private readonly ExampleServiceConfiguration _configuration;
+
+    public ExampleService(
+        DaprClient daprClient,
+        ILogger<ExampleService> logger,
+        ExampleServiceConfiguration configuration)
+    {
+        _daprClient = daprClient;
+        _logger = logger;
+        _configuration = configuration;
+    }
+
+    public async Task<(StatusCodes, HelloResponse?)> SayHelloAsync(
+        HelloRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Saying hello to {Name}", request.Name);
+
+            var response = new HelloResponse
+            {
+                Message = $"Hello, {request.Name}!"
+            };
+
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to say hello to {Name}", request.Name);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+}
+```
+
+**4. Configure and Deploy**
+Use environment variables to control which services run where:
+
+```bash
+# Enable your service
+EXAMPLE_SERVICE_ENABLED=true
+
+# Or disable all services except yours
+SERVICES_ENABLED=false
+EXAMPLE_SERVICE_ENABLED=true
+```
+
+### Plugin Architecture Benefits
+
+**🚀 Rapid Development**
+- New service from concept to production in under a day
+- Generate controllers, models, clients, and configuration automatically
+- Focus only on business logic, not infrastructure code
+
+**⚙️ Selective Assembly Loading**
+- Single codebase can run as monolith (all services) or microservices (selected services)
+- Docker images built with only necessary service combinations
+- Perfect for development (all local) to production (distributed) scaling
+
+**🔌 Dynamic Service Discovery**
+- Services automatically register with Dapr service mesh
+- Client-to-service routing handled transparently through `ServiceAppMappingResolver`
+- Default to "bannou" (omnipotent routing) for development, distributed routing for production
+
+**🛡️ Type Safety & Consistency**
+- Generated clients provide compile-time type checking for service-to-service calls
+- OpenAPI schema ensures request/response consistency across all services
+- Automatic input validation from schema definitions
+
+**🧪 Comprehensive Testing**
+- Unit tests auto-generated for all service methods
+- HTTP integration testing through generated clients
+- WebSocket protocol testing for Connect service integration
+
+### Service Enable/Disable System
+
+Bannou supports two-mode environment variable configuration for maximum flexibility:
+
+**Global Control (SERVICES_ENABLED)**
+```bash
+# Enable all services by default
+SERVICES_ENABLED=true    # Default behavior
+
+# Disable all services by default (selective enabling)
+SERVICES_ENABLED=false
+EXAMPLE_SERVICE_ENABLED=true    # Only enable specific services
+TESTING_SERVICE_ENABLED=true
+```
+
+**Individual Service Control**
+```bash
+# Individual service toggles (override global setting)
+ACCOUNTS_SERVICE_ENABLED=true
+AUTH_SERVICE_ENABLED=true
+CONNECT_SERVICE_ENABLED=true
+BEHAVIOR_SERVICE_ENABLED=false  # Disable specific services
+```
+
+This enables efficient resource usage and deployment flexibility:
+- **Development**: All services enabled locally for full-stack development
+- **Testing**: Minimal services (just testing service) for infrastructure validation
+- **Production**: Distribute services across multiple nodes based on load patterns
+
+### Integration with Dapr Service Mesh
+
+Every plugin integrates seamlessly with Dapr for:
+
+**Service-to-Service Communication**
+```csharp
+// Generated clients handle Dapr routing automatically
+public class ExampleService : IExampleService
+{
+    private readonly IAccountsClient _accountsClient;  // Generated client
+
+    public async Task<(StatusCodes, SomeResponse?)> DoSomethingAsync(SomeRequest request)
+    {
+        // Call other services using generated clients - routing handled automatically
+        var (status, account) = await _accountsClient.GetAccountAsync(request.AccountId);
+        if (status != StatusCodes.OK) return (status, null);
+
+        // Your business logic here...
+    }
+}
+```
+
+**State Management and Events**
+```csharp
+// Dapr state store integration
+private const string STATE_STORE = "example-store";
+await _daprClient.SaveStateAsync(STATE_STORE, key, data);
+var data = await _daprClient.GetStateAsync<ModelType>(STATE_STORE, key);
+
+// Dapr pub/sub event publishing
+await _daprClient.PublishEventAsync("bannou-pubsub", "example-event", eventModel);
+```
+
+**Configuration and Secrets**
+```csharp
+// Generated configuration classes with environment variable binding
+public class ExampleServiceConfiguration : BaseServiceConfiguration
+{
+    [ServiceConfiguration(envPrefix: "BANNOU_")]
+    public int MaxConcurrentRequests { get; set; } = 100;
+
+    [ServiceConfiguration(envPrefix: "BANNOU_")]
+    public bool EnableCaching { get; set; } = true;
+}
+```
+
+### Advanced Plugin Features
+
+**WebSocket Integration**
+All services automatically integrate with the Connect service WebSocket gateway:
+- Binary protocol with 31-byte headers for efficient routing
+- Client-salted service GUIDs prevent cross-session security exploits
+- Real-time capability updates when services deploy new APIs
+
+**Assembly Loading Optimization**
+```bash
+# Build specialized Docker images with only required services
+docker build --build-arg ENABLED_SERVICES="accounts,auth,connect" .
+
+# Or build full-featured development image
+docker build --build-arg ENABLED_SERVICES="all" .
+```
+
+**Multi-Environment Configuration**
+```bash
+# Development environment (.env)
+BANNOU_EmulateDapr=True
+SERVICES_ENABLED=true
+
+# Production environment
+DAPR_HTTP_PORT=3500
+DAPR_GRPC_PORT=50001
+SERVICES_ENABLED=false
+ACCOUNTS_SERVICE_ENABLED=true
+AUTH_SERVICE_ENABLED=true
+```
+
+This plugin architecture enables Bannou to scale from single-developer local development to massive distributed deployments supporting hundreds of thousands of concurrent NPCs, all from the same codebase and deployment tooling.
+
 ## Extending the Service
 
-The Bannou Service's primary goal is to be flexible, so there are numerous ways to use and extend it. The classic use would be to fork this repository, adding your own APIs (see below on adding APIs) directly to the main application in the same way that the existing services, controllers, and configuration are set up. The application code itself is your guide- MVC controllers are still the same MVC controllers you'd always deal with in .NET 7, and should be fairly self-explanatory.
+With the schema-first plugin architecture, extending Bannou is straightforward and follows proven patterns. The generated code handles all infrastructure concerns, letting you focus on business value.
 
-Alternatively, you can add this repository as a project reference / git submodule of your own .NET application. The Program class in this monoservice has been kept intentionally minimalistic, and all mechanisms of service, controller, and configuration discovery have been written in a way to also include other loaded assemblies. Until more examples can be included, the `unit tests` project clearly shows that extending the base attribute, configuration, service, and controller classes works just fine when using the Bannou Service as a project reference.
+### Adding a New Service
 
-Finally, you can build this application using the dotnet commandline build tool, and reference/include in the generated library in your own app.
+The complete workflow from idea to production deployment:
 
-### Adding APIs
+1. **Create OpenAPI Schema** (`/schemas/{service}-api.yaml`)
+   - Define your service API contract with request/response models
+   - Include configuration schema in `x-service-configuration` section
+   - Use standard HTTP status codes and error handling patterns
 
-To add an API controller, first determine if the APIs are distinct enough to potentially have their own on/off switch enabling them for a given service instance. In other words, would you want only some nodes in your services network to have these APIs enabled, while others have them disabled?
+2. **Generate Plugin Structure** (`scripts/generate-all-services.sh`)
+   - Creates complete plugin with controllers, models, clients, configuration
+   - Generates project files and dependency references automatically
+   - Updates solution file with new project references
 
-If you need that control, then you'll want to start by implementing IDaprService in a new "service handler" class- this new class is where you'll do your initial setup in support of the API controller you'll be adding. It gives you the on/off switch to enable and disable the controllers by configuration, as well as handling long-running tasks for maintenance, cleanup, or generating events of some kind.
+3. **Implement Service Logic** (Edit only `{Service}Service.cs`)
+   - Implement generated interface with your business logic
+   - Use DaprClient for state management and service communication
+   - Follow `(StatusCodes, ResponseModel?)` tuple pattern for responses
 
-If your new APIs are generic enough that you don't mind requests being spread across every node in the network without that level of control, you can forego having a "service handler" entirely, and move right to adding the Controller.
+4. **Configure and Test** (Environment variables and testing)
+   - Enable service with `{SERVICE}_SERVICE_ENABLED=true`
+   - Run generated unit tests and integration tests
+   - Test service-to-service communication using generated clients
 
-### Implementing IDaprService
+5. **Deploy and Scale** (Docker and service mesh)
+   - Service automatically registers with Dapr service discovery
+   - Configure selective assembly loading for production deployment
+   - Monitor and scale using standard Dapr metrics and tooling
 
-Dapr services are the classes which support the API controllers, by providing the business logic of transactional requests, an entry point for starting long-running service tasks, the cleanup handler when the service is shutting down, and the means by which easy per-controller configuration can be generated.
+The plugin system ensures consistency, type safety, and rapid development while maintaining production-grade reliability and performance.
 
-There are two requirements for adding a new "service handler" to the application- one is implementing the IDaprService interface, and the second is decorating the class with the `[DaprServiceAttribute]`. The attribute allows you to specify a service handler name- this should be unique per Dapr service, as it's used to determine the ENV for enabling and disabling the service handler (and its associated API controllers).
+### Special Case: Testing Service Plugin
 
-Your individual Dapr service can be enabled by setting `{SERVICE_NAME}_SERVICE_ENABLED=true` as an ENV or `--{service_name}-service-enabled=true` as a switch.
+The `lib-testing` plugin serves as an example of a manually-created plugin that follows the same architectural patterns as generated plugins, but is hand-crafted for infrastructure testing purposes:
 
-### Implementing IServiceConfiguration
+```
+lib-testing/
+├── TestingService.cs              # Business logic (implements ITestingService interface)
+├── TestingServiceConfiguration.cs # Configuration (extends BaseServiceConfiguration)
+├── TestingController.cs           # Controller (follows same patterns as generated controllers)
+├── ITestingService.cs            # Service interface (manually defined)
+└── lib-testing.csproj            # Project file
+```
 
-Configuration is meant to be per-Dapr service, so there are several ways through the service and associated controllers that configuration can be retrieved in the application. To add a new configuration class, implement the IServiceConfiguration interface and decorate it with the `[ServiceConfiguration]` attribute pointing to the particular Dapr service that the configuration is meant for. Any existing ENVs (and args/switches, if you provide them) will be used to populate your configuration class automatically. By adding a "prefix" param to the config attribute, you can specify that only ENVs with a given prefix should be used to populate it instead (a common mechanism for per-component configuration in a .NET application).
-
-By decorating any configuration property in your new class with `[Required]` (from DataAnnotations), your service will then fail to start if the configuration is NOT provided. This is only when the Dapr service is enabled on that node- if it's disabled, then its required configuration obviously doesn't matter.
-
-Dapr services can have any number of configuration classes without issue, but if you have more than one, then you should set `primary=true` in the attribute constructor for the one you wish to be treated as the service's primary configuration. This means the configuration is selected and populated automatically when building from the direction of the Dapr service or associated controller (as if it were the only configuration). Properties set with the `[Required]` attribute in classes that are NOT the primary configuration for a service type will be ignored.
-
-### Implementing IDaprController
-
-To add a new API controller to use through Dapr, implement IDaprController and decorate the class with the `[DaprController]` attribute. The attribute extends the `[Route]` attribute, so can be thought of similarly- add a template string for the route your controller will use, and each method path will be appended to that route.
-
-If your API controller has business logic then you should also add a Dapr service class (see above) to handle that logic, and reference said Dapr service from the attribute decorating your controller. A Dapr service can have any number of associated controllers (meaning, any number of controllers can reference back to and use the service), but the opposite is not true- Dapr controllers can only reference one Dapr service each.
-
-If you need to make a request from one Dapr service to another, keep in mind that the 2nd service may be disabled on your particular node at some point in the future, leading to problems. You MUST make such requests back out through Dapr to an internal controller, and not attempt to bypass that step- this is to prevent issues with concurrency, as well as simply keeping internal depencencies to a minimum.
-
-### Implementing IServiceAttribute
-
-IServiceAttribute is a shared interface for custom attributes within the application. The interface largely provides a set of utility methods, useful for finding all instances of the attribute decorating targets within the application (classes, methods, fields, etc).
-
-The `[DaprService]`, `[DaprController]`, and `[ServiceConfiguration]` attributes all implement IServiceAttribute, and those same helper methods are what are used to locate and perform operations on all of the classes decorated with those attributes, so they can be used as examples of how those methods work.
+This plugin demonstrates how to create services that don't require schema generation but still integrate seamlessly with the plugin system, service discovery, and configuration management.
 
 ## Deployment Notes
 
