@@ -21,7 +21,7 @@ runs:
       shell: bash
       run: |
         echo "🏗️ Running infrastructure tests with minimal service configuration (TESTING service only)..."
-        docker compose -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ingress.yml"  -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" up --exit-code-from=bannou-tester
+        docker compose -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ingress.yml"  -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" up --exit-code-from=bannou-infra-tester
 
     - name: Cleanup Infrastructure Tests
       if: always()

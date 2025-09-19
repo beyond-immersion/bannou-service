@@ -16,9 +16,33 @@ public class BehaviorServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
-    /// properties configuration property
-    /// Environment variable: PROPERTIES or BANNOU_PROPERTIES
+    /// Maximum number of stackable behaviors per NPC
+    /// Environment variable: MAXBEHAVIORSTACKDEPTH or BANNOU_MAXBEHAVIORSTACKDEPTH
     /// </summary>
-    public string Properties = string.Empty;
+    public int MaxBehaviorStackDepth = 10;
+
+    /// <summary>
+    /// Maximum number of compiled behaviors to cache
+    /// Environment variable: COMPILATIONCACHESIZE or BANNOU_COMPILATIONCACHESIZE
+    /// </summary>
+    public int CompilationCacheSize = 1000;
+
+    /// <summary>
+    /// Maximum time allowed for behavior compilation
+    /// Environment variable: COMPILATIONTIMEOUTSECONDS or BANNOU_COMPILATIONTIMEOUTSECONDS
+    /// </summary>
+    public int CompilationTimeoutSeconds = 30;
+
+    /// <summary>
+    /// ABML validation strictness level
+    /// Environment variable: ABMLVALIDATIONLEVEL or BANNOU_ABMLVALIDATIONLEVEL
+    /// </summary>
+    public string ABMLValidationLevel = "standard";
+
+    /// <summary>
+    /// Maximum depth for recursive context variable expansion
+    /// Environment variable: CONTEXTVARIABLEEXPANSIONDEPTH or BANNOU_CONTEXTVARIABLEEXPANSIONDEPTH
+    /// </summary>
+    public int ContextVariableExpansionDepth = 5;
 
 }

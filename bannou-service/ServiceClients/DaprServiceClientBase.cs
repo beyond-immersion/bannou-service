@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System.Net.Http;
 using System.Text;
 
@@ -87,7 +88,7 @@ public abstract class DaprServiceClientBase : IDaprClient
     }
 
     /// <summary>
-    /// Prepares the HTTP request with proper Dapr headers.
+    /// Prepares the HTTP request with proper Dapr headers and custom headers.
     /// Works with both full constructor and parameterless constructor.
     /// </summary>
     protected virtual void PrepareRequest(HttpClient client, HttpRequestMessage request, string url)
@@ -113,10 +114,34 @@ public abstract class DaprServiceClientBase : IDaprClient
             request.Headers.Add("dapr-app-id", appId);
             _logger?.LogTrace("Added dapr-app-id header: {AppId} for URL: {Url}", appId, url);
         }
+
+        // Apply authorization header if set
+        if (!string.IsNullOrEmpty(_authorizationHeader))
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer",
+                _authorizationHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                    ? _authorizationHeader.Substring(7)
+                    : _authorizationHeader);
+            _logger?.LogTrace("Added Authorization header for service {ServiceName}", ServiceName);
+        }
+
+        // Apply custom headers
+        foreach (var header in _customHeaders)
+        {
+            if (!request.Headers.Contains(header.Key))
+            {
+                request.Headers.Add(header.Key, header.Value);
+                _logger?.LogTrace("Added custom header {HeaderName}: {HeaderValue} for service {ServiceName}",
+                    header.Key, header.Value, ServiceName);
+            }
+        }
+
+        // Clear headers after applying them (one-time use)
+        ClearHeaders();
     }
 
     /// <summary>
-    /// Prepares the HTTP request with URL builder for Dapr routing.
+    /// Prepares the HTTP request with URL builder for Dapr routing and custom headers.
     /// Works with both full constructor and parameterless constructor.
     /// </summary>
     protected virtual void PrepareRequest(HttpClient client, HttpRequestMessage request, StringBuilder urlBuilder)
@@ -142,6 +167,30 @@ public abstract class DaprServiceClientBase : IDaprClient
             request.Headers.Add("dapr-app-id", appId);
             _logger?.LogTrace("Added dapr-app-id header: {AppId} for URL builder: {Url}", appId, urlBuilder.ToString());
         }
+
+        // Apply authorization header if set
+        if (!string.IsNullOrEmpty(_authorizationHeader))
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer",
+                _authorizationHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                    ? _authorizationHeader.Substring(7)
+                    : _authorizationHeader);
+            _logger?.LogTrace("Added Authorization header for service {ServiceName}", ServiceName);
+        }
+
+        // Apply custom headers
+        foreach (var header in _customHeaders)
+        {
+            if (!request.Headers.Contains(header.Key))
+            {
+                request.Headers.Add(header.Key, header.Value);
+                _logger?.LogTrace("Added custom header {HeaderName}: {HeaderValue} for service {ServiceName}",
+                    header.Key, header.Value, ServiceName);
+            }
+        }
+
+        // Clear headers after applying them (one-time use)
+        ClearHeaders();
     }
 
     /// <summary>
@@ -156,6 +205,54 @@ public abstract class DaprServiceClientBase : IDaprClient
                 _serviceName, response.StatusCode, response.ReasonPhrase);
         }
     }
+
+    #region Header Support Methods
+
+    /// <summary>
+    /// Storage for custom headers to be applied to the next request.
+    /// </summary>
+    private readonly Dictionary<string, string> _customHeaders = new();
+
+    /// <summary>
+    /// Authorization header value for the next request.
+    /// </summary>
+    private string? _authorizationHeader;
+
+    /// <summary>
+    /// Sets a custom header for the next service request.
+    /// Headers are applied once and then cleared.
+    /// Used internally by extension methods for type-safe fluent API.
+    /// </summary>
+    /// <param name="name">Header name (e.g., "X-Custom-Header")</param>
+    /// <param name="value">Header value</param>
+    internal void SetHeader(string name, string value)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Header name cannot be null or empty", nameof(name));
+
+        _customHeaders[name] = value ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Clears the Authorization header.
+    /// Used internally by extension methods for type-safe fluent API.
+    /// </summary>
+    internal void ClearAuthorization()
+    {
+        _authorizationHeader = null;
+    }
+
+    /// <summary>
+    /// Clears all custom headers and authorization for a fresh request.
+    /// Called automatically after each request.
+    /// </summary>
+    protected void ClearHeaders()
+    {
+        _customHeaders.Clear();
+        _authorizationHeader = null;
+    }
+
+    #endregion
 
     /// <summary>
     /// Extracts the Dapr app-id from a Dapr invoke URL.

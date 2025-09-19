@@ -45,6 +45,44 @@ fi
 # Ensure output directory exists
 mkdir -p "$OUTPUT_DIR"
 
+# Create filtered schema for client generation (remove x-from-authorization parameters)
+FILTERED_SCHEMA_FILE="$SCHEMA_FILE"
+if grep -q "x-from-authorization" "$SCHEMA_FILE"; then
+    echo -e "${YELLOW}🔧 Creating filtered schema for client generation (removing x-from-authorization parameters)...${NC}"
+    FILTERED_SCHEMA_FILE="/tmp/${SERVICE_NAME}-client-filtered-schema.yaml"
+
+    # Use Python to remove x-from-authorization parameters from client schema
+    python3 -c "
+import yaml
+import sys
+
+with open('$SCHEMA_FILE', 'r') as f:
+    schema = yaml.safe_load(f)
+
+if 'paths' in schema:
+    for path, path_data in schema['paths'].items():
+        for method, method_data in path_data.items():
+            if isinstance(method_data, dict) and 'parameters' in method_data:
+                # Filter out parameters marked with x-from-authorization
+                original_params = method_data['parameters']
+                filtered_params = []
+
+                for param in original_params:
+                    if param.get('x-from-authorization'):
+                        print(f'Removing x-from-authorization parameter \"{param.get(\"name\", \"unknown\")}\" from {path} {method} for client generation', file=sys.stderr)
+                    else:
+                        filtered_params.append(param)
+
+                method_data['parameters'] = filtered_params
+
+# Write filtered schema for client generation
+with open('$FILTERED_SCHEMA_FILE', 'w') as f:
+    yaml.dump(schema, f, default_flow_style=False, sort_keys=False)
+
+print('Client filtered schema created successfully', file=sys.stderr)
+"
+fi
+
 # Function to find NSwag executable
 find_nswag_exe() {
     # On Linux/macOS, prefer the global dotnet tool over Windows executables
@@ -106,7 +144,7 @@ fi
 echo -e "${YELLOW}🔄 Running NSwag client generation...${NC}"
 
 "$NSWAG_EXE" openapi2csclient \
-    "/input:$SCHEMA_FILE" \
+    "/input:$FILTERED_SCHEMA_FILE" \
     "/output:$OUTPUT_FILE" \
     "/namespace:BeyondImmersion.BannouService.$SERVICE_PASCAL" \
     "/clientBaseClass:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase" \
@@ -129,8 +167,17 @@ echo -e "${YELLOW}🔄 Running NSwag client generation...${NC}"
 if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
     FILE_SIZE=$(wc -l < "$OUTPUT_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated service client ($FILE_SIZE lines)${NC}"
+
+    # Cleanup temporary filtered schema file
+    if [ "$FILTERED_SCHEMA_FILE" != "$SCHEMA_FILE" ] && [ -f "$FILTERED_SCHEMA_FILE" ]; then
+        rm -f "$FILTERED_SCHEMA_FILE"
+    fi
     exit 0
 else
     echo -e "${RED}❌ Failed to generate service client${NC}"
+    # Cleanup temporary filtered schema file
+    if [ "$FILTERED_SCHEMA_FILE" != "$SCHEMA_FILE" ] && [ -f "$FILTERED_SCHEMA_FILE" ]; then
+        rm -f "$FILTERED_SCHEMA_FILE"
+    fi
     exit 1
 fi

@@ -26,11 +26,7 @@ public class AuthService : IAuthService, IDaprService
     private readonly AuthServiceConfiguration _configuration;
     private const string REDIS_STATE_STORE = "statestore";
 
-    // Hardcoded configuration for now - can be moved to config later
-    private const string JWT_SECRET = "your-256-bit-secret-key-here-must-be-32-chars";
-    private const string JWT_ISSUER = "bannou-auth-service";
-    private const string JWT_AUDIENCE = "bannou-clients";
-    private const int JWT_EXPIRATION_MINUTES = 60;
+    // Configuration loaded from environment variables
 
     public AuthService(
         IAccountsClient accountsClient,
@@ -84,7 +80,7 @@ public class AuthService : IAuthService, IDaprService
                 AccountId = account.AccountId,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                ExpiresIn = JWT_EXPIRATION_MINUTES * 60
+                ExpiresIn = _configuration.JwtExpirationMinutes * 60
             });
         }
         catch (Exception ex)
@@ -179,7 +175,7 @@ public class AuthService : IAuthService, IDaprService
                 AccountId = mockAccount.AccountId,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                ExpiresIn = JWT_EXPIRATION_MINUTES * 60
+                ExpiresIn = _configuration.JwtExpirationMinutes * 60
             });
         }
         catch (Exception ex)
@@ -222,7 +218,7 @@ public class AuthService : IAuthService, IDaprService
                 AccountId = mockAccount.AccountId,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                ExpiresIn = JWT_EXPIRATION_MINUTES * 60
+                ExpiresIn = _configuration.JwtExpirationMinutes * 60
             });
         }
         catch (Exception ex)
@@ -234,6 +230,7 @@ public class AuthService : IAuthService, IDaprService
 
     /// <inheritdoc/>
     public async Task<(StatusCodes, AuthResponse?)> RefreshTokenAsync(
+        string jwt,
         RefreshRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -273,7 +270,7 @@ public class AuthService : IAuthService, IDaprService
                 AccountId = account.AccountId,
                 AccessToken = accessToken,
                 RefreshToken = newRefreshToken,
-                ExpiresIn = JWT_EXPIRATION_MINUTES * 60
+                ExpiresIn = _configuration.JwtExpirationMinutes * 60
             });
         }
         catch (Exception ex)
@@ -332,15 +329,26 @@ public class AuthService : IAuthService, IDaprService
 
     /// <inheritdoc/>
     public Task<(StatusCodes, object?)> LogoutAsync(
+        string jwt,
         LogoutRequest? body,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing logout request");
+            _logger.LogInformation("Processing logout request. AllSessions: {AllSessions}", body?.AllSessions ?? false);
 
-            // TODO: Invalidate session based on user context
-            // For now, return success
+            // TODO: To properly implement logout, we need the JWT token to identify the session
+            // The logout endpoint should be modified to use x-from-authorization: bearer
+            // or take a JWT parameter like ValidateTokenAsync does
+
+            // For now, we can only log the request since we don't have session identification
+            _logger.LogWarning("Logout implementation incomplete - cannot identify specific session to invalidate without JWT token");
+
+            if (body?.AllSessions == true)
+            {
+                _logger.LogInformation("AllSessions logout requested but not implemented");
+                // TODO: Implement all sessions logout when we have user identification
+            }
 
             return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { Message = "Logout successful" }));
         }
@@ -352,7 +360,7 @@ public class AuthService : IAuthService, IDaprService
     }
 
     /// <inheritdoc/>
-    public Task<(StatusCodes, object?)> TerminateSessionAsync(
+    public async Task<(StatusCodes, object?)> TerminateSessionAsync(
         Guid sessionId,
         CancellationToken cancellationToken = default)
     {
@@ -360,15 +368,31 @@ public class AuthService : IAuthService, IDaprService
         {
             _logger.LogInformation("Terminating session: {SessionId}", sessionId);
 
-            // TODO: Remove session from Redis
-            // For now, return success
+            // Find and remove the session from Redis
+            // Since we store sessions with session_key, we need to find sessions by session_id
+            var sessionKey = await FindSessionKeyBySessionIdAsync(sessionId.ToString(), cancellationToken);
 
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { Message = "Session terminated successfully" }));
+            if (sessionKey != null)
+            {
+                // Remove the session data from Redis
+                await _daprClient.DeleteStateAsync(
+                    REDIS_STATE_STORE,
+                    $"session:{sessionKey}",
+                    cancellationToken: cancellationToken);
+
+                _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
+            }
+            else
+            {
+                _logger.LogWarning("Session {SessionId} not found for termination", sessionId);
+            }
+
+            return (StatusCodes.OK, new { Message = "Session terminated successfully" });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error terminating session: {SessionId}", sessionId);
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -416,26 +440,22 @@ public class AuthService : IAuthService, IDaprService
 
     /// <inheritdoc/>
     public Task<(StatusCodes, SessionsResponse?)> GetSessionsAsync(
+        string jwt,
         CancellationToken cancellationToken = default)
     {
         try
         {
             // TODO: Get sessions for authenticated user from Redis
-            // For now, return mock sessions
+            // This requires knowing which user is making the request (via JWT token)
+            // The endpoint should be modified to use x-from-authorization: bearer
             _logger.LogInformation("Sessions requested");
 
+            _logger.LogWarning("GetSessionsAsync implementation incomplete - cannot identify user without JWT token");
+
+            // Return empty sessions list for now since we can't identify the user
             return Task.FromResult<(StatusCodes, SessionsResponse?)>((StatusCodes.OK, new SessionsResponse
             {
-                Sessions = new List<SessionInfo>
-                {
-                    new SessionInfo
-                    {
-                        SessionId = Guid.NewGuid().ToString(),
-                        CreatedAt = DateTimeOffset.UtcNow.AddHours(-2),
-                        LastActive = DateTimeOffset.UtcNow.AddMinutes(-5),
-                        DeviceInfo = new DeviceInfo()
-                    }
-                }
+                Sessions = new List<SessionInfo>()
             }));
         }
         catch (Exception ex)
@@ -445,12 +465,121 @@ public class AuthService : IAuthService, IDaprService
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(
+        string jwt,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Validating JWT token");
+
+            if (string.IsNullOrWhiteSpace(jwt))
+            {
+                _logger.LogWarning("JWT token is null or empty");
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            // Validate JWT signature and extract claims
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_configuration.JwtSecret);
+
+            try
+            {
+                var tokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidIssuer = _configuration.JwtIssuer,
+                    ValidateAudience = true,
+                    ValidAudience = _configuration.JwtAudience,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+
+                var principal = tokenHandler.ValidateToken(jwt, tokenValidationParameters, out var validatedToken);
+
+                // Extract session_key from JWT claims
+                var sessionKeyClaimType = "session_key";
+                var sessionKeyClaim = principal.FindFirst(sessionKeyClaimType);
+                if (sessionKeyClaim == null)
+                {
+                    _logger.LogWarning("JWT token does not contain session_key claim");
+                    return (StatusCodes.Unauthorized, null);
+                }
+
+                var sessionKey = sessionKeyClaim.Value;
+
+                // Lookup session data from Redis using session_key
+                var sessionData = await _daprClient.GetStateAsync<SessionDataModel>(
+                    REDIS_STATE_STORE,
+                    $"session:{sessionKey}",
+                    cancellationToken: cancellationToken);
+
+                if (sessionData == null)
+                {
+                    _logger.LogWarning("Session not found in Redis for session_key: {SessionKey}", sessionKey);
+                    return (StatusCodes.Unauthorized, null);
+                }
+
+                // Check if session has expired
+                if (sessionData.ExpiresAt < DateTime.UtcNow)
+                {
+                    _logger.LogWarning("Session has expired for session_key: {SessionKey}", sessionKey);
+                    return (StatusCodes.Unauthorized, null);
+                }
+
+                _logger.LogInformation("JWT token validated successfully for account: {AccountId}", sessionData.AccountId);
+
+                // Return session information
+                return (StatusCodes.OK, new ValidateTokenResponse
+                {
+                    Valid = true,
+                    AccountId = sessionData.AccountId,
+                    SessionId = sessionData.SessionId,
+                    Roles = sessionData.Roles ?? new List<string>(),
+                    RemainingTime = (int)(sessionData.ExpiresAt - DateTime.UtcNow).TotalSeconds
+                });
+            }
+            catch (SecurityTokenValidationException ex)
+            {
+                _logger.LogWarning(ex, "JWT token validation failed");
+                return (StatusCodes.Unauthorized, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during JWT validation");
+                return (StatusCodes.InternalServerError, null);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during token validation");
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
     #region Private Helper Methods
+
+    /// <summary>
+    /// Internal model for session data stored in Redis
+    /// </summary>
+    private class SessionDataModel
+    {
+        public Guid AccountId { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public List<string> Roles { get; set; } = new List<string>();
+        public string SessionId { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public DateTime ExpiresAt { get; set; }
+    }
 
     private string HashPassword(string password)
     {
         // Simplified password hashing - use BCrypt in production
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(password + JWT_SECRET));
+        return Convert.ToBase64String(Encoding.UTF8.GetBytes(password + _configuration.JwtSecret));
     }
 
     private bool VerifyPassword(string password, string? hash)
@@ -474,19 +603,19 @@ public class AuthService : IAuthService, IDaprService
             Roles = account.Roles ?? new List<string>(),
             SessionId = sessionId,
             CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(JWT_EXPIRATION_MINUTES)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes)
         };
 
         await _daprClient.SaveStateAsync(
             REDIS_STATE_STORE,
             $"session:{sessionKey}",
             sessionData,
-            metadata: new Dictionary<string, string> { { "ttl", (JWT_EXPIRATION_MINUTES * 60).ToString() } },
+            metadata: new Dictionary<string, string> { { "ttl", (_configuration.JwtExpirationMinutes * 60).ToString() } },
             cancellationToken: cancellationToken);
 
         // JWT contains only opaque session key - no sensitive data
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(JWT_SECRET);
+        var key = Encoding.ASCII.GetBytes(_configuration.JwtSecret);
         var claims = new List<Claim>
         {
             new Claim("session_key", sessionKey), // Opaque key for Redis lookup
@@ -497,10 +626,10 @@ public class AuthService : IAuthService, IDaprService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(JWT_EXPIRATION_MINUTES),
+            Expires = DateTime.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-            Issuer = JWT_ISSUER,
-            Audience = JWT_AUDIENCE
+            Issuer = _configuration.JwtIssuer,
+            Audience = _configuration.JwtAudience
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -547,6 +676,28 @@ public class AuthService : IAuthService, IDaprService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to remove refresh token");
+        }
+    }
+
+    /// <summary>
+    /// Find session key by session ID (requires scanning Redis keys)
+    /// </summary>
+    private Task<string?> FindSessionKeyBySessionIdAsync(string sessionId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Note: This is not efficient for large numbers of sessions
+            // In production, consider maintaining a reverse index session_id -> session_key
+            // For now, we'll return null as this would require Redis key scanning
+            // which isn't directly available through Dapr state store
+
+            _logger.LogWarning("FindSessionKeyBySessionIdAsync not fully implemented - requires Redis key scanning");
+            return Task.FromResult<string?>(null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error finding session key for session ID: {SessionId}", sessionId);
+            return Task.FromResult<string?>(null);
         }
     }
 

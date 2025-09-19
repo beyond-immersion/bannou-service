@@ -58,8 +58,14 @@ def to_pascal_case(name):
 
 def to_property_name(name):
     # Convert environment variable style to property name
-    # e.g., 'MAX_CONNECTIONS' -> 'MaxConnections'
-    return to_pascal_case(name.lower())
+    # e.g., 'MAX_CONNECTIONS' -> 'MaxConnections', 'JwtSecret' -> 'JwtSecret'
+    # Handle both camelCase/PascalCase and UPPER_CASE formats
+    if '_' in name.upper():
+        # Handle UPPER_CASE style: 'JWT_SECRET' -> 'JwtSecret'
+        return to_pascal_case(name.lower())
+    else:
+        # Handle camelCase/PascalCase: 'JwtSecret' -> 'JwtSecret'
+        return name[0].upper() + name[1:] if name else name
 
 try:
     with open('$SCHEMA_FILE', 'r') as f:
@@ -73,7 +79,10 @@ try:
     if 'x-service-configuration' in schema:
         config_section = schema['x-service-configuration']
 
-        for prop_name, prop_info in config_section.items():
+        # Handle both direct properties and properties under 'properties' key
+        properties_dict = config_section.get('properties', config_section)
+
+        for prop_name, prop_info in properties_dict.items():
             prop_type = prop_info.get('type', 'string')
             prop_default = prop_info.get('default', None)
             prop_description = prop_info.get('description', f'{prop_name} configuration property')
@@ -97,6 +106,13 @@ try:
                     default_value = f' = \"{prop_default}\";'
                 elif csharp_type == 'bool':
                     default_value = f' = {str(prop_default).lower()};'
+                elif csharp_type == 'string[]':
+                    # Convert Python list to C# array literal with double quotes
+                    if isinstance(prop_default, list):
+                        array_items = ', '.join(f'\"{item}\"' for item in prop_default)
+                        default_value = f' = [{array_items}];'
+                    else:
+                        default_value = f' = {prop_default};'
                 else:
                     default_value = f' = {prop_default};'
             elif csharp_type == 'string':

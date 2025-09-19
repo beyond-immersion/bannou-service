@@ -16,9 +16,39 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
-    /// properties configuration property
-    /// Environment variable: PROPERTIES or BANNOU_PROPERTIES
+    /// Bcrypt work factor for password hashing (higher = more secure but slower)
+    /// Environment variable: BCRYPTWORKFACTOR or BANNOU_BCRYPTWORKFACTOR
     /// </summary>
-    public string Properties = string.Empty;
+    public int BcryptWorkFactor = 12;
+
+    /// <summary>
+    /// JWT secret key for token signing
+    /// Environment variable: JWTSECRET or BANNOU_JWTSECRET
+    /// </summary>
+    public string JwtSecret = string.Empty;
+
+    /// <summary>
+    /// JWT issuer identifier
+    /// Environment variable: JWTISSUER or BANNOU_JWTISSUER
+    /// </summary>
+    public string JwtIssuer = "bannou-auth";
+
+    /// <summary>
+    /// JWT audience identifier
+    /// Environment variable: JWTAUDIENCE or BANNOU_JWTAUDIENCE
+    /// </summary>
+    public string JwtAudience = "bannou-services";
+
+    /// <summary>
+    /// JWT expiration time in minutes
+    /// Environment variable: JWTEXPIRATIONMINUTES or BANNOU_JWTEXPIRATIONMINUTES
+    /// </summary>
+    public int JwtExpirationMinutes = 1440;
+
+    /// <summary>
+    /// Access token expiration time in minutes (alias for JwtExpirationMinutes)
+    /// Environment variable: ACCESSTOKENEXPIRATIONMINUTES or BANNOU_ACCESSTOKENEXPIRATIONMINUTES
+    /// </summary>
+    public int AccessTokenExpirationMinutes = 1440;
 
 }

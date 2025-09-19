@@ -151,6 +151,14 @@ paths:
       operationId: refreshToken
       tags:
         - Tokens
+      parameters:
+        - name: jwt
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Current JWT access token for refresh
+          x-from-authorization: bearer
       requestBody:
         required: true
         content:
@@ -169,11 +177,16 @@ paths:
     post:
       summary: Validate access token
       operationId: validateToken
-      x-controller-only: true
       tags:
         - Tokens
-      security:
-        - BearerAuth: []
+      parameters:
+        - name: jwt
+          in: header
+          required: true
+          schema:
+            type: string
+          description: JWT access token for validation
+          x-from-authorization: bearer
       responses:
         '200':
           description: Token is valid
@@ -181,6 +194,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidateTokenResponse'
+        '401':
+          description: Invalid or missing token
+        '403':
+          description: Token expired or malformed
 
   /auth/logout:
     post:
@@ -188,8 +205,14 @@ paths:
       operationId: logout
       tags:
         - Authentication
-      security:
-        - BearerAuth: []
+      parameters:
+        - name: jwt
+          in: header
+          required: true
+          schema:
+            type: string
+          description: JWT access token for session identification
+          x-from-authorization: bearer
       requestBody:
         content:
           application/json:
@@ -205,8 +228,14 @@ paths:
       operationId: getSessions
       tags:
         - Sessions
-      security:
-        - BearerAuth: []
+      parameters:
+        - name: jwt
+          in: header
+          required: true
+          schema:
+            type: string
+          description: JWT access token for session identification
+          x-from-authorization: bearer
       responses:
         '200':
           description: Active sessions retrieved

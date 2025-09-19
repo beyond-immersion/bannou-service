@@ -847,6 +847,18 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                         return objectResponse_.Object;
                     }
                     else
+                    if (status_ == 401)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Invalid or missing token", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 403)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Token expired or malformed", status_, responseText_, headers_, null);
+                    }
+                    else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
                         throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);

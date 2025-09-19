@@ -85,35 +85,43 @@ public interface IAuthController
     /// Refresh access token
     /// </summary>
 
+    /// <param name="jwt">Current JWT access token for refresh</param>
+
 
     /// <returns>Token refreshed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> RefreshTokenAsync(RefreshRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> RefreshTokenAsync(string jwt, RefreshRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Validate access token
     /// </summary>
 
+    /// <param name="jwt">JWT access token for validation</param>
+
     /// <returns>Token is valid</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateTokenAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateTokenAsync(string jwt, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Logout and invalidate tokens
     /// </summary>
 
+    /// <param name="jwt">JWT access token for session identification</param>
+
 
     /// <returns>Logged out successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LogoutAsync(LogoutRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LogoutAsync(string jwt, LogoutRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Get active sessions for account
     /// </summary>
 
+    /// <param name="jwt">JWT access token for session identification</param>
+
     /// <returns>Active sessions retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionsResponse>> GetSessionsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionsResponse>> GetSessionsAsync(string jwt, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Terminate specific session
@@ -147,11 +155,11 @@ public interface IAuthController
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 [Microsoft.AspNetCore.Mvc.Route("v1.0/invoke/bannou/method")]
 
-public abstract class AuthControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
+public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IAuthService _implementation;
 
-    public AuthControllerBase(IAuthService implementation)
+    public AuthController(IAuthService implementation)
     {
         _implementation = implementation;
     }
@@ -275,47 +283,72 @@ public abstract class AuthControllerBase : Microsoft.AspNetCore.Mvc.ControllerBa
     /// <summary>
     /// Refresh access token
     /// </summary>
+    /// <param name="jwt">Current JWT access token for refresh</param>
     /// <returns>Token refreshed successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/refresh")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> RefreshToken([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RefreshRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RefreshTokenAsync(body, cancellationToken);
+        var jwt = BeyondImmersion.BannouService.HttpContextHelper.ExtractBearerToken(HttpContext);
+        if (string.IsNullOrEmpty(jwt))
+            return Unauthorized("Missing or invalid Authorization header");
+
+        var (statusCode, result) = await _implementation.RefreshTokenAsync(jwt, body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
     /// <summary>
     /// Validate access token
     /// </summary>
+    /// <param name="jwt">JWT access token for validation</param>
     /// <returns>Token is valid</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/validate")]
 
-    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateToken(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateToken(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var jwt = BeyondImmersion.BannouService.HttpContextHelper.ExtractBearerToken(HttpContext);
+        if (string.IsNullOrEmpty(jwt))
+            return Unauthorized("Missing or invalid Authorization header");
+
+        var (statusCode, result) = await _implementation.ValidateTokenAsync(jwt, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
 
     /// <summary>
     /// Logout and invalidate tokens
     /// </summary>
+    /// <param name="jwt">JWT access token for session identification</param>
     /// <returns>Logged out successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/logout")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Logout([Microsoft.AspNetCore.Mvc.FromBody] LogoutRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.LogoutAsync(body, cancellationToken);
+        var jwt = BeyondImmersion.BannouService.HttpContextHelper.ExtractBearerToken(HttpContext);
+        if (string.IsNullOrEmpty(jwt))
+            return Unauthorized("Missing or invalid Authorization header");
+
+        var (statusCode, result) = await _implementation.LogoutAsync(jwt, body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
     /// <summary>
     /// Get active sessions for account
     /// </summary>
+    /// <param name="jwt">JWT access token for session identification</param>
     /// <returns>Active sessions retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/sessions")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionsResponse>> GetSessions(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetSessionsAsync(cancellationToken);
+        var jwt = BeyondImmersion.BannouService.HttpContextHelper.ExtractBearerToken(HttpContext);
+        if (string.IsNullOrEmpty(jwt))
+            return Unauthorized("Missing or invalid Authorization header");
+
+        var (statusCode, result) = await _implementation.GetSessionsAsync(jwt, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

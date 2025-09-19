@@ -34,7 +34,7 @@ public class ConnectServiceTests
         _mockLogger = new Mock<ILogger<ConnectService>>();
         _configuration = new ConnectServiceConfiguration
         {
-            Properties = "test-properties"
+            BinaryProtocolVersion = "2.0"
         };
         _mockAuthClient = new Mock<IAuthClient>();
         _mockPermissionsClient = new Mock<IPermissionsClient>();

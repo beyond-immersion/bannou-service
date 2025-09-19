@@ -1,194 +1,251 @@
-# CURRENT TASKS - Bannou Service Architecture Implementation
+# CURRENT TASKS - Auth/Connect Service Integration Implementation
 
-*Created: 2025-01-15 - Comprehensive task analysis following architecture review*
+*Updated: 2025-01-15 - Auth/Connect service analysis and implementation plan*
 
 ## Executive Summary
 
-After thorough review of the Connect Service Implementation Guide, Queue Service Implementation Guide, and API-DESIGN documentation, the current Bannou architecture is **fundamentally sound**. The issues we're encountering are not architectural problems but rather **incomplete implementations** of correctly designed systems.
+Following comprehensive analysis of Auth and Connect service schemas and implementations against the Connect Service Implementation Guide requirements, we have identified specific implementation gaps blocking WebSocket authentication. The architecture is sound but key auth validation and WebSocket protocol components are incomplete.
 
-## Current State Analysis
+**Critical Discovery**: The Auth service has a `/auth/validate` endpoint defined in the schema with `x-controller-only: true`, but the actual service implementation is missing. This is the primary blocker for Connect service WebSocket authentication.
 
-### ✅ What's Working Correctly
+## Current Implementation Status
 
-**Schema-Driven Service Generation**:
-- All 6 core services (Accounts, Auth, Behavior, Connect, Permissions, Website) build successfully
-- NSwag generation pipeline creates proper controllers, models, and clients
-- Service registration and dependency injection working correctly
+### ✅ Auth Service - What's Working
 
-**Service Architecture**:
-- ServiceAppMappingResolver correctly defaults to "bannou" for local development
-- Generated clients properly use resolver for dynamic routing
-- Dapr integration patterns established and working
+**JWT Redis Key Security Model**: ✅ **CORRECTLY IMPLEMENTED**
+- JWT tokens contain opaque `session_key` instead of sensitive session data
+- Session data properly stored in Redis with TTL expiration
+- Refresh token rotation and storage implemented correctly
+- Login/registration flows creating proper session structure
 
-**HTTP Integration Testing**:
-- Basic service endpoints functional (Accounts CRUD operations pass)
-- Service-to-service communication via Dapr working
-- Authentication and authorization foundations in place
+**Basic Authentication Flows**: ✅ **FUNCTIONAL**
+- Account registration via AccountsClient integration working
+- Login flow with password validation functional
+- JWT token generation with session_key working
+- Redis session storage operational
 
-### ⚠️ What's Incomplete (Current Problems)
+**Schema and Generation**: ✅ **COMPLETE**
+- OpenAPI schema properly defines all endpoints
+- NSwag generation creates proper interfaces and models
+- Service registration and DI injection working correctly
 
-**Connect Service - WebSocket Protocol** (50% Complete):
-- ✅ HTTP APIs implemented (ProxyInternalRequestAsync, DiscoverAPIsAsync)
-- ❌ WebSocket binary protocol incomplete (31-byte header system)
-- ❌ Redis session management not integrated
-- ❌ Binary message routing pipeline incomplete
+### ❌ Auth Service - Critical Missing Implementation
 
-**Service Mapping Architecture** (80% Complete):
-- ✅ ServiceAppMappingResolver implemented correctly
-- ✅ "bannou" default routing working
-- ❌ RabbitMQ event handling for dynamic mappings incomplete
-- ❌ Service Coordinator not yet implemented
+**Token Validation Endpoint**: ❌ **BLOCKING ISSUE**
+- Schema defines `/auth/validate` with `x-controller-only: true`
+- AuthController.cs has placeholder implementation returning mock data
+- **ValidateTokenAsync method completely missing from AuthService.cs**
+- Connect service cannot validate JWT tokens for WebSocket authentication
 
-**Infrastructure Testing** (Misaligned):
-- ✅ Basic infrastructure tests working
-- ❌ Service mapping tests incorrectly trying to test Connect service endpoints
-- ❌ Tests should be testing ServiceAppMappingResolver behavior, not HTTP endpoints
+**Session Management**: ❌ **INCOMPLETE STUBS**
+- `TerminateSessionAsync` returns mock response, doesn't remove from Redis
+- `GetSessionsAsync` returns hardcoded data, doesn't query Redis
+- `LogoutAsync` doesn't invalidate session in Redis
+- No actual session cleanup happening
 
-## Architectural Clarifications
+**Configuration Usage**: ❌ **HARDCODED VALUES**
+- AuthService.cs uses hardcoded JWT secrets and configuration
+- `AuthServiceConfiguration` generated but not used in implementation
+- Environment variables not properly loaded
 
-### Connect Service Role (CORRECT UNDERSTANDING)
-**Primary Function**: WebSocket-first edge gateway for client connections
-- Handles WebSocket connection establishment and JWT authentication
-- Routes binary messages between clients and services using service GUIDs
-- Manages real-time capability updates via Permissions service events
-- **NOT responsible for**: Service-to-app-id mappings or service discovery
+### ✅ Connect Service - What's Working
 
-### Service Mapping Architecture (CORRECT UNDERSTANDING)
-**App-ID Mappings**: Managed by future Service Coordinator via RabbitMQ events
-- All services use ServiceAppMappingResolver to determine routing
-- Default: Everything routes to "bannou" (local development)
-- Production: Dynamic updates via `bannou-service-mappings` RabbitMQ topic
-- **NOT managed by**: Connect service or individual services
+**HTTP API Endpoints**: ✅ **FULLY IMPLEMENTED**
+- `ProxyInternalRequestAsync` - Service routing with permission validation
+- `DiscoverAPIsAsync` - Dynamic API discovery with client-salted GUIDs
+- `GetServiceMappingsAsync` - Service mapping monitoring
+- ServiceAppMappingResolver integration for dynamic routing
 
-**API Mappings**: Managed by Permissions service
-- Compiles session capabilities based on roles and service permissions
-- Publishes updates to Connect service via `bannou-session-capabilities` topic
-- Connect service uses these for client GUID generation and access control
-- **Different from**: Service-to-app-id mappings
+**WebSocket Infrastructure**: ✅ **PARTIALLY COMPLETE**
+- ConnectController.cs has WebSocket upgrade handling
+- JWT validation integration with Auth service (depends on ValidateTokenAsync)
+- Connection management infrastructure in place
+- Binary protocol classes and routing framework implemented
 
-### Queue Service Role (NOT YET IMPLEMENTED)
-**Primary Function**: Centralized queue management with capacity reporting
-- Dual endpoint pattern: external (queue management) + internal (capacity reporting)
-- Reports queue capacity to Connect service for load balancing
-- Manages persistent game session queues
-- **Integration with**: Connect service for capacity-based routing decisions
+### ❌ Connect Service - Missing WebSocket Implementation
 
-## Required Fixes
+**Binary Protocol Handler**: ❌ **INCOMPLETE**
+- 31-byte binary header parsing incomplete
+- `HandleWebSocketCommunicationAsync` marked as obsolete
+- Binary message routing to services incomplete
+- Client-to-service RPC handling incomplete
 
-### 1. Fix Service Mapping Tests (IMMEDIATE - HIGH PRIORITY)
+**Redis Session Integration**: ❌ **INCOMPLETE**
+- Session stickiness for WebSocket connections not implemented
+- Redis-backed connection state management incomplete
+- Session heartbeat and cleanup not implemented
 
-**Problem**: Tests incorrectly assume Connect service manages app-id mappings
-**Solution**: Test ServiceAppMappingResolver behavior directly
+**Service Routing**: ❌ **INCOMPLETE**
+- Message routing to Dapr services via binary protocol incomplete
+- Service GUID to WebSocket client mapping incomplete
+- Bidirectional RPC (service-to-client calls) incomplete
+
+## Registration → Login → Connect Flow Design
+
+### Current Flow (What Works)
+1. **Registration**: POST `/auth/register` → Creates account via AccountsClient → Returns JWT with session_key
+2. **Login**: POST `/auth/login` → Validates credentials → Creates session in Redis → Returns JWT with session_key
+3. **API Discovery**: POST `/connect/api-discovery` → Returns available APIs with client-salted GUIDs (requires JWT)
+4. **Service Calls**: POST `/connect/internal/proxy` → Routes HTTP requests to services (requires JWT)
+
+### Missing WebSocket Flow (Needs Implementation)
+5. **WebSocket Connect**: GET `/connect/connect` with JWT → **BLOCKED**: ValidateTokenAsync missing
+6. **Binary Protocol**: WebSocket communication with 31-byte headers → **INCOMPLETE**
+7. **Service Routing**: Binary messages routed to services → **INCOMPLETE**
+
+### Queue Service Integration (Future - Optional for Now)
+The Connect Service Implementation Guide mentions queue service integration between login and connect:
+
+**Enhanced Flow (With Queue Service)**:
+1. Registration/Login (same as above)
+2. **Queue Request**: POST `/queue/request-access` → Check capacity → Return queue position or grant token
+3. **Connect with Queue**: GET `/connect/connect` with JWT + queue grant → Immediate connection
+4. **Alternative**: Direct connect if capacity available (bypass queue)
+
+**For Now**: Implement direct connect flow without queue service, but design to accommodate queue grants in AuthResponse/ConnectRequest when queue service is added later.
+
+## Authentication Flow Requirements
+
+### Auth Service ValidateTokenAsync Implementation
+
+**CRITICAL MISSING**: This method must be implemented in AuthService.cs to unblock Connect service
+
+```csharp
+public async Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(CancellationToken cancellationToken = default)
+{
+    // 1. Extract Authorization header from HttpContext
+    // 2. Parse "Bearer <jwt_token>" format
+    // 3. Validate JWT signature with secret key
+    // 4. Extract session_key from JWT claims
+    // 5. Lookup session data from Redis using session_key
+    // 6. Check session expiration
+    // 7. Return session info (session_id, account_id, roles, etc.)
+}
+```
+
+**Dependencies**:
+- HttpContext access for Authorization header
+- JWT validation with current secret
+- Redis session lookup by session_key
+- Session expiration checking
+
+### Connect Service WebSocket Authentication
+
+**Current Implementation** (ConnectController.cs):
+```csharp
+// This works but depends on Auth service ValidateTokenAsync
+var sessionId = await connectService.ValidateJWTAndExtractSessionAsync(authorization, cancellationToken);
+```
+
+**ValidateJWTAndExtractSessionAsync** calls AuthClient.ValidateTokenAsync which currently returns mock data.
+
+## Implementation Plan
+
+### Phase 1: Implement Auth Service ValidateTokenAsync (CRITICAL - Week 1)
+
+**Priority**: BLOCKING - Required for all WebSocket authentication
 
 **Tasks**:
-- [ ] Rewrite DaprServiceMappingTestHandler to test ServiceAppMappingResolver
-- [ ] Remove HTTP endpoint testing from infrastructure tests
-- [ ] Add unit tests for mapping updates, removal, and default behavior
-- [ ] Test RabbitMQ event simulation (mock event publishing)
+1. **Add ValidateTokenAsync to IAuthService interface**
+2. **Implement ValidateTokenAsync in AuthService.cs**:
+   - Extract JWT from HttpContext Authorization header
+   - Validate JWT signature and expiration
+   - Extract session_key from JWT claims
+   - Lookup session data from Redis
+   - Return proper ValidateTokenResponse
+3. **Fix configuration usage**: Replace hardcoded values with AuthServiceConfiguration
+4. **Test JWT validation flow**: Ensure Connect service can validate tokens
 
-### 2. Complete Connect Service WebSocket Protocol (HIGH PRIORITY)
+### Phase 2: Complete Session Management (HIGH PRIORITY - Week 1)
 
-**Current Status**: HTTP APIs complete, WebSocket incomplete
-**Remaining Work**: Binary protocol implementation
-
-**Tasks**:
-- [ ] Implement 31-byte binary header parsing (MessageFlags, Channel, Sequence, Service GUID, Message ID)
-- [ ] Complete WebSocket connection handler with JWT authentication
-- [ ] Integrate Redis session management (replace in-memory storage)
-- [ ] Implement binary message routing to services via ServiceAppMappingResolver
-- [ ] Add RabbitMQ event handlers for real-time capability updates
-
-### 3. Remove Incorrect BaseURL Logic (MEDIUM PRIORITY)
-
-**Problem**: Services shouldn't determine their own base URLs
-**Solution**: Remove baseUrl logic, rely entirely on ServiceAppMappingResolver
+**Priority**: Required for production WebSocket connections
 
 **Tasks**:
-- [ ] Remove baseUrl properties from OpenAPI schemas
-- [ ] Remove baseUrl logic from DaprServiceClientBase
-- [ ] Ensure all routing goes through ServiceAppMappingResolver.GetAppIdForService()
-- [ ] Update generated clients to use resolver-based routing only
+1. **Implement actual session termination**:
+   - TerminateSessionAsync removes from Redis
+   - LogoutAsync invalidates session properly
+2. **Implement GetSessionsAsync**: Query actual session data from Redis
+3. **Add session cleanup**: Expired session removal and monitoring
+4. **Test session lifecycle**: Login → validate → logout → verify cleanup
 
-### 4. Implement Service Coordinator (FUTURE - LOW PRIORITY)
+### Phase 3: Complete Connect Service WebSocket Protocol (HIGH PRIORITY - Week 2)
 
-**Purpose**: Publish service-to-app-id mapping events for distributed deployment
-**Timeline**: After Connect service WebSocket protocol complete
-
-**Tasks**:
-- [ ] Create `lib-coordinator` service plugin
-- [ ] Implement RabbitMQ event publishing for service mappings
-- [ ] Add service discovery and topology management
-- [ ] Integrate with ServiceAppMappingResolver event handling
-
-### 5. Implement Queue Service (FUTURE - MEDIUM PRIORITY)
-
-**Purpose**: Centralized queue management with Connect service integration
-**Dependencies**: Connect service WebSocket protocol complete
+**Priority**: Core functionality for real-time communication
 
 **Tasks**:
-- [ ] Create `lib-queue` service plugin following documented architecture
-- [ ] Implement dual endpoint pattern (external + internal)
-- [ ] Add capacity reporting to Connect service
-- [ ] Integrate with game session management
+1. **Un-obsolete WebSocket handling**: Remove obsolete markers and complete implementation
+2. **Implement 31-byte binary protocol**: Message flags, channels, service GUIDs
+3. **Complete binary message routing**: Route to Dapr services via ServiceAppMappingResolver
+4. **Add Redis session integration**: WebSocket connection stickiness and heartbeats
+5. **Test WebSocket flow**: JWT auth → connection → binary messages → service routing
 
-## Testing Strategy Corrections
+### Phase 4: Update Testing (MEDIUM PRIORITY - Week 2)
 
-### Infrastructure Tests Should Test:
-✅ **ServiceAppMappingResolver Behavior**:
-- Default "bannou" routing
-- Dynamic mapping updates via RabbitMQ events (mocked)
-- Mapping removal and fallback behavior
-- Thread-safe concurrent access
+**Tasks**:
+1. **HTTP Tests**: Registration → Login → API Discovery → Internal Proxy (no WebSocket)
+2. **Edge Tests**: Full WebSocket flow including binary protocol and service routing
+3. **Auth validation tests**: Verify JWT validation works correctly
+4. **Session management tests**: Test session lifecycle and cleanup
 
-❌ **NOT Connect Service HTTP Endpoints**:
-- Service mapping tests should not make HTTP calls
-- Infrastructure tests are for component testing, not integration testing
-- HTTP endpoints are tested in integration tests, not infrastructure tests
+## Testing Strategy
 
-### HTTP Integration Tests Should Test:
-✅ **Service-to-Service Communication**:
-- Generated clients using ServiceAppMappingResolver correctly
-- Actual service endpoints responding properly
-- Authentication and authorization flows
+### HTTP Tests Should Cover
+✅ **Service-to-Service Communication** (no WebSocket):
+- Registration flow via AuthClient
+- Login flow via AuthClient
+- API discovery via ConnectClient
+- Internal proxy routing via ConnectClient
+- Token validation between services
 
-## Implementation Priority Order
+❌ **NOT WebSocket Connections**:
+- HTTP tests should not establish WebSocket connections
+- WebSocket testing is for edge-tester only
 
-### Phase 1: Fix Current Issues (Week 1)
-1. **Fix service mapping tests** - Remove incorrect HTTP endpoint testing
-2. **Complete Connect service WebSocket protocol** - Binary message handling
-3. **Remove baseUrl logic** - Simplify to resolver-only routing
-
-### Phase 2: Complete Core Infrastructure (Week 2-3)
-1. **Integrate Redis session management** - Replace in-memory storage
-2. **Add RabbitMQ event handlers** - Real-time capability updates
-3. **Implement Service Coordinator** - Dynamic mapping events
-
-### Phase 3: Add Advanced Features (Week 4+)
-1. **Implement Queue Service** - Capacity reporting integration
-2. **Production deployment patterns** - Multi-instance scaling
-3. **Advanced testing scenarios** - Distributed deployment simulation
+### Edge Tests Should Cover
+✅ **Client WebSocket Experience**:
+- Complete registration → login → WebSocket connect flow
+- JWT authentication for WebSocket upgrade
+- Binary protocol message sending/receiving
+- Service routing through WebSocket binary messages
+- Real-time API discovery updates
+- Session management and reconnection
 
 ## Success Criteria
 
 ### Phase 1 Complete When:
-- [ ] All service mapping tests pass without HTTP calls
-- [ ] Connect service handles WebSocket binary protocol correctly
-- [ ] All routing goes through ServiceAppMappingResolver (no baseUrl logic)
-- [ ] HTTP integration tests demonstrate proper service communication
+- [ ] Auth service ValidateTokenAsync implemented and working
+- [ ] Connect service can validate JWT tokens for WebSocket authentication
+- [ ] Session management properly stores/retrieves from Redis
+- [ ] HTTP tests pass for registration → login → API discovery flow
 
-### Architecture Validated When:
-- [ ] Single "bannou" instance handles all services locally
-- [ ] Dynamic mapping updates work via RabbitMQ events (mocked)
-- [ ] Client connections receive real-time capability updates
-- [ ] Service-to-service calls route correctly through resolver
+### Phase 2 Complete When:
+- [ ] WebSocket connections successfully authenticate via JWT
+- [ ] Binary protocol (31-byte header) implemented and working
+- [ ] Messages route from WebSocket clients to Dapr services
+- [ ] Edge tests demonstrate complete client experience
 
-## Notes
+### Production Ready When:
+- [ ] All authentication flows tested and working
+- [ ] WebSocket binary protocol fully functional
+- [ ] Session management handles multi-device scenarios
+- [ ] Performance meets requirements (1000+ concurrent WebSocket connections)
 
-**Architecture Confidence**: The current design is sound and follows best practices
-**Implementation Gap**: We're implementing correctly designed systems, not fixing broken architecture
-**Testing Alignment**: Tests need to match the actual responsibilities of each service
-**Documentation Quality**: Implementation guides provide clear, accurate architectural direction
+## Current Immediate Actions
+
+### Week 1 Priorities (In Order)
+1. **Implement ValidateTokenAsync in AuthService.cs** (BLOCKING)
+2. **Fix Auth service configuration usage** (hardcoded → environment)
+3. **Implement session management methods** (terminate, cleanup)
+4. **Update HTTP tests for registration/login flow**
+5. **Test Auth service validation integration**
+
+### Week 2 Priorities
+1. **Complete Connect service WebSocket binary protocol**
+2. **Implement Redis session stickiness for WebSocket**
+3. **Update edge tests for complete WebSocket flow**
+4. **Test performance and connection limits**
+5. **Prepare for optional queue service integration**
 
 ---
 
-*This document should be updated as tasks are completed and new issues are discovered.*
+*This document reflects the current state after comprehensive analysis of Auth and Connect service schemas and implementations. The architecture is sound - we need to complete the missing authentication validation and WebSocket protocol implementations to enable the full registration → login → WebSocket connect flow.*

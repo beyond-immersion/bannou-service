@@ -491,9 +491,10 @@ public class ConnectService : IConnectService, IDaprService
             {
                 var token = authorization.Substring(7);
 
-                // Use auth service to validate token (pass token via Authorization header)
-                // The AuthClient should handle the Bearer token automatically through HttpContext
-                var validationResponse = await _authClient.ValidateTokenAsync(cancellationToken);
+                // Use auth service to validate token with header-based authorization
+                var validationResponse = await ((AuthClient)_authClient)
+                    .WithAuthorization(token)
+                    .ValidateTokenAsync(cancellationToken);
 
                 if (validationResponse.Valid && !string.IsNullOrEmpty(validationResponse.SessionId))
                 {
@@ -1294,20 +1295,21 @@ public class ConnectService : IConnectService, IDaprService
     }
 
     /// <summary>
-    /// Validates that a session still exists and is valid.
+    /// Validates that a session still exists and is valid by checking the connection manager.
     /// </summary>
-    private async Task<bool> ValidateSessionAsync(string sessionId)
+    private Task<bool> ValidateSessionAsync(string sessionId)
     {
         try
         {
-            // Use Auth service to validate the session
-            var validationResponse = await _authClient.ValidateTokenAsync(CancellationToken.None);
-            return validationResponse.Valid && validationResponse.SessionId == sessionId;
+            // Check if session exists in our connection manager
+            // This is used for token refresh events where we only have session ID
+            var connection = _connectionManager.GetConnection(sessionId);
+            return Task.FromResult(connection != null);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Session validation failed for {SessionId}", sessionId);
-            return false;
+            return Task.FromResult(false);
         }
     }
 

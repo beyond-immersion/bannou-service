@@ -42,17 +42,22 @@ public interface IAuthService
     /// <summary>
     /// RefreshToken operation
     /// </summary>
-    Task<(StatusCodes, AuthResponse?)> RefreshTokenAsync(RefreshRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, AuthResponse?)> RefreshTokenAsync(string jwt, RefreshRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
+    /// ValidateToken operation
+    /// </summary>
+    Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(string jwt, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// Logout operation
     /// </summary>
-    Task<(StatusCodes, object?)> LogoutAsync(LogoutRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, object?)> LogoutAsync(string jwt, LogoutRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// GetSessions operation
     /// </summary>
-    Task<(StatusCodes, SessionsResponse?)> GetSessionsAsync(CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, SessionsResponse?)> GetSessionsAsync(string jwt, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// TerminateSession operation

@@ -16,9 +16,21 @@ public class AccountsServiceConfiguration : IServiceConfiguration
     public string? Force_Service_ID { get; set; }
 
     /// <summary>
-    /// properties configuration property
-    /// Environment variable: PROPERTIES or BANNOU_PROPERTIES
+    /// Default page size for account listings
+    /// Environment variable: DEFAULTPAGESIZE or BANNOU_DEFAULTPAGESIZE
     /// </summary>
-    public string Properties = string.Empty;
+    public int DefaultPageSize = 20;
+
+    /// <summary>
+    /// Maximum allowed page size for account listings
+    /// Environment variable: MAXPAGESIZE or BANNOU_MAXPAGESIZE
+    /// </summary>
+    public int MaxPageSize = 100;
+
+    /// <summary>
+    /// Number of days to retain deleted account data
+    /// Environment variable: ACCOUNTRETENTIONDAYS or BANNOU_ACCOUNTRETENTIONDAYS
+    /// </summary>
+    public int AccountRetentionDays = 30;
 
 }

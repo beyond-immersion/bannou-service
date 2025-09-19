@@ -1024,6 +1024,34 @@
             Add property headers.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.HttpContextHelper">
+            <summary>
+            Helper methods for extracting data from HTTP context in generated controllers.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.HttpContextHelper.ExtractBearerToken(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Extract Bearer token from Authorization header.
+            </summary>
+            <param name="context">HTTP context containing the request headers</param>
+            <returns>Bearer token without "Bearer " prefix, or null if not found</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.HttpContextHelper.ExtractHeader(Microsoft.AspNetCore.Http.HttpContext,System.String)">
+            <summary>
+            Extract raw header value by name.
+            </summary>
+            <param name="context">HTTP context containing the request headers</param>
+            <param name="headerName">Name of the header to extract</param>
+            <returns>Header value or null if not found</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.HttpContextHelper.ExtractHeaders(Microsoft.AspNetCore.Http.HttpContext,System.String[])">
+            <summary>
+            Extract multiple headers into a dictionary.
+            </summary>
+            <param name="context">HTTP context containing the request headers</param>
+            <param name="headerNames">Names of headers to extract</param>
+            <returns>Dictionary of header name to value (null if header not found)</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Logging.ServiceLogging">
             <summary>
             A collection of helpers for generating service logs.
@@ -1481,19 +1509,50 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.String)">
             <summary>
-            Prepares the HTTP request with proper Dapr headers.
+            Prepares the HTTP request with proper Dapr headers and custom headers.
             Works with both full constructor and parameterless constructor.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.Text.StringBuilder)">
             <summary>
-            Prepares the HTTP request with URL builder for Dapr routing.
+            Prepares the HTTP request with URL builder for Dapr routing and custom headers.
             Works with both full constructor and parameterless constructor.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ProcessResponse(System.Net.Http.HttpClient,System.Net.Http.HttpResponseMessage)">
             <summary>
             Processes the HTTP response from Dapr service invocation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._customHeaders">
+            <summary>
+            Storage for custom headers to be applied to the next request.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase._authorizationHeader">
+            <summary>
+            Authorization header value for the next request.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.SetHeader(System.String,System.String)">
+            <summary>
+            Sets a custom header for the next service request.
+            Headers are applied once and then cleared.
+            Used internally by extension methods for type-safe fluent API.
+            </summary>
+            <param name="name">Header name (e.g., "X-Custom-Header")</param>
+            <param name="value">Header value</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ClearAuthorization">
+            <summary>
+            Clears the Authorization header.
+            Used internally by extension methods for type-safe fluent API.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ClearHeaders">
+            <summary>
+            Clears all custom headers and authorization for a fresh request.
+            Called automatically after each request.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ExtractAppIdFromUrl(System.String)">
@@ -1614,6 +1673,54 @@
             Follows naming convention: {Service}Client implements I{Service}Client.
             Service name is derived by removing "Client" suffix and converting to lowercase.
             </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientFluentExtensions">
+            <summary>
+            Fluent API extensions for service client header management.
+            Provides type-safe method chaining without casting requirements.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientFluentExtensions.WithHeader``1(``0,System.String,System.String)">
+            <summary>
+            Sets a custom header on the service client.
+            Uses extension method pattern to return the correct concrete type for method chaining.
+            </summary>
+            <typeparam name="T">The concrete service client type</typeparam>
+            <param name="client">The service client instance</param>
+            <param name="name">Header name</param>
+            <param name="value">Header value</param>
+            <returns>The same client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientFluentExtensions.WithAuthorization``1(``0,System.String)">
+            <summary>
+            Sets the Authorization header on the service client.
+            Automatically prefixes with "Bearer " if not already present.
+            Uses extension method pattern to return the correct concrete type for method chaining.
+            </summary>
+            <typeparam name="T">The concrete service client type</typeparam>
+            <param name="client">The service client instance</param>
+            <param name="token">JWT token or other authorization value</param>
+            <returns>The same client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientFluentExtensions.WithAuthorization``1(``0,Newtonsoft.Json.Linq.JObject)">
+            <summary>
+            Sets the Authorization header using a JObject containing auth data.
+            Serializes the JObject to JSON and uses it as the authorization value.
+            Uses extension method pattern to return the correct concrete type for method chaining.
+            </summary>
+            <typeparam name="T">The concrete service client type</typeparam>
+            <param name="client">The service client instance</param>
+            <param name="authData">JObject containing authentication data</param>
+            <returns>The same client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientFluentExtensions.ClearAuthorization``1(``0)">
+            <summary>
+            Clears the Authorization header on the service client.
+            Uses extension method pattern to return the correct concrete type for method chaining.
+            </summary>
+            <typeparam name="T">The concrete service client type</typeparam>
+            <param name="client">The service client instance</param>
+            <returns>The same client instance for method chaining</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection">
             <summary>
