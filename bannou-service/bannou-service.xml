@@ -1019,32 +1019,6 @@
             Returns new string.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.ExtensionMethods.AddDaprServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
-            <summary>
-            Binds HTTP endpoints for all registered dapr services.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ExtensionMethods.AddApplicationParts(Microsoft.Extensions.DependencyInjection.IMvcBuilder,System.Collections.Generic.IEnumerable{System.Reflection.Assembly})">
-            <summary>
-            Add all of the given assemblies to the application.
-            This will make their services and controllers discoverable.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ExtensionMethods.InvokeAllServiceStartMethods(Microsoft.AspNetCore.Builder.WebApplication)">
-            <summary>
-            Iterates through and invokes the Start() method on all loaded service handlers.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ExtensionMethods.InvokeAllServiceRunningMethods(Microsoft.AspNetCore.Builder.WebApplication)">
-            <summary>
-            Iterates through and invokes the Running() method on all loaded service handlers.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ExtensionMethods.InvokeAllServiceShutdownMethods(Microsoft.AspNetCore.Builder.WebApplication)">
-            <summary>
-            Iterates through and invokes the Shutdown() method on all loaded service handlers.
-            </summary>
-        </member>
         <member name="M:BeyondImmersion.BannouService.ExtensionMethods.AddPropertyHeaders(System.Net.Http.HttpRequestMessage,BeyondImmersion.BannouService.Controllers.Messages.ApiRequest)">
             <summary>
             Add property headers.
@@ -1287,6 +1261,13 @@
             </summary>
             <param name="services">Service collection</param>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.FinalizeConfigurationRegistrations(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Final registration pass to override any auto-registered configurations with correct lifetimes.
+            Called just before WebApplication build to ensure our configuration lifetimes take precedence.
+            </summary>
+            <param name="services">Service collection</param>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.RegisterClientTypes(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
             <summary>
             Register all discovered client types in DI with matching service lifetimes.
@@ -1428,14 +1409,6 @@
             Get the list of requested plugins based on Include_Assemblies configuration.
             </summary>
             <returns>List of plugin names to load, or null for all plugins</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Program.LoadAssemblies">
-             <summary>
-             Load appropriate sets of plugins in /plugins/ and subdirectories
-             based on current application configuration.
-            
-             <seealso cref="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Include_Assemblies"/>
-             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Program.OnAssemblyResolve(System.Object,System.ResolveEventArgs)">
             <summary>

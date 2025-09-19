@@ -15,7 +15,7 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     public override string PluginName => "permissions";
     public override string DisplayName => "Permissions Service";
 
-    private PermissionsService? _service;
+    private IPermissionsService? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
@@ -64,12 +64,13 @@ public class PermissionsServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Get service instance from DI container
-            _service = _serviceProvider?.GetService<PermissionsService>();
+            // Get service instance from DI container with proper scope handling
+            using var scope = _serviceProvider?.CreateScope();
+            _service = scope?.ServiceProvider.GetService<IPermissionsService>();
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve PermissionsService from DI container");
+                Logger?.LogError("❌ Failed to resolve IPermissionsService from DI container");
                 return false;
             }
 

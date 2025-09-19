@@ -1,7 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
-using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.GameSession;
 
@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// Configuration class for GameSession service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(GameSessionService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(IGameSessionService), envPrefix: "BANNOU_")]
 public class GameSessionServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

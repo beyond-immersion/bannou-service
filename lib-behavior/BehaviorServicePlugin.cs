@@ -15,7 +15,7 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     public override string PluginName => "behavior";
     public override string DisplayName => "Behavior Service";
 
-    private BehaviorService? _service;
+    private IBehaviorService? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
@@ -64,12 +64,13 @@ public class BehaviorServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Get service instance from DI container
-            _service = _serviceProvider?.GetService<BehaviorService>();
+            // Get service instance from DI container with proper scope handling
+            using var scope = _serviceProvider?.CreateScope();
+            _service = scope?.ServiceProvider.GetService<IBehaviorService>();
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve BehaviorService from DI container");
+                Logger?.LogError("❌ Failed to resolve IBehaviorService from DI container");
                 return false;
             }
 

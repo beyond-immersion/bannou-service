@@ -15,7 +15,8 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     public override string PluginName => "website";
     public override string DisplayName => "Website Service";
 
-    private WebsiteService? _service;
+
+    private IWebsiteService? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
@@ -60,59 +61,19 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        Console.WriteLine("🔍 DEBUG: WebsiteServicePlugin.OnStartAsync() called");
         Logger?.LogInformation("▶️  Starting Website service");
 
         try
         {
-            // Get centrally resolved service from PluginLoader
-            var pluginLoader = BeyondImmersion.BannouService.Program.PluginLoader;
-            if (pluginLoader != null)
-            {
-                var resolvedService = pluginLoader.GetResolvedService("website");
-                if (resolvedService != null)
-                {
-                    _service = resolvedService as WebsiteService;
-                    Logger?.LogInformation("✅ Using centrally resolved WebsiteService");
-
-                    // Service lifecycle is now handled centrally by PluginLoader
-                    // No need to call IDaprService methods here
-                    Logger?.LogInformation("✅ Website service started successfully (centrally managed)");
-                    return true;
-                }
-                else
-                {
-                    Logger?.LogWarning("⚠️  No centrally resolved service found for 'website' plugin");
-                }
-            }
-            else
-            {
-                Logger?.LogWarning("⚠️  PluginLoader not available for central service resolution");
-            }
-
-            // Fallback to manual service resolution (legacy approach)
-            Logger?.LogInformation("🔄 Falling back to manual service resolution");
-
-            // Debug: Check if service provider is available
-            if (_serviceProvider == null)
-            {
-                Console.WriteLine("❌ DEBUG: Service provider is null!");
-                Logger?.LogError("❌ Service provider is null - ConfigureApplication may not have been called");
-                return false;
-            }
-
-            Logger?.LogInformation("🔍 Service provider available, resolving WebsiteService...");
-
-            // Get service instance from DI container
-            _service = _serviceProvider?.GetService<WebsiteService>();
+            // Get service instance from DI container with proper scope handling
+            using var scope = _serviceProvider?.CreateScope();
+            _service = scope?.ServiceProvider.GetService<IWebsiteService>();
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve WebsiteService from DI container");
+                Logger?.LogError("❌ Failed to resolve IWebsiteService from DI container");
                 return false;
             }
-
-            Logger?.LogInformation("✅ WebsiteService resolved successfully (fallback)");
 
             // Call existing IDaprService.OnStartAsync if the service implements it
             if (_service is IDaprService daprService)
@@ -126,8 +87,7 @@ public class WebsiteServicePlugin : BaseBannouPlugin
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "❌ Failed to start Website service - Exception details: {ExceptionType}: {Message}", ex.GetType().Name, ex.Message);
-            Logger?.LogError("❌ Stack trace: {StackTrace}", ex.StackTrace);
+            Logger?.LogError(ex, "❌ Failed to start Website service");
             return false;
         }
     }

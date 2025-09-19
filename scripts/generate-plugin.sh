@@ -72,7 +72,7 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     public override string PluginName => "$SERVICE_NAME";
     public override string DisplayName => "$SERVICE_PASCAL Service";
 
-    private ${SERVICE_PASCAL}Service? _service;
+    private I${SERVICE_PASCAL}Service? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
@@ -144,12 +144,14 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Get service instance from DI container
-            _service = _serviceProvider?.GetService<${SERVICE_PASCAL}Service>();
+            // Get service instance from DI container with proper scope handling
+            // Note: CreateScope() is required for Scoped services to avoid "Cannot resolve scoped service from root provider" error
+            using var scope = _serviceProvider?.CreateScope();
+            _service = scope?.ServiceProvider.GetService<I${SERVICE_PASCAL}Service>();
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve ${SERVICE_PASCAL}Service from DI container");
+                Logger?.LogError("❌ Failed to resolve I${SERVICE_PASCAL}Service from DI container");
                 return false;
             }
 

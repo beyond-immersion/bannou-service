@@ -17,7 +17,7 @@ public class AuthServicePlugin : BaseBannouPlugin
     public override string PluginName => "auth";
     public override string DisplayName => "Auth Service";
 
-    private AuthService? _authService;
+    private IAuthService? _authService;
     private IServiceProvider? _serviceProvider;
 
 
@@ -65,12 +65,13 @@ public class AuthServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Get service instance from DI container
-            _authService = _serviceProvider?.GetService<AuthService>();
+            // Get service instance from DI container with proper scope handling
+            using var scope = _serviceProvider?.CreateScope();
+            _authService = scope?.ServiceProvider.GetService<IAuthService>();
 
             if (_authService == null)
             {
-                Logger?.LogError("❌ Failed to resolve AuthService from DI container");
+                Logger?.LogError("❌ Failed to resolve IAuthService from DI container");
                 return false;
             }
 

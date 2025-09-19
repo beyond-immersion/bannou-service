@@ -6,8 +6,6 @@ services:
     build:
       context: ../
       dockerfile: provisioning/Dockerfile
-      args:
-        BANNOU_SERVICES: "all"
     env_file: ../.env.ci.http
 
   # HTTP testing configuration for bannou-dapr

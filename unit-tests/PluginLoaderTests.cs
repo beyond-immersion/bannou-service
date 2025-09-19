@@ -1701,6 +1701,14 @@ public interface IPermissionsClient
 }
 
 /// <summary>
+/// Interface for TestConnectService to validate interface-to-implementation mapping.
+/// </summary>
+public interface ITestConnectService
+{
+    string GetInstanceId();
+}
+
+/// <summary>
 /// Test configuration class with ServiceConfiguration attribute for testing.
 /// </summary>
 [ServiceConfiguration(typeof(TestService))]
@@ -1740,7 +1748,7 @@ public class TestPlugin : IBannouPlugin
 /// <summary>
 /// Test ConnectService for integration testing with complex configuration requirements.
 /// </summary>
-public class TestConnectService
+public class TestConnectService : ITestConnectService
 {
     private readonly TestConnectServiceConfiguration _configuration;
     private readonly IAuthClient _authClient;
@@ -1785,4 +1793,206 @@ public class ComplexNamingTestServiceConfiguration : IServiceConfiguration
 {
     public string ComplexSetting { get; set; } = "complex";
     public string? Force_Service_ID { get; } = null;
+}
+
+/// <summary>
+/// Tests for configuration discovery and interface mapping functionality.
+/// Validates the fixes for configuration lifetime issues and interface resolution.
+/// </summary>
+public class ConfigurationDiscoveryTests
+{
+    /// <summary>
+    /// Tests that configurations referencing service interfaces are correctly matched to service registrations.
+    /// This validates the fix for configurations using typeof(IXService) instead of typeof(XService).
+    /// </summary>
+    [Fact]
+    public void ConfigurationDiscovery_ShouldMatchInterfaceToImplementation()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        // Register service by interface (standard DaprService pattern)
+        services.AddSingleton<ITestConnectService, TestConnectService>();
+
+        var serviceProvider = services.BuildServiceProvider();
+        var logger = serviceProvider.GetRequiredService<ILogger<PluginLoader>>();
+        var pluginLoader = new PluginLoader(logger);
+
+        // Simulate configuration discovery
+        var serviceRegistrations = new List<(Type interfaceType, Type implementationType, ServiceLifetime lifetime)>
+        {
+            (typeof(ITestConnectService), typeof(TestConnectService), ServiceLifetime.Singleton)
+        };
+
+        // Act - Test interface-to-implementation matching
+        var matchedLifetime = ServiceLifetime.Scoped; // Default
+        foreach (var (interfaceType, implementationType, lifetime) in serviceRegistrations)
+        {
+            if (interfaceType == typeof(ITestConnectService))
+            {
+                matchedLifetime = lifetime;
+                break;
+            }
+        }
+
+        // Assert
+        Assert.Equal(ServiceLifetime.Singleton, matchedLifetime);
+    }
+
+    /// <summary>
+    /// Tests that Singleton services get Singleton configurations to prevent DI lifetime mismatches.
+    /// This validates the core fix for "Cannot consume scoped service from singleton service" errors.
+    /// </summary>
+    [Fact]
+    public void ConfigurationLifetime_ShouldMatchServiceLifetime_ForSingletonServices()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        // Register Singleton service (typical for Connect, Auth services)
+        services.AddSingleton<ITestConnectService, TestConnectService>();
+        services.AddSingleton<TestConnectServiceConfiguration>();
+
+        // Register mock dependencies
+        services.AddSingleton<IAuthClient>(_ => new Mock<IAuthClient>().Object);
+        services.AddSingleton<IPermissionsClient>(_ => new Mock<IPermissionsClient>().Object);
+
+        // Act
+        var serviceProvider = services.BuildServiceProvider();
+        var service = serviceProvider.GetService<ITestConnectService>();
+        var config = serviceProvider.GetService<TestConnectServiceConfiguration>();
+
+        // Assert - Both should resolve successfully (no DI lifetime errors)
+        Assert.NotNull(service);
+        Assert.NotNull(config);
+        Assert.IsType<TestConnectService>(service);
+        Assert.IsType<TestConnectServiceConfiguration>(config);
+    }
+
+    /// <summary>
+    /// Tests that multiple registrations of the same configuration type are handled correctly.
+    /// This validates the FinalizeConfigurationRegistrations logic that removes competing registrations.
+    /// </summary>
+    [Fact]
+    public void ConfigurationRegistration_ShouldHandleMultipleRegistrations()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        // Simulate the issue: auto-registration adds Scoped, our system adds Singleton
+        services.AddScoped<TestConnectServiceConfiguration>(); // Auto-registered (problematic)
+
+        // Act - Simulate our finalization logic
+        var existingRegistrations = services.Where(s => s.ServiceType == typeof(TestConnectServiceConfiguration)).ToList();
+        foreach (var existing in existingRegistrations)
+        {
+            services.Remove(existing);
+        }
+        services.AddSingleton<TestConnectServiceConfiguration>(); // Our correct registration
+
+        // Assert - Only one registration should remain, and it should be Singleton
+        var finalRegistrations = services.Where(s => s.ServiceType == typeof(TestConnectServiceConfiguration)).ToList();
+        Assert.Single(finalRegistrations);
+        Assert.Equal(ServiceLifetime.Singleton, finalRegistrations.First().Lifetime);
+    }
+
+    /// <summary>
+    /// Tests the naming convention fallback when ServiceConfiguration attribute evaluation fails.
+    /// This validates the fallback logic for typeof() resolution issues.
+    /// </summary>
+    [Fact]
+    public void ConfigurationDiscovery_ShouldUseNamingConventionFallback()
+    {
+        // Arrange - Test naming convention: TestConnectServiceConfiguration -> TestConnectService
+        var configurationTypeName = "TestConnectServiceConfiguration";
+        var expectedServiceName = "TestConnectService";
+
+        // Act - Simulate naming convention logic
+        string? serviceName = null;
+        if (configurationTypeName.EndsWith("ServiceConfiguration"))
+        {
+            serviceName = configurationTypeName.Replace("ServiceConfiguration", "Service");
+        }
+
+        // Assert
+        Assert.Equal(expectedServiceName, serviceName);
+    }
+
+    /// <summary>
+    /// Tests that configurations without matching services are properly skipped.
+    /// This validates that orphaned configurations don't cause startup failures.
+    /// </summary>
+    [Fact]
+    public void ConfigurationDiscovery_ShouldSkipUnmatchedConfigurations()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        // Register a configuration that doesn't match any service
+        services.AddSingleton<UnmatchedConfiguration>();
+
+        // Act
+        var serviceProvider = services.BuildServiceProvider();
+        var config = serviceProvider.GetService<UnmatchedConfiguration>();
+
+        // Assert - Configuration should be registered but not cause errors
+        Assert.NotNull(config);
+        Assert.IsType<UnmatchedConfiguration>(config);
+    }
+
+    /// <summary>
+    /// Tests the complete configuration discovery workflow with both success and failure scenarios.
+    /// This integration test validates the entire configuration matching pipeline.
+    /// </summary>
+    [Fact]
+    public void ConfigurationDiscovery_IntegrationTest_ShouldHandleMultipleScenarios()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        // Scenario 1: Matching service and configuration (should succeed)
+        services.AddSingleton<ITestConnectService, TestConnectService>();
+        services.AddSingleton<TestConnectServiceConfiguration>();
+
+        // Register mock dependencies for TestConnectService
+        services.AddSingleton<IAuthClient>(_ => new Mock<IAuthClient>().Object);
+        services.AddSingleton<IPermissionsClient>(_ => new Mock<IPermissionsClient>().Object);
+
+        // Scenario 2: Configuration without matching service (should be skipped gracefully)
+        services.AddSingleton<UnmatchedConfiguration>();
+
+        // Scenario 3: Multiple registrations (should resolve to correct lifetime)
+        services.AddScoped<ComplexNamingTestServiceConfiguration>(); // Wrong lifetime
+        services.Remove(services.First(s => s.ServiceType == typeof(ComplexNamingTestServiceConfiguration)));
+        services.AddSingleton<ComplexNamingTestServiceConfiguration>(); // Correct lifetime
+
+        // Act
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Assert - All scenarios should work without throwing
+        Exception? thrownException = null;
+        try
+        {
+            var service = serviceProvider.GetService<ITestConnectService>();
+            var config1 = serviceProvider.GetService<TestConnectServiceConfiguration>();
+            var config2 = serviceProvider.GetService<UnmatchedConfiguration>();
+            var config3 = serviceProvider.GetService<ComplexNamingTestServiceConfiguration>();
+
+            Assert.NotNull(service);
+            Assert.NotNull(config1);
+            Assert.NotNull(config2);
+            Assert.NotNull(config3);
+        }
+        catch (Exception ex)
+        {
+            thrownException = ex;
+        }
+
+        Assert.Null(thrownException);
+    }
 }

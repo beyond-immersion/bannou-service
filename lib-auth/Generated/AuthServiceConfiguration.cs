@@ -1,7 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
-using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Auth;
 
@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Auth;
 /// Configuration class for Auth service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(AuthService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(IAuthService), envPrefix: "BANNOU_")]
 public class AuthServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

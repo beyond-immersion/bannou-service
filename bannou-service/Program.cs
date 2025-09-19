@@ -87,7 +87,7 @@ public static class Program
     /// </summary>
     public static CancellationTokenSource ShutdownCancellationTokenSource { get; } = new CancellationTokenSource();
 
-    private static async Task Main()
+    private static async Task<int> Main()
     {
         Logger.Log(LogLevel.Information, null, "Service starting.");
         AppRunningState = AppRunningStates.Starting;
@@ -96,7 +96,7 @@ public static class Program
         if (Configuration == null)
         {
             Logger.Log(LogLevel.Error, null, "Service configuration missing- exiting application.");
-            return;
+            return 1;
         }
 
 
@@ -129,18 +129,22 @@ public static class Program
         if (!await WaitForDaprReadiness())
         {
             Logger.Log(LogLevel.Error, null, "Dapr readiness check failed- exiting application.");
-            return;
+            return 1;
         }
 
         // load the plugins
-        await LoadPlugins();
+        if (!await LoadPlugins())
+        {
+            Logger.Log(LogLevel.Error, null, "Failed to load enabled plugins- exiting application.");
+            return 1;
+        }
 
         // prepare to build the application
         WebApplicationBuilder? webAppBuilder = WebApplication.CreateBuilder(Environment.GetCommandLineArgs());
         if (webAppBuilder == null)
         {
             Logger.Log(LogLevel.Error, null, "Failed to create WebApplicationBuilder- exiting application.");
-            return;
+            return 1;
         }
 
         try
@@ -193,8 +197,7 @@ public static class Program
                 });
 
             webAppBuilder.Services
-                .AddWebSockets((websocketOptions) => { })
-                .AddDaprServices();
+                .AddWebSockets((websocketOptions) => { });
 
             webAppBuilder.Services.AddDaprClient();
 
@@ -240,8 +243,14 @@ public static class Program
         catch (Exception exc)
         {
             Logger.Log(LogLevel.Error, exc, "Failed to add required services to registry- exiting application.");
-            return;
+            return 1;
         }
+
+        // Final override: Ensure configuration lifetimes are correct (after all auto-registration)
+        Logger.Log(LogLevel.Information, null, "🔧 Final configuration lifetime check and override...");
+
+        // Re-register configurations with correct lifetimes to override any auto-registrations
+        PluginLoader?.FinalizeConfigurationRegistrations(webAppBuilder.Services);
 
         // build the application
         Logger.Log(LogLevel.Information, null, "🔧 About to build WebApplication - checking for DI conflicts...");
@@ -302,7 +311,7 @@ public static class Program
                 if (!await PluginLoader.InitializeAsync())
                 {
                     Logger.Log(LogLevel.Error, "Plugin initialization failed- exiting application.");
-                    return;
+                    return 1;
                 }
             }
 
@@ -320,7 +329,7 @@ public static class Program
                 if (!await PluginLoader.StartAsync())
                 {
                     Logger.Log(LogLevel.Error, "Plugin startup failed- exiting application.");
-                    return;
+                    return 1;
                 }
             }
 
@@ -376,12 +385,13 @@ public static class Program
         }
 
         Logger.Log(LogLevel.Debug, null, "Application shutdown complete.");
+        return 0;
     }
 
     /// <summary>
     /// Load and initialize plugins based on current application configuration.
     /// </summary>
-    private static async Task LoadPlugins()
+    private static async Task<bool> LoadPlugins()
     {
         // Enable assembly resolution for plugin dependencies
         AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
@@ -399,15 +409,15 @@ public static class Program
         var pluginsDirectory = Path.Combine(appDirectory, "plugins");
 
         var pluginsLoaded = await PluginLoader.DiscoverAndLoadPluginsAsync(pluginsDirectory, requestedPlugins);
+        if (pluginsLoaded == null)
+            return false;
 
         if (pluginsLoaded == 0)
-        {
             Logger.Log(LogLevel.Warning, null, "No plugins were loaded. Running with existing IDaprService implementations only.");
-        }
         else
-        {
             Logger.Log(LogLevel.Information, null, $"Successfully loaded {pluginsLoaded} plugins.");
-        }
+
+        return true;
     }
 
     /// <summary>
@@ -435,116 +445,6 @@ public static class Program
         // Parse comma-separated list
         var assemblyNames = Configuration.Include_Assemblies.Split(',', StringSplitOptions.RemoveEmptyEntries);
         return assemblyNames.Select(name => name.Trim()).ToList();
-    }
-
-    // TODO: DEPRECATED - Replace with Plugin system configuration validation
-    // /// <summary>
-    // /// Returns whether all enabled services have their required configuration set.
-    // /// </summary>
-    // private static bool EnabledServicesHaveRequiredConfiguration()
-    // {
-    //     foreach (var serviceInfo in IDaprService.EnabledServices)
-    //     {
-    //         Type interfaceType = serviceInfo.Item1;
-    //         Type implementationType = serviceInfo.Item2;
-    //         Type serviceConfig = IDaprService.GetConfigurationType(implementationType);
-    //         if (serviceConfig == null)
-    //             continue;
-
-    //         if (!IServiceConfiguration.HasRequiredForType(serviceConfig))
-    //         {
-    //             Logger.Log(LogLevel.Error, null, $"Required configuration is missing for the '{serviceInfo.Item3.Name}' service.");
-    //             return false;
-    //         }
-    //     }
-
-    //     return true;
-    // }
-
-    /// <summary>
-    /// Load appropriate sets of plugins in /plugins/ and subdirectories
-    /// based on current application configuration.
-    ///
-    /// <seealso cref="AppConfiguration.Include_Assemblies"/>
-    /// </summary>
-    private static void LoadAssemblies()
-    {
-        AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
-
-        if (string.Equals("none", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
-            return;
-
-        // load root app assemblies (probably already loaded anyways)
-        var appDirectory = Directory.GetCurrentDirectory();
-        foreach (var assemblyPath in Directory.GetFiles(appDirectory, "*.dll"))
-            TryLoadAssembly(assemblyPath, out _);
-
-        var pluginsRootDirectory = Path.Combine(appDirectory, "plugins");
-        if (pluginsRootDirectory == null || !Directory.Exists(pluginsRootDirectory))
-        {
-            Logger.Log(LogLevel.Warning, null, $"Failed to load additional assemblies- plugins directory does not exist.");
-            return;
-        }
-
-        // load root plugin assemblies (should be loaded if `none` isn't selected)
-        foreach (var assemblyPath in Directory.GetFiles(pluginsRootDirectory, "*.dll"))
-            TryLoadAssembly(assemblyPath, out _);
-
-        var pluginDirectories = Directory.GetDirectories(pluginsRootDirectory);
-        if (pluginDirectories == null || pluginDirectories.Length == 0)
-        {
-            Logger.Log(LogLevel.Warning, null, $"Failed to load non-root assemblies- no subdirectories found in plugins.");
-            return;
-        }
-
-        if (string.Equals("all", Configuration.Include_Assemblies, StringComparison.InvariantCultureIgnoreCase))
-        {
-            foreach (var pluginDirectory in pluginDirectories)
-            {
-                var assemblyPaths = Directory.GetFiles(pluginDirectory, "*.dll", SearchOption.AllDirectories);
-                foreach (var assemblyPath in assemblyPaths)
-                    TryLoadAssembly(assemblyPath, out _);
-            }
-
-            return;
-        }
-
-        // load common plugin assemblies (should be loaded if `none` isn't selected and the directory exists)
-        {
-            var pluginDirectory = Directory.GetDirectories(pluginsRootDirectory, "common", SearchOption.TopDirectoryOnly).FirstOrDefault();
-            if (pluginDirectory != null)
-            {
-                var assemblyPaths = Directory.GetFiles(pluginDirectory, "*.dll", SearchOption.AllDirectories);
-                foreach (var assemblyPath in assemblyPaths)
-                    TryLoadAssembly(assemblyPath, out _);
-            }
-        }
-
-        // if no configuration, or common, then that's all we need
-        if (Configuration.Include_Assemblies == null || string.Equals("common", Configuration.Include_Assemblies))
-            return;
-
-        // otherwise, split by commas, and load the rest manually by assembly name
-        var assemblyNames = Configuration.Include_Assemblies.Split(',', StringSplitOptions.RemoveEmptyEntries);
-        if (assemblyNames == null || assemblyNames.Length == 0)
-            return;
-
-        foreach (var assemblyName in assemblyNames)
-        {
-            var pluginDirectory = Directory.GetDirectories(pluginsRootDirectory, assemblyName, SearchOption.TopDirectoryOnly).FirstOrDefault();
-            if (pluginDirectory == null)
-            {
-                Logger.Log(LogLevel.Warning, null, $"Failed to load assemblies for {assemblyName}- specified in configuration, but no plugins were found.");
-                continue;
-            }
-
-            // load all files from subdirectories, if assembly directory is there
-            var assemblyPaths = Directory.GetFiles(pluginDirectory, "*.dll", SearchOption.AllDirectories);
-            foreach (var assemblyPath in assemblyPaths)
-                TryLoadAssembly(assemblyPath, out _);
-        }
-
-        return;
     }
 
     /// <summary>

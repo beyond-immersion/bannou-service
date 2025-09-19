@@ -1,7 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
-using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Website;
 
@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Website;
 /// Configuration class for Website service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(WebsiteService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(IWebsiteService), envPrefix: "BANNOU_")]
 public class WebsiteServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

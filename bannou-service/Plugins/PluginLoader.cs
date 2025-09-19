@@ -60,7 +60,7 @@ public class PluginLoader
     /// <param name="pluginsDirectory">Root plugins directory</param>
     /// <param name="requestedPlugins">List of specific plugins to load, or null for all</param>
     /// <returns>Number of enabled plugins successfully loaded</returns>
-    public async Task<int> DiscoverAndLoadPluginsAsync(string pluginsDirectory, IList<string>? requestedPlugins = null)
+    public async Task<int?> DiscoverAndLoadPluginsAsync(string pluginsDirectory, IList<string>? requestedPlugins = null)
     {
         _logger.LogInformation("🔍 Discovering plugins in: {PluginsDirectory}", pluginsDirectory);
 
@@ -108,6 +108,7 @@ public class PluginLoader
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Failed to load plugin from directory: {PluginDirectory}", pluginDir);
+                return null;
             }
         }
 
@@ -116,6 +117,7 @@ public class PluginLoader
 
         _logger.LogInformation("📋 Plugin discovery complete. {AllCount} plugins discovered, {EnabledCount} enabled",
             _allPlugins.Count, _enabledPlugins.Count);
+
         return _enabledPlugins.Count;
     }
 
@@ -188,7 +190,7 @@ public class PluginLoader
                 if (_enabledPlugins.Any(p => p.PluginName == pluginName))
                 {
                     DiscoverServiceTypes(assembly, pluginName);
-                    DiscoverConfigurationTypes(assembly, pluginName);
+                    // Note: Configuration discovery happens later to ensure service types are registered first
                 }
                 else
                 {
@@ -201,8 +203,25 @@ public class PluginLoader
             }
         }
 
-        _logger.LogInformation("✅ Type discovery complete. {ClientCount} client types, {ServiceCount} service types",
-            _clientTypesToRegister.Count, _serviceTypesToRegister.Count);
+        // PHASE 2: Now that service types are discovered, discover configurations that reference them
+        foreach (var (pluginName, assembly) in _loadedAssemblies)
+        {
+            try
+            {
+                // Only register configurations for enabled plugins
+                if (_enabledPlugins.Any(p => p.PluginName == pluginName))
+                {
+                    DiscoverConfigurationTypes(assembly, pluginName);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Failed to discover configuration types from assembly: {PluginName}", pluginName);
+            }
+        }
+
+        _logger.LogInformation("✅ Type discovery complete. {ClientCount} client types, {ServiceCount} service types, {ConfigCount} configuration types",
+            _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _configurationTypesToRegister.Count);
     }
 
     /// <summary>
@@ -276,22 +295,64 @@ public class PluginLoader
 
         foreach (var configurationType in configurationTypes)
         {
-            var serviceConfigAttr = configurationType.GetCustomAttribute<ServiceConfigurationAttribute>();
-            if (serviceConfigAttr?.ServiceImplementationType != null)
-            {
-                var serviceType = serviceConfigAttr.ServiceImplementationType;
+            ServiceConfigurationAttribute? serviceConfigAttr = null;
+            Type? serviceType = null;
 
+            try
+            {
+                // Try to get the ServiceConfiguration attribute
+                serviceConfigAttr = configurationType.GetCustomAttribute<ServiceConfigurationAttribute>();
+                serviceType = serviceConfigAttr?.ServiceImplementationType;
+
+                if (serviceType != null)
+                {
+                    _logger.LogDebug("✅ Successfully resolved ServiceConfiguration attribute for {ConfigType} -> {ServiceType}",
+                        configurationType.Name, serviceType.Name);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("⚠️  Failed to read ServiceConfiguration attribute for {ConfigType}. Error: {Error}",
+                    configurationType.Name, ex.Message);
+            }
+
+            // If attribute evaluation failed or ServiceImplementationType is null, use naming convention fallback
+            if (serviceType == null && configurationType.Name.EndsWith("ServiceConfiguration"))
+            {
+                var serviceName = configurationType.Name.Replace("ServiceConfiguration", "Service");
+                _logger.LogDebug("🔍 Using naming convention fallback for {ConfigType} -> {ServiceName}",
+                    configurationType.Name, serviceName);
+
+                // Find service by name in the same assembly
+                serviceType = assembly.GetTypes()
+                    .FirstOrDefault(t => t.Name == serviceName && typeof(IDaprService).IsAssignableFrom(t));
+
+                if (serviceType != null)
+                {
+                    _logger.LogDebug("✅ Found service {ServiceType} via naming convention for configuration {ConfigType}",
+                        serviceType.Name, configurationType.Name);
+                }
+            }
+
+            if (serviceType != null)
+            {
                 // Find the registered service to match its lifetime
                 var serviceRegistration = _serviceTypesToRegister
                     .FirstOrDefault(s => s.implementationType == serviceType || s.interfaceType == serviceType);
 
                 if (serviceRegistration.implementationType != null)
                 {
-                    var configLifetime = serviceRegistration.lifetime;
+                    // Configuration lifetime must be compatible with service lifetime
+                    // Singleton services MUST have Singleton configurations (DI constraint)
+                    // Scoped services can have Scoped configurations
+                    var configLifetime = serviceRegistration.lifetime == ServiceLifetime.Singleton
+                        ? ServiceLifetime.Singleton
+                        : serviceRegistration.lifetime;
+
                     _configurationTypesToRegister.Add((configurationType, configLifetime));
 
-                    _logger.LogInformation("📋 Will register configuration: {ConfigType} ({Lifetime}) for service {ServiceType}",
-                        configurationType.Name, configLifetime, serviceType.Name);
+                    _logger.LogInformation("📋 Will register configuration: {ConfigType} ({Lifetime}) for service {ServiceType} (service lifetime: {ServiceLifetime})",
+                        configurationType.Name, configLifetime, serviceType.Name, serviceRegistration.lifetime);
                 }
                 else
                 {
@@ -301,7 +362,7 @@ public class PluginLoader
             }
             else
             {
-                _logger.LogDebug("🚫 Skipping configuration {ConfigType} - missing [ServiceConfiguration] attribute with ServiceImplementationType",
+                _logger.LogWarning("🚫 Skipping configuration {ConfigType} - could not determine associated service via attribute or naming convention",
                     configurationType.Name);
             }
         }
@@ -346,6 +407,37 @@ public class PluginLoader
         }
 
         _logger.LogInformation("✅ Service configuration complete - centralized type registration finished");
+    }
+
+    /// <summary>
+    /// Final registration pass to override any auto-registered configurations with correct lifetimes.
+    /// Called just before WebApplication build to ensure our configuration lifetimes take precedence.
+    /// </summary>
+    /// <param name="services">Service collection</param>
+    public void FinalizeConfigurationRegistrations(IServiceCollection services)
+    {
+        _logger.LogInformation("🔧 Finalizing configuration registrations to override auto-registrations...");
+
+        var finalizedCount = 0;
+        foreach (var (configurationType, lifetime) in _configurationTypesToRegister)
+        {
+            // Remove all existing registrations for this configuration type
+            var existingRegistrations = services.Where(s => s.ServiceType == configurationType).ToList();
+            foreach (var existing in existingRegistrations)
+            {
+                _logger.LogWarning("⚠️  Removing auto-registered configuration: {ConfigType} (Lifetime: {ExistingLifetime})",
+                    configurationType.Name, existing.Lifetime);
+                services.Remove(existing);
+            }
+
+            // Re-add with correct lifetime
+            services.Add(new ServiceDescriptor(configurationType, configurationType, lifetime));
+            _logger.LogInformation("✅ Finalized configuration: {ConfigType} ({Lifetime})",
+                configurationType.Name, lifetime);
+            finalizedCount++;
+        }
+
+        _logger.LogInformation("✅ Finalized {Count} configuration registrations", finalizedCount);
     }
 
     /// <summary>
@@ -411,12 +503,34 @@ public class PluginLoader
     {
         foreach (var (configurationType, lifetime) in _configurationTypesToRegister)
         {
+            // Check if this type is already registered
+            var existingRegistration = services.FirstOrDefault(s => s.ServiceType == configurationType);
+            if (existingRegistration != null)
+            {
+                _logger.LogWarning("⚠️  Configuration type {ConfigType} is already registered with lifetime {ExistingLifetime}. Removing existing registration to replace with {NewLifetime}.",
+                    configurationType.Name, existingRegistration.Lifetime, lifetime);
+                services.Remove(existingRegistration);
+            }
+
             services.Add(new ServiceDescriptor(configurationType, configurationType, lifetime));
             _logger.LogInformation("✅ Registered configuration: {ConfigType} ({Lifetime})",
                 configurationType.Name, lifetime);
         }
 
         _logger.LogInformation("✅ Registered {Count} configuration types in DI", _configurationTypesToRegister.Count);
+
+        // Debug: Print all ConnectServiceConfiguration registrations
+        var connectConfigRegistrations = services.Where(s =>
+            s.ServiceType.Name.Contains("ConnectServiceConfiguration")).ToList();
+
+        _logger.LogWarning("🔍 DEBUG: Found {Count} registrations for ConnectServiceConfiguration:",
+            connectConfigRegistrations.Count);
+
+        foreach (var reg in connectConfigRegistrations)
+        {
+            _logger.LogWarning("  - ServiceType: {ServiceType}, ImplementationType: {ImplType}, Lifetime: {Lifetime}",
+                reg.ServiceType.Name, reg.ImplementationType?.Name ?? "Unknown", reg.Lifetime);
+        }
     }
 
     /// <summary>

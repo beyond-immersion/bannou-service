@@ -15,7 +15,7 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     public override string PluginName => "game-session";
     public override string DisplayName => "GameSession Service";
 
-    private GameSessionService? _service;
+    private IGameSessionService? _service;
     private IServiceProvider? _serviceProvider;
 
 
@@ -63,12 +63,13 @@ public class GameSessionServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Get service instance from DI container
-            _service = _serviceProvider?.GetService<GameSessionService>();
+            // Get service instance from DI container with proper scope handling
+            using var scope = _serviceProvider?.CreateScope();
+            _service = scope?.ServiceProvider.GetService<IGameSessionService>();
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve GameSessionService from DI container");
+                Logger?.LogError("❌ Failed to resolve IGameSessionService from DI container");
                 return false;
             }
 

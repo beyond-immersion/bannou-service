@@ -15,7 +15,7 @@ public class AccountsServicePlugin : BaseBannouPlugin
     public override string PluginName => "accounts";
     public override string DisplayName => "Accounts Service";
 
-    private AccountsService? _service;
+    private IAccountsService? _service;
     private IServiceProvider? _serviceProvider;
 
 
@@ -63,12 +63,13 @@ public class AccountsServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Get service instance from DI container
-            _service = _serviceProvider?.GetService<AccountsService>();
+            // Get service instance from DI container with proper scope handling
+            using var scope = _serviceProvider?.CreateScope();
+            _service = scope?.ServiceProvider.GetService<IAccountsService>();
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve AccountsService from DI container");
+                Logger?.LogError("❌ Failed to resolve IAccountsService from DI container");
                 return false;
             }
 

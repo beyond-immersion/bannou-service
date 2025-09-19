@@ -117,8 +117,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-auth", "lib-auth\lib-au
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-connect", "lib-connect\lib-connect.csproj", "{12EF86E5-D398-AE42-DAF8-DA3F02333D25}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bannou.Client.SDK", "Bannou.Client.SDK\Bannou.Client.SDK.csproj", "{531B77A4-9FA2-759B-09B9-E07DFECC1FB1}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

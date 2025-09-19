@@ -15,7 +15,7 @@ public class ConnectServicePlugin : BaseBannouPlugin
     public override string PluginName => "connect";
     public override string DisplayName => "Connect Service";
 
-    private ConnectService? _service;
+    private IConnectService? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
@@ -65,11 +65,11 @@ public class ConnectServicePlugin : BaseBannouPlugin
         try
         {
             // Get service instance from DI container
-            _service = _serviceProvider?.GetService<ConnectService>();
+            _service = _serviceProvider?.GetService<IConnectService>();
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve ConnectService from DI container");
+                Logger?.LogError("❌ Failed to resolve IConnectService from DI container");
                 return false;
             }
 

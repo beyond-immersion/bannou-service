@@ -1,7 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
-using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// Configuration class for Connect service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(ConnectService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(IConnectService), envPrefix: "BANNOU_")]
 public class ConnectServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

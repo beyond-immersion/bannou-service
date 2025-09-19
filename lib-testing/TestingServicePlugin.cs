@@ -15,7 +15,7 @@ public class TestingServicePlugin : BaseBannouPlugin
     public override string PluginName => "testing";
     public override string DisplayName => "Testing Service";
 
-    private TestingService? _service;
+    private ITestingService? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
@@ -102,12 +102,13 @@ public class TestingServicePlugin : BaseBannouPlugin
                 return false;
             }
 
-            // Get service instance from DI container
-            _service = _serviceProvider?.GetService<TestingService>();
+            // Get service instance from DI container with proper scope handling
+            using var scope = _serviceProvider?.CreateScope();
+            _service = scope?.ServiceProvider.GetService<ITestingService>();
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve TestingService from DI container");
+                Logger?.LogError("❌ Failed to resolve ITestingService from DI container");
                 return false;
             }
 
