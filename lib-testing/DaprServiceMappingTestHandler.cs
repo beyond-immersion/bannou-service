@@ -70,47 +70,57 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
     /// <summary>
     /// Tests service mapping event publishing and handling.
     /// </summary>
-    private static async Task<TestResult> TestServiceMappingEvents(ITestClient testClient, string[] args)
+    private static Task<TestResult> TestServiceMappingEvents(ITestClient testClient, string[] args)
     {
         try
         {
             Console.WriteLine("Testing service mapping events...");
 
-            // Test event creation
-            var mappingEvent = new ServiceMappingEvent
-            {
-                ServiceName = "test-service",
-                AppId = "test-app-id",
-                Action = "register",
-                Metadata = new Dictionary<string, object>
-                {
-                    ["environment"] = "test",
-                    ["source"] = "unit-test"
-                }
-            };
+            // Test ServiceAppMappingResolver with simulated RabbitMQ events
+            var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>());
 
-            Console.WriteLine($"✓ Created service mapping event: {mappingEvent.Action} {mappingEvent.ServiceName} -> {mappingEvent.AppId}");
+            // Test 1: Verify default behavior (everything routes to "bannou")
+            var defaultAppId = resolver.GetAppIdForService("test-service");
+            if (defaultAppId != "bannou")
+                return Task.FromResult(new TestResult(false, $"Expected default app-id 'bannou', got '{defaultAppId}'"));
 
-            // Test event validation
-            if (string.IsNullOrEmpty(mappingEvent.EventId))
-                return new TestResult(false, "Event ID should be auto-generated");
+            Console.WriteLine($"✓ Default routing verified: test-service -> {defaultAppId}");
 
-            if (mappingEvent.Timestamp == default)
-                return new TestResult(false, "Event timestamp should be auto-generated");
+            // Test 2: Simulate RabbitMQ service mapping event
+            Console.WriteLine("Simulating RabbitMQ service mapping update event...");
+            resolver.UpdateServiceMapping("test-service", "test-service-east-01");
 
-            Console.WriteLine($"✓ Event validation passed: ID={mappingEvent.EventId}, Timestamp={mappingEvent.Timestamp:yyyy-MM-dd HH:mm:ss}");
+            var updatedAppId = resolver.GetAppIdForService("test-service");
+            if (updatedAppId != "test-service-east-01")
+                return Task.FromResult(new TestResult(false, $"Expected updated app-id 'test-service-east-01', got '{updatedAppId}'"));
 
-            // If we can make HTTP calls, test the actual endpoint
-            if (testClient.TransportType == "HTTP")
-            {
-                await TestServiceMappingEndpoint(testClient);
-            }
+            Console.WriteLine($"✓ Dynamic mapping update: test-service -> {updatedAppId}");
 
-            return new TestResult(true, "Service mapping event tests passed");
+            // Test 3: Test mapping removal (should revert to default)
+            Console.WriteLine("Simulating service offline event (mapping removal)...");
+            resolver.RemoveServiceMapping("test-service");
+
+            var revertedAppId = resolver.GetAppIdForService("test-service");
+            if (revertedAppId != "bannou")
+                return Task.FromResult(new TestResult(false, $"Expected reverted app-id 'bannou', got '{revertedAppId}'"));
+
+            Console.WriteLine($"✓ Mapping removal: test-service -> {revertedAppId}");
+
+            // Test 4: Test GetAllMappings for monitoring
+            resolver.UpdateServiceMapping("accounts", "accounts-cluster-west");
+            resolver.UpdateServiceMapping("behavior", "npc-processing-01");
+
+            var allMappings = resolver.GetAllMappings();
+            if (allMappings.Count != 2)
+                return Task.FromResult(new TestResult(false, $"Expected 2 mappings, got {allMappings.Count}"));
+
+            Console.WriteLine($"✓ All mappings retrieved: {string.Join(", ", allMappings.Select(kv => $"{kv.Key}->{kv.Value}"))}");
+
+            return Task.FromResult(new TestResult(true, "Service mapping event tests passed"));
         }
         catch (Exception ex)
         {
-            return new TestResult(false, $"Service mapping event test failed: {ex.Message}", ex);
+            return Task.FromResult(new TestResult(false, $"Service mapping event test failed: {ex.Message}", ex));
         }
     }
 
@@ -160,30 +170,81 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Tests service mapping health endpoints.
+    /// Tests service mapping health and monitoring functionality.
     /// </summary>
     private static Task<TestResult> TestServiceMappingHealth(ITestClient testClient, string[] args)
     {
         try
         {
-            Console.WriteLine("Testing service mapping health endpoints...");
+            Console.WriteLine("Testing service mapping health and monitoring...");
 
-            if (testClient.TransportType != "HTTP")
+            var resolver = new ServiceAppMappingResolver(CreateTestLogger<ServiceAppMappingResolver>());
+
+            // Test 1: Health check - resolver responds correctly to various inputs
+            Console.WriteLine("Testing resolver health with edge cases...");
+
+            // Test empty service name
+            var emptyResult = resolver.GetAppIdForService("");
+            if (emptyResult != "bannou")
+                return Task.FromResult(new TestResult(false, $"Empty service name should return 'bannou', got '{emptyResult}'"));
+
+            // Test null service name
+            var nullResult = resolver.GetAppIdForService(null!);
+            if (nullResult != "bannou")
+                return Task.FromResult(new TestResult(false, $"Null service name should return 'bannou', got '{nullResult}'"));
+
+            // Test whitespace service name
+            var whitespaceResult = resolver.GetAppIdForService("   ");
+            if (whitespaceResult != "bannou")
+                return Task.FromResult(new TestResult(false, $"Whitespace service name should return 'bannou', got '{whitespaceResult}'"));
+
+            Console.WriteLine("✓ Resolver handles edge cases correctly");
+
+            // Test 2: Monitoring functionality - GetAllMappings
+            Console.WriteLine("Testing monitoring capabilities...");
+
+            // Initially should be empty
+            var initialMappings = resolver.GetAllMappings();
+            if (initialMappings.Count != 0)
+                return Task.FromResult(new TestResult(false, $"Initial mappings should be empty, got {initialMappings.Count}"));
+
+            // Add some mappings and verify monitoring
+            resolver.UpdateServiceMapping("accounts", "accounts-cluster");
+            resolver.UpdateServiceMapping("auth", "auth-cluster");
+
+            var updatedMappings = resolver.GetAllMappings();
+            if (updatedMappings.Count != 2)
+                return Task.FromResult(new TestResult(false, $"Expected 2 mappings after updates, got {updatedMappings.Count}"));
+
+            if (!updatedMappings.ContainsKey("accounts") || updatedMappings["accounts"] != "accounts-cluster")
+                return Task.FromResult(new TestResult(false, "Accounts mapping not found or incorrect"));
+
+            if (!updatedMappings.ContainsKey("auth") || updatedMappings["auth"] != "auth-cluster")
+                return Task.FromResult(new TestResult(false, "Auth mapping not found or incorrect"));
+
+            Console.WriteLine($"✓ Monitoring shows {updatedMappings.Count} active mappings");
+
+            // Test 3: Thread safety simulation (rapid concurrent updates)
+            Console.WriteLine("Testing concurrent access patterns...");
+
+            var tasks = new List<Task>();
+            for (int i = 0; i < 10; i++)
             {
-                return Task.FromResult(new TestResult(true, "Service mapping health test skipped (HTTP transport required)"));
+                int serviceId = i;
+                tasks.Add(Task.Run(() =>
+                {
+                    resolver.UpdateServiceMapping($"service-{serviceId}", $"cluster-{serviceId}");
+                    var result = resolver.GetAppIdForService($"service-{serviceId}");
+                    // Result should be either the mapped value or "bannou" (if not yet updated)
+                    if (result != $"cluster-{serviceId}" && result != "bannou")
+                        throw new InvalidOperationException($"Unexpected result for service-{serviceId}: {result}");
+                }));
             }
 
-            // Test with any test client type
-            if (!testClient.IsAuthenticated)
-            {
-                return Task.FromResult(new TestResult(true, "Service mapping health test skipped (authentication required)"));
-            }
+            Task.WaitAll(tasks.ToArray());
+            Console.WriteLine("✓ Concurrent access patterns handled correctly");
 
-            // Try to reach the service mapping health endpoint
-            // This would be implemented if we have access to make HTTP calls
-            Console.WriteLine("✓ Service mapping health endpoint tests would go here");
-
-            return Task.FromResult(new TestResult(true, "Service mapping health tests passed"));
+            return Task.FromResult(new TestResult(true, "Service mapping health and monitoring tests passed"));
         }
         catch (Exception ex)
         {
@@ -191,21 +252,6 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
         }
     }
 
-    /// <summary>
-    /// Tests the actual service mapping HTTP endpoint.
-    /// </summary>
-    private static Task TestServiceMappingEndpoint(ITestClient testClient)
-    {
-        if (testClient.TransportType != "HTTP")
-            return Task.CompletedTask;
-        Console.WriteLine("Testing service mapping HTTP endpoint...");
-
-        // This would test the actual /api/events/service-mapping/health endpoint
-        // Implementation would depend on access to the HTTP client
-
-        Console.WriteLine("✓ Service mapping HTTP endpoint test completed");
-        return Task.CompletedTask;
-    }
 
     /// <summary>
     /// Creates a test logger for the given type.
