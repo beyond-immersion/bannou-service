@@ -328,7 +328,7 @@ public class AuthService : IAuthService, IDaprService
     }
 
     /// <inheritdoc/>
-    public Task<(StatusCodes, object?)> LogoutAsync(
+    public async Task<(StatusCodes, object?)> LogoutAsync(
         string jwt,
         LogoutRequest? body,
         CancellationToken cancellationToken = default)
@@ -337,25 +337,52 @@ public class AuthService : IAuthService, IDaprService
         {
             _logger.LogInformation("Processing logout request. AllSessions: {AllSessions}", body?.AllSessions ?? false);
 
-            // TODO: To properly implement logout, we need the JWT token to identify the session
-            // The logout endpoint should be modified to use x-from-authorization: bearer
-            // or take a JWT parameter like ValidateTokenAsync does
+            if (string.IsNullOrWhiteSpace(jwt))
+            {
+                _logger.LogWarning("JWT token is null or empty for logout");
+                return (StatusCodes.Unauthorized, null);
+            }
 
-            // For now, we can only log the request since we don't have session identification
-            _logger.LogWarning("Logout implementation incomplete - cannot identify specific session to invalidate without JWT token");
+            // Validate JWT and extract session key
+            var (validateStatus, validateResponse) = await ValidateTokenAsync(jwt, cancellationToken);
+            if (validateStatus != StatusCodes.OK || validateResponse == null || !validateResponse.Valid)
+            {
+                _logger.LogWarning("Invalid JWT token provided for logout");
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            // Extract session_key from JWT claims to identify which session to logout
+            var sessionKey = await ExtractSessionKeyFromJWT(jwt);
+            if (sessionKey == null)
+            {
+                _logger.LogWarning("Could not extract session_key from JWT for logout");
+                return (StatusCodes.Unauthorized, null);
+            }
 
             if (body?.AllSessions == true)
             {
-                _logger.LogInformation("AllSessions logout requested but not implemented");
-                // TODO: Implement all sessions logout when we have user identification
+                _logger.LogInformation("AllSessions logout requested for account: {AccountId}", validateResponse.AccountId);
+                // TODO: Implement all sessions logout - requires finding all sessions for this account
+                // This would require either maintaining an account->sessions mapping or scanning Redis
+                _logger.LogWarning("AllSessions logout not yet implemented - would require account session index");
+            }
+            else
+            {
+                // Logout current session only
+                await _daprClient.DeleteStateAsync(
+                    REDIS_STATE_STORE,
+                    $"session:{sessionKey}",
+                    cancellationToken: cancellationToken);
+
+                _logger.LogInformation("Session logged out successfully for account: {AccountId}", validateResponse.AccountId);
             }
 
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { Message = "Logout successful" }));
+            return (StatusCodes.OK, new { Message = "Logout successful" });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during logout");
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -439,29 +466,61 @@ public class AuthService : IAuthService, IDaprService
     }
 
     /// <inheritdoc/>
-    public Task<(StatusCodes, SessionsResponse?)> GetSessionsAsync(
+    public async Task<(StatusCodes, SessionsResponse?)> GetSessionsAsync(
         string jwt,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            // TODO: Get sessions for authenticated user from Redis
-            // This requires knowing which user is making the request (via JWT token)
-            // The endpoint should be modified to use x-from-authorization: bearer
             _logger.LogInformation("Sessions requested");
 
-            _logger.LogWarning("GetSessionsAsync implementation incomplete - cannot identify user without JWT token");
-
-            // Return empty sessions list for now since we can't identify the user
-            return Task.FromResult<(StatusCodes, SessionsResponse?)>((StatusCodes.OK, new SessionsResponse
+            if (string.IsNullOrWhiteSpace(jwt))
             {
-                Sessions = new List<SessionInfo>()
-            }));
+                _logger.LogWarning("JWT token is null or empty for get sessions");
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            // Validate JWT and get account information
+            var (validateStatus, validateResponse) = await ValidateTokenAsync(jwt, cancellationToken);
+            if (validateStatus != StatusCodes.OK || validateResponse == null || !validateResponse.Valid)
+            {
+                _logger.LogWarning("Invalid JWT token provided for get sessions");
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            _logger.LogInformation("Getting sessions for account: {AccountId}", validateResponse.AccountId);
+
+            // For now, return the current session only since we don't have efficient multi-session retrieval
+            // TODO: Implement efficient session retrieval for an account
+            // This would require either maintaining an account->sessions mapping or scanning Redis
+            var sessions = new List<SessionInfo>
+            {
+                new SessionInfo
+                {
+                    SessionId = validateResponse.SessionId,
+                    CreatedAt = DateTimeOffset.UtcNow, // We don't store this in current implementation
+                    LastActive = DateTimeOffset.UtcNow, // We don't track this in current implementation
+                    DeviceInfo = new DeviceInfo
+                    {
+                        DeviceType = DeviceInfoDeviceType.Desktop, // Default to desktop for now
+                        Platform = "Unknown", // We don't store device info in current implementation
+                        Browser = "Unknown"
+                    }
+                }
+            };
+
+            _logger.LogInformation("Returning {SessionCount} session(s) for account: {AccountId}",
+                sessions.Count, validateResponse.AccountId);
+
+            return (StatusCodes.OK, new SessionsResponse
+            {
+                Sessions = sessions
+            });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting sessions");
-            return Task.FromResult<(StatusCodes, SessionsResponse?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -697,6 +756,26 @@ public class AuthService : IAuthService, IDaprService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error finding session key for session ID: {SessionId}", sessionId);
+            return Task.FromResult<string?>(null);
+        }
+    }
+
+    /// <summary>
+    /// Extract session_key from JWT token without full validation (for logout operations)
+    /// </summary>
+    private Task<string?> ExtractSessionKeyFromJWT(string jwt)
+    {
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jsonToken = tokenHandler.ReadJwtToken(jwt);
+
+            var sessionKeyClaim = jsonToken?.Claims?.FirstOrDefault(c => c.Type == "session_key");
+            return Task.FromResult(sessionKeyClaim?.Value);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error extracting session_key from JWT");
             return Task.FromResult<string?>(null);
         }
     }
