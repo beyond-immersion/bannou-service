@@ -1476,24 +1476,30 @@
         <member name="P:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.BaseUrl">
             <summary>
             Gets the base URL for Dapr service invocation with dynamic app-id resolution.
-            Only available when using the full constructor.
+            For parameterless constructor, falls back to "bannou" app-id.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.String)">
             <summary>
             Prepares the HTTP request with proper Dapr headers.
-            Only functional when using the full constructor.
+            Works with both full constructor and parameterless constructor.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.Text.StringBuilder)">
             <summary>
             Prepares the HTTP request with URL builder for Dapr routing.
-            Only functional when using the full constructor.
+            Works with both full constructor and parameterless constructor.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ProcessResponse(System.Net.Http.HttpClient,System.Net.Http.HttpResponseMessage)">
             <summary>
             Processes the HTTP response from Dapr service invocation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ExtractAppIdFromUrl(System.String)">
+            <summary>
+            Extracts the Dapr app-id from a Dapr invoke URL.
+            URL pattern: http://localhost:3500/v1.0/invoke/{app-id}/method/...
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.IDaprClient">

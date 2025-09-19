@@ -64,51 +64,83 @@ public abstract class DaprServiceClientBase : IDaprClient
 
     /// <summary>
     /// Gets the base URL for Dapr service invocation with dynamic app-id resolution.
-    /// Only available when using the full constructor.
+    /// For parameterless constructor, falls back to "bannou" app-id.
     /// </summary>
     protected string BaseUrl
     {
         get
         {
-            if (_appMappingResolver == null || _serviceName == null)
-                throw new InvalidOperationException("BaseUrl is only available when using the full constructor with all dependencies");
+            // If full dependencies available, use dynamic resolution
+            if (_appMappingResolver != null && _serviceName != null)
+            {
+                var appId = _appMappingResolver.GetAppIdForService(_serviceName);
+                var baseUrl = $"http://localhost:3500/v1.0/invoke/{appId}/method/";
+                _logger?.LogTrace("Service {ServiceName} routing to app-id {AppId}", _serviceName, appId);
+                return baseUrl;
+            }
 
-            var appId = _appMappingResolver.GetAppIdForService(_serviceName);
-            var baseUrl = $"http://localhost:3500/v1.0/invoke/{appId}/method";
-
-            _logger?.LogTrace("Service {ServiceName} routing to app-id {AppId}", _serviceName, appId);
-            return baseUrl;
+            // Fallback for parameterless constructor - use "bannou" default
+            var fallbackUrl = "http://localhost:3500/v1.0/invoke/bannou/method/";
+            _logger?.LogTrace("Service {ServiceName} using fallback app-id 'bannou' (parameterless constructor)", ServiceName);
+            return fallbackUrl;
         }
     }
 
     /// <summary>
     /// Prepares the HTTP request with proper Dapr headers.
-    /// Only functional when using the full constructor.
+    /// Works with both full constructor and parameterless constructor.
     /// </summary>
     protected virtual void PrepareRequest(HttpClient client, HttpRequestMessage request, string url)
     {
-        if (_appMappingResolver != null && _serviceName != null)
+        // Ensure dapr-app-id header is set if not already present
+        if (!request.Headers.Contains("dapr-app-id"))
         {
-            var appId = _appMappingResolver.GetAppIdForService(_serviceName);
+            string appId;
+
+            // If full dependencies available, use dynamic resolution
+            if (_appMappingResolver != null && _serviceName != null)
+            {
+                appId = _appMappingResolver.GetAppIdForService(_serviceName);
+                _logger?.LogTrace("Service {ServiceName} routing to app-id {AppId} (full constructor)", _serviceName, appId);
+            }
+            else
+            {
+                // Fallback for parameterless constructor - always use "bannou" (matches BaseUrl)
+                appId = "bannou";
+                _logger?.LogTrace("Service {ServiceName} using fallback app-id {AppId} (parameterless constructor)", ServiceName, appId);
+            }
+
             request.Headers.Add("dapr-app-id", appId);
+            _logger?.LogTrace("Added dapr-app-id header: {AppId} for URL: {Url}", appId, url);
         }
     }
 
     /// <summary>
     /// Prepares the HTTP request with URL builder for Dapr routing.
-    /// Only functional when using the full constructor.
+    /// Works with both full constructor and parameterless constructor.
     /// </summary>
     protected virtual void PrepareRequest(HttpClient client, HttpRequestMessage request, StringBuilder urlBuilder)
     {
-        if (_appMappingResolver != null && _serviceName != null)
+        // Ensure dapr-app-id header is set if not already present
+        if (!request.Headers.Contains("dapr-app-id"))
         {
-            var appId = _appMappingResolver.GetAppIdForService(_serviceName);
-            request.Headers.Add("dapr-app-id", appId);
+            string appId;
 
-            // Replace the URL to use proper Dapr routing
-            var originalUrl = urlBuilder.ToString();
-            var daprUrl = $"http://localhost:3500/v1.0/invoke/{appId}/method{originalUrl}";
-            urlBuilder.Clear().Append(daprUrl);
+            // If full dependencies available, use dynamic resolution
+            if (_appMappingResolver != null && _serviceName != null)
+            {
+                appId = _appMappingResolver.GetAppIdForService(_serviceName);
+                _logger?.LogTrace("Service {ServiceName} routing to app-id {AppId} (full constructor)", _serviceName, appId);
+            }
+            else
+            {
+                // Fallback for parameterless constructor - always use "bannou" (matches BaseUrl)
+                appId = "bannou";
+                _logger?.LogTrace("Service {ServiceName} using fallback app-id {AppId} (parameterless constructor)", ServiceName, appId);
+            }
+
+            request.Headers.Add("dapr-app-id", appId);
+            _logger?.LogTrace("Added dapr-app-id header: {AppId} for URL builder: {Url}", appId, urlBuilder.ToString());
         }
     }
 
@@ -123,5 +155,28 @@ public abstract class DaprServiceClientBase : IDaprClient
             _logger?.LogWarning("Service {ServiceName} returned {StatusCode}: {ReasonPhrase}",
                 _serviceName, response.StatusCode, response.ReasonPhrase);
         }
+    }
+
+    /// <summary>
+    /// Extracts the Dapr app-id from a Dapr invoke URL.
+    /// URL pattern: http://localhost:3500/v1.0/invoke/{app-id}/method/...
+    /// </summary>
+    private static string? ExtractAppIdFromUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url))
+            return null;
+
+        var invokePrefix = "/v1.0/invoke/";
+        var invokeIndex = url.IndexOf(invokePrefix);
+        if (invokeIndex >= 0)
+        {
+            var startIndex = invokeIndex + invokePrefix.Length;
+            var endIndex = url.IndexOf("/method", startIndex);
+            if (endIndex > startIndex)
+            {
+                return url.Substring(startIndex, endIndex - startIndex);
+            }
+        }
+        return null;
     }
 }

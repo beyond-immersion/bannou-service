@@ -179,10 +179,6 @@ public partial interface IWebsiteClient
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IWebsiteClient
 {
-    #pragma warning disable 8618
-    private string _baseUrl;
-    #pragma warning restore 8618
-
     private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
     private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
 
@@ -190,7 +186,6 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
     public WebsiteClient()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
-        BaseUrl = "http://localhost:3500/v1.0/invoke/bannou/method";
         Initialize();
     }
 
@@ -199,17 +194,6 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         var settings = new Newtonsoft.Json.JsonSerializerSettings();
         UpdateJsonSerializerSettings(settings);
         return settings;
-    }
-
-    public string BaseUrl
-    {
-        get { return _baseUrl; }
-        set
-        {
-            _baseUrl = value;
-            if (!string.IsNullOrEmpty(_baseUrl) && !_baseUrl.EndsWith("/"))
-                _baseUrl += '/';
-        }
     }
 
     protected Newtonsoft.Json.JsonSerializerSettings JsonSerializerSettings { get { return _instanceSettings ?? _settings.Value; } }
@@ -227,17 +211,9 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
         // Create HttpClient with default configuration
         var httpClient = new System.Net.Http.HttpClient();
 
-        // Set base address if specified
-        if (!string.IsNullOrEmpty("http://localhost:3500/v1.0/invoke/bannou/method"))
-        {
-            httpClient.BaseAddress = new System.Uri("http://localhost:3500/v1.0/invoke/bannou/method", System.UriKind.Absolute);
-        }
-
         return System.Threading.Tasks.Task.FromResult(httpClient);
     }
 
-    partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
-    partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
     partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -258,7 +234,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/status"
                 urlBuilder_.Append("website/status");
 
@@ -336,7 +313,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/content/{slug}"
                 urlBuilder_.Append("website/content/");
                 urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(slug, System.Globalization.CultureInfo.InvariantCulture)));
@@ -423,7 +401,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/news"
                 urlBuilder_.Append("website/news");
                 urlBuilder_.Append('?');
@@ -507,7 +486,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/server-status"
                 urlBuilder_.Append("website/server-status");
 
@@ -582,7 +562,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/downloads"
                 urlBuilder_.Append("website/downloads");
                 urlBuilder_.Append('?');
@@ -669,7 +650,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/contact"
                 urlBuilder_.Append("website/contact");
 
@@ -763,7 +745,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/account/profile"
                 urlBuilder_.Append("website/account/profile");
 
@@ -847,7 +830,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/account/characters"
                 urlBuilder_.Append("website/account/characters");
 
@@ -931,7 +915,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/cms/pages"
                 urlBuilder_.Append("website/cms/pages");
                 urlBuilder_.Append('?');
@@ -1018,7 +1003,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/cms/pages"
                 urlBuilder_.Append("website/cms/pages");
 
@@ -1102,7 +1088,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/cms/pages/{slug}"
                 urlBuilder_.Append("website/cms/pages/");
                 urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(slug, System.Globalization.CultureInfo.InvariantCulture)));
@@ -1179,7 +1166,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Method = new System.Net.Http.HttpMethod("DELETE");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/cms/pages/{slug}"
                 urlBuilder_.Append("website/cms/pages/");
                 urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(slug, System.Globalization.CultureInfo.InvariantCulture)));
@@ -1249,7 +1237,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/cms/site-settings"
                 urlBuilder_.Append("website/cms/site-settings");
 
@@ -1330,7 +1319,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/cms/site-settings"
                 urlBuilder_.Append("website/cms/site-settings");
 
@@ -1404,7 +1394,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/cms/theme"
                 urlBuilder_.Append("website/cms/theme");
 
@@ -1484,7 +1475,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Method = new System.Net.Http.HttpMethod("PUT");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/cms/theme"
                 urlBuilder_.Append("website/cms/theme");
 
@@ -1553,7 +1545,8 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "website/account/subscription"
                 urlBuilder_.Append("website/account/subscription");
 
@@ -1711,7 +1704,7 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1723,7 +1716,7 @@ public partial class WebsiteClient : BeyondImmersion.BannouService.ServiceClient
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool) 
+        else if (value is bool)
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

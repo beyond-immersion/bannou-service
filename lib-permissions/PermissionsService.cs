@@ -31,9 +31,18 @@ public class PermissionsService : IPermissionsService, IDaprService
     /// </summary>
     public async Task<(StatusCodes, CapabilityResponse?)> GetCapabilitiesAsync(CapabilityRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
-        _logger.LogWarning("Method GetCapabilitiesAsync called but not implemented");
-        await Task.Delay(1); // Avoid async warning
-        throw new NotImplementedException("Method GetCapabilitiesAsync is not implemented");
+        _logger.LogInformation("GetCapabilitiesAsync called for session {SessionId}", body.SessionId);
+
+        // TODO: Implement real capability checking based on session permissions
+        // For now, return a basic response to allow Connect service to function
+        var response = new CapabilityResponse
+        {
+            SessionId = body.SessionId,
+            Permissions = new Dictionary<string, ICollection<string>>(), // Empty permissions for now
+            GeneratedAt = DateTimeOffset.UtcNow
+        };
+
+        return await Task.FromResult((StatusCodes.OK, (CapabilityResponse?)response));
     }
 
     /// <summary>

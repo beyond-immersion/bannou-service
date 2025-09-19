@@ -22,7 +22,7 @@ public class AccountsService : IAccountsService, IDaprService
     private readonly AccountsServiceConfiguration _configuration;
     private readonly DaprClient _daprClient;
 
-    private const string ACCOUNTS_STATE_STORE = "accounts-store";
+    private const string ACCOUNTS_STATE_STORE = "statestore";
     private const string ACCOUNTS_KEY_PREFIX = "account-";
 
     public AccountsService(
@@ -113,7 +113,7 @@ public class AccountsService : IAccountsService, IDaprService
                 AuthMethods = new List<AuthMethodInfo>()
             };
 
-            return (StatusCodes.OK, response);
+            return (StatusCodes.Created, response);
         }
         catch (Exception ex)
         {

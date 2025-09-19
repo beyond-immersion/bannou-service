@@ -113,10 +113,6 @@ public partial interface IBehaviorClient
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IBehaviorClient
 {
-    #pragma warning disable 8618
-    private string _baseUrl;
-    #pragma warning restore 8618
-
     private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
     private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
 
@@ -124,7 +120,6 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
     public BehaviorClient()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
-        BaseUrl = "http://localhost/api/behavior";
         Initialize();
     }
 
@@ -133,17 +128,6 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
         var settings = new Newtonsoft.Json.JsonSerializerSettings();
         UpdateJsonSerializerSettings(settings);
         return settings;
-    }
-
-    public string BaseUrl
-    {
-        get { return _baseUrl; }
-        set
-        {
-            _baseUrl = value;
-            if (!string.IsNullOrEmpty(_baseUrl) && !_baseUrl.EndsWith("/"))
-                _baseUrl += '/';
-        }
     }
 
     protected Newtonsoft.Json.JsonSerializerSettings JsonSerializerSettings { get { return _instanceSettings ?? _settings.Value; } }
@@ -161,17 +145,9 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
         // Create HttpClient with default configuration
         var httpClient = new System.Net.Http.HttpClient();
 
-        // Set base address if specified
-        if (!string.IsNullOrEmpty("http://localhost/api/behavior"))
-        {
-            httpClient.BaseAddress = new System.Uri("http://localhost/api/behavior", System.UriKind.Absolute);
-        }
-
         return System.Threading.Tasks.Task.FromResult(httpClient);
     }
 
-    partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
-    partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
     partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -203,7 +179,8 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "compile"
                 urlBuilder_.Append("compile");
 
@@ -318,7 +295,8 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "stack/compile"
                 urlBuilder_.Append("stack/compile");
 
@@ -413,7 +391,8 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "validate"
                 urlBuilder_.Append("validate");
 
@@ -495,7 +474,8 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "cache/{behavior_id}"
                 urlBuilder_.Append("cache/");
                 urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(behavior_id, System.Globalization.CultureInfo.InvariantCulture)));
@@ -587,7 +567,8 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
                 request_.Method = new System.Net.Http.HttpMethod("DELETE");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "cache/{behavior_id}"
                 urlBuilder_.Append("cache/");
                 urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(behavior_id, System.Globalization.CultureInfo.InvariantCulture)));
@@ -674,7 +655,8 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "context/resolve"
                 urlBuilder_.Append("context/resolve");
 
@@ -822,7 +804,7 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -834,7 +816,7 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool) 
+        else if (value is bool)
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

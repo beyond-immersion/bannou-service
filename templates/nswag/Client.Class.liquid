@@ -3,10 +3,16 @@
 {{ ClientClassAccessModifier }} partial class {{ Class }} {% if HasBaseType %}: {% endif %}{% if HasBaseClass %}{{ BaseClass }}{% if GenerateClientInterfaces %}, {% endif %}{% endif %}{% if GenerateClientInterfaces %}I{{ Class }}{% endif %}
 {
 {% if UseBaseUrl -%}
+{%     assign isDaprClient = false -%}
+{%     if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
+{%         assign isDaprClient = true -%}
+{%     endif -%}
+{%     unless isDaprClient -%}
     #pragma warning disable 8618
     private string _baseUrl;
     #pragma warning restore 8618
 
+{%     endunless -%}
 {% endif -%}
 {% if InjectHttpClient -%}
     private {{ HttpClientType }} _httpClient;
@@ -38,32 +44,38 @@
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
 {%     if UseBaseUrl -%}
-{%         if HasBaseUrl -%}
-{%             if GenerateBaseUrlProperty -%}
+{%         assign isDaprClient = false -%}
+{%         if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
+{%             assign isDaprClient = true -%}
+{%         endif -%}
+{%         unless isDaprClient -%}
+{%             if HasBaseUrl -%}
+{%                 if GenerateBaseUrlProperty -%}
         BaseUrl = "{{ BaseUrl }}";
-{%             else -%}
-{%                 if BaseUrl != "" -%}
-{%                     assign baseUrlLength = BaseUrl | size -%}
-{%                     assign lastUrlCharIndex = baseUrlLength | minus: 1 -%}
-{%                     assign lastUrlChar = BaseUrl | slice: lastUrlCharIndex, 1 -%}
-{%                     if lastUrlChar == "/" -%}
+{%                 else -%}
+{%                     if BaseUrl != "" -%}
+{%                         assign baseUrlLength = BaseUrl | size -%}
+{%                         assign lastUrlCharIndex = baseUrlLength | minus: 1 -%}
+{%                         assign lastUrlChar = BaseUrl | slice: lastUrlCharIndex, 1 -%}
+{%                         if lastUrlChar == "/" -%}
         _baseUrl = "{{ BaseUrl }}";
-{%                     else -%}
+{%                         else -%}
         _baseUrl = "{{ BaseUrl }}/";
+{%                         endif -%}
 {%                     endif -%}
 {%                 endif -%}
-{%             endif -%}
-{%         else -%}
-{%             if GenerateBaseUrlProperty -%}
-        BaseUrl = baseUrl;
 {%             else -%}
-{%                 if HasConfigurationClass == false -%}
+{%                 if GenerateBaseUrlProperty -%}
+        BaseUrl = baseUrl;
+{%                 else -%}
+{%                     if HasConfigurationClass == false -%}
         _baseUrl = (string.IsNullOrEmpty(baseUrl) || baseUrl.EndsWith("/"))
             ? baseUrl
             : baseUrl + "/";
+{%                     endif -%}
 {%                 endif -%}
 {%             endif -%}
-{%         endif -%}
+{%         endunless -%}
 {%     endif -%}
 {%     if InjectHttpClient -%}
         _httpClient = httpClient;
@@ -88,6 +100,11 @@
     }
 
 {% if UseBaseUrl and GenerateBaseUrlProperty -%}
+{%     assign isDaprClient = false -%}
+{%     if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
+{%         assign isDaprClient = true -%}
+{%     endif -%}
+{%     unless isDaprClient -%}
     public string BaseUrl
     {
         get { return _baseUrl; }
@@ -99,6 +116,7 @@
         }
     }
 
+{%     endunless -%}
 {% endif -%}
 {% if ExposeJsonSerializerSettings -%}
 {%     assign serializerSettingsAccessModifier = "public" %}
@@ -133,11 +151,17 @@
         var httpClient = new {{ HttpClientType }}();
 
 {% if UseBaseUrl and HasBaseUrl -%}
+{%     assign isDaprClient = false -%}
+{%     if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
+{%         assign isDaprClient = true -%}
+{%     endif -%}
+{%     unless isDaprClient -%}
         // Set base address if specified
         if (!string.IsNullOrEmpty("{{ BaseUrl }}"))
         {
             httpClient.BaseAddress = new System.Uri("{{ BaseUrl }}", System.UriKind.Absolute);
         }
+{%     endunless -%}
 {% endif -%}
 
         return System.Threading.Tasks.Task.FromResult(httpClient);
@@ -145,8 +169,14 @@
 {% endif -%}
 
 {% if GeneratePrepareRequestAndProcessResponseAsAsyncMethods == false -%}
+{%     assign isDaprClient = false -%}
+{%     if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
+{%         assign isDaprClient = true -%}
+{%     endif -%}
+{%     unless isDaprClient -%}
     partial void PrepareRequest({{ HttpClientType }} client, System.Net.Http.HttpRequestMessage request, string url);
     partial void PrepareRequest({{ HttpClientType }} client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
+{%     endunless -%}
     partial void ProcessResponse({{ HttpClientType }} client, System.Net.Http.HttpResponseMessage response);
 {% endif -%}
 {% for operation in Operations %}
@@ -317,7 +347,17 @@
 {%     endif -%}
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                {% if UseBaseUrl %}if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);{% endif %}
+                {% if UseBaseUrl -%}
+{%     assign isDaprClient = false -%}
+{%     if HasBaseClass and BaseClass contains "DaprServiceClientBase" -%}
+{%         assign isDaprClient = true -%}
+{%     endif -%}
+{%     if isDaprClient -%}
+                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+{%     else -%}
+                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+{%     endif -%}
+{% endif %}
                 // Operation Path: "{{ operation.Path }}"
 {%     if operation.Path contains "{" -%}
 {%        assign pathParts = operation.Path | split: "{" -%}

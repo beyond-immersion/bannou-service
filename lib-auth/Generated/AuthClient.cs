@@ -141,10 +141,6 @@ public partial interface IAuthClient
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IAuthClient
 {
-    #pragma warning disable 8618
-    private string _baseUrl;
-    #pragma warning restore 8618
-
     private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
     private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
 
@@ -152,7 +148,6 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
     public AuthClient()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
-        BaseUrl = "http://localhost:3500/v1.0/invoke/bannou/method";
         Initialize();
     }
 
@@ -161,17 +156,6 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
         var settings = new Newtonsoft.Json.JsonSerializerSettings();
         UpdateJsonSerializerSettings(settings);
         return settings;
-    }
-
-    public string BaseUrl
-    {
-        get { return _baseUrl; }
-        set
-        {
-            _baseUrl = value;
-            if (!string.IsNullOrEmpty(_baseUrl) && !_baseUrl.EndsWith("/"))
-                _baseUrl += '/';
-        }
     }
 
     protected Newtonsoft.Json.JsonSerializerSettings JsonSerializerSettings { get { return _instanceSettings ?? _settings.Value; } }
@@ -189,17 +173,9 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
         // Create HttpClient with default configuration
         var httpClient = new System.Net.Http.HttpClient();
 
-        // Set base address if specified
-        if (!string.IsNullOrEmpty("http://localhost:3500/v1.0/invoke/bannou/method"))
-        {
-            httpClient.BaseAddress = new System.Uri("http://localhost:3500/v1.0/invoke/bannou/method", System.UriKind.Absolute);
-        }
-
         return System.Threading.Tasks.Task.FromResult(httpClient);
     }
 
-    partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
-    partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
     partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -227,7 +203,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/login"
                 urlBuilder_.Append("auth/login");
 
@@ -320,7 +297,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/register"
                 urlBuilder_.Append("auth/register");
 
@@ -410,7 +388,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Method = new System.Net.Http.HttpMethod("GET");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/oauth/{provider}/init"
                 urlBuilder_.Append("auth/oauth/");
                 urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(provider, System.Globalization.CultureInfo.InvariantCulture)));
@@ -506,7 +485,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/oauth/{provider}/callback"
                 urlBuilder_.Append("auth/oauth/");
                 urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(provider, System.Globalization.CultureInfo.InvariantCulture)));
@@ -583,7 +563,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Method = new System.Net.Http.HttpMethod("GET");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/steam/init"
                 urlBuilder_.Append("auth/steam/init");
                 urlBuilder_.Append('?');
@@ -670,7 +651,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/steam/verify"
                 urlBuilder_.Append("auth/steam/verify");
 
@@ -751,7 +733,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/refresh"
                 urlBuilder_.Append("auth/refresh");
 
@@ -826,7 +809,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/validate"
                 urlBuilder_.Append("auth/validate");
 
@@ -903,7 +887,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/logout"
                 urlBuilder_.Append("auth/logout");
 
@@ -972,7 +957,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/sessions"
                 urlBuilder_.Append("auth/sessions");
 
@@ -1048,7 +1034,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Method = new System.Net.Http.HttpMethod("DELETE");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/sessions/{sessionId}"
                 urlBuilder_.Append("auth/sessions/");
                 urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
@@ -1124,7 +1111,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/password/reset"
                 urlBuilder_.Append("auth/password/reset");
 
@@ -1199,7 +1187,8 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "auth/password/confirm"
                 urlBuilder_.Append("auth/password/confirm");
 
@@ -1342,7 +1331,7 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1354,7 +1343,7 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool) 
+        else if (value is bool)
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

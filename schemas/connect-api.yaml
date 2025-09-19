@@ -24,10 +24,8 @@ info:
     - **Reconnection Support**: Clients can reconnect to existing sessions within a configurable time window
 
 servers:
-  - url: http://localhost/api/connect
-    description: Development server (HTTP upgrade to WebSocket)
-  - url: ws://localhost/api/connect
-    description: Development WebSocket server
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
+    description: Dapr sidecar endpoint (internal only)
 
 paths:
   /internal/proxy:

@@ -110,10 +110,6 @@ public partial interface IConnectClient
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IConnectClient
 {
-    #pragma warning disable 8618
-    private string _baseUrl;
-    #pragma warning restore 8618
-
     private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
     private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
 
@@ -121,7 +117,6 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
     public ConnectClient()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
-        BaseUrl = "http://localhost/api/connect";
         Initialize();
     }
 
@@ -130,17 +125,6 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
         var settings = new Newtonsoft.Json.JsonSerializerSettings();
         UpdateJsonSerializerSettings(settings);
         return settings;
-    }
-
-    public string BaseUrl
-    {
-        get { return _baseUrl; }
-        set
-        {
-            _baseUrl = value;
-            if (!string.IsNullOrEmpty(_baseUrl) && !_baseUrl.EndsWith("/"))
-                _baseUrl += '/';
-        }
     }
 
     protected Newtonsoft.Json.JsonSerializerSettings JsonSerializerSettings { get { return _instanceSettings ?? _settings.Value; } }
@@ -158,17 +142,9 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
         // Create HttpClient with default configuration
         var httpClient = new System.Net.Http.HttpClient();
 
-        // Set base address if specified
-        if (!string.IsNullOrEmpty("http://localhost/api/connect"))
-        {
-            httpClient.BaseAddress = new System.Uri("http://localhost/api/connect", System.UriKind.Absolute);
-        }
-
         return System.Threading.Tasks.Task.FromResult(httpClient);
     }
 
-    partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, string url);
-    partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
     partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -201,7 +177,8 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "internal/proxy"
                 urlBuilder_.Append("internal/proxy");
 
@@ -300,7 +277,8 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "api-discovery"
                 urlBuilder_.Append("api-discovery");
 
@@ -378,7 +356,8 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "service-mappings"
                 urlBuilder_.Append("service-mappings");
 
@@ -486,7 +465,8 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Method = new System.Net.Http.HttpMethod("GET");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "connect"
                 urlBuilder_.Append("connect");
 
@@ -613,7 +593,8 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
                 request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
-                if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
                 // Operation Path: "connect"
                 urlBuilder_.Append("connect");
 
@@ -794,7 +775,7 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -806,7 +787,7 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool) 
+        else if (value is bool)
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

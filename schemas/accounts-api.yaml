@@ -4,7 +4,7 @@ info:
   description: Internal account management service (CRUD operations only, never exposed to internet)
   version: 1.0.0
 servers:
-  - url: http://localhost:3500/v1.0/invoke/accounts/method
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
     description: Dapr sidecar endpoint (internal only)
 
 paths:

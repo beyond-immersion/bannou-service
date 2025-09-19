@@ -24,7 +24,7 @@ public class AuthService : IAuthService, IDaprService
     private readonly DaprClient _daprClient;
     private readonly ILogger<AuthService> _logger;
     private readonly AuthServiceConfiguration _configuration;
-    private const string REDIS_STATE_STORE = "bannou-redis-store";
+    private const string REDIS_STATE_STORE = "statestore";
 
     // Hardcoded configuration for now - can be moved to config later
     private const string JWT_SECRET = "your-256-bit-secret-key-here-must-be-32-chars";

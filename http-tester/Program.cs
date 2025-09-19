@@ -46,14 +46,15 @@ public class Program
         }
     }
 
-    internal static async Task Main(string[] args)
+    internal static async Task<int> Main(string[] args)
     {
         try
         {
             Console.WriteLine("Testing service-to-service communication via NSwag-generated clients...");
 
             // Start the interactive test console - no client abstraction needed
-            await RunInteractiveTestConsole(args);
+            var exitCode = await RunInteractiveTestConsole(args);
+            return exitCode;
         }
         catch (Exception exc)
         {
@@ -62,29 +63,34 @@ public class Program
             Console.WriteLine($"Stack trace: {exc.StackTrace}");
 
             WaitForUserInput("Press any key to exit...", args);
+            return 1;  // Return failure exit code
         }
     }
 
     /// <summary>
     /// Runs the test console that allows users to select and execute tests, or runs all tests in daemon mode
     /// </summary>
-    private static async Task RunInteractiveTestConsole(string[] args)
+    private static async Task<int> RunInteractiveTestConsole(string[] args)
     {
         LoadServiceTests();
 
         if (sTestRegistry.Count == 0)
         {
             WaitForUserInput("No tests to run - press any key to exit.", args);
-            return;
+            return 1;  // No tests means something is wrong
         }
 
         // In daemon mode, run all tests automatically
         if (IsDaemonMode(args))
         {
             Console.WriteLine("Running in daemon mode - executing all tests automatically...");
+            int failedTests = 0;
+            int totalTests = 0;
+
             foreach (var kvp in sTestRegistry)
             {
                 Console.WriteLine($"Running test: {kvp.Value.Name}");
+                totalTests++;
                 try
                 {
                     // Tests no longer need a client parameter - they create their own generated clients
@@ -96,15 +102,28 @@ public class Program
                     else
                     {
                         Console.WriteLine($"❌ Test {kvp.Value.Name} failed: {result.Message}");
+                        failedTests++;
                     }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"❌ Test {kvp.Value.Name} failed with exception: {ex.Message}");
+                    failedTests++;
                 }
             }
-            Console.WriteLine("All tests completed in daemon mode.");
-            return;
+
+            Console.WriteLine($"All tests completed in daemon mode. Passed: {totalTests - failedTests}, Failed: {failedTests}");
+
+            if (failedTests > 0)
+            {
+                Console.WriteLine($"❌ {failedTests} test(s) failed - returning exit code 1");
+                return 1;  // Return failure exit code if any tests failed
+            }
+            else
+            {
+                Console.WriteLine("✅ All tests passed - returning exit code 0");
+                return 0;  // All tests passed
+            }
         }
 
         // Interactive mode
