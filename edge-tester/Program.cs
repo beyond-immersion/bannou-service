@@ -318,7 +318,8 @@ public class Program
             // Try to parse as binary protocol message
             try
             {
-                var receivedMessage = BinaryMessage.Parse(receivedBuffer.Array!, result.Count);
+                var bufferArray = receivedBuffer.Array ?? throw new InvalidOperationException("Received buffer array is null");
+                var receivedMessage = BinaryMessage.Parse(bufferArray, result.Count);
                 Console.WriteLine("✅ Successfully parsed binary protocol response:");
                 Console.WriteLine($"   Flags: {receivedMessage.Flags}");
                 Console.WriteLine($"   Channel: {receivedMessage.Channel}");

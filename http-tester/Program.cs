@@ -184,7 +184,7 @@ public class Program
         // In daemon mode, run all tests automatically
         if (IsDaemonMode(args))
         {
-            Console.WriteLine("Running in daemon mode - executing all tests automatically...");
+            Console.WriteLine("Running in daemon mode - executing all tests sequentially with fail-fast on service crashes...");
             int failedTests = 0;
             int totalTests = 0;
 
@@ -206,12 +206,32 @@ public class Program
                     {
                         Console.WriteLine($"❌ Test {kvp.Value.Name} failed: {result.Message}");
                         failedTests++;
+
+                        // Check for service crash indicators
+                        if (IsServiceCrashError(result.Message) || IsServiceCrashError(result.Exception?.Message))
+                        {
+                            Console.WriteLine($"🚨 FATAL: Service crash detected in test '{kvp.Value.Name}'. Exiting immediately to prevent cascade failures.");
+                            Console.WriteLine($"🚨 Error details: {result.Message}");
+                            if (result.Exception != null)
+                            {
+                                Console.WriteLine($"🚨 Exception: {result.Exception.Message}");
+                            }
+                            return 139;  // Return segfault exit code to indicate service crash
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"❌ Test {kvp.Value.Name} failed with exception: {ex.Message}");
                     failedTests++;
+
+                    // Check for service crash indicators in exceptions
+                    if (IsServiceCrashError(ex.Message))
+                    {
+                        Console.WriteLine($"🚨 FATAL: Service crash detected in test '{kvp.Value.Name}'. Exiting immediately to prevent cascade failures.");
+                        Console.WriteLine($"🚨 Exception: {ex.Message}");
+                        return 139;  // Return segfault exit code to indicate service crash
+                    }
                 }
             }
 
@@ -307,6 +327,9 @@ public class Program
         // Add "All Tests" meta-test
         sTestRegistry.Add("All", new ServiceTest(RunAllTests, "All", "Meta", "Run entire test suite"));
 
+        // Check for plugin filtering
+        var pluginFilter = Environment.GetEnvironmentVariable("PLUGIN");
+
         // Load HTTP-specific test handlers
         var testHandlers = new List<IServiceTestHandler>
         {
@@ -316,6 +339,31 @@ public class Program
             new DaprServiceMappingTestHandler()
             // Add more test handlers as needed
         };
+
+        // Filter test handlers by plugin if specified
+        if (!string.IsNullOrWhiteSpace(pluginFilter))
+        {
+            Console.WriteLine($"🔍 Filtering tests for plugin: {pluginFilter}");
+            testHandlers = testHandlers.Where(handler =>
+            {
+                var handlerName = handler.GetType().Name.Replace("TestHandler", "").ToLowerInvariant();
+                return handlerName.Contains(pluginFilter.ToLowerInvariant()) ||
+                       pluginFilter.ToLowerInvariant().Contains(handlerName);
+            }).ToList();
+
+            if (testHandlers.Count == 0)
+            {
+                Console.WriteLine($"⚠️ No test handlers found matching plugin filter: {pluginFilter}");
+            }
+            else
+            {
+                Console.WriteLine($"✅ Found {testHandlers.Count} test handler(s) for plugin: {pluginFilter}");
+                foreach (var handler in testHandlers)
+                {
+                    Console.WriteLine($"   - {handler.GetType().Name}");
+                }
+            }
+        }
 
         foreach (var handler in testHandlers)
         {
@@ -367,6 +415,31 @@ public class Program
         }
 
         return new TestResult(failed == 0, $"Test suite completed. Passed: {passed}, Failed: {failed}");
+    }
+
+    /// <summary>
+    /// Detects error messages that indicate a service has crashed (segfault, container exit, connection refused)
+    /// </summary>
+    /// <param name="errorMessage">Error message to check</param>
+    /// <returns>True if the error indicates a service crash</returns>
+    private static bool IsServiceCrashError(string? errorMessage)
+    {
+        if (string.IsNullOrEmpty(errorMessage))
+            return false;
+
+        var crashIndicators = new[]
+        {
+            "connection refused",           // Service not responding (likely crashed)
+            "bannou, err:",                // Dapr invoke error (service unreachable)
+            "dial tcp",                    // Network connection failure to service
+            "ERR_DIRECT_INVOKE",          // Dapr service invocation failure
+            "No connection could be made", // Windows equivalent of connection refused
+            "timeout",                     // Service not responding (potential crash)
+            "Connection reset by peer"     // Service crashed during request
+        };
+
+        return crashIndicators.Any(indicator =>
+            errorMessage.Contains(indicator, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>

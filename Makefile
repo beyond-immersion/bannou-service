@@ -240,11 +240,15 @@ test-infrastructure:
 	@echo "✅ OpenResty infrastructure integration tests completed"
 
 # HTTP integration testing (matches CI workflow)
+# Usage: make test-http [PLUGIN=plugin-name]
 test-http:
-	@echo "🧪 Running HTTP integration tests via containerized service-to-service testing..."
-	docker compose -p bannou-http-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.http.yml" build
-	docker compose -p bannou-http-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.http.yml" up --exit-code-from=bannou-http-tester
-	docker compose -p bannou-http-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.http.yml" down --remove-orphans -v
+	@if [ "$(PLUGIN)" ]; then \
+		echo "🧪 Running HTTP integration tests for plugin: $(PLUGIN)..."; \
+	else \
+		echo "🧪 Running HTTP integration tests via containerized service-to-service testing..."; \
+	fi
+	SERVICE_DOMAIN=ci-http-test PLUGIN=$(PLUGIN) docker compose -p bannou-http-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.http.yml" build
+	SERVICE_DOMAIN=ci-http-test PLUGIN=$(PLUGIN) docker compose -p bannou-http-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.http.yml" up --exit-code-from=bannou-http-tester
 	@echo "✅ HTTP integration tests completed"
 
 # WebSocket/edge integration testing (matches CI workflow)
@@ -252,7 +256,6 @@ test-edge:
 	@echo "🧪 Running Edge integration tests..."
 	docker compose -p bannou-edge-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.edge.yml" build
 	docker compose -p bannou-edge-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.edge.yml" up --exit-code-from=bannou-edge-tester
-	docker compose -p bannou-edge-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.edge.yml" down --remove-orphans -v
 	@echo "✅ Edge integration tests completed"
 
 tagname := $(shell date -u +%FT%H-%M-%SZ)

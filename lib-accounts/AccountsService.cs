@@ -35,9 +35,9 @@ public class AccountsService : IAccountsService
         AccountsServiceConfiguration configuration,
         DaprClient daprClient)
     {
-        _logger = logger;
-        _configuration = configuration;
-        _daprClient = daprClient;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
     }
 
     public Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(
@@ -81,12 +81,17 @@ public class AccountsService : IAccountsService
         CreateAccountRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogCritical("🚨 ACCOUNTS SERVICE: CreateAccountAsync called - This message should appear in logs!");
         try
         {
+            _logger.LogInformation("DEBUG: CreateAccountAsync - Entry point reached");
             _logger.LogDebug("Creating account for email: {Email}", body.Email);
 
+            _logger.LogInformation("DEBUG: CreateAccountAsync - About to create account entity");
             // Create account entity
             var accountId = Guid.NewGuid();
+            _logger.LogInformation("DEBUG: CreateAccountAsync - AccountId generated: {AccountId}", accountId);
+
             var account = new AccountModel
             {
                 AccountId = accountId.ToString(),
@@ -97,23 +102,29 @@ public class AccountsService : IAccountsService
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             };
+            _logger.LogInformation("DEBUG: CreateAccountAsync - AccountModel created successfully");
 
+            _logger.LogInformation("DEBUG: CreateAccountAsync - About to save account to Dapr state store");
             // Store in Dapr state store (replaces Entity Framework)
             await _daprClient.SaveStateAsync(
                 ACCOUNTS_STATE_STORE,
                 $"{ACCOUNTS_KEY_PREFIX}{accountId}",
                 account);
+            _logger.LogInformation("DEBUG: CreateAccountAsync - Account saved to state store");
 
+            _logger.LogInformation("DEBUG: CreateAccountAsync - About to save email index");
             // Create email index for quick lookup
             await _daprClient.SaveStateAsync(
                 ACCOUNTS_STATE_STORE,
                 $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
                 accountId.ToString());
+            _logger.LogInformation("DEBUG: CreateAccountAsync - Email index saved");
 
-            _logger.LogInformation("Account created successfully: {AccountId}", accountId);
+            _logger.LogDebug("Account created successfully: {AccountId}", accountId);
 
             // Publish account created event
-            await PublishAccountCreatedEventAsync(account);
+            // TODO: Temporarily disabled to debug segfault
+            // await PublishAccountCreatedEventAsync(account);
 
             // Return success response
             var response = new AccountResponse

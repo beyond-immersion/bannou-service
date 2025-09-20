@@ -732,17 +732,20 @@ public class ConnectService : IConnectService
     {
         try
         {
+            // Validate service name early
+            var serviceName = routeInfo.ServiceName ?? throw new InvalidOperationException("Service name is null in route info");
+
             // Add to pending messages for response correlation
             if (routeInfo.RequiresResponse)
             {
-                connectionState.AddPendingMessage(message.MessageId, routeInfo.ServiceName!, DateTimeOffset.UtcNow);
+                connectionState.AddPendingMessage(message.MessageId, serviceName, DateTimeOffset.UtcNow);
             }
 
             // Get JSON payload for service call
             var jsonPayload = message.GetJsonPayload();
 
             // Use ServiceAppMappingResolver for dynamic app-id resolution
-            var appId = _appMappingResolver.GetAppIdForService(routeInfo.ServiceName!);
+            var appId = _appMappingResolver.GetAppIdForService(serviceName);
 
             _logger.LogDebug("Routing WebSocket message to service {Service} via app-id {AppId}",
                 routeInfo.ServiceName, appId);

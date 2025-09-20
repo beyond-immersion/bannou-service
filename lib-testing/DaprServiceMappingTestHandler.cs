@@ -188,8 +188,9 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
             if (emptyResult != "bannou")
                 return Task.FromResult(new TestResult(false, $"Empty service name should return 'bannou', got '{emptyResult}'"));
 
-            // Test null service name
-            var nullResult = resolver.GetAppIdForService(null!);
+            // Test null service name (edge case - method handles gracefully)
+            string? nullServiceName = null;
+            var nullResult = resolver.GetAppIdForService(nullServiceName);
             if (nullResult != "bannou")
                 return Task.FromResult(new TestResult(false, $"Null service name should return 'bannou', got '{nullResult}'"));
 

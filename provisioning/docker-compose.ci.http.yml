@@ -21,6 +21,8 @@ services:
       dockerfile: http-tester/Dockerfile
     network_mode: service:bannou
     env_file: ../.env.ci.http
+    environment:
+      - PLUGIN=${PLUGIN}
     stdin_open: false
     depends_on:
       bannou:

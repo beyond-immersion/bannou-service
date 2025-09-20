@@ -104,11 +104,9 @@ public partial interface IGameSessionClient
 public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IGameSessionClient
 {
     private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
-    private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
+    private Newtonsoft.Json.JsonSerializerSettings? _instanceSettings;
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     public GameSessionClient()
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
         Initialize();
     }

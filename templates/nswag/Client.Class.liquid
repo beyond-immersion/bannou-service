@@ -8,23 +8,21 @@
 {%         assign isDaprClient = true -%}
 {%     endif -%}
 {%     unless isDaprClient -%}
-    #pragma warning disable 8618
-    private string _baseUrl;
-    #pragma warning restore 8618
+    private string? _baseUrl;
 
 {%     endunless -%}
 {% endif -%}
 {% if InjectHttpClient -%}
-    private {{ HttpClientType }} _httpClient;
+    private {{ HttpClientType }}? _httpClient;
 {% endif -%}
 {% if UseRequestAndResponseSerializationSettings -%}
     private static System.Lazy<{{ JsonSerializerSettingsType }}> _requestSettings = new System.Lazy<{{ JsonSerializerSettingsType }}>(() => CreateSerializerSettings(true), true);
-    private {{ JsonSerializerSettingsType }} _instanceRequestSettings;
+    private {{ JsonSerializerSettingsType }}? _instanceRequestSettings;
     private static System.Lazy<{{ JsonSerializerSettingsType }}> _responseSettings = new System.Lazy<{{ JsonSerializerSettingsType }}>(() => CreateSerializerSettings(false), true);
-    private {{ JsonSerializerSettingsType }} _instanceResponseSettings;
+    private {{ JsonSerializerSettingsType }}? _instanceResponseSettings;
 {% else -%}
     private static System.Lazy<{{ JsonSerializerSettingsType }}> _settings = new System.Lazy<{{ JsonSerializerSettingsType }}>(CreateSerializerSettings, true);
-    private {{ JsonSerializerSettingsType }} _instanceSettings;
+    private {{ JsonSerializerSettingsType }}? _instanceSettings;
 {% endif -%}
 
 {% assign constructorParameters = "" -%}
@@ -39,9 +37,7 @@
 {%     unless constructorParameters == "" -%}{% assign constructorParameters = constructorParameters | append: ", " -%}{% endunless -%}
 {%     assign constructorParameters = constructorParameters | append: HttpClientType | append: " httpClient" -%}
 {% endif -%}
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     public {{ Class }}({{ constructorParameters }}){% if HasConfigurationClass and HasBaseClass -%}{{ " : base(configuration)"}}{% endif %}
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
 {%     if UseBaseUrl -%}
 {%         assign isDaprClient = false -%}

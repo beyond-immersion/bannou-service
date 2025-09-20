@@ -25,7 +25,7 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
     /// Gets the Dapr app-id for the specified service.
     /// Defaults to "bannou" but can be overridden by RabbitMQ service mapping events.
     /// </summary>
-    public string GetAppIdForService(string serviceName)
+    public string GetAppIdForService(string? serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
         {

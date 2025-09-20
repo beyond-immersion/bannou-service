@@ -68,7 +68,9 @@ public class RedisSessionManager
                 return null;
             }
 
-            var mappings = JsonSerializer.Deserialize<Dictionary<string, Guid>>(serializedMappings!);
+            // Convert RedisValue to string - safe after HasValue check
+            string mappingsValue = serializedMappings.ToString();
+            var mappings = JsonSerializer.Deserialize<Dictionary<string, Guid>>(mappingsValue);
 
             _logger.LogDebug("Retrieved service mappings for session {SessionId} from Redis", sessionId);
             return mappings;
@@ -119,7 +121,9 @@ public class RedisSessionManager
                 return null;
             }
 
-            var stateData = JsonSerializer.Deserialize<ConnectionStateData>(serializedState!);
+            // Convert RedisValue to string - safe after HasValue check
+            string stateValue = serializedState.ToString();
+            var stateData = JsonSerializer.Deserialize<ConnectionStateData>(stateValue);
 
             _logger.LogDebug("Retrieved connection state for session {SessionId} from Redis", sessionId);
             return stateData;
@@ -179,7 +183,9 @@ public class RedisSessionManager
                 var serializedHeartbeat = await _database.StringGetAsync(key);
                 if (serializedHeartbeat.HasValue)
                 {
-                    var heartbeat = JsonSerializer.Deserialize<SessionHeartbeat>(serializedHeartbeat!);
+                    // Convert RedisValue to string - serializedHeartbeat comes from Redis string array
+                    string heartbeatValue = serializedHeartbeat.ToString();
+                    var heartbeat = JsonSerializer.Deserialize<SessionHeartbeat>(heartbeatValue);
                     if (heartbeat != null)
                     {
                         heartbeats.Add(heartbeat);

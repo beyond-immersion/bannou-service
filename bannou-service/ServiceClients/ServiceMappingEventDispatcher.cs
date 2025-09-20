@@ -150,7 +150,8 @@ public class ServiceMappingEventDispatcher : IServiceMappingEventDispatcher
                 }
                 else if (param.HasDefaultValue)
                 {
-                    parameters.Add(param.DefaultValue!);
+                    var defaultValue = param.DefaultValue ?? throw new InvalidOperationException($"Parameter {param.Name} has null default value");
+                    parameters.Add(defaultValue);
                 }
                 else
                 {

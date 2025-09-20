@@ -54,6 +54,22 @@ When making changes to service APIs or architectural patterns, you MUST update A
 
 ## Critical Development Rules
 
+### NEVER Manually Implement Library Functionality
+**MANDATORY**: YOU ARE FORBIDDEN FROM MANUALLY IMPLEMENTING SOMETHING THAT WE INSTALLED A LIBRARY TO HANDLE.
+- **Always use installed libraries**: Use the proper library APIs instead of manual implementations
+- **No custom implementations**: Never write manual JWT, crypto, serialization, or other functionality when libraries exist
+- **Research first**: Always research the correct library API before implementing
+- **Ask for clarification**: If library API is unclear, ask for help rather than implementing manually
+
+### NEVER Use Null-Forgiving Operators or Null Casts
+**MANDATORY**: Never use null-forgiving operators (`!`) or cast null to non-nullable types anywhere in Bannou code as they cause segmentation faults and hide null reference exceptions.
+- **Prohibited**: `variable!`, `property!`, `method()!`, `null!`, `default!`, `(Type)null`
+- **Required**: Always use explicit null checks with meaningful exceptions or proper test data
+- **Example Correct**: `var value = variable ?? throw new ArgumentNullException(nameof(variable));`
+- **Example Incorrect**: `var value = variable!;` or `var value = (Type)null;`
+- **Test Rule**: Tests should use real data, not null casts. If testing null handling, use nullable types properly.
+- **Principle**: Explicit null safety prevents segmentation faults and provides clear error messages
+
 ### NEVER Export Environment Variables
 **MANDATORY**: Never use `export` commands to set environment variables on the local machine. This confuses containerization workflows and creates debugging issues.
 - **Correct**: Use .env files and Docker Compose environment configuration

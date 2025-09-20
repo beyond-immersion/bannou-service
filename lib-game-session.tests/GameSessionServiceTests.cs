@@ -4,14 +4,8 @@ namespace BeyondImmersion.BannouService.GameSession.Tests;
 
 public class GameSessionServiceTests
 {
-    private Mock<ILogger<GameSessionService>> _mockLogger = null!;
-    private Mock<GameSessionServiceConfiguration> _mockConfiguration = null!;
-
-    public GameSessionServiceTests()
-    {
-        _mockLogger = new Mock<ILogger<GameSessionService>>();
-        _mockConfiguration = new Mock<GameSessionServiceConfiguration>();
-    }
+    private readonly Mock<ILogger<GameSessionService>> _mockLogger = new();
+    private readonly Mock<GameSessionServiceConfiguration> _mockConfiguration = new();
 
     [Fact]
     public void Constructor_WithValidParameters_ShouldNotThrow()

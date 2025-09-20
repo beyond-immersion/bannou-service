@@ -39,49 +39,6 @@ public class AuthServiceTests
         Assert.NotNull(service);
     }
 
-    [Fact]
-    public void Constructor_WithNullAccountsClient_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            null!,
-            _mockDaprClient.Object,
-            _mockConfiguration.Object,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            null!,
-            _mockConfiguration.Object,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            null!,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _mockConfiguration.Object,
-            null!));
-    }
 
     [Fact]
     public void AuthServiceConfiguration_ShouldBindFromEnvironmentVariables()

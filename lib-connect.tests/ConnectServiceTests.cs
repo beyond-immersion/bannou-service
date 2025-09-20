@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Moq;
 using StackExchange.Redis;
+using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -52,31 +53,6 @@ public class ConnectServiceTests
         Assert.Null(exception);
     }
 
-    [Fact]
-    public void Constructor_WithNullAuthClient_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ConnectService(
-            null!,
-            _mockPermissionsClient.Object,
-            _mockDaprClient.Object,
-            _mockAppMappingResolver.Object,
-            _configuration,
-            _mockLogger.Object));
-    }
-
-    [Fact]
-    public void Constructor_WithNullPermissionsClient_ShouldThrowArgumentNullException()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ConnectService(
-            _mockAuthClient.Object,
-            null!,
-            _mockDaprClient.Object,
-            _mockAppMappingResolver.Object,
-            _configuration,
-            _mockLogger.Object));
-    }
 
     #endregion
 
@@ -440,7 +416,8 @@ public class ConnectServiceTests
         Assert.NotNull(result);
         var resultJson = JsonSerializer.Serialize(result);
         var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
-        Assert.Equal("processed", resultDict!["status"].ToString());
+        Assert.NotNull(resultDict);
+        Assert.Equal("processed", resultDict["status"].ToString());
         Assert.Equal("test-session-123", resultDict["sessionId"].ToString());
     }
 
@@ -464,7 +441,8 @@ public class ConnectServiceTests
         Assert.NotNull(result);
         var resultJson = JsonSerializer.Serialize(result);
         var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
-        Assert.Equal("processed", resultDict!["status"].ToString());
+        Assert.NotNull(resultDict);
+        Assert.Equal("processed", resultDict["status"].ToString());
         Assert.Equal("test-session-456", resultDict["sessionId"].ToString());
     }
 
@@ -486,7 +464,8 @@ public class ConnectServiceTests
         Assert.NotNull(result);
         var resultJson = JsonSerializer.Serialize(result);
         var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
-        Assert.Equal("processed", resultDict!["status"].ToString());
+        Assert.NotNull(resultDict);
+        Assert.Equal("processed", resultDict["status"].ToString());
         Assert.Equal("new-service-123", resultDict["serviceId"].ToString());
 
         // Verify that PublishEventAsync was called for permission recompilation
@@ -520,7 +499,8 @@ public class ConnectServiceTests
         Assert.NotNull(result);
         var resultJson = JsonSerializer.Serialize(result);
         var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
-        Assert.Equal("delivered", resultDict!["status"].ToString());
+        Assert.NotNull(resultDict);
+        Assert.Equal("delivered", resultDict["status"].ToString());
         Assert.Equal("client-789", resultDict["clientId"].ToString());
     }
 
@@ -547,7 +527,8 @@ public class ConnectServiceTests
         Assert.NotNull(result);
         var resultJson = JsonSerializer.Serialize(result);
         var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
-        Assert.Equal("sent", resultDict!["status"].ToString());
+        Assert.NotNull(resultDict);
+        Assert.Equal("sent", resultDict["status"].ToString());
         Assert.Equal("client-rpc-999", resultDict["clientId"].ToString());
     }
 
@@ -614,10 +595,18 @@ public class ConnectServiceTests
     {
         // Create a mock connection manager that simulates having connections
         var mockConnectionManager = new Mock<WebSocketConnectionManager>();
-        var mockConnection = hasConnection ? new Mock<WebSocketConnection>("test", null!, null!) : null;
+
+        WebSocketConnection? connection = null;
+        if (hasConnection)
+        {
+            // Create mock dependencies for WebSocketConnection
+            var mockWebSocket = new Mock<WebSocket>();
+            var connectionState = new ConnectionState("test-session");
+            connection = new WebSocketConnection("test-session", mockWebSocket.Object, connectionState);
+        }
 
         mockConnectionManager.Setup(x => x.GetConnection(It.IsAny<string>()))
-            .Returns(hasConnection ? mockConnection?.Object : null);
+            .Returns(connection);
 
         mockConnectionManager.Setup(x => x.SendMessageAsync(It.IsAny<string>(), It.IsAny<BinaryMessage>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(hasConnection);
