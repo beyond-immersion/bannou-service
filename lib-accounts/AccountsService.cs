@@ -25,6 +25,10 @@ public class AccountsService : IAccountsService
     private const string ACCOUNTS_STATE_STORE = "statestore";
     private const string ACCOUNTS_KEY_PREFIX = "account-";
     private const string EMAIL_INDEX_KEY_PREFIX = "email-index-";
+    private const string PUBSUB_NAME = "bannou-pubsub";
+    private const string ACCOUNT_CREATED_TOPIC = "account.created";
+    private const string ACCOUNT_UPDATED_TOPIC = "account.updated";
+    private const string ACCOUNT_DELETED_TOPIC = "account.deleted";
 
     public AccountsService(
         ILogger<AccountsService> logger,
@@ -107,6 +111,9 @@ public class AccountsService : IAccountsService
                 accountId.ToString());
 
             _logger.LogInformation("Account created successfully: {AccountId}", accountId);
+
+            // Publish account created event
+            await PublishAccountCreatedEventAsync(account);
 
             // Return success response
             var response = new AccountResponse
@@ -192,9 +199,19 @@ public class AccountsService : IAccountsService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Track changes for event publishing
+            var changedFields = new List<string>();
+            var previousValues = new Dictionary<string, object?>();
+            var newValues = new Dictionary<string, object?>();
+
             // Update fields if provided
-            if (body.DisplayName != null)
+            if (body.DisplayName != null && body.DisplayName != account.DisplayName)
+            {
+                changedFields.Add("displayName");
+                previousValues["displayName"] = account.DisplayName;
+                newValues["displayName"] = body.DisplayName;
                 account.DisplayName = body.DisplayName;
+            }
             // TODO: Handle roles and metadata from body
 
             account.UpdatedAt = DateTimeOffset.UtcNow;
@@ -206,6 +223,12 @@ public class AccountsService : IAccountsService
                 account);
 
             _logger.LogInformation("Account updated successfully: {AccountId}", accountId);
+
+            // Publish account updated event if there were changes
+            if (changedFields.Count > 0)
+            {
+                await PublishAccountUpdatedEventAsync(accountId, changedFields, previousValues, newValues);
+            }
 
             var response = new AccountResponse
             {
@@ -418,21 +441,53 @@ public class AccountsService : IAccountsService
     }
 
     // Add missing methods from interface
-    public Task<(StatusCodes, object?)> DeleteAccountAsync(
+    public async Task<(StatusCodes, object?)> DeleteAccountAsync(
         Guid accountId,
         CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogDebug("Deleting account: {AccountId}", accountId);
-            // TODO: Implement account deletion with Dapr state store
-            _logger.LogWarning("DeleteAccount not fully implemented");
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+
+            // Get existing account for event publishing
+            var account = await _daprClient.GetStateAsync<AccountModel>(
+                ACCOUNTS_STATE_STORE,
+                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                cancellationToken: cancellationToken);
+
+            if (account == null)
+            {
+                _logger.LogWarning("Account not found for deletion: {AccountId}", accountId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Soft delete by setting DeletedAt timestamp
+            account.DeletedAt = DateTimeOffset.UtcNow;
+
+            // Save the soft-deleted account
+            await _daprClient.SaveStateAsync(
+                ACCOUNTS_STATE_STORE,
+                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                account,
+                cancellationToken: cancellationToken);
+
+            // Remove email index
+            await _daprClient.DeleteStateAsync(
+                ACCOUNTS_STATE_STORE,
+                $"{EMAIL_INDEX_KEY_PREFIX}{account.Email.ToLowerInvariant()}",
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Account deleted successfully: {AccountId}", accountId);
+
+            // Publish account deleted event
+            await PublishAccountDeletedEventAsync(account, "User requested deletion");
+
+            return (StatusCodes.NoContent, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting account: {AccountId}", accountId);
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -490,6 +545,90 @@ public class AccountsService : IAccountsService
         {
             _logger.LogError(ex, "Error updating verification status: {AccountId}", accountId);
             return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+        }
+    }
+
+    /// <summary>
+    /// Publish AccountCreatedEvent to RabbitMQ via Dapr
+    /// </summary>
+    private async Task PublishAccountCreatedEventAsync(AccountModel account)
+    {
+        try
+        {
+            var eventModel = new AccountCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = Guid.Parse(account.AccountId),
+                Email = account.Email,
+                DisplayName = account.DisplayName,
+                Roles = new List<string>() // TODO: Load actual roles from account
+            };
+
+            await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_CREATED_TOPIC, eventModel);
+            _logger.LogDebug("Published AccountCreatedEvent for account: {AccountId}", account.AccountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish AccountCreatedEvent for account: {AccountId}", account.AccountId);
+            // Don't throw - event publishing failure shouldn't break account creation
+        }
+    }
+
+    /// <summary>
+    /// Publish AccountUpdatedEvent to RabbitMQ via Dapr
+    /// </summary>
+    private async Task PublishAccountUpdatedEventAsync(
+        Guid accountId,
+        List<string> changedFields,
+        Dictionary<string, object?> previousValues,
+        Dictionary<string, object?> newValues)
+    {
+        try
+        {
+            var eventModel = new AccountUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = accountId,
+                ChangedFields = changedFields,
+                PreviousValues = previousValues,
+                NewValues = newValues
+            };
+
+            await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_UPDATED_TOPIC, eventModel);
+            _logger.LogDebug("Published AccountUpdatedEvent for account: {AccountId}", accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish AccountUpdatedEvent for account: {AccountId}", accountId);
+            // Don't throw - event publishing failure shouldn't break account update
+        }
+    }
+
+    /// <summary>
+    /// Publish AccountDeletedEvent to RabbitMQ via Dapr
+    /// </summary>
+    private async Task PublishAccountDeletedEventAsync(AccountModel account, string deletionReason)
+    {
+        try
+        {
+            var eventModel = new AccountDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = Guid.Parse(account.AccountId),
+                Email = account.Email,
+                DeletionReason = deletionReason
+            };
+
+            await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_DELETED_TOPIC, eventModel);
+            _logger.LogDebug("Published AccountDeletedEvent for account: {AccountId}", account.AccountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish AccountDeletedEvent for account: {AccountId}", account.AccountId);
+            // Don't throw - event publishing failure shouldn't break account deletion
         }
     }
 }

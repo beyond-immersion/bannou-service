@@ -514,8 +514,20 @@ public class PluginLoader
             }
 
             // All configurations must be Singleton for proper configuration binding
-            services.Add(new ServiceDescriptor(configurationType, configurationType, ServiceLifetime.Singleton));
-            _logger.LogInformation("✅ Registered configuration: {ConfigType} (Singleton)",
+            // Register with factory that builds configuration from environment variables
+            services.AddSingleton(configurationType, serviceProvider =>
+            {
+                // Use reflection to call IServiceConfiguration.BuildConfiguration<T>() with specific signature
+                var buildMethod = (typeof(IServiceConfiguration).GetMethod(
+                    nameof(IServiceConfiguration.BuildConfiguration),
+                    BindingFlags.Public | BindingFlags.Static,
+                    Type.DefaultBinder,
+                    new Type[] { typeof(string[]) }, // string[]? args = null overload
+                    null)?.MakeGenericMethod(configurationType)) ?? throw new InvalidOperationException($"Could not find BuildConfiguration<T>(string[]?) method for type {configurationType.Name}");
+                var configInstance = buildMethod.Invoke(null, new object?[] { null }); // Pass null for args parameter
+                return configInstance ?? throw new InvalidOperationException($"BuildConfiguration returned null for type {configurationType.Name}");
+            });
+            _logger.LogInformation("✅ Registered configuration: {ConfigType} (Singleton with BuildConfiguration factory)",
                 configurationType.Name);
         }
 

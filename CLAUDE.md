@@ -60,6 +60,32 @@ When making changes to service APIs or architectural patterns, you MUST update A
 - **Incorrect**: `export VARIABLE=value` commands
 - **Principle**: We use containerization workflows - configuration belongs in containers, not host environments
 
+### ⚠️ MANDATORY REFERENCE - TESTING.md for ALL Testing Tasks
+**CRITICAL**: For ANY task involving tests, testing architecture, or test placement, you MUST ALWAYS reference the TESTING.md documentation FIRST and IN FULL before proceeding with any work.
+
+**MANDATORY TESTING WORKFLOW**:
+1. Read TESTING.md completely to understand plugin isolation boundaries
+2. Use the decision guide to determine correct test placement
+3. Follow architectural constraints (unit-tests cannot reference plugins, lib-testing cannot reference other plugins, etc.)
+4. ALWAYS respond with "I have referred to the service testing document" to confirm you read it
+
+**⚠️ MANDATORY REFERENCE TRIGGERS** - You MUST reference TESTING.md for:
+- ANY task involving writing, modifying, or debugging tests
+- Questions about where to place tests (unit tests vs infrastructure tests vs integration tests)
+- Testing configuration classes, service functionality, or cross-service communication
+- Debugging test failures or compilation errors in test projects
+- Understanding test isolation boundaries and plugin loading constraints
+- ANY testing-related architectural decisions
+
+**TESTING ARCHITECTURE RULES** (from TESTING.md):
+- `unit-tests/`: Can ONLY reference `bannou-service`. CANNOT reference ANY `lib-*` plugins
+- `lib-*.tests/`: Can ONLY reference their own `lib-*` plugin + `bannou-service`. CANNOT reference other `lib-*` plugins
+- `lib-testing/`: Can ONLY reference `bannou-service`. CANNOT reference ANY other `lib-*` plugins
+- `http-tester/`: Can reference all services via generated clients
+- `edge-tester/`: Can test all services via WebSocket protocol
+
+**VIOLATION PREVENTION**: Never attempt to reference AuthServiceConfiguration from lib-testing, never reference plugin types from unit-tests, never test business logic in lib-testing
+
 ### Always Check GitHub Actions for Testing Workflows
 **MANDATORY**: Before attempting any integration testing work, ALWAYS check `.github/workflows/ci.integration.yml` first to understand the proper testing approach.
 - The GitHub Actions workflow defines the authoritative 10-step testing pipeline

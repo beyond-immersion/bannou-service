@@ -47,6 +47,13 @@ public class Configuration : IClassFixture<CollectionFixture>
         public string? Property { get; set; }
     }
 
+    [ServiceConfiguration(typeof(Service_WithPrefix), envPrefix: "BANNOU_")]
+    private class Configuration_Attribute_BannouPrefix : ConfigBase
+    {
+        public string? JwtSecret { get; set; }
+        public string? Property { get; set; }
+    }
+
     private class Configuration_NoAttribute : ConfigBase
     {
         public string? Property { get; set; }
@@ -598,6 +605,48 @@ public class Configuration : IClassFixture<CollectionFixture>
         {
             Environment.SetEnvironmentVariable("TEST_PROPERTY", null);
             Environment.SetEnvironmentVariable("TEST_FORCE_SERVICE_ID", null);
+        }
+    }
+
+    [Fact]
+    public void Configuration_ForService_WithBannouPrefix_Generic()
+    {
+        Environment.SetEnvironmentVariable("PROPERTY", null);
+        Environment.SetEnvironmentVariable("JWTSECRET", null);
+        Environment.SetEnvironmentVariable("BANNOU_PROPERTY", null);
+        Environment.SetEnvironmentVariable("BANNOU_JWTSECRET", null);
+
+        Configuration_Attribute_BannouPrefix config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_BannouPrefix>();
+        Assert.Null(config.Property);
+        Assert.Null(config.JwtSecret);
+
+        var testSecret = "bannou-test-jwt-secret";
+        try
+        {
+            Environment.SetEnvironmentVariable("PROPERTY", "Test");
+            Environment.SetEnvironmentVariable("JWTSECRET", testSecret);
+            config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_BannouPrefix>();
+            Assert.Null(config.Property);
+            Assert.Null(config.JwtSecret);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("PROPERTY", null);
+            Environment.SetEnvironmentVariable("JWTSECRET", null);
+        }
+
+        try
+        {
+            Environment.SetEnvironmentVariable("BANNOU_PROPERTY", "Test");
+            Environment.SetEnvironmentVariable("BANNOU_JWTSECRET", testSecret);
+            config = IServiceConfiguration.BuildConfiguration<Configuration_Attribute_BannouPrefix>();
+            Assert.Equal("Test", config.Property);
+            Assert.Equal(testSecret, config.JwtSecret);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("BANNOU_PROPERTY", null);
+            Environment.SetEnvironmentVariable("BANNOU_JWTSECRET", null);
         }
     }
 }

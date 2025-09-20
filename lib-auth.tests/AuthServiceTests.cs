@@ -83,6 +83,43 @@ public class AuthServiceTests
             null!));
     }
 
+    [Fact]
+    public void AuthServiceConfiguration_ShouldBindFromEnvironmentVariables()
+    {
+        // Arrange
+        var testSecret = "test-jwt-secret-from-env";
+        var testIssuer = "test-issuer";
+        var testAudience = "test-audience";
+        var testExpiration = 120;
+
+        try
+        {
+            // Set environment variables with BANNOU_ prefix
+            Environment.SetEnvironmentVariable("BANNOU_JWTSECRET", testSecret);
+            Environment.SetEnvironmentVariable("BANNOU_JWTISSUER", testIssuer);
+            Environment.SetEnvironmentVariable("BANNOU_JWTAUDIENCE", testAudience);
+            Environment.SetEnvironmentVariable("BANNOU_JWTEXPIRATIONMINUTES", testExpiration.ToString());
+
+            // Act - Build configuration using the same method as dependency injection
+            var config = BeyondImmersion.BannouService.Configuration.IServiceConfiguration.BuildConfiguration<AuthServiceConfiguration>();
+
+            // Assert
+            Assert.NotNull(config);
+            Assert.Equal(testSecret, config.JwtSecret);
+            Assert.Equal(testIssuer, config.JwtIssuer);
+            Assert.Equal(testAudience, config.JwtAudience);
+            Assert.Equal(testExpiration, config.JwtExpirationMinutes);
+        }
+        finally
+        {
+            // Clean up environment variables
+            Environment.SetEnvironmentVariable("BANNOU_JWTSECRET", null);
+            Environment.SetEnvironmentVariable("BANNOU_JWTISSUER", null);
+            Environment.SetEnvironmentVariable("BANNOU_JWTAUDIENCE", null);
+            Environment.SetEnvironmentVariable("BANNOU_JWTEXPIRATIONMINUTES", null);
+        }
+    }
+
     // TODO: Add service-specific unit tests here
     // For service-to-service communication tests, add references to other service client projects
     // Example: Add reference to lib-accounts project to test AuthService → AccountsClient integration

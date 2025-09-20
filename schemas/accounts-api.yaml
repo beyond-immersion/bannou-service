@@ -583,6 +583,98 @@ components:
         hasPreviousPage:
           type: boolean
 
+    # Event Models for Account Lifecycle
+    AccountCreatedEvent:
+      type: object
+      description: Event published when a new account is created
+      required:
+        - eventId
+        - timestamp
+        - accountId
+        - email
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the created account
+        email:
+          type: string
+          format: email
+          description: Email address of the created account
+        displayName:
+          type: string
+          nullable: true
+          description: Display name of the created account
+        roles:
+          type: array
+          items:
+            type: string
+          description: Roles assigned to the account
+
+    AccountUpdatedEvent:
+      type: object
+      description: Event published when an account is updated
+      required:
+        - eventId
+        - timestamp
+        - accountId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the updated account
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of fields that were changed
+        previousValues:
+          type: object
+          description: Previous values of changed fields
+        newValues:
+          type: object
+          description: New values of changed fields
+
+    AccountDeletedEvent:
+      type: object
+      description: Event published when an account is deleted
+      required:
+        - eventId
+        - timestamp
+        - accountId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the deleted account
+        email:
+          type: string
+          format: email
+          description: Email of the deleted account
+        deletionReason:
+          type: string
+          description: Reason for account deletion
+
 x-service-configuration:
   properties:
     DefaultPageSize:

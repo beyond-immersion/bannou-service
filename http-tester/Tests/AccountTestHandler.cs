@@ -1,4 +1,6 @@
 using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
@@ -17,6 +19,8 @@ public class AccountTestHandler : IServiceTestHandler
             new ServiceTest(TestGetAccount, "GetAccount", "Account", "Test account retrieval endpoint"),
             new ServiceTest(TestListAccounts, "ListAccounts", "Account", "Test account listing endpoint"),
             new ServiceTest(TestUpdateAccount, "UpdateAccount", "Account", "Test account update endpoint"),
+            new ServiceTest(TestDeleteAccount, "DeleteAccount", "Account", "Test account deletion endpoint"),
+            new ServiceTest(TestAccountDeletionSessionInvalidation, "AccountDeletionSessionInvalidation", "Account", "Test account deletion → session invalidation flow"),
         };
     }
 
@@ -150,6 +154,137 @@ public class AccountTestHandler : IServiceTestHandler
         catch (ApiException ex)
         {
             return TestResult.Failed($"Account update failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<TestResult> TestDeleteAccount(ITestClient client, string[] args)
+    {
+        try
+        {
+            // Create AccountsClient
+            var accountsClient = new AccountsClient();
+
+            var testUsername = $"deletetest_{DateTime.Now.Ticks}";
+
+            // First create an account to delete
+            var createRequest = new CreateAccountRequest
+            {
+                DisplayName = testUsername,
+                Email = $"{testUsername}@example.com"
+            };
+
+            var createResponse = await accountsClient.CreateAccountAsync(createRequest);
+            if (createResponse.AccountId == Guid.Empty)
+                return TestResult.Failed("Failed to create test account for deletion test");
+
+            var accountId = createResponse.AccountId;
+
+            // Now delete the account
+            await accountsClient.DeleteAccountAsync(accountId);
+
+            // Verify the account is deleted by trying to get it (should return 404)
+            try
+            {
+                await accountsClient.GetAccountAsync(accountId);
+                return TestResult.Failed("Account retrieval should have failed after deletion, but it succeeded");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // Expected behavior - account not found after deletion
+                return TestResult.Successful($"Account deleted successfully: ID={accountId}");
+            }
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Account deletion failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<TestResult> TestAccountDeletionSessionInvalidation(ITestClient client, string[] args)
+    {
+        try
+        {
+            // Create clients
+            var accountsClient = new AccountsClient();
+            var authClient = new AuthClient();
+
+            var testUsername = $"sessiontest_{DateTime.Now.Ticks}";
+            var testPassword = "TestPassword123!";
+
+            // Step 1: Create an account
+            var createRequest = new CreateAccountRequest
+            {
+                DisplayName = testUsername,
+                Email = $"{testUsername}@example.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(testPassword) // Pre-hash password
+            };
+
+            var createResponse = await accountsClient.CreateAccountAsync(createRequest);
+            if (createResponse.AccountId == Guid.Empty)
+                return TestResult.Failed("Failed to create test account");
+
+            var accountId = createResponse.AccountId;
+
+            // Step 2: Login to create a session
+            var loginRequest = new LoginRequest
+            {
+                Email = $"{testUsername}@example.com", // Use email instead of username
+                Password = testPassword
+            };
+
+            var loginResponse = await authClient.LoginAsync(loginRequest);
+            if (string.IsNullOrWhiteSpace(loginResponse.AccessToken))
+                return TestResult.Failed("Failed to login and create session");
+
+            var accessToken = loginResponse.AccessToken;
+
+            // Step 3: Verify session exists by calling GetSessions
+            var sessionsResponse = await ((AuthClient)authClient)
+                .WithAuthorization(accessToken)
+                .GetSessionsAsync();
+            if (sessionsResponse.Sessions == null || !sessionsResponse.Sessions.Any())
+                return TestResult.Failed("No sessions found after login");
+
+            var sessionCount = sessionsResponse.Sessions.Count;
+
+            // Step 4: Delete the account (this should trigger session invalidation via events)
+            await accountsClient.DeleteAccountAsync(accountId);
+
+            // Step 5: Wait a moment for event processing
+            await Task.Delay(2000); // 2 second delay for event processing
+
+            // Step 6: Try to get sessions again - should fail or return empty
+            try
+            {
+                var sessionsAfterDeletion = await ((AuthClient)authClient)
+                    .WithAuthorization(accessToken)
+                    .GetSessionsAsync();
+
+                // Check if sessions were invalidated
+                if (sessionsAfterDeletion.Sessions != null && sessionsAfterDeletion.Sessions.Any())
+                {
+                    return TestResult.Failed($"Sessions still exist after account deletion: {sessionsAfterDeletion.Sessions.Count} sessions found");
+                }
+
+                return TestResult.Successful($"Account deletion → session invalidation flow verified: {sessionCount} session(s) invalidated");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 401)
+            {
+                // Expected behavior - unauthorized because token is now invalid
+                return TestResult.Successful($"Account deletion → session invalidation flow verified: Token invalidated (401 response)");
+            }
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Session invalidation test failed: {ex.StatusCode} - {ex.Message}");
         }
         catch (Exception ex)
         {

@@ -12,6 +12,8 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using BCrypt.Net;
+using Dapr;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BeyondImmersion.BannouService.Auth;
 
@@ -1093,6 +1095,92 @@ public class AuthService : IAuthService
         {
             _logger.LogError(ex, "Failed to get sessions for account {AccountId}", accountId);
             return new List<SessionInfo>();
+        }
+    }
+
+    #endregion
+
+    #region Event Handlers
+
+    /// <summary>
+    /// Handles account deleted events to invalidate all sessions for the deleted account.
+    /// This ensures security by preventing continued access after account deletion.
+    /// </summary>
+    [Topic("bannou-pubsub", "account.deleted")]
+    [HttpPost("events/account-deleted")]
+    public async Task<IActionResult> HandleAccountDeletedEventAsync([FromBody] AccountDeletedEvent eventData)
+    {
+        try
+        {
+            _logger.LogInformation("Received account deleted event {EventId} for account: {AccountId}",
+                eventData.EventId, eventData.AccountId);
+
+            // Invalidate all sessions for the deleted account
+            await InvalidateAllSessionsForAccountAsync(eventData.AccountId);
+
+            _logger.LogInformation("Successfully invalidated all sessions for deleted account: {AccountId}",
+                eventData.AccountId);
+
+            return new OkObjectResult(new { status = "processed", eventId = eventData.EventId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process account deleted event {EventId} for account: {AccountId}",
+                eventData.EventId, eventData.AccountId);
+            return new ObjectResult(new { error = "Internal server error", eventId = eventData.EventId })
+            {
+                StatusCode = 500
+            };
+        }
+    }
+
+    /// <summary>
+    /// Invalidate all sessions for a specific account.
+    /// Used when account is deleted to ensure security.
+    /// </summary>
+    private async Task InvalidateAllSessionsForAccountAsync(Guid accountId)
+    {
+        try
+        {
+            // Get session keys directly from the account index
+            var indexKey = $"account-sessions:{accountId}";
+            var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
+                REDIS_STATE_STORE,
+                indexKey,
+                cancellationToken: CancellationToken.None);
+
+            if (sessionKeys == null || !sessionKeys.Any())
+            {
+                _logger.LogInformation("No sessions found for account {AccountId}", accountId);
+                return;
+            }
+
+            // Remove each session from Redis
+            foreach (var sessionKey in sessionKeys)
+            {
+                try
+                {
+                    // Delete the session data
+                    await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, $"session:{sessionKey}");
+                    _logger.LogDebug("Deleted session {SessionKey} for account {AccountId}", sessionKey, accountId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete session {SessionKey} for account {AccountId}", sessionKey, accountId);
+                    // Continue with other sessions even if one fails
+                }
+            }
+
+            // Remove the account-to-sessions index
+            await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, indexKey);
+
+            _logger.LogInformation("Invalidated {SessionCount} sessions for account {AccountId}",
+                sessionKeys.Count, accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to invalidate sessions for account {AccountId}", accountId);
+            throw; // Re-throw to let the event handler know about the failure
         }
     }
 

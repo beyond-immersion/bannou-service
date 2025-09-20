@@ -2,6 +2,30 @@
 
 Comprehensive testing documentation for Bannou's schema-driven microservices architecture with WebSocket-first edge gateway and CI/CD integration.
 
+## 🚨 CRITICAL: Test Architecture Boundaries (READ FIRST)
+
+**BEFORE writing ANY test, you MUST understand these isolation rules**:
+
+### Plugin Isolation (MANDATORY)
+- **`unit-tests/`**: Can ONLY reference `bannou-service`. CANNOT reference ANY `lib-*` plugins.
+- **`lib-*.tests/`**: Can ONLY reference their own `lib-*` plugin + `bannou-service`. CANNOT reference other `lib-*` plugins.
+- **`lib-testing/`**: Can ONLY reference `bannou-service`. CANNOT reference ANY other `lib-*` plugins.
+- **`http-tester/`**: Can reference all services via generated clients.
+- **`edge-tester/`**: Can test all services via WebSocket protocol.
+
+### Critical Examples
+- ❌ **WRONG**: Testing `AuthServiceConfiguration` in `lib-testing` (cannot reference `lib-auth`)
+- ✅ **CORRECT**: Testing `AuthServiceConfiguration` in `lib-auth.tests` (own plugin)
+- ❌ **WRONG**: Testing `AuthServiceConfiguration` in `unit-tests` (cannot reference plugins)
+- ✅ **CORRECT**: Testing auth endpoints in `http-tester` (service integration)
+
+### Quick Decision Guide
+- **Testing specific service logic?** → `lib-{service}.tests/`
+- **Testing service-to-service calls?** → `http-tester/`
+- **Testing WebSocket protocol?** → `edge-tester/`
+- **Testing core framework?** → `unit-tests/`
+- **Testing infrastructure health?** → `lib-testing/`
+
 ## Overview
 
 Bannou implements a **progressive CI/CD pipeline** with comprehensive testing coverage including:
@@ -34,6 +58,75 @@ make test-infrastructure       # Infrastructure validation
 ```
 
 ## Testing Architecture
+
+**CRITICAL: Test Isolation Boundaries and Dependencies**
+
+Before understanding the specific test types, you must understand the strict isolation boundaries that prevent cross-contamination and architectural violations:
+
+### Test Isolation Rules (MANDATORY)
+
+#### 1. Plugin Isolation Principle
+**Rule**: Each service plugin is completely isolated and cannot reference other service plugins.
+
+**What this means**:
+- `lib-auth.tests` CANNOT reference `lib-accounts` or any other `lib-*` plugin
+- `lib-testing` CANNOT reference `lib-auth`, `lib-accounts`, or any other `lib-*` plugin
+- `unit-tests` CANNOT reference ANY `lib-*` plugin (they are not loaded in unit test context)
+
+**Why**: Plugins are dynamically loaded at runtime. In test contexts, only specific plugins are loaded, so cross-plugin references will fail.
+
+#### 2. Reference Hierarchy
+**What each test type CAN reference**:
+
+- **`unit-tests/`**: Only `bannou-service` project (core framework code)
+- **`lib-*.tests/`**: Only their own `lib-*` plugin + `bannou-service` project + mocks
+- **`lib-testing/`**: Only `bannou-service` project (cannot reference other plugins)
+- **`http-tester/`**: All service plugins via NSwag-generated clients + `bannou-service`
+- **`edge-tester/`**: All service plugins via WebSocket protocol + `bannou-service`
+
+#### 3. Configuration Testing Rules
+**Problem**: You want to test `AuthServiceConfiguration` but it lives in `lib-auth` plugin.
+
+**Solutions by test type**:
+- **Unit test in `unit-tests/`**: ❌ CANNOT - unit-tests cannot reference `lib-auth` plugin
+- **Unit test in `lib-auth.tests/`**: ✅ CAN - tests its own plugin with mocks
+- **Infrastructure test in `lib-testing/`**: ❌ CANNOT - lib-testing cannot reference `lib-auth` plugin
+- **HTTP integration test**: ✅ CAN - http-tester can call auth service endpoints
+- **WebSocket integration test**: ✅ CAN - edge-tester can test auth via WebSocket protocol
+
+**To test configuration binding mechanism itself**:
+- Create test configuration class IN `lib-testing` that mimics the pattern
+- Test the core `IServiceConfiguration.BuildConfiguration<T>()` mechanism
+- Do NOT try to test the actual `AuthServiceConfiguration` from infrastructure tests
+
+#### 4. When to Use Each Test Type
+
+**Use `unit-tests/`** when:
+- Testing core framework functionality (configuration binding mechanism, plugin loading, etc.)
+- Testing shared utilities in `bannou-service` project
+- Cannot and should not reference any `lib-*` plugins
+
+**Use `lib-*.tests/`** when:
+- Testing specific service logic with mocked dependencies
+- Testing service configuration of that specific service only
+- Testing service-specific business logic in isolation
+
+**Use `lib-testing/`** when:
+- Testing infrastructure components (Docker, Dapr, basic connectivity)
+- Testing core framework functionality with minimal service load
+- Validating that the basic service loading mechanism works
+- NEVER for testing specific service functionality
+
+**Use `http-tester/`** when:
+- Testing service-to-service communication
+- Testing actual API endpoints and business logic
+- Testing authentication flows and service integration
+- Testing request/response models and validation
+
+**Use `edge-tester/`** when:
+- Testing WebSocket protocol implementation
+- Testing Connect service routing and binary protocol
+- Testing real-time features and client-server communication
 
 ### 1. Unit Tests (189+ Total)
 
@@ -110,10 +203,29 @@ dotnet run --project edge-tester
 DAEMON_MODE=true dotnet run --project edge-tester --configuration Release
 ```
 
-### 4. Infrastructure Testing
+### 4. Infrastructure Testing (`lib-testing`)
 
-**Purpose**: Docker Compose service availability and connectivity validation
+**Purpose**: Docker Compose service availability and minimal infrastructure validation
+**Service Scope**: TESTING service ONLY (uses `BANNOU_SERVICES: "testing"`)
 **Components**: OpenResty, Redis, RabbitMQ, MySQL basic connectivity
+
+**CRITICAL ARCHITECTURAL CONSTRAINTS**:
+- **lib-testing CANNOT reference any other service plugins**
+- **Uses minimal configuration with only TESTING service loaded**
+- **Environment**: `.env.ci.infrastructure` with `TESTING_SERVICE_ENABLED=true` only
+- **Docker Compose**: `docker-compose.ci.infrastructure.yml` builds with `BANNOU_SERVICES: "testing"`
+
+**What Infrastructure Tests CAN Test**:
+- Basic Docker Compose service health (databases, message queues)
+- Core framework configuration binding mechanism (using test-specific config classes)
+- Service plugin loading infrastructure (TestingService only)
+- Dapr component connectivity and health
+
+**What Infrastructure Tests CANNOT Test**:
+- Real service configurations from other plugins (AuthServiceConfiguration, etc.)
+- Service-to-service communication (use http-tester for this)
+- Business logic from specific services (use lib-*.tests for this)
+- Cross-plugin functionality (plugins are isolated)
 
 **Usage**:
 ```bash
@@ -124,6 +236,21 @@ make test-infrastructure
 make build-compose
 make ci-up-compose
 make test-infrastructure
+```
+
+**Testing Configuration Binding Example**:
+If you want to test that environment variable binding works, create a configuration class IN lib-testing:
+
+```csharp
+// IN lib-testing/TestingService.cs - NOT referencing other plugins
+[ServiceConfiguration(envPrefix: "BANNOU_")]
+public class TestConfigurationBinding
+{
+    public string? TestSecret { get; set; }
+    public string? TestValue { get; set; }
+}
+
+// Test the core mechanism with THIS class, not AuthServiceConfiguration
 ```
 
 ## GitHub Actions Progressive CI/CD Pipeline
@@ -330,6 +457,92 @@ DAEMON_MODE=true make test-ci  # Non-interactive pipeline
 **Resource Optimization**: Docker containers cleaned up automatically after testing
 
 ## Troubleshooting
+
+### Critical Test Architecture Violations (MUST AVOID)
+
+#### ❌ WRONG: Trying to Reference Other Plugins from Infrastructure Tests
+```csharp
+// In lib-testing/TestingService.cs - THIS IS WRONG
+public Task<TestResult> TestAuthConfiguration()
+{
+    // ❌ ERROR: lib-testing cannot reference AuthServiceConfiguration
+    var authConfig = GetService<AuthServiceConfiguration>();
+    // This will fail because lib-testing cannot reference lib-auth
+}
+```
+
+#### ✅ CORRECT: Test Configuration Mechanism in Infrastructure Tests
+```csharp
+// In lib-testing/TestingService.cs - THIS IS CORRECT
+[ServiceConfiguration(envPrefix: "BANNOU_")]
+public class TestConfigForBindingValidation
+{
+    public string? TestSecret { get; set; }
+}
+
+public Task<TestResult> TestConfigurationBinding()
+{
+    // ✅ CORRECT: Test the core binding mechanism with lib-testing's own config
+    var config = IServiceConfiguration.BuildConfiguration<TestConfigForBindingValidation>();
+    // This tests that BANNOU_ prefix binding works without referencing other plugins
+}
+```
+
+#### ❌ WRONG: Putting Service-Specific Tests in Wrong Place
+```csharp
+// In unit-tests/AuthServiceTests.cs - THIS IS WRONG
+public void TestAuthServiceConfiguration()
+{
+    // ❌ ERROR: unit-tests cannot reference AuthServiceConfiguration
+    var service = new AuthService(...); // This will fail
+}
+```
+
+#### ✅ CORRECT: Service-Specific Tests in Correct Location
+```csharp
+// In lib-auth.tests/AuthServiceTests.cs - THIS IS CORRECT
+public void TestAuthServiceConfiguration()
+{
+    // ✅ CORRECT: lib-auth.tests can test its own plugin
+    var service = new AuthService(...); // This works
+}
+```
+
+#### ❌ WRONG: Testing Real Service Integration from Infrastructure Tests
+```csharp
+// In lib-testing/ - THIS IS WRONG
+public async Task TestRealAuthEndpoint()
+{
+    // ❌ ERROR: lib-testing only has TESTING service, not AUTH service
+    var authClient = GetService<IAuthClient>(); // This will fail
+}
+```
+
+#### ✅ CORRECT: Service Integration Testing in HTTP Tester
+```csharp
+// In http-tester/Tests/AuthTestHandler.cs - THIS IS CORRECT
+public async Task TestRealAuthEndpoint()
+{
+    // ✅ CORRECT: http-tester has all services and can test real integration
+    var authClient = GetServiceClient<IAuthClient>(); // This works
+}
+```
+
+### Architecture Decision Rules
+
+**When you want to test something, ask these questions**:
+
+1. **Am I testing a specific service's functionality?** → Use `lib-{service}.tests/`
+2. **Am I testing service-to-service communication?** → Use `http-tester/`
+3. **Am I testing WebSocket protocol or Connect service?** → Use `edge-tester/`
+4. **Am I testing core framework functionality?** → Use `unit-tests/`
+5. **Am I testing basic infrastructure connectivity?** → Use `lib-testing/`
+
+**RED FLAGS that indicate wrong test placement**:
+- Trying to reference `lib-auth` from `lib-testing` ❌
+- Trying to reference ANY `lib-*` from `unit-tests` ❌
+- Trying to test business logic in `lib-testing` ❌
+- Trying to test infrastructure in `lib-*.tests` ❌
 
 ### Common Testing Issues
 
