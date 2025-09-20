@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
@@ -26,12 +27,23 @@ public class AuthTestHandler : IServiceTestHandler
         };
     }
 
+    /// <summary>
+    /// Gets a service client from the dependency injection container.
+    /// </summary>
+    private static T GetServiceClient<T>() where T : class
+    {
+        if (Program.ServiceProvider == null)
+            throw new InvalidOperationException("Service provider not initialized");
+
+        return Program.ServiceProvider.GetRequiredService<T>();
+    }
+
     private static async Task<TestResult> TestRegisterFlow(ITestClient client, string[] args)
     {
         try
         {
-            // Create AuthClient directly with parameterless constructor
-            var authClient = new AuthClient();
+            // Get AuthClient from dependency injection container
+            var authClient = GetServiceClient<IAuthClient>();
 
             var testUsername = $"regtest_{DateTime.Now.Ticks}";
 
@@ -63,8 +75,8 @@ public class AuthTestHandler : IServiceTestHandler
     {
         try
         {
-            // Create AuthClient directly with parameterless constructor
-            var authClient = new AuthClient();
+            // Get AuthClient from dependency injection container
+            var authClient = GetServiceClient<IAuthClient>();
 
             // First register a test user
             var testUsername = $"logintest_{DateTime.Now.Ticks}";
@@ -104,13 +116,13 @@ public class AuthTestHandler : IServiceTestHandler
     {
         try
         {
-            // Create AuthClient directly with parameterless constructor
-            var authClient = new AuthClient();
+            // Get AuthClient from dependency injection container
+            var authClient = GetServiceClient<IAuthClient>();
 
             // ValidateTokenAsync now uses header-based token authentication
             try
             {
-                var validationResponse = await authClient
+                var validationResponse = await ((AuthClient)authClient)
                     .WithAuthorization("invalid_token")
                     .ValidateTokenAsync();
                 return TestResult.Successful($"Token validation endpoint responded: Valid={validationResponse.Valid}");
@@ -134,8 +146,8 @@ public class AuthTestHandler : IServiceTestHandler
     {
         try
         {
-            // Create AuthClient directly with parameterless constructor
-            var authClient = new AuthClient();
+            // Get AuthClient from dependency injection container
+            var authClient = GetServiceClient<IAuthClient>();
 
             // Test token refresh with a dummy refresh token
             var refreshRequest = new RefreshRequest
@@ -145,7 +157,7 @@ public class AuthTestHandler : IServiceTestHandler
 
             try
             {
-                var refreshResponse = await authClient
+                var refreshResponse = await ((AuthClient)authClient)
                     .WithAuthorization("dummy-jwt-token")
                     .RefreshTokenAsync(refreshRequest);
                 return TestResult.Successful($"Token refresh endpoint responded correctly with AccountId: {refreshResponse.AccountId}");
@@ -165,8 +177,8 @@ public class AuthTestHandler : IServiceTestHandler
     {
         try
         {
-            // Create AuthClient directly with parameterless constructor
-            var authClient = new AuthClient();
+            // Get AuthClient from dependency injection container
+            var authClient = GetServiceClient<IAuthClient>();
 
             // Test OAuth callback with mock data
             var oauthRequest = new OAuthCallbackRequest
@@ -196,8 +208,8 @@ public class AuthTestHandler : IServiceTestHandler
     {
         try
         {
-            // Create AuthClient directly with parameterless constructor
-            var authClient = new AuthClient();
+            // Get AuthClient from dependency injection container
+            var authClient = GetServiceClient<IAuthClient>();
 
             // Test Steam verification with mock data
             var steamRequest = new SteamVerifyRequest
@@ -227,12 +239,12 @@ public class AuthTestHandler : IServiceTestHandler
     {
         try
         {
-            // Create AuthClient directly with parameterless constructor
-            var authClient = new AuthClient();
+            // Get AuthClient from dependency injection container
+            var authClient = GetServiceClient<IAuthClient>();
 
             try
             {
-                var sessionsResponse = await authClient
+                var sessionsResponse = await ((AuthClient)authClient)
                     .WithAuthorization("dummy-jwt-token")
                     .GetSessionsAsync();
                 return TestResult.Successful($"Get sessions endpoint responded with {sessionsResponse.Sessions.Count} sessions");
@@ -252,9 +264,9 @@ public class AuthTestHandler : IServiceTestHandler
     {
         try
         {
-            // Create clients with parameterless constructors
-            var authClient = new AuthClient();
-            var connectClient = new ConnectClient();
+            // Get clients from dependency injection container
+            var authClient = GetServiceClient<IAuthClient>();
+            var connectClient = GetServiceClient<IConnectClient>();
 
             // Step 1: Register a new user
             var testUsername = $"completetest_{DateTime.Now.Ticks}";
@@ -284,7 +296,7 @@ public class AuthTestHandler : IServiceTestHandler
             // Step 3: Test token validation with the actual access token
             try
             {
-                var validationResponse = await authClient
+                var validationResponse = await ((AuthClient)authClient)
                     .WithAuthorization(accessToken)
                     .ValidateTokenAsync();
                 if (!validationResponse.Valid)

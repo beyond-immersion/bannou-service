@@ -97,7 +97,7 @@ try:
                 'array': 'string[]'
             }.get(prop_type, 'string')
 
-            # Handle nullable types and defaults
+            # Handle nullable types and defaults for properties
             nullable_suffix = '?' if prop_default is None and csharp_type != 'string' else ''
             default_value = ''
 
@@ -117,8 +117,6 @@ try:
                     default_value = f' = {prop_default};'
             elif csharp_type == 'string':
                 default_value = ' = string.Empty;'
-            else:
-                default_value = ';'
 
             property_name = to_property_name(prop_name)
 
@@ -142,7 +140,7 @@ namespace BeyondImmersion.BannouService.{service_pascal};
 /// Configuration class for {service_pascal} service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(I{service_pascal}Service), envPrefix: \"BANNOU_\")]
+[ServiceConfiguration(typeof({service_pascal}Service), envPrefix: \"BANNOU_\")]
 public class {service_pascal}ServiceConfiguration : IServiceConfiguration
 {{
     /// <inheritdoc />
@@ -155,7 +153,7 @@ public class {service_pascal}ServiceConfiguration : IServiceConfiguration
     /// {prop['description']}
     /// Environment variable: {prop['env_var']} or BANNOU_{prop['env_var']}
     /// </summary>
-    public {prop['type']} {prop['name']}{prop['default']}
+    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
 ''')
     else:
         print(f'''    /// <summary>

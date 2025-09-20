@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Services;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,7 +8,7 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// <summary>
 /// Service interface for Accounts API
 /// </summary>
-public interface IAccountsService
+public interface IAccountsService : IDaprService
 {
     /// <summary>
     /// ListAccounts operation

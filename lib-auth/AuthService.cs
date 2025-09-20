@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Auth;
 
@@ -18,7 +19,7 @@ namespace BeyondImmersion.BannouService.Auth;
 /// Follows schema-first architecture - implements generated IAuthService interface.
 /// </summary>
 [DaprService("auth", typeof(IAuthService), lifetime: ServiceLifetime.Scoped)]
-public class AuthService : IAuthService, IDaprService
+public class AuthService : IAuthService
 {
     private readonly IAccountsClient _accountsClient;
     private readonly DaprClient _daprClient;
@@ -38,6 +39,26 @@ public class AuthService : IAuthService, IDaprService
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        logger.LogInformation("AuthService constructor starting - dependencies being injected");
+        logger.LogInformation("AccountsClient dependency successfully assigned");
+        logger.LogInformation("DaprClient dependency successfully assigned");
+        logger.LogInformation("Configuration dependency successfully assigned");
+
+        try
+        {
+            _logger.LogInformation("AuthService initialized with JwtSecret length: {Length}, Issuer: {Issuer}, Audience: {Audience}",
+                _configuration.JwtSecret?.Length ?? 0, _configuration.JwtIssuer, _configuration.JwtAudience);
+
+            _logger.LogInformation("Testing AccountsClient type: {Type}", _accountsClient.GetType().FullName);
+
+            _logger.LogInformation("AuthService constructor completed successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during AuthService constructor completion");
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -54,16 +75,30 @@ public class AuthService : IAuthService, IDaprService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Get account by email
-            var account = await _accountsClient.GetAccountByEmailAsync(body.Email, cancellationToken);
-            if (account == null)
+            // Lookup account by email via AccountsClient
+            _logger.LogInformation("Looking up account by email via AccountsClient: {Email}", body.Email);
+
+            AccountResponse account;
+            try
             {
-                return (StatusCodes.Forbidden, null);
+                account = await _accountsClient.GetAccountByEmailAsync(body.Email, cancellationToken);
+                _logger.LogInformation("Account found via service call: {AccountId}", account?.AccountId);
+
+                if (account == null)
+                {
+                    _logger.LogWarning("No account found for email: {Email}", body.Email);
+                    return (StatusCodes.Unauthorized, null);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to lookup account by email via AccountsClient");
+                return (StatusCodes.InternalServerError, null);
             }
 
             // TODO: Verify password (would need to get password hash from accounts service)
             // For now, assume validation passed
-            _logger.LogInformation("Mock password verification for email: {Email}", body.Email);
+            _logger.LogInformation("Password verification for email: {Email} (implementation pending)", body.Email);
 
             // Generate tokens
             var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
@@ -104,18 +139,32 @@ public class AuthService : IAuthService, IDaprService
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Create account through accounts service
-            var createAccountRequest = new CreateAccountRequest
+            // Create account via AccountsClient service call
+            _logger.LogInformation("Creating account via AccountsClient for registration: {Email}", body.Email ?? $"{body.Username}@example.com");
+
+            var createRequest = new CreateAccountRequest
             {
+                Email = body.Email ?? $"{body.Username}@example.com",
                 DisplayName = body.Username,
-                Email = body.Email
-                // TODO: Add password hash, provider, etc. when accounts service supports it
+                EmailVerified = false
             };
 
-            var accountResult = await _accountsClient.CreateAccountAsync(createAccountRequest, cancellationToken);
-            if (accountResult == null || accountResult.AccountId == Guid.Empty)
+            AccountResponse? accountResult;
+            try
             {
-                return (StatusCodes.Conflict, null);
+                accountResult = await _accountsClient.CreateAccountAsync(createRequest, cancellationToken);
+                _logger.LogInformation("Account created successfully via service call: {AccountId}", accountResult?.AccountId);
+
+                if (accountResult == null)
+                {
+                    _logger.LogWarning("AccountsClient returned null response");
+                    return (StatusCodes.InternalServerError, null);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create account via AccountsClient");
+                return (StatusCodes.InternalServerError, null);
             }
 
             // Generate tokens
@@ -250,11 +299,25 @@ public class AuthService : IAuthService, IDaprService
                 return (StatusCodes.Forbidden, null);
             }
 
-            // Get account
-            var account = await _accountsClient.GetAccountAsync(Guid.Parse(accountId), cancellationToken);
-            if (account == null)
+            // Lookup account by ID via AccountsClient
+            _logger.LogInformation("Looking up account by ID via AccountsClient: {AccountId}", accountId);
+
+            AccountResponse account;
+            try
             {
-                return (StatusCodes.Forbidden, null);
+                account = await _accountsClient.GetAccountAsync(Guid.Parse(accountId), cancellationToken);
+                _logger.LogInformation("Account found for refresh: {AccountId}", account?.AccountId);
+
+                if (account == null)
+                {
+                    _logger.LogWarning("No account found for ID: {AccountId}", accountId);
+                    return (StatusCodes.Unauthorized, null);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to lookup account by ID via AccountsClient");
+                return (StatusCodes.InternalServerError, null);
             }
 
             // Generate new tokens
@@ -362,9 +425,37 @@ public class AuthService : IAuthService, IDaprService
             if (body?.AllSessions == true)
             {
                 _logger.LogInformation("AllSessions logout requested for account: {AccountId}", validateResponse.AccountId);
-                // TODO: Implement all sessions logout - requires finding all sessions for this account
-                // This would require either maintaining an account->sessions mapping or scanning Redis
-                _logger.LogWarning("AllSessions logout not yet implemented - would require account session index");
+
+                // Get all sessions for the account using our new efficient method
+                var accountSessions = await GetAccountSessionsAsync(validateResponse.AccountId.ToString(), cancellationToken);
+
+                if (accountSessions.Count > 0)
+                {
+                    // Get session keys from index to delete all sessions
+                    var indexKey = $"account-sessions:{validateResponse.AccountId}";
+                    var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
+                        REDIS_STATE_STORE,
+                        indexKey,
+                        cancellationToken: cancellationToken);
+
+                    if (sessionKeys != null && sessionKeys.Count > 0)
+                    {
+                        // Delete all sessions
+                        var deleteTasks = sessionKeys.Select(key =>
+                            _daprClient.DeleteStateAsync(REDIS_STATE_STORE, $"session:{key}", cancellationToken: cancellationToken));
+                        await Task.WhenAll(deleteTasks);
+
+                        // Remove the account sessions index
+                        await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, indexKey, cancellationToken: cancellationToken);
+
+                        _logger.LogInformation("All {SessionCount} sessions logged out for account: {AccountId}",
+                            sessionKeys.Count, validateResponse.AccountId);
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation("No active sessions found for account: {AccountId}", validateResponse.AccountId);
+                }
             }
             else
             {
@@ -373,6 +464,9 @@ public class AuthService : IAuthService, IDaprService
                     REDIS_STATE_STORE,
                     $"session:{sessionKey}",
                     cancellationToken: cancellationToken);
+
+                // Remove session from account index
+                await RemoveSessionFromAccountIndexAsync(validateResponse.AccountId.ToString(), sessionKey, cancellationToken);
 
                 _logger.LogInformation("Session logged out successfully for account: {AccountId}", validateResponse.AccountId);
             }
@@ -401,11 +495,23 @@ public class AuthService : IAuthService, IDaprService
 
             if (sessionKey != null)
             {
+                // Get session data to find account ID for index cleanup
+                var sessionData = await _daprClient.GetStateAsync<SessionDataModel>(
+                    REDIS_STATE_STORE,
+                    $"session:{sessionKey}",
+                    cancellationToken: cancellationToken);
+
                 // Remove the session data from Redis
                 await _daprClient.DeleteStateAsync(
                     REDIS_STATE_STORE,
                     $"session:{sessionKey}",
                     cancellationToken: cancellationToken);
+
+                // Remove session from account index if we found the session data
+                if (sessionData != null)
+                {
+                    await RemoveSessionFromAccountIndexAsync(sessionData.AccountId.ToString(), sessionKey, cancellationToken);
+                }
 
                 _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
             }
@@ -490,24 +596,8 @@ public class AuthService : IAuthService, IDaprService
 
             _logger.LogInformation("Getting sessions for account: {AccountId}", validateResponse.AccountId);
 
-            // For now, return the current session only since we don't have efficient multi-session retrieval
-            // TODO: Implement efficient session retrieval for an account
-            // This would require either maintaining an account->sessions mapping or scanning Redis
-            var sessions = new List<SessionInfo>
-            {
-                new SessionInfo
-                {
-                    SessionId = validateResponse.SessionId,
-                    CreatedAt = DateTimeOffset.UtcNow, // We don't store this in current implementation
-                    LastActive = DateTimeOffset.UtcNow, // We don't track this in current implementation
-                    DeviceInfo = new DeviceInfo
-                    {
-                        DeviceType = DeviceInfoDeviceType.Desktop, // Default to desktop for now
-                        Platform = "Unknown", // We don't store device info in current implementation
-                        Browser = "Unknown"
-                    }
-                }
-            };
+            // Use efficient account-to-sessions index with bulk state operations
+            var sessions = await GetAccountSessionsAsync(validateResponse.AccountId.ToString(), cancellationToken);
 
             _logger.LogInformation("Returning {SessionCount} session(s) for account: {AccountId}",
                 sessions.Count, validateResponse.AccountId);
@@ -649,17 +739,36 @@ public class AuthService : IAuthService, IDaprService
 
     private async Task<string> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
     {
+        // Validate inputs
+        if (account == null)
+            throw new ArgumentNullException(nameof(account));
+
+        if (_configuration == null)
+            throw new InvalidOperationException("AuthServiceConfiguration is null");
+
+        if (string.IsNullOrWhiteSpace(_configuration.JwtSecret))
+            throw new InvalidOperationException("JWT secret is not configured");
+
+        if (string.IsNullOrWhiteSpace(_configuration.JwtIssuer))
+            throw new InvalidOperationException("JWT issuer is not configured");
+
+        if (string.IsNullOrWhiteSpace(_configuration.JwtAudience))
+            throw new InvalidOperationException("JWT audience is not configured");
+
+        _logger.LogDebug("Generating access token for account {AccountId} with JWT config: Secret={SecretLength}, Issuer={Issuer}, Audience={Audience}",
+            account.AccountId, _configuration.JwtSecret?.Length, _configuration.JwtIssuer, _configuration.JwtAudience);
+
         // Generate opaque session key (per API-DESIGN.md security pattern)
         var sessionKey = Guid.NewGuid().ToString("N");
         var sessionId = Guid.NewGuid().ToString();
 
         // Store session data in Redis with opaque key
-        var sessionData = new
+        var sessionData = new SessionDataModel
         {
             AccountId = account.AccountId,
             Email = account.Email,
-            DisplayName = account.DisplayName,
-            Roles = account.Roles ?? new List<string>(),
+            DisplayName = account.DisplayName ?? string.Empty,
+            Roles = account.Roles?.ToList() ?? new List<string>(),
             SessionId = sessionId,
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = DateTime.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes)
@@ -672,9 +781,12 @@ public class AuthService : IAuthService, IDaprService
             metadata: new Dictionary<string, string> { { "ttl", (_configuration.JwtExpirationMinutes * 60).ToString() } },
             cancellationToken: cancellationToken);
 
+        // Maintain account-to-sessions index for efficient GetSessions implementation
+        await AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
+
         // JWT contains only opaque session key - no sensitive data
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_configuration.JwtSecret);
+        var key = Encoding.ASCII.GetBytes(_configuration.JwtSecret!);
         var claims = new List<Claim>
         {
             new Claim("session_key", sessionKey), // Opaque key for Redis lookup
@@ -777,6 +889,192 @@ public class AuthService : IAuthService, IDaprService
         {
             _logger.LogError(ex, "Error extracting session_key from JWT");
             return Task.FromResult<string?>(null);
+        }
+    }
+
+    /// <summary>
+    /// Add session key to account's session index for efficient GetSessions
+    /// </summary>
+    private async Task AddSessionToAccountIndexAsync(string accountId, string sessionKey, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var indexKey = $"account-sessions:{accountId}";
+
+            // Get existing session list
+            var existingSessions = await _daprClient.GetStateAsync<List<string>>(
+                REDIS_STATE_STORE,
+                indexKey,
+                cancellationToken: cancellationToken) ?? new List<string>();
+
+            // Add new session if not already present
+            if (!existingSessions.Contains(sessionKey))
+            {
+                existingSessions.Add(sessionKey);
+
+                // Save updated list with TTL slightly longer than session TTL to handle clock skew
+                var accountIndexTtl = (_configuration.JwtExpirationMinutes * 60) + 300; // +5 minutes buffer
+                await _daprClient.SaveStateAsync(
+                    REDIS_STATE_STORE,
+                    indexKey,
+                    existingSessions,
+                    metadata: new Dictionary<string, string> { { "ttl", accountIndexTtl.ToString() } },
+                    cancellationToken: cancellationToken);
+
+                _logger.LogDebug("Added session {SessionKey} to account index for account {AccountId}", sessionKey, accountId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to add session {SessionKey} to account index for account {AccountId}", sessionKey, accountId);
+            // Don't throw - session creation should succeed even if index update fails
+        }
+    }
+
+    /// <summary>
+    /// Remove session key from account's session index
+    /// </summary>
+    private async Task RemoveSessionFromAccountIndexAsync(string accountId, string sessionKey, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var indexKey = $"account-sessions:{accountId}";
+
+            // Get existing session list
+            var existingSessions = await _daprClient.GetStateAsync<List<string>>(
+                REDIS_STATE_STORE,
+                indexKey,
+                cancellationToken: cancellationToken);
+
+            if (existingSessions != null && existingSessions.Contains(sessionKey))
+            {
+                existingSessions.Remove(sessionKey);
+
+                if (existingSessions.Count > 0)
+                {
+                    // Save updated list
+                    var accountIndexTtl = (_configuration.JwtExpirationMinutes * 60) + 300; // +5 minutes buffer
+                    await _daprClient.SaveStateAsync(
+                        REDIS_STATE_STORE,
+                        indexKey,
+                        existingSessions,
+                        metadata: new Dictionary<string, string> { { "ttl", accountIndexTtl.ToString() } },
+                        cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    // Remove empty index
+                    await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, indexKey, cancellationToken: cancellationToken);
+                }
+
+                _logger.LogDebug("Removed session {SessionKey} from account index for account {AccountId}", sessionKey, accountId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to remove session {SessionKey} from account index for account {AccountId}", sessionKey, accountId);
+            // Don't throw - logout should succeed even if index update fails
+        }
+    }
+
+    /// <summary>
+    /// Get all active sessions for an account using efficient bulk operations
+    /// </summary>
+    private async Task<List<SessionInfo>> GetAccountSessionsAsync(string accountId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var indexKey = $"account-sessions:{accountId}";
+
+            // Get session keys from account index
+            var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
+                REDIS_STATE_STORE,
+                indexKey,
+                cancellationToken: cancellationToken);
+
+            if (sessionKeys == null || sessionKeys.Count == 0)
+            {
+                _logger.LogDebug("No sessions found in index for account {AccountId}", accountId);
+                return new List<SessionInfo>();
+            }
+
+            // Use efficient parallel operations to get all session data
+            var sessionDataTasks = sessionKeys.Select(async key =>
+            {
+                try
+                {
+                    var sessionData = await _daprClient.GetStateAsync<SessionDataModel>(
+                        REDIS_STATE_STORE,
+                        $"session:{key}",
+                        cancellationToken: cancellationToken);
+
+                    return new { SessionKey = key, SessionData = (SessionDataModel?)sessionData };
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to retrieve session data for key: {SessionKey}", key);
+                    return new { SessionKey = key, SessionData = (SessionDataModel?)null };
+                }
+            });
+
+            var sessionResults = await Task.WhenAll(sessionDataTasks);
+
+            var sessions = new List<SessionInfo>();
+            var expiredSessionKeys = new List<string>();
+
+            foreach (var result in sessionResults)
+            {
+                if (result.SessionData != null)
+                {
+                    // Check if session is still valid
+                    if (result.SessionData.ExpiresAt > DateTime.UtcNow)
+                    {
+                        sessions.Add(new SessionInfo
+                        {
+                            SessionId = result.SessionData.SessionId,
+                            CreatedAt = result.SessionData.CreatedAt,
+                            LastActive = result.SessionData.CreatedAt, // We don't track last active time yet
+                            DeviceInfo = new DeviceInfo
+                            {
+                                DeviceType = DeviceInfoDeviceType.Desktop, // Default for now
+                                Platform = "Unknown", // We don't store device info yet
+                                Browser = "Unknown"
+                            }
+                        });
+                    }
+                    else
+                    {
+                        // Session expired, add to cleanup list
+                        expiredSessionKeys.Add(result.SessionKey);
+                        _logger.LogDebug("Found expired session {SessionKey} for account {AccountId}", result.SessionKey, accountId);
+                    }
+                }
+                else
+                {
+                    // Session data not found (may have been deleted), remove from index
+                    expiredSessionKeys.Add(result.SessionKey);
+                }
+            }
+
+            // Clean up expired sessions from index
+            if (expiredSessionKeys.Count > 0)
+            {
+                // Await the cleanup to avoid potential issues with background tasks
+                foreach (var expiredKey in expiredSessionKeys)
+                {
+                    await RemoveSessionFromAccountIndexAsync(accountId, expiredKey, cancellationToken);
+                }
+            }
+
+            _logger.LogDebug("Retrieved {ActiveSessionCount} active sessions for account {AccountId} (cleaned up {ExpiredCount} expired)",
+                sessions.Count, accountId, expiredSessionKeys.Count);
+
+            return sessions;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get sessions for account {AccountId}", accountId);
+            return new List<SessionInfo>();
         }
     }
 

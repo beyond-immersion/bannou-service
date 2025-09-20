@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Website;
 /// Configuration class for Website service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(IWebsiteService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(WebsiteService), envPrefix: "BANNOU_")]
 public class WebsiteServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

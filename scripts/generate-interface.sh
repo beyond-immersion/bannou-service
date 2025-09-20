@@ -49,6 +49,7 @@ echo -e "${YELLOW}🔄 Extracting interface from schema...${NC}"
 # Create base interface structure
 cat > "$OUTPUT_FILE" << EOF
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Services;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -57,7 +58,7 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// <summary>
 /// Service interface for $SERVICE_PASCAL API
 /// </summary>
-public interface I${SERVICE_PASCAL}Service
+public interface I${SERVICE_PASCAL}Service : IDaprService
 {
 EOF
 

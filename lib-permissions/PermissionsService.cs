@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Permissions;
 /// Generated service implementation for Permissions API
 /// </summary>
 [DaprService("permissions", typeof(IPermissionsService), lifetime: ServiceLifetime.Scoped)]
-public class PermissionsService : IPermissionsService, IDaprService
+public class PermissionsService : IPermissionsService
 {
     private readonly ILogger<PermissionsService> _logger;
     private readonly PermissionsServiceConfiguration _configuration;

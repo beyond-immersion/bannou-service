@@ -1313,7 +1313,8 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.RegisterConfigurationTypes(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
             <summary>
-            Register all discovered configuration types in DI with matching service lifetimes.
+            Register all discovered configuration types in DI with Singleton lifetime.
+            All configurations use Singleton lifetime regardless of service lifetime for proper startup configuration binding.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.ResolveServices(System.IServiceProvider)">
@@ -1803,6 +1804,13 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.ServiceMappingHandlerInfo.Description">
             <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceMappingHandlerInfo.#ctor(System.Type,System.Reflection.MethodInfo)">
+            <summary>
+            Initializes a new instance of the ServiceMappingHandlerInfo class.
+            </summary>
+            <param name="handlerType">The type containing the handler method.</param>
+            <param name="method">The method that handles service mapping events.</param>
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceMappingEventHandler">
             <summary>

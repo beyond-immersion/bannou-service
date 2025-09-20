@@ -149,8 +149,26 @@ public static class Program
 
         try
         {
-            // configure services
-            _ = webAppBuilder.Services.AddAuthentication();
+            // configure services - add default authentication scheme to prevent Forbid() errors
+            _ = webAppBuilder.Services.AddAuthentication("Bearer")
+                .AddJwtBearer("Bearer", options =>
+                {
+                    // Basic JWT bearer configuration - not used for validation, just to prevent Forbid() errors
+                    options.RequireHttpsMetadata = false; // Allow HTTP for development
+                    options.SaveToken = false; // We don't need to save tokens
+                    options.IncludeErrorDetails = true; // Include error details for debugging
+
+                    // Set a dummy key to prevent startup errors (real validation happens in AuthService)
+                    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                    {
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ValidateLifetime = false,
+                        ValidateIssuerSigningKey = false,
+                        RequireExpirationTime = false,
+                        RequireSignedTokens = false
+                    };
+                });
 
             // TODO: DEPRECATED - Replace with Plugin system controller registration
             // get all loaded assemblies hosting enabled DaprController types
@@ -249,8 +267,9 @@ public static class Program
         // Final override: Ensure configuration lifetimes are correct (after all auto-registration)
         Logger.Log(LogLevel.Information, null, "🔧 Final configuration lifetime check and override...");
 
-        // Re-register configurations with correct lifetimes to override any auto-registrations
-        PluginLoader?.FinalizeConfigurationRegistrations(webAppBuilder.Services);
+        // DISABLED: This was destroying properly bound configurations by replacing them with default constructor instances
+        // The PluginLoader already registers configurations properly with environment binding
+        // PluginLoader?.FinalizeConfigurationRegistrations(webAppBuilder.Services);
 
         // build the application
         Logger.Log(LogLevel.Information, null, "🔧 About to build WebApplication - checking for DI conflicts...");
@@ -275,6 +294,24 @@ public static class Program
         }
         try
         {
+            // Add diagnostic middleware to track request lifecycle
+            webApp.Use(async (context, next) =>
+            {
+                var requestId = Guid.NewGuid().ToString();
+                Logger.Log(LogLevel.Debug, null, $"[{requestId}] Request starting: {context.Request.Method} {context.Request.Path}");
+
+                try
+                {
+                    await next();
+                    Logger.Log(LogLevel.Debug, null, $"[{requestId}] Request completed: Status {context.Response.StatusCode}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log(LogLevel.Error, ex, $"[{requestId}] Request failed with exception");
+                    throw;
+                }
+            });
+
             // Configure OpenAPI documentation in development
             if (webApp.Environment.IsDevelopment())
             {

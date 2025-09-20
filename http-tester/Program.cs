@@ -1,8 +1,47 @@
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Dapr.Client;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.HttpTester;
+
+/// <summary>
+/// Mock test client for tests that don't actually use the ITestClient interface
+/// </summary>
+public class MockTestClient : ITestClient
+{
+    public bool IsAuthenticated => false;
+    public string TransportType => "Mock";
+
+    public Task<TestResponse<T>> PostAsync<T>(string endpoint, object? requestBody = null) where T : class
+    {
+        throw new NotImplementedException("MockTestClient should not be used for actual HTTP requests");
+    }
+
+    public Task<TestResponse<T>> GetAsync<T>(string endpoint) where T : class
+    {
+        throw new NotImplementedException("MockTestClient should not be used for actual HTTP requests");
+    }
+
+    public Task<bool> RegisterAsync(string username, string password)
+    {
+        throw new NotImplementedException("MockTestClient should not be used for actual authentication");
+    }
+
+    public Task<bool> LoginAsync(string username, string password)
+    {
+        throw new NotImplementedException("MockTestClient should not be used for actual authentication");
+    }
+
+    public void Dispose()
+    {
+        // Nothing to dispose
+    }
+}
 
 public class Program
 {
@@ -15,6 +54,11 @@ public class Program
     /// Lookup for all service tests.
     /// </summary>
     private static readonly Dictionary<string, ServiceTest> sTestRegistry = new();
+
+    /// <summary>
+    /// Service provider for dependency injection in tests.
+    /// </summary>
+    public static IServiceProvider? ServiceProvider { get; private set; }
 
     /// <summary>
     /// Checks if the application is running in daemon mode (non-interactive).
@@ -52,7 +96,14 @@ public class Program
         {
             Console.WriteLine("Testing service-to-service communication via NSwag-generated clients...");
 
-            // Start the interactive test console - no client abstraction needed
+            // Set up dependency injection for service-to-service testing
+            if (!await SetupServiceProvider())
+            {
+                Console.WriteLine("Failed to set up service provider for testing");
+                return 1;
+            }
+
+            // Start the interactive test console with DI-enabled testing
             var exitCode = await RunInteractiveTestConsole(args);
             return exitCode;
         }
@@ -64,6 +115,56 @@ public class Program
 
             WaitForUserInput("Press any key to exit...", args);
             return 1;  // Return failure exit code
+        }
+    }
+
+    /// <summary>
+    /// Sets up dependency injection with DaprClient and service clients for testing.
+    /// </summary>
+    private static async Task<bool> SetupServiceProvider()
+    {
+        try
+        {
+            var serviceCollection = new ServiceCollection();
+
+            // Add logging
+            serviceCollection.AddLogging(builder =>
+            {
+                builder.AddConsole();
+                builder.SetMinimumLevel(LogLevel.Information);
+            });
+
+            // Add Dapr client for service-to-service communication
+            serviceCollection.AddDaprClient();
+
+            // Add Bannou service client infrastructure
+            serviceCollection.AddBannouServiceClients();
+
+            // Register generated service clients using simple scoped registration (NSwag parameterless constructor architecture)
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Auth.IAuthClient, BeyondImmersion.BannouService.Auth.AuthClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Accounts.IAccountsClient, BeyondImmersion.BannouService.Accounts.AccountsClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Connect.IConnectClient, BeyondImmersion.BannouService.Connect.ConnectClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Behavior.IBehaviorClient, BeyondImmersion.BannouService.Behavior.BehaviorClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Permissions.IPermissionsClient, BeyondImmersion.BannouService.Permissions.PermissionsClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.GameSession.IGameSessionClient, BeyondImmersion.BannouService.GameSession.GameSessionClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Website.IWebsiteClient, BeyondImmersion.BannouService.Website.WebsiteClient>();
+
+            // Build the service provider
+            ServiceProvider = serviceCollection.BuildServiceProvider();
+
+            // Test Dapr connectivity
+            var daprClient = ServiceProvider.GetRequiredService<DaprClient>();
+            await daprClient.CheckHealthAsync();
+
+            Console.WriteLine("✅ Service provider setup completed successfully");
+            Console.WriteLine("✅ Dapr client connectivity verified");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to setup service provider: {ex.Message}");
+            return false;
         }
     }
 
@@ -94,7 +195,9 @@ public class Program
                 try
                 {
                     // Tests no longer need a client parameter - they create their own generated clients
-                    var result = await kvp.Value.TestAction(null!, Array.Empty<string>());
+                    // Pass a mock test client to satisfy the interface signature
+                    var mockTestClient = new MockTestClient();
+                    var result = await kvp.Value.TestAction(mockTestClient, Array.Empty<string>());
                     if (result.Success)
                     {
                         Console.WriteLine($"✅ Test {kvp.Value.Name} completed successfully: {result.Message}");
@@ -158,7 +261,9 @@ public class Program
                     try
                     {
                         // Tests no longer need a client parameter - they create their own generated clients
-                        var result = await testTarget.TestAction(null!, commandArgs.ToArray());
+                        // Pass a mock test client to satisfy the interface signature
+                        var mockTestClient = new MockTestClient();
+                        var result = await testTarget.TestAction(mockTestClient, commandArgs.ToArray());
 
                         if (result.Success)
                         {
@@ -240,7 +345,9 @@ public class Program
             try
             {
                 // Tests no longer need a client parameter - they create their own generated clients
-                var result = await kvp.Value.TestAction(null!, args);
+                // Pass a mock test client to satisfy the interface signature
+                var mockTestClient = new MockTestClient();
+                var result = await kvp.Value.TestAction(mockTestClient, args);
                 if (result.Success)
                 {
                     Console.WriteLine($"  ✓ PASSED: {result.Message}");

@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Services;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,7 +8,7 @@ namespace BeyondImmersion.BannouService.Permissions;
 /// <summary>
 /// Service interface for Permissions API
 /// </summary>
-public interface IPermissionsService
+public interface IPermissionsService : IDaprService
 {
     /// <summary>
     /// GetCapabilities operation

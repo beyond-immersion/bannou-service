@@ -497,24 +497,26 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Register all discovered configuration types in DI with matching service lifetimes.
+    /// Register all discovered configuration types in DI with Singleton lifetime.
+    /// All configurations use Singleton lifetime regardless of service lifetime for proper startup configuration binding.
     /// </summary>
     private void RegisterConfigurationTypes(IServiceCollection services)
     {
-        foreach (var (configurationType, lifetime) in _configurationTypesToRegister)
+        foreach (var (configurationType, _) in _configurationTypesToRegister)
         {
             // Check if this type is already registered
             var existingRegistration = services.FirstOrDefault(s => s.ServiceType == configurationType);
             if (existingRegistration != null)
             {
-                _logger.LogWarning("⚠️  Configuration type {ConfigType} is already registered with lifetime {ExistingLifetime}. Removing existing registration to replace with {NewLifetime}.",
-                    configurationType.Name, existingRegistration.Lifetime, lifetime);
+                _logger.LogWarning("⚠️  Configuration type {ConfigType} is already registered with lifetime {ExistingLifetime}. Removing existing registration to replace with Singleton.",
+                    configurationType.Name, existingRegistration.Lifetime);
                 services.Remove(existingRegistration);
             }
 
-            services.Add(new ServiceDescriptor(configurationType, configurationType, lifetime));
-            _logger.LogInformation("✅ Registered configuration: {ConfigType} ({Lifetime})",
-                configurationType.Name, lifetime);
+            // All configurations must be Singleton for proper configuration binding
+            services.Add(new ServiceDescriptor(configurationType, configurationType, ServiceLifetime.Singleton));
+            _logger.LogInformation("✅ Registered configuration: {ConfigType} (Singleton)",
+                configurationType.Name);
         }
 
         _logger.LogInformation("✅ Registered {Count} configuration types in DI", _configurationTypesToRegister.Count);

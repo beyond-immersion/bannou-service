@@ -189,10 +189,8 @@ public class ServiceMappingEventDispatcher : IServiceMappingEventDispatcher
                     if (methodAttribute == null)
                         continue;
 
-                    yield return new ServiceMappingHandlerInfo
+                    yield return new ServiceMappingHandlerInfo(type, method)
                     {
-                        HandlerType = type,
-                        Method = method,
                         Name = $"{type.Name}.{method.Name}",
                         Action = methodAttribute.Action,
                         ServiceName = methodAttribute.ServiceName,
@@ -225,9 +223,9 @@ public class ServiceMappingEventDispatcher : IServiceMappingEventDispatcher
 public class ServiceMappingHandlerInfo
 {
     /// <inheritdoc/>
-    public Type HandlerType { get; set; } = null!;
+    public Type HandlerType { get; set; }
     /// <inheritdoc/>
-    public MethodInfo Method { get; set; } = null!;
+    public MethodInfo Method { get; set; }
     /// <inheritdoc/>
     public string Name { get; set; } = "";
     /// <inheritdoc/>
@@ -240,4 +238,15 @@ public class ServiceMappingHandlerInfo
     public bool RunAsync { get; set; }
     /// <inheritdoc/>
     public string? Description { get; set; }
+
+    /// <summary>
+    /// Initializes a new instance of the ServiceMappingHandlerInfo class.
+    /// </summary>
+    /// <param name="handlerType">The type containing the handler method.</param>
+    /// <param name="method">The method that handles service mapping events.</param>
+    public ServiceMappingHandlerInfo(Type handlerType, MethodInfo method)
+    {
+        HandlerType = handlerType ?? throw new ArgumentNullException(nameof(handlerType));
+        Method = method ?? throw new ArgumentNullException(nameof(method));
+    }
 }

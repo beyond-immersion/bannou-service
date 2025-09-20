@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// Configuration class for Accounts service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(IAccountsService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(AccountsService), envPrefix: "BANNOU_")]
 public class AccountsServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
@@ -19,18 +19,18 @@ public class AccountsServiceConfiguration : IServiceConfiguration
     /// Default page size for account listings
     /// Environment variable: DEFAULTPAGESIZE or BANNOU_DEFAULTPAGESIZE
     /// </summary>
-    public int DefaultPageSize = 20;
+    public int DefaultPageSize { get; set; } = 20;
 
     /// <summary>
     /// Maximum allowed page size for account listings
     /// Environment variable: MAXPAGESIZE or BANNOU_MAXPAGESIZE
     /// </summary>
-    public int MaxPageSize = 100;
+    public int MaxPageSize { get; set; } = 100;
 
     /// <summary>
     /// Number of days to retain deleted account data
     /// Environment variable: ACCOUNTRETENTIONDAYS or BANNOU_ACCOUNTRETENTIONDAYS
     /// </summary>
-    public int AccountRetentionDays = 30;
+    public int AccountRetentionDays { get; set; } = 30;
 
 }

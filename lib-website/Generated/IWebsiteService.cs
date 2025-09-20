@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Services;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,7 +8,7 @@ namespace BeyondImmersion.BannouService.Website;
 /// <summary>
 /// Service interface for Website API
 /// </summary>
-public interface IWebsiteService
+public interface IWebsiteService : IDaprService
 {
     /// <summary>
     /// GetStatus operation

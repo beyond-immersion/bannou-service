@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// Configuration class for Behavior service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(IBehaviorService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(BehaviorService), envPrefix: "BANNOU_")]
 public class BehaviorServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
@@ -19,30 +19,30 @@ public class BehaviorServiceConfiguration : IServiceConfiguration
     /// Maximum number of stackable behaviors per NPC
     /// Environment variable: MAXBEHAVIORSTACKDEPTH or BANNOU_MAXBEHAVIORSTACKDEPTH
     /// </summary>
-    public int MaxBehaviorStackDepth = 10;
+    public int MaxBehaviorStackDepth { get; set; } = 10;
 
     /// <summary>
     /// Maximum number of compiled behaviors to cache
     /// Environment variable: COMPILATIONCACHESIZE or BANNOU_COMPILATIONCACHESIZE
     /// </summary>
-    public int CompilationCacheSize = 1000;
+    public int CompilationCacheSize { get; set; } = 1000;
 
     /// <summary>
     /// Maximum time allowed for behavior compilation
     /// Environment variable: COMPILATIONTIMEOUTSECONDS or BANNOU_COMPILATIONTIMEOUTSECONDS
     /// </summary>
-    public int CompilationTimeoutSeconds = 30;
+    public int CompilationTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// ABML validation strictness level
     /// Environment variable: ABMLVALIDATIONLEVEL or BANNOU_ABMLVALIDATIONLEVEL
     /// </summary>
-    public string ABMLValidationLevel = "standard";
+    public string ABMLValidationLevel { get; set; } = "standard";
 
     /// <summary>
     /// Maximum depth for recursive context variable expansion
     /// Environment variable: CONTEXTVARIABLEEXPANSIONDEPTH or BANNOU_CONTEXTVARIABLEEXPANSIONDEPTH
     /// </summary>
-    public int ContextVariableExpansionDepth = 5;
+    public int ContextVariableExpansionDepth { get; set; } = 5;
 
 }

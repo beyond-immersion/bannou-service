@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Permissions;
 /// Configuration class for Permissions service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(IPermissionsService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(PermissionsService), envPrefix: "BANNOU_")]
 public class PermissionsServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Website;
 /// Service implementation for Website API
 /// </summary>
 [DaprService("website", typeof(IWebsiteService), lifetime: ServiceLifetime.Scoped)]
-public class WebsiteService : IWebsiteService, IDaprService
+public class WebsiteService : IWebsiteService
 {
     private readonly ILogger<WebsiteService> _logger;
     private readonly WebsiteServiceConfiguration _configuration;

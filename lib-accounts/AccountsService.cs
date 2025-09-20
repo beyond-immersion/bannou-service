@@ -16,7 +16,7 @@ namespace BeyondImmersion.BannouService.Accounts;
 /// Uses Dapr state management for persistence instead of Entity Framework
 /// </summary>
 [DaprService("accounts", typeof(IAccountsService), lifetime: ServiceLifetime.Scoped)]
-public class AccountsService : IAccountsService, IDaprService
+public class AccountsService : IAccountsService
 {
     private readonly ILogger<AccountsService> _logger;
     private readonly AccountsServiceConfiguration _configuration;
@@ -24,6 +24,7 @@ public class AccountsService : IAccountsService, IDaprService
 
     private const string ACCOUNTS_STATE_STORE = "statestore";
     private const string ACCOUNTS_KEY_PREFIX = "account-";
+    private const string EMAIL_INDEX_KEY_PREFIX = "email-index-";
 
     public AccountsService(
         ILogger<AccountsService> logger,
@@ -97,6 +98,12 @@ public class AccountsService : IAccountsService, IDaprService
                 ACCOUNTS_STATE_STORE,
                 $"{ACCOUNTS_KEY_PREFIX}{accountId}",
                 account);
+
+            // Create email index for quick lookup
+            await _daprClient.SaveStateAsync(
+                ACCOUNTS_STATE_STORE,
+                $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
+                accountId.ToString());
 
             _logger.LogInformation("Account created successfully: {AccountId}", accountId);
 
@@ -220,7 +227,7 @@ public class AccountsService : IAccountsService, IDaprService
         }
     }
 
-    public Task<(StatusCodes, AccountResponse?)> GetAccountByEmailAsync(
+    public async Task<(StatusCodes, AccountResponse?)> GetAccountByEmailAsync(
         string email,
         CancellationToken cancellationToken = default)
     {
@@ -228,15 +235,50 @@ public class AccountsService : IAccountsService, IDaprService
         {
             _logger.LogDebug("Retrieving account by email: {Email}", email);
 
-            // TODO: Implement email-based lookup with Dapr state store
-            // This requires either secondary indexing or scanning approach
-            _logger.LogWarning("GetAccountByEmail not fully implemented - requires email indexing");
-            return Task.FromResult<(StatusCodes, AccountResponse?)>((StatusCodes.InternalServerError, null));
+            // Get the account ID from email index
+            var accountId = await _daprClient.GetStateAsync<string>(
+                ACCOUNTS_STATE_STORE,
+                $"{EMAIL_INDEX_KEY_PREFIX}{email.ToLowerInvariant()}",
+                cancellationToken: cancellationToken);
+
+            if (string.IsNullOrEmpty(accountId))
+            {
+                _logger.LogWarning("No account found for email: {Email}", email);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get the full account data
+            var account = await _daprClient.GetStateAsync<AccountModel>(
+                ACCOUNTS_STATE_STORE,
+                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                cancellationToken: cancellationToken);
+
+            if (account == null)
+            {
+                _logger.LogWarning("Account data not found for ID: {AccountId} (from email: {Email})", accountId, email);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Convert to response model
+            var response = new AccountResponse
+            {
+                AccountId = Guid.Parse(account.AccountId),
+                Email = account.Email,
+                DisplayName = account.DisplayName,
+                EmailVerified = account.IsVerified,
+                CreatedAt = account.CreatedAt,
+                UpdatedAt = account.UpdatedAt,
+                Roles = new List<string>(), // TODO: Implement roles from account data
+                AuthMethods = new List<AuthMethodInfo>() // TODO: Implement auth methods from account data
+            };
+
+            _logger.LogDebug("Account retrieved successfully for email: {Email}, AccountId: {AccountId}", email, accountId);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving account by email: {Email}", email);
-            return Task.FromResult<(StatusCodes, AccountResponse?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 

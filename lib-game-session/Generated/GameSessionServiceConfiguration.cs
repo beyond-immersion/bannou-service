@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// Configuration class for GameSession service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(IGameSessionService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(GameSessionService), envPrefix: "BANNOU_")]
 public class GameSessionServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />

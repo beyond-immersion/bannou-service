@@ -28,7 +28,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// Uses Permissions service for dynamic API discovery and capability management.
 /// </summary>
 [DaprService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
-public class ConnectService : IConnectService, IDaprService
+public class ConnectService : IConnectService
 {
     private readonly IAuthClient _authClient;
     private readonly IPermissionsClient _permissionsClient;

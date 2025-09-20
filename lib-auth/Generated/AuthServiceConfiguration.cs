@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Auth;
 /// Configuration class for Auth service.
 /// Properties are automatically bound from environment variables.
 /// </summary>
-[ServiceConfiguration(typeof(IAuthService), envPrefix: "BANNOU_")]
+[ServiceConfiguration(typeof(AuthService), envPrefix: "BANNOU_")]
 public class AuthServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
@@ -19,36 +19,36 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// Bcrypt work factor for password hashing (higher = more secure but slower)
     /// Environment variable: BCRYPTWORKFACTOR or BANNOU_BCRYPTWORKFACTOR
     /// </summary>
-    public int BcryptWorkFactor = 12;
+    public int BcryptWorkFactor { get; set; } = 12;
 
     /// <summary>
     /// JWT secret key for token signing
     /// Environment variable: JWTSECRET or BANNOU_JWTSECRET
     /// </summary>
-    public string JwtSecret = string.Empty;
+    public string JwtSecret { get; set; } = string.Empty;
 
     /// <summary>
     /// JWT issuer identifier
     /// Environment variable: JWTISSUER or BANNOU_JWTISSUER
     /// </summary>
-    public string JwtIssuer = "bannou-auth";
+    public string JwtIssuer { get; set; } = "bannou-auth";
 
     /// <summary>
     /// JWT audience identifier
     /// Environment variable: JWTAUDIENCE or BANNOU_JWTAUDIENCE
     /// </summary>
-    public string JwtAudience = "bannou-services";
+    public string JwtAudience { get; set; } = "bannou-services";
 
     /// <summary>
     /// JWT expiration time in minutes
     /// Environment variable: JWTEXPIRATIONMINUTES or BANNOU_JWTEXPIRATIONMINUTES
     /// </summary>
-    public int JwtExpirationMinutes = 1440;
+    public int JwtExpirationMinutes { get; set; } = 1440;
 
     /// <summary>
     /// Access token expiration time in minutes (alias for JwtExpirationMinutes)
     /// Environment variable: ACCESSTOKENEXPIRATIONMINUTES or BANNOU_ACCESSTOKENEXPIRATIONMINUTES
     /// </summary>
-    public int AccessTokenExpirationMinutes = 1440;
+    public int AccessTokenExpirationMinutes { get; set; } = 1440;
 
 }

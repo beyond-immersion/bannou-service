@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Services;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,7 +8,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// <summary>
 /// Service interface for Connect API
 /// </summary>
-public interface IConnectService
+public interface IConnectService : IDaprService
 {
     /// <summary>
     /// ProxyInternalRequest operation

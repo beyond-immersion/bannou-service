@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Services;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,7 +8,7 @@ namespace BeyondImmersion.BannouService.Auth;
 /// <summary>
 /// Service interface for Auth API
 /// </summary>
-public interface IAuthService
+public interface IAuthService : IDaprService
 {
     /// <summary>
     /// Login operation

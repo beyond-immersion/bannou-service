@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// Generated service implementation for GameSession API
 /// </summary>
 [DaprService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped)]
-public class GameSessionService : IGameSessionService, IDaprService
+public class GameSessionService : IGameSessionService
 {
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionServiceConfiguration _configuration;

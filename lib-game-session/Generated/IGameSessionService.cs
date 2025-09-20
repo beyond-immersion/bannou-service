@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Services;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,7 +8,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// <summary>
 /// Service interface for GameSession API
 /// </summary>
-public interface IGameSessionService
+public interface IGameSessionService : IDaprService
 {
     /// <summary>
     /// ListGameSessions operation

@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// Generated service implementation for Behavior API
 /// </summary>
 [DaprService("behavior", typeof(IBehaviorService), lifetime: ServiceLifetime.Scoped)]
-public class BehaviorService : IBehaviorService, IDaprService
+public class BehaviorService : IBehaviorService
 {
     private readonly ILogger<BehaviorService> _logger;
     private readonly BehaviorServiceConfiguration _configuration;

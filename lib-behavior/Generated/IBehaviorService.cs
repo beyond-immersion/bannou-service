@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Services;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,7 +8,7 @@ namespace BeyondImmersion.BannouService.Behavior;
 /// <summary>
 /// Service interface for Behavior API
 /// </summary>
-public interface IBehaviorService
+public interface IBehaviorService : IDaprService
 {
     /// <summary>
     /// CompileAbmlBehavior operation
