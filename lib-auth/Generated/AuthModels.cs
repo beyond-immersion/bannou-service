@@ -127,15 +127,15 @@ public partial class RegisterResponse
     /// <summary>
     /// JWT access token for immediate authentication
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("access_token", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("accessToken", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Access_token { get; set; } = default!;
+    public string AccessToken { get; set; } = default!;
 
     /// <summary>
     /// Refresh token for obtaining new access tokens
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("refresh_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Refresh_token { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("refreshToken", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? RefreshToken { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -158,15 +158,15 @@ public partial class LoginResponse
     /// <summary>
     /// JWT access token for authentication
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("access_token", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("accessToken", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Access_token { get; set; } = default!;
+    public string AccessToken { get; set; } = default!;
 
     /// <summary>
     /// Refresh token for obtaining new access tokens
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("refresh_token", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string? Refresh_token { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("refreshToken", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? RefreshToken { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

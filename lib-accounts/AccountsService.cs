@@ -88,6 +88,7 @@ public class AccountsService : IAccountsService
                 AccountId = accountId.ToString(),
                 Email = body.Email,
                 DisplayName = body.DisplayName,
+                PasswordHash = body.PasswordHash, // Store pre-hashed password from Auth service
                 IsVerified = body.EmailVerified == true,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
@@ -265,6 +266,7 @@ public class AccountsService : IAccountsService
                 AccountId = Guid.Parse(account.AccountId),
                 Email = account.Email,
                 DisplayName = account.DisplayName,
+                PasswordHash = account.PasswordHash, // Include password hash for auth service validation
                 EmailVerified = account.IsVerified,
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
@@ -501,6 +503,7 @@ public class AccountModel
     public string AccountId { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? DisplayName { get; set; }
+    public string? PasswordHash { get; set; } // BCrypt hashed password for authentication
     public bool IsVerified { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }

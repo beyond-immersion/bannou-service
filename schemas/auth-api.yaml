@@ -356,13 +356,13 @@ components:
       type: object
       description: Response from successful user registration
       required:
-        - access_token
+        - accessToken
       properties:
-        access_token:
+        accessToken:
           type: string
           description: JWT access token for immediate authentication
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature"
-        refresh_token:
+        refreshToken:
           type: string
           description: Refresh token for obtaining new access tokens
           nullable: true
@@ -372,13 +372,13 @@ components:
       type: object
       description: Response from successful user login
       required:
-        - access_token
+        - accessToken
       properties:
-        access_token:
+        accessToken:
           type: string
           description: JWT access token for authentication
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature"
-        refresh_token:
+        refreshToken:
           type: string
           description: Refresh token for obtaining new access tokens
           nullable: true

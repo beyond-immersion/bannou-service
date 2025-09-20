@@ -1,40 +1,12 @@
-# CURRENT TASKS - Connect Service WebSocket Protocol Implementation
+# CURRENT TASKS - Service Integration Implementation Phase
 
-*Updated: 2025-01-19 - Implementation phase following successful authentication foundation*
+*Updated: 2025-01-20 - Core implementation phase focused on auth/accounts/connect service integration*
 
 ## Executive Summary
 
-**Implementation Phase**: We've successfully validated the architecture and are now implementing the designed systems according to technical guides. Code generation, JWT security model, and basic auth flows are working. Focus is on completing auth service implementation and Connect service WebSocket protocol per the Connect Service Implementation Guide.
+**Implementation Phase**: ✅ **Segmentation faults resolved!** We've successfully completed null safety fixes and are now in active implementation of core service functionality. The architecture is sound and code generation pipeline is fully operational. Focus is on completing auth service password handling, accounts service event publishing, and connect service WebSocket protocol.
 
-**Key Insight**: We have a solid foundation but significant implementation work remains. This is about building out designed systems, not fixing broken architecture. Both http-tester (service-to-service) and edge-tester (client perspective) validation will be essential for ensuring complete functionality.
-
-## ⚠️ CRITICAL BLOCKER - Segmentation Fault During HTTP Tests
-
-**Issue**: Service crashes with exit code 139 (segmentation fault) during HTTP integration tests
-**Impact**: Tests cannot pass, blocking all development progress
-**Investigation Status**: Root cause unknown after extensive debugging
-
-### Investigation Summary
-1. **Confirmed**: Segfault occurs after processing several successful requests
-2. **Confirmed**: Infrastructure and initial service startup work correctly
-3. **Disproven**: HeaderArray filters are NOT the cause (disabled them, segfault persists)
-4. **Unknown**: Actual root cause of the segmentation fault
-
-### Potential Causes to Investigate
-- .NET 9 runtime issue (preview version being used)
-- Dapr integration memory management
-- Service-to-service communication patterns
-- Database/Redis connection issues
-- Garbage collection conflicts
-- Native library incompatibility
-- Threading/async issues in request pipeline
-
-### Next Investigation Steps
-1. Add verbose logging around request completion pipeline
-2. Check for memory leaks in service-to-service calls
-3. Test with .NET 8 instead of .NET 9 preview
-4. Isolate which specific service call triggers the crash
-5. Run with debugging symbols and core dump analysis
+**Key Insight**: We have a solid foundation with working JWT validation, Redis session management, and service routing. The primary work is completing missing implementations rather than fixing broken architecture. All three test tiers (infrastructure, http, edge) are operational and ready for validation.
 
 ## Current Implementation Status
 
@@ -59,31 +31,34 @@
 - ServiceAppMappingResolver with "bannou" default working
 - HTTP integration demonstrated (GetSessions test passing)
 
-### 🚧 Auth Service - Partially Implemented
+### 🚧 Auth Service - Core Issues to Fix
 
-**Core Authentication**: 🚧 **FOUNDATION WORKING, DETAILS INCOMPLETE**
-- ✅ Login/registration basic flow operational
+**Core Authentication**: 🚧 **JWT/SESSION WORKING, PASSWORD HANDLING BROKEN**
 - ✅ JWT generation and Redis session storage working
+- ✅ ValidateTokenAsync, LogoutAsync, GetSessionsAsync implemented
+- ✅ Header-based authentication (x-from-authorization) working
+- ❌ **CRITICAL**: Password validation NOT implemented (TODO comment in LoginAsync line 99)
+- ❌ **CRITICAL**: Registration doesn't hash passwords before storing
 - ❌ OAuth provider integration (Discord, Google, etc.) incomplete
-- ❌ Steam authentication incomplete
 - ❌ Password reset functionality incomplete
-- ❌ Multi-session management needs refinement
 
-**Configuration Integration**: 🚧 **MIXED**
+**Configuration Integration**: ✅ **WORKING**
 - ✅ AuthServiceConfiguration properly generated and used
-- ❌ Some OAuth provider configurations incomplete
-- ❌ Email service integration for password reset missing
+- ✅ JWT configuration loading from environment variables
+- ❌ BCrypt work factor configuration needs implementation
 
-### 🚧 Accounts Service - Event System Missing
+### 🚧 Accounts Service - Missing Event System
 
-**CRUD Operations**: ✅ **WORKING**
-- Basic account creation, retrieval, update, delete functional
-- Integration with auth service working
+**CRUD Operations**: 🚧 **BASIC WORKING, PASSWORD FIELD MISSING**
+- ✅ Basic account creation, retrieval, update, delete functional
+- ✅ Integration with auth service working
+- ❌ **CRITICAL**: No password hash field in AccountModel
+- ❌ **CRITICAL**: GetAccountByEmail doesn't return password for validation
 
 **Event Publishing**: ❌ **CRITICAL MISSING**
-- Need account.created, account.updated, account.deleted events
-- Auth service needs to subscribe to account.deleted → invalidate sessions
-- Permission service integration for role changes
+- ❌ No event publishing for account.created, account.updated, account.deleted
+- ❌ Auth service can't subscribe to account.deleted → session invalidation broken
+- ❌ No integration with RabbitMQ event bus
 
 ### ✅ Connect Service - What's Working
 
@@ -324,13 +299,17 @@ var sessionId = await connectService.ValidateJWTAndExtractSessionAsync(authoriza
 
 ## Current Immediate Actions
 
-### Week 1 Priorities (In Order)
-1. ✅ **COMPLETED**: Auth service ValidateTokenAsync, LogoutAsync, GetSessionsAsync implementation
-2. ✅ **COMPLETED**: Header-based authentication (x-from-authorization) integration
-3. ✅ **COMPLETED**: Service client JWT parameter exclusion via NSwag filtering
-4. **NEXT**: Fix auth service registration/login flow issues in http-tester
-5. **NEXT**: Implement accounts service event publishing (account.created, account.updated, account.deleted)
-6. **NEXT**: Add auth service event subscription for session invalidation
+### Current Week Priorities (Implementation Phase - In Order)
+1. ✅ **COMPLETED**: Segmentation fault resolution and null safety fixes
+2. ✅ **COMPLETED**: Auth service ValidateTokenAsync, LogoutAsync, GetSessionsAsync implementation
+3. ✅ **COMPLETED**: Header-based authentication (x-from-authorization) integration
+4. **IN PROGRESS**: Fix auth service password validation (LoginAsync line 99 TODO)
+5. **NEXT**: Add password hashing to registration flow (BCrypt integration)
+6. **NEXT**: Add password hash field to AccountModel and fix GetAccountByEmail
+7. **NEXT**: Implement accounts service event publishing (account.created, account.updated, account.deleted)
+8. **NEXT**: Add auth service event subscription for session invalidation
+9. **NEXT**: Fix test field name mismatches (Access_token vs AccessToken)
+10. **NEXT**: Run make test-http and iterate on fixing remaining issues
 
 ### Week 2 Priorities
 1. **Complete Connect service WebSocket binary protocol** (31-byte header implementation)

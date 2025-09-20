@@ -195,6 +195,12 @@ public partial class AccountResponse
     [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
     public string? DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// BCrypt hashed password for authentication
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? PasswordHash { get; set; } = default!;
+
     [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;

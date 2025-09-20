@@ -480,6 +480,10 @@ components:
         displayName:
           type: string
           nullable: true
+        passwordHash:
+          type: string
+          nullable: true
+          description: BCrypt hashed password for authentication
         createdAt:
           type: string
           format: date-time

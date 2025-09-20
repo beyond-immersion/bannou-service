@@ -11,6 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using BCrypt.Net;
 
 namespace BeyondImmersion.BannouService.Auth;
 
@@ -96,9 +97,21 @@ public class AuthService : IAuthService
                 return (StatusCodes.InternalServerError, null);
             }
 
-            // TODO: Verify password (would need to get password hash from accounts service)
-            // For now, assume validation passed
-            _logger.LogInformation("Password verification for email: {Email} (implementation pending)", body.Email);
+            // Verify password against stored hash
+            if (string.IsNullOrWhiteSpace(account.PasswordHash))
+            {
+                _logger.LogWarning("Account has no password hash stored: {Email}", body.Email);
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            bool passwordValid = BCrypt.Net.BCrypt.Verify(body.Password, account.PasswordHash);
+            if (!passwordValid)
+            {
+                _logger.LogWarning("Password verification failed for email: {Email}", body.Email);
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            _logger.LogInformation("Password verification successful for email: {Email}", body.Email);
 
             // Generate tokens
             var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
@@ -139,6 +152,10 @@ public class AuthService : IAuthService
                 return (StatusCodes.BadRequest, null);
             }
 
+            // Hash password before storing
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.Password, workFactor: 12);
+            _logger.LogInformation("Password hashed successfully for registration");
+
             // Create account via AccountsClient service call
             _logger.LogInformation("Creating account via AccountsClient for registration: {Email}", body.Email ?? $"{body.Username}@example.com");
 
@@ -146,6 +163,7 @@ public class AuthService : IAuthService
             {
                 Email = body.Email ?? $"{body.Username}@example.com",
                 DisplayName = body.Username,
+                PasswordHash = passwordHash, // Store hashed password
                 EmailVerified = false
             };
 
@@ -179,8 +197,8 @@ public class AuthService : IAuthService
 
             return (StatusCodes.OK, new RegisterResponse
             {
-                Access_token = accessToken,
-                Refresh_token = refreshToken
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
             });
         }
         catch (Exception ex)

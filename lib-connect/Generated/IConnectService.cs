@@ -10,19 +10,19 @@ namespace BeyondImmersion.BannouService.Connect;
 /// </summary>
 public interface IConnectService : IDaprService
 {
-    /// <summary>
-    /// ProxyInternalRequest operation
-    /// </summary>
-    Task<(StatusCodes, InternalProxyResponse?)> ProxyInternalRequestAsync(InternalProxyRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        /// <summary>
+        /// ProxyInternalRequest operation
+        /// </summary>
+        Task<(StatusCodes, InternalProxyResponse?)> ProxyInternalRequestAsync(InternalProxyRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
-    /// <summary>
-    /// DiscoverAPIs operation
-    /// </summary>
-    Task<(StatusCodes, ApiDiscoveryResponse?)> DiscoverAPIsAsync(ApiDiscoveryRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        /// <summary>
+        /// DiscoverAPIs operation
+        /// </summary>
+        Task<(StatusCodes, ApiDiscoveryResponse?)> DiscoverAPIsAsync(ApiDiscoveryRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
-    /// <summary>
-    /// GetServiceMappings operation
-    /// </summary>
-    Task<(StatusCodes, ServiceMappingsResponse?)> GetServiceMappingsAsync(CancellationToken cancellationToken = default(CancellationToken));
+        /// <summary>
+        /// GetServiceMappings operation
+        /// </summary>
+        Task<(StatusCodes, ServiceMappingsResponse?)> GetServiceMappingsAsync(CancellationToken cancellationToken = default(CancellationToken));
 
 }

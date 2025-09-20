@@ -56,7 +56,7 @@ public class AuthTestHandler : IServiceTestHandler
 
             var response = await authClient.RegisterAsync(registerRequest);
 
-            if (string.IsNullOrWhiteSpace(response.Access_token))
+            if (string.IsNullOrWhiteSpace(response.AccessToken))
                 return TestResult.Failed("Registration succeeded but no access token returned");
 
             return TestResult.Successful($"Registration flow completed successfully for user {testUsername}");
@@ -278,7 +278,7 @@ public class AuthTestHandler : IServiceTestHandler
             };
 
             var registerResponse = await authClient.RegisterAsync(registerRequest);
-            if (string.IsNullOrWhiteSpace(registerResponse.Access_token))
+            if (string.IsNullOrWhiteSpace(registerResponse.AccessToken))
                 return TestResult.Failed("Registration succeeded but no access token returned");
 
             // Step 2: Login with the same credentials
