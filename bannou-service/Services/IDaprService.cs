@@ -14,6 +14,21 @@ namespace BeyondImmersion.BannouService.Services;
 public interface IDaprService
 {
     private static (Type, Type, DaprServiceAttribute)[]? _services;
+
+    /// <summary>
+    /// Called when a Dapr event is received by this service.
+    /// Override in service implementations to handle specific events.
+    /// Default implementation does nothing.
+    /// </summary>
+    /// <typeparam name="T">The event data type</typeparam>
+    /// <param name="topic">The event topic (e.g., "account.deleted")</param>
+    /// <param name="eventData">The event data payload</param>
+    /// <returns>Task representing the event handling operation</returns>
+    virtual Task OnEventReceivedAsync<T>(string topic, T eventData) where T : class
+    {
+        // Default empty implementation
+        return Task.CompletedTask;
+    }
     /// <summary>
     /// Gets all discovered service types with their attributes.
     /// </summary>

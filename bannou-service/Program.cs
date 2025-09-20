@@ -370,6 +370,8 @@ public static class Program
                 }
             }
 
+            // Event subscriptions will be handled by generated controller methods
+
             Logger.Log(LogLevel.Information, null, "Services added and initialized successfully- WebHost starting.");
 
             // start webhost

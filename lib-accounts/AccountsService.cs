@@ -168,6 +168,13 @@ public class AccountsService : IAccountsService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Check if account is soft-deleted
+            if (account.DeletedAt.HasValue)
+            {
+                _logger.LogWarning("Account is deleted: {AccountId}", accountId);
+                return (StatusCodes.NotFound, null);
+            }
+
             var response = new AccountResponse
             {
                 AccountId = Guid.Parse(account.AccountId),
@@ -291,6 +298,13 @@ public class AccountsService : IAccountsService
             if (account == null)
             {
                 _logger.LogWarning("Account data not found for ID: {AccountId} (from email: {Email})", accountId, email);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check if account is soft-deleted
+            if (account.DeletedAt.HasValue)
+            {
+                _logger.LogWarning("Account is deleted for email: {Email}, AccountId: {AccountId}", email, accountId);
                 return (StatusCodes.NotFound, null);
             }
 

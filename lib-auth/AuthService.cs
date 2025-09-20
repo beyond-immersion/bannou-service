@@ -9,8 +9,8 @@ using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -1149,12 +1149,35 @@ public class AuthService : IAuthService
     #region Event Handlers
 
     /// <summary>
+    /// Called when a Dapr event is received. Routes to appropriate event handlers.
+    /// </summary>
+    public async Task OnEventReceivedAsync<T>(string topic, T eventData) where T : class
+    {
+        _logger.LogInformation("AuthService received event {Topic} with data type {DataType}", topic, typeof(T).Name);
+
+        switch (topic)
+        {
+            case "account.deleted":
+                if (eventData is AccountDeletedEvent deletedEvent)
+                {
+                    await HandleAccountDeletedEventAsync(deletedEvent);
+                }
+                else
+                {
+                    _logger.LogWarning("Received account.deleted event but data type is {DataType}, expected AccountDeletedEvent", typeof(T).Name);
+                }
+                break;
+            default:
+                _logger.LogWarning("AuthService received unknown event topic: {Topic}", topic);
+                break;
+        }
+    }
+
+    /// <summary>
     /// Handles account deleted events to invalidate all sessions for the deleted account.
     /// This ensures security by preventing continued access after account deletion.
     /// </summary>
-    [Topic("bannou-pubsub", "account.deleted")]
-    [HttpPost("events/account-deleted")]
-    public async Task<IActionResult> HandleAccountDeletedEventAsync([FromBody] AccountDeletedEvent eventData)
+    private async Task HandleAccountDeletedEventAsync(AccountDeletedEvent eventData)
     {
         try
         {
@@ -1166,17 +1189,14 @@ public class AuthService : IAuthService
 
             _logger.LogInformation("Successfully invalidated all sessions for deleted account: {AccountId}",
                 eventData.AccountId);
-
-            return new OkObjectResult(new { status = "processed", eventId = eventData.EventId });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to process account deleted event {EventId} for account: {AccountId}",
                 eventData.EventId, eventData.AccountId);
-            return new ObjectResult(new { error = "Internal server error", eventId = eventData.EventId })
-            {
-                StatusCode = 500
-            };
+
+            // Don't re-throw - log the error and continue
+            // The generated controller will handle HTTP response for the event endpoint
         }
     }
 

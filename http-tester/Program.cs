@@ -184,7 +184,7 @@ public class Program
         // In daemon mode, run all tests automatically
         if (IsDaemonMode(args))
         {
-            Console.WriteLine("Running in daemon mode - executing all tests sequentially with fail-fast on service crashes...");
+            Console.WriteLine("Running in daemon mode - executing tests sequentially with fail-fast on service crashes...");
             int failedTests = 0;
             int totalTests = 0;
 
@@ -212,10 +212,10 @@ public class Program
                         {
                             Console.WriteLine($"🚨 FATAL: Service crash detected in test '{kvp.Value.Name}'. Exiting immediately to prevent cascade failures.");
                             Console.WriteLine($"🚨 Error details: {result.Message}");
+
                             if (result.Exception != null)
-                            {
                                 Console.WriteLine($"🚨 Exception: {result.Exception.Message}");
-                            }
+
                             return 139;  // Return segfault exit code to indicate service crash
                         }
                     }
@@ -348,7 +348,7 @@ public class Program
             {
                 var handlerName = handler.GetType().Name.Replace("TestHandler", "").ToLowerInvariant();
                 return handlerName.Contains(pluginFilter.ToLowerInvariant()) ||
-                       pluginFilter.ToLowerInvariant().Contains(handlerName);
+                        pluginFilter.ToLowerInvariant().Contains(handlerName);
             }).ToList();
 
             if (testHandlers.Count == 0)

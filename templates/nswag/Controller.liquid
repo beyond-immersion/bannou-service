@@ -188,6 +188,43 @@ public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} cla
 {%-         endif %}
 
 {%     endfor -%}
+{%- comment -%}
+Generate event handler methods from x-event-subscriptions in OpenAPI spec
+{%- endcomment -%}
+{%- if Document.ExtensionData["x-event-subscriptions"] -%}
+{%-     for subscription in Document.ExtensionData["x-event-subscriptions"] -%}
+{%-         assign topicParts = subscription.topic | split: "." -%}
+{%-         assign eventName = "" -%}
+{%-         for part in topicParts -%}
+{%-             assign eventName = eventName | append: part | capitalize -%}
+{%-         endfor -%}
+{%-         assign methodName = "Handle" | append: eventName | append: "Event" -%}
+
+    /// <summary>
+    /// Event handler for {{ subscription.topic }} events
+    /// </summary>
+    /// <remarks>
+    /// {{ subscription.description }}
+    /// </remarks>
+    [Dapr.Topic("{{ subscription.pubsub }}", "{{ subscription.topic }}")]
+    [{{ AspNetNamespace }}.HttpPost("{{ subscription.path }}")]
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> {{ methodName }}([{{ AspNetNamespace }}.FromBody] object eventData)
+    {
+        try
+        {
+            // Delegate to service's OnEventReceivedAsync method
+            await _implementation.OnEventReceivedAsync("{{ subscription.topic }}", eventData);
+            return Ok(new { status = "processed" });
+        }
+        catch (System.Exception ex)
+        {
+            // Log error but don't expose internal details
+            return StatusCode(500, new { error = "Internal server error" });
+        }
+    }
+
+{%-     endfor -%}
+{%- endif -%}
 }
 {% elsif GenerateAbstractControllers -%}
 {% template Controller.Class.Annotations %}

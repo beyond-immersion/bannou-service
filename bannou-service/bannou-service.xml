@@ -924,6 +924,22 @@
             Internal server error (500).
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.IDaprEvent">
+            <summary>
+            Base interface for all Dapr events.
+            Provides common properties that all events should have.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.IDaprEvent.EventId">
+            <summary>
+            Unique identifier for this event instance.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.IDaprEvent.Timestamp">
+            <summary>
+            Timestamp when the event occurred.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ExtensionMethods">
             <summary>
             Extension methods for various types used throughout the Bannou service platform.
@@ -1941,6 +1957,17 @@
              any API calls that desire to create/modify inventory
              data in the game.
              </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.OnEventReceivedAsync``1(System.String,``0)">
+            <summary>
+            Called when a Dapr event is received by this service.
+            Override in service implementations to handle specific events.
+            Default implementation does nothing.
+            </summary>
+            <typeparam name="T">The event data type</typeparam>
+            <param name="topic">The event topic (e.g., "account.deleted")</param>
+            <param name="eventData">The event data payload</param>
+            <returns>Task representing the event handling operation</returns>
         </member>
         <member name="P:BeyondImmersion.BannouService.Services.IDaprService.Services">
             <summary>

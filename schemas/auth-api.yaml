@@ -611,3 +611,11 @@ x-service-configuration:
       type: integer
       description: Access token expiration time in minutes (alias for JwtExpirationMinutes)
       default: 1440
+
+x-event-subscriptions:
+  - topic: account.deleted
+    pubsub: bannou-pubsub
+    path: /dapr/events/account-deleted
+    schema:
+      $ref: 'accounts-api.yaml#/components/schemas/AccountDeletedEvent'
+    description: Subscribe to account deletion events to invalidate sessions
