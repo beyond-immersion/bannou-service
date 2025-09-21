@@ -158,15 +158,23 @@ public static class Program
                     options.SaveToken = false; // We don't need to save tokens
                     options.IncludeErrorDetails = true; // Include error details for debugging
 
-                    // Set a dummy key to prevent startup errors (real validation happens in AuthService)
+                    // Set actual JWT secret to prevent validation errors in CI
+                    var jwtSecret = webAppBuilder.Configuration["BANNOU_JWTSECRET"]
+                        ?? webAppBuilder.Configuration["AUTH_JWT_SECRET"]
+                        ?? webAppBuilder.Configuration["JWTSECRET"]
+                        ?? "default-fallback-secret-key-for-development";
+
+                    var key = System.Text.Encoding.ASCII.GetBytes(jwtSecret);
+
                     options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                     {
                         ValidateIssuer = false,
                         ValidateAudience = false,
                         ValidateLifetime = false,
-                        ValidateIssuerSigningKey = false,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(key),
                         RequireExpirationTime = false,
-                        RequireSignedTokens = false
+                        RequireSignedTokens = true
                     };
                 });
 
