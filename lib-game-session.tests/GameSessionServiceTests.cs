@@ -1,9 +1,11 @@
 using BeyondImmersion.BannouService.GameSession;
+using Dapr.Client;
 
 namespace BeyondImmersion.BannouService.GameSession.Tests;
 
 public class GameSessionServiceTests
 {
+    private readonly Mock<DaprClient> _mockDaprClient = new();
     private readonly Mock<ILogger<GameSessionService>> _mockLogger = new();
     private readonly Mock<GameSessionServiceConfiguration> _mockConfiguration = new();
 
@@ -11,7 +13,7 @@ public class GameSessionServiceTests
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
         // Arrange & Act
-        var service = new GameSessionService(_mockLogger.Object, _mockConfiguration.Object);
+        var service = new GameSessionService(_mockDaprClient.Object, _mockLogger.Object, _mockConfiguration.Object);
 
         // Assert
         Assert.NotNull(service);

@@ -62,11 +62,11 @@ public class PluginLoader
     /// <returns>Number of enabled plugins successfully loaded</returns>
     public async Task<int?> DiscoverAndLoadPluginsAsync(string pluginsDirectory, IList<string>? requestedPlugins = null)
     {
-        _logger.LogInformation("🔍 Discovering plugins in: {PluginsDirectory}", pluginsDirectory);
+        _logger.LogInformation("Discovering plugins in: {PluginsDirectory}", pluginsDirectory);
 
         if (!Directory.Exists(pluginsDirectory))
         {
-            _logger.LogWarning("⚠️  Plugins directory does not exist: {PluginsDirectory}", pluginsDirectory);
+            _logger.LogWarning("Plugins directory does not exist: {PluginsDirectory}", pluginsDirectory);
             return 0;
         }
 
@@ -80,7 +80,7 @@ public class PluginLoader
             // Skip if specific plugins requested and this isn't one of them
             if (requestedPlugins != null && !requestedPlugins.Contains(pluginName))
             {
-                _logger.LogDebug("⏭️  Skipping plugin '{PluginName}' (not in requested list)", pluginName);
+                _logger.LogDebug("Skipping plugin '{PluginName}' (not in requested list)", pluginName);
                 continue;
             }
 
@@ -97,17 +97,17 @@ public class PluginLoader
                     if (IsServiceEnabled(serviceName))
                     {
                         _enabledPlugins.Add(plugin);
-                        _logger.LogInformation("✅ Service {ServiceName} is enabled", serviceName);
+                        _logger.LogInformation("Service {ServiceName} is enabled", serviceName);
                     }
                     else
                     {
-                        _logger.LogInformation("⚠️  Service {ServiceName} is disabled", serviceName);
+                        _logger.LogInformation("Service {ServiceName} is disabled", serviceName);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to load plugin from directory: {PluginDirectory}", pluginDir);
+                _logger.LogError(ex, "Failed to load plugin from directory: {PluginDirectory}", pluginDir);
                 return null;
             }
         }
@@ -115,7 +115,7 @@ public class PluginLoader
         // STAGE 2: Discover types for DI registration from ALL assemblies
         DiscoverTypesForRegistration();
 
-        _logger.LogInformation("📋 Plugin discovery complete. {AllCount} plugins discovered, {EnabledCount} enabled",
+        _logger.LogInformation("Plugin discovery complete. {AllCount} plugins discovered, {EnabledCount} enabled",
             _allPlugins.Count, _enabledPlugins.Count);
 
         return _enabledPlugins.Count;
@@ -173,7 +173,7 @@ public class PluginLoader
     /// </summary>
     private void DiscoverTypesForRegistration()
     {
-        _logger.LogInformation("🔍 Discovering types for DI registration from {AssemblyCount} assemblies", _loadedAssemblies.Count);
+        _logger.LogInformation("Discovering types for DI registration from {AssemblyCount} assemblies", _loadedAssemblies.Count);
 
         _clientTypesToRegister.Clear();
         _serviceTypesToRegister.Clear();
@@ -199,7 +199,7 @@ public class PluginLoader
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to discover types from assembly: {PluginName}", pluginName);
+                _logger.LogError(ex, "Failed to discover types from assembly: {PluginName}", pluginName);
             }
         }
 
@@ -216,11 +216,11 @@ public class PluginLoader
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to discover configuration types from assembly: {PluginName}", pluginName);
+                _logger.LogError(ex, "Failed to discover configuration types from assembly: {PluginName}", pluginName);
             }
         }
 
-        _logger.LogInformation("✅ Type discovery complete. {ClientCount} client types, {ServiceCount} service types, {ConfigCount} configuration types",
+        _logger.LogInformation("Type discovery complete. {ClientCount} client types, {ServiceCount} service types, {ConfigCount} configuration types",
             _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _configurationTypesToRegister.Count);
     }
 
@@ -237,10 +237,10 @@ public class PluginLoader
         foreach (var clientType in clientTypes)
         {
             _clientTypesToRegister.Add(clientType);
-            _logger.LogDebug("📋 Will register client: {Implementation}", clientType.Name);
+            _logger.LogDebug("Will register client: {Implementation}", clientType.Name);
         }
 
-        _logger.LogDebug("🔍 Discovered {Count} client types in assembly {AssemblyName}",
+        _logger.LogDebug("Discovered {Count} client types in assembly {AssemblyName}",
             clientTypes.Count, assembly.GetName().Name);
     }
 
@@ -263,7 +263,7 @@ public class PluginLoader
                 var lifetime = serviceAttr.Lifetime;
 
                 _serviceTypesToRegister.Add((interfaceType, serviceType, lifetime));
-                _logger.LogDebug("📋 Will register service: {Interface} -> {Implementation} ({Lifetime})",
+                _logger.LogDebug("Will register service: {Interface} -> {Implementation} ({Lifetime})",
                     interfaceType.Name, serviceType.Name, lifetime);
             }
             else
@@ -273,7 +273,7 @@ public class PluginLoader
             }
         }
 
-        _logger.LogDebug("🔍 Discovered {Count} service types in assembly {AssemblyName}",
+        _logger.LogDebug("Discovered {Count} service types in assembly {AssemblyName}",
             serviceTypes.Count(t => t.GetCustomAttribute<DaprServiceAttribute>() != null), assembly.GetName().Name);
     }
 
@@ -284,13 +284,13 @@ public class PluginLoader
     /// </summary>
     private void DiscoverConfigurationTypes(Assembly assembly, string pluginName)
     {
-        _logger.LogInformation("🔍 Discovering configuration types in assembly {AssemblyName} for plugin {PluginName}", assembly.GetName().Name, pluginName);
+        _logger.LogInformation("Discovering configuration types in assembly {AssemblyName} for plugin {PluginName}", assembly.GetName().Name, pluginName);
 
         var configurationTypes = assembly.GetTypes()
             .Where(t => !t.IsInterface && !t.IsAbstract && typeof(IServiceConfiguration).IsAssignableFrom(t))
             .ToList();
 
-        _logger.LogInformation("📋 Found {Count} configuration types in assembly {AssemblyName}: {ConfigTypes}",
+        _logger.LogInformation("Found {Count} configuration types in assembly {AssemblyName}: {ConfigTypes}",
             configurationTypes.Count, assembly.GetName().Name, string.Join(", ", configurationTypes.Select(t => t.Name)));
 
         foreach (var configurationType in configurationTypes)
@@ -306,13 +306,13 @@ public class PluginLoader
 
                 if (serviceType != null)
                 {
-                    _logger.LogDebug("✅ Successfully resolved ServiceConfiguration attribute for {ConfigType} -> {ServiceType}",
+                    _logger.LogDebug("Successfully resolved ServiceConfiguration attribute for {ConfigType} -> {ServiceType}",
                         configurationType.Name, serviceType.Name);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogDebug("⚠️  Failed to read ServiceConfiguration attribute for {ConfigType}. Error: {Error}",
+                _logger.LogDebug("Failed to read ServiceConfiguration attribute for {ConfigType}. Error: {Error}",
                     configurationType.Name, ex.Message);
             }
 
@@ -320,7 +320,7 @@ public class PluginLoader
             if (serviceType == null && configurationType.Name.EndsWith("ServiceConfiguration"))
             {
                 var serviceName = configurationType.Name.Replace("ServiceConfiguration", "Service");
-                _logger.LogDebug("🔍 Using naming convention fallback for {ConfigType} -> {ServiceName}",
+                _logger.LogDebug("Using naming convention fallback for {ConfigType} -> {ServiceName}",
                     configurationType.Name, serviceName);
 
                 // Find service by name in the same assembly
@@ -329,7 +329,7 @@ public class PluginLoader
 
                 if (serviceType != null)
                 {
-                    _logger.LogDebug("✅ Found service {ServiceType} via naming convention for configuration {ConfigType}",
+                    _logger.LogDebug("Found service {ServiceType} via naming convention for configuration {ConfigType}",
                         serviceType.Name, configurationType.Name);
                 }
             }
@@ -351,23 +351,22 @@ public class PluginLoader
 
                     _configurationTypesToRegister.Add((configurationType, configLifetime));
 
-                    _logger.LogInformation("📋 Will register configuration: {ConfigType} ({Lifetime}) for service {ServiceType} (service lifetime: {ServiceLifetime})",
+                    _logger.LogInformation("Will register configuration: {ConfigType} ({Lifetime}) for service {ServiceType} (service lifetime: {ServiceLifetime})",
                         configurationType.Name, configLifetime, serviceType.Name, serviceRegistration.lifetime);
                 }
                 else
                 {
-                    _logger.LogWarning("⚠️  Configuration {ConfigType} references service {ServiceType} but no matching service registration found. Skipping configuration.",
-                        configurationType.Name, serviceType.Name);
+                    _logger.LogWarning("Configuration {ConfigType} references service {ServiceType} but no matching service registration found. Skipping configuration.", configurationType.Name, serviceType.Name);
                 }
             }
             else
             {
-                _logger.LogWarning("🚫 Skipping configuration {ConfigType} - could not determine associated service via attribute or naming convention",
+                _logger.LogWarning("Skipping configuration {ConfigType} - could not determine associated service via attribute or naming convention",
                     configurationType.Name);
             }
         }
 
-        _logger.LogDebug("🔍 Discovered {Count} configuration types in assembly {AssemblyName}",
+        _logger.LogDebug("Discovered {Count} configuration types in assembly {AssemblyName}",
             _configurationTypesToRegister.Count, assembly.GetName().Name);
     }
 
@@ -378,7 +377,7 @@ public class PluginLoader
     /// <param name="services">Service collection</param>
     public void ConfigureServices(IServiceCollection services)
     {
-        _logger.LogInformation("🔧 Centrally registering {ClientCount} client types, {ServiceCount} service types, and {ConfigCount} configuration types",
+        _logger.LogInformation("Centrally registering {ClientCount} client types, {ServiceCount} service types, and {ConfigCount} configuration types",
             _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _configurationTypesToRegister.Count);
 
         // STAGE 1: Register ALL client types (even from disabled plugins for dependencies)
@@ -396,17 +395,17 @@ public class PluginLoader
         {
             try
             {
-                _logger.LogDebug("⚙️  Calling additional ConfigureServices for enabled plugin: {PluginName}", plugin.PluginName);
+                _logger.LogDebug("Calling additional ConfigureServices for enabled plugin: {PluginName}", plugin.PluginName);
                 plugin.ConfigureServices(services);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to configure additional services for plugin: {PluginName}", plugin.PluginName);
+                _logger.LogError(ex, "Failed to configure additional services for plugin: {PluginName}", plugin.PluginName);
                 throw; // Re-throw to fail startup if plugin configuration fails
             }
         }
 
-        _logger.LogInformation("✅ Service configuration complete - centralized type registration finished");
+        _logger.LogInformation("Service configuration complete - centralized type registration finished");
     }
 
     /// <summary>
@@ -416,7 +415,7 @@ public class PluginLoader
     /// <param name="services">Service collection</param>
     public void FinalizeConfigurationRegistrations(IServiceCollection services)
     {
-        _logger.LogInformation("🔧 Finalizing configuration registrations to override auto-registrations...");
+        _logger.LogInformation("Finalizing configuration registrations to override auto-registrations...");
 
         var finalizedCount = 0;
         foreach (var (configurationType, lifetime) in _configurationTypesToRegister)
@@ -425,19 +424,18 @@ public class PluginLoader
             var existingRegistrations = services.Where(s => s.ServiceType == configurationType).ToList();
             foreach (var existing in existingRegistrations)
             {
-                _logger.LogWarning("⚠️  Removing auto-registered configuration: {ConfigType} (Lifetime: {ExistingLifetime})",
-                    configurationType.Name, existing.Lifetime);
+                _logger.LogWarning("Removing auto-registered configuration: {ConfigType} (Lifetime: {ExistingLifetime})", configurationType.Name, existing.Lifetime);
                 services.Remove(existing);
             }
 
             // Re-add with correct lifetime
             services.Add(new ServiceDescriptor(configurationType, configurationType, lifetime));
-            _logger.LogInformation("✅ Finalized configuration: {ConfigType} ({Lifetime})",
+            _logger.LogInformation("Finalized configuration: {ConfigType} ({Lifetime})",
                 configurationType.Name, lifetime);
             finalizedCount++;
         }
 
-        _logger.LogInformation("✅ Finalized {Count} configuration registrations", finalizedCount);
+        _logger.LogInformation("Finalized {Count} configuration registrations", finalizedCount);
     }
 
     /// <summary>
@@ -460,12 +458,12 @@ public class PluginLoader
                 // Register with the determined lifetime
                 services.Add(new ServiceDescriptor(clientInterface, clientType, lifetime));
 
-                _logger.LogDebug("✅ Registered client: {Interface} -> {Implementation} (Lifetime: {Lifetime})",
+                _logger.LogDebug("Registered client: {Interface} -> {Implementation} (Lifetime: {Lifetime})",
                     clientInterface.Name, clientType.Name, lifetime);
             }
         }
 
-        _logger.LogInformation("✅ Registered {Count} client types in DI", _clientTypesToRegister.Count);
+        _logger.LogInformation("Registered {Count} client types in DI", _clientTypesToRegister.Count);
     }
 
     /// <summary>
@@ -477,7 +475,7 @@ public class PluginLoader
         // Clients are generated code for making Dapr requests and should not depend on their service's lifetime.
         // Some services that USE clients (not the service they communicate with) could be Singleton,
         // so all clients need to be at least Singleton to be injectable.
-        _logger.LogDebug("✅ Using Singleton lifetime for client '{ClientInterface}' (all clients are Singleton)", clientInterface.Name);
+        _logger.LogDebug("Using Singleton lifetime for client '{ClientInterface}' (all clients are Singleton)", clientInterface.Name);
         return ServiceLifetime.Singleton;
     }
 
@@ -489,11 +487,11 @@ public class PluginLoader
         foreach (var (interfaceType, implementationType, lifetime) in _serviceTypesToRegister)
         {
             services.Add(new ServiceDescriptor(interfaceType, implementationType, lifetime));
-            _logger.LogDebug("✅ Registered service: {Interface} -> {Implementation} ({Lifetime})",
+            _logger.LogDebug("Registered service: {Interface} -> {Implementation} ({Lifetime})",
                 interfaceType.Name, implementationType.Name, lifetime);
         }
 
-        _logger.LogInformation("✅ Registered {Count} service types in DI", _serviceTypesToRegister.Count);
+        _logger.LogInformation("Registered {Count} service types in DI", _serviceTypesToRegister.Count);
     }
 
     /// <summary>
@@ -508,8 +506,7 @@ public class PluginLoader
             var existingRegistration = services.FirstOrDefault(s => s.ServiceType == configurationType);
             if (existingRegistration != null)
             {
-                _logger.LogWarning("⚠️  Configuration type {ConfigType} is already registered with lifetime {ExistingLifetime}. Removing existing registration to replace with Singleton.",
-                    configurationType.Name, existingRegistration.Lifetime);
+                _logger.LogWarning("Configuration type {ConfigType} is already registered with lifetime {ExistingLifetime}. Removing existing registration to replace with Singleton.", configurationType.Name, existingRegistration.Lifetime);
                 services.Remove(existingRegistration);
             }
 
@@ -527,17 +524,17 @@ public class PluginLoader
                 var configInstance = buildMethod.Invoke(null, new object?[] { null }); // Pass null for args parameter
                 return configInstance ?? throw new InvalidOperationException($"BuildConfiguration returned null for type {configurationType.Name}");
             });
-            _logger.LogInformation("✅ Registered configuration: {ConfigType} (Singleton with BuildConfiguration factory)",
+            _logger.LogInformation("Registered configuration: {ConfigType} (Singleton with BuildConfiguration factory)",
                 configurationType.Name);
         }
 
-        _logger.LogInformation("✅ Registered {Count} configuration types in DI", _configurationTypesToRegister.Count);
+        _logger.LogInformation("Registered {Count} configuration types in DI", _configurationTypesToRegister.Count);
 
         // Debug: Print all ConnectServiceConfiguration registrations
         var connectConfigRegistrations = services.Where(s =>
             s.ServiceType.Name.Contains("ConnectServiceConfiguration")).ToList();
 
-        _logger.LogWarning("🔍 DEBUG: Found {Count} registrations for ConnectServiceConfiguration:",
+        _logger.LogWarning("DEBUG: Found {Count} registrations for ConnectServiceConfiguration:",
             connectConfigRegistrations.Count);
 
         foreach (var reg in connectConfigRegistrations)
@@ -554,7 +551,7 @@ public class PluginLoader
     /// <param name="serviceProvider">Service provider to resolve services from</param>
     public void ResolveServices(IServiceProvider serviceProvider)
     {
-        _logger.LogInformation("🔍 Centrally resolving services for {EnabledCount} enabled plugins", _enabledPlugins.Count);
+        _logger.LogInformation("Centrally resolving services for {EnabledCount} enabled plugins", _enabledPlugins.Count);
 
         // Use a service scope to resolve scoped services correctly
         using var scope = serviceProvider.CreateScope();
@@ -564,7 +561,7 @@ public class PluginLoader
         {
             try
             {
-                _logger.LogDebug("🔍 Resolving service for enabled plugin: {PluginName}", plugin.PluginName);
+                _logger.LogDebug("Resolving service for enabled plugin: {PluginName}", plugin.PluginName);
 
                 // Find the service type that was registered for this plugin
                 var serviceRegistration = _serviceTypesToRegister
@@ -576,32 +573,30 @@ public class PluginLoader
                     if (serviceInstance is IDaprService daprService)
                     {
                         _resolvedServices[plugin.PluginName] = daprService;
-                        _logger.LogInformation("✅ Resolved {ServiceType} for plugin: {PluginName}",
+                        _logger.LogInformation("Resolved {ServiceType} for plugin: {PluginName}",
                             serviceRegistration.implementationType.Name, plugin.PluginName);
                     }
                     else if (serviceInstance != null)
                     {
-                        _logger.LogWarning("⚠️  Service {ServiceType} for plugin {PluginName} does not implement IDaprService",
-                            serviceRegistration.implementationType.Name, plugin.PluginName);
+                        _logger.LogWarning("Service {ServiceType} could not be resolved from DI container for plugin: {PluginName}", serviceRegistration.interfaceType.Name, plugin.PluginName);
                     }
                     else
                     {
-                        _logger.LogWarning("⚠️  Failed to resolve service {ServiceType} for plugin: {PluginName}",
-                            serviceRegistration.implementationType.Name, plugin.PluginName);
+                        _logger.LogWarning("Failed to resolve service {ServiceType} for plugin: {PluginName}", serviceRegistration.interfaceType.Name, plugin.PluginName);
                     }
                 }
                 else
                 {
-                    _logger.LogDebug("ℹ️  No service registration found for plugin: {PluginName} (plugin may not have a service)", plugin.PluginName);
+                    _logger.LogDebug("No service registration found for plugin: {PluginName} (plugin may not have a service)", plugin.PluginName);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Exception while resolving service for plugin: {PluginName}", plugin.PluginName);
+                _logger.LogError(ex, "Exception while resolving service for plugin: {PluginName}", plugin.PluginName);
             }
         }
 
-        _logger.LogInformation("✅ Service resolution complete. {ResolvedCount} services resolved", _resolvedServices.Count);
+        _logger.LogInformation("Service resolution complete. {ResolvedCount} services resolved", _resolvedServices.Count);
     }
 
     /// <summary>
@@ -646,19 +641,19 @@ public class PluginLoader
             loadedPluginNames.Add(pluginName.ToLower());
         }
 
-        _logger.LogDebug("🎯 Available plugin assemblies: {PluginNames}", string.Join(", ", loadedPluginNames));
+        _logger.LogDebug("Available plugin assemblies: {PluginNames}", string.Join(", ", loadedPluginNames));
 
         // Return all loaded plugin assemblies - they contain controllers and clients
         foreach (var (pluginName, assembly) in _loadedAssemblies)
         {
             if (!assemblies.Contains(assembly))
             {
-                _logger.LogDebug("🎯 Adding plugin assembly: {AssemblyName}", assembly.GetName().Name);
+                _logger.LogDebug("Adding plugin assembly: {AssemblyName}", assembly.GetName().Name);
                 assemblies.Add(assembly);
             }
         }
 
-        _logger.LogInformation("🎯 Found {Count} plugin assemblies for controller registration", assemblies.Count);
+        _logger.LogInformation("Found {Count} plugin assemblies for controller registration", assemblies.Count);
 
         return assemblies;
     }
@@ -669,23 +664,23 @@ public class PluginLoader
     /// <param name="app">Web application</param>
     public void ConfigureApplication(WebApplication app)
     {
-        _logger.LogInformation("🔧 Configuring application pipeline for {EnabledCount} enabled plugins", _enabledPlugins.Count);
+        _logger.LogInformation("Configuring application pipeline for {EnabledCount} enabled plugins", _enabledPlugins.Count);
 
         foreach (var plugin in _enabledPlugins)
         {
             try
             {
-                _logger.LogDebug("⚙️  Configuring application for plugin: {PluginName}", plugin.PluginName);
+                _logger.LogDebug("Configuring application for plugin: {PluginName}", plugin.PluginName);
                 plugin.ConfigureApplication(app);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to configure application for plugin: {PluginName}", plugin.PluginName);
+                _logger.LogError(ex, "Failed to configure application for plugin: {PluginName}", plugin.PluginName);
                 throw; // Re-throw to fail startup if plugin configuration fails
             }
         }
 
-        _logger.LogInformation("✅ Application configuration complete for enabled plugins");
+        _logger.LogInformation("Application configuration complete for enabled plugins");
     }
 
     /// <summary>
@@ -702,17 +697,17 @@ public class PluginLoader
         {
             try
             {
-                _logger.LogDebug("🔄 Initializing plugin: {PluginName}", plugin.PluginName);
+                _logger.LogDebug("Initializing plugin: {PluginName}", plugin.PluginName);
                 var success = await plugin.InitializeAsync();
                 if (!success)
                 {
-                    _logger.LogError("❌ Plugin initialization failed: {PluginName}", plugin.PluginName);
+                    _logger.LogError("Plugin initialization failed: {PluginName}", plugin.PluginName);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Exception during plugin initialization: {PluginName}", plugin.PluginName);
+                _logger.LogError(ex, "Exception during plugin initialization: {PluginName}", plugin.PluginName);
                 return false;
             }
         }
@@ -722,17 +717,21 @@ public class PluginLoader
         {
             try
             {
-                _logger.LogDebug("🔄 Initializing centrally resolved service for plugin: {PluginName}", pluginName);
+                _logger.LogDebug("Initializing centrally resolved service for plugin: {PluginName}", pluginName);
                 await service.OnStartAsync(CancellationToken.None);
+
+                // STAGE 2.5: Register service permissions automatically
+                _logger.LogDebug("Registering permissions for service: {PluginName}", pluginName);
+                await service.RegisterServicePermissionsAsync();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Exception during centrally resolved service initialization for plugin: {PluginName}", pluginName);
+                _logger.LogError(ex, "Exception during centrally resolved service initialization for plugin: {PluginName}", pluginName);
                 return false;
             }
         }
 
-        _logger.LogInformation("✅ All enabled plugins and services initialized successfully");
+        _logger.LogInformation("All enabled plugins and services initialized successfully");
         return true;
     }
 
@@ -743,24 +742,24 @@ public class PluginLoader
     /// <returns>True if all plugins and services started successfully</returns>
     public async Task<bool> StartAsync()
     {
-        _logger.LogInformation("▶️  Starting {EnabledCount} enabled plugins", _enabledPlugins.Count);
+        _logger.LogInformation("Starting {EnabledCount} enabled plugins", _enabledPlugins.Count);
 
         // STAGE 1: Start enabled plugins
         foreach (var plugin in _enabledPlugins)
         {
             try
             {
-                _logger.LogDebug("▶️  Starting plugin: {PluginName}", plugin.PluginName);
+                _logger.LogDebug("Starting plugin: {PluginName}", plugin.PluginName);
                 var success = await plugin.StartAsync();
                 if (!success)
                 {
-                    _logger.LogError("❌ Plugin start failed: {PluginName}", plugin.PluginName);
+                    _logger.LogError("Plugin start failed: {PluginName}", plugin.PluginName);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Exception during plugin start: {PluginName}", plugin.PluginName);
+                _logger.LogError(ex, "Exception during plugin start: {PluginName}", plugin.PluginName);
                 return false;
             }
         }
@@ -768,7 +767,7 @@ public class PluginLoader
         // STAGE 2: Start centrally resolved services (with WebApplication access)
         // Note: This would need WebApplication parameter if services need it
 
-        _logger.LogInformation("✅ All enabled plugins started successfully");
+        _logger.LogInformation("All enabled plugins started successfully");
         return true;
     }
 
@@ -777,18 +776,18 @@ public class PluginLoader
     /// </summary>
     public async Task InvokeRunningAsync()
     {
-        _logger.LogInformation("🏃 Invoking running methods for {EnabledCount} enabled plugins", _enabledPlugins.Count);
+        _logger.LogInformation("Invoking running methods for {EnabledCount} enabled plugins", _enabledPlugins.Count);
 
         var runningTasks = _enabledPlugins.Select(async plugin =>
         {
             try
             {
-                _logger.LogDebug("🏃 Invoking running for plugin: {PluginName}", plugin.PluginName);
+                _logger.LogDebug("Invoking running for plugin: {PluginName}", plugin.PluginName);
                 await plugin.RunningAsync();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Exception during plugin running: {PluginName}", plugin.PluginName);
+                _logger.LogError(ex, "Exception during plugin running: {PluginName}", plugin.PluginName);
             }
         });
 
@@ -797,17 +796,17 @@ public class PluginLoader
         {
             try
             {
-                _logger.LogDebug("🏃 Invoking running for centrally resolved service: {PluginName}", kvp.Key);
+                _logger.LogDebug("Invoking running for centrally resolved service: {PluginName}", kvp.Key);
                 await kvp.Value.OnRunningAsync(CancellationToken.None);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Exception during centrally resolved service running: {PluginName}", kvp.Key);
+                _logger.LogError(ex, "Exception during centrally resolved service running: {PluginName}", kvp.Key);
             }
         });
 
         await Task.WhenAll(runningTasks.Concat(serviceRunningTasks));
-        _logger.LogInformation("✅ All enabled plugin running methods invoked");
+        _logger.LogInformation("All enabled plugin running methods invoked");
     }
 
     /// <summary>
@@ -815,18 +814,18 @@ public class PluginLoader
     /// </summary>
     public async Task ShutdownAsync()
     {
-        _logger.LogInformation("🛑 Shutting down {EnabledCount} enabled plugins", _enabledPlugins.Count);
+        _logger.LogInformation("Shutting down {EnabledCount} enabled plugins", _enabledPlugins.Count);
 
         var shutdownTasks = _enabledPlugins.Select(async plugin =>
         {
             try
             {
-                _logger.LogDebug("🛑 Shutting down plugin: {PluginName}", plugin.PluginName);
+                _logger.LogDebug("Shutting down plugin: {PluginName}", plugin.PluginName);
                 await plugin.ShutdownAsync();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Exception during plugin shutdown: {PluginName}", plugin.PluginName);
+                _logger.LogError(ex, "Exception during plugin shutdown: {PluginName}", plugin.PluginName);
             }
         });
 
@@ -835,17 +834,17 @@ public class PluginLoader
         {
             try
             {
-                _logger.LogDebug("🛑 Shutting down centrally resolved service: {PluginName}", kvp.Key);
+                _logger.LogDebug("Shutting down centrally resolved service: {PluginName}", kvp.Key);
                 await kvp.Value.OnShutdownAsync();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Exception during centrally resolved service shutdown: {PluginName}", kvp.Key);
+                _logger.LogError(ex, "Exception during centrally resolved service shutdown: {PluginName}", kvp.Key);
             }
         });
 
         await Task.WhenAll(shutdownTasks.Concat(serviceShutdownTasks));
-        _logger.LogInformation("✅ All enabled plugins shut down");
+        _logger.LogInformation("All enabled plugins shut down");
     }
 
     /// <summary>
@@ -856,13 +855,13 @@ public class PluginLoader
     /// <returns>Loaded plugin instance or null if loading failed</returns>
     private Task<IBannouPlugin?> LoadPluginFromDirectoryAsync(string pluginDirectory, string expectedPluginName)
     {
-        _logger.LogDebug("🔍 Loading plugin from directory: {PluginDirectory}", pluginDirectory);
+        _logger.LogDebug("Loading plugin from directory: {PluginDirectory}", pluginDirectory);
 
         // Find the main assembly (usually lib-{service}.dll)
         var assemblyPath = Path.Combine(pluginDirectory, $"lib-{expectedPluginName}.dll");
         if (!File.Exists(assemblyPath))
         {
-            _logger.LogWarning("⚠️  Plugin assembly not found: {AssemblyPath}", assemblyPath);
+            _logger.LogWarning("Plugin assembly not found: {AssemblyPath}", assemblyPath);
             return Task.FromResult<IBannouPlugin?>(null);
         }
 
@@ -877,12 +876,12 @@ public class PluginLoader
             {
                 // Load the assembly if not already loaded
                 assembly = Assembly.LoadFrom(assemblyPath);
-                _logger.LogDebug("🔄 Loaded new assembly: {AssemblyName} from {AssemblyPath}",
+                _logger.LogDebug("Loaded new assembly: {AssemblyName} from {AssemblyPath}",
                     assembly.GetName().Name, assemblyPath);
             }
             else
             {
-                _logger.LogDebug("🔄 Using already loaded assembly: {AssemblyName}", assembly.GetName().Name);
+                _logger.LogDebug("Using already loaded assembly: {AssemblyName}", assembly.GetName().Name);
             }
 
             _loadedAssemblies[expectedPluginName] = assembly;
@@ -894,13 +893,13 @@ public class PluginLoader
 
             if (pluginTypes.Count == 0)
             {
-                _logger.LogWarning("⚠️  No IBannouPlugin implementations found in assembly: {AssemblyPath}", assemblyPath);
+                _logger.LogWarning("No IBannouPlugin implementations found in assembly: {AssemblyPath}", assemblyPath);
                 return Task.FromResult<IBannouPlugin?>(null);
             }
 
             if (pluginTypes.Count > 1)
             {
-                _logger.LogWarning("⚠️  Multiple IBannouPlugin implementations found in assembly: {AssemblyPath}. Using first one.", assemblyPath);
+                _logger.LogWarning("Multiple IBannouPlugin implementations found in assembly: {AssemblyPath}. Using first one.", assemblyPath);
             }
 
             // Create plugin instance
@@ -909,21 +908,21 @@ public class PluginLoader
 
             if (plugin == null)
             {
-                _logger.LogError("❌ Failed to create plugin instance for type: {PluginType}", pluginType.Name);
+                _logger.LogError("Failed to create plugin instance for type: {PluginType}", pluginType.Name);
                 return Task.FromResult<IBannouPlugin?>(null);
             }
 
             // Validate plugin
             if (!plugin.ValidatePlugin())
             {
-                _logger.LogWarning("⚠️  Plugin validation failed: {PluginName}", plugin.PluginName);
+                _logger.LogWarning("Plugin validation failed: {PluginName}", plugin.PluginName);
                 return Task.FromResult<IBannouPlugin?>(null);
             }
 
             // Verify plugin name matches expected
             if (!string.Equals(plugin.PluginName, expectedPluginName, StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("⚠️  Plugin name mismatch. Expected: {Expected}, Got: {Actual}",
+                _logger.LogWarning("Plugin name mismatch. Expected: {Expected}, Got: {Actual}",
                     expectedPluginName, plugin.PluginName);
             }
 
@@ -931,7 +930,7 @@ public class PluginLoader
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Failed to load plugin assembly: {AssemblyPath}", assemblyPath);
+            _logger.LogError(ex, "Failed to load plugin assembly: {AssemblyPath}", assemblyPath);
             return Task.FromResult<IBannouPlugin?>(null);
         }
     }

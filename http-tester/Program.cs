@@ -335,8 +335,7 @@ public class Program
         {
             new AccountTestHandler(),
             new AuthTestHandler(),
-            new ConnectTestHandler(),
-            new DaprServiceMappingTestHandler()
+            new ConnectTestHandler()
             // Add more test handlers as needed
         };
 

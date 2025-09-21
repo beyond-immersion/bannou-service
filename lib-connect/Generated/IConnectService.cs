@@ -16,11 +16,6 @@ public interface IConnectService : IDaprService
     Task<(StatusCodes, InternalProxyResponse?)> ProxyInternalRequestAsync(InternalProxyRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// DiscoverAPIs operation
-    /// </summary>
-    Task<(StatusCodes, ApiDiscoveryResponse?)> DiscoverAPIsAsync(ApiDiscoveryRequest body, CancellationToken cancellationToken = default(CancellationToken));
-
-    /// <summary>
     /// GetServiceMappings operation
     /// </summary>
     Task<(StatusCodes, ServiceMappingsResponse?)> GetServiceMappingsAsync(CancellationToken cancellationToken = default(CancellationToken));

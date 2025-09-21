@@ -68,6 +68,19 @@
     <AdditionalFiles Include="../schemas/*.yaml" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AdditionalFiles Remove="..\schemas\accounts-api.yaml" />
+    <AdditionalFiles Remove="..\schemas\accounts-events.yaml" />
+    <AdditionalFiles Remove="..\schemas\auth-api.yaml" />
+    <AdditionalFiles Remove="..\schemas\behavior-api.yaml" />
+    <AdditionalFiles Remove="..\schemas\common-events.yaml" />
+    <AdditionalFiles Remove="..\schemas\connect-api.yaml" />
+    <AdditionalFiles Remove="..\schemas\game-session-api.yaml" />
+    <AdditionalFiles Remove="..\schemas\permissions-api.yaml" />
+    <AdditionalFiles Remove="..\schemas\permissions-events.yaml" />
+    <AdditionalFiles Remove="..\schemas\website-api.yaml" />
+  </ItemGroup>
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
     <Exec Command="dotnet format --no-restore" />
   </Target>

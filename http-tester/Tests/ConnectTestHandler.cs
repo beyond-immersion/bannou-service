@@ -16,7 +16,6 @@ public class ConnectTestHandler : IServiceTestHandler
         return new[]
         {
             new ServiceTest(TestServiceMappings, "ServiceMappings", "Connect", "Test service routing mappings retrieval"),
-            new ServiceTest(TestApiDiscovery, "ApiDiscovery", "Connect", "Test API discovery for session"),
             new ServiceTest(TestInternalProxy, "InternalProxy", "Connect", "Test internal API proxy functionality"),
         };
     }
@@ -53,46 +52,6 @@ public class ConnectTestHandler : IServiceTestHandler
         }
     }
 
-    private static async Task<TestResult> TestApiDiscovery(ITestClient client, string[] args)
-    {
-        try
-        {
-            // Create ConnectClient directly with parameterless constructor
-            var connectClient = new ConnectClient();
-
-            // Create a test session ID for API discovery
-            var testSessionId = $"test-session-{DateTime.Now.Ticks}";
-
-            var discoveryRequest = new ApiDiscoveryRequest
-            {
-                SessionId = testSessionId,
-                ContextData = new { testMode = true }
-            };
-
-            // Test API discovery
-            var response = await connectClient.DiscoverAPIsAsync(discoveryRequest);
-
-            if (response?.AvailableAPIs == null)
-                return TestResult.Failed("API discovery response is null or missing available APIs");
-
-            if (response.SessionId != testSessionId)
-                return TestResult.Failed($"Session ID mismatch - expected {testSessionId}, got {response.SessionId}");
-
-            // Verify the response structure
-            var apiCount = response.AvailableAPIs.Count;
-            var serviceCount = response.ServiceCapabilities?.Count ?? 0;
-
-            return TestResult.Successful($"API discovery completed successfully - {apiCount} APIs, {serviceCount} services");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
 
     private static async Task<TestResult> TestInternalProxy(ITestClient client, string[] args)
     {

@@ -24,7 +24,7 @@
 
 ## ⚠️ MANDATORY REFERENCE - API-DESIGN.md
 
-**CRITICAL**: For ALL Bannou service design and development tasks, you MUST ALWAYS reference the authoritative API-DESIGN.md documentation FIRST before proceeding with any work.
+**CRITICAL**: For ALL Bannou service design and development tasks, you MUST ALWAYS reference the authoritative API-DESIGN.md documentation FIRST before proceeding with any work. For any task involving implementation, you MUST refer to the CURRENT_TASKS.md document in the bannou repository. If you're recently had context compacted, this is especially important.
 
 **Location**: Technical Architecture knowledge base section (API-DESIGN.md)
 

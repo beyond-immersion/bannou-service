@@ -24,7 +24,7 @@ public class ConnectServicePlugin : BaseBannouPlugin
     public override void ConfigureServices(IServiceCollection services)
     {
 
-        Logger?.LogInformation("🔧 Configuring Connect service dependencies");
+        Logger?.LogDebug("Configuring service dependencies");
 
         // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
         // No need to register IConnectService and ConnectService here
@@ -35,7 +35,7 @@ public class ConnectServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
-        Logger?.LogInformation("✅ Connect service dependencies configured");
+        Logger?.LogDebug("Service dependencies configured");
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ public class ConnectServicePlugin : BaseBannouPlugin
     public override void ConfigureApplication(WebApplication app)
     {
 
-        Logger?.LogInformation("🔧 Configuring Connect service application pipeline");
+        Logger?.LogDebug("Configuring application pipeline");
 
         // The generated ConnectController should already be discovered via standard ASP.NET Core controller discovery
         // since we're not excluding the assembly like we did with IDaprController approach
@@ -52,7 +52,7 @@ public class ConnectServicePlugin : BaseBannouPlugin
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        Logger?.LogInformation("✅ Connect service application pipeline configured");
+        Logger?.LogDebug("Application pipeline configured");
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public class ConnectServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("▶️  Starting Connect service");
+        Logger?.LogInformation("Starting service");
 
         try
         {
@@ -69,23 +69,23 @@ public class ConnectServicePlugin : BaseBannouPlugin
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve IConnectService from DI container");
+                Logger?.LogError("Failed to resolve IConnectService from DI container");
                 return false;
             }
 
             // Call existing IDaprService.OnStartAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnStartAsync for Connect service");
+                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Connect service");
                 await daprService.OnStartAsync(CancellationToken.None);
             }
 
-            Logger?.LogInformation("✅ Connect service started successfully");
+            Logger?.LogInformation("Service started");
             return true;
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "❌ Failed to start Connect service");
+            Logger?.LogError(ex, "Failed to start service");
             return false;
         }
     }
@@ -97,20 +97,20 @@ public class ConnectServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogDebug("🏃 Connect service running");
+        Logger?.LogDebug("Service running");
 
         try
         {
             // Call existing IDaprService.OnRunningAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnRunningAsync for Connect service");
+                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Connect service");
                 await daprService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Connect service running phase");
+            Logger?.LogWarning(ex, "Exception during running phase");
         }
     }
 
@@ -121,22 +121,22 @@ public class ConnectServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogInformation("🛑 Shutting down Connect service");
+        Logger?.LogInformation("Shutting down service");
 
         try
         {
             // Call existing IDaprService.OnShutdownAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnShutdownAsync for Connect service");
+                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Connect service");
                 await daprService.OnShutdownAsync();
             }
 
-            Logger?.LogInformation("✅ Connect service shutdown complete");
+            Logger?.LogInformation("Service shutdown complete");
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Connect service shutdown");
+            Logger?.LogWarning(ex, "Exception during shutdown");
         }
     }
 }

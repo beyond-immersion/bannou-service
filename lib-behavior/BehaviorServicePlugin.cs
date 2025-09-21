@@ -24,7 +24,7 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     public override void ConfigureServices(IServiceCollection services)
     {
 
-        Logger?.LogInformation("🔧 Configuring Behavior service dependencies");
+        Logger?.LogDebug("Configuring service dependencies");
 
         // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
         // No need to register IBehaviorService and BehaviorService here
@@ -35,7 +35,7 @@ public class BehaviorServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
-        Logger?.LogInformation("✅ Behavior service dependencies configured");
+        Logger?.LogDebug("Service dependencies configured");
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     public override void ConfigureApplication(WebApplication app)
     {
 
-        Logger?.LogInformation("🔧 Configuring Behavior service application pipeline");
+        Logger?.LogDebug("Configuring application pipeline");
 
         // The generated BehaviorController should already be discovered via standard ASP.NET Core controller discovery
         // since we're not excluding the assembly like we did with IDaprController approach
@@ -52,7 +52,7 @@ public class BehaviorServicePlugin : BaseBannouPlugin
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        Logger?.LogInformation("✅ Behavior service application pipeline configured");
+        Logger?.LogDebug("Application pipeline configured");
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("▶️  Starting Behavior service");
+        Logger?.LogInformation("Starting service");
 
         try
         {
@@ -70,23 +70,23 @@ public class BehaviorServicePlugin : BaseBannouPlugin
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve IBehaviorService from DI container");
+                Logger?.LogError("Failed to resolve IBehaviorService from DI container");
                 return false;
             }
 
             // Call existing IDaprService.OnStartAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnStartAsync for Behavior service");
+                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Behavior service");
                 await daprService.OnStartAsync(CancellationToken.None);
             }
 
-            Logger?.LogInformation("✅ Behavior service started successfully");
+            Logger?.LogInformation("Service started");
             return true;
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "❌ Failed to start Behavior service");
+            Logger?.LogError(ex, "Failed to start service");
             return false;
         }
     }
@@ -98,20 +98,20 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogDebug("🏃 Behavior service running");
+        Logger?.LogDebug("Service running");
 
         try
         {
             // Call existing IDaprService.OnRunningAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnRunningAsync for Behavior service");
+                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Behavior service");
                 await daprService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Behavior service running phase");
+            Logger?.LogWarning(ex, "Exception during running phase");
         }
     }
 
@@ -122,22 +122,22 @@ public class BehaviorServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogInformation("🛑 Shutting down Behavior service");
+        Logger?.LogInformation("Shutting down service");
 
         try
         {
             // Call existing IDaprService.OnShutdownAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnShutdownAsync for Behavior service");
+                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Behavior service");
                 await daprService.OnShutdownAsync();
             }
 
-            Logger?.LogInformation("✅ Behavior service shutdown complete");
+            Logger?.LogInformation("Service shutdown complete");
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Behavior service shutdown");
+            Logger?.LogWarning(ex, "Exception during shutdown");
         }
     }
 }

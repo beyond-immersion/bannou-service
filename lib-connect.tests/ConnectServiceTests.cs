@@ -2,7 +2,7 @@ using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Permissions;
-using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;

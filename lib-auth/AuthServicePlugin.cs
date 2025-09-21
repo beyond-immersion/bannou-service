@@ -26,7 +26,7 @@ public class AuthServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        Logger?.LogInformation("🔧 Configuring Auth service dependencies");
+        Logger?.LogDebug("Configuring service dependencies");
 
         // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
         // No need to register IAuthService and AuthService here
@@ -37,7 +37,7 @@ public class AuthServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients (IAccountsClient) should already be registered by AddAllBannouServiceClients()
 
-        Logger?.LogInformation("✅ Auth service dependencies configured");
+        Logger?.LogDebug("Service dependencies configured");
     }
 
     /// <summary>
@@ -45,7 +45,7 @@ public class AuthServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        Logger?.LogInformation("🔧 Configuring Auth service application pipeline");
+        Logger?.LogDebug("Configuring application pipeline");
 
         // The generated AuthController should already be discovered via standard ASP.NET Core controller discovery
         // since we're not excluding the assembly like we did with IDaprController approach
@@ -53,7 +53,7 @@ public class AuthServicePlugin : BaseBannouPlugin
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        Logger?.LogInformation("✅ Auth service application pipeline configured");
+        Logger?.LogDebug("Application pipeline configured");
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public class AuthServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("▶️  Starting Auth service");
+        Logger?.LogInformation("Starting service");
 
         try
         {
@@ -71,23 +71,23 @@ public class AuthServicePlugin : BaseBannouPlugin
 
             if (_authService == null)
             {
-                Logger?.LogError("❌ Failed to resolve IAuthService from DI container");
+                Logger?.LogError("Failed to resolve IAuthService from DI container");
                 return false;
             }
 
             // Call existing IDaprService.OnStartAsync if the service implements it
             if (_authService is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnStartAsync for Auth service");
+                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Auth service");
                 await daprService.OnStartAsync(CancellationToken.None);
             }
 
-            Logger?.LogInformation("✅ Auth service started successfully");
+            Logger?.LogInformation("Service started");
             return true;
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "❌ Failed to start Auth service");
+            Logger?.LogError(ex, "Failed to start service");
             return false;
         }
     }
@@ -99,20 +99,20 @@ public class AuthServicePlugin : BaseBannouPlugin
     {
         if (_authService == null) return;
 
-        Logger?.LogDebug("🏃 Auth service running");
+        Logger?.LogDebug("Service running");
 
         try
         {
             // Call existing IDaprService.OnRunningAsync if the service implements it
             if (_authService is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnRunningAsync for Auth service");
+                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Auth service");
                 await daprService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Auth service running phase");
+            Logger?.LogWarning(ex, "Exception during running phase");
         }
     }
 
@@ -123,22 +123,22 @@ public class AuthServicePlugin : BaseBannouPlugin
     {
         if (_authService == null) return;
 
-        Logger?.LogInformation("🛑 Shutting down Auth service");
+        Logger?.LogInformation("Shutting down service");
 
         try
         {
             // Call existing IDaprService.OnShutdownAsync if the service implements it
             if (_authService is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnShutdownAsync for Auth service");
+                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Auth service");
                 await daprService.OnShutdownAsync();
             }
 
-            Logger?.LogInformation("✅ Auth service shutdown complete");
+            Logger?.LogInformation("Service shutdown complete");
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Auth service shutdown");
+            Logger?.LogWarning(ex, "Exception during shutdown");
         }
     }
 }

@@ -1,39 +1,12 @@
 {
   "profiles": {
-    "http": {
+    "bannou-service": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "BANNOU_EnableTemplateService": "True",
-        "BANNOU_EmulateDapr": "True"
-      },
-      "dotnetRunMessages": true,
-      "applicationUrl": "http://localhost:5012"
-    },
-    "IIS Express": {
-      "commandName": "IISExpress",
-      "launchBrowser": true,
-      "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
-    "Docker": {
-      "commandName": "Docker",
-      "launchBrowser": true,
-      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
-      "environmentVariables": {
-        "ASPNETCORE_URLS": "http://+:80"
       },
-      "publishAllPorts": true
-    }
-  },
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:35883",
-      "sslPort": 0
+      "applicationUrl": "https://localhost:56603;http://localhost:56604"
     }
   }
 }

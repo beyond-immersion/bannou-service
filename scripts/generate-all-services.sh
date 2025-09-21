@@ -39,6 +39,16 @@ fi
 echo -e "  🎯 Components: ${COMPONENTS[*]}"
 echo ""
 
+# Generate common events first (shared across all services)
+echo -e "${BLUE}🌟 Generating common events first...${NC}"
+if ./generate-common-events.sh; then
+    echo -e "${GREEN}✅ Common events generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate common events${NC}"
+    exit 1
+fi
+echo ""
+
 # Find all schema files
 SCHEMA_FILES=(../schemas/*-api.yaml)
 if [ ! -e "${SCHEMA_FILES[0]}" ]; then

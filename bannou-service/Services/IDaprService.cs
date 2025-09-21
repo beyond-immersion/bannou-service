@@ -261,7 +261,7 @@ public interface IDaprService
     async Task OnRunningAsync(CancellationToken token)
     {
         var serviceName = GetName() ?? GetType().Name;
-        Program.Logger?.Log(LogLevel.Debug, "🏃 {ServiceName} service running", serviceName);
+        Program.Logger?.Log(LogLevel.Debug, "{ServiceName} service running", serviceName);
         await Task.CompletedTask;
     }
 
@@ -271,7 +271,7 @@ public interface IDaprService
     async Task OnShutdownAsync()
     {
         var serviceName = GetName() ?? GetType().Name;
-        Program.Logger?.Log(LogLevel.Information, "🛑 {ServiceName} service shutting down", serviceName);
+        Program.Logger?.Log(LogLevel.Information, "{ServiceName} service shutting down", serviceName);
         await Task.CompletedTask;
     }
 
@@ -281,6 +281,22 @@ public interface IDaprService
     /// <returns>The service name if found, otherwise null.</returns>
     public string? GetName()
         => GetType().GetServiceName();
+
+    /// <summary>
+    /// Registers service permissions with the Permissions service on startup.
+    /// This method is automatically called by PluginLoader and should be generated
+    /// based on x-permissions sections in the service's OpenAPI schema.
+    /// Override this method if the service has custom permission registration logic.
+    /// </summary>
+    /// <returns>Task representing the registration operation</returns>
+    virtual Task RegisterServicePermissionsAsync()
+    {
+        // Default implementation does nothing - method will be overridden
+        // by generated code when x-permissions sections are found in schema
+        var serviceName = GetName() ?? GetType().Name;
+        Program.Logger?.Log(LogLevel.Debug, "Service {ServiceName} has no permission registration (no x-permissions in schema)", serviceName);
+        return Task.CompletedTask;
+    }
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be disabled.

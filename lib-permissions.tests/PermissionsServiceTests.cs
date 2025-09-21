@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Permissions;
+using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -13,11 +14,13 @@ public class PermissionsServiceTests
 {
     private readonly Mock<ILogger<PermissionsService>> _mockLogger;
     private readonly Mock<PermissionsServiceConfiguration> _mockConfiguration;
+    private readonly Mock<DaprClient> _mockDaprClient;
 
     public PermissionsServiceTests()
     {
         _mockLogger = new Mock<ILogger<PermissionsService>>();
         _mockConfiguration = new Mock<PermissionsServiceConfiguration>();
+        _mockDaprClient = new Mock<DaprClient>();
     }
 
     [Fact]
@@ -26,7 +29,8 @@ public class PermissionsServiceTests
         // Arrange & Act & Assert
         var service = new PermissionsService(
             _mockLogger.Object,
-            _mockConfiguration.Object);
+            _mockConfiguration.Object,
+            _mockDaprClient.Object);
 
         Assert.NotNull(service);
     }

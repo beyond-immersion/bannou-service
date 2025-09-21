@@ -1,9 +1,13 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,15 +19,18 @@ namespace BeyondImmersion.BannouService.GameSession;
 [DaprService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped)]
 public class GameSessionService : IGameSessionService
 {
+    private readonly DaprClient _daprClient;
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionServiceConfiguration _configuration;
 
     public GameSessionService(
+        DaprClient daprClient,
         ILogger<GameSessionService> logger,
         GameSessionServiceConfiguration configuration)
     {
-        _logger = logger;
-        _configuration = configuration;
+        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     /// <summary>
@@ -104,5 +111,112 @@ public class GameSessionService : IGameSessionService
         _logger.LogWarning("Method SendChatMessageAsync called but not implemented");
         await Task.Delay(1); // Avoid async warning
         return (StatusCodes.OK, null);
+    }
+
+    /// <summary>
+    /// Registers service permissions extracted from x-permissions sections in the OpenAPI schema.
+    /// This method is automatically generated and called during service startup.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        try
+        {
+            var serviceName = GetType().GetServiceName() ?? "game-session";
+            _logger?.LogInformation("Registering permissions for {ServiceName} service", serviceName);
+
+            // Build endpoints directly from x-permissions data
+            var endpoints = CreateServiceEndpoints();
+
+            // Publish service registration event to Permissions service
+            await _daprClient.PublishEventAsync(
+                "bannou-pubsub",
+                "bannou-service-registered",
+                new ServiceRegistrationEvent
+                {
+                    EventId = Guid.NewGuid().ToString(),
+                    Timestamp = DateTime.UtcNow,
+                    ServiceId = serviceName,
+                    Version = "1.0.0", // TODO: Extract from schema info.version
+                    AppId = "bannou", // Default routing
+                    Endpoints = endpoints,
+                    Metadata = new Dictionary<string, object>
+                    {
+                        { "generatedFrom", "x-permissions" },
+                        { "extractedAt", DateTime.UtcNow },
+                        { "endpointCount", endpoints.Count }
+                    }
+                });
+
+            _logger?.LogInformation("Successfully registered {Count} permission rules for {ServiceName}",
+                endpoints.Count, serviceName);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to register permissions for service {ServiceName}", GetType().GetServiceName() ?? "game-session");
+            // Don't throw - permission registration failure shouldn't crash the service
+        }
+    }
+
+    /// <summary>
+    /// Create ServiceEndpoint objects from extracted x-permissions data.
+    /// </summary>
+    private List<ServiceEndpoint> CreateServiceEndpoints()
+    {
+        var endpoints = new List<ServiceEndpoint>();
+
+        // Permission mapping extracted from x-permissions sections:
+        // State -> Role -> Methods
+        var permissionData = new Dictionary<string, Dictionary<string, List<string>>>
+        {
+            ["anonymous"] = new Dictionary<string, List<string>>
+            {
+                ["user"] = new List<string> { "GET:/sessions", "GET:/sessions/{sessionId}", "POST:/sessions/{sessionId}/actions", "POST:/sessions/{sessionId}/chat", "POST:/sessions/{sessionId}/leave" },
+                ["admin"] = new List<string> { "POST:/sessions/{sessionId}/kick" }
+            },
+            ["authenticated"] = new Dictionary<string, List<string>>
+            {
+                ["user"] = new List<string> { "POST:/sessions", "POST:/sessions/{sessionId}/join" }
+            }
+        };
+
+        foreach (var stateEntry in permissionData)
+        {
+            var stateName = stateEntry.Key;
+            var statePermissions = stateEntry.Value;
+
+            foreach (var roleEntry in statePermissions)
+            {
+                var roleName = roleEntry.Key;
+                var methods = roleEntry.Value;
+
+                foreach (var method in methods)
+                {
+                    var parts = method.Split(':', 2);
+                    if (parts.Length == 2 && Enum.TryParse<ServiceEndpointMethod>(parts[0], out var httpMethod))
+                    {
+                        endpoints.Add(new ServiceEndpoint
+                        {
+                            Path = parts[1],
+                            Method = httpMethod,
+                            Permissions = new List<PermissionRequirement>
+                            {
+                                new PermissionRequirement
+                                {
+                                    Role = roleName,
+                                    RequiredStates = new Dictionary<string, string>
+                                    {
+                                        { "game-session", stateName }
+                                    }
+                                }
+                            },
+                            Description = $"{httpMethod} {parts[1]} ({roleName} in {stateName} state)",
+                            Category = "game-session"
+                        });
+                    }
+                }
+            }
+        }
+
+        return endpoints;
     }
 }

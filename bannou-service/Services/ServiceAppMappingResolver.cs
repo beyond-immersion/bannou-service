@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
-namespace BeyondImmersion.BannouService.ServiceClients;
+namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Default implementation of service-to-app-id mapping with dynamic updates via RabbitMQ.
@@ -12,13 +12,12 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
 {
     private readonly ConcurrentDictionary<string, string> _serviceMappings = new();
     private readonly ILogger<ServiceAppMappingResolver> _logger;
-    private const string DEFAULT_APP_ID = "bannou"; // "almighty" - handles everything locally
 
     /// <inheritdoc/>
     public ServiceAppMappingResolver(ILogger<ServiceAppMappingResolver> logger)
     {
         _logger = logger;
-        _logger.LogInformation("ServiceAppMappingResolver initialized with default app-id: {DefaultAppId}", DEFAULT_APP_ID);
+        _logger.LogInformation("ServiceAppMappingResolver initialized with default app-id: {DefaultAppId}", AppConstants.DEFAULT_APP_NAME);
     }
 
     /// <summary>
@@ -29,8 +28,8 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
     {
         if (string.IsNullOrWhiteSpace(serviceName))
         {
-            _logger.LogWarning("Empty service name provided, defaulting to {DefaultAppId}", DEFAULT_APP_ID);
-            return DEFAULT_APP_ID;
+            _logger.LogWarning("Empty service name provided, defaulting to {DefaultAppId}", AppConstants.DEFAULT_APP_NAME);
+            return AppConstants.DEFAULT_APP_NAME;
         }
 
         // Check for dynamic mapping first
@@ -41,8 +40,8 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
         }
 
         // Default to "bannou" (omnipotent local node)
-        _logger.LogTrace("Service {ServiceName} using default app-id {DefaultAppId}", serviceName, DEFAULT_APP_ID);
-        return DEFAULT_APP_ID;
+        _logger.LogTrace("Service {ServiceName} using default app-id {DefaultAppId}", serviceName, AppConstants.DEFAULT_APP_NAME);
+        return AppConstants.DEFAULT_APP_NAME;
     }
 
     /// <summary>

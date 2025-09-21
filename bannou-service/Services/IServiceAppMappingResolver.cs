@@ -1,4 +1,4 @@
-namespace BeyondImmersion.BannouService.ServiceClients;
+namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
 /// Resolves service names to Dapr app-ids for distributed service routing.

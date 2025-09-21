@@ -1685,11 +1685,30 @@ public class PluginLoaderTests
         }
         catch (ReflectionTypeLoadException ex)
         {
+            List<Type> types = new();
+
             // Handle assembly loading issues
-            return ex.Types?.Where(t => t != null && typeof(IDaprService).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract).ToList() ?? new List<Type>();
+            for (int i = 0; i < ex.Types.Length; i++)
+            {
+                Type? type = ex.Types[i];
+                if (type == null)
+                    continue;
+
+                if (!typeof(IDaprService).IsAssignableFrom(type))
+                    continue;
+
+                if (type.IsInterface)
+                    continue;
+
+                if (type.IsAbstract)
+                    continue;
+
+                types.Add(type);
+            }
+
+            return types;
         }
     }
-
 }
 
 /// <summary>

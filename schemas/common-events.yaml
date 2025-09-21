@@ -1,0 +1,199 @@
+openapi: 3.0.3
+info:
+  title: Common Events API
+  description: |
+    Shared event schemas used across all Bannou services.
+    These events enable service-to-service communication via RabbitMQ pub/sub.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    ServiceRegistrationEvent:
+      type: object
+      description: |
+        Published by any service during startup to register its API endpoints
+        and permission requirements with the Permissions service.
+      required:
+        - eventId
+        - timestamp
+        - serviceId
+        - version
+        - appId
+        - endpoints
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this registration event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the service registration occurred
+        serviceId:
+          type: string
+          description: Service ID that registered (e.g., "behavior", "accounts")
+        version:
+          type: string
+          description: Service API version for change tracking
+        appId:
+          type: string
+          description: Dapr app-id for service routing (typically "bannou")
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceEndpoint'
+          description: API endpoints registered by the service with permission requirements
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional service registration metadata
+
+    ServiceEndpoint:
+      type: object
+      description: |
+        Individual API endpoint with permission requirements.
+        Extracted from OpenAPI schema x-permissions sections.
+      required:
+        - path
+        - method
+        - permissions
+      properties:
+        path:
+          type: string
+          description: API endpoint path (e.g., "/accounts/{id}")
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+          description: HTTP method for this endpoint
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionRequirement'
+          description: Permission requirements for this endpoint
+        description:
+          type: string
+          description: Human-readable endpoint description
+        category:
+          type: string
+          description: API category (auth, accounts, game, social, etc.)
+
+    PermissionRequirement:
+      type: object
+      description: |
+        Permission requirement mapping role and state to endpoint access.
+        Defines which roles can access an endpoint in which states.
+      required:
+        - role
+        - requiredStates
+      properties:
+        role:
+          type: string
+          description: Role that can access this endpoint (e.g., "user", "admin", "npc")
+        requiredStates:
+          type: object
+          additionalProperties:
+            type: string
+          description: |
+            Map of service states required for access.
+            Key: service_id, Value: required_state
+            Example: {"auth": "authenticated", "game-session": "in_game"}
+        description:
+          type: string
+          description: Optional human-readable permission description
+
+    ServiceHeartbeatEvent:
+      type: object
+      description: |
+        Published periodically by all services to indicate health and capacity.
+        Used for load balancing and service discovery.
+      required:
+        - eventId
+        - timestamp
+        - serviceId
+        - appId
+        - status
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this heartbeat event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the heartbeat was sent
+        serviceId:
+          type: string
+          description: Service ID sending the heartbeat
+        appId:
+          type: string
+          description: Dapr app-id for this service instance
+        status:
+          type: string
+          enum: [healthy, degraded, overloaded, shutting_down]
+          description: Current service health status
+        capacity:
+          type: object
+          properties:
+            maxConnections:
+              type: integer
+              description: Maximum connections this instance can handle
+            currentConnections:
+              type: integer
+              description: Current active connections
+            cpuUsage:
+              type: number
+              format: float
+              description: CPU usage percentage (0.0 - 1.0)
+            memoryUsage:
+              type: number
+              format: float
+              description: Memory usage percentage (0.0 - 1.0)
+          description: Service capacity and load information
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional service-specific metadata
+
+    ServiceMappingEvent:
+      type: object
+      description: |
+        Published when service-to-app-id mappings change for distributed deployment.
+        Enables dynamic service routing without service restarts.
+      required:
+        - eventId
+        - timestamp
+        - serviceName
+        - appId
+        - action
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this mapping event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the mapping change occurred
+        serviceName:
+          type: string
+          description: Service name being mapped (e.g., "behavior", "accounts")
+        appId:
+          type: string
+          description: Target Dapr app-id for routing
+        action:
+          type: string
+          enum: [register, unregister, update]
+          description: Type of mapping operation
+        region:
+          type: string
+          description: Optional regional routing information
+        priority:
+          type: integer
+          description: Load balancing weight for this mapping
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional mapping metadata

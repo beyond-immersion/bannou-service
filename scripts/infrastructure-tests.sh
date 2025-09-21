@@ -39,16 +39,20 @@ echo "🔍 Testing OpenResty Infrastructure..."
 run_test "OpenResty health endpoint" "curl --verbose --fail --max-time 5 http://openresty/health"
 run_test "Redis connectivity via OpenResty" "curl --verbose --fail --max-time 5 http://openresty/health/redis"
 
-# Test 3-4: Basic service availability (infrastructure level only)
+# Test 3-5: Basic service availability
 echo "🔍 Testing Basic Service Availability..."
-run_test "Bannou service basic availability" "curl --verbose --fail --max-time 10 http://bannou:80/testing/run-enabled"
 run_test "Bannou service direct health check" "curl --verbose --fail --max-time 10 http://bannou:80/health || true"
+run_test "Bannou service plugin enabled check" "curl --verbose --fail --max-time 10 http://bannou:80/testing/health || true"
 
-# Test 5: Admin heartbeats
+# Test 5: Integration tests (testing lib only)
+echo "🔍 Running Integration Tests (Testing Plugin Only)..."
+run_test "Bannou service plugin test validation check" "curl --verbose --fail --max-time 10 http://bannou:80/testing/run"
+
+# Test 6: Admin heartbeats
 echo "🔍 Testing Admin Heartbeats..."
 run_test "Admin heartbeats endpoint" "curl --verbose --fail --max-time 5 http://openresty:8080/admin/heartbeats"
 
-# Test 6: Configuration validation
+# Test 7: Configuration validation
 echo "🔍 Testing Configuration..."
 run_test "Environment variables accessible" "test -n \"$SERVICE_DOMAIN\" || echo 'SERVICE_DOMAIN not set, using defaults'"
 

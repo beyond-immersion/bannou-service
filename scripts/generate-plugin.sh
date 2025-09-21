@@ -81,7 +81,7 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     protected override bool OnValidatePlugin()
     {
         var enabled = Environment.GetEnvironmentVariable("${SERVICE_NAME^^}_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("🔍 $SERVICE_PASCAL service enabled check: {EnabledValue}", enabled);
+        Logger?.LogDebug("$SERVICE_PASCAL service enabled check: {EnabledValue}", enabled);
         return enabled == "true";
     }
 
@@ -92,11 +92,11 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     {
         if (!OnValidatePlugin())
         {
-            Logger?.LogInformation("⏭️  $SERVICE_PASCAL service disabled, skipping service registration");
+            Logger?.LogInformation("$SERVICE_PASCAL service disabled, skipping service registration");
             return;
         }
 
-        Logger?.LogInformation("🔧 Configuring $SERVICE_PASCAL service dependencies");
+        Logger?.LogInformation("Configuring $SERVICE_PASCAL service dependencies");
 
         // Register the service implementation (existing pattern from [DaprService] attribute)
         services.AddScoped<I${SERVICE_PASCAL}Service, ${SERVICE_PASCAL}Service>();
@@ -108,7 +108,7 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
-        Logger?.LogInformation("✅ $SERVICE_PASCAL service dependencies configured");
+        Logger?.LogInformation("$SERVICE_PASCAL service dependencies configured");
     }
 
     /// <summary>
@@ -118,11 +118,11 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     {
         if (!OnValidatePlugin())
         {
-            Logger?.LogInformation("⏭️  $SERVICE_PASCAL service disabled, skipping application configuration");
+            Logger?.LogInformation("$SERVICE_PASCAL service disabled, skipping application configuration");
             return;
         }
 
-        Logger?.LogInformation("🔧 Configuring $SERVICE_PASCAL service application pipeline");
+        Logger?.LogInformation("Configuring $SERVICE_PASCAL service application pipeline");
 
         // The generated ${SERVICE_PASCAL}Controller should already be discovered via standard ASP.NET Core controller discovery
         // since we're not excluding the assembly like we did with IDaprController approach
@@ -130,7 +130,7 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        Logger?.LogInformation("✅ $SERVICE_PASCAL service application pipeline configured");
+        Logger?.LogInformation("$SERVICE_PASCAL service application pipeline configured");
     }
 
     /// <summary>
@@ -140,7 +140,7 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     {
         if (!OnValidatePlugin()) return true;
 
-        Logger?.LogInformation("▶️  Starting $SERVICE_PASCAL service");
+        Logger?.LogInformation("Starting $SERVICE_PASCAL service");
 
         try
         {
@@ -151,23 +151,23 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve I${SERVICE_PASCAL}Service from DI container");
+                Logger?.LogError("Failed to resolve I${SERVICE_PASCAL}Service from DI container");
                 return false;
             }
 
             // Call existing IDaprService.OnStartAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnStartAsync for $SERVICE_PASCAL service");
+                Logger?.LogDebug("Calling IDaprService.OnStartAsync for $SERVICE_PASCAL service");
                 await daprService.OnStartAsync(CancellationToken.None);
             }
 
-            Logger?.LogInformation("✅ $SERVICE_PASCAL service started successfully");
+            Logger?.LogInformation("$SERVICE_PASCAL service started successfully");
             return true;
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "❌ Failed to start $SERVICE_PASCAL service");
+            Logger?.LogError(ex, "Failed to start $SERVICE_PASCAL service");
             return false;
         }
     }
@@ -179,20 +179,20 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     {
         if (!OnValidatePlugin() || _service == null) return;
 
-        Logger?.LogDebug("🏃 $SERVICE_PASCAL service running");
+        Logger?.LogDebug("$SERVICE_PASCAL service running");
 
         try
         {
             // Call existing IDaprService.OnRunningAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnRunningAsync for $SERVICE_PASCAL service");
+                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for $SERVICE_PASCAL service");
                 await daprService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during $SERVICE_PASCAL service running phase");
+            Logger?.LogWarning(ex, "Exception during $SERVICE_PASCAL service running phase");
         }
     }
 
@@ -203,22 +203,22 @@ public class ${SERVICE_PASCAL}ServicePlugin : BaseBannouPlugin
     {
         if (!OnValidatePlugin() || _service == null) return;
 
-        Logger?.LogInformation("🛑 Shutting down $SERVICE_PASCAL service");
+        Logger?.LogInformation("Shutting down $SERVICE_PASCAL service");
 
         try
         {
             // Call existing IDaprService.OnShutdownAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnShutdownAsync for $SERVICE_PASCAL service");
+                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for $SERVICE_PASCAL service");
                 await daprService.OnShutdownAsync();
             }
 
-            Logger?.LogInformation("✅ $SERVICE_PASCAL service shutdown complete");
+            Logger?.LogInformation("$SERVICE_PASCAL service shutdown complete");
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during $SERVICE_PASCAL service shutdown");
+            Logger?.LogWarning(ex, "Exception during $SERVICE_PASCAL service shutdown");
         }
     }
 }

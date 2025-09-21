@@ -312,27 +312,9 @@ public class AuthTestHandler : IServiceTestHandler
                 // Method not implemented - expected until ValidateTokenAsync is completed
             }
 
-            // Step 4: Test API Discovery via Connect service (requires authentication)
-            try
-            {
-                var apiDiscoveryRequest = new ApiDiscoveryRequest
-                {
-                    SessionId = "test-session-id" // Mock session ID for HTTP testing
-                };
-                var apiDiscoveryResponse = await connectClient.DiscoverAPIsAsync(apiDiscoveryRequest);
-
-                if (apiDiscoveryResponse.AvailableAPIs == null || apiDiscoveryResponse.AvailableAPIs.Count == 0)
-                    return TestResult.Failed("API discovery returned no available APIs");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 401 || ex.StatusCode == 403)
-            {
-                // Expected if Connect service can't validate our JWT token
-                // This indicates the ValidateTokenAsync dependency is blocking Connect service
-            }
-            catch (ApiException ex)
-            {
-                return TestResult.Failed($"API discovery failed with unexpected error: {ex.StatusCode} - {ex.Message}");
-            }
+            // Step 4: API Discovery removed - now handled by Permissions service, not Connect service
+            // Connect service's responsibility is WebSocket connections and message routing only
+            // API capability discovery happens via permission events from Permissions service
 
             return TestResult.Successful($"Complete auth flow tested successfully for user {testUsername}. " +
                                         "Some endpoints may be incomplete (ValidateTokenAsync) but core flow is operational.");

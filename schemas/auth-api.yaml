@@ -617,5 +617,5 @@ x-event-subscriptions:
     pubsub: bannou-pubsub
     path: /dapr/events/account-deleted
     schema:
-      $ref: 'accounts-api.yaml#/components/schemas/AccountDeletedEvent'
+      $ref: 'accounts-events.yaml#/components/schemas/AccountDeletedEvent'
     description: Subscribe to account deletion events to invalidate sessions

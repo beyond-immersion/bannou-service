@@ -30,7 +30,7 @@ public class TestingService : ITestingService
     {
         try
         {
-            _logger.LogDebug("🧪 Running test: {TestName}", testName);
+            _logger.LogDebug("Running test: {TestName}", testName);
 
             var response = new TestResponse
             {
@@ -44,7 +44,7 @@ public class TestingService : ITestingService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error running test: {TestName}", testName);
+            _logger.LogError(ex, "Error running test: {TestName}", testName);
             return Task.FromResult<(StatusCodes, TestResponse?)>((StatusCodes.InternalServerError, null));
         }
     }
@@ -56,7 +56,7 @@ public class TestingService : ITestingService
     {
         try
         {
-            _logger.LogDebug("🔧 Testing configuration");
+            _logger.LogDebug("Testing configuration");
 
             var response = new ConfigTestResponse
             {
@@ -69,7 +69,7 @@ public class TestingService : ITestingService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error testing configuration");
+            _logger.LogError(ex, "Error testing configuration");
             return Task.FromResult<(StatusCodes, ConfigTestResponse?)>((StatusCodes.InternalServerError, null));
         }
     }
@@ -82,7 +82,7 @@ public class TestingService : ITestingService
     {
         try
         {
-            _logger.LogDebug("🔍 Testing dependency injection health");
+            _logger.LogDebug("Testing dependency injection health");
 
             // Since we established null safety in constructor with proper null checks,
             // we know both _logger and _configuration are not null
@@ -133,7 +133,7 @@ public class TestingService : ITestingService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error testing dependency injection health");
+            _logger.LogError(ex, "Error testing dependency injection health");
             return Task.FromResult<(StatusCodes, DependencyTestResponse?)>((StatusCodes.InternalServerError, null));
         }
     }

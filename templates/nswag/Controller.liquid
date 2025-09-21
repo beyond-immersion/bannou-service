@@ -1,6 +1,6 @@
 ﻿{% if GeneratePartialControllers -%}
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "{{ ToolchainVersion }}")]
-public interface I{{ Class }}Controller
+public interface I{{ Class }}Controller : BeyondImmersion.BannouService.Controllers.IDaprController
 {
 {%-     for operation in Operations %}
 {%-         comment -%}
@@ -144,16 +144,16 @@ public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} cla
 {%-             assign fromHeader = parameter.ExtensionData["x-from-header"] -%}
 {%-             if fromAuth -%}
 {%-                 if fromAuth == "bearer" %}
-        var {{ parameter.VariableName }} = BeyondImmersion.BannouService.HttpContextHelper.ExtractBearerToken(HttpContext);
+        var {{ parameter.VariableName }} = HttpContext.ExtractBearerToken();
         if (string.IsNullOrEmpty({{ parameter.VariableName }}))
             return Unauthorized("Missing or invalid Authorization header");
 {%-                 else %}
-        var {{ parameter.VariableName }} = BeyondImmersion.BannouService.HttpContextHelper.ExtractHeader(HttpContext, "Authorization");
+        var {{ parameter.VariableName }} = HttpContext.ExtractHeader("Authorization");
         if (string.IsNullOrEmpty({{ parameter.VariableName }}))
             return Unauthorized("Missing Authorization header");
 {%-                 endif -%}
 {%-             elsif fromHeader %}
-        var {{ parameter.VariableName }} = BeyondImmersion.BannouService.HttpContextHelper.ExtractHeader(HttpContext, "{{ fromHeader }}");
+        var {{ parameter.VariableName }} = HttpContext.ExtractHeader("{{ fromHeader }}");
 {%-                 if parameter.IsRequired %}
         if (string.IsNullOrEmpty({{ parameter.VariableName }}))
             return BadRequest("Missing required header: {{ fromHeader }}");
@@ -191,8 +191,8 @@ public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} cla
 {%- comment -%}
 Generate event handler methods from x-event-subscriptions in OpenAPI spec
 {%- endcomment -%}
-{%- if Document.ExtensionData["x-event-subscriptions"] -%}
-{%-     for subscription in Document.ExtensionData["x-event-subscriptions"] -%}
+{%- if ExtensionData["x-event-subscriptions"] -%}
+{%-     for subscription in ExtensionData["x-event-subscriptions"] -%}
 {%-         assign topicParts = subscription.topic | split: "." -%}
 {%-         assign eventName = "" -%}
 {%-         for part in topicParts -%}
@@ -212,14 +212,45 @@ Generate event handler methods from x-event-subscriptions in OpenAPI spec
     {
         try
         {
-            // Delegate to service's OnEventReceivedAsync method
-            await _implementation.OnEventReceivedAsync("{{ subscription.topic }}", eventData);
-            return Ok(new { status = "processed" });
+            var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{ Class }}Controller>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(logger, "Processing Dapr event: {Topic}", "{{ subscription.topic }}");
+
+            // Use Newtonsoft.Json for consistent serialization since the generated models use Newtonsoft attributes
+            var serializedData = Newtonsoft.Json.JsonConvert.SerializeObject(eventData);
+
+{%-         comment -%}
+            Extract event type information from schema $ref
+            Format: 'accounts-events.yaml#/components/schemas/AccountDeletedEvent'
+{%-         endcomment -%}
+{%-         assign schemaRef = subscription.schema["$ref"] -%}
+{%-         assign refParts = schemaRef | split: "#/components/schemas/" -%}
+{%-         assign sourceFile = refParts[0] | remove: ".yaml" | remove: "'" -%}
+{%-         assign eventTypeName = refParts[1] -%}
+{%-         comment -%}
+            Map source file to namespace - accounts-events -> Accounts
+{%-         endcomment -%}
+{%-         assign serviceName = sourceFile | split: "-" | first | capitalize -%}
+{%-         assign fullTypeName = "BeyondImmersion.BannouService." | append: serviceName | append: "." | append: eventTypeName -%}
+
+            // Deserialize using Newtonsoft.Json to match the generated models
+            var typedEventData = Newtonsoft.Json.JsonConvert.DeserializeObject<{{ fullTypeName }}>(serializedData);
+
+            if (typedEventData != null)
+            {
+                Microsoft.Extensions.Logging.LoggerExtensions.LogInformation(logger, "Processing {{ subscription.topic }} event for entity: {EntityId}", typedEventData.AccountId);
+                await _implementation.OnEventReceivedAsync("{{ subscription.topic }}", typedEventData);
+            }
+            else
+            {
+                Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger, "Failed to deserialize {{ subscription.topic }} event data");
+            }
+            return Ok();
         }
         catch (System.Exception ex)
         {
-            // Log error but don't expose internal details
-            return StatusCode(500, new { error = "Internal server error" });
+            var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{ Class }}Controller>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, ex, "Failed to process {{ subscription.topic }} event");
+            return StatusCode(500, new { error = "Event processing failed" });
         }
     }
 
@@ -257,5 +288,29 @@ public abstract class {{ Class }}ControllerBase : {% if HasBaseClass %}{{ BaseCl
     public abstract {%  if operation.WrapResponse %}System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage>{% else %}{{ operation.ResultType }}{% endif %} {{ operation.ActualOperationName }}({% for parameter in operation.Parameters %}{% if parameter.IsQuery %}[{{ AspNetNamespace }}.{% if IsAspNetCore -%}FromQuery{% else -%}FromUri{%- endif %}{% if parameter.IsValidIdentifier == false %}(Name = "{{ parameter.Name }}"){% endif %}] {% endif %}{% if parameter.IsHeader %}[{% if IsAspNetCore -%}{{ AspNetNamespace }}.{%- endif %}FromHeader{% if parameter.IsValidIdentifier == false %}(Name = "{{ parameter.Name }}"){% endif %}] {% endif %}{% if parameter.IsBody and parameter.IsBinaryBody == false %}[{{ AspNetNamespace }}.FromBody] {% endif %}{% if GenerateModelValidationAttributes and parameter.IsRequired %}[{{ RequiredAttributeType }}] {% endif %}{{ parameter.Type }} {{ parameter.VariableName }}{% if parameter.HasDefault %} = {{parameter.Default}}{% endif %}{% if GenerateOptionalParameters and parameter.IsOptional and parameter.HasDefault == false %} = null{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken){% endif %});
 
 {%     endfor -%}
+{%- comment -%}
+Generate event handler methods from x-event-subscriptions in OpenAPI spec (for abstract controllers)
+{%- endcomment -%}
+{%- if ExtensionData["x-event-subscriptions"] -%}
+{%-     for subscription in ExtensionData["x-event-subscriptions"] -%}
+{%-         assign topicParts = subscription.topic | split: "." -%}
+{%-         assign eventName = "" -%}
+{%-         for part in topicParts -%}
+{%-             assign eventName = eventName | append: part | capitalize -%}
+{%-         endfor -%}
+{%-         assign methodName = "Handle" | append: eventName | append: "Event" -%}
+
+    /// <summary>
+    /// Event handler for {{ subscription.topic }} events
+    /// </summary>
+    /// <remarks>
+    /// {{ subscription.description }}
+    /// </remarks>
+    [Dapr.Topic("{{ subscription.pubsub }}", "{{ subscription.topic }}")]
+    [{{ AspNetNamespace }}.HttpPost("{{ subscription.path }}")]
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> {{ methodName }}([{{ AspNetNamespace }}.FromBody] object eventData);
+
+{%-     endfor -%}
+{%- endif -%}
 }
 {%- endif %}

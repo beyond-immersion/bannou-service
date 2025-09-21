@@ -239,11 +239,17 @@ components:
       type: object
       required:
         - serviceId
-        - registered
+        - success
         - affectedSessions
       properties:
         serviceId:
           type: string
+        success:
+          type: boolean
+          description: Whether registration was successful
+        message:
+          type: string
+          description: Success or error message
         registered:
           type: boolean
           description: Whether registration was successful
@@ -260,16 +266,20 @@ components:
       required:
         - sessionId
         - serviceId
-        - state
+        - newState
       properties:
         sessionId:
           type: string
         serviceId:
           type: string
           description: Service whose state is changing for this session
-        state:
+        newState:
           type: string
           description: New state value (lobby, in_game, etc.)
+        previousState:
+          type: string
+          description: Previous state value (null for initial state)
+          nullable: true
         metadata:
           type: object
           additionalProperties: true
@@ -279,26 +289,33 @@ components:
       type: object
       required:
         - sessionId
-        - role
+        - newRole
       properties:
         sessionId:
           type: string
-        role:
+        newRole:
           type: string
           description: New role (user, admin, etc.)
+        previousRole:
+          type: string
+          description: Previous role (null for initial role)
+          nullable: true
 
     SessionUpdateResponse:
       type: object
       required:
         - sessionId
-        - updated
+        - success
         - permissionsChanged
       properties:
         sessionId:
           type: string
-        updated:
+        success:
           type: boolean
           description: Whether update was successful
+        message:
+          type: string
+          description: Success or error message
         permissionsChanged:
           type: boolean
           description: Whether compiled permissions actually changed
@@ -328,7 +345,7 @@ components:
         - sessionId
         - role
         - states
-        - compiledPermissions
+        - permissions
       properties:
         sessionId:
           type: string
@@ -340,6 +357,13 @@ components:
           additionalProperties:
             type: string
           description: Map of ServiceID -> Current State
+        permissions:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Map of ServiceID -> List of available methods
         compiledPermissions:
           type: object
           additionalProperties:
@@ -347,6 +371,9 @@ components:
             items:
               type: string
           description: Map of ServiceID -> List of available methods
+        version:
+          type: integer
+          description: Permission version number
         lastUpdated:
           type: string
           format: date-time

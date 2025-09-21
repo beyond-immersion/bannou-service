@@ -214,7 +214,19 @@ public partial class RegistrationResponse
     /// <summary>
     /// Whether registration was successful
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("registered", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Success or error message
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Message { get; set; } = default!;
+
+    /// <summary>
+    /// Whether registration was successful
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("registered", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
     public bool Registered { get; set; } = default!;
 
     /// <summary>
@@ -255,9 +267,15 @@ public partial class SessionStateUpdate
     /// <summary>
     /// New state value (lobby, in_game, etc.)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("newState", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string State { get; set; } = default!;
+    public string NewState { get; set; } = default!;
+
+    /// <summary>
+    /// Previous state value (null for initial state)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("previousState", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? PreviousState { get; set; } = default!;
 
     /// <summary>
     /// Optional context data
@@ -287,9 +305,15 @@ public partial class SessionRoleUpdate
     /// <summary>
     /// New role (user, admin, etc.)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("role", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("newRole", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string Role { get; set; } = default!;
+    public string NewRole { get; set; } = default!;
+
+    /// <summary>
+    /// Previous role (null for initial role)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("previousRole", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string? PreviousRole { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -313,8 +337,14 @@ public partial class SessionUpdateResponse
     /// <summary>
     /// Whether update was successful
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("updated", Required = Newtonsoft.Json.Required.Always)]
-    public bool Updated { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Success or error message
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Message { get; set; } = default!;
 
     /// <summary>
     /// Whether compiled permissions actually changed
@@ -386,9 +416,21 @@ public partial class SessionInfo
     /// <summary>
     /// Map of ServiceID -&gt; List of available methods
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("compiledPermissions", Required = Newtonsoft.Json.Required.Always)]
+    [Newtonsoft.Json.JsonProperty("permissions", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> CompiledPermissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
+
+    /// <summary>
+    /// Map of ServiceID -&gt; List of available methods
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("compiledPermissions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> CompiledPermissions { get; set; } = default!;
+
+    /// <summary>
+    /// Permission version number
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int Version { get; set; } = default!;
 
     /// <summary>
     /// When permissions were last recompiled

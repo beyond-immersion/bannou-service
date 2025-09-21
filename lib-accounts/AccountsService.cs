@@ -81,16 +81,12 @@ public class AccountsService : IAccountsService
         CreateAccountRequest body,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogCritical("🚨 ACCOUNTS SERVICE: CreateAccountAsync called - This message should appear in logs!");
         try
         {
-            _logger.LogInformation("DEBUG: CreateAccountAsync - Entry point reached");
             _logger.LogDebug("Creating account for email: {Email}", body.Email);
 
-            _logger.LogInformation("DEBUG: CreateAccountAsync - About to create account entity");
             // Create account entity
             var accountId = Guid.NewGuid();
-            _logger.LogInformation("DEBUG: CreateAccountAsync - AccountId generated: {AccountId}", accountId);
 
             var account = new AccountModel
             {
@@ -102,25 +98,20 @@ public class AccountsService : IAccountsService
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             };
-            _logger.LogInformation("DEBUG: CreateAccountAsync - AccountModel created successfully");
 
-            _logger.LogInformation("DEBUG: CreateAccountAsync - About to save account to Dapr state store");
             // Store in Dapr state store (replaces Entity Framework)
             await _daprClient.SaveStateAsync(
                 ACCOUNTS_STATE_STORE,
                 $"{ACCOUNTS_KEY_PREFIX}{accountId}",
                 account);
-            _logger.LogInformation("DEBUG: CreateAccountAsync - Account saved to state store");
 
-            _logger.LogInformation("DEBUG: CreateAccountAsync - About to save email index");
             // Create email index for quick lookup
             await _daprClient.SaveStateAsync(
                 ACCOUNTS_STATE_STORE,
                 $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
                 accountId.ToString());
-            _logger.LogInformation("DEBUG: CreateAccountAsync - Email index saved");
 
-            _logger.LogDebug("Account created successfully: {AccountId}", accountId);
+            _logger.LogInformation("Account created: {AccountId} for email: {Email}", accountId, body.Email);
 
             // Publish account created event
             // TODO: Temporarily disabled to debug segfault
@@ -240,7 +231,7 @@ public class AccountsService : IAccountsService
                 $"{ACCOUNTS_KEY_PREFIX}{accountId}",
                 account);
 
-            _logger.LogInformation("Account updated successfully: {AccountId}", accountId);
+            _logger.LogInformation("Account updated: {AccountId}", accountId);
 
             // Publish account updated event if there were changes
             if (changedFields.Count > 0)
@@ -322,7 +313,7 @@ public class AccountsService : IAccountsService
                 AuthMethods = new List<AuthMethodInfo>() // TODO: Implement auth methods from account data
             };
 
-            _logger.LogDebug("Account retrieved successfully for email: {Email}, AccountId: {AccountId}", email, accountId);
+            _logger.LogDebug("Account retrieved for email: {Email}, AccountId: {AccountId}", email, accountId);
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
@@ -502,10 +493,10 @@ public class AccountsService : IAccountsService
                 $"{EMAIL_INDEX_KEY_PREFIX}{account.Email.ToLowerInvariant()}",
                 cancellationToken: cancellationToken);
 
-            _logger.LogInformation("Account deleted successfully: {AccountId}", accountId);
+            _logger.LogInformation("Account deleted: {AccountId}", accountId);
 
             // Publish account deleted event
-            await PublishAccountDeletedEventAsync(account, "User requested deletion");
+            await PublishAccountDeletedEventAsync(accountId, account, "User requested deletion");
 
             return (StatusCodes.NoContent, null);
         }
@@ -634,25 +625,26 @@ public class AccountsService : IAccountsService
     /// <summary>
     /// Publish AccountDeletedEvent to RabbitMQ via Dapr
     /// </summary>
-    private async Task PublishAccountDeletedEventAsync(AccountModel account, string deletionReason)
+    private async Task PublishAccountDeletedEventAsync(Guid accountId, AccountModel account, string deletionReason)
     {
         try
         {
+
             var eventModel = new AccountDeletedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AccountId = Guid.Parse(account.AccountId),
+                AccountId = accountId,
                 Email = account.Email,
                 DeletionReason = deletionReason
             };
 
             await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_DELETED_TOPIC, eventModel);
-            _logger.LogDebug("Published AccountDeletedEvent for account: {AccountId}", account.AccountId);
+            _logger.LogDebug("Published AccountDeletedEvent for account: {AccountId}", accountId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish AccountDeletedEvent for account: {AccountId}", account.AccountId);
+            _logger.LogError(ex, "Failed to publish AccountDeletedEvent for account: {AccountId}", accountId);
             // Don't throw - event publishing failure shouldn't break account deletion
         }
     }

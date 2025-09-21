@@ -23,7 +23,7 @@ public class TestingServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        Logger?.LogInformation("🔧 Configuring Testing service dependencies");
+        Logger?.LogDebug("Configuring service dependencies");
 
         // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
         // No need to register ITestingService and TestingService here
@@ -31,7 +31,7 @@ public class TestingServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register TestingServiceConfiguration here
 
-        Logger?.LogInformation("✅ Testing service dependencies configured");
+        Logger?.LogDebug("Service dependencies configured");
     }
 
     /// <summary>
@@ -39,12 +39,12 @@ public class TestingServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        Logger?.LogInformation("🔧 Configuring Testing service application pipeline");
+        Logger?.LogDebug("Configuring application pipeline");
 
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        Logger?.LogInformation("✅ Testing service application pipeline configured");
+        Logger?.LogDebug("Application pipeline configured");
     }
 
     /// <summary>
@@ -52,7 +52,7 @@ public class TestingServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("▶️  Starting Testing service");
+        Logger?.LogInformation("Starting service");
 
         try
         {
@@ -64,7 +64,7 @@ public class TestingServicePlugin : BaseBannouPlugin
                 if (resolvedService != null)
                 {
                     _service = resolvedService as TestingService;
-                    Logger?.LogInformation("✅ Using centrally resolved TestingService");
+                    Logger?.LogInformation("Using centrally resolved TestingService");
 
                     // Test the service is working
                     if (_service != null)
@@ -72,33 +72,33 @@ public class TestingServicePlugin : BaseBannouPlugin
                         var testResult = await _service.RunTestAsync("plugin-startup-test");
                         if (testResult.Item1 == StatusCodes.OK)
                         {
-                            Logger?.LogInformation("✅ Testing service startup test passed");
+                            Logger?.LogInformation("Testing service startup test passed");
                         }
                         else
                         {
-                            Logger?.LogWarning("⚠️  Testing service startup test failed");
+                            Logger?.LogWarning("Testing service startup test failed");
                         }
                     }
 
-                    Logger?.LogInformation("✅ Testing service started successfully (centrally managed)");
+                    Logger?.LogInformation("Service started (centrally managed)");
                     return true;
                 }
                 else
                 {
-                    Logger?.LogWarning("⚠️  No centrally resolved service found for 'testing' plugin");
+                    Logger?.LogWarning("No centrally resolved service found for 'testing' plugin");
                 }
             }
             else
             {
-                Logger?.LogWarning("⚠️  PluginLoader not available for central service resolution");
+                Logger?.LogWarning("PluginLoader not available for central service resolution");
             }
 
             // Fallback to manual service resolution
-            Logger?.LogInformation("🔄 Falling back to manual service resolution");
+            Logger?.LogInformation("Falling back to manual service resolution");
 
             if (_serviceProvider == null)
             {
-                Logger?.LogError("❌ Service provider is null - ConfigureApplication may not have been called");
+                Logger?.LogError("Service provider is null - ConfigureApplication may not have been called");
                 return false;
             }
 
@@ -108,16 +108,16 @@ public class TestingServicePlugin : BaseBannouPlugin
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve ITestingService from DI container");
+                Logger?.LogError("Failed to resolve ITestingService from DI container");
                 return false;
             }
 
-            Logger?.LogInformation("✅ TestingService resolved successfully (fallback)");
+            Logger?.LogInformation("TestingService resolved successfully (fallback)");
 
             // Call existing IDaprService.OnStartAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnStartAsync for Testing service");
+                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Testing service");
                 await daprService.OnStartAsync(CancellationToken.None);
             }
 
@@ -125,15 +125,15 @@ public class TestingServicePlugin : BaseBannouPlugin
             var fallbackTestResult = await _service.RunTestAsync("plugin-fallback-startup-test");
             if (fallbackTestResult.Item1 == StatusCodes.OK)
             {
-                Logger?.LogInformation("✅ Testing service fallback startup test passed");
+                Logger?.LogInformation("Testing service fallback startup test passed");
             }
 
-            Logger?.LogInformation("✅ Testing service started successfully");
+            Logger?.LogInformation("Service started");
             return true;
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "❌ Failed to start Testing service");
+            Logger?.LogError(ex, "Failed to start service");
             return false;
         }
     }
@@ -145,14 +145,14 @@ public class TestingServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogDebug("🏃 Testing service running");
+        Logger?.LogDebug("Service running");
 
         try
         {
             // Call existing IDaprService.OnRunningAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnRunningAsync for Testing service");
+                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Testing service");
                 await daprService.OnRunningAsync(CancellationToken.None);
             }
 
@@ -160,12 +160,12 @@ public class TestingServicePlugin : BaseBannouPlugin
             var runningTestResult = await _service.RunTestAsync("plugin-running-test");
             if (runningTestResult.Item1 == StatusCodes.OK)
             {
-                Logger?.LogDebug("✅ Testing service running test passed");
+                Logger?.LogDebug("Testing service running test passed");
             }
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Testing service running phase");
+            Logger?.LogWarning(ex, "Exception during running phase");
         }
     }
 
@@ -176,22 +176,22 @@ public class TestingServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogInformation("🛑 Shutting down Testing service");
+        Logger?.LogInformation("Shutting down service");
 
         try
         {
             // Call existing IDaprService.OnShutdownAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnShutdownAsync for Testing service");
+                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Testing service");
                 await daprService.OnShutdownAsync();
             }
 
-            Logger?.LogInformation("✅ Testing service shutdown complete");
+            Logger?.LogInformation("Service shutdown complete");
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Testing service shutdown");
+            Logger?.LogWarning(ex, "Exception during shutdown");
         }
     }
 }

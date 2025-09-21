@@ -44,7 +44,7 @@ public abstract class BaseBannouPlugin : IBannouPlugin
         if (loggerFactory != null)
         {
             Logger = loggerFactory.CreateLogger(GetType());
-            Logger?.LogInformation("🔧 Initializing plugin: {PluginName}", PluginName);
+            Logger?.LogInformation("Initializing plugin: {PluginName}", PluginName);
         }
 
         return await OnInitializeAsync();
@@ -53,21 +53,21 @@ public abstract class BaseBannouPlugin : IBannouPlugin
     /// <inheritdoc />
     public virtual async Task<bool> StartAsync()
     {
-        Logger?.LogInformation("▶️  Starting plugin: {PluginName}", PluginName);
+        Logger?.LogInformation("Starting plugin: {PluginName}", PluginName);
         return await OnStartAsync();
     }
 
     /// <inheritdoc />
     public virtual async Task RunningAsync()
     {
-        Logger?.LogDebug("🏃 Plugin running: {PluginName}", PluginName);
+        Logger?.LogDebug("Plugin running: {PluginName}", PluginName);
         await OnRunningAsync();
     }
 
     /// <inheritdoc />
     public virtual async Task ShutdownAsync()
     {
-        Logger?.LogInformation("🛑 Shutting down plugin: {PluginName}", PluginName);
+        Logger?.LogInformation("Shutting down plugin: {PluginName}", PluginName);
         await OnShutdownAsync();
     }
 
@@ -130,7 +130,7 @@ public abstract class BaseBannouPlugin : IBannouPlugin
     /// Get logger factory from service provider if available.
     /// </summary>
     /// <returns>Logger factory or null if not available</returns>
-    private ILoggerFactory? GetLoggerFactory()
+    private static ILoggerFactory? GetLoggerFactory()
     {
         try
         {

@@ -25,7 +25,7 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     public override void ConfigureServices(IServiceCollection services)
     {
 
-        Logger?.LogInformation("🔧 Configuring Website service dependencies");
+        Logger?.LogDebug("Configuring service dependencies");
 
         // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
         // No need to register IWebsiteService and WebsiteService here
@@ -36,7 +36,7 @@ public class WebsiteServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
-        Logger?.LogInformation("✅ Website service dependencies configured");
+        Logger?.LogDebug("Service dependencies configured");
     }
 
     /// <summary>
@@ -45,7 +45,7 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     public override void ConfigureApplication(WebApplication app)
     {
 
-        Logger?.LogInformation("🔧 Configuring Website service application pipeline");
+        Logger?.LogDebug("Configuring application pipeline");
 
         // The generated WebsiteController should already be discovered via standard ASP.NET Core controller discovery
         // since we're not excluding the assembly like we did with IDaprController approach
@@ -53,7 +53,7 @@ public class WebsiteServicePlugin : BaseBannouPlugin
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        Logger?.LogInformation("✅ Website service application pipeline configured");
+        Logger?.LogDebug("Application pipeline configured");
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("▶️  Starting Website service");
+        Logger?.LogInformation("Starting service");
 
         try
         {
@@ -71,23 +71,23 @@ public class WebsiteServicePlugin : BaseBannouPlugin
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve IWebsiteService from DI container");
+                Logger?.LogError("Failed to resolve IWebsiteService from DI container");
                 return false;
             }
 
             // Call existing IDaprService.OnStartAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnStartAsync for Website service");
+                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Website service");
                 await daprService.OnStartAsync(CancellationToken.None);
             }
 
-            Logger?.LogInformation("✅ Website service started successfully");
+            Logger?.LogInformation("Service started");
             return true;
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "❌ Failed to start Website service");
+            Logger?.LogError(ex, "Failed to start service");
             return false;
         }
     }
@@ -99,20 +99,20 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogDebug("🏃 Website service running");
+        Logger?.LogDebug("Service running");
 
         try
         {
             // Call existing IDaprService.OnRunningAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnRunningAsync for Website service");
+                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Website service");
                 await daprService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Website service running phase");
+            Logger?.LogWarning(ex, "Exception during running phase");
         }
     }
 
@@ -123,22 +123,22 @@ public class WebsiteServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogInformation("🛑 Shutting down Website service");
+        Logger?.LogInformation("Shutting down service");
 
         try
         {
             // Call existing IDaprService.OnShutdownAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnShutdownAsync for Website service");
+                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Website service");
                 await daprService.OnShutdownAsync();
             }
 
-            Logger?.LogInformation("✅ Website service shutdown complete");
+            Logger?.LogInformation("Service shutdown complete");
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Website service shutdown");
+            Logger?.LogWarning(ex, "Exception during shutdown");
         }
     }
 }

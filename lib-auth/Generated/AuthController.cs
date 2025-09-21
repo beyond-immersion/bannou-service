@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Auth;
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public interface IAuthController
+public interface IAuthController : BeyondImmersion.BannouService.Controllers.IDaprController
 {
 
     /// <summary>
@@ -290,7 +290,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> RefreshToken([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RefreshRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var jwt = BeyondImmersion.BannouService.HttpContextHelper.ExtractBearerToken(HttpContext);
+        var jwt = HttpContext.ExtractBearerToken();
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
@@ -308,7 +308,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTokenResponse>> ValidateToken(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var jwt = BeyondImmersion.BannouService.HttpContextHelper.ExtractBearerToken(HttpContext);
+        var jwt = HttpContext.ExtractBearerToken();
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
@@ -326,7 +326,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Logout([Microsoft.AspNetCore.Mvc.FromBody] LogoutRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var jwt = BeyondImmersion.BannouService.HttpContextHelper.ExtractBearerToken(HttpContext);
+        var jwt = HttpContext.ExtractBearerToken();
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
@@ -344,7 +344,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionsResponse>> GetSessions(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var jwt = BeyondImmersion.BannouService.HttpContextHelper.ExtractBearerToken(HttpContext);
+        var jwt = HttpContext.ExtractBearerToken();
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
@@ -389,6 +389,46 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         var (statusCode, result) = await _implementation.ConfirmPasswordResetAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Event handler for account.deleted events
+    /// </summary>
+    /// <remarks>
+    /// Subscribe to account deletion events to invalidate sessions
+    /// </remarks>
+    [Dapr.Topic("bannou-pubsub", "account.deleted")]
+    [Microsoft.AspNetCore.Mvc.HttpPost("/dapr/events/account-deleted")]
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleAccountdeletedEvent([Microsoft.AspNetCore.Mvc.FromBody] object eventData)
+    {
+        try
+        {
+            var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(logger, "Processing Dapr event: {Topic}", "account.deleted");
+
+            // Use Newtonsoft.Json for consistent serialization since the generated models use Newtonsoft attributes
+            var serializedData = Newtonsoft.Json.JsonConvert.SerializeObject(eventData);
+
+            // Deserialize using Newtonsoft.Json to match the generated models
+            var typedEventData = Newtonsoft.Json.JsonConvert.DeserializeObject<BeyondImmersion.BannouService.Accounts.AccountDeletedEvent>(serializedData);
+
+            if (typedEventData != null)
+            {
+                Microsoft.Extensions.Logging.LoggerExtensions.LogInformation(logger, "Processing account.deleted event for entity: {EntityId}", typedEventData.AccountId);
+                await _implementation.OnEventReceivedAsync("account.deleted", typedEventData);
+            }
+            else
+            {
+                Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger, "Failed to deserialize account.deleted event data");
+            }
+            return Ok();
+        }
+        catch (System.Exception ex)
+        {
+            var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, ex, "Failed to process account.deleted event");
+            return StatusCode(500, new { error = "Event processing failed" });
+        }
     }
 
 }

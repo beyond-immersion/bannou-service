@@ -261,181 +261,12 @@ public class ConnectService : IConnectService
         }
     }
 
-    /// <summary>
-    /// Get available APIs for current session using Permissions service.
-    /// Returns client-salted GUIDs for security isolation.
-    /// </summary>
-    public async Task<(StatusCodes, ApiDiscoveryResponse?)> DiscoverAPIsAsync(
-        ApiDiscoveryRequest body,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing API discovery request for session {SessionId}",
-                body.SessionId);
-
-            // Get capabilities from Permissions service
-            var capabilityRequest = new CapabilityRequest
-            {
-                SessionId = body.SessionId,
-                ServiceIds = new List<string>() // Get all available services
-            };
-
-            CapabilityResponse capabilities;
-            try
-            {
-                capabilities = await _permissionsClient.GetCapabilitiesAsync(
-                    capabilityRequest, cancellationToken);
-            }
-            catch (ApiException apiEx)
-            {
-                _logger.LogWarning("Failed to get capabilities for session {SessionId}: {Error}",
-                    body.SessionId, apiEx.Message);
-
-                if (apiEx.StatusCode == 404)
-                {
-                    return (StatusCodes.NotFound, null);
-                }
-
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // Build available APIs with client-salted GUIDs
-            var availableApis = new List<ApiEndpointInfo>();
-            var serviceCapabilities = new Dictionary<string, ICollection<string>>();
-            var serviceMappings = new Dictionary<string, Guid>();
-
-            foreach (var servicePermission in capabilities.Permissions)
-            {
-                var serviceName = servicePermission.Key;
-                var methods = servicePermission.Value;
-
-                // Generate client-salted GUID for this service
-                var serviceGuid = GuidGenerator.GenerateServiceGuid(
-                    body.SessionId.ToString(), serviceName, _serverSalt);
-                serviceMappings[serviceName] = serviceGuid;
-
-                // Create API endpoint info for each method
-                foreach (var method in methods)
-                {
-                    // Parse method format (e.g., "GET:/accounts/{id}")
-                    var parts = method.Split(':', 2);
-                    if (parts.Length != 2) continue;
-
-                    var httpMethod = ParseMethod(parts[0]);
-                    var endpoint = parts[1];
-
-                    availableApis.Add(new ApiEndpointInfo
-                    {
-                        ServiceGuid = serviceGuid,
-                        ServiceName = serviceName,
-                        Endpoint = endpoint,
-                        Method = httpMethod,
-                        Description = $"{httpMethod} {endpoint} on {serviceName}",
-                        RequiredPermissions = new List<string> { $"{serviceName}:{parts[0].ToLower()}" },
-                        Category = GetServiceCategory(serviceName),
-                        Channel = GetPreferredChannel(serviceName, endpoint)
-                    });
-                }
-
-                // Add to service capabilities map
-                if (!serviceCapabilities.ContainsKey(serviceName))
-                {
-                    serviceCapabilities[serviceName] = new List<string>();
-                }
-                ((List<string>)serviceCapabilities[serviceName]).AddRange(methods);
-            }
-
-            // Store service mappings for this session (for reverse lookup during routing)
-            if (_sessionManager != null)
-            {
-                // Use Redis for distributed session management
-                await _sessionManager.SetSessionServiceMappingsAsync(body.SessionId.ToString(), serviceMappings);
-            }
-            else
-            {
-                // Fallback to in-memory storage
-                _sessionServiceMappings[body.SessionId.ToString()] = serviceMappings;
-            }
-
-            var response = new ApiDiscoveryResponse
-            {
-                SessionId = body.SessionId,
-                AvailableAPIs = availableApis,
-                ServiceCapabilities = serviceCapabilities,
-                Version = 1, // Default version for now
-                GeneratedAt = DateTimeOffset.UtcNow,
-                ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(60) // Default 60 minute expiry
-            };
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing API discovery request");
-            return (StatusCodes.InternalServerError, null);
-        }
-    }
+    // REMOVED: DiscoverAPIsAsync - API discovery belongs to Permissions service, not Connect service
+    // Connect service ONLY handles WebSocket connections and message routing
 
 
-    /// <summary>
-    /// Parse HTTP method string to enum.
-    /// </summary>
-    private ApiEndpointInfoMethod ParseMethod(string method)
-    {
-        return method.ToUpperInvariant() switch
-        {
-            "GET" => ApiEndpointInfoMethod.GET,
-            "POST" => ApiEndpointInfoMethod.POST,
-            "PUT" => ApiEndpointInfoMethod.PUT,
-            "DELETE" => ApiEndpointInfoMethod.DELETE,
-            "PATCH" => ApiEndpointInfoMethod.PATCH,
-            _ => ApiEndpointInfoMethod.GET
-        };
-    }
-
-    /// <summary>
-    /// Get service category for grouping in discovery response.
-    /// </summary>
-    private string GetServiceCategory(string serviceName)
-    {
-        return serviceName.ToLowerInvariant() switch
-        {
-            "auth" => "authentication",
-            "accounts" => "accounts",
-            "behavior" => "game",
-            "gamesession" => "game",
-            "permissions" => "system",
-            "website" => "public",
-            "connect" => "infrastructure",
-            _ => "general"
-        };
-    }
-
-    /// <summary>
-    /// Get preferred channel for message ordering.
-    /// Higher channels guarantee sequential processing.
-    /// </summary>
-    private int GetPreferredChannel(string serviceName, string endpoint)
-    {
-        // Assign channels based on service criticality and message ordering needs
-        // Channel 0 = default/unordered
-        // Higher channels = sequential processing guaranteed
-
-        if (serviceName == "auth" || endpoint.Contains("/login") || endpoint.Contains("/logout"))
-            return 1; // Auth operations on channel 1
-
-        if (serviceName == "gamesession" || endpoint.Contains("/join") || endpoint.Contains("/leave"))
-            return 2; // Game session operations on channel 2
-
-        if (serviceName == "behavior")
-            return 3; // Behavior operations on channel 3
-
-        if (serviceName == "permissions")
-            return 4; // Permission operations on channel 4
-
-        return 0; // Default channel for everything else
-    }
+    // REMOVED: ParseMethod, GetServiceCategory, GetPreferredChannel methods
+    // These were only used by the removed DiscoverAPIsAsync method
 
     /// <summary>
     /// Gets current service routing information for monitoring/debugging.
@@ -941,48 +772,38 @@ public class ConnectService : IConnectService
             // Check if the session has an active WebSocket connection
             if (HasConnection(eventData.SessionId))
             {
-                // Regenerate service discovery for the session
-                var discoveryRequest = new ApiDiscoveryRequest { SessionId = eventData.SessionId };
-                var (statusCode, discoveryResponse) = await DiscoverAPIsAsync(discoveryRequest, CancellationToken.None);
-
-                if (statusCode == StatusCodes.OK && discoveryResponse != null)
+                // Send capability update directly without API discovery
+                // The client can request fresh capabilities from the Permissions service if needed
+                var updatePayload = new
                 {
-                    // Create capability update message
-                    var updatePayload = new
-                    {
-                        type = "capability_update",
-                        sessionId = eventData.SessionId,
-                        version = eventData.Version,
-                        addedCapabilities = eventData.AddedCapabilities,
-                        removedCapabilities = eventData.RemovedCapabilities,
-                        availableAPIs = discoveryResponse.AvailableAPIs,
-                        updatedAt = DateTimeOffset.UtcNow
-                    };
+                    type = "capability_update",
+                    sessionId = eventData.SessionId,
+                    version = eventData.Version,
+                    addedCapabilities = eventData.AddedCapabilities,
+                    removedCapabilities = eventData.RemovedCapabilities,
+                    updatedAt = DateTimeOffset.UtcNow,
+                    message = "Capabilities updated. Use Permissions service to get fresh capability list."
+                };
 
-                    // Send real-time update via WebSocket
-                    var messageId = MessageRouter.GenerateMessageId();
-                    var updateMessage = BinaryMessage.FromJson(
-                        channel: 4, // Permissions channel
-                        sequenceNumber: 0, // Event message (no sequence)
-                        serviceGuid: Guid.Empty, // System message
-                        messageId: messageId,
-                        JsonSerializer.Serialize(updatePayload)
-                    );
+                // Send real-time update via WebSocket
+                var messageId = MessageRouter.GenerateMessageId();
+                var updateMessage = BinaryMessage.FromJson(
+                    channel: 4, // Permissions channel
+                    sequenceNumber: 0, // Event message (no sequence)
+                    serviceGuid: Guid.Empty, // System message
+                    messageId: messageId,
+                    JsonSerializer.Serialize(updatePayload)
+                );
 
-                    var sent = await SendMessageAsync(eventData.SessionId, updateMessage, CancellationToken.None);
+                var sent = await SendMessageAsync(eventData.SessionId, updateMessage, CancellationToken.None);
 
-                    if (sent)
-                    {
-                        _logger.LogInformation("Sent capability update to session {SessionId}", eventData.SessionId);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Failed to send capability update to session {SessionId} - connection not found", eventData.SessionId);
-                    }
+                if (sent)
+                {
+                    _logger.LogInformation("Sent capability update to session {SessionId}", eventData.SessionId);
                 }
                 else
                 {
-                    _logger.LogWarning("Failed to regenerate API discovery for session {SessionId}", eventData.SessionId);
+                    _logger.LogWarning("Failed to send capability update to session {SessionId} - connection not found", eventData.SessionId);
                 }
             }
             else
@@ -1257,43 +1078,37 @@ public class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Refreshes session capabilities and sends real-time update to client.
+    /// Sends auth state change notification to client.
+    /// Client should request fresh capabilities from Permissions service.
     /// </summary>
     private async Task RefreshSessionCapabilitiesAsync(string sessionId, string newState)
     {
         try
         {
-            var discoveryRequest = new ApiDiscoveryRequest { SessionId = sessionId };
-            var (statusCode, discoveryResponse) = await DiscoverAPIsAsync(discoveryRequest, CancellationToken.None);
-
-            if (statusCode == StatusCodes.OK && discoveryResponse != null)
+            var updatePayload = new
             {
-                var updatePayload = new
-                {
-                    type = "auth_state_change",
-                    sessionId = sessionId,
-                    newState = newState,
-                    availableAPIs = discoveryResponse.AvailableAPIs,
-                    serviceCapabilities = discoveryResponse.ServiceCapabilities,
-                    updatedAt = DateTimeOffset.UtcNow
-                };
+                type = "auth_state_change",
+                sessionId = sessionId,
+                newState = newState,
+                updatedAt = DateTimeOffset.UtcNow,
+                message = "Authentication state changed. Request fresh capabilities from Permissions service."
+            };
 
-                var messageId = MessageRouter.GenerateMessageId();
-                var updateMessage = BinaryMessage.FromJson(
-                    channel: 1, // Auth channel
-                    sequenceNumber: 0, // Event message
-                    serviceGuid: Guid.Empty, // System message
-                    messageId: messageId,
-                    JsonSerializer.Serialize(updatePayload)
-                );
+            var messageId = MessageRouter.GenerateMessageId();
+            var updateMessage = BinaryMessage.FromJson(
+                channel: 1, // Auth channel
+                sequenceNumber: 0, // Event message
+                serviceGuid: Guid.Empty, // System message
+                messageId: messageId,
+                JsonSerializer.Serialize(updatePayload)
+            );
 
-                await _connectionManager.SendMessageAsync(sessionId, updateMessage, CancellationToken.None);
-                _logger.LogInformation("Sent auth state change update to session {SessionId}: {NewState}", sessionId, newState);
-            }
+            await _connectionManager.SendMessageAsync(sessionId, updateMessage, CancellationToken.None);
+            _logger.LogInformation("Sent auth state change update to session {SessionId}: {NewState}", sessionId, newState);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to refresh capabilities for session {SessionId}", sessionId);
+            _logger.LogError(ex, "Failed to send auth state change for session {SessionId}", sessionId);
         }
     }
 

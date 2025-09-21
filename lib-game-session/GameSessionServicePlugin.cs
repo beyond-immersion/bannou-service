@@ -24,7 +24,7 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        Logger?.LogInformation("🔧 Configuring GameSession service dependencies");
+        Logger?.LogDebug("Configuring service dependencies");
 
         // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
         // No need to register IGameSessionService and GameSessionService here
@@ -35,7 +35,7 @@ public class GameSessionServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
-        Logger?.LogInformation("✅ GameSession service dependencies configured");
+        Logger?.LogDebug("Service dependencies configured");
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        Logger?.LogInformation("🔧 Configuring GameSession service application pipeline");
+        Logger?.LogDebug("Configuring application pipeline");
 
         // The generated GameSessionController should already be discovered via standard ASP.NET Core controller discovery
         // since we're not excluding the assembly like we did with IDaprController approach
@@ -51,7 +51,7 @@ public class GameSessionServicePlugin : BaseBannouPlugin
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        Logger?.LogInformation("✅ GameSession service application pipeline configured");
+        Logger?.LogDebug("Application pipeline configured");
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("▶️  Starting GameSession service");
+        Logger?.LogInformation("Starting service");
 
         try
         {
@@ -69,23 +69,23 @@ public class GameSessionServicePlugin : BaseBannouPlugin
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve IGameSessionService from DI container");
+                Logger?.LogError("Failed to resolve IGameSessionService from DI container");
                 return false;
             }
 
             // Call existing IDaprService.OnStartAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnStartAsync for GameSession service");
+                Logger?.LogDebug("Calling IDaprService.OnStartAsync for GameSession service");
                 await daprService.OnStartAsync(CancellationToken.None);
             }
 
-            Logger?.LogInformation("✅ GameSession service started successfully");
+            Logger?.LogInformation("Service started");
             return true;
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "❌ Failed to start GameSession service");
+            Logger?.LogError(ex, "Failed to start service");
             return false;
         }
     }
@@ -97,20 +97,20 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogDebug("🏃 GameSession service running");
+        Logger?.LogDebug("Service running");
 
         try
         {
             // Call existing IDaprService.OnRunningAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnRunningAsync for GameSession service");
+                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for GameSession service");
                 await daprService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during GameSession service running phase");
+            Logger?.LogWarning(ex, "Exception during running phase");
         }
     }
 
@@ -121,22 +121,22 @@ public class GameSessionServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogInformation("🛑 Shutting down GameSession service");
+        Logger?.LogInformation("Shutting down service");
 
         try
         {
             // Call existing IDaprService.OnShutdownAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnShutdownAsync for GameSession service");
+                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for GameSession service");
                 await daprService.OnShutdownAsync();
             }
 
-            Logger?.LogInformation("✅ GameSession service shutdown complete");
+            Logger?.LogInformation("Service shutdown complete");
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during GameSession service shutdown");
+            Logger?.LogWarning(ex, "Exception during shutdown");
         }
     }
 }

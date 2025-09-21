@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Connect;
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public interface IConnectController
+public interface IConnectController : BeyondImmersion.BannouService.Controllers.IDaprController
 {
 
     /// <summary>
@@ -43,15 +43,6 @@ public interface IConnectController
     /// <returns>Request proxied successfully</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InternalProxyResponse>> ProxyInternalRequestAsync(InternalProxyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <summary>
-    /// Get available APIs for current session
-    /// </summary>
-
-
-    /// <returns>Available APIs discovered successfully</returns>
-
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ApiDiscoveryResponse>> DiscoverAPIsAsync(ApiDiscoveryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Get current service routing mappings
@@ -179,19 +170,6 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     {
 
         var (statusCode, result) = await _implementation.ProxyInternalRequestAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
-    }
-
-    /// <summary>
-    /// Get available APIs for current session
-    /// </summary>
-    /// <returns>Available APIs discovered successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("api-discovery")]
-
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ApiDiscoveryResponse>> DiscoverAPIs([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ApiDiscoveryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-
-        var (statusCode, result) = await _implementation.DiscoverAPIsAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

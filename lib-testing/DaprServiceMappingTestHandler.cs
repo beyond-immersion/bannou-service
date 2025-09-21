@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

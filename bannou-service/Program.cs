@@ -265,24 +265,24 @@ public static class Program
         }
 
         // Final override: Ensure configuration lifetimes are correct (after all auto-registration)
-        Logger.Log(LogLevel.Information, null, "🔧 Final configuration lifetime check and override...");
+        Logger.Log(LogLevel.Information, null, "Final configuration lifetime check and override...");
 
         // DISABLED: This was destroying properly bound configurations by replacing them with default constructor instances
         // The PluginLoader already registers configurations properly with environment binding
         // PluginLoader?.FinalizeConfigurationRegistrations(webAppBuilder.Services);
 
         // build the application
-        Logger.Log(LogLevel.Information, null, "🔧 About to build WebApplication - checking for DI conflicts...");
+        Logger.Log(LogLevel.Information, null, "About to build WebApplication - checking for DI conflicts...");
 
         WebApplication webApp;
         try
         {
             webApp = webAppBuilder.Build();
-            Logger.Log(LogLevel.Information, null, "✅ WebApplication built successfully - no DI validation errors detected");
+            Logger.Log(LogLevel.Information, null, "WebApplication built successfully - no DI validation errors detected");
         }
         catch (Exception ex)
         {
-            Logger.Log(LogLevel.Error, ex, "❌ Failed to build WebApplication - DI validation error detected");
+            Logger.Log(LogLevel.Error, ex, "Failed to build WebApplication - DI validation error detected");
             Logger.Log(LogLevel.Error, null, "Exception type: {ExceptionType}", ex?.GetType()?.Name ?? "null");
             Logger.Log(LogLevel.Error, null, "Exception message: {ExceptionMessage}", ex?.Message ?? "null");
             if (ex?.InnerException != null)

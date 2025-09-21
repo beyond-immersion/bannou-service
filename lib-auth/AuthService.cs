@@ -70,7 +70,6 @@ public class AuthService : IAuthService
         LoginRequest body,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogCritical("🚨 AUTH SERVICE: LoginAsync called - This message should appear in logs!");
         try
         {
             _logger.LogInformation("Processing login request for email: {Email}", body.Email);
@@ -82,13 +81,11 @@ public class AuthService : IAuthService
 
             // Lookup account by email via AccountsClient
             _logger.LogInformation("Looking up account by email via AccountsClient: {Email}", body.Email);
-            _logger.LogCritical("🚨 AUTH SERVICE: About to call _accountsClient.GetAccountByEmailAsync");
 
             AccountResponse account;
             try
             {
                 account = await _accountsClient.GetAccountByEmailAsync(body.Email, cancellationToken);
-                _logger.LogCritical("🚨 AUTH SERVICE: AccountsClient call completed successfully");
                 _logger.LogInformation("Account found via service call: {AccountId}", account?.AccountId);
 
                 if (account == null)
@@ -104,16 +101,13 @@ public class AuthService : IAuthService
             }
 
             // Verify password against stored hash
-            _logger.LogCritical("🚨 AUTH SERVICE: About to check password hash");
             if (string.IsNullOrWhiteSpace(account.PasswordHash))
             {
                 _logger.LogWarning("Account has no password hash stored: {Email}", body.Email);
                 return (StatusCodes.Unauthorized, null);
             }
 
-            _logger.LogCritical("🚨 AUTH SERVICE: About to verify password with BCrypt");
             bool passwordValid = BCrypt.Net.BCrypt.Verify(body.Password, account.PasswordHash);
-            _logger.LogCritical("🚨 AUTH SERVICE: BCrypt verification completed");
 
             if (!passwordValid)
             {
@@ -123,18 +117,13 @@ public class AuthService : IAuthService
 
             _logger.LogInformation("Password verification successful for email: {Email}", body.Email);
 
-            _logger.LogCritical("🚨 AUTH SERVICE: About to generate access token");
             // Generate tokens
             var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
-            _logger.LogCritical("🚨 AUTH SERVICE: Access token generated successfully");
 
             var refreshToken = GenerateRefreshToken();
-            _logger.LogCritical("🚨 AUTH SERVICE: Refresh token generated successfully");
 
-            _logger.LogCritical("🚨 AUTH SERVICE: About to store refresh token");
             // Store refresh token
             await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
-            _logger.LogCritical("🚨 AUTH SERVICE: Refresh token stored successfully");
 
             _logger.LogInformation("Successfully authenticated user: {Email} (ID: {AccountId})",
                 body.Email, account.AccountId);
@@ -811,7 +800,6 @@ public class AuthService : IAuthService
         var sessionId = Guid.NewGuid().ToString();
 
         // Store session data in Redis with opaque key
-        _logger.LogCritical("🚨 AUTH SERVICE: About to create session data object");
         var sessionData = new SessionDataModel
         {
             AccountId = account.AccountId,
@@ -822,7 +810,6 @@ public class AuthService : IAuthService
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = DateTime.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes)
         };
-        _logger.LogCritical("🚨 AUTH SERVICE: Session data object created, about to save to Redis");
 
         await _daprClient.SaveStateAsync(
             REDIS_STATE_STORE,
@@ -830,21 +817,14 @@ public class AuthService : IAuthService
             sessionData,
             metadata: new Dictionary<string, string> { { "ttl", (_configuration.JwtExpirationMinutes * 60).ToString() } },
             cancellationToken: cancellationToken);
-        _logger.LogCritical("🚨 AUTH SERVICE: Redis SaveStateAsync completed successfully");
 
         // Maintain account-to-sessions index for efficient GetSessions implementation
-        _logger.LogCritical("🚨 AUTH SERVICE: About to call AddSessionToAccountIndexAsync");
         await AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
-        _logger.LogCritical("🚨 AUTH SERVICE: AddSessionToAccountIndexAsync completed successfully");
 
         // JWT contains only opaque session key - no sensitive data
-        _logger.LogCritical("🚨 AUTH SERVICE: About to create JWT manually");
         var jwtSecret = _configuration.JwtSecret ?? throw new InvalidOperationException("JWT secret is not configured");
-        _logger.LogCritical("🚨 AUTH SERVICE: JWT secret length: {Length}", jwtSecret.Length);
         var key = Encoding.UTF8.GetBytes(jwtSecret);
-        _logger.LogCritical("🚨 AUTH SERVICE: Key bytes created, length: {Length}", key.Length);
 
-        _logger.LogCritical("🚨 AUTH SERVICE: About to create JWT using JwtSecurityTokenHandler library");
 
         try
         {
@@ -876,15 +856,13 @@ public class AuthService : IAuthService
                 Audience = _configuration.JwtAudience
             };
 
-            _logger.LogCritical("🚨 AUTH SERVICE: Using JwtSecurityTokenHandler.CreateToken API");
             var jwt = tokenHandler.CreateToken(tokenDescriptor);
             var jwtString = tokenHandler.WriteToken(jwt);
-            _logger.LogCritical("🚨 AUTH SERVICE: JWT token created successfully, length: {Length}", jwtString.Length);
             return jwtString;
         }
         catch (Exception ex)
         {
-            _logger.LogCritical("🚨 AUTH SERVICE: Exception in JWT creation: {Exception}", ex.ToString());
+            _logger.LogError(ex, $"Failed to generate security token for session with ID {sessionKey}.");
             throw;
         }
     }

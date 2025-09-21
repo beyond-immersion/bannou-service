@@ -24,7 +24,7 @@ public class AccountsServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        Logger?.LogInformation("🔧 Configuring Accounts service dependencies");
+        Logger?.LogDebug("Configuring Accounts service dependencies");
 
         // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
         // No need to register IAccountsService and AccountsService here
@@ -35,7 +35,7 @@ public class AccountsServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
-        Logger?.LogInformation("✅ Accounts service dependencies configured");
+        Logger?.LogDebug("Accounts service dependencies configured");
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public class AccountsServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        Logger?.LogInformation("🔧 Configuring Accounts service application pipeline");
+        Logger?.LogDebug("Configuring Accounts service application pipeline");
 
         // The generated AccountsController should already be discovered via standard ASP.NET Core controller discovery
         // since we're not excluding the assembly like we did with IDaprController approach
@@ -51,7 +51,7 @@ public class AccountsServicePlugin : BaseBannouPlugin
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        Logger?.LogInformation("✅ Accounts service application pipeline configured");
+        Logger?.LogDebug("Accounts service application pipeline configured");
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public class AccountsServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("▶️  Starting Accounts service");
+        Logger?.LogInformation("Starting Accounts service");
 
         try
         {
@@ -69,23 +69,23 @@ public class AccountsServicePlugin : BaseBannouPlugin
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve IAccountsService from DI container");
+                Logger?.LogError("Failed to resolve IAccountsService from DI container");
                 return false;
             }
 
             // Call existing IDaprService.OnStartAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnStartAsync for Accounts service");
+                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Accounts service");
                 await daprService.OnStartAsync(CancellationToken.None);
             }
 
-            Logger?.LogInformation("✅ Accounts service started successfully");
+            Logger?.LogInformation("Accounts service started");
             return true;
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "❌ Failed to start Accounts service");
+            Logger?.LogError(ex, "Failed to start Accounts service");
             return false;
         }
     }
@@ -97,20 +97,20 @@ public class AccountsServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogDebug("🏃 Accounts service running");
+        Logger?.LogDebug("Accounts service running");
 
         try
         {
             // Call existing IDaprService.OnRunningAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnRunningAsync for Accounts service");
+                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Accounts service");
                 await daprService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Accounts service running phase");
+            Logger?.LogWarning(ex, "Exception during Accounts service running phase");
         }
     }
 
@@ -121,22 +121,22 @@ public class AccountsServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogInformation("🛑 Shutting down Accounts service");
+        Logger?.LogInformation("Shutting down Accounts service");
 
         try
         {
             // Call existing IDaprService.OnShutdownAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnShutdownAsync for Accounts service");
+                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Accounts service");
                 await daprService.OnShutdownAsync();
             }
 
-            Logger?.LogInformation("✅ Accounts service shutdown complete");
+            Logger?.LogInformation("Accounts service shutdown complete");
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Accounts service shutdown");
+            Logger?.LogWarning(ex, "Exception during Accounts service shutdown");
         }
     }
 }

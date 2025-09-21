@@ -58,25 +58,6 @@ paths:
         '429':
           description: Rate limit exceeded
 
-  /api-discovery:
-    post:
-      summary: Get available APIs for current session
-      operationId: discoverAPIs
-      tags:
-        - API Discovery
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApiDiscoveryRequest'
-      responses:
-        '200':
-          description: Available APIs discovered successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiDiscoveryResponse'
 
   /service-mappings:
     get:
@@ -345,105 +326,6 @@ components:
           type: integer
           description: Request execution time in milliseconds
 
-    ApiDiscoveryRequest:
-      type: object
-      required:
-        - sessionId
-      properties:
-        sessionId:
-          type: string
-          description: Current WebSocket session ID
-        contextData:
-          type: object
-          additionalProperties: true
-          description: Additional context (game session, character, etc.)
-
-    ApiDiscoveryResponse:
-      type: object
-      required:
-        - sessionId
-        - availableAPIs
-        - serviceCapabilities
-        - generatedAt
-      properties:
-        sessionId:
-          type: string
-          description: Current WebSocket session ID
-        availableAPIs:
-          type: array
-          items:
-            $ref: '#/components/schemas/ApiEndpointInfo'
-          description: All APIs currently accessible to this session with client-salted GUIDs
-        serviceCapabilities:
-          type: object
-          additionalProperties:
-            type: array
-            items:
-              type: string
-          description: Map of service names to their available endpoints
-        version:
-          type: integer
-          description: Version number for capability updates (increments on permission changes)
-        generatedAt:
-          type: string
-          format: date-time
-          description: When this API discovery response was generated
-        expiresAt:
-          type: string
-          format: date-time
-          description: When this API list expires and should be refreshed
-
-    ApiEndpointInfo:
-      type: object
-      required:
-        - serviceGuid
-        - serviceName
-        - endpoint
-        - method
-      properties:
-        serviceGuid:
-          type: string
-          format: uuid
-          description: Client-salted GUID for this service/endpoint combination
-        serviceName:
-          type: string
-          description: Service name (e.g., "accounts", "auth", "behavior")
-        endpoint:
-          type: string
-          description: API endpoint path (e.g., "/accounts/{id}")
-        method:
-          type: string
-          enum: [GET, POST, PUT, DELETE, PATCH]
-          description: HTTP method for this endpoint
-        description:
-          type: string
-          description: Human-readable endpoint description
-        requiredPermissions:
-          type: array
-          items:
-            type: string
-          description: Permissions required to access this endpoint
-        rateLimits:
-          $ref: '#/components/schemas/ApiRateLimit'
-        category:
-          type: string
-          description: API category (auth, accounts, game, social, etc.)
-        channel:
-          type: integer
-          description: Preferred channel for sequential message processing (0-65535)
-
-    ApiRateLimit:
-      type: object
-      properties:
-        requestsPerMinute:
-          type: integer
-        requestsPerHour:
-          type: integer
-        burstLimit:
-          type: integer
-        remaining:
-          type: integer
-          description: Current remaining requests
 
     ConnectRequest:
       type: object

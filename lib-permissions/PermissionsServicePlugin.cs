@@ -24,7 +24,7 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     public override void ConfigureServices(IServiceCollection services)
     {
 
-        Logger?.LogInformation("🔧 Configuring Permissions service dependencies");
+        Logger?.LogDebug("Configuring service dependencies");
 
         // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
         // No need to register IPermissionsService and PermissionsService here
@@ -35,7 +35,7 @@ public class PermissionsServicePlugin : BaseBannouPlugin
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
-        Logger?.LogInformation("✅ Permissions service dependencies configured");
+        Logger?.LogDebug("Service dependencies configured");
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     public override void ConfigureApplication(WebApplication app)
     {
 
-        Logger?.LogInformation("🔧 Configuring Permissions service application pipeline");
+        Logger?.LogDebug("Configuring application pipeline");
 
         // The generated PermissionsController should already be discovered via standard ASP.NET Core controller discovery
         // since we're not excluding the assembly like we did with IDaprController approach
@@ -52,7 +52,7 @@ public class PermissionsServicePlugin : BaseBannouPlugin
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        Logger?.LogInformation("✅ Permissions service application pipeline configured");
+        Logger?.LogDebug("Application pipeline configured");
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("▶️  Starting Permissions service");
+        Logger?.LogInformation("Starting service");
 
         try
         {
@@ -70,23 +70,23 @@ public class PermissionsServicePlugin : BaseBannouPlugin
 
             if (_service == null)
             {
-                Logger?.LogError("❌ Failed to resolve IPermissionsService from DI container");
+                Logger?.LogError("Failed to resolve IPermissionsService from DI container");
                 return false;
             }
 
             // Call existing IDaprService.OnStartAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnStartAsync for Permissions service");
+                Logger?.LogDebug("Calling IDaprService.OnStartAsync for Permissions service");
                 await daprService.OnStartAsync(CancellationToken.None);
             }
 
-            Logger?.LogInformation("✅ Permissions service started successfully");
+            Logger?.LogInformation("Service started");
             return true;
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "❌ Failed to start Permissions service");
+            Logger?.LogError(ex, "Failed to start service");
             return false;
         }
     }
@@ -98,20 +98,20 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogDebug("🏃 Permissions service running");
+        Logger?.LogDebug("Service running");
 
         try
         {
             // Call existing IDaprService.OnRunningAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnRunningAsync for Permissions service");
+                Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Permissions service");
                 await daprService.OnRunningAsync(CancellationToken.None);
             }
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Permissions service running phase");
+            Logger?.LogWarning(ex, "Exception during running phase");
         }
     }
 
@@ -122,22 +122,22 @@ public class PermissionsServicePlugin : BaseBannouPlugin
     {
         if (_service == null) return;
 
-        Logger?.LogInformation("🛑 Shutting down Permissions service");
+        Logger?.LogInformation("Shutting down service");
 
         try
         {
             // Call existing IDaprService.OnShutdownAsync if the service implements it
             if (_service is IDaprService daprService)
             {
-                Logger?.LogDebug("🔄 Calling IDaprService.OnShutdownAsync for Permissions service");
+                Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Permissions service");
                 await daprService.OnShutdownAsync();
             }
 
-            Logger?.LogInformation("✅ Permissions service shutdown complete");
+            Logger?.LogInformation("Service shutdown complete");
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "⚠️  Exception during Permissions service shutdown");
+            Logger?.LogWarning(ex, "Exception during shutdown");
         }
     }
 }
