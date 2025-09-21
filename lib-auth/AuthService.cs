@@ -734,6 +734,16 @@ public class AuthService : IAuthService
                 _logger.LogWarning(ex, "JWT token validation failed");
                 return (StatusCodes.Unauthorized, null);
             }
+            catch (SecurityTokenMalformedException ex)
+            {
+                _logger.LogWarning(ex, "JWT token is malformed");
+                return (StatusCodes.Unauthorized, null);
+            }
+            catch (SecurityTokenException ex)
+            {
+                _logger.LogWarning(ex, "JWT security token error");
+                return (StatusCodes.Unauthorized, null);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during JWT validation");
@@ -834,41 +844,47 @@ public class AuthService : IAuthService
         var key = Encoding.UTF8.GetBytes(jwtSecret);
         _logger.LogCritical("🚨 AUTH SERVICE: Key bytes created, length: {Length}", key.Length);
 
-        _logger.LogCritical("🚨 AUTH SERVICE: About to create JWT using JsonWebTokenHandler library");
+        _logger.LogCritical("🚨 AUTH SERVICE: About to create JWT using JwtSecurityTokenHandler library");
 
         try
         {
-            // Use JsonWebTokenHandler.CreateToken(SecurityTokenDescriptor) - the correct API
-            var tokenHandler = new JsonWebTokenHandler();
+            // Use JwtSecurityTokenHandler - the standard JWT implementation
+            var tokenHandler = new JwtSecurityTokenHandler();
 
             var claims = new List<Claim>
             {
                 new Claim("session_key", sessionKey), // Opaque key for Redis lookup
-                new Claim("sub", account.AccountId.ToString()), // Standard subject claim
-                new Claim("jti", Guid.NewGuid().ToString()) // JWT ID for tracking
+                new Claim(ClaimTypes.NameIdentifier, account.AccountId.ToString()), // Standard subject claim
+                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, account.AccountId.ToString()), // Standard subject claim
+                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // JWT ID for tracking
+                new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Iat,
+                    new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString(),
+                    ClaimValueTypes.Integer64) // Issued at time
             };
 
             var symmetricKey = new SymmetricSecurityKey(key);
             var signingCredentials = new SigningCredentials(symmetricKey, SecurityAlgorithms.HmacSha256Signature);
-            var claimsIdentity = new ClaimsIdentity(claims);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = claimsIdentity,
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes),
+                NotBefore = DateTime.UtcNow,
+                IssuedAt = DateTime.UtcNow,
                 SigningCredentials = signingCredentials,
                 Issuer = _configuration.JwtIssuer,
                 Audience = _configuration.JwtAudience
             };
 
-            _logger.LogCritical("🚨 AUTH SERVICE: Using proper JsonWebTokenHandler.CreateToken(SecurityTokenDescriptor) API");
+            _logger.LogCritical("🚨 AUTH SERVICE: Using JwtSecurityTokenHandler.CreateToken API");
             var jwt = tokenHandler.CreateToken(tokenDescriptor);
-            _logger.LogCritical("🚨 AUTH SERVICE: JsonWebTokenHandler.CreateToken completed successfully");
-            return jwt;
+            var jwtString = tokenHandler.WriteToken(jwt);
+            _logger.LogCritical("🚨 AUTH SERVICE: JWT token created successfully, length: {Length}", jwtString.Length);
+            return jwtString;
         }
         catch (Exception ex)
         {
-            _logger.LogCritical("🚨 AUTH SERVICE: Exception in JsonWebTokenHandler.CreateToken: {Exception}", ex.ToString());
+            _logger.LogCritical("🚨 AUTH SERVICE: Exception in JWT creation: {Exception}", ex.ToString());
             throw;
         }
     }

@@ -34,11 +34,18 @@ public class PermissionsService : IPermissionsService
         _logger.LogInformation("GetCapabilitiesAsync called for session {SessionId}", body.SessionId);
 
         // TODO: Implement real capability checking based on session permissions
-        // For now, return a basic response to allow Connect service to function
+        // For now, return basic permissions to allow Connect service testing to function
         var response = new CapabilityResponse
         {
             SessionId = body.SessionId,
-            Permissions = new Dictionary<string, ICollection<string>>(), // Empty permissions for now
+            Permissions = new Dictionary<string, ICollection<string>>
+            {
+                // Mock basic service permissions for testing
+                { "accounts", new List<string> { "GET", "POST", "PUT", "DELETE" } },
+                { "auth", new List<string> { "GET", "POST" } },
+                { "connect", new List<string> { "GET", "POST" } },
+                { "permissions", new List<string> { "GET", "POST" } }
+            },
             GeneratedAt = DateTimeOffset.UtcNow
         };
 
