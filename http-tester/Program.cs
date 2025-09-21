@@ -190,6 +190,10 @@ public class Program
 
             foreach (var kvp in sTestRegistry)
             {
+                // Skip the "All" meta-test in daemon mode since we're running individual tests
+                if (kvp.Key == "All")
+                    continue;
+
                 Console.WriteLine($"Running test: {kvp.Value.Name}");
                 totalTests++;
                 try

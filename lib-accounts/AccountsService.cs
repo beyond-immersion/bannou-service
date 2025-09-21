@@ -496,7 +496,9 @@ public class AccountsService : IAccountsService
             _logger.LogInformation("Account deleted: {AccountId}", accountId);
 
             // Publish account deleted event
+            _logger.LogInformation("About to publish account deleted event for: {AccountId}", accountId);
             await PublishAccountDeletedEventAsync(accountId, account, "User requested deletion");
+            _logger.LogInformation("Account deleted event publishing completed for: {AccountId}", accountId);
 
             return (StatusCodes.NoContent, null);
         }
@@ -629,6 +631,7 @@ public class AccountsService : IAccountsService
     {
         try
         {
+            _logger.LogInformation("PublishAccountDeletedEventAsync called for account: {AccountId}", accountId);
 
             var eventModel = new AccountDeletedEvent
             {
@@ -639,8 +642,9 @@ public class AccountsService : IAccountsService
                 DeletionReason = deletionReason
             };
 
+            _logger.LogInformation("About to call PublishEventAsync for topic: {Topic}, account: {AccountId}", ACCOUNT_DELETED_TOPIC, accountId);
             await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_DELETED_TOPIC, eventModel);
-            _logger.LogDebug("Published AccountDeletedEvent for account: {AccountId}", accountId);
+            _logger.LogInformation("Successfully published AccountDeletedEvent for account: {AccountId}", accountId);
         }
         catch (Exception ex)
         {
