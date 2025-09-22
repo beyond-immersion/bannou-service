@@ -7,6 +7,6 @@ spec:
   version: v1
   metadata:
   - name: redisHost
-    value: auth-redis:6379
+    value: bannou-redis:6379
   - name: redisPassword
     value: ""

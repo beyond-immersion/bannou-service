@@ -66,23 +66,27 @@ public abstract class DaprServiceClientBase : IDaprClient
     /// <summary>
     /// Gets the base URL for Dapr service invocation with dynamic app-id resolution.
     /// For parameterless constructor, falls back to "bannou" app-id.
+    /// Uses environment variable DAPR_HTTP_ENDPOINT if available for containerized environments.
     /// </summary>
     protected string BaseUrl
     {
         get
         {
+            // Get Dapr HTTP endpoint from environment (for container environments) or default to localhost
+            var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "http://localhost:3500";
+
             // If full dependencies available, use dynamic resolution
             if (_appMappingResolver != null && _serviceName != null)
             {
                 var appId = _appMappingResolver.GetAppIdForService(_serviceName);
-                var baseUrl = $"http://localhost:3500/v1.0/invoke/{appId}/method/";
-                _logger?.LogTrace("Service {ServiceName} routing to app-id {AppId}", _serviceName, appId);
+                var baseUrl = $"{daprHttpEndpoint}/v1.0/invoke/{appId}/method/";
+                _logger?.LogTrace("Service {ServiceName} routing to app-id {AppId} via {DaprEndpoint}", _serviceName, appId, daprHttpEndpoint);
                 return baseUrl;
             }
 
             // Fallback for parameterless constructor - use "bannou" default
-            var fallbackUrl = "http://localhost:3500/v1.0/invoke/bannou/method/";
-            _logger?.LogTrace("Service {ServiceName} using fallback app-id 'bannou' (parameterless constructor)", ServiceName);
+            var fallbackUrl = $"{daprHttpEndpoint}/v1.0/invoke/bannou/method/";
+            _logger?.LogTrace("Service {ServiceName} using fallback app-id 'bannou' via {DaprEndpoint} (parameterless constructor)", ServiceName, daprHttpEndpoint);
             return fallbackUrl;
         }
     }

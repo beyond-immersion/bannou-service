@@ -135,7 +135,52 @@ public class Program
             });
 
             // Add Dapr client for service-to-service communication
-            serviceCollection.AddDaprClient();
+            // In CI environment, connect to sidecar container instead of localhost
+            var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "http://localhost:3500";
+            Console.WriteLine($"🔗 Configuring DaprClient to use endpoint: {daprHttpEndpoint}");
+
+            // Test connectivity to the endpoint before configuring DaprClient
+            try
+            {
+                using var httpClient = new HttpClient();
+                var healthUrl = daprHttpEndpoint + "/v1.0/healthz";
+                Console.WriteLine($"🔍 Testing connectivity to: {healthUrl}");
+                var response = await httpClient.GetAsync(healthUrl);
+                Console.WriteLine($"✅ HTTP healthz test successful: {response.StatusCode}");
+
+                // Also test the metadata endpoint that DaprClient uses
+                var metadataUrl = daprHttpEndpoint + "/v1.0/metadata";
+                Console.WriteLine($"🔍 Testing metadata endpoint: {metadataUrl}");
+                var metadataResponse = await httpClient.GetAsync(metadataUrl);
+                Console.WriteLine($"✅ HTTP metadata test successful: {metadataResponse.StatusCode}");
+                var metadataContent = await metadataResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"📋 Metadata response: {metadataContent.Substring(0, Math.Min(200, metadataContent.Length))}...");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ HTTP connectivity test failed: {ex.Message}");
+                Console.WriteLine($"   Exception type: {ex.GetType().Name}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+                }
+            }
+
+            serviceCollection.AddDaprClient(daprClientBuilder =>
+            {
+                // Configure both HTTP and gRPC endpoints for bannou-http-tester-dapr
+                var daprGrpcEndpoint = Environment.GetEnvironmentVariable("DAPR_GRPC_ENDPOINT") ?? "http://localhost:50001";
+                Console.WriteLine($"🔧 DaprClient HTTP endpoint: {daprHttpEndpoint}");
+                Console.WriteLine($"🔧 DaprClient gRPC endpoint: {daprGrpcEndpoint}");
+
+                daprClientBuilder.UseHttpEndpoint(daprHttpEndpoint);
+                daprClientBuilder.UseGrpcEndpoint(daprGrpcEndpoint);
+
+                daprClientBuilder.UseJsonSerializationOptions(new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                });
+            });
 
             // Add Bannou service client infrastructure
             serviceCollection.AddBannouServiceClients();
@@ -152,12 +197,23 @@ public class Program
             // Build the service provider
             ServiceProvider = serviceCollection.BuildServiceProvider();
 
-            // Test Dapr connectivity
+            // Get DaprClient for readiness check
             var daprClient = ServiceProvider.GetRequiredService<DaprClient>();
-            await daprClient.CheckHealthAsync();
+
+            // Wait for Dapr to be ready before proceeding (same pattern as main Bannou service)
+            if (!await WaitForDaprReadiness(daprClient))
+            {
+                Console.WriteLine("❌ Failed to wait for Dapr readiness");
+                return false;
+            }
 
             Console.WriteLine("✅ Service provider setup completed successfully");
             Console.WriteLine("✅ Dapr client connectivity verified");
+
+            // Give additional time for all services to register with placement service
+            Console.WriteLine("⏳ Waiting for service discovery to stabilize...");
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            Console.WriteLine("✅ Service discovery stabilization complete");
 
             return true;
         }
@@ -166,6 +222,45 @@ public class Program
             Console.WriteLine($"❌ Failed to setup service provider: {ex.Message}");
             return false;
         }
+    }
+
+    /// <summary>
+    /// Waits for Dapr to be ready before proceeding with testing.
+    /// Uses the same pattern as the main Bannou service for consistency.
+    /// </summary>
+    /// <param name="daprClient">The Dapr client to use for readiness checks.</param>
+    /// <returns>True if Dapr is ready, false if timeout or error occurs.</returns>
+    private static async Task<bool> WaitForDaprReadiness(DaprClient daprClient)
+    {
+        // Use a 60-second timeout for testing scenarios
+        var timeout = TimeSpan.FromSeconds(60);
+        var checkInterval = TimeSpan.FromSeconds(1);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        Console.WriteLine($"Waiting for Dapr to be ready (timeout: {timeout.TotalSeconds}s)...");
+
+        while (stopwatch.Elapsed < timeout)
+        {
+            try
+            {
+                // Try to get Dapr metadata as a basic connectivity check
+                var metadata = await daprClient.GetMetadataAsync();
+                if (metadata != null)
+                {
+                    Console.WriteLine($"✅ Dapr is ready (sidecar ID: {metadata.Id})");
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⏳ Dapr readiness check failed, retrying... ({stopwatch.Elapsed.TotalSeconds:F1}s elapsed) - {ex.Message}");
+            }
+
+            await Task.Delay(checkInterval);
+        }
+
+        Console.WriteLine($"❌ Dapr readiness check timed out after {timeout.TotalSeconds}s. Ensure Dapr sidecar is running.");
+        return false;
     }
 
     /// <summary>

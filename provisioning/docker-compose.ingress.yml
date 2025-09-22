@@ -19,7 +19,7 @@ services:
       - ./certificates:/certs:ro
     depends_on:
       bannou:
-        condition: service_healthy
+        condition: service_started
       routing-redis:
         condition: service_healthy
     environment:

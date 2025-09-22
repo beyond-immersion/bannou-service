@@ -145,8 +145,9 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
             var baseUrl = serviceClient.TestGetBaseUrl();
             Console.WriteLine($"Generated base URL: {baseUrl}");
 
-            if (!baseUrl.Contains("localhost:3500"))
-                return Task.FromResult(new TestResult(false, $"Expected Dapr sidecar URL (localhost:3500), got: {baseUrl}"));
+            string daprEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "localhost:3500";
+            if (!baseUrl.Contains(daprEndpoint))
+                return Task.FromResult(new TestResult(false, $"Expected Dapr sidecar URL {daprEndpoint}, got: {baseUrl}"));
 
             if (!baseUrl.Contains("/bannou/"))
                 return Task.FromResult(new TestResult(false, $"Expected default app-id 'bannou' in URL, got: {baseUrl}"));

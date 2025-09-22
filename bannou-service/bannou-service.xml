@@ -1626,6 +1626,7 @@
             <summary>
             Gets the base URL for Dapr service invocation with dynamic app-id resolution.
             For parameterless constructor, falls back to "bannou" app-id.
+            Uses environment variable DAPR_HTTP_ENDPOINT if available for containerized environments.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.String)">

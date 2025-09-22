@@ -121,16 +121,28 @@ public static class Program
         Logger.Log(LogLevel.Information, null, "Configuration built and validated.");
 
         // build the dapr client
-        DaprClient = new DaprClientBuilder()
-            .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig)
-            .Build();
+        var daprClientBuilder = new DaprClientBuilder()
+            .UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig);
 
-        // ensure dapr is ready before continuing
-        if (!await WaitForDaprReadiness())
+        // Configure Dapr gRPC endpoint from environment variable (for containerized environments)
+        var daprGrpcEndpoint = Environment.GetEnvironmentVariable("DAPR_GRPC_ENDPOINT");
+        if (!string.IsNullOrEmpty(daprGrpcEndpoint))
         {
-            Logger.Log(LogLevel.Error, null, "Dapr readiness check failed- exiting application.");
-            return 1;
+            daprClientBuilder.UseGrpcEndpoint(daprGrpcEndpoint);
+            Logger.Log(LogLevel.Information, null, $"Using Dapr gRPC endpoint from environment: {daprGrpcEndpoint}");
         }
+
+        // Configure Dapr HTTP endpoint from environment variable (for containerized environments)
+        var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT");
+        if (!string.IsNullOrEmpty(daprHttpEndpoint))
+        {
+            daprClientBuilder.UseHttpEndpoint(daprHttpEndpoint);
+            Logger.Log(LogLevel.Information, null, $"Using Dapr HTTP endpoint from environment: {daprHttpEndpoint}");
+        }
+
+        DaprClient = daprClientBuilder.Build();
+
+        // Note: Dapr readiness check moved to after web server startup to avoid circular dependency
 
         // load the plugins
         if (!await LoadPlugins())
@@ -385,6 +397,13 @@ public static class Program
             // start webhost
             var webHostTask = webApp.RunAsync(ShutdownCancellationTokenSource.Token);
             await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Now that web server is running, ensure dapr is ready for service communication
+            if (!await WaitForDaprReadiness())
+            {
+                Logger.Log(LogLevel.Error, null, "Dapr readiness check failed after web server startup - exiting application.");
+                return 1;
+            }
 
             // TODO: DEPRECATED - Replace with Plugin system lifecycle
             // invoke all Service.Running() methods on enabled service handlers
