@@ -36,7 +36,9 @@ all: ## Complete development cycle - clean, generate, format, build, test, docke
 #
 # Environment Patterns:
 # - Local Dev: base + local + dev + [feature-specific]
+# - Local Dev (Host): base + local + host + [feature-specific] (WSL2 Dapr workaround)
 # - Local Test: base + local + test-local + [feature-specific]
+# - Local Test (Host): base + local + test-local + host + [feature-specific] (WSL2 workaround)
 # - CI/CD: base + ci + [feature-specific]
 # - Production: base + production + [region-specific] + [feature-specific]
 # =============================================================================
@@ -46,32 +48,38 @@ build: ## Build all .NET projects
 
 build-compose: ## Build Docker containers (all services)
 	if [ ! -f .env ]; then touch .env; fi
-	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml --project-name cl build
+	docker compose --env-file ./.env \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		--project-name bannou build
 
-up-compose: ## Start services locally
+up-compose: ## Start services locally (base + services)
 	if [ ! -f .env ]; then touch .env; fi
-	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml --project-name cl up -d
+	docker compose --env-file ./.env \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		--project-name bannou up -d
 
-up-openresty: ## Start with OpenResty edge proxy
+up-openresty: ## Start with OpenResty edge proxy (base + services + ingress)
 	if [ ! -f .env ]; then touch .env; fi
-	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.ingress.yml -f provisioning/docker-compose.ingress.local.yml --project-name cl up -d
-
-ci-up-compose: ## Start with CI configuration
-	if [ ! -f .env ]; then touch .env; fi
-	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.ci.yml -f provisioning/docker-compose.ingress.yml --project-name cl up -d
-
-elk-up-compose: ## Start with ELK logging stack
-	if [ ! -f .env ]; then touch .env; fi
-	docker compose --env-file ./.env -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.elk.yml --project-name cl up -d
+	docker compose --env-file ./.env \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.ingress.yml \
+		--project-name bannou up -d
 
 down-compose: ## Stop and cleanup containers
-	docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml --project-name cl down --remove-orphans
+	docker compose \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		--project-name bannou down --remove-orphans
 
 down-openresty: ## Stop OpenResty setup
-	docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.ingress.yml -f provisioning/docker-compose.ingress.local.yml --project-name cl down --remove-orphans
-
-elk-down-compose: ## Stop ELK setup
-	docker compose -f provisioning/docker-compose.yml -f provisioning/docker-compose.local.yml -f provisioning/docker-compose.elk.yml --project-name cl down --remove-orphans
+	docker compose \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.ingress.yml \
+		--project-name bannou down --remove-orphans
 
 clean: ## Clean generated files and caches (add PLUGIN=name for specific plugin)
 	@if [ "$(PLUGIN)" ]; then \
@@ -231,31 +239,82 @@ test-unit:
 	@echo "✅ .NET unit tests completed"
 
 # Infrastructure integration testing (matches CI workflow)
-# Uses minimal service configuration (TESTING service only) to reduce dependencies
+# Uses minimal service configuration (TESTING service only) - no databases, no ingress
+# Stack: base + test + test.infrastructure (minimal dependencies)
 test-infrastructure:
-	@echo "🚀 Running OpenResty infrastructure tests (TESTING service only) via containerized testing..."
-	docker compose -p bannou-infra-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" build
-	docker compose -p bannou-infra-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" up --exit-code-from=bannou-infra-tester
-	docker compose -p bannou-infra-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" down --remove-orphans -v
-	@echo "✅ OpenResty infrastructure integration tests completed"
+	@echo "🚀 Running infrastructure tests (TESTING service only - minimal deps)..."
+	docker compose -p bannou-test-infra \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.infrastructure.yml" \
+		build
+	docker compose -p bannou-test-infra \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.infrastructure.yml" \
+		up --exit-code-from=bannou-infra-tester
+	docker compose -p bannou-test-infra \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.infrastructure.yml" \
+		down --remove-orphans -v
+	@echo "✅ Infrastructure tests completed"
 
 # HTTP integration testing (matches CI workflow)
 # Usage: make test-http [PLUGIN=plugin-name]
+# Stack: base + services + test + test.http (service-to-service via Dapr, no ingress)
 test-http:
 	@if [ "$(PLUGIN)" ]; then \
 		echo "🧪 Running HTTP integration tests for plugin: $(PLUGIN)..."; \
 	else \
-		echo "🧪 Running HTTP integration tests via containerized service-to-service testing..."; \
+		echo "🧪 Running HTTP integration tests (service-to-service via Dapr)..."; \
 	fi
-	SERVICE_DOMAIN=ci-http-test PLUGIN=$(PLUGIN) docker compose -p bannou-http-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.http.yml" build
-	SERVICE_DOMAIN=ci-http-test PLUGIN=$(PLUGIN) docker compose -p bannou-http-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.http.yml" up --exit-code-from=bannou-http-tester
+	SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.http.yml" \
+		build
+	SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.http.yml" \
+		up --exit-code-from=bannou-http-tester
+	docker compose -p bannou-test-http \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.http.yml" \
+		down --remove-orphans -v
 	@echo "✅ HTTP integration tests completed"
 
-# WebSocket/edge integration testing (matches CI workflow)
+# WebSocket/Edge integration testing (matches CI workflow)
+# Simulates external client connecting through OpenResty edge proxy
+# Stack: base + services + ingress + test + test.edge
 test-edge:
-	@echo "🧪 Running Edge integration tests..."
-	docker compose -p bannou-edge-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.edge.yml" build
-	docker compose -p bannou-edge-test -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.local.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.edge.yml" up --exit-code-from=bannou-edge-tester
+	@echo "🧪 Running Edge/WebSocket integration tests..."
+	docker compose -p bannou-test-edge \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		build
+	docker compose -p bannou-test-edge \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		up --exit-code-from=bannou-edge-tester
+	docker compose -p bannou-test-edge \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		down --remove-orphans -v
 	@echo "✅ Edge integration tests completed"
 
 tagname := $(shell date -u +%FT%H-%M-%SZ)

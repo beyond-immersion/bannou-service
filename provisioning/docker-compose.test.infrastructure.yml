@@ -1,0 +1,24 @@
+# Infrastructure Test Configuration
+# Minimal service setup (TESTING service only) for infrastructure validation
+# Tester shares network stack with bannou using network_mode
+
+services:
+
+  bannou:
+    env_file: ../.env.test.infrastructure
+
+  # Dapr sidecar - NO components for infrastructure testing
+  bannou-dapr:
+    volumes:
+      - "./dapr/components-empty/:/components"  # Empty - no components needed for infrastructure tests
+      - "./certificates:/certificates"
+
+  # Infrastructure tester - shares network stack with bannou
+  bannou-infra-tester:
+    image: curlimages/curl:latest
+    network_mode: service:bannou  # Share network with bannou, can access 127.0.0.1:80
+    volumes:
+      - "../scripts/wait-for-health.sh:/wait-for-health.sh"
+      - "../scripts/infrastructure-tests.sh:/infrastructure-tests.sh"
+    stdin_open: false
+    command: sh -c "/wait-for-health.sh && /infrastructure-tests.sh"

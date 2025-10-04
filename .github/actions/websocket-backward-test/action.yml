@@ -7,10 +7,16 @@ runs:
     - name: Start WebSocket Services
       shell: bash
       run: |
-        echo "📋 Using .env.ci.edge configuration for backward-compatibility WebSocket testing..."
-        docker compose -p bannou-ci-edge -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.edge.yml" up -d
+        echo "📋 Using .env.test.edge configuration for backward-compatibility WebSocket testing..."
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          up -d
 
-        echo "⏳ Waiting for WebSocket coordinator services to be ready..."
+        echo "⏳ Waiting for WebSocket services to be ready..."
         sleep 30
 
     - name: Build Edge Tester with Published SDK

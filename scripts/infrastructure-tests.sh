@@ -1,8 +1,15 @@
 #!/bin/sh
 
+# Infrastructure Integration Tests
+# Tests MINIMAL infrastructure: bannou + dapr + placement + rabbitmq
+# NO databases, NO OpenResty - just core Bannou service infrastructure
+# Runs with network_mode: service:bannou, so:
+#   - 127.0.0.1 = bannou itself
+#   - Service names (placement, rabbitmq) work via default bridge network
+
 set -e
 
-echo "🧪 Running infrastructure tests (OpenResty + Redis + basic connectivity)..."
+echo "🧪 Running minimal infrastructure integration tests..."
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -34,42 +41,41 @@ run_test() {
     fi
 }
 
-# Test 1-2: OpenResty Infrastructure
-echo "🔍 Testing OpenResty Infrastructure..."
-run_test "OpenResty health endpoint" "curl --verbose --fail --max-time 5 http://openresty/health"
-run_test "Redis connectivity via OpenResty" "curl --verbose --fail --max-time 5 http://openresty/health/redis"
+# Test 1-2: Bannou service availability (via 127.0.0.1 - shared network stack)
+echo "🔍 Testing Bannou Service..."
+run_test "Bannou service health check" "curl --verbose --fail --max-time 10 http://127.0.0.1:80/health"
+run_test "TESTING plugin enabled" "curl --verbose --fail --max-time 10 http://127.0.0.1:80/testing/health"
 
-# Test 3-5: Basic service availability
-echo "🔍 Testing Basic Service Availability..."
-run_test "Bannou service direct health check" "curl --verbose --fail --max-time 10 http://bannou:80/health || true"
-run_test "Bannou service plugin enabled check" "curl --verbose --fail --max-time 10 http://bannou:80/testing/health || true"
+# Test 3: TESTING plugin functionality
+echo "🔍 Testing TESTING Plugin..."
+run_test "TESTING plugin execution" "curl --verbose --fail --max-time 10 http://127.0.0.1:80/testing/run"
 
-# Test 5: Integration tests (testing lib only)
-echo "🔍 Running Integration Tests (Testing Plugin Only)..."
-run_test "Bannou service plugin test validation check" "curl --verbose --fail --max-time 10 http://bannou:80/testing/run"
+# Test 4: Dapr sidecar availability (via 127.0.0.1 - shared network stack)
+echo "🔍 Testing Dapr Sidecar..."
+run_test "Dapr health endpoint" "curl --verbose --fail --max-time 5 http://127.0.0.1:3500/v1.0/healthz"
 
-# Test 6: Admin heartbeats
-echo "🔍 Testing Admin Heartbeats..."
-run_test "Admin heartbeats endpoint" "curl --verbose --fail --max-time 5 http://openresty:8080/admin/heartbeats"
+# Test 5: Dapr can reach placement service (via service name on default bridge)
+echo "🔍 Testing Dapr Placement Connectivity..."
+run_test "Dapr metadata (verifies placement)" "curl --verbose --fail --max-time 5 http://127.0.0.1:3500/v1.0/metadata"
 
-# Test 7: Configuration validation
+# Test 6: Configuration validation
 echo "🔍 Testing Configuration..."
 run_test "Environment variables accessible" "test -n \"$SERVICE_DOMAIN\" || echo 'SERVICE_DOMAIN not set, using defaults'"
 
 # Summary
 echo ""
-echo "📊 Integration Test Results:"
+echo "📊 Infrastructure Test Results:"
 echo -e "  Total Tests: $TESTS_RUN"
 echo -e "  ${GREEN}Passed: $TESTS_PASSED${NC}"
 
 if [ $TESTS_FAILED -gt 0 ]; then
     echo -e "  ${RED}Failed: $TESTS_FAILED${NC}"
     echo ""
-    echo -e "${RED}❌ Integration tests failed! Some components are not working correctly.${NC}"
+    echo -e "${RED}❌ Infrastructure tests failed! Some components not working correctly.${NC}"
     exit 1
 else
     echo -e "  ${GREEN}Failed: 0${NC}"
     echo ""
-    echo -e "${GREEN}🎉 All integration tests passed! OpenResty architecture is working correctly.${NC}"
+    echo -e "${GREEN}🎉 All infrastructure tests passed! Minimal Bannou infrastructure is working.${NC}"
     exit 0
 fi

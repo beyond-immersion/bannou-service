@@ -14,18 +14,30 @@ runs:
     - name: Build Infrastructure Image (TESTING service only)
       shell: bash
       run: |
-        echo "🔧 Building Docker image with TESTING service only..."
-        docker compose -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" build
+        echo "🔧 Building minimal infrastructure (TESTING service only - no databases, no ingress)..."
+        docker compose -p bannou-ci-infra \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.infrastructure.yml" \
+          build
 
     - name: Execute Infrastructure Tests
       shell: bash
       run: |
-        echo "🏗️ Running infrastructure tests with minimal service configuration (TESTING service only)..."
-        docker compose -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ingress.yml"  -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" up --exit-code-from=bannou-infra-tester
+        echo "🏗️ Running minimal infrastructure tests (bannou + dapr + placement + rabbitmq)..."
+        docker compose -p bannou-ci-infra \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.infrastructure.yml" \
+          up --exit-code-from=bannou-infra-tester
 
     - name: Cleanup Infrastructure Tests
       if: always()
       shell: bash
       run: |
         echo "🛑 Stopping infrastructure testing containers..."
-        docker compose -p bannou-ci-infra -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ingress.yml" -f "./provisioning/docker-compose.ci.yml" -f "./provisioning/docker-compose.ci.infrastructure.yml" down --remove-orphans -v
+        docker compose -p bannou-ci-infra \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.infrastructure.yml" \
+          down --remove-orphans -v

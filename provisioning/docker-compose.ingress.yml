@@ -1,3 +1,7 @@
+# Ingress Layer - OpenResty Edge Proxy
+# OpenResty on dual networks: default (internal backend) + external (client-facing)
+# This enables edge tests to simulate real external clients
+
 services:
 
   bannou:
@@ -6,7 +10,7 @@ services:
       - "openresty.backend.auth=/authorization"
       - "openresty.backend.connect=/connect"
 
-  # OpenResty with Lua + Redis for complex queue routing
+  # OpenResty Edge Proxy with Lua + Redis routing
   openresty:
     image: openresty/openresty:1.21.4.2-0-alpine
     ports:
@@ -17,19 +21,14 @@ services:
       - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
       - ./openresty/lua:/usr/local/openresty/lua:ro
       - ./certificates:/certs:ro
-    depends_on:
-      bannou:
-        condition: service_started
-      routing-redis:
-        condition: service_healthy
     environment:
+      # Routing Redis on default (internal) network - service name resolution
       - REDIS_HOST=routing-redis
       - REDIS_PORT=6379
       - SERVICE_DOMAIN=${SERVICE_DOMAIN}
     networks:
-      - default
-      - celestial_network
-      - routing_network
+      - default   # Internal network - reach bannou, routing-redis via service names
+      - external  # External network - accept edge tester connections
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:80/health"]
@@ -38,16 +37,14 @@ services:
       retries: 5
       start_period: 60s
 
-  # Redis for OpenResty routing decisions and queue management
+  # Redis for OpenResty routing state and service heartbeats
   routing-redis:
     image: redis:7-alpine
     command: redis-server --appendonly yes
     volumes:
       - routing-redis-data:/data
-    networks:
-      - celestial_network
     ports:
-      - "6380:6379"
+      - "6380:6379"  # Expose on different port than bannou-redis
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -55,11 +52,11 @@ services:
       retries: 5
       interval: 5s
 
+# External network for edge testing (simulates client outside datacenter)
+# OpenResty bridges internal (default) and external networks
 networks:
-  celestial_network:
-  routing_network:
+  external:
     driver: bridge
-    internal: false  # OpenResty needs external access for routing
 
 volumes:
   routing-redis-data:

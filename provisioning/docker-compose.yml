@@ -1,31 +1,25 @@
+# Base Bannou Services - WSL2 Compatible Networking
+# Uses Docker's default bridge network for all internal communication
+# No custom networks = no mDNS issues on WSL2/Windows
+
 services:
 
-  # build the monoservice
+  # Bannou monoservice - binds to 0.0.0.0 for WSL2 compatibility
   bannou:
     image: bannou:latest
     build:
       context: ../
       dockerfile: provisioning/Dockerfile
     environment:
+      # Dapr endpoints - use 127.0.0.1 since sidecar shares network stack
       - DAPR_HTTP_ENDPOINT=http://127.0.0.1:3500
       - DAPR_GRPC_ENDPOINT=http://127.0.0.1:50001
     volumes:
       - "./certificates:/certificates"
       - "logs-data:/app/logs/"
-    depends_on:
-      placement:
-        condition: service_started
-      account-db:
-        condition: service_healthy
-      bannou-redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     ports:
       - "8080:80"
       - "8443:443"
-    networks:
-      - celestial_network
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://127.0.0.1:80/health"]
       interval: 30s
@@ -33,7 +27,7 @@ services:
       retries: 5
       start_period: 60s
 
-  # attach the dapr sidecar to the monoservice
+  # Dapr sidecar - shares network stack with bannou container
   bannou-dapr:
     image: "daprio/daprd:edge"
     command: [
@@ -42,24 +36,21 @@ services:
       "--app-port", "80",
       "--app-protocol", "http",
       "--dapr-http-port", "3500",
+      "--dapr-grpc-port", "50001",
       "--placement-host-address", "placement:50006",
       "--resources-path", "./components",
       "--log-level", "debug",
       "--enable-api-logging"
     ]
     volumes:
+      - "./dapr/components/:/components"
       - "./certificates:/certificates"
     environment:
       - "SSL_CERT_DIR=/certificates"
-    depends_on:
-      bannou:
-        condition: service_started
-      rabbitmq:
-        condition: service_healthy
+    network_mode: "service:bannou"  # Share network stack with bannou
     restart: on-failure
-    network_mode: "service:bannou"
 
-  # placement service for coordinating dapr actors
+  # Dapr placement service - uses default bridge network
   placement:
     image: "daprio/placement"
     command: [
@@ -67,28 +58,10 @@ services:
     ]
     ports:
       - "50006:50006"
-    networks:
-      - celestial_network
 
-  bannou-redis:
-    image: redis:latest
-    networks:
-      - celestial_network
-    ports:
-      - "6379:6379"  # For development access
-    command: redis-server --databases 16 --appendonly yes
-    volumes:
-      - bannou-redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
+  # RabbitMQ message broker - uses default bridge network
   rabbitmq:
     image: rabbitmq:3.12-management
-    networks:
-      - celestial_network
     ports:
       - "5672:5672"   # AMQP port
       - "15672:15672" # Management UI
@@ -104,42 +77,6 @@ services:
       retries: 10
       start_period: 30s
 
-  account-db:
-    image: mysql:8.1.0
-    networks:
-      - celestial_network
-    environment:
-      - MYSQL_DATABASE=accounts
-      - MYSQL_USER=guest
-      - MYSQL_PASSWORD=guest
-      - MYSQL_RANDOM_ROOT_PASSWORD=true
-    volumes:
-      - account-data:/var/lib/mysql
-      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
-      - ./mysql/run-init/:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "guest", "-pguest"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-
-  auth-redis:
-    image: redis:latest
-    networks:
-      - celestial_network
-    command: redis-server --databases 16 --appendonly yes
-    volumes:
-      - auth-redis-data:/data
-
-networks:
-  celestial_network:
-    driver: bridge
-    internal: true
-
 volumes:
   logs-data:
-  account-data:
-  bannou-redis-data:
-  auth-redis-data:
   rabbitmq-data:
