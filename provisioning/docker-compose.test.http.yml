@@ -21,7 +21,12 @@ services:
     ports:
       - "9000:80"
       - "9001:443"
-    command: ["dotnet", "run", "--project", "http-tester", "--configuration", "Release", "--no-build"]
+
+  # Override Dapr components for both bannou and http-tester
+  bannou-dapr:
+    volumes:
+      - "./dapr/components-http-test/:/components"  # HTTP test components (Redis only, no RabbitMQ)
+      - "./certificates:/certificates"
 
   # Dapr sidecar for HTTP tester - shares network stack
   bannou-http-tester-dapr:
@@ -39,8 +44,9 @@ services:
       "--enable-api-logging"
     ]
     volumes:
-      - "./dapr/components/:/components"
+      - "./dapr/components-http-test/:/components"
       - "./certificates:/certificates"
     environment:
       - "SSL_CERT_DIR=/certificates"
     network_mode: "service:bannou-http-tester"  # Share network stack with http-tester
+    restart: always

@@ -48,7 +48,7 @@ services:
     environment:
       - "SSL_CERT_DIR=/certificates"
     network_mode: "service:bannou"  # Share network stack with bannou
-    restart: on-failure
+    restart: always
 
   # Dapr placement service - uses default bridge network
   placement:
