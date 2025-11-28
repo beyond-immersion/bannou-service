@@ -86,12 +86,13 @@ cat >> "$SDK_PROJECT" << 'EOF'
     </ItemGroup>
   </Target>
 
-  <!-- Include only client-safe files from ServiceClients -->
+  <!-- Include only client-safe files from ServiceClients and Services -->
+  <!-- Note: ServiceAppMappingResolver.cs is NOT included as it depends on server-side AppConstants -->
+  <!-- Client SDK uses the fallback "bannou" app-id in DaprServiceClientBase -->
   <ItemGroup>
     <Compile Include="../bannou-service/ServiceClients/IDaprClient.cs" Condition="Exists('../bannou-service/ServiceClients/IDaprClient.cs')" />
     <Compile Include="../bannou-service/ServiceClients/DaprServiceClientBase.cs" Condition="Exists('../bannou-service/ServiceClients/DaprServiceClientBase.cs')" />
-    <Compile Include="../bannou-service/ServiceClients/IServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/ServiceClients/IServiceAppMappingResolver.cs')" />
-    <Compile Include="../bannou-service/ServiceClients/ServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/ServiceClients/ServiceAppMappingResolver.cs')" />
+    <Compile Include="../bannou-service/Services/IServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/Services/IServiceAppMappingResolver.cs')" />
     <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
   </ItemGroup>
 
