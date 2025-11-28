@@ -16,11 +16,13 @@ runs:
           -f "./provisioning/docker-compose.test.edge.yml" \
           ps
 
-    - name: Build Edge Tester with Current SDK
+    - name: Build SDK and Edge Tester with Current SDK
       shell: bash
       run: |
+        echo "🔧 Building Client SDK first..."
+        dotnet build Bannou.Client.SDK --configuration Release
         echo "🔧 Building edge-tester with current generated SDK..."
-        dotnet build edge-tester --configuration Release -p:UseCurrentSDK=true --no-dependencies
+        dotnet build edge-tester --configuration Release -p:UseCurrentSDK=true
 
     - name: Execute WebSocket Forward Compatibility Tests
       shell: bash
