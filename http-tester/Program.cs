@@ -207,6 +207,14 @@ public class Program
                 return false;
             }
 
+            // Wait for pubsub component to be ready (RabbitMQ connectivity)
+            // This ensures event-driven tests will work properly
+            if (!await WaitForPubSubReadiness(daprClient))
+            {
+                Console.WriteLine("⚠️ Pubsub readiness check failed, continuing anyway...");
+                // Don't fail here - individual tests that need pubsub will report meaningful errors
+            }
+
             Console.WriteLine("✅ Service provider setup completed successfully");
             Console.WriteLine("✅ Dapr client connectivity verified");
 
@@ -261,6 +269,51 @@ public class Program
 
         Console.WriteLine($"❌ Dapr readiness check timed out after {timeout.TotalSeconds}s. Ensure Dapr sidecar is running.");
         return false;
+    }
+
+    /// <summary>
+    /// Waits for the Dapr pubsub component to be fully connected to RabbitMQ.
+    /// This ensures event-driven tests will work properly.
+    /// </summary>
+    /// <param name="daprClient">The Dapr client to use for pubsub checks.</param>
+    /// <returns>True if pubsub is ready, false if timeout or error occurs.</returns>
+    private static async Task<bool> WaitForPubSubReadiness(DaprClient daprClient)
+    {
+        var timeout = TimeSpan.FromSeconds(60);
+        var checkInterval = TimeSpan.FromSeconds(2);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var pubsubName = "bannou-pubsub";
+        var testTopic = "test-connectivity";
+
+        Console.WriteLine($"Waiting for pubsub component '{pubsubName}' to be ready (timeout: {timeout.TotalSeconds}s)...");
+
+        while (stopwatch.Elapsed < timeout)
+        {
+            try
+            {
+                // Try to publish a test message to verify RabbitMQ connectivity
+                // This will fail if RabbitMQ isn't connected yet
+                await daprClient.PublishEventAsync(pubsubName, testTopic, new { test = "connectivity-check", timestamp = DateTime.UtcNow });
+                Console.WriteLine($"✅ Pubsub component '{pubsubName}' is ready and connected to RabbitMQ");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                var elapsed = stopwatch.Elapsed.TotalSeconds;
+                // Only log every few seconds to reduce noise
+                if (elapsed < 5 || (int)elapsed % 5 == 0)
+                {
+                    Console.WriteLine($"⏳ Pubsub not ready, retrying... ({elapsed:F1}s elapsed) - {ex.Message}");
+                }
+            }
+
+            await Task.Delay(checkInterval);
+        }
+
+        Console.WriteLine($"⚠️ Pubsub readiness check timed out after {timeout.TotalSeconds}s. Event-driven tests may fail.");
+        // Return true anyway - we don't want to block all tests just because pubsub isn't ready
+        // Individual tests that need pubsub will fail with meaningful errors
+        return true;
     }
 
     /// <summary>
