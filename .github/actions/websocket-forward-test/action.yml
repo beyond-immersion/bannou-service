@@ -28,6 +28,9 @@ runs:
       shell: bash
       run: |
         echo "🚀 Running WebSocket tests with current generated SDK (forward compatibility)..."
+        # Source .env.test.edge to get client configuration (endpoints, credentials)
+        # Using set -a / set +a pattern to automatically export sourced variables
+        set -a && source .env.test.edge && set +a
         DAEMON_MODE=true dotnet run --project edge-tester --configuration Release --no-build
 
     - name: Final Cleanup
