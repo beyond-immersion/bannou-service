@@ -31,6 +31,12 @@ runs:
         # Source .env.test.edge to get client configuration (endpoints, credentials)
         # Using set -a / set +a pattern to automatically export sourced variables
         set -a && source .env.test.edge && set +a
+        # Override Docker hostnames with localhost for CI host access
+        # (edge-tester runs on CI host, not in Docker, so it needs localhost)
+        export REGISTER_ENDPOINT=localhost:80/auth/register
+        export LOGIN_CREDENTIALS_ENDPOINT=localhost:80/auth/login
+        export LOGIN_TOKEN_ENDPOINT=localhost:80/auth/login/token
+        export CONNECT_ENDPOINT=localhost:80/connect
         DAEMON_MODE=true dotnet run --project edge-tester --configuration Release --no-build
 
     - name: Final Cleanup
