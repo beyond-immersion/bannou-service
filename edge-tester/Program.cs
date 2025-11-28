@@ -216,10 +216,16 @@ public class Program
         var serverUri = new Uri($"http://{Configuration.Login_Credentials_Endpoint}");
         Console.WriteLine($"Credential login Uri: {serverUri}");
 
+        // Auth API expects JSON body with email/password per auth-api.yaml
+        var contentObj = new JObject()
+        {
+            ["email"] = Configuration.Client_Username, // Using username as email for testing
+            ["password"] = Configuration.Client_Password
+        };
         using HttpRequestMessage httpRequest = new(HttpMethod.Post, serverUri);
-        httpRequest.Headers.Add("username", Configuration.Client_Username);
-        httpRequest.Headers.Add("password", Configuration.Client_Password);
-        httpRequest.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+        var jsonContentStr = JsonConvert.SerializeObject(contentObj);
+        var strContent = new StringContent(jsonContentStr, Encoding.UTF8, "application/json");
+        httpRequest.Content = strContent;
 
         using var response = await HttpClient.SendAsync(httpRequest, ShutdownCancellationTokenSource.Token);
         if (response == null)
