@@ -16,6 +16,9 @@ runs:
           -f "./provisioning/docker-compose.test.edge.yml" \
           ps
 
+        echo "⏳ Waiting for services to be fully ready..."
+        sleep 15
+
     - name: Build SDK and Edge Tester with Current SDK
       shell: bash
       run: |
