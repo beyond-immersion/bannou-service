@@ -130,8 +130,9 @@ public class Program
             else
                 Console.WriteLine("Login successful.");
 
-            sAccessToken = (string?)accessTokens["access_token"];
-            sRefreshToken = (string?)accessTokens["refresh_token"];
+            // Auth API returns camelCase property names per OpenAPI schema
+            sAccessToken = (string?)accessTokens["accessToken"];
+            sRefreshToken = (string?)accessTokens["refreshToken"];
             if (sAccessToken == null)
                 throw new InvalidOperationException("Failed to parse JWT from login result.");
 
