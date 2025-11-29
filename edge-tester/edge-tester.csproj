@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BeyondImmersion.BannouService.EdgeTester</RootNamespace>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <OutputType>Exe</OutputType>
+    <Configurations>Debug;Release;Development</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;8618</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|AnyCPU'">
+    <NoWarn>1701;1702;8618</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;8618</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../bannou-service/bannou-service.csproj" />
+    <ProjectReference Include="../lib-connect/lib-connect.csproj" />
+    <ProjectReference Include="..\lib-accounts\lib-accounts.csproj" />
+    <ProjectReference Include="..\lib-auth\lib-auth.csproj" />
+    <ProjectReference Include="..\lib-behavior\lib-behavior.csproj" />
+    <ProjectReference Include="..\lib-game-session\lib-game-session.csproj" />
+    <ProjectReference Include="..\lib-permissions\lib-permissions.csproj" />
+    <ProjectReference Include="..\lib-website\lib-website.csproj" />
+  </ItemGroup>
+
+  <!-- Backwards Compatibility Testing: Use Published NuGet SDK -->
+  <ItemGroup Condition="'$(UsePublishedSDK)' == 'true'">
+    <PackageReference Include="BeyondImmersion.Bannou.Client.SDK" Version="*" />
+  </ItemGroup>
+
+  <!-- Forward Compatibility Testing: Use Current Generated SDK -->
+  <ItemGroup Condition="'$(UseCurrentSDK)' == 'true'">
+    <ProjectReference Include="../Bannou.Client.SDK/Bannou.Client.SDK.csproj" />
+  </ItemGroup>
+
+  <!-- Development Mode: Default to current generated SDK when no specific mode -->
+  <ItemGroup Condition="'$(UsePublishedSDK)' != 'true' AND '$(UseCurrentSDK)' != 'true'">
+    <ProjectReference Include="../Bannou.Client.SDK/Bannou.Client.SDK.csproj" />
+  </ItemGroup>
+
+
+  <!-- Build Target Validation -->
+  <Target Name="ValidateSDKMode" BeforeTargets="BeforeBuild">
+    <Message Condition="'$(UsePublishedSDK)' == 'true'" Text="🔄 Building edge-tester with PUBLISHED NuGet SDK (backwards compatibility testing)" Importance="high" />
+    <Message Condition="'$(UseCurrentSDK)' == 'true'" Text="🚀 Building edge-tester with CURRENT generated SDK (forward compatibility testing)" Importance="high" />
+    <Message Condition="'$(UsePublishedSDK)' != 'true' AND '$(UseCurrentSDK)' != 'true'" Text="⚙️ Building edge-tester with CURRENT generated SDK (development mode)" Importance="high" />
+  </Target>
+
+</Project>

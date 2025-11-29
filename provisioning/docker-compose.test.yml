@@ -1,0 +1,18 @@
+# Test Configuration - Shared settings for all test scenarios
+# This file provides common test environment overrides
+# Stack with specific test files: test.infrastructure, test.http, or test.edge
+
+services:
+
+  # Bannou test configuration overrides
+  bannou:
+    # Test env file will be overridden by specific test compose files
+    # (test.infrastructure, test.http, test.edge each set their own env_file)
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Testing
+      - SERVICE_DOMAIN=${SERVICE_DOMAIN:-test}
+
+  # Dapr sidecar test configuration
+  bannou-dapr:
+    # Don't restart in tests - let tests control lifecycle
+    restart: "no"

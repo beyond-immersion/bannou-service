@@ -1,0 +1,444 @@
+openapi: 3.0.3
+info:
+  title: Orchestrator API
+  version: 1.0.0
+  description: |
+    Service lifecycle management and testing orchestration for Bannou.
+
+    The orchestrator service provides:
+    - Infrastructure health monitoring (Redis, RabbitMQ, MySQL)
+    - API-driven test execution (infrastructure, HTTP, edge tests)
+    - Smart service restart logic based on actual health metrics
+    - Container lifecycle management via Docker API
+
+    **CRITICAL**: This service uses DIRECT connections to Redis and RabbitMQ
+    (not via Dapr) to avoid chicken-and-egg dependency issues.
+
+servers: []
+
+paths:
+  /orchestrator/health/infrastructure:
+    get:
+      summary: Check infrastructure component health
+      description: |
+        Validates connectivity and health of core infrastructure components:
+        - Redis (direct connection via StackExchange.Redis)
+        - RabbitMQ (direct connection via RabbitMQ.Client)
+        - Dapr Placement service
+      operationId: GetInfrastructureHealth
+      responses:
+        '200':
+          description: Infrastructure health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfrastructureHealthResponse'
+        '503':
+          description: One or more infrastructure components unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfrastructureHealthResponse'
+
+  /orchestrator/health/services:
+    get:
+      summary: Get health status of all services
+      description: |
+        Retrieves health information from all services via Redis heartbeat monitoring.
+        Uses existing ServiceHeartbeatEvent schema from common-events.yaml.
+      operationId: GetServicesHealth
+      responses:
+        '200':
+          description: Service health report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceHealthReport'
+
+  /orchestrator/tests/run:
+    post:
+      summary: Execute test batch via API
+      description: |
+        Executes tests via API calls to test services (no --exit-code-from).
+
+        Supports three test types:
+        - infrastructure: Basic service availability (testing plugin)
+        - http: Service-to-service HTTP testing (http-tester)
+        - edge: WebSocket protocol testing (edge-tester)
+      operationId: RunTests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestExecutionRequest'
+      responses:
+        '200':
+          description: Test execution results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestExecutionResult'
+        '400':
+          description: Invalid test configuration
+        '500':
+          description: Test execution failed
+
+  /orchestrator/services/restart:
+    post:
+      summary: Restart service with optional configuration
+      description: |
+        Performs intelligent service restart based on health metrics.
+        Only restarts if truly necessary (e.g., 5+ minute degradation).
+
+        Supports optional environment variable updates during restart.
+      operationId: RestartService
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceRestartRequest'
+      responses:
+        '200':
+          description: Service restarted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceRestartResult'
+        '400':
+          description: Invalid restart request
+        '409':
+          description: Service restart not needed (healthy status)
+
+  /orchestrator/services/should-restart:
+    post:
+      summary: Check if service needs restart
+      description: |
+        Evaluates service health and determines if restart is necessary.
+
+        Restart logic:
+        - Healthy: No restart needed
+        - Degraded < 5 min: No restart needed
+        - Degraded > 5 min: Restart recommended
+        - Unavailable: Restart needed
+      operationId: ShouldRestartService
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShouldRestartServiceRequest'
+      responses:
+        '200':
+          description: Restart recommendation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestartRecommendation'
+
+components:
+  schemas:
+    InfrastructureHealthResponse:
+      type: object
+      required:
+        - healthy
+        - timestamp
+        - components
+      properties:
+        healthy:
+          type: boolean
+          description: Overall infrastructure health status
+        timestamp:
+          type: string
+          format: date-time
+          description: When health check was performed
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComponentHealth'
+          description: Individual component health status
+
+    ComponentHealth:
+      type: object
+      required:
+        - name
+        - status
+        - lastSeen
+      properties:
+        name:
+          type: string
+          description: Component name (redis, rabbitmq, placement)
+        status:
+          type: string
+          enum: [healthy, degraded, unavailable]
+          description: Component health status
+        lastSeen:
+          type: string
+          format: date-time
+          description: Last successful connection time
+        message:
+          type: string
+          description: Additional status information
+        metrics:
+          type: object
+          additionalProperties: true
+          description: Component-specific metrics (e.g., ping time)
+
+    ServiceHealthReport:
+      type: object
+      required:
+        - timestamp
+        - totalServices
+        - healthPercentage
+        - healthyServices
+        - unhealthyServices
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: When report was generated
+        totalServices:
+          type: integer
+          description: Total number of services
+        healthPercentage:
+          type: number
+          format: float
+          description: Percentage of healthy services (0-100)
+        healthyServices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceHealthStatus'
+          description: Services with recent heartbeats
+        unhealthyServices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceHealthStatus'
+          description: Services with expired heartbeats
+
+    ServiceHealthStatus:
+      type: object
+      description: |
+        Service health status from heartbeat monitoring.
+        Uses ServiceHeartbeatEvent schema from common-events.yaml.
+      required:
+        - serviceId
+        - appId
+        - status
+        - lastSeen
+      properties:
+        serviceId:
+          type: string
+          description: Service ID (e.g., "behavior", "accounts")
+        appId:
+          type: string
+          description: Dapr app-id (e.g., "bannou", "npc-omega-01")
+        status:
+          type: string
+          description: Service status from heartbeat
+        lastSeen:
+          type: string
+          format: date-time
+          description: Last heartbeat timestamp
+        capacity:
+          type: object
+          description: Service capacity from heartbeat
+          properties:
+            maxConnections:
+              type: integer
+            currentConnections:
+              type: integer
+            cpuUsage:
+              type: number
+              format: float
+            memoryUsage:
+              type: number
+              format: float
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional service metadata
+
+    TestExecutionRequest:
+      type: object
+      required:
+        - testType
+      properties:
+        testType:
+          type: string
+          enum: [infrastructure, http, edge]
+          description: Type of tests to execute
+        plugin:
+          type: string
+          description: Specific plugin to test (for http tests)
+        configuration:
+          type: object
+          additionalProperties: true
+          description: Additional test configuration parameters
+        timeout:
+          type: integer
+          description: Test timeout in seconds (default 300)
+
+    TestExecutionResult:
+      type: object
+      required:
+        - success
+        - testType
+        - duration
+      properties:
+        success:
+          type: boolean
+          description: Overall test success status
+        testType:
+          type: string
+          description: Type of tests executed
+        duration:
+          type: string
+          description: Total execution time
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestResult'
+          description: Individual test results
+        summary:
+          type: string
+          description: Human-readable test summary
+        error:
+          type: string
+          description: Error message if test execution failed
+
+    TestResult:
+      type: object
+      required:
+        - name
+        - passed
+      properties:
+        name:
+          type: string
+          description: Test name
+        passed:
+          type: boolean
+          description: Test pass/fail status
+        duration:
+          type: string
+          description: Test execution time
+        message:
+          type: string
+          description: Test result message
+        stackTrace:
+          type: string
+          description: Stack trace if test failed
+
+    ServiceRestartRequest:
+      type: object
+      required:
+        - serviceName
+      properties:
+        serviceName:
+          type: string
+          description: Name of service to restart
+        environment:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional environment variable updates
+        force:
+          type: boolean
+          description: Force restart even if healthy (default false)
+        timeout:
+          type: integer
+          description: Timeout for service to become healthy (seconds, default 120)
+
+    ServiceRestartResult:
+      type: object
+      required:
+        - success
+        - serviceName
+        - duration
+      properties:
+        success:
+          type: boolean
+          description: Restart success status
+        serviceName:
+          type: string
+          description: Service that was restarted
+        duration:
+          type: string
+          description: Time taken to restart and become healthy
+        previousStatus:
+          type: string
+          description: Service status before restart
+        currentStatus:
+          type: string
+          description: Service status after restart
+        message:
+          type: string
+          description: Restart result message
+
+    ShouldRestartServiceRequest:
+      type: object
+      required:
+        - serviceName
+      properties:
+        serviceName:
+          type: string
+          description: Name of service to evaluate
+
+    RestartRecommendation:
+      type: object
+      required:
+        - shouldRestart
+        - serviceName
+        - currentStatus
+        - reason
+      properties:
+        shouldRestart:
+          type: boolean
+          description: Whether restart is recommended
+        serviceName:
+          type: string
+          description: Service being evaluated
+        currentStatus:
+          type: string
+          description: Current service health status
+        lastSeen:
+          type: string
+          format: date-time
+          description: Last heartbeat timestamp
+        degradedDuration:
+          type: string
+          description: How long service has been degraded
+        reason:
+          type: string
+          description: Explanation for recommendation
+
+x-service-configuration:
+  properties:
+    RedisConnectionString:
+      type: string
+      default: "redis:6379"
+      description: Direct Redis connection (not Dapr component)
+    RabbitMqConnectionString:
+      type: string
+      default: "amqp://guest:guest@rabbitmq:5672"
+      description: Direct RabbitMQ connection (not Dapr component)
+    DockerHost:
+      type: string
+      default: "unix:///var/run/docker.sock"
+      description: Docker API endpoint (socket for dev, TLS for prod)
+    ServiceHealthCheckInterval:
+      type: integer
+      default: 30
+      description: Interval for service health checks (seconds)
+    InfrastructureHealthCheckInterval:
+      type: integer
+      default: 10
+      description: Interval for infrastructure health checks (seconds)
+    DegradationThresholdMinutes:
+      type: integer
+      default: 5
+      description: Minutes of degradation before restart recommended
+    HeartbeatTimeoutSeconds:
+      type: integer
+      default: 90
+      description: Seconds before heartbeat considered expired

@@ -27,22 +27,35 @@ public class ServiceConfigurationAttribute : BaseServiceAttribute
     /// </summary>
     public string? EnvPrefix { get; }
 
-    public ServiceConfigurationAttribute() { }
-
-    public ServiceConfigurationAttribute(Type? serviceImplementation = null, string? envPrefix = null)
+    /// <summary>
+    /// Initializes a new instance of the ServiceConfigurationAttribute for app-level configuration (no associated service).
+    /// </summary>
+    /// <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
+    public ServiceConfigurationAttribute(string? envPrefix = null)
     {
-        if (serviceImplementation != null)
-        {
-            if (!typeof(IDaprService).IsAssignableFrom(serviceImplementation))
-                throw new InvalidCastException($"Service implementation type provided does not implement {nameof(IDaprService)}");
+        ServiceImplementationType = null;
+        ServiceAttribute = null;
+        EnvPrefix = envPrefix;
+    }
 
-            if (serviceImplementation.IsAbstract || serviceImplementation.IsInterface)
-                throw new InvalidCastException($"Service implementation type provided to config must be a concrete class.");
-        }
+    /// <summary>
+    /// Initializes a new instance of the ServiceConfigurationAttribute with the specified configuration.
+    /// </summary>
+    /// <param name="serviceImplementation">The service implementation type this configuration is for (required).</param>
+    /// <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
+    public ServiceConfigurationAttribute(Type serviceImplementation, string? envPrefix = null)
+    {
+        if (serviceImplementation == null)
+            throw new ArgumentNullException(nameof(serviceImplementation), "Service implementation type is required");
+
+        if (!typeof(IDaprService).IsAssignableFrom(serviceImplementation))
+            throw new InvalidCastException($"Service implementation type provided does not implement {nameof(IDaprService)}");
+
+        if (serviceImplementation.IsAbstract || serviceImplementation.IsInterface)
+            throw new InvalidCastException($"Service implementation type provided to config must be a concrete class.");
 
         ServiceImplementationType = serviceImplementation;
-        if (serviceImplementation != null)
-            ServiceAttribute = serviceImplementation.GetCustomAttribute<DaprServiceAttribute>();
+        ServiceAttribute = serviceImplementation.GetCustomAttribute<DaprServiceAttribute>();
 
         EnvPrefix = envPrefix;
         if (ServiceAttribute != null && envPrefix == null)

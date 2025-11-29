@@ -5,12 +5,19 @@ using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Controllers.Filters;
 
+/// <summary>
+/// Action filter for handling HTTP headers mapped to properties via HeaderArrayAttribute.
+/// </summary>
 public class HeaderArrayActionFilter : IActionFilter
 {
     private const string HEADER_ARRAY_LIST = "HEADER_ARRAY_PROPERTIES";
     private const string HEADER_ARRAY_PREFIX = "HEADER_ARRAY:";
     private const string PROPERTYINFO_PREFIX = "PROPERTY_INFO:";
 
+    /// <summary>
+    /// Called before action method execution to map HTTP headers to request properties.
+    /// </summary>
+    /// <param name="context">The action executing context.</param>
     public void OnActionExecuting(ActionExecutingContext context)
     {
         try
@@ -50,6 +57,10 @@ public class HeaderArrayActionFilter : IActionFilter
         }
     }
 
+    /// <summary>
+    /// Called after action method execution to map response properties to HTTP headers.
+    /// </summary>
+    /// <param name="context">The action executed context.</param>
     public void OnActionExecuted(ActionExecutedContext context)
     {
         if (context.Result is ObjectResult objectResult && objectResult?.Value != null)

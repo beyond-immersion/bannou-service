@@ -26,7 +26,7 @@ public interface IDaprController
                         return true;
                     });
 
-                _controllers = controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();
+                _controllers = controllerClasses?.ToArray() ?? [];
             }
 
             return _controllers;
@@ -38,7 +38,7 @@ public interface IDaprController
     /// </summary>
     public static (Type, DaprControllerAttribute)[] NonServiceControllers
     {
-        get => Controllers.Where(t => t.Item2?.InterfaceType == null).ToArray();
+        get => [.. Controllers.Where(t => t.Item2?.InterfaceType == null)];
     }
 
     /// <summary>
@@ -46,7 +46,7 @@ public interface IDaprController
     /// </summary>
     public static (Type, DaprControllerAttribute)[] ServiceControllers
     {
-        get => Controllers.Where(t => t.Item2?.InterfaceType != null).ToArray();
+        get => [.. Controllers.Where(t => t.Item2?.InterfaceType != null)];
     }
 
     /// <summary>
@@ -56,15 +56,14 @@ public interface IDaprController
     {
         get
         {
-            return Controllers.Where(t =>
+            return [.. Controllers.Where(t =>
                 {
                     if (t.Item2?.InterfaceType == null)
                         return false;
 
                     (Type, Type, DaprServiceAttribute)? serviceInfo = IDaprService.GetServiceInfo(t.Item2.InterfaceType);
                     return serviceInfo != null && !IDaprService.IsDisabled(serviceInfo.Value.Item3.Name);
-                })
-                .ToArray();
+                })];
         }
     }
 
@@ -93,7 +92,7 @@ public interface IDaprController
         IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = ServiceControllers
             .Where(t => interfaceType == t.Item2.InterfaceType);
 
-        return controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();
+        return controllerClasses?.ToArray() ?? [];
     }
 
     /// <summary>
@@ -106,7 +105,7 @@ public interface IDaprController
 
         DaprServiceAttribute? serviceAttr = implementationType.GetCustomAttribute<DaprServiceAttribute>();
         if (serviceAttr == null || serviceAttr.InterfaceType == null)
-            return Array.Empty<(Type, DaprControllerAttribute)>();
+            return [];
 
         IEnumerable<(Type, DaprControllerAttribute)> controllerClasses = ServiceControllers
             .Where(t =>
@@ -114,6 +113,6 @@ public interface IDaprController
                 return t.Item2.InterfaceType?.IsAssignableFrom(implementationType) ?? false;
             });
 
-        return controllerClasses?.ToArray() ?? Array.Empty<(Type, DaprControllerAttribute)>();
+        return controllerClasses?.ToArray() ?? [];
     }
 }

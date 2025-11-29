@@ -1,0 +1,52 @@
+# HTTP Integration Test Configuration
+# Service-to-service testing using Dapr service invocation
+# HTTP tester has its own Dapr sidecar to test inter-service communication
+
+services:
+
+  bannou:
+    env_file: ../.env.test.http
+
+  # HTTP integration tester - simulates another service in datacenter
+  bannou-http-tester:
+    build:
+      context: ..
+      dockerfile: http-tester/Dockerfile
+    env_file: ../.env.test.http
+    environment:
+      - PLUGIN=${PLUGIN}
+      # Dapr sidecar shares network stack, accessible via 127.0.0.1
+      - DAPR_HTTP_ENDPOINT=http://127.0.0.1:3500
+      - DAPR_GRPC_ENDPOINT=http://127.0.0.1:50001
+    ports:
+      - "9000:80"
+      - "9001:443"
+
+  # Override Dapr components for both bannou and http-tester
+  bannou-dapr:
+    volumes:
+      - "./dapr/components-http-test/:/components"  # HTTP test components (Redis only, no RabbitMQ)
+      - "./certificates:/certificates"
+
+  # Dapr sidecar for HTTP tester - shares network stack
+  bannou-http-tester-dapr:
+    image: "daprio/daprd:edge"
+    command: [
+      "./daprd",
+      "--app-id", "bannou-http-tester",
+      "--app-port", "80",
+      "--app-protocol", "http",
+      "--dapr-http-port", "3500",
+      "--dapr-grpc-port", "50001",
+      "--placement-host-address", "placement:50006",  # Use service name on default network
+      "--resources-path", "./components",
+      "--log-level", "debug",
+      "--enable-api-logging"
+    ]
+    volumes:
+      - "./dapr/components-http-test/:/components"
+      - "./certificates:/certificates"
+    environment:
+      - "SSL_CERT_DIR=/certificates"
+    network_mode: "service:bannou-http-tester"  # Share network stack with http-tester
+    restart: always

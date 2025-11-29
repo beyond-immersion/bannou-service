@@ -24,10 +24,8 @@ info:
     - **Reconnection Support**: Clients can reconnect to existing sessions within a configurable time window
 
 servers:
-  - url: http://localhost/api/connect
-    description: Development server (HTTP upgrade to WebSocket)
-  - url: ws://localhost/api/connect
-    description: Development WebSocket server
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
+    description: Dapr sidecar endpoint (internal only)
 
 paths:
   /internal/proxy:
@@ -60,25 +58,25 @@ paths:
         '429':
           description: Rate limit exceeded
 
-  /api-discovery:
-    post:
-      summary: Get available APIs for current session
-      operationId: discoverAPIs
+
+  /service-mappings:
+    get:
+      summary: Get current service routing mappings
+      operationId: getServiceMappings
       tags:
-        - API Discovery
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApiDiscoveryRequest'
+        - Service Discovery
+      description: |
+        Returns current service-to-app-id routing mappings for monitoring and debugging.
+        Shows how services are mapped in the current deployment topology.
       responses:
         '200':
-          description: Available APIs discovered successfully
+          description: Service mappings retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiDiscoveryResponse'
+                $ref: '#/components/schemas/ServiceMappingsResponse'
+        '500':
+          description: Error retrieving service mappings
 
   /connect:
     get:
@@ -99,6 +97,7 @@ paths:
       operationId: ConnectWebSocket
       tags:
         - WebSocket Connection
+      x-controller-only: true
       parameters:
         - name: Connection
           in: header
@@ -203,6 +202,7 @@ paths:
       operationId: ConnectWebSocketPost
       tags:
         - WebSocket Connection
+      x-controller-only: true
       parameters:
         - name: Connection
           in: header
@@ -259,165 +259,73 @@ components:
     InternalProxyRequest:
       type: object
       required:
-        - agentId
-        - agentRole
+        - sessionId
         - targetService
         - targetEndpoint
         - method
       properties:
-        agentId:
+        sessionId:
           type: string
-          description: Unique identifier for the requesting agent (NPC ID, system ID, etc.)
-        agentRole:
-          type: string
-          description: Role of the agent for permission validation
-          examples: ["npc_trader", "npc_guard", "system_scheduler", "ai_moderator"]
-        accountId:
-          type: string
-          format: uuid
-          description: Associated account ID if agent represents a user
+          description: WebSocket session ID making the request
         targetService:
           type: string
-          description: Target service ID or name
+          description: Target service name (e.g., "accounts", "auth", "behavior")
         targetEndpoint:
           type: string
-          description: Target API endpoint path
+          description: Target API endpoint path (e.g., "/accounts/{id}")
         method:
           type: string
           enum: [GET, POST, PUT, DELETE, PATCH]
           description: HTTP method for the target endpoint
-        requestData:
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Additional headers to forward to the service
+        body:
           type: object
           additionalProperties: true
-          description: Request payload to forward to target service
-        contextData:
+          description: Request body to forward to target service
+        pathParameters:
           type: object
-          additionalProperties: true
-          description: Agent context for permission evaluation (location, state, relationships, etc.)
-        rateLimitKey:
-          type: string
-          description: Custom rate limit key (defaults to agentRole)
-        metadata:
+          additionalProperties:
+            type: string
+          description: Path parameters for the endpoint
+        queryParameters:
           type: object
-          additionalProperties: true
-          description: Additional metadata for logging/monitoring
+          additionalProperties:
+            type: string
+          description: Query string parameters for the endpoint
 
     InternalProxyResponse:
       type: object
       required:
         - success
-        - agentId
+        - statusCode
       properties:
         success:
           type: boolean
-        agentId:
+          description: Whether the proxy request was successful
+        statusCode:
+          type: integer
+          description: HTTP status code from the target service
+        response:
           type: string
-          description: Echo of the requesting agent ID
-        targetService:
+          description: JSON response from the target service (as string)
+        headers:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Response headers from the target service
+        error:
           type: string
-          description: Service that handled the request
-        responseData:
-          type: object
-          additionalProperties: true
-          description: Response from the target service
-        permissionInfo:
-          type: object
-          properties:
-            granted:
-              type: boolean
-            requiredPermissions:
-              type: array
-              items:
-                type: string
-            rateLimitRemaining:
-              type: integer
+          description: Error message if the request failed
         executionTime:
           type: integer
           description: Request execution time in milliseconds
 
-    ApiDiscoveryRequest:
-      type: object
-      required:
-        - sessionId
-      properties:
-        sessionId:
-          type: string
-          format: uuid
-          description: Current WebSocket session ID
-        contextData:
-          type: object
-          additionalProperties: true
-          description: Additional context (game session, character, etc.)
-
-    ApiDiscoveryResponse:
-      type: object
-      required:
-        - sessionId
-        - availableAPIs
-        - version
-      properties:
-        sessionId:
-          type: string
-          format: uuid
-        availableAPIs:
-          type: array
-          items:
-            $ref: '#/components/schemas/AvailableAPI'
-          description: All APIs currently accessible to this session
-        version:
-          type: integer
-          description: Version number for capability updates
-        expiresAt:
-          type: string
-          format: date-time
-          description: When this API list expires
-
-    AvailableAPI:
-      type: object
-      required:
-        - serviceId
-        - serviceName
-        - endpoint
-        - method
-      properties:
-        serviceId:
-          type: string
-          description: Service GUID for routing via binary protocol
-        serviceName:
-          type: string
-          description: Human-readable service name
-        endpoint:
-          type: string
-          description: API endpoint path
-        method:
-          type: string
-          enum: [GET, POST, PUT, DELETE, PATCH]
-        description:
-          type: string
-          description: Human-readable endpoint description
-        requiredPermissions:
-          type: array
-          items:
-            type: string
-          description: Permissions that enabled this API
-        rateLimits:
-          $ref: '#/components/schemas/ApiRateLimit'
-        category:
-          type: string
-          description: API category (auth, game, social, etc.)
-
-    ApiRateLimit:
-      type: object
-      properties:
-        requestsPerMinute:
-          type: integer
-        requestsPerHour:
-          type: integer
-        burstLimit:
-          type: integer
-        remaining:
-          type: integer
-          description: Current remaining requests
 
     ConnectRequest:
       type: object
@@ -458,22 +366,53 @@ components:
           enum: [400, 403, 500]
       additionalProperties: false
 
+    ServiceMappingsResponse:
+      type: object
+      required:
+        - mappings
+        - defaultMapping
+        - generatedAt
+      properties:
+        mappings:
+          type: object
+          additionalProperties:
+            type: string
+          description: Map of service names to app-id routing destinations
+          example:
+            accounts: "bannou"
+            auth: "bannou"
+            behavior: "npc-processing-01"
+        defaultMapping:
+          type: string
+          description: Default app-id used when no specific mapping exists
+          default: "bannou"
+        generatedAt:
+          type: string
+          format: date-time
+          description: When this mapping information was generated
+        totalServices:
+          type: integer
+          description: Total number of services with routing mappings
+          minimum: 0
+      additionalProperties: false
+
     # Binary Protocol Schemas (for documentation purposes)
     MessageFlags:
       type: integer
       format: byte
       description: |
-        Bit flags controlling message behavior in the binary protocol.
-        
+        Bit flags controlling message behavior in the enhanced 31-byte binary protocol.
+
         **Flags:**
         - 0x00 (None): Default - JSON text, service request, unencrypted, standard priority, expects response
-        - 0x01 (Binary): Message payload is binary data
+        - 0x01 (Binary): Message payload is binary data (not JSON)
         - 0x02 (Encrypted): Message payload is encrypted
-        - 0x04 (Compressed): Message payload is compressed
+        - 0x04 (Compressed): Message payload is compressed (gzip)
         - 0x08 (HighPriority): Deliver at high priority, skip to front of queues
         - 0x10 (Event): Fire-and-forget message, no response expected
         - 0x20 (Client): Route to another WebSocket client (not a Dapr service)
         - 0x40 (Response): Message is a response to an RPC (not a new request)
+        - 0x80 (Reserved): Reserved for future use
       minimum: 0
       maximum: 255
       example: 0
@@ -481,84 +420,121 @@ components:
     ResponseCodes:
       type: integer
       format: byte
+      enum:
+        - 0   # OK
+        - 10  # RequestError
+        - 11  # RequestTooLarge
+        - 12  # TooManyRequests
+        - 13  # InvalidRequestChannel
+        - 20  # Unauthorized
+        - 30  # ServiceNotFound
+        - 31  # ClientNotFound
+        - 32  # MessageNotFound
+        - 50  # Service_BadRequest
+        - 51  # Service_NotFound
+        - 52  # Service_Unauthorized
+        - 60  # Service_InternalServerError
+      x-enumNames:
+        - "OK"
+        - "RequestError"
+        - "RequestTooLarge"
+        - "TooManyRequests"
+        - "InvalidRequestChannel"
+        - "Unauthorized"
+        - "ServiceNotFound"
+        - "ClientNotFound"
+        - "MessageNotFound"
+        - "Service_BadRequest"
+        - "Service_NotFound"
+        - "Service_Unauthorized"
+        - "Service_InternalServerError"
       description: |
-        Response codes used in the binary protocol.
-        
-        **Success:**
-        - 0: OK
-        
-        **Request Errors (10-19):**
-        - 10: RequestError
-        - 11: RequestTooLarge
-        - 12: TooManyRequests
-        - 13: InvalidRequestChannel
-        
-        **Authorization Errors (20-29):**
-        - 20: Unauthorized
-        
-        **Not Found Errors (30-39):**
-        - 30: ServiceNotFound
-        - 31: ClientNotFound
-        - 32: MessageNotFound
-        
-        **Service Errors (50-60):**
-        - 50: Service_BadRequest
-        - 51: Service_NotFound
-        - 52: Service_Unauthorized
-        - 60: Service_InternalServerError
-      enum: [0, 10, 11, 12, 13, 20, 30, 31, 32, 50, 51, 52, 60]
+        Response codes used in the binary protocol for success/error indication.
+        Provides fine-grained error reporting for different failure scenarios.
       example: 0
 
     ServiceRequestMessage:
       type: object
       description: |
-        Structure of a service request message in the binary protocol.
+        Structure of a service request message in the enhanced 31-byte binary protocol.
         This schema is for documentation - actual messages are binary.
+
+        **Binary Header Layout (31 bytes):**
+        - Bytes 0: Message Flags (1 byte)
+        - Bytes 1-2: Channel ID (2 bytes, big-endian)
+        - Bytes 3-6: Sequence Number (4 bytes, big-endian)
+        - Bytes 7-22: Service GUID (16 bytes)
+        - Bytes 23-30: Message ID (8 bytes)
+        - Bytes 31+: Payload (variable length)
       required:
         - flags
-        - message_id
-        - message_channel
-        - service_id
-        - content
+        - channel
+        - sequenceNumber
+        - serviceGuid
+        - messageId
+        - payload
       properties:
         flags:
           $ref: '#/components/schemas/MessageFlags'
-        message_id:
-          type: string
-          format: uuid
-          description: Unique identifier for request/response matching
-        message_channel:
+        channel:
           type: integer
           format: uint16
-          description: Channel for sequential message processing (0 = no channel)
-        service_id:
+          description: Channel for sequential message processing (0-65535, 0 = default)
+        sequenceNumber:
+          type: integer
+          format: uint32
+          description: Per-channel sequence number for message ordering
+        serviceGuid:
           type: string
           format: uuid
-          description: Target service UUID for routing
-        content:
+          description: Client-salted service GUID for routing
+        messageId:
+          type: integer
+          format: int64
+          description: Unique message ID for request/response correlation
+        payload:
           type: string
           format: byte
-          description: Message payload (JSON or binary data)
+          description: Message payload (JSON or binary data based on flags)
 
     ServiceResponseMessage:
       type: object
       description: |
-        Structure of a service response message in the binary protocol.
+        Structure of a service response message in the enhanced 31-byte binary protocol.
         This schema is for documentation - actual messages are binary.
+
+        **Binary Header Layout (31 bytes):**
+        - Same as ServiceRequestMessage but with Response flag (0x40) set
       required:
         - flags
-        - message_id
-        - response_code
+        - channel
+        - sequenceNumber
+        - serviceGuid
+        - messageId
+        - responseCode
       properties:
         flags:
           $ref: '#/components/schemas/MessageFlags'
-        message_id:
+          description: Must have Response flag (0x40) set
+        channel:
+          type: integer
+          format: uint16
+          description: Matches the request channel
+        sequenceNumber:
+          type: integer
+          format: uint32
+          description: Matches the request sequence number
+        serviceGuid:
           type: string
           format: uuid
+          description: Matches the request service GUID
+        messageId:
+          type: integer
+          format: int64
           description: Matches the request message ID
-        response_code:
+        responseCode:
           $ref: '#/components/schemas/ResponseCodes'
-        content:
+        payload:
           type: string
           format: byte
           description: Optional response payload
@@ -596,6 +572,252 @@ components:
           type: string
           description: Base64-encoded RSA public key for JWT validation
 
+    # RabbitMQ Event Models for Real-time Communication
+    SessionCapabilityUpdateEvent:
+      type: object
+      description: |
+        Event published when a session's capabilities change (permissions, role changes, etc.).
+        Triggers real-time WebSocket updates to connected clients.
+      required:
+        - sessionId
+        - version
+      properties:
+        sessionId:
+          type: string
+          description: Session ID that had capability changes
+        addedCapabilities:
+          type: array
+          items:
+            type: string
+          description: New capabilities added to the session
+        removedCapabilities:
+          type: array
+          items:
+            type: string
+          description: Capabilities removed from the session
+        updatedServices:
+          type: array
+          items:
+            type: string
+          description: Services that had permission changes
+        version:
+          type: integer
+          description: New capability version number
+        expiresAt:
+          type: string
+          format: date-time
+          description: When these capabilities expire and need refresh
+
+    AuthEvent:
+      type: object
+      description: |
+        Authentication state change events (login, logout, token refresh).
+        Triggers session capability updates for connected clients.
+      required:
+        - sessionId
+        - eventType
+        - timestamp
+      properties:
+        sessionId:
+          type: string
+          description: Session ID affected by the auth event
+        eventType:
+          $ref: '#/components/schemas/AuthEventType'
+        timestamp:
+          type: string
+          format: date-time
+          description: When the auth event occurred
+        userId:
+          type: string
+          description: User ID associated with the session (optional for some events)
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional event metadata (device info, location, etc.)
+
+    AuthEventType:
+      type: string
+      enum:
+        - Login
+        - Logout
+        - TokenRefresh
+        - PermissionChange
+      description: Type of authentication event that occurred
+
+    ServiceRegistrationEvent:
+      type: object
+      description: |
+        Event published when a service registers new API endpoints.
+        Triggers permission recompilation for all active sessions.
+      required:
+        - serviceId
+        - timestamp
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this registration event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the service registration occurred
+        serviceId:
+          type: string
+          description: Service ID that registered (e.g., "behavior", "accounts")
+        version:
+          type: string
+          description: Service version that was registered
+        endpoints:
+          type: array
+          items:
+            type: string
+          description: New API endpoints registered by the service
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional service registration metadata
+
+    ClientMessageEvent:
+      type: object
+      description: |
+        Event for server-to-client push messaging.
+        Allows services to send messages directly to connected WebSocket clients.
+      required:
+        - clientId
+        - serviceGuid
+        - messageId
+        - payload
+      properties:
+        clientId:
+          type: string
+          description: Target client session ID
+        serviceName:
+          type: string
+          description: Name of the service sending the message
+        serviceGuid:
+          type: string
+          format: uuid
+          description: Service GUID for routing
+        messageId:
+          type: integer
+          format: int64
+          description: Unique message ID for correlation
+        payload:
+          type: string
+          format: byte
+          description: Message payload (binary data)
+        flags:
+          $ref: '#/components/schemas/MessageFlags'
+        channel:
+          type: integer
+          format: uint16
+          description: Channel for message routing
+          default: 0
+        timestamp:
+          type: string
+          format: date-time
+          description: When the message was sent
+
+    ClientRPCEvent:
+      type: object
+      description: |
+        Event for bidirectional RPC where services call clients and expect responses.
+        Extends ClientMessageEvent with response handling.
+      required:
+        - clientId
+        - serviceGuid
+        - messageId
+        - payload
+        - responseChannel
+      properties:
+        clientId:
+          type: string
+          description: Target client session ID
+        serviceName:
+          type: string
+          description: Name of the service making the RPC call
+        serviceGuid:
+          type: string
+          format: uuid
+          description: Service GUID for routing
+        messageId:
+          type: integer
+          format: int64
+          description: Unique message ID for correlation
+        payload:
+          type: string
+          format: byte
+          description: RPC request payload (binary data)
+        flags:
+          $ref: '#/components/schemas/MessageFlags'
+        channel:
+          type: integer
+          format: uint16
+          description: Channel for message routing
+          default: 0
+        responseChannel:
+          type: string
+          description: RabbitMQ channel for sending response back to service
+        timeoutSeconds:
+          type: integer
+          description: RPC timeout in seconds
+          default: 30
+        timestamp:
+          type: string
+          format: date-time
+          description: When the RPC was initiated
+
+    MessageFlags:
+      type: integer
+      format: byte
+      description: |
+        Bit flags for binary protocol message control.
+
+        Bit meanings:
+        - 0x01: Binary payload (vs JSON)
+        - 0x02: Encrypted payload
+        - 0x04: Compressed payload
+        - 0x08: Priority message
+        - 0x10: Requires acknowledgment
+        - 0x20: Broadcast message
+        - 0x40: Response message
+        - 0x80: Control message
+      minimum: 0
+      maximum: 255
+      default: 0
+
+    PermissionRecompileEvent:
+      type: object
+      description: |
+        Event to trigger permission recompilation for all sessions.
+        Published when services register new APIs or permission rules change.
+      required:
+        - eventId
+        - timestamp
+        - reason
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for this recompilation event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the recompilation was triggered
+        reason:
+          type: string
+          enum:
+            - service_registered
+            - permission_rules_changed
+            - role_definitions_updated
+            - manual_trigger
+          description: Reason for triggering permission recompilation
+        serviceId:
+          type: string
+          description: Service ID that triggered the recompilation (if applicable)
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional context for the recompilation
+
   securitySchemes:
     BearerAuth:
       type: http
@@ -630,6 +852,72 @@ tags:
 security:
   - BearerAuth: []
   - ReconnectAuth: []
+
+x-service-configuration:
+  properties:
+    MaxConcurrentConnections:
+      type: integer
+      description: Maximum number of concurrent WebSocket connections
+      default: 10000
+    ConnectionTimeoutSeconds:
+      type: integer
+      description: WebSocket connection timeout in seconds
+      default: 300
+    HeartbeatIntervalSeconds:
+      type: integer
+      description: Interval between heartbeat messages
+      default: 30
+    MessageQueueSize:
+      type: integer
+      description: Maximum number of queued messages per connection
+      default: 1000
+    BinaryProtocolVersion:
+      type: string
+      description: Binary protocol version identifier
+      default: "2.0"
+    BufferSize:
+      type: integer
+      description: Size of message buffers in bytes
+      default: 65536
+    DefaultServices:
+      type: array
+      items:
+        type: string
+      description: Services available to unauthenticated connections
+      default: ["auth", "website"]
+    AuthenticatedServices:
+      type: array
+      items:
+        type: string
+      description: Additional services available to authenticated connections
+      default: ["accounts", "behavior", "permissions", "gamesession"]
+    EnableClientToClientRouting:
+      type: boolean
+      description: Enable routing messages between WebSocket clients
+      default: true
+    MaxMessagesPerMinute:
+      type: integer
+      description: Rate limit for messages per minute per client
+      default: 1000
+    RateLimitWindowMinutes:
+      type: integer
+      description: Rate limit window in minutes
+      default: 1
+    RedisConnectionString:
+      type: string
+      description: Redis connection string for session management
+      default: "localhost:6379"
+    JwtPublicKey:
+      type: string
+      description: RSA public key for JWT validation (PEM format)
+    ServiceHeartbeatIntervalSeconds:
+      type: integer
+      description: Interval for service heartbeat updates to Redis
+      default: 30
+    ServiceDiscoveryRefreshSeconds:
+      type: integer
+      description: Interval for refreshing service discovery from Redis
+      default: 60
 
 externalDocs:
   description: Binary Protocol Documentation

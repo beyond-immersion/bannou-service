@@ -4,7 +4,7 @@ info:
   description: Internal account management service (CRUD operations only, never exposed to internet)
   version: 1.0.0
 servers:
-  - url: http://localhost:3500/v1.0/invoke/accounts/method
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
     description: Dapr sidecar endpoint (internal only)
 
 paths:
@@ -17,35 +17,47 @@ paths:
       parameters:
         - name: email
           in: query
+          required: false
           schema:
             type: string
             format: email
+            nullable: true
         - name: displayName
           in: query
+          required: false
           schema:
             type: string
+            nullable: true
         - name: provider
           in: query
+          required: false
           schema:
             type: string
             enum: [email, google, discord, twitch, steam]
+            nullable: true
         - name: verified
           in: query
+          required: false
           schema:
             type: boolean
+            nullable: true
         - name: page
           in: query
+          required: false
           schema:
             type: integer
             minimum: 1
             default: 1
+            nullable: true
         - name: pageSize
           in: query
+          required: false
           schema:
             type: integer
             minimum: 1
             maximum: 100
             default: 20
+            nullable: true
       responses:
         '200':
           description: Accounts retrieved successfully
@@ -468,6 +480,10 @@ components:
         displayName:
           type: string
           nullable: true
+        passwordHash:
+          type: string
+          nullable: true
+          description: BCrypt hashed password for authentication
         createdAt:
           type: string
           format: date-time
@@ -566,3 +582,110 @@ components:
           type: boolean
         hasPreviousPage:
           type: boolean
+
+    # Event Models for Account Lifecycle
+    AccountCreatedEvent:
+      type: object
+      description: Event published when a new account is created
+      required:
+        - eventId
+        - timestamp
+        - accountId
+        - email
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the created account
+        email:
+          type: string
+          format: email
+          description: Email address of the created account
+        displayName:
+          type: string
+          nullable: true
+          description: Display name of the created account
+        roles:
+          type: array
+          items:
+            type: string
+          description: Roles assigned to the account
+
+    AccountUpdatedEvent:
+      type: object
+      description: Event published when an account is updated
+      required:
+        - eventId
+        - timestamp
+        - accountId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the updated account
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of fields that were changed
+        previousValues:
+          type: object
+          description: Previous values of changed fields
+        newValues:
+          type: object
+          description: New values of changed fields
+
+    AccountDeletedEvent:
+      type: object
+      description: Event published when an account is deleted
+      required:
+        - eventId
+        - timestamp
+        - accountId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the deleted account
+        email:
+          type: string
+          format: email
+          description: Email of the deleted account
+        deletionReason:
+          type: string
+          description: Reason for account deletion
+
+x-service-configuration:
+  properties:
+    DefaultPageSize:
+      type: integer
+      description: Default page size for account listings
+      default: 20
+    MaxPageSize:
+      type: integer
+      description: Maximum allowed page size for account listings
+      default: 100
+    AccountRetentionDays:
+      type: integer
+      description: Number of days to retain deleted account data
+      default: 30

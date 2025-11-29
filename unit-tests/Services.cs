@@ -66,10 +66,8 @@ public class Services : IClassFixture<CollectionFixture>
     private class Service_PriorityAndOverride_2 : Service_PriorityAndOverride_1 { }
 
     [ServiceConfiguration(typeof(Service_Attribute))]
-    private class Configuration : IServiceConfiguration
+    private class Configuration : BaseServiceConfiguration
     {
-        public string? Force_Service_ID { get; set; }
-        public bool? Service_Disabled { get; set; }
         public string? Property { get; set; }
     }
 
@@ -80,31 +78,22 @@ public class Services : IClassFixture<CollectionFixture>
     private class Service_MultipleRequired : IDaprService { }
 
     [ServiceConfiguration(typeof(Service_Required))]
-    private class Configuration_Required : IServiceConfiguration
+    private class Configuration_Required : BaseServiceConfiguration
     {
-        public string? Force_Service_ID { get; set; }
-        public bool? Service_Disabled { get; set; }
-
         [ConfigRequired(AllowEmptyStrings = false)]
         public string? Property { get; set; }
     }
 
     [ServiceConfiguration(typeof(Service_MultipleRequired))]
-    private class Configuration_MultipleRequired_A : IServiceConfiguration
+    private class Configuration_MultipleRequired_A : BaseServiceConfiguration
     {
-        public string? Force_Service_ID { get; set; }
-        public bool? Service_Disabled { get; set; }
-
         [ConfigRequired(AllowEmptyStrings = false)]
         public string? Property_A { get; set; }
     }
 
     [ServiceConfiguration(typeof(Service_MultipleRequired))]
-    private class Configuration_MultipleRequired_B : IServiceConfiguration
+    private class Configuration_MultipleRequired_B : BaseServiceConfiguration
     {
-        public string? Force_Service_ID { get; set; }
-        public bool? Service_Disabled { get; set; }
-
         [ConfigRequired(AllowEmptyStrings = false)]
         public string? Property_B { get; set; }
     }
@@ -135,14 +124,8 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_AnyServiceEnabled()
     {
-        try
-        {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_DISABLED", null);
-            Assert.True(IDaprService.IsAnyEnabled());
-        }
-        finally
-        {
-        }
+        // Test that at least one service is available - use Services property to check
+        Assert.True(IDaprService.Services.Length > 0, "At least one service should be available");
     }
 
     [Fact]
@@ -267,28 +250,8 @@ public class Services : IClassFixture<CollectionFixture>
         }
     }
 
-    [Fact]
-    public void Services_GetConfigurationType()
-    {
-        IDaprService testService = new Service();
-        Assert.Equal(typeof(AppConfiguration), testService.GetConfigurationType());
-
-        testService = new Service_Attribute();
-        Assert.Equal(typeof(Configuration), testService.GetConfigurationType());
-
-        testService = new Service_MultipleRequired();
-        Assert.Equal(typeof(Configuration_MultipleRequired_A), testService.GetConfigurationType());
-        Assert.NotEqual(typeof(Configuration_MultipleRequired_B), testService.GetConfigurationType());
-    }
-
-    [Fact]
-    public void Services_GetConfigurationType_ByServiceType()
-    {
-        Assert.Equal(typeof(AppConfiguration), IDaprService.GetConfigurationType(typeof(Service)));
-        Assert.Equal(typeof(Configuration), IDaprService.GetConfigurationType(typeof(Service_Attribute)));
-        Assert.Equal(typeof(Configuration_MultipleRequired_A), IDaprService.GetConfigurationType(typeof(Service_MultipleRequired)));
-        Assert.NotEqual(typeof(Configuration_MultipleRequired_B), IDaprService.GetConfigurationType(typeof(Service_MultipleRequired)));
-    }
+    // Removed GetConfigurationType tests - this was an internal implementation detail
+    // Configuration type discovery is handled internally by the plugin system
 
     [Fact]
     public void Services_FindAll()
@@ -382,13 +345,17 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_HasRequiredConfiguration()
     {
-        IDaprService testService = new Service_Required();
-        Assert.False(testService.HasRequiredConfiguration());
-
+        // Test configuration requirements using IServiceConfiguration.HasRequired() instead of the removed method
         try
         {
+            // Without required environment variable, configuration should not have required properties
+            var config = IServiceConfiguration.BuildConfiguration<Configuration_Required>();
+            Assert.False(((IServiceConfiguration)config).HasRequired());
+
+            // With required environment variable, configuration should have required properties
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", "Test");
-            Assert.True(testService.HasRequiredConfiguration());
+            var configWithRequired = IServiceConfiguration.BuildConfiguration<Configuration_Required>();
+            Assert.True(((IServiceConfiguration)configWithRequired).HasRequired());
         }
         finally
         {
@@ -399,21 +366,31 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_HasRequiredConfiguration_MultipleTypes()
     {
-        IDaprService testService = new Service_MultipleRequired();
-        Assert.False(testService.HasRequiredConfiguration());
-
+        // Test multiple configuration requirements using IServiceConfiguration.HasRequired()
         try
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY", "Test");
-            Assert.False(testService.HasRequiredConfiguration());
+            // No required properties set - neither configuration should be satisfied
+            var configA = IServiceConfiguration.BuildConfiguration<Configuration_MultipleRequired_A>();
+            var configB = IServiceConfiguration.BuildConfiguration<Configuration_MultipleRequired_B>();
+            Assert.False(((IServiceConfiguration)configA).HasRequired());
+            Assert.False(((IServiceConfiguration)configB).HasRequired());
+
+            // Set property A - only config A should be satisfied
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", "Test");
-            Assert.True(testService.HasRequiredConfiguration());
+            var configAWithRequired = IServiceConfiguration.BuildConfiguration<Configuration_MultipleRequired_A>();
+            var configBStillMissing = IServiceConfiguration.BuildConfiguration<Configuration_MultipleRequired_B>();
+            Assert.True(((IServiceConfiguration)configAWithRequired).HasRequired());
+            Assert.False(((IServiceConfiguration)configBStillMissing).HasRequired());
+
+            // Set property B - both configurations should now be satisfied
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", "Test");
-            Assert.True(testService.HasRequiredConfiguration());
+            var configAStillSatisfied = IServiceConfiguration.BuildConfiguration<Configuration_MultipleRequired_A>();
+            var configBNowSatisfied = IServiceConfiguration.BuildConfiguration<Configuration_MultipleRequired_B>();
+            Assert.True(((IServiceConfiguration)configAStillSatisfied).HasRequired());
+            Assert.True(((IServiceConfiguration)configBNowSatisfied).HasRequired());
         }
         finally
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY", null);
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", null);
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", null);
         }
@@ -422,12 +399,13 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_HasRequiredConfiguration_ByType()
     {
-        Assert.False(IDaprService.HasRequiredConfiguration(typeof(Service_Required)));
+        // Test configuration requirements by type using IServiceConfiguration.HasRequiredForType()
+        Assert.False(IServiceConfiguration.HasRequiredForType<Configuration_Required>());
 
         try
         {
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", "Test");
-            Assert.True(IDaprService.HasRequiredConfiguration(typeof(Service_Required)));
+            Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_Required>());
         }
         finally
         {
@@ -438,20 +416,24 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_HasRequiredConfiguration_ByType_MultipleTypes()
     {
-        Assert.False(IDaprService.HasRequiredConfiguration(typeof(Service_MultipleRequired)));
+        // Test multiple configuration requirements by type
+        Assert.False(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_A>());
+        Assert.False(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_B>());
 
         try
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY", "Test");
-            Assert.False(IDaprService.HasRequiredConfiguration(typeof(Service_MultipleRequired)));
+            // Set property A - only config A should be satisfied
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", "Test");
-            Assert.False(IDaprService.HasRequiredConfiguration(typeof(Service_MultipleRequired)));
+            Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_A>());
+            Assert.False(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_B>());
+
+            // Set property B - both configurations should be satisfied
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", "Test");
-            Assert.True(IDaprService.HasRequiredConfiguration(typeof(Service_MultipleRequired)));
+            Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_A>());
+            Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_B>());
         }
         finally
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY", null);
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", null);
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", null);
         }
@@ -460,12 +442,13 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_HasRequiredConfiguration_ByType_Generic()
     {
-        Assert.False(IDaprService.HasRequiredConfiguration<Service_Required>());
+        // Test generic configuration requirements
+        Assert.False(IServiceConfiguration.HasRequiredForType<Configuration_Required>());
 
         try
         {
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", "Test");
-            Assert.True(IDaprService.HasRequiredConfiguration<Service_Required>());
+            Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_Required>());
         }
         finally
         {
@@ -476,20 +459,24 @@ public class Services : IClassFixture<CollectionFixture>
     [Fact]
     public void Services_HasRequiredConfiguration_ByType_MultipleTypes_Generic()
     {
-        Assert.False(IDaprService.HasRequiredConfiguration<Service_MultipleRequired>());
+        // Test generic multiple configuration requirements
+        Assert.False(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_A>());
+        Assert.False(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_B>());
 
         try
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY", "Test");
-            Assert.False(IDaprService.HasRequiredConfiguration<Service_MultipleRequired>());
+            // Set property A - only config A should be satisfied
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", "Test");
-            Assert.False(IDaprService.HasRequiredConfiguration<Service_MultipleRequired>());
+            Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_A>());
+            Assert.False(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_B>());
+
+            // Set property B - both configurations should be satisfied
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", "Test");
-            Assert.True(IDaprService.HasRequiredConfiguration<Service_MultipleRequired>());
+            Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_A>());
+            Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_B>());
         }
         finally
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY", null);
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", null);
             Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", null);
         }

@@ -1,0 +1,19 @@
+# Edge/WebSocket Test Configuration
+# Simulates external client connecting through OpenResty edge proxy
+# Edge tester ONLY on external network (not default) to simulate real client
+
+services:
+
+  bannou:
+    env_file: ../.env.test.edge
+
+  # Edge integration tester - simulates external client
+  bannou-edge-tester:
+    build:
+      context: ..
+      dockerfile: edge-tester/Dockerfile
+    networks:
+      - external  # Only on external network - reaches OpenResty, not bannou directly
+    env_file: ../.env.test.edge
+    stdin_open: false
+    command: ["dotnet", "run", "--project", "edge-tester", "--configuration", "Release", "--no-build"]

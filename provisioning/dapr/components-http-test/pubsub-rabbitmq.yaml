@@ -1,0 +1,22 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: bannou-pubsub
+spec:
+  type: pubsub.rabbitmq
+  version: v1
+  initTimeout: 60s  # Wait up to 60 seconds for RabbitMQ to be ready
+  ignoreErrors: true  # Don't exit Dapr if component fails - allows graceful degradation
+  metadata:
+  - name: host
+    value: amqp://rabbitmq:5672
+  - name: username
+    value: guest
+  - name: password
+    value: guest
+  - name: durable
+    value: "true"
+  - name: reconnectWait
+    value: "3s"
+  - name: maxRetryCount
+    value: "10"

@@ -1,0 +1,40 @@
+name: 'HTTP Integration Tests'
+description: 'Run HTTP integration tests with coordinator service configuration'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Build HTTP Integration Services (All Services)
+      shell: bash
+      run: |
+        echo "🔧 Building Docker image with all services for HTTP integration testing..."
+        echo "📋 Service-to-service testing via Dapr (no ingress - uses generated clients)..."
+        docker compose -p bannou-ci-http \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.http.yml" \
+          build
+
+    - name: Execute HTTP Integration Tests
+      shell: bash
+      run: |
+        echo "🔗 Running HTTP integration tests via Dapr service invocation..."
+        docker compose -p bannou-ci-http \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.http.yml" \
+          up --exit-code-from=bannou-http-tester
+
+    - name: Cleanup HTTP Integration Services
+      if: always()
+      shell: bash
+      run: |
+        echo "🛑 Stopping integration testing services..."
+        docker compose -p bannou-ci-http \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.http.yml" \
+          down --remove-orphans -v

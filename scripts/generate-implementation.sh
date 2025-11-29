@@ -1,0 +1,269 @@
+#!/bin/bash
+
+# Generate default service implementation template (if it doesn't exist)
+# Usage: ./generate-implementation.sh <service-name> [schema-file]
+
+set -e  # Exit on any error
+
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# Validate arguments
+if [ $# -lt 1 ]; then
+    echo -e "${RED}Usage: $0 <service-name> [schema-file]${NC}"
+    echo "Example: $0 accounts"
+    echo "Example: $0 accounts ../schemas/accounts-api.yaml"
+    exit 1
+fi
+
+SERVICE_NAME="$1"
+SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-api.yaml}"
+
+# Helper function to convert hyphenated names to PascalCase
+to_pascal_case() {
+    local input="$1"
+    echo "$input" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))} 1' | sed 's/ //g'
+}
+
+SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
+SERVICE_DIR="../lib-${SERVICE_NAME}"
+IMPLEMENTATION_FILE="$SERVICE_DIR/${SERVICE_PASCAL}Service.cs"
+
+echo -e "${YELLOW}🔧 Generating service implementation for: $SERVICE_NAME${NC}"
+echo -e "  📋 Schema: $SCHEMA_FILE"
+echo -e "  📁 Output: $IMPLEMENTATION_FILE"
+
+# Validate schema file exists
+if [ ! -f "$SCHEMA_FILE" ]; then
+    echo -e "${RED}❌ Schema file not found: $SCHEMA_FILE${NC}"
+    exit 1
+fi
+
+# Check if implementation already exists
+if [ -f "$IMPLEMENTATION_FILE" ]; then
+    echo -e "${YELLOW}📝 Service implementation already exists, skipping: $IMPLEMENTATION_FILE${NC}"
+    exit 0
+fi
+
+# Ensure service directory exists
+mkdir -p "$SERVICE_DIR"
+
+echo -e "${YELLOW}🔄 Creating service implementation template...${NC}"
+
+# Create service implementation template
+cat > "$IMPLEMENTATION_FILE" << EOF
+using BeyondImmersion.BannouService;
+using Dapr.Client;
+using Microsoft.Extensions.Logging;
+
+[assembly: InternalsVisibleTo("lib-${SERVICE_NAME}.tests")]
+
+namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
+
+/// <summary>
+/// Implementation of the $SERVICE_PASCAL service.
+/// This class contains the business logic for all $SERVICE_PASCAL operations.
+/// </summary>
+[DaprService("$SERVICE_NAME", typeof(I${SERVICE_PASCAL}Service), lifetime: ServiceLifetime.Scoped)]
+public class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
+{
+    private readonly DaprClient _daprClient;
+    private readonly ILogger<${SERVICE_PASCAL}Service> _logger;
+    private readonly ${SERVICE_PASCAL}ServiceConfiguration _configuration;
+
+    private const string STATE_STORE = "${SERVICE_NAME}-store";
+
+    public ${SERVICE_PASCAL}Service(
+        DaprClient daprClient,
+        ILogger<${SERVICE_PASCAL}Service> logger,
+        ${SERVICE_PASCAL}ServiceConfiguration configuration)
+    {
+        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+    }
+
+EOF
+
+# Generate implementation methods directly from schema (schema-first approach)
+echo -e "${YELLOW}🔄 Generating implementation methods from schema...${NC}"
+
+python3 -c "
+import re
+import sys
+import yaml
+
+schema_file = '$SCHEMA_FILE'
+
+def convert_openapi_type_to_csharp(openapi_type, format_type=None, nullable=False, items=None):
+    '''Convert OpenAPI type to C# type'''
+    type_mapping = {
+        'string': 'string',
+        'integer': 'int',
+        'number': 'double',
+        'boolean': 'bool',
+        'array': 'ICollection',
+        'object': 'object'
+    }
+
+    if openapi_type == 'string' and format_type == 'uuid':
+        base_type = 'Guid'
+    elif openapi_type == 'array' and items:
+        item_type = convert_openapi_type_to_csharp(items.get('type', 'object'))
+        base_type = f'ICollection<{item_type}>'
+    else:
+        base_type = type_mapping.get(openapi_type, 'object')
+
+    # Handle nullable types
+    if nullable and base_type not in ['string', 'object'] and not base_type.startswith('ICollection'):
+        base_type += '?'
+
+    return base_type
+
+def convert_operation_id_to_method_name(operation_id):
+    '''Convert camelCase operationId to PascalCase method name'''
+    return operation_id[0].upper() + operation_id[1:] if operation_id else ''
+
+try:
+    with open(schema_file, 'r') as schema_f:
+        schema = yaml.safe_load(schema_f)
+
+    if 'paths' not in schema:
+        print('    # Warning: No paths found in schema', file=sys.stderr)
+        sys.exit(0)
+
+    # Process each path and method
+    for path, path_data in schema['paths'].items():
+        for http_method, method_data in path_data.items():
+            if not isinstance(method_data, dict):
+                continue
+
+            operation_id = method_data.get('operationId', '')
+            if not operation_id:
+                continue
+
+            method_name = convert_operation_id_to_method_name(operation_id)
+
+            # Skip methods marked as controller-only
+            if method_data.get('x-controller-only') is True:
+                continue
+
+            # Determine return type from responses
+            return_type = 'object'
+            if 'responses' in method_data:
+                success_responses = ['200', '201', '202']
+                for status_code in success_responses:
+                    if status_code in method_data['responses']:
+                        response = method_data['responses'][status_code]
+                        if 'content' in response and 'application/json' in response['content']:
+                            content_schema = response['content']['application/json'].get('schema', {})
+                            if '\$ref' in content_schema:
+                                # Extract model name from reference
+                                ref_parts = content_schema['\$ref'].split('/')
+                                return_type = ref_parts[-1] if ref_parts else 'object'
+                            elif 'type' in content_schema:
+                                return_type = convert_openapi_type_to_csharp(
+                                    content_schema['type'],
+                                    content_schema.get('format'),
+                                    content_schema.get('nullable', False),
+                                    content_schema.get('items')
+                                )
+                        break
+
+            # Build parameter list
+            param_parts = []
+            if 'parameters' in method_data:
+                for param in method_data['parameters']:
+                    param_name = param.get('name', '')
+                    param_schema = param.get('schema', {})
+                    param_type = convert_openapi_type_to_csharp(
+                        param_schema.get('type', 'string'),
+                        param_schema.get('format'),
+                        not param.get('required', True),  # If not required, make nullable
+                        param_schema.get('items')
+                    )
+
+                    # For implementation, remove default values - just the parameter type and name
+                    param_parts.append(f'{param_type} {param_name}')
+
+            # Handle request body parameter
+            if 'requestBody' in method_data:
+                request_body = method_data['requestBody']
+                if 'content' in request_body and 'application/json' in request_body['content']:
+                    content_schema = request_body['content']['application/json'].get('schema', {})
+                    if '\$ref' in content_schema:
+                        # Extract model name from reference
+                        ref_parts = content_schema['\$ref'].split('/')
+                        body_type = ref_parts[-1] if ref_parts else 'object'
+                        param_parts.append(f'{body_type} body')
+
+            # Always add CancellationToken
+            param_parts.append('CancellationToken cancellationToken')
+
+            # Generate implementation method stub
+            params_str = ', '.join(param_parts)
+
+            print(f'''    /// <summary>
+    /// Implementation of {method_name} operation.
+    /// TODO: Implement business logic for this method.
+    /// </summary>
+    public async Task<(StatusCodes, {return_type})> {method_name}Async({params_str})
+    {{
+        _logger.LogInformation(\"Executing {method_name} operation\");
+
+        try
+        {{
+            // TODO: Implement your business logic here
+            throw new NotImplementedException(\"Method {method_name} not yet implemented\");
+
+            // Example patterns:
+            //
+            // For data retrieval:
+            // var data = await _daprClient.GetStateAsync<YourDataType>(STATE_STORE, key);
+            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
+            //
+            // For data creation:
+            // await _daprClient.SaveStateAsync(STATE_STORE, key, newData);
+            // return (StatusCodes.Created, newData);
+            //
+            // For data updates:
+            // var existing = await _daprClient.GetStateAsync<YourDataType>(STATE_STORE, key);
+            // if (existing == null) return (StatusCodes.NotFound, default);
+            // await _daprClient.SaveStateAsync(STATE_STORE, key, updatedData);
+            // return (StatusCodes.OK, updatedData);
+            //
+            // For data deletion:
+            // await _daprClient.DeleteStateAsync(STATE_STORE, key);
+            // return (StatusCodes.NoContent, default);
+        }}
+        catch (Exception ex)
+        {{
+            _logger.LogError(ex, \"Error executing {method_name} operation\");
+            return (StatusCodes.InternalServerError, default);
+        }}
+    }}
+''')
+
+except Exception as e:
+    print(f'    # Error processing schema: {e}', file=sys.stderr)
+    sys.exit(1)
+" >> "$IMPLEMENTATION_FILE"
+
+# Close the class
+cat >> "$IMPLEMENTATION_FILE" << EOF
+}
+EOF
+
+# Check if generation succeeded
+if [ -f "$IMPLEMENTATION_FILE" ]; then
+    FILE_SIZE=$(wc -l < "$IMPLEMENTATION_FILE" 2>/dev/null || echo "0")
+    echo -e "${GREEN}✅ Generated service implementation template ($FILE_SIZE lines)${NC}"
+    echo -e "${YELLOW}⚠️  Remember to implement the TODO methods with actual business logic${NC}"
+    exit 0
+else
+    echo -e "${RED}❌ Failed to generate service implementation${NC}"
+    exit 1
+fi

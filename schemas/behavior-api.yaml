@@ -630,3 +630,27 @@ tags:
     description: Behavior compilation caching operations
   - name: Context
     description: Context variable resolution and management
+
+x-service-configuration:
+  properties:
+    MaxBehaviorStackDepth:
+      type: integer
+      description: Maximum number of stackable behaviors per NPC
+      default: 10
+    CompilationCacheSize:
+      type: integer
+      description: Maximum number of compiled behaviors to cache
+      default: 1000
+    CompilationTimeoutSeconds:
+      type: integer
+      description: Maximum time allowed for behavior compilation
+      default: 30
+    ABMLValidationLevel:
+      type: string
+      description: ABML validation strictness level
+      enum: [strict, standard, permissive]
+      default: "standard"
+    ContextVariableExpansionDepth:
+      type: integer
+      description: Maximum depth for recursive context variable expansion
+      default: 5

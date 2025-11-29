@@ -1,4 +1,4 @@
-name: 'Integration Tests'
+name: 'Bannou Integration Pipeline'
 
 on:
   push:
@@ -7,122 +7,155 @@ on:
     branches: [master]
   workflow_dispatch:
 
-jobs:
+# Discord webhook for notifications (secrets only needed for Discord)
+env:
+  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
 
-  integration-tests:
-    name: Integration Tests
+jobs:
+  integration-pipeline:
+    name: Sequential Integration Testing
     runs-on: ubuntu-latest
-    env:
-      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      ACCOUNT_DB_USER: ${{ secrets.ACCOUNT_DB_USER }}
-      ACCOUNT_DB_PASSWORD: ${{ secrets.ACCOUNT_DB_PASSWORD }}
-      AUTH_TOKEN_PUBLIC_KEY: ${{ secrets.AUTH_TOKEN_PUBLIC_KEY }}
-      AUTH_TOKEN_PRIVATE_KEY: ${{ secrets.AUTH_TOKEN_PRIVATE_KEY }}
 
     steps:
-      - uses: actions/checkout@v4
-        name: Checkout Repo
+      # Must checkout first to access local actions
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Initial setup and notification
+      - name: Setup Bannou Environment
+        id: setup
+        uses: ./.github/actions/setup-bannou
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          dotnet-version: '9.0.x'
 
-      - name: Install Docker Compose
+      - name: Notify Pipeline Start
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          stage-name: "Integration Pipeline Started"
+          status: "success"
+          commit-message: ${{ steps.setup.outputs.commit-message }}
+          commit-author: ${{ steps.setup.outputs.commit-author }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repository-url: ${{ github.server_url }}/${{ github.repository }}
+
+      # Unit Tests
+      - name: Unit Tests
         run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
+          echo "🧪 Running unit tests..."
+          dotnet test --configuration Release --no-build
 
-      - name: Rebuild Services
-        run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" build --no-cache --pull
-
-      - name: Run Integration Tests
-        run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" up --exit-code-from=bannou-tester
-
-      - name: Cleanup
+      - name: Notify Unit Tests Result
         if: always()
-        continue-on-error: true
-        run: docker-compose -p bannou-tests -f "./provisioning/docker-compose.yml" -f "./provisioning/docker-compose.ci.yml" down --remove-orphans -v &&
-            docker container prune -f &&
-            docker image prune -f &&
-            docker volume prune -f
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          stage-name: "Unit Tests"
+          status: ${{ job.status }}
+          commit-message: ${{ steps.setup.outputs.commit-message }}
+          commit-author: ${{ steps.setup.outputs.commit-author }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repository-url: ${{ github.server_url }}/${{ github.repository }}
 
-      - name: Get Latest Commit Info
-        id: commit_info
+      # Infrastructure Tests (minimal dependencies - still uses secrets for security)
+      - name: Infrastructure Tests
+        if: success()
+        uses: ./.github/actions/infrastructure-test
+
+      - name: Notify Infrastructure Tests Result
+        if: always() && steps.setup.conclusion == 'success'
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          stage-name: "Infrastructure Tests"
+          status: ${{ job.status }}
+          commit-message: ${{ steps.setup.outputs.commit-message }}
+          commit-author: ${{ steps.setup.outputs.commit-author }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repository-url: ${{ github.server_url }}/${{ github.repository }}
+
+      # HTTP Integration Tests (coordinator mode with .env.ci.http)
+      - name: HTTP Integration Tests
+        if: success()
+        uses: ./.github/actions/http-integration-test
+
+      - name: Notify HTTP Integration Tests Result
+        if: always() && steps.setup.conclusion == 'success'
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          stage-name: "HTTP Integration Tests"
+          status: ${{ job.status }}
+          commit-message: ${{ steps.setup.outputs.commit-message }}
+          commit-author: ${{ steps.setup.outputs.commit-author }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repository-url: ${{ github.server_url }}/${{ github.repository }}
+
+      # WebSocket Backward Compatibility Tests (coordinator mode with .env.ci.edge)
+      - name: WebSocket Backward Compatibility Tests
+        if: success()
+        uses: ./.github/actions/websocket-backward-test
+
+      - name: Notify WebSocket Backward Tests Result
+        if: always() && steps.setup.conclusion == 'success'
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          stage-name: "WebSocket Backward Compatibility"
+          status: ${{ job.status }}
+          commit-message: ${{ steps.setup.outputs.commit-message }}
+          commit-author: ${{ steps.setup.outputs.commit-author }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repository-url: ${{ github.server_url }}/${{ github.repository }}
+
+      # WebSocket Forward Compatibility Tests (reuses .env.ci.edge configuration)
+      - name: WebSocket Forward Compatibility Tests
+        if: success()
+        uses: ./.github/actions/websocket-forward-test
+
+      - name: Notify WebSocket Forward Tests Result
+        if: always() && steps.setup.conclusion == 'success'
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ env.DISCORD_WEBHOOK }}
+          stage-name: "WebSocket Forward Compatibility"
+          status: ${{ job.status }}
+          commit-message: ${{ steps.setup.outputs.commit-message }}
+          commit-author: ${{ steps.setup.outputs.commit-author }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repository-url: ${{ github.server_url }}/${{ github.repository }}
+
+      # NuGet Publishing (only on master branch success)
+      - name: Calculate Semantic Version
+        if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
+        id: version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          dry_run: false
+
+      - name: Build and Pack Client SDK for Release
+        if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
-          {
-            echo "COMMIT_MESSAGE<<EOF"
-            git log -1 --pretty=%B
-            echo "EOF"
-          } >> $GITHUB_ENV
-          echo "COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
-          echo "COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')" >> $GITHUB_ENV
+          echo "📦 Building and packing Client SDK v${{ steps.version.outputs.new_version }}..."
+          dotnet build Bannou.Client.SDK --configuration Release --no-dependencies
+          dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=${{ steps.version.outputs.new_version }} --output ./nuget-packages --no-build
 
-      - name: Notify Success
-        if: success() && env.DISCORD_WEBHOOK != ''
-        uses: tsickert/discord-webhook@v7.0.0
-        continue-on-error: true
+      - name: Publish to NuGet
+        if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
+        run: |
+          echo "🚀 Publishing to NuGet.org..."
+          dotnet nuget push ./nuget-packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Notify Pipeline Complete
+        if: always() && steps.setup.conclusion == 'success'
+        uses: ./.github/actions/discord-notify
         with:
           webhook-url: ${{ env.DISCORD_WEBHOOK }}
-          username: "GitHub Actions"
-          content: |
-            **:white_check_mark: Integration Tests Passed Successfully**
-            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            - **Author:** ${{ env.COMMIT_AUTHOR }}
-            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
-            [Repository](${{ github.server_url }}/${{ github.repository }})
-          avatar-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
-          embed-title: "Success: Integration Tests"
-          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          embed-description: ":white_check_mark: The integration tests have passed successfully."
-          embed-author-name: "${{ env.COMMIT_AUTHOR }}"
-          embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Allowed.svg"
-          embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
-          embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
-          embed-color: 15430476
-          embed-timestamp: "${{ steps.ml.outputs.time }}"
-
-      - name: Notify Failure
-        if: failure() && env.DISCORD_WEBHOOK != ''
-        uses: tsickert/discord-webhook@v7.0.0
-        continue-on-error: true
-        with:
-          webhook-url: ${{ env.DISCORD_WEBHOOK }}
-          username: "GitHub Actions"
-          content: |
-            **:x: Integration Tests Failed**
-            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            - **Author:** ${{ env.COMMIT_AUTHOR }}
-            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
-            [Repository](${{ github.server_url }}/${{ github.repository }})
-          avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
-          embed-title: "Failed: Integration Tests"
-          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          embed-description: ":x: The integration tests have failed."
-          embed-author-name: "${{ env.COMMIT_AUTHOR }}"
-          embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
-          embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
-          embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
-          embed-color: 15430476
-          embed-timestamp: "${{ steps.ml.outputs.time }}"
-
-      - name: Notify Cancelled
-        if: cancelled() && env.DISCORD_WEBHOOK != ''
-        uses: tsickert/discord-webhook@v7.0.0
-        continue-on-error: true
-        with:
-          webhook-url: ${{ env.DISCORD_WEBHOOK }}
-          username: "GitHub Actions"
-          content: |
-            **:warning: Integration Tests Cancelled**
-            - **Action Run:** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            - **Author:** ${{ env.COMMIT_AUTHOR }}
-            - **Commit Message:** ${{ env.COMMIT_MESSAGE }}
-            [Repository](${{ github.server_url }}/${{ github.repository }})
-          avatar-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
-          embed-title: "Cancelled: Integration Tests"
-          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          embed-description: ":warning: The integration tests have been cancelled."
-          embed-author-name: "${{ env.COMMIT_AUTHOR }}"
-          embed-author-icon-url: "https://commons.wikimedia.org/wiki/File:Heavy_red_%22x%22.png"
-          embed-author-url: "${{ github.server_url }}/${{ github.repository }}"
-          embed-footer-text: "Commit Message: ${{ env.COMMIT_MESSAGE }}"
-          embed-color: 15430476
-          embed-timestamp: "${{ steps.ml.outputs.time }}"
+          stage-name: "Integration Pipeline Complete"
+          status: ${{ job.status }}
+          commit-message: ${{ steps.setup.outputs.commit-message }}
+          commit-author: ${{ steps.setup.outputs.commit-author }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repository-url: ${{ github.server_url }}/${{ github.repository }}

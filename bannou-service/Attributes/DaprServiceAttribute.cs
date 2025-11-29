@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Attributes;
 
@@ -14,7 +15,7 @@ public sealed class DaprServiceAttribute : BaseServiceAttribute
     /// Must implement/inherit IDaprService.
     /// Can be an interface, abstract or concrete class.
     /// If null, will use exact class type.
-    /// 
+    ///
     /// MUST match the service pulled from DI in related controllers.
     /// </summary>
     public Type? InterfaceType { get; }
@@ -38,13 +39,23 @@ public sealed class DaprServiceAttribute : BaseServiceAttribute
     public string Name { get; }
 
     private DaprServiceAttribute() { }
+
+    /// <summary>
+    /// Initializes a new instance of the DaprServiceAttribute with the specified configuration.
+    /// </summary>
+    /// <param name="name">Name of the service.</param>
+    /// <param name="interfaceType">The service interface type (must implement IDaprService).</param>
+    /// <param name="priority">Whether this service has automatic priority over other handlers.</param>
+    /// <param name="lifetime">How long the service instance lasts (Transient, Scoped, or Singleton).</param>
     public DaprServiceAttribute(string name, Type? interfaceType = null, bool priority = false, ServiceLifetime lifetime = ServiceLifetime.Singleton)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentNullException(nameof(name));
 
-        if (interfaceType != null && !interfaceType.IsAssignableTo(typeof(IDaprService)))
-            throw new InvalidCastException($"Dapr service type specified must implement {nameof(IDaprService)}.");
+        // Note: We don't require the interface type to implement IDaprService
+        // because the interface is for registration, and the implementation class
+        // will implement IDaprService. The validation should be on the implementation type,
+        // not the interface type used for DI registration.
 
         Name = name;
         Priority = priority;

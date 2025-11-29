@@ -1,35 +1,33 @@
-version: "3.4"
+# Base Bannou Services - WSL2 Compatible Networking
+# Uses Docker's default bridge network for all internal communication
+# No custom networks = no mDNS issues on WSL2/Windows
 
 services:
 
-  # build the monoservice
+  # Bannou monoservice - binds to 0.0.0.0 for WSL2 compatibility
   bannou:
     image: bannou:latest
     build:
       context: ../
       dockerfile: provisioning/Dockerfile
+    environment:
+      # Dapr endpoints - use 127.0.0.1 since sidecar shares network stack
+      - DAPR_HTTP_ENDPOINT=http://127.0.0.1:3500
+      - DAPR_GRPC_ENDPOINT=http://127.0.0.1:50001
     volumes:
       - "./certificates:/certificates"
-      - "logs-volume:/app/logs/"
-    depends_on:
-      - placement
-      - account-db
-      - auth-redis
-      - connect-redis
-    environment:
-      - ACCOUNT_DATABASE_USER=${ACCOUNT_DB_USER}
-      - ACCOUNT_DATABASE_PASSWORD=${ACCOUNT_DB_PASSWORD}
-      - AUTHORIZATION_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
-      - AUTHORIZATION_TOKEN_PRIVATE_KEY=${AUTH_TOKEN_PRIVATE_KEY}
-      - AUTHORIZATION_REDIS_CONNECTION_STRING=auth-redis:6379
-      - CONNECT_TOKEN_PUBLIC_KEY=${AUTH_TOKEN_PUBLIC_KEY}
-      - CONNECT_REDIS_CONNECTION_STRING=connect-redis:6379
-    networks:
-      - celestial_network
-      - auth_network
-      - connect_network
+      - "logs-data:/app/logs/"
+    ports:
+      - "8080:80"
+      - "8443:443"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://127.0.0.1:80/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+      start_period: 60s
 
-  # attach the dapr sidecar to the monoservice
+  # Dapr sidecar - shares network stack with bannou container
   bannou-dapr:
     image: "daprio/daprd:edge"
     command: [
@@ -38,18 +36,21 @@ services:
       "--app-port", "80",
       "--app-protocol", "http",
       "--dapr-http-port", "3500",
+      "--dapr-grpc-port", "50001",
       "--placement-host-address", "placement:50006",
-      "--resources-path", "./components"
+      "--resources-path", "./components",
+      "--log-level", "debug",
+      "--enable-api-logging"
     ]
     volumes:
+      - "./dapr/components/:/components"
       - "./certificates:/certificates"
     environment:
       - "SSL_CERT_DIR=/certificates"
-    depends_on:
-      - bannou
-    network_mode: "service:bannou"
+    network_mode: "service:bannou"  # Share network stack with bannou
+    restart: always
 
-  # placement service for coordinating dapr actors
+  # Dapr placement service - uses default bridge network
   placement:
     image: "daprio/placement"
     command: [
@@ -57,54 +58,25 @@ services:
     ]
     ports:
       - "50006:50006"
-    networks:
-      - celestial_network
 
-  filebeat:
-    image: docker.elastic.co/beats/filebeat:8.10.4
-    command: sh -c "chmod go-w /usr/share/filebeat/filebeat.yml && filebeat -e"
-    volumes:
-      - ./filebeat/filebeat.console.yml:/usr/share/filebeat/filebeat.yml
-      - logs-volume:/app/logs/
+  # RabbitMQ message broker - uses default bridge network
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
     environment:
-      - "FILEBEAT_INPUTS_PATHS=/app/logs/*"
-
-  account-db:
-    image: mysql:8.1.0
-    networks:
-      - celestial_network
-    environment:
-      - MYSQL_DATABASE=accounts
-      - MYSQL_USER=${ACCOUNT_DB_USER}
-      - MYSQL_PASSWORD=${ACCOUNT_DB_PASSWORD}
-      - MYSQL_RANDOM_ROOT_PASSWORD=true
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
     volumes:
-      - account-volume:/var/lib/mysql
-      - ./provisioning/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
-      - ./provisioning/mysql/run-init/:/docker-entrypoint-initdb.d
-
-  auth-redis:
-    image: redis:latest
-    networks:
-      - auth_network
-
-  connect-redis:
-    image: redis:latest
-    networks:
-      - connect_network
-
-networks:
-  celestial_network:
-    driver: bridge
-    internal: true
-  auth_network:
-    driver: bridge
-    internal: true
-  connect_network:
-    driver: bridge
-    internal: true
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
 volumes:
-  logs-volume:
-  account-volume:
-  
+  logs-data:
+  rabbitmq-data:

@@ -1,0 +1,48 @@
+name: 'Discord Notification'
+description: 'Send structured Discord notifications for CI/CD pipeline stages'
+
+inputs:
+  webhook-url:
+    description: 'Discord webhook URL'
+    required: true
+  stage-name:
+    description: 'Name of the CI stage (e.g., "Infrastructure Tests", "HTTP Integration")'
+    required: true
+  status:
+    description: 'Status of the stage: success, failure, or cancelled'
+    required: true
+  commit-message:
+    description: 'Git commit message'
+    required: false
+    default: ''
+  commit-author:
+    description: 'Git commit author'
+    required: false
+    default: ''
+  run-url:
+    description: 'GitHub Actions run URL'
+    required: true
+  repository-url:
+    description: 'Repository URL'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Send Discord Notification
+      if: inputs.webhook-url != ''
+      uses: tsickert/discord-webhook@v7.0.0
+      continue-on-error: true
+      with:
+        webhook-url: ${{ inputs.webhook-url }}
+        username: "Bannou CI/CD"
+        content: |
+          ${{ inputs.status == 'success' && '✅' || inputs.status == 'failure' && '❌' || '⚠️' }} **${{ inputs.stage-name }}** - ${{ inputs.status == 'success' && 'PASSED' || inputs.status == 'failure' && 'FAILED' || 'CANCELLED' }}
+        avatar-url: ${{ inputs.status == 'success' && 'https://github.com/microsoft/fluentui-emoji/raw/main/assets/Check%20mark/3D/check_mark_3d.png' || inputs.status == 'failure' && 'https://github.com/microsoft/fluentui-emoji/raw/main/assets/Cross%20mark/3D/cross_mark_3d.png' || 'https://github.com/microsoft/fluentui-emoji/raw/main/assets/Warning/3D/warning_3d.png' }}
+        embed-title: "${{ inputs.stage-name }}"
+        embed-url: "${{ inputs.run-url }}"
+        embed-description: ${{ inputs.status == 'success' && 'Stage completed successfully' || inputs.status == 'failure' && 'Stage failed - check logs for details' || 'Stage was cancelled' }}
+        embed-color: ${{ inputs.status == 'success' && '65280' || inputs.status == 'failure' && '16711680' || '16776960' }}
+        embed-footer-text: "${{ inputs.commit-message != '' && inputs.commit-message || 'No commit message' }}"
+        embed-author-name: ${{ inputs.commit-author }}
+        embed-author-url: "${{ inputs.repository-url }}"

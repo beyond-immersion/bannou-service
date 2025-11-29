@@ -1,0 +1,55 @@
+# Service Dependencies - WSL2 Compatible
+# Database and caching services using default bridge network
+# All services reachable by service name (bannou-redis, account-db, auth-redis)
+
+services:
+
+  # Redis for general Bannou state/caching
+  bannou-redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"  # For development access
+    command: redis-server --databases 16 --appendonly yes
+    volumes:
+      - bannou-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # MySQL for accounts service
+  account-db:
+    image: mysql:8.1.0
+    environment:
+      - MYSQL_DATABASE=accounts
+      - MYSQL_USER=guest
+      - MYSQL_PASSWORD=guest
+      - MYSQL_RANDOM_ROOT_PASSWORD=true
+    volumes:
+      - account-data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./mysql/run-init/:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "guest", "-pguest"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Redis for auth service sessions
+  auth-redis:
+    image: redis:latest
+    command: redis-server --databases 16 --appendonly yes
+    volumes:
+      - auth-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  bannou-redis-data:
+  account-data:
+  auth-redis-data:

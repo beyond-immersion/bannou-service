@@ -1,46 +1,62 @@
+# Ingress Layer - OpenResty Edge Proxy
+# OpenResty on dual networks: default (internal backend) + external (client-facing)
+# This enables edge tests to simulate real external clients
+
 services:
 
   bannou:
-    depends_on:
-      - traefik
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=celestial_network"
-      - "traefik.http.middlewares.auth-prefix.addprefix.prefix=/authorization"
-      - "traefik.http.middlewares.connect-prefix.addprefix.prefix=/connect"
-      - "traefik.http.services.auth-service.loadbalancer.server.port=80"
-      - "traefik.http.services.connect-service.loadbalancer.server.port=80"
-      - "traefik.http.routers.auth-service.middlewares=auth-prefix@docker"
-      - "traefik.http.routers.auth-service.rule=Host(`auth.${SERVICE_DOMAIN}`)"
-      - "traefik.http.routers.auth-service.entrypoints=web,websecure"
-      - "traefik.http.routers.auth-service.service=auth-service"
-      - "traefik.http.routers.connect-service.middlewares=connect-prefix@docker"
-      - "traefik.http.routers.connect-service.rule=Host(`connect.${SERVICE_DOMAIN}`)"
-      - "traefik.http.routers.connect-service.entrypoints=web,websecure"
-      - "traefik.http.routers.connect-service.service=connect-service"
+      - "openresty.enable=true"
+      - "openresty.backend.auth=/authorization"
+      - "openresty.backend.connect=/connect"
 
-  traefik:
-    image: traefik:v2.5
-    command:
-      - --api.insecure=true
-      - --providers.docker
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-      - --log.level=DEBUG
-      - --accesslog=true
+  # OpenResty Edge Proxy with Lua + Redis routing
+  openresty:
+    image: openresty/openresty:1.21.4.2-0-alpine
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
+      - "8081:8080"  # Admin/status interface (avoid conflict with bannou)
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./certificates:/certs
+      - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ./openresty/lua:/usr/local/openresty/lua:ro
+      - ./certificates:/certs:ro
+    environment:
+      # Routing Redis on default (internal) network - service name resolution
+      - REDIS_HOST=routing-redis
+      - REDIS_PORT=6379
+      - SERVICE_DOMAIN=${SERVICE_DOMAIN}
     networks:
-      - default
-      - celestial_network
+      - default   # Internal network - reach bannou, routing-redis via service names
+      - external  # External network - accept edge tester connections
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:80/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+      start_period: 60s
 
+  # Redis for OpenResty routing state and service heartbeats
+  routing-redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - routing-redis-data:/data
+    ports:
+      - "6380:6379"  # Expose on different port than bannou-redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
+      interval: 5s
+
+# External network for edge testing (simulates client outside datacenter)
+# OpenResty bridges internal (default) and external networks
 networks:
-  celestial_network:
+  external:
     driver: bridge
-    external: true
+
+volumes:
+  routing-redis-data:

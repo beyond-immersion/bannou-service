@@ -84,13 +84,10 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
         Assert.Equal(testResult, testParagraph.GenerateSlug());
     }
 
-#pragma warning disable CS0612 // Type or member is obsolete
-#pragma warning disable CS0618 // Type or member is obsolete
-
     [Fact]
     public void ObsoleteTest_Field()
     {
-        System.Reflection.FieldInfo? obsMemberInfo = GetType().GetField(nameof(ObsoleteTestField), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        System.Reflection.FieldInfo? obsMemberInfo = GetType().GetField("ObsoleteTestField", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.NotNull(obsMemberInfo);
         Assert.True(obsMemberInfo.IsObsolete());
     }
@@ -98,7 +95,7 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
     [Fact]
     public void ObsoleteTest_Property()
     {
-        System.Reflection.PropertyInfo? obsMemberInfo = GetType().GetProperty(nameof(ObsoleteTestProperty), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        System.Reflection.PropertyInfo? obsMemberInfo = GetType().GetProperty("ObsoleteTestProperty", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         Assert.NotNull(obsMemberInfo);
         Assert.True(obsMemberInfo.IsObsolete());
     }
@@ -112,6 +109,7 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
     }
 
     [Fact]
+    [Obsolete]
     public void ObsoleteTest_GetMessage()
     {
         System.Reflection.FieldInfo? obsMemberInfo = GetType().GetField(nameof(ObsoleteTestField), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -206,8 +204,5 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
 
         return jwtBuilder;
     }
-
-#pragma warning restore CS0612 // Type or member is obsolete
-#pragma warning restore CS0618 // Type or member is obsolete
 
 }

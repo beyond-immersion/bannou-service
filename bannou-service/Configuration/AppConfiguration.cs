@@ -1,16 +1,36 @@
 namespace BeyondImmersion.BannouService.Configuration;
 
-[ServiceConfiguration]
+/// <summary>
+/// Main application configuration for the Bannou service platform.
+/// </summary>
+[ServiceConfiguration(envPrefix: "BANNOU_")]
 public class AppConfiguration : BaseServiceConfiguration
 {
+    /// <summary>
+    /// Enumeration for log output destinations.
+    /// </summary>
     [Flags]
     public enum LogModes
     {
+        /// <summary>
+        /// No logging output.
+        /// </summary>
         None = 0,
+        /// <summary>
+        /// Log output to file.
+        /// </summary>
         File = 1 << 0,
+        /// <summary>
+        /// Log output to console.
+        /// </summary>
         Console = 1 << 1,
+        /// <summary>
+        /// Log output to cloud services.
+        /// </summary>
         Cloud = 1 << 2,
-        // convenience
+        /// <summary>
+        /// Log output to all destinations (convenience flag).
+        /// </summary>
         All = File | Cloud | Console
     }
 
@@ -43,6 +63,12 @@ public class AppConfiguration : BaseServiceConfiguration
     /// throw an error and start application shutdown.
     /// </summary>
     public int Service_Start_Timeout { get; set; } = (int)TimeSpan.FromMinutes(3).TotalMilliseconds;
+
+    /// <summary>
+    /// Time in milliseconds to wait for Dapr to be ready before failing startup.
+    /// Set to 0 to disable Dapr readiness checks.
+    /// </summary>
+    public int Dapr_Readiness_Timeout { get; set; } = (int)TimeSpan.FromMinutes(2).TotalMilliseconds;
 
     /// <summary>
     /// The port the HTTP webhost is listening on.

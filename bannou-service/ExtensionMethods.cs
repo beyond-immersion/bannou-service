@@ -7,6 +7,9 @@ using System.Text.RegularExpressions;
 
 namespace BeyondImmersion.BannouService;
 
+/// <summary>
+/// Extension methods for various types used throughout the Bannou service platform.
+/// </summary>
 public static partial class ExtensionMethods
 {
     private static bool sProviderRegistered = false;
@@ -29,6 +32,11 @@ public static partial class ExtensionMethods
     [GeneratedRegex("\\s+")]
     public static partial Regex REGEX_MultipleSpaces();
 
+    /// <summary>
+    /// Converts HttpMethodTypes enum to HttpMethod object.
+    /// </summary>
+    /// <param name="httpMethod">The HTTP method type to convert.</param>
+    /// <returns>The corresponding HttpMethod object.</returns>
     public static HttpMethod ToObject(this HttpMethodTypes httpMethod)
         => httpMethod switch
         {
@@ -41,6 +49,12 @@ public static partial class ExtensionMethods
             _ => HttpMethod.Post
         };
 
+    /// <summary>
+    /// Converts StatusCodes enum to IStatusCodeActionResult for ASP.NET Core responses.
+    /// </summary>
+    /// <param name="httpStatusCode">The status code to convert.</param>
+    /// <param name="value">Optional response value.</param>
+    /// <returns>The corresponding IStatusCodeActionResult.</returns>
     public static IStatusCodeActionResult ToActionResult(this StatusCodes httpStatusCode, object? value = null)
     {
         if (value == null)
@@ -96,6 +110,51 @@ public static partial class ExtensionMethods
         return false;
     }
 
+    /// <summary>
+    /// Extract Bearer token from Authorization header.
+    /// </summary>
+    /// <param name="context">HTTP context containing the request headers</param>
+    /// <returns>Bearer token without "Bearer " prefix, or null if not found</returns>
+    public static string? ExtractBearerToken(this HttpContext context)
+    {
+        var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
+        if (authHeader?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) == true)
+            return authHeader[7..];
+
+        return null;
+    }
+
+    /// <summary>
+    /// Extract raw header value by name.
+    /// </summary>
+    /// <param name="context">HTTP context containing the request headers</param>
+    /// <param name="headerName">Name of the header to extract</param>
+    /// <returns>Header value or null if not found</returns>
+    public static string? ExtractHeader(this HttpContext context, string headerName)
+    {
+        return context.Request.Headers[headerName].FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Extract multiple headers into a dictionary.
+    /// </summary>
+    /// <param name="context">HTTP context containing the request headers</param>
+    /// <param name="headerNames">Names of headers to extract</param>
+    /// <returns>Dictionary of header name to value (null if header not found)</returns>
+    public static Dictionary<string, string?> ExtractHeaders(this HttpContext context, params string[] headerNames)
+    {
+        var result = new Dictionary<string, string?>();
+        foreach (var headerName in headerNames)
+            result[headerName] = ExtractHeader(context, headerName);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets all interfaces implemented by a type, including inherited interfaces.
+    /// </summary>
+    /// <param name="type">The type to examine.</param>
+    /// <returns>Array of all implemented interface types.</returns>
     public static Type[] GetAllImplementedInterfaces(this Type? type)
     {
         var interfaces = new List<Type>();
@@ -106,7 +165,7 @@ public static partial class ExtensionMethods
             type = type.BaseType;
         }
 
-        return interfaces.Distinct().ToArray();
+        return [.. interfaces.Distinct()];
     }
 
     /// <summary>
@@ -142,6 +201,11 @@ public static partial class ExtensionMethods
         return str;
     }
 
+    /// <summary>
+    /// Gets the service name from a service type using DaprServiceAttribute or service info.
+    /// </summary>
+    /// <param name="serviceType">The service type to examine.</param>
+    /// <returns>The service name if found, otherwise null.</returns>
     public static string? GetServiceName(this Type serviceType)
     {
         DaprServiceAttribute? serviceAttr = serviceType.GetCustomAttributes<DaprServiceAttribute>().FirstOrDefault();
@@ -172,119 +236,8 @@ public static partial class ExtensionMethods
     }
 
     /// <summary>
-    /// Binds HTTP endpoints for all registered dapr services.
+    /// Add property headers.
     /// </summary>
-    public static IServiceCollection AddDaprServices(this IServiceCollection builder)
-    {
-        foreach (var serviceInfo in IDaprService.EnabledServices)
-        {
-            Type interfaceType = serviceInfo.Item1;
-            Type implementationType = serviceInfo.Item2;
-            ServiceLifetime serviceLifetime = serviceInfo.Item3.Lifetime;
-            var serviceName = serviceInfo.Item3.Name;
-
-            Program.Logger?.Log(LogLevel.Trace, null, $"Service {serviceName} has been enabled to handle type {interfaceType}.");
-
-            builder.Add(new ServiceDescriptor(interfaceType, implementationType, serviceLifetime));
-        }
-
-        return builder;
-    }
-
-    /// <summary>
-    /// Add all of the given assemblies to the application.
-    /// This will make their services and controllers discoverable.
-    /// </summary>
-    public static IMvcBuilder AddApplicationParts(this IMvcBuilder builder, IEnumerable<Assembly>? assemblies)
-    {
-        if (assemblies == null)
-            return builder;
-
-        foreach (var assembly in assemblies)
-            builder.AddApplicationPart(assembly);
-
-        return builder;
-    }
-
-    /// <summary>
-    /// Iterates through and invokes the Start() method on all loaded service handlers.
-    /// </summary>
-    public static async Task<bool> InvokeAllServiceStartMethods(this WebApplication webApp)
-    {
-        var timeoutTime = Program.Configuration.Service_Start_Timeout;
-        var cancellationToken = Program.ShutdownCancellationTokenSource.Token;
-
-        foreach (var serviceData in IDaprService.EnabledServices)
-        {
-            var serviceInst = (IDaprService?)webApp.Services.GetService(serviceData.Item1);
-            if (serviceInst == null)
-                continue;
-
-            if (timeoutTime < 1)
-            {
-                await serviceInst.OnStartAsync(cancellationToken);
-                continue;
-            }
-
-            try
-            {
-                var startTask = serviceInst.OnStartAsync(cancellationToken);
-                var timeoutTask = Task.Delay(timeoutTime);
-
-                if (await Task.WhenAny(startTask, timeoutTask) == startTask)
-                {
-                    if (startTask.IsFaulted)
-                    {
-                        Program.Logger.Log(LogLevel.Error, startTask.Exception, $"An exception was thrown starting service '{serviceData.Item2.Name}'.");
-                        return false;
-                    }
-
-                    Program.Logger.Log(LogLevel.Information, $"Service startup successful for '{serviceData.Item2.Name}'.");
-                }
-                else
-                {
-                    Program.Logger.Log(LogLevel.Error, $"Service startup has timed out for '{serviceData.Item2.Name}'.");
-                    return false;
-                }
-            }
-            catch (Exception exc)
-            {
-                Program.Logger.Log(LogLevel.Error, exc, $"Service startup has failed for '{serviceData.Item2.Name}'.");
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Iterates through and invokes the Running() method on all loaded service handlers.
-    /// </summary>
-    public static async Task InvokeAllServiceRunningMethods(this WebApplication webApp)
-    {
-        var cancellationToken = Program.ShutdownCancellationTokenSource.Token;
-
-        foreach (var serviceInfo in IDaprService.EnabledServices)
-        {
-            var serviceInst = (IDaprService?)webApp.Services.GetService(serviceInfo.Item1);
-            if (serviceInst != null)
-                await serviceInst.OnRunningAsync(cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// Iterates through and invokes the Shutdown() method on all loaded service handlers.
-    /// </summary>
-    public static async Task InvokeAllServiceShutdownMethods(this WebApplication webApp)
-    {
-        foreach (var serviceInfo in IDaprService.EnabledServices)
-        {
-            var serviceInst = (IDaprService?)webApp.Services.GetService(serviceInfo.Item1);
-            if (serviceInst != null)
-                await serviceInst.OnShutdownAsync();
-        }
-    }
-
     public static void AddPropertyHeaders(this HttpRequestMessage message, ApiRequest request)
     {
         foreach (var headerKVP in request.SetPropertiesToHeaders())

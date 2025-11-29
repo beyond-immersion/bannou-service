@@ -1,0 +1,355 @@
+openapi: 3.0.3
+info:
+  title: Permissions Service Events
+  description: Event models for permissions service RabbitMQ pub/sub via Dapr
+  version: 1.0.0
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    ServiceRegistrationEvent:
+      type: object
+      description: |
+        Published by services on startup to register their API endpoints with the permissions system.
+        Contains permission requirements extracted from OpenAPI x-permissions sections.
+      required:
+        - eventId
+        - timestamp
+        - serviceId
+        - version
+        - endpoints
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this registration event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the service registration occurred
+        serviceId:
+          type: string
+          description: Service ID that registered (e.g., "behavior", "accounts", "auth")
+        version:
+          type: string
+          description: Service version that was registered
+        appId:
+          type: string
+          description: Dapr app-id where this service is running
+          default: "bannou"
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceEndpoint'
+          description: API endpoints registered by the service with permission requirements
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional service registration metadata
+
+    ServiceEndpoint:
+      type: object
+      description: |
+        Individual API endpoint with permission requirements.
+        Extracted from OpenAPI schema x-permissions sections.
+      required:
+        - path
+        - method
+        - permissions
+      properties:
+        path:
+          type: string
+          description: API endpoint path (e.g., "/accounts/{id}")
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+          description: HTTP method for this endpoint
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionRequirement'
+          description: Permission requirements for this endpoint
+        description:
+          type: string
+          description: Human-readable endpoint description
+        category:
+          type: string
+          description: API category (auth, accounts, game, social, etc.)
+
+    PermissionRequirement:
+      type: object
+      description: |
+        Permission requirement mapping role and state to endpoint access.
+        Defines which roles can access an endpoint in which states.
+      required:
+        - role
+        - requiredStates
+      properties:
+        role:
+          type: string
+          description: Role that can access this endpoint (e.g., "user", "admin", "npc")
+        requiredStates:
+          type: object
+          additionalProperties:
+            type: string
+          description: |
+            Map of service states required for access.
+            Key: service_id, Value: required_state
+            Example: {"auth": "authenticated", "game-session": "in_game"}
+        description:
+          type: string
+          description: Human-readable permission description
+
+    PermissionCapabilityUpdate:
+      type: object
+      description: |
+        Event published to specific Connect service instances (CONNECT_{session_id} channel).
+        Contains compiled permission capabilities for a session with optional delta updates.
+      required:
+        - sessionId
+        - version
+        - updateType
+      properties:
+        sessionId:
+          type: string
+          description: Session ID that had capability changes
+        version:
+          type: integer
+          description: New capability version number (increments on each update)
+        updateType:
+          type: string
+          enum: [full, delta]
+          description: Type of update - full capabilities or delta changes
+        fullCapabilities:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: |
+            Complete capability map (for full updates or initial connection).
+            Key: service_id, Value: array of allowed endpoints.
+            Example: {"accounts": ["GET:/accounts", "PUT:/accounts/{id}"]}
+        addedCapabilities:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: |
+            New capabilities added to the session (for delta updates).
+            Same format as fullCapabilities.
+        removedCapabilities:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: |
+            Capabilities removed from the session (for delta updates).
+            Same format as fullCapabilities.
+        generatedAt:
+          type: string
+          format: date-time
+          description: When these capabilities were compiled
+        expiresAt:
+          type: string
+          format: date-time
+          description: When these capabilities expire and need refresh
+        reason:
+          type: string
+          enum:
+            - session_created
+            - session_state_changed
+            - role_changed
+            - service_registered
+            - manual_refresh
+          description: Reason for the capability update
+
+    SessionStateChangeEvent:
+      type: object
+      description: |
+        Published by services when a session's state changes within that service.
+        Triggers permission recompilation in the Permissions service.
+      required:
+        - eventId
+        - timestamp
+        - sessionId
+        - serviceId
+        - newState
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this state change event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the state change occurred
+        sessionId:
+          type: string
+          description: Session ID that had state change
+        serviceId:
+          type: string
+          description: Service where the state changed (e.g., "auth", "game-session")
+        previousState:
+          type: string
+          description: Previous state (null for initial state)
+          nullable: true
+        newState:
+          type: string
+          description: New state (e.g., "authenticated", "in_game", "character_selected")
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional context about the state change
+
+    AuthSessionEvent:
+      type: object
+      description: |
+        Authentication-related session events (login, logout, role changes).
+        Extends SessionStateChangeEvent with auth-specific information.
+      required:
+        - eventId
+        - timestamp
+        - sessionId
+        - eventType
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this auth event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the auth event occurred
+        sessionId:
+          type: string
+          description: Session ID affected by the auth event
+        eventType:
+          type: string
+          enum:
+            - session_created
+            - session_destroyed
+            - role_changed
+            - token_refreshed
+          description: Type of authentication event
+        userId:
+          type: string
+          description: User ID associated with the session
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+          description: Current roles for the session
+        previousRoles:
+          type: array
+          items:
+            type: string
+          description: Previous roles (for role_changed events)
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional auth event metadata
+
+    PermissionRecompileRequest:
+      type: object
+      description: |
+        Request to trigger bulk permission recompilation.
+        Used when service registrations change or global permission rules update.
+      required:
+        - eventId
+        - timestamp
+        - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this recompilation request
+        timestamp:
+          type: string
+          format: date-time
+          description: When the recompilation was requested
+        reason:
+          type: string
+          enum:
+            - service_registered
+            - service_unregistered
+            - permission_rules_changed
+            - role_definitions_updated
+            - manual_trigger
+          description: Reason for triggering permission recompilation
+        serviceIds:
+          type: array
+          items:
+            type: string
+          description: |
+            Specific services that changed (optional).
+            If not provided, recompiles all sessions.
+        sessionIds:
+          type: array
+          items:
+            type: string
+          description: |
+            Specific sessions to recompile (optional).
+            If not provided, recompiles all active sessions.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional context for the recompilation
+
+    # Redis Operation Events (Internal to Permissions Service)
+    RedisOperationEvent:
+      type: object
+      description: |
+        Internal event for Redis operation tracking and monitoring.
+        Used for debugging and performance monitoring.
+      required:
+        - eventId
+        - timestamp
+        - operation
+        - success
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this operation
+        timestamp:
+          type: string
+          format: date-time
+          description: When the Redis operation occurred
+        operation:
+          type: string
+          enum:
+            - session_state_updated
+            - permissions_compiled
+            - active_session_added
+            - active_session_removed
+            - permission_matrix_updated
+            - bulk_recompilation
+          description: Type of Redis operation performed
+        sessionId:
+          type: string
+          description: Session ID affected (if applicable)
+          nullable: true
+        serviceId:
+          type: string
+          description: Service ID affected (if applicable)
+          nullable: true
+        success:
+          type: boolean
+          description: Whether the operation succeeded
+        executionTime:
+          type: integer
+          description: Operation execution time in milliseconds
+        error:
+          type: string
+          description: Error message if operation failed
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional operation context

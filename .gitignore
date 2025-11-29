@@ -5,6 +5,13 @@ project.lock.json
 *.pyc
 nupkg/
 .env
+# Allow CI-specific environment files (non-sensitive)
+!.env.ci.*
+
+# Generated Client SDK (regenerated on build)
+Bannou.Client.SDK/
+test-nuget/
+nuget-packages/
 
 # Visual Studio Code
 .vscode
@@ -44,5 +51,10 @@ msbuild.wrn
 # MegaLinter reports
 megalinter-reports/
 
+# Test output and log files
+*.log
+edge_test_output*.log
+
 # Empty files
 bannou-service/{}
+plugins/

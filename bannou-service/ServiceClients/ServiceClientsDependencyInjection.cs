@@ -18,15 +18,6 @@ public static class ServiceClientsDependencyInjection
         // Core service mapping infrastructure
         services.AddServiceAppMappingResolver();
 
-        // Service mapping event system (singleton for hosted service dependency)
-        services.AddSingleton<IServiceMappingEventPublisher, ServiceMappingEventPublisher>();
-        services.AddScoped<IServiceMappingEventDispatcher, ServiceMappingEventDispatcher>();
-        services.AddScoped<ServiceMappingEventHandler>();
-        services.AddScoped<ExampleServiceMappingHandlers>();
-
-        // Lifecycle management for automatic service announcements
-        services.AddHostedService<ServiceMappingLifecycleService>();
-
         return services;
     }
 

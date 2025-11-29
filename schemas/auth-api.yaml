@@ -1,335 +1,331 @@
 openapi: 3.0.0
 info:
-  title: Bannou Authorization API
-  version: 1.0.0
-  description: |
-    User authentication and authorization for Bannou services.
-    
-    This API handles:
-    - User registration with username/password authentication
-    - User login with credentials (username/password) 
-    - Token-based authentication using JWT access tokens and refresh tokens
-    - Token validation and refresh flows
-    - Integration with Dapr service mesh
-
+  title: Bannou Auth Service API
+  description: Authentication and session management service (Internet-facing)
+  version: 3.0.0
 servers:
-  - url: http://localhost/api/authorization
-    description: Development server
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
+    description: Dapr sidecar endpoint
 
 paths:
-  /register:
+  /auth/login:
+    post:
+      summary: Login with email/password
+      operationId: login
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+        '429':
+          description: Too many login attempts
+
+  /auth/register:
     post:
       summary: Register new user account
-      description: |
-        Creates a new user account with username and password authentication.
-        Returns JWT access token and refresh token on successful registration.
-        Email is optional but recommended for account recovery.
-      operationId: Register
+      operationId: register
       tags:
-        - Authorization
+        - Authentication
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/RegisterRequest'
-            examples:
-              standard-registration:
-                summary: Standard username/password registration
-                value:
-                  username: "gameuser123"
-                  password: "SecurePassword123!"
-                  email: "user@example.com"
-              minimal-registration:
-                summary: Registration without email
-                value:
-                  username: "player456"
-                  password: "AnotherSecurePass!"
       responses:
         '200':
-          description: User registered successfully
+          description: Registration successful
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RegisterResponse'
         '400':
-          description: Invalid request data (missing username/password)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '403':
-          description: Registration forbidden (username taken, policy violation)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
+          description: Invalid request data
+        '409':
+          description: Username already exists
 
-  /login/credentials:
+  /auth/oauth/{provider}/init:
     get:
-      summary: Login with username and password (GET)
-      description: |
-        Authenticate user with username and password provided via headers.
-        Returns JWT access token and refresh token on successful authentication.
-        Uses GET method for simple credential-based login.
-      operationId: LoginWithCredentialsGet
+      summary: Initialize OAuth2 flow
+      operationId: initOAuth
       tags:
-        - Authorization
+        - OAuth
       parameters:
-        - name: username
-          in: header
+        - name: provider
+          in: path
           required: true
-          description: Username for authentication
+          schema:
+            $ref: '#/components/schemas/Provider'
+        - name: redirectUri
+          in: query
+          required: true
           schema:
             type: string
-            minLength: 1
-            example: "gameuser123"
-        - name: password
-          in: header
-          required: true
-          description: Password for authentication  
+            format: uri
+        - name: state
+          in: query
           schema:
             type: string
-            format: password
-            minLength: 1
-            example: "SecurePassword123!"
       responses:
-        '200':
-          description: Login successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '400':
-          description: Missing username or password
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '403':
-          description: Authentication failed (invalid credentials)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-    
-    post:
-      summary: Login with username and password (POST)
-      description: |
-        Authenticate user with username and password provided via headers.
-        Returns JWT access token and refresh token on successful authentication.
-        Uses POST method for credential-based login with potential request body.
-      operationId: LoginWithCredentialsPost
-      tags:
-        - Authorization
-      parameters:
-        - name: username
-          in: header
-          required: true
-          description: Username for authentication
-          schema:
-            type: string
-            minLength: 1
-            example: "gameuser123"
-        - name: password
-          in: header
-          required: true
-          description: Password for authentication
-          schema:
-            type: string
-            format: password
-            minLength: 1
-            example: "SecurePassword123!"
-      requestBody:
-        required: false
-        description: Optional login request body (currently unused)
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-      responses:
-        '200':
-          description: Login successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '400':
-          description: Missing username or password
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '403':
-          description: Authentication failed (invalid credentials)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
+        '302':
+          description: Redirect to OAuth provider
 
-  /login/token:
-    get:
-      summary: Login with refresh token (GET)
-      description: |
-        Authenticate user with a refresh token provided via header.
-        Returns new JWT access token and potentially new refresh token.
-        Used for token refresh flows without requiring password re-entry.
-      operationId: LoginWithTokenGet
-      tags:
-        - Authorization  
-      parameters:
-        - name: token
-          in: header
-          required: true
-          description: Refresh token for authentication
-          schema:
-            type: string
-            minLength: 1
-            example: "refresh_token_abc123xyz"
-      responses:
-        '200':
-          description: Token refresh successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '400':
-          description: Missing or invalid token format
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '403':
-          description: Token invalid or expired
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-
+  /auth/oauth/{provider}/callback:
     post:
-      summary: Login with refresh token (POST)
-      description: |
-        Authenticate user with a refresh token provided via header.
-        Returns new JWT access token and potentially new refresh token.
-        Uses POST method for token refresh with potential request body.
-      operationId: LoginWithTokenPost
+      summary: Complete OAuth2 flow
+      operationId: completeOAuth
       tags:
-        - Authorization
+        - OAuth
       parameters:
-        - name: token
-          in: header
+        - name: provider
+          in: path
           required: true
-          description: Refresh token for authentication
           schema:
-            type: string
-            minLength: 1
-            example: "refresh_token_abc123xyz"
-      requestBody:
-        required: false
-        description: Optional login request body (currently unused)
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-      responses:
-        '200':
-          description: Token refresh successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '400':
-          description: Missing or invalid token format
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '403':
-          description: Token invalid or expired
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-
-  /validate:
-    post:
-      summary: Validate JWT access token
-      description: |
-        Validates a JWT access token and returns token status information.
-        Can be used to check if a token is valid, expired, or contains specific claims.
-        Currently returns basic validation response.
-      operationId: ValidateToken
-      tags:
-        - Authorization
+            $ref: '#/components/schemas/Provider'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ValidateTokenRequest'
-            examples:
-              token-validation:
-                summary: Validate access token
-                value:
-                  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              $ref: '#/components/schemas/OAuthCallbackRequest'
       responses:
         '200':
-          description: Token validation completed
+          description: OAuth authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/steam/init:
+    get:
+      summary: Initialize Steam authentication
+      operationId: initSteamAuth
+      tags:
+        - Steam
+      parameters:
+        - name: returnUrl
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uri
+      responses:
+        '302':
+          description: Redirect to Steam login
+
+  /auth/steam/verify:
+    post:
+      summary: Verify Steam authentication response
+      operationId: verifySteamAuth
+      tags:
+        - Steam
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SteamVerifyRequest'
+      responses:
+        '200':
+          description: Steam authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+      operationId: refreshToken
+      tags:
+        - Tokens
+      parameters:
+        - name: jwt
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Current JWT access token for refresh
+          x-from-authorization: bearer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/validate:
+    post:
+      summary: Validate access token
+      operationId: validateToken
+      tags:
+        - Tokens
+      parameters:
+        - name: jwt
+          in: header
+          required: true
+          schema:
+            type: string
+          description: JWT access token for validation
+          x-from-authorization: bearer
+      responses:
+        '200':
+          description: Token is valid
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidateTokenResponse'
-        '400':
-          description: Invalid request (missing token)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
         '401':
-          description: Token invalid or expired
+          description: Invalid or missing token
+        '403':
+          description: Token expired or malformed
+
+  /auth/logout:
+    post:
+      summary: Logout and invalidate tokens
+      operationId: logout
+      tags:
+        - Authentication
+      parameters:
+        - name: jwt
+          in: header
+          required: true
+          schema:
+            type: string
+          description: JWT access token for session identification
+          x-from-authorization: bearer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /auth/sessions:
+    get:
+      summary: Get active sessions for account
+      operationId: getSessions
+      tags:
+        - Sessions
+      parameters:
+        - name: jwt
+          in: header
+          required: true
+          schema:
+            type: string
+          description: JWT access token for session identification
+          x-from-authorization: bearer
+      responses:
+        '200':
+          description: Active sessions retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
+                $ref: '#/components/schemas/SessionsResponse'
+
+  /auth/sessions/{sessionId}:
+    delete:
+      summary: Terminate specific session
+      operationId: terminateSession
+      tags:
+        - Sessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Session terminated
+
+  /auth/password/reset:
+    post:
+      summary: Request password reset
+      operationId: requestPasswordReset
+      tags:
+        - Password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '200':
+          description: Reset email sent if account exists
+
+  /auth/password/confirm:
+    post:
+      summary: Confirm password reset with token
+      operationId: confirmPasswordReset
+      tags:
+        - Password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmRequest'
+      responses:
+        '200':
+          description: Password reset successfully
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
+    Provider:
+      type: string
+      enum: [google, discord, twitch]
+      description: OAuth provider type
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        rememberMe:
+          type: boolean
+          default: false
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+
     RegisterRequest:
       type: object
       description: Request to register a new user account
@@ -346,153 +342,280 @@ components:
           example: "gameuser123"
         password:
           type: string
-          description: Password for the account (will be securely hashed)
+          description: Password for the account (will be hashed)
           minLength: 8
-          maxLength: 128
           format: password
           example: "SecurePassword123!"
         email:
           type: string
-          description: Email address for the account (optional but recommended)
           format: email
-          maxLength: 255
-          nullable: true
+          description: Optional email for account recovery
           example: "user@example.com"
 
     RegisterResponse:
       type: object
       description: Response from successful user registration
       required:
-        - access_token
+        - accessToken
       properties:
-        access_token:
+        accessToken:
           type: string
           description: JWT access token for immediate authentication
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature"
-        refresh_token:
+        refreshToken:
           type: string
           description: Refresh token for obtaining new access tokens
           nullable: true
           example: "refresh_token_abc123xyz789"
 
-    LoginRequest:
-      type: object
-      description: |
-        Login request body (currently unused - credentials passed via headers).
-        Provided for future extensibility and consistency with API patterns.
-      properties: {}
-
     LoginResponse:
       type: object
       description: Response from successful user login
       required:
-        - access_token
+        - accessToken
       properties:
-        access_token:
+        accessToken:
           type: string
           description: JWT access token for authentication
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature"
-        refresh_token:
+        refreshToken:
           type: string
           description: Refresh token for obtaining new access tokens
           nullable: true
           example: "refresh_token_def456uvw012"
 
-    ValidateTokenRequest:
+    AuthResponse:
       type: object
-      description: Request to validate a JWT access token
       required:
-        - token
+        - accountId
+        - accessToken
+        - refreshToken
+        - expiresIn
+        - connectUrl
       properties:
-        token:
+        accountId:
           type: string
-          description: JWT access token to validate
-          minLength: 1
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnYW1ldXNlcjEyMyIsImlhdCI6MTY0MDk5NTIwMCwiZXhwIjoxNjQwOTk4ODAwfQ.signature"
+          format: uuid
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+          description: Seconds until access token expires
+        connectUrl:
+          type: string
+          format: uri
+          description: WebSocket endpoint for Connect service
+        roles:
+          type: array
+          items:
+            type: string
+        requiresTwoFactor:
+          type: boolean
+          default: false
+
+    OAuthCallbackRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+        state:
+          type: string
+          nullable: true
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+
+    SteamVerifyRequest:
+      type: object
+      required:
+        - ticket
+      properties:
+        ticket:
+          type: string
+          description: Steam session ticket
+        steamId:
+          type: string
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+
+    RefreshRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
 
     ValidateTokenResponse:
       type: object
-      description: |
-        Response from token validation (currently minimal implementation).
-        Future versions may include token claims, expiration info, and validation details.
+      required:
+        - valid
+        - accountId
+        - sessionId
       properties:
         valid:
           type: boolean
-          description: Whether the token is valid
-          example: true
-        expires_at:
+        accountId:
           type: string
-          description: Token expiration timestamp
-          format: date-time
-          nullable: true
-          example: "2024-01-01T15:00:00Z"
-        subject:
-          type: string  
-          description: Token subject (user identifier)
-          nullable: true
-          example: "gameuser123"
-        claims:
-          type: object
-          description: Token claims (roles, permissions, etc.)
-          additionalProperties: true
-          nullable: true
+          format: uuid
+        sessionId:
+          type: string
+          description: Session identifier for WebSocket connections and service routing
+        roles:
+          type: array
+          items:
+            type: string
+        remainingTime:
+          type: integer
+          description: Seconds until expiration
 
-    AccessData:
+    LogoutRequest:
       type: object
-      description: |
-        Internal access data structure containing authentication tokens.
-        Used by service implementations but not directly exposed in API responses.
       properties:
-        access_token:
-          type: string
-          description: JWT access token
-          nullable: true
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-        refresh_token:
-          type: string
-          description: Refresh token for token renewal
-          nullable: true
-          example: "refresh_token_abc123xyz"
+        allSessions:
+          type: boolean
+          default: false
+          description: Logout from all sessions/devices
 
-    AuthErrorResponse:
+    SessionsResponse:
       type: object
-      description: Error response for failed requests
       required:
-        - error
-        - message
+        - sessions
       properties:
-        error:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionInfo'
+
+    SessionInfo:
+      type: object
+      required:
+        - sessionId
+        - createdAt
+        - lastActive
+      properties:
+        sessionId:
           type: string
-          description: Error type identifier
-          enum:
-            - INVALID_REQUEST
-            - MISSING_CREDENTIALS
-            - AUTHENTICATION_FAILED
-            - TOKEN_INVALID
-            - TOKEN_EXPIRED
-            - USER_EXISTS
-            - INTERNAL_ERROR
-          example: "AUTHENTICATION_FAILED"
-        message:
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+        createdAt:
           type: string
-          description: Human-readable error message
-          example: "Invalid username or password"
-        details:
-          type: object
-          description: Additional error context and details
-          additionalProperties: true
+          format: date-time
+        lastActive:
+          type: string
+          format: date-time
+        ipAddress:
+          type: string
+        location:
+          type: string
           nullable: true
 
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT access token authentication
+    DeviceInfo:
+      type: object
+      properties:
+        deviceType:
+          type: string
+          enum: [desktop, mobile, tablet, console]
+        platform:
+          type: string
+        browser:
+          type: string
+          nullable: true
+        appVersion:
+          type: string
+          nullable: true
 
-security:
-  - BearerAuth: []
+    PasswordResetRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
 
-tags:
-  - name: Authorization
-    description: User authentication and authorization operations
+    PasswordResetConfirmRequest:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+        newPassword:
+          type: string
+          format: password
+          minLength: 8
+
+    OAuthProvidersResponse:
+      type: object
+      description: List of available OAuth providers
+      required:
+        - providers
+      properties:
+        providers:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "steam"
+              displayName:
+                type: string
+                example: "Steam"
+              authUrl:
+                type: string
+                format: uri
+                example: "https://steamcommunity.com/openid/login"
+
+    RoutingPreferenceResponse:
+      type: object
+      description: Response from routing preference update
+      properties:
+        success:
+          type: boolean
+          description: Whether the routing preference was updated successfully
+          example: true
+        preferredInstance:
+          type: string
+          description: The preferred Connect service instance ID
+          example: "connect-omega-01"
+
+x-service-configuration:
+  properties:
+    BcryptWorkFactor:
+      type: integer
+      description: Bcrypt work factor for password hashing (higher = more secure but slower)
+      default: 12
+    JwtSecret:
+      type: string
+      required: true
+      description: JWT secret key for token signing
+    JwtIssuer:
+      type: string
+      description: JWT issuer identifier
+      default: "bannou-auth"
+    JwtAudience:
+      type: string
+      description: JWT audience identifier
+      default: "bannou-services"
+    JwtExpirationMinutes:
+      type: integer
+      description: JWT expiration time in minutes
+      default: 1440
+    AccessTokenExpirationMinutes:
+      type: integer
+      description: Access token expiration time in minutes (alias for JwtExpirationMinutes)
+      default: 1440
+
+x-event-subscriptions:
+  - topic: account.deleted
+    pubsub: bannou-pubsub
+    path: /dapr/events/account-deleted
+    schema:
+      $ref: 'accounts-events.yaml#/components/schemas/AccountDeletedEvent'
+    description: Subscribe to account deletion events to invalidate sessions
