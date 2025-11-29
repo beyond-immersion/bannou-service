@@ -273,3 +273,39 @@ make test-all
 ✅ **No Circular Dependencies** - Wait scripts handle startup order
 ✅ **CI/CD Compatible** - Works identically in GitHub Actions
 ✅ **Maintainable** - Easy to understand and debug
+
+## Migration History
+
+This networking strategy replaced a complex multi-file setup that failed on WSL2/Windows.
+
+### Deleted Files (Old Complex Stack)
+```
+provisioning/docker-compose.ci.yml                   → Replaced by docker-compose.test.yml
+provisioning/docker-compose.ci.infrastructure.yml   → Replaced by docker-compose.test.infrastructure.yml
+provisioning/docker-compose.ci.http.yml             → Replaced by docker-compose.test.http.yml
+provisioning/docker-compose.ci.edge.yml             → Replaced by docker-compose.test.edge.yml
+provisioning/docker-compose.local.yml               → Removed (no longer needed)
+provisioning/docker-compose.ingress.local.yml       → Removed (no longer needed)
+provisioning/docker-compose.host.yml                → Removed (old WSL2 workaround)
+provisioning/docker-compose.host.http.yml           → Removed (old WSL2 workaround)
+provisioning/docker-compose.ek.yml                  → Removed (unused)
+provisioning/docker-compose.elk.yml                 → Removed (unused)
+docs/HOST-NETWORKING.md                              → Removed (obsolete workaround documentation)
+```
+
+### Current File Structure
+```
+provisioning/docker-compose.yml                     → Base services (bannou, dapr, placement, rabbitmq)
+provisioning/docker-compose.services.yml            → Service dependencies (MySQL, Redis)
+provisioning/docker-compose.ingress.yml             → OpenResty edge proxy (dual network)
+provisioning/docker-compose.test.yml                → Shared test configuration
+provisioning/docker-compose.test.infrastructure.yml → Infrastructure test overrides
+provisioning/docker-compose.test.http.yml           → HTTP integration test overrides
+provisioning/docker-compose.test.edge.yml           → Edge/WebSocket test overrides
+```
+
+### Key Technical Changes
+- **Before**: Custom bridge networks with explicit `driver: bridge`, mDNS resolution failures on WSL2
+- **After**: Docker's default bridge network with service name resolution working reliably
+- **Before**: `depends_on` blocks causing circular dependency restart loops
+- **After**: Wait scripts handle service readiness independently

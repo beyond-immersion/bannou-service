@@ -2,6 +2,8 @@
 *Initial Draft - Pending Research Validation*
 *Date: 2025-10-04*
 
+> **Note**: This is a detailed implementation reference document. For the consolidated orchestrator design including architecture decisions, API design, and secrets management, see **[ORCHESTRATOR-SERVICE-DESIGN.md](./ORCHESTRATOR-SERVICE-DESIGN.md)**.
+
 ## Executive Summary
 
 Create a comprehensive orchestration/coordinator service as a Bannou plugin that:
