@@ -1,7 +1,7 @@
+using BeyondImmersion.BannouService.Orchestrator;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
-using BeyondImmersion.BannouService.Orchestrator;
 
 namespace LibOrchestrator;
 
@@ -9,12 +9,12 @@ namespace LibOrchestrator;
 /// Manages intelligent service restart logic with Docker container lifecycle management.
 /// Uses Docker.DotNet for container operations (Docker Compose environments).
 /// </summary>
-public class SmartRestartManager : IAsyncDisposable
+public class SmartRestartManager : ISmartRestartManager
 {
     private readonly ILogger<SmartRestartManager> _logger;
     private readonly OrchestratorServiceConfiguration _configuration;
-    private readonly ServiceHealthMonitor _healthMonitor;
-    private readonly OrchestratorEventManager _eventManager;
+    private readonly IServiceHealthMonitor _healthMonitor;
+    private readonly IOrchestratorEventManager _eventManager;
     private DockerClient? _dockerClient;
 
     private const int DEFAULT_RESTART_TIMEOUT_SECONDS = 120;
@@ -23,8 +23,8 @@ public class SmartRestartManager : IAsyncDisposable
     public SmartRestartManager(
         ILogger<SmartRestartManager> logger,
         OrchestratorServiceConfiguration configuration,
-        ServiceHealthMonitor healthMonitor,
-        OrchestratorEventManager eventManager)
+        IServiceHealthMonitor healthMonitor,
+        IOrchestratorEventManager eventManager)
     {
         _logger = logger;
         _configuration = configuration;
@@ -87,12 +87,7 @@ public class SmartRestartManager : IAsyncDisposable
             var previousStatus = await GetCurrentServiceStatusAsync(request.ServiceName);
 
             // Find container by service name
-            var container = await FindContainerByServiceNameAsync(request.ServiceName);
-            if (container == null)
-            {
-                throw new InvalidOperationException($"Container for service '{request.ServiceName}' not found");
-            }
-
+            var container = await FindContainerByServiceNameAsync(request.ServiceName) ?? throw new InvalidOperationException($"Container for service '{request.ServiceName}' not found");
             _logger.LogInformation(
                 "Restarting service: {ServiceName} (container: {ContainerId})",
                 request.ServiceName, container.ID[..12]);
@@ -185,15 +180,8 @@ public class SmartRestartManager : IAsyncDisposable
         // Try matching by Docker Compose service label
         var container = containers.FirstOrDefault(c =>
             c.Labels.TryGetValue("com.docker.compose.service", out var service) &&
-            service == serviceName);
-
-        // Fallback: try matching by container name
-        if (container == null)
-        {
-            container = containers.FirstOrDefault(c =>
+            service == serviceName) ?? containers.FirstOrDefault(c =>
                 c.Names.Any(n => n.Contains(serviceName, StringComparison.OrdinalIgnoreCase)));
-        }
-
         return container;
     }
 
@@ -246,14 +234,24 @@ public class SmartRestartManager : IAsyncDisposable
         return recommendation.CurrentStatus;
     }
 
-    public async ValueTask DisposeAsync()
+    /// <summary>
+    /// Synchronous dispose for DI container compatibility.
+    /// </summary>
+    public void Dispose()
     {
         if (_dockerClient != null)
         {
             _dockerClient.Dispose();
-            _logger.LogInformation("Docker client disposed");
+            _logger.LogDebug("Docker client disposed synchronously");
         }
+    }
 
+    /// <summary>
+    /// Async dispose for async-aware disposal contexts.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        Dispose();
         await Task.CompletedTask;
     }
 }

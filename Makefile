@@ -247,7 +247,7 @@ test-infrastructure:
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.infrastructure.yml" \
-		build
+		build --no-cache
 	docker compose -p bannou-test-infra \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
@@ -263,51 +263,192 @@ test-infrastructure:
 # HTTP integration testing (matches CI workflow)
 # Usage: make test-http [PLUGIN=plugin-name]
 # Stack: base + services + test + test.http (service-to-service via Dapr, no ingress)
+# Note: Uses 'up -d' + 'wait' instead of '--exit-code-from' to avoid aborting
+#       when orchestrator tests create/destroy containers during the test run.
 test-http:
 	@if [ "$(PLUGIN)" ]; then \
 		echo "🧪 Running HTTP integration tests for plugin: $(PLUGIN)..."; \
 	else \
 		echo "🧪 Running HTTP integration tests (service-to-service via Dapr)..."; \
 	fi
+	@SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.http.yml" \
+		build --no-cache
+	@SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.http.yml" \
+		up -d
+	@( SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.http.yml" \
+		logs -f bannou-http-tester & ); \
 	SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.http.yml" \
-		build
+		wait bannou-http-tester; \
+	TEST_EXIT_CODE=$$?; \
+	docker compose -p bannou-test-http \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.http.yml" \
+		down --remove-orphans -v; \
+	if [ $$TEST_EXIT_CODE -eq 0 ]; then \
+		echo "✅ HTTP integration tests completed successfully"; \
+	else \
+		echo "❌ HTTP integration tests failed with exit code $$TEST_EXIT_CODE"; \
+	fi; \
+	exit $$TEST_EXIT_CODE
+
+# WebSocket/Edge integration testing (matches CI workflow)
+# Simulates external client connecting through OpenResty edge proxy
+# Stack: base + services + ingress + test + test.edge
+# Note: Uses 'up -d' + 'wait' instead of '--exit-code-from' for consistency
+#       with HTTP tests and to avoid abort issues with container lifecycle.
+test-edge:
+	@echo "🧪 Running Edge/WebSocket integration tests..."
+	@docker compose -p bannou-test-edge \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		build --no-cache
+	@docker compose -p bannou-test-edge \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		up -d
+	@( docker compose -p bannou-test-edge \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		logs -f bannou-edge-tester & ); \
+	docker compose -p bannou-test-edge \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		wait bannou-edge-tester; \
+	TEST_EXIT_CODE=$$?; \
+	docker compose -p bannou-test-edge \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		down --remove-orphans -v; \
+	if [ $$TEST_EXIT_CODE -eq 0 ]; then \
+		echo "✅ Edge integration tests completed successfully"; \
+	else \
+		echo "❌ Edge integration tests failed with exit code $$TEST_EXIT_CODE"; \
+	fi; \
+	exit $$TEST_EXIT_CODE
+
+# =============================================================================
+# DEVELOPMENT TEST COMMANDS (keep containers + log files)
+# =============================================================================
+# These variants keep containers running for inspection and save logs to files
+# Logs are saved to ./test-logs/ directory for easy review
+# =============================================================================
+
+TEST_LOG_DIR := ./test-logs
+
+# Create test log directory
+test-logs-dir:
+	@mkdir -p $(TEST_LOG_DIR)
+
+# HTTP testing with container persistence - keeps running for inspection
+test-http-dev: test-logs-dir ## HTTP tests: keep containers running, save logs to ./test-logs/
+	@echo "🧪 Starting HTTP integration tests (dev mode - containers stay running)..."
+	@echo "📁 Logs will be saved to $(TEST_LOG_DIR)/"
 	SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.http.yml" \
-		up --exit-code-from=bannou-http-tester
+		up --build --no-cache -d
+	@echo "⏳ Waiting for test to complete (check logs with 'make test-http-logs')..."
+	@echo "💡 Use 'make test-http-down' when done to clean up containers"
+	@echo "💡 Use 'make test-http-logs' to view latest output"
+	@sleep 5
+	@$(MAKE) test-http-logs
+	@echo "✅ Dev test containers running. Use 'make test-http-down' to clean up."
+
+# Collect HTTP tester logs to file and display
+test-http-logs: test-logs-dir ## Collect HTTP test logs to ./test-logs/http-tester.log
+	@echo "📋 Collecting HTTP tester logs..."
+	@docker logs bannou-test-http-bannou-http-tester-1 2>&1 | tee $(TEST_LOG_DIR)/http-tester.log
+	@echo "📋 Collecting bannou service logs..."
+	@docker logs bannou-test-http-bannou-1 2>&1 | tee $(TEST_LOG_DIR)/http-bannou.log
+	@echo ""
+	@echo "✅ Logs saved to:"
+	@echo "   $(TEST_LOG_DIR)/http-tester.log"
+	@echo "   $(TEST_LOG_DIR)/http-bannou.log"
+
+# Follow HTTP tester logs live
+test-http-follow: ## Follow HTTP test logs in real-time
+	@docker logs -f bannou-test-http-bannou-http-tester-1
+
+# Cleanup HTTP dev containers
+test-http-down: ## Stop HTTP test containers
+	@echo "🛑 Stopping HTTP test containers..."
 	docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.http.yml" \
 		down --remove-orphans -v
-	@echo "✅ HTTP integration tests completed"
+	@echo "✅ HTTP test containers stopped"
 
-# WebSocket/Edge integration testing (matches CI workflow)
-# Simulates external client connecting through OpenResty edge proxy
-# Stack: base + services + ingress + test + test.edge
-test-edge:
-	@echo "🧪 Running Edge/WebSocket integration tests..."
+# Edge testing with container persistence
+test-edge-dev: test-logs-dir ## Edge tests: keep containers running, save logs to ./test-logs/
+	@echo "🧪 Starting Edge/WebSocket tests (dev mode - containers stay running)..."
+	@echo "📁 Logs will be saved to $(TEST_LOG_DIR)/"
 	docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
-		build
-	docker compose -p bannou-test-edge \
-		-f "./provisioning/docker-compose.yml" \
-		-f "./provisioning/docker-compose.services.yml" \
-		-f "./provisioning/docker-compose.ingress.yml" \
-		-f "./provisioning/docker-compose.test.yml" \
-		-f "./provisioning/docker-compose.test.edge.yml" \
-		up --exit-code-from=bannou-edge-tester
+		up --build --no-cache -d
+	@echo "⏳ Waiting for test to start..."
+	@sleep 5
+	@$(MAKE) test-edge-logs
+	@echo "✅ Dev test containers running. Use 'make test-edge-down' to clean up."
+
+# Collect Edge tester logs
+test-edge-logs: test-logs-dir ## Collect Edge test logs to ./test-logs/edge-tester.log
+	@echo "📋 Collecting Edge tester logs..."
+	@docker logs bannou-test-edge-bannou-edge-tester-1 2>&1 | tee $(TEST_LOG_DIR)/edge-tester.log
+	@echo "📋 Collecting bannou service logs..."
+	@docker logs bannou-test-edge-bannou-1 2>&1 | tee $(TEST_LOG_DIR)/edge-bannou.log
+	@echo ""
+	@echo "✅ Logs saved to:"
+	@echo "   $(TEST_LOG_DIR)/edge-tester.log"
+	@echo "   $(TEST_LOG_DIR)/edge-bannou.log"
+
+# Follow Edge tester logs live
+test-edge-follow: ## Follow Edge test logs in real-time
+	@docker logs -f bannou-test-edge-bannou-edge-tester-1
+
+# Cleanup Edge dev containers
+test-edge-down: ## Stop Edge test containers
+	@echo "🛑 Stopping Edge test containers..."
 	docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
@@ -315,7 +456,117 @@ test-edge:
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		down --remove-orphans -v
-	@echo "✅ Edge integration tests completed"
+	@echo "✅ Edge test containers stopped"
+
+# Infrastructure testing with persistence
+test-infra-dev: test-logs-dir ## Infrastructure tests: keep containers running, save logs
+	@echo "🧪 Starting infrastructure tests (dev mode)..."
+	docker compose -p bannou-test-infra \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.infrastructure.yml" \
+		up --build --no-cache -d
+	@sleep 5
+	@$(MAKE) test-infra-logs
+	@echo "✅ Dev test containers running. Use 'make test-infra-down' to clean up."
+
+test-infra-logs: test-logs-dir ## Collect infrastructure test logs
+	@docker logs bannou-test-infra-bannou-infra-tester-1 2>&1 | tee $(TEST_LOG_DIR)/infra-tester.log
+	@echo "✅ Logs saved to $(TEST_LOG_DIR)/infra-tester.log"
+
+test-infra-down: ## Stop infrastructure test containers
+	docker compose -p bannou-test-infra \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.infrastructure.yml" \
+		down --remove-orphans -v
+
+# Clean all test logs
+test-logs-clean: ## Remove all saved test logs
+	@rm -rf $(TEST_LOG_DIR)
+	@echo "✅ Test logs cleaned"
+
+# =============================================================================
+# ORCHESTRATOR COMMANDS
+# =============================================================================
+# The orchestrator runs in standalone mode without Dapr, connecting directly
+# to Redis (heartbeats) and RabbitMQ (events). It monitors and manages
+# Bannou service deployments across multiple backends.
+# =============================================================================
+
+up-orchestrator: ## Start orchestrator standalone with infrastructure
+	@echo "🚀 Starting orchestrator in standalone mode..."
+	if [ ! -f .env ]; then touch .env; fi
+	docker compose --env-file ./.env \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.orchestrator.yml \
+		--project-name bannou-orchestrator up -d
+	@echo "✅ Orchestrator running at http://localhost:8090"
+	@echo "📋 API endpoints:"
+	@echo "   GET  /orchestrator/status         - Overall status"
+	@echo "   GET  /orchestrator/health         - Infrastructure health"
+	@echo "   GET  /orchestrator/services       - Service health"
+	@echo "   GET  /orchestrator/backends       - Available backends"
+	@echo "   POST /orchestrator/restart        - Restart a service"
+	@echo "   GET  /orchestrator/containers     - Container status"
+
+down-orchestrator: ## Stop orchestrator stack
+	@echo "🛑 Stopping orchestrator..."
+	docker compose \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.orchestrator.yml \
+		--project-name bannou-orchestrator down --remove-orphans
+	@echo "✅ Orchestrator stopped"
+
+logs-orchestrator: ## View orchestrator logs
+	docker compose \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.orchestrator.yml \
+		--project-name bannou-orchestrator logs -f bannou-orchestrator
+
+# Orchestrator API test commands
+orchestrator-status: ## Get orchestrator status
+	@curl -s http://localhost:8090/orchestrator/status | jq .
+
+orchestrator-health: ## Get infrastructure health
+	@curl -s http://localhost:8090/orchestrator/health | jq .
+
+orchestrator-services: ## Get service health report
+	@curl -s http://localhost:8090/orchestrator/services | jq .
+
+orchestrator-backends: ## Get available backends
+	@curl -s http://localhost:8090/orchestrator/backends | jq .
+
+orchestrator-containers: ## Get container status
+	@curl -s http://localhost:8090/orchestrator/containers | jq .
+
+# Test all orchestrator APIs
+test-orchestrator: ## Test all orchestrator APIs
+	@echo "🧪 Testing orchestrator APIs..."
+	@echo ""
+	@echo "📋 GET /orchestrator/status"
+	@curl -s http://localhost:8090/orchestrator/status | jq . || echo "❌ Failed"
+	@echo ""
+	@echo "📋 GET /orchestrator/health"
+	@curl -s http://localhost:8090/orchestrator/health | jq . || echo "❌ Failed"
+	@echo ""
+	@echo "📋 GET /orchestrator/services"
+	@curl -s http://localhost:8090/orchestrator/services | jq . || echo "❌ Failed"
+	@echo ""
+	@echo "📋 GET /orchestrator/backends"
+	@curl -s http://localhost:8090/orchestrator/backends | jq . || echo "❌ Failed"
+	@echo ""
+	@echo "📋 GET /orchestrator/containers"
+	@curl -s http://localhost:8090/orchestrator/containers | jq . || echo "❌ Failed"
+	@echo ""
+	@echo "✅ Orchestrator API tests completed"
+
+# =============================================================================
+# GIT TAGGING
+# =============================================================================
 
 tagname := $(shell date -u +%FT%H-%M-%SZ)
 tag:

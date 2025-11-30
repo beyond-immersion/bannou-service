@@ -1,9 +1,9 @@
-using System.Text;
-using System.Text.Json;
+using BeyondImmersion.BannouService.Orchestrator;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Microsoft.Extensions.Logging;
-using BeyondImmersion.BannouService.Orchestrator;
+using System.Text;
+using System.Text.Json;
 
 namespace LibOrchestrator;
 
@@ -12,10 +12,10 @@ namespace LibOrchestrator;
 /// CRITICAL: Uses direct RabbitMQ.Client (NOT Dapr) to avoid chicken-and-egg dependency.
 /// Dapr sidecar depends on RabbitMQ being available, so orchestrator needs direct access.
 /// </summary>
-public class OrchestratorEventManager : IAsyncDisposable
+public class OrchestratorEventManager : IOrchestratorEventManager
 {
     private readonly ILogger<OrchestratorEventManager> _logger;
-    private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly string _connectionString;
     private IConnection? _connection;
     private IChannel? _channel;
 
@@ -26,15 +26,22 @@ public class OrchestratorEventManager : IAsyncDisposable
     private const string HEARTBEAT_EXCHANGE = "bannou-service-heartbeats";
     private const string HEARTBEAT_QUEUE = "orchestrator-heartbeat-queue";
     private const string RESTART_EXCHANGE = "bannou-service-restarts";
+    private const string MAPPINGS_EXCHANGE = "bannou-service-mappings";
+    private const string DEPLOYMENT_EXCHANGE = "bannou-deployment-events";
 
     public event Action<ServiceHeartbeatEvent>? HeartbeatReceived;
 
-    public OrchestratorEventManager(
-        ILogger<OrchestratorEventManager> logger,
-        OrchestratorServiceConfiguration configuration)
+    /// <summary>
+    /// Creates OrchestratorEventManager with connection string read directly from environment.
+    /// This avoids DI lifetime conflicts with scoped configuration classes.
+    /// </summary>
+    public OrchestratorEventManager(ILogger<OrchestratorEventManager> logger)
     {
         _logger = logger;
-        _configuration = configuration;
+        // Read connection string directly from environment to avoid DI lifetime conflicts
+        _connectionString = Environment.GetEnvironmentVariable("BANNOU_RabbitMqConnectionString")
+            ?? Environment.GetEnvironmentVariable("RabbitMqConnectionString")
+            ?? "amqp://guest:guest@rabbitmq:5672";
     }
 
     /// <summary>
@@ -51,11 +58,11 @@ public class OrchestratorEventManager : IAsyncDisposable
             {
                 _logger.LogInformation(
                     "Attempting RabbitMQ connection (attempt {Attempt}/{MaxAttempts}): {ConnectionString}",
-                    attempt, MAX_RETRY_ATTEMPTS, MaskConnectionString(_configuration.RabbitMqConnectionString));
+                    attempt, MAX_RETRY_ATTEMPTS, MaskConnectionString(_connectionString));
 
                 var factory = new ConnectionFactory
                 {
-                    Uri = new Uri(_configuration.RabbitMqConnectionString ?? "amqp://guest:guest@rabbitmq:5672"),
+                    Uri = new Uri(_connectionString),
                     AutomaticRecoveryEnabled = true,  // ✅ Automatic reconnection
                     NetworkRecoveryInterval = TimeSpan.FromSeconds(5),
                     RequestedHeartbeat = TimeSpan.FromSeconds(30)
@@ -70,6 +77,8 @@ public class OrchestratorEventManager : IAsyncDisposable
                 await _channel.QueueBindAsync(HEARTBEAT_QUEUE, HEARTBEAT_EXCHANGE, "service.heartbeat.#", cancellationToken: cancellationToken);
 
                 await _channel.ExchangeDeclareAsync(RESTART_EXCHANGE, ExchangeType.Topic, durable: true, cancellationToken: cancellationToken);
+                await _channel.ExchangeDeclareAsync(MAPPINGS_EXCHANGE, ExchangeType.Fanout, durable: true, cancellationToken: cancellationToken);
+                await _channel.ExchangeDeclareAsync(DEPLOYMENT_EXCHANGE, ExchangeType.Fanout, durable: true, cancellationToken: cancellationToken);
 
                 // Start consuming heartbeat events
                 var consumer = new AsyncEventingBasicConsumer(_channel);
@@ -170,6 +179,82 @@ public class OrchestratorEventManager : IAsyncDisposable
     }
 
     /// <summary>
+    /// Publish service mapping event to RabbitMQ.
+    /// Used when topology changes to notify all bannou instances of new service-to-app-id mappings.
+    /// Uses fanout exchange so ALL bannou instances receive the mapping update.
+    /// </summary>
+    public async Task PublishServiceMappingEventAsync(ServiceMappingEvent mappingEvent)
+    {
+        if (_channel == null)
+        {
+            _logger.LogWarning("RabbitMQ channel not initialized. Cannot publish service mapping event.");
+            return;
+        }
+
+        try
+        {
+            var message = JsonSerializer.Serialize(mappingEvent);
+            var body = Encoding.UTF8.GetBytes(message);
+
+            // Fanout exchange - all consumers receive the message
+            await _channel.BasicPublishAsync(
+                exchange: MAPPINGS_EXCHANGE,
+                routingKey: string.Empty,  // Fanout ignores routing key
+                body: body);
+
+            _logger.LogInformation(
+                "Published service mapping event: {ServiceName} -> {AppId} ({Action})",
+                mappingEvent.ServiceName, mappingEvent.AppId, mappingEvent.Action);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to publish service mapping event for {ServiceName}",
+                mappingEvent.ServiceName);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Publish deployment event to RabbitMQ.
+    /// Used to broadcast deployment lifecycle events (started, completed, failed, topology-changed).
+    /// Uses fanout exchange so ALL consumers (including test handlers) receive the event.
+    /// </summary>
+    public async Task PublishDeploymentEventAsync(DeploymentEvent deploymentEvent)
+    {
+        if (_channel == null)
+        {
+            _logger.LogWarning("RabbitMQ channel not initialized. Cannot publish deployment event.");
+            return;
+        }
+
+        try
+        {
+            var message = JsonSerializer.Serialize(deploymentEvent);
+            var body = Encoding.UTF8.GetBytes(message);
+
+            // Fanout exchange - all consumers receive the message
+            await _channel.BasicPublishAsync(
+                exchange: DEPLOYMENT_EXCHANGE,
+                routingKey: string.Empty,  // Fanout ignores routing key
+                body: body);
+
+            _logger.LogInformation(
+                "Published deployment event: {DeploymentId} - {Action}",
+                deploymentEvent.DeploymentId, deploymentEvent.Action);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to publish deployment event for {DeploymentId}",
+                deploymentEvent.DeploymentId);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Check if RabbitMQ connection is healthy.
     /// </summary>
     public (bool IsHealthy, string? Message) CheckHealth()
@@ -200,6 +285,26 @@ public class OrchestratorEventManager : IAsyncDisposable
         // Basic masking - replace password in AMQP URI
         var uri = new Uri(connectionString);
         return $"amqp://***:***@{uri.Host}:{uri.Port}";
+    }
+
+    /// <summary>
+    /// Synchronous dispose for DI container compatibility.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_channel != null)
+        {
+            _channel.CloseAsync().GetAwaiter().GetResult();
+            _channel.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        }
+
+        if (_connection != null)
+        {
+            _connection.CloseAsync().GetAwaiter().GetResult();
+            _connection.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        }
+
+        _logger.LogDebug("RabbitMQ connection closed synchronously");
     }
 
     /// <summary>

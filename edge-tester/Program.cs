@@ -74,9 +74,19 @@ public class Program
     /// </summary>
     private static readonly Dictionary<string, Action<string[]>> sTestRegistry = new();
 
-    // tokens generated from login
+    // tokens generated from login (regular user)
     private static string? sAccessToken = null;
     private static string? sRefreshToken = null;
+
+    // tokens generated from admin login (for orchestrator APIs)
+    private static string? sAdminAccessToken = null;
+    private static string? sAdminRefreshToken = null;
+
+    /// <summary>
+    /// Gets the admin access token (for orchestrator API tests).
+    /// Returns null if admin login hasn't been performed.
+    /// </summary>
+    public static string? AdminAccessToken => sAdminAccessToken;
 
     /// <summary>
     /// Checks if the application is running in daemon mode (non-interactive).
@@ -137,6 +147,15 @@ public class Program
                 throw new InvalidOperationException("Failed to parse JWT from login result.");
 
             Console.WriteLine("Parsing access token and refresh token from login result successful.");
+
+            // Also authenticate with admin credentials for orchestrator API tests
+            Console.WriteLine("\n=== Admin Authentication ===");
+            bool adminAuthenticated = await EnsureAdminAuthenticated();
+            if (!adminAuthenticated)
+            {
+                Console.WriteLine("⚠️ Admin authentication failed - orchestrator tests may fail.");
+            }
+            Console.WriteLine();
 
             Console.WriteLine("🧪 Enhanced WebSocket Protocol Testing - Binary Protocol Validation");
             Console.WriteLine($"Base URL: ws://{Configuration.Connect_Endpoint}");
@@ -273,6 +292,119 @@ public class Program
         var responseObj = JObject.Parse(responseStr);
 
         return responseObj;
+    }
+
+    /// <summary>
+    /// Registers an admin user account using admin credentials from configuration.
+    /// Admin email should match AdminEmails or AdminEmailDomain configuration for auto-admin role.
+    /// </summary>
+    private static async Task<JObject?> RegisterAdminWithCredentials()
+    {
+        var serverUri = new Uri($"http://{Configuration.Register_Endpoint}");
+        Console.WriteLine($"Admin registration Uri: {serverUri}");
+
+        var contentObj = new JObject()
+        {
+            ["username"] = Configuration.GetAdminUsername(),
+            ["password"] = Configuration.GetAdminPassword()
+        };
+        using HttpRequestMessage httpRequest = new(HttpMethod.Post, serverUri);
+        var jsonContentStr = JsonConvert.SerializeObject(contentObj);
+        var strContent = new StringContent(jsonContentStr, Encoding.UTF8, "application/json");
+        httpRequest.Content = strContent;
+
+        using var response = await HttpClient.SendAsync(httpRequest, ShutdownCancellationTokenSource.Token);
+        if (response == null)
+        {
+            Console.WriteLine($"No server response received for admin registration");
+            return null;
+        }
+
+        if (response.StatusCode != System.Net.HttpStatusCode.OK)
+        {
+            Console.WriteLine($"Admin registration responded with: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+            return null;
+        }
+
+        var responseStr = await response.Content.ReadAsStringAsync();
+        var responseObj = JObject.Parse(responseStr);
+
+        return responseObj;
+    }
+
+    /// <summary>
+    /// Logs in with admin credentials from configuration.
+    /// </summary>
+    private static async Task<JObject?> LoginAdminWithCredentials()
+    {
+        var serverUri = new Uri($"http://{Configuration.Login_Credentials_Endpoint}");
+        Console.WriteLine($"Admin credential login Uri: {serverUri}");
+
+        var contentObj = new JObject()
+        {
+            ["email"] = Configuration.GetAdminUsername(),
+            ["password"] = Configuration.GetAdminPassword()
+        };
+        using HttpRequestMessage httpRequest = new(HttpMethod.Post, serverUri);
+        var jsonContentStr = JsonConvert.SerializeObject(contentObj);
+        var strContent = new StringContent(jsonContentStr, Encoding.UTF8, "application/json");
+        httpRequest.Content = strContent;
+
+        using var response = await HttpClient.SendAsync(httpRequest, ShutdownCancellationTokenSource.Token);
+        if (response == null)
+        {
+            Console.WriteLine($"No server response received for admin login");
+            return null;
+        }
+
+        if (response.StatusCode != System.Net.HttpStatusCode.OK)
+        {
+            Console.WriteLine($"Admin login responded with: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+            return null;
+        }
+
+        var responseStr = await response.Content.ReadAsStringAsync();
+        var responseObj = JObject.Parse(responseStr);
+
+        return responseObj;
+    }
+
+    /// <summary>
+    /// Ensures admin user exists and is logged in. Stores admin tokens for orchestrator API tests.
+    /// </summary>
+    private static async Task<bool> EnsureAdminAuthenticated()
+    {
+        Console.WriteLine("Attempting to log in with admin credentials...");
+
+        JObject? adminTokens = await LoginAdminWithCredentials();
+        if (adminTokens == null)
+        {
+            Console.WriteLine("Admin login failed, attempting registration...");
+            adminTokens = await RegisterAdminWithCredentials();
+            if (adminTokens == null)
+            {
+                Console.WriteLine("⚠️ Failed to create admin account - orchestrator tests will be skipped.");
+                return false;
+            }
+
+            Console.WriteLine("Admin registration successful.");
+        }
+        else
+        {
+            Console.WriteLine("Admin login successful.");
+        }
+
+        sAdminAccessToken = (string?)adminTokens["accessToken"];
+        sAdminRefreshToken = (string?)adminTokens["refreshToken"];
+
+        if (string.IsNullOrEmpty(sAdminAccessToken))
+        {
+            Console.WriteLine("⚠️ Failed to parse admin JWT from login result.");
+            return false;
+        }
+
+        Console.WriteLine($"✅ Admin authenticated as: {Configuration.GetAdminUsername()}");
+        return true;
     }
 
     private static async Task<bool> EstablishWebsocketAndSendMessage()
@@ -433,6 +565,10 @@ public class Program
         foreach (ServiceTest serviceTest in connectTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
+        // load orchestrator websocket tests
+        var orchestratorTestHandler = new OrchestratorWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in orchestratorTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
     }
 
     private static void RunEntireTestSuite(string[] args)

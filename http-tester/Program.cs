@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.HttpTester.Tests;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 using Dapr.Client;
@@ -193,6 +194,7 @@ public class Program
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Permissions.IPermissionsClient, BeyondImmersion.BannouService.Permissions.PermissionsClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.GameSession.IGameSessionClient, BeyondImmersion.BannouService.GameSession.GameSessionClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Website.IWebsiteClient, BeyondImmersion.BannouService.Website.WebsiteClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient, BeyondImmersion.BannouService.Orchestrator.OrchestratorClient>();
 
             // Build the service provider
             ServiceProvider = serviceCollection.BuildServiceProvider();
@@ -487,7 +489,9 @@ public class Program
         {
             new AccountTestHandler(),
             new AuthTestHandler(),
-            new ConnectTestHandler()
+            new ConnectTestHandler(),
+            new OrchestratorTestHandler(),
+            new PermissionsTestHandler()
             // Add more test handlers as needed
         };
 

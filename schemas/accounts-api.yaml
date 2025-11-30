@@ -689,3 +689,11 @@ x-service-configuration:
       type: integer
       description: Number of days to retain deleted account data
       default: 30
+    AdminEmails:
+      type: string
+      description: Comma-separated list of emails that automatically get admin role assigned
+      default: ""
+    AdminEmailDomain:
+      type: string
+      description: Email domain that automatically gets admin role (e.g., "@admin.test.local")
+      default: ""

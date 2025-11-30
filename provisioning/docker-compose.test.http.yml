@@ -6,6 +6,8 @@ services:
 
   bannou:
     env_file: ../.env.test.http
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"  # Docker socket for orchestrator
 
   # HTTP integration tester - simulates another service in datacenter
   bannou-http-tester:
@@ -22,24 +24,19 @@ services:
       - "9000:80"
       - "9001:443"
 
-  # Override Dapr components for both bannou and http-tester
+  # Override Dapr sidecar for bannou - uses custom image that waits for RabbitMQ
   bannou-dapr:
-    volumes:
-      - "./dapr/components-http-test/:/components"  # HTTP test components (Redis only, no RabbitMQ)
-      - "./certificates:/certificates"
-
-  # Dapr sidecar for HTTP tester - shares network stack
-  bannou-http-tester-dapr:
-    image: "daprio/daprd:edge"
+    build:
+      context: ./dapr
+      dockerfile: Dockerfile.dapr-wait
     command: [
-      "./daprd",
-      "--app-id", "bannou-http-tester",
+      "--app-id", "bannou",
       "--app-port", "80",
       "--app-protocol", "http",
       "--dapr-http-port", "3500",
       "--dapr-grpc-port", "50001",
-      "--placement-host-address", "placement:50006",  # Use service name on default network
-      "--resources-path", "./components",
+      "--placement-host-address", "placement:50006",
+      "--resources-path", "/components",
       "--log-level", "debug",
       "--enable-api-logging"
     ]
@@ -48,5 +45,36 @@ services:
       - "./certificates:/certificates"
     environment:
       - "SSL_CERT_DIR=/certificates"
+      - "RABBITMQ_HOST=rabbitmq"
+      - "RABBITMQ_PORT=5672"
+      - "RABBITMQ_MAX_RETRIES=30"
+      - "RABBITMQ_RETRY_INTERVAL=2"
+
+  # Dapr sidecar for HTTP tester - shares network stack
+  # Uses custom image that waits for RabbitMQ before starting Dapr
+  bannou-http-tester-dapr:
+    build:
+      context: ./dapr
+      dockerfile: Dockerfile.dapr-wait
+    command: [
+      "--app-id", "bannou-http-tester",
+      "--app-port", "80",
+      "--app-protocol", "http",
+      "--dapr-http-port", "3500",
+      "--dapr-grpc-port", "50001",
+      "--placement-host-address", "placement:50006",  # Use service name on default network
+      "--resources-path", "/components",
+      "--log-level", "debug",
+      "--enable-api-logging"
+    ]
+    volumes:
+      - "./dapr/components-http-test/:/components"
+      - "./certificates:/certificates"
+    environment:
+      - "SSL_CERT_DIR=/certificates"
+      - "RABBITMQ_HOST=rabbitmq"
+      - "RABBITMQ_PORT=5672"
+      - "RABBITMQ_MAX_RETRIES=30"
+      - "RABBITMQ_RETRY_INTERVAL=2"
     network_mode: "service:bannou-http-tester"  # Share network stack with http-tester
     restart: always

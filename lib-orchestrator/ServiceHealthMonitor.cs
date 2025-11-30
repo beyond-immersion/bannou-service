@@ -1,5 +1,5 @@
-using Microsoft.Extensions.Logging;
 using BeyondImmersion.BannouService.Orchestrator;
+using Microsoft.Extensions.Logging;
 
 namespace LibOrchestrator;
 
@@ -7,18 +7,18 @@ namespace LibOrchestrator;
 /// Monitors service health based on ServiceHeartbeatEvent data from Redis.
 /// Uses existing heartbeat schema from common-events.yaml.
 /// </summary>
-public class ServiceHealthMonitor
+public class ServiceHealthMonitor : IServiceHealthMonitor
 {
     private readonly ILogger<ServiceHealthMonitor> _logger;
     private readonly OrchestratorServiceConfiguration _configuration;
-    private readonly OrchestratorRedisManager _redisManager;
-    private readonly OrchestratorEventManager _eventManager;
+    private readonly IOrchestratorRedisManager _redisManager;
+    private readonly IOrchestratorEventManager _eventManager;
 
     public ServiceHealthMonitor(
         ILogger<ServiceHealthMonitor> logger,
         OrchestratorServiceConfiguration configuration,
-        OrchestratorRedisManager redisManager,
-        OrchestratorEventManager eventManager)
+        IOrchestratorRedisManager redisManager,
+        IOrchestratorEventManager eventManager)
     {
         _logger = logger;
         _configuration = configuration;

@@ -88,6 +88,19 @@ public class AccountsService : IAccountsService
             // Create account entity
             var accountId = Guid.NewGuid();
 
+            // Determine roles - start with roles from request body
+            var roles = body.Roles?.ToList() ?? new List<string>();
+
+            // Apply ENV-based admin role assignment
+            if (ShouldAssignAdminRole(body.Email))
+            {
+                if (!roles.Contains("admin"))
+                {
+                    roles.Add("admin");
+                    _logger.LogInformation("Auto-assigning admin role to {Email} based on configuration", body.Email);
+                }
+            }
+
             var account = new AccountModel
             {
                 AccountId = accountId.ToString(),
@@ -95,6 +108,7 @@ public class AccountsService : IAccountsService
                 DisplayName = body.DisplayName,
                 PasswordHash = body.PasswordHash, // Store pre-hashed password from Auth service
                 IsVerified = body.EmailVerified == true,
+                Roles = roles, // Store roles in account model
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             };
@@ -111,7 +125,8 @@ public class AccountsService : IAccountsService
                 $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
                 accountId.ToString());
 
-            _logger.LogInformation("Account created: {AccountId} for email: {Email}", accountId, body.Email);
+            _logger.LogInformation("Account created: {AccountId} for email: {Email} with roles: {Roles}",
+                accountId, body.Email, string.Join(", ", roles));
 
             // Publish account created event
             // TODO: Temporarily disabled to debug segfault
@@ -126,7 +141,7 @@ public class AccountsService : IAccountsService
                 EmailVerified = account.IsVerified,
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
-                Roles = new List<string>(),
+                Roles = account.Roles, // Return stored roles
                 AuthMethods = new List<AuthMethodInfo>()
             };
 
@@ -137,6 +152,49 @@ public class AccountsService : IAccountsService
             _logger.LogError(ex, "Error creating account");
             return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    /// <summary>
+    /// Determines if admin role should be auto-assigned based on email configuration.
+    /// Checks AdminEmails (comma-separated list) and AdminEmailDomain settings.
+    /// </summary>
+    private bool ShouldAssignAdminRole(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        var emailLower = email.ToLowerInvariant();
+
+        // Check AdminEmails (comma-separated list of exact email addresses)
+        if (!string.IsNullOrWhiteSpace(_configuration.AdminEmails))
+        {
+            var adminEmails = _configuration.AdminEmails
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(e => e.ToLowerInvariant());
+
+            if (adminEmails.Contains(emailLower))
+            {
+                _logger.LogDebug("Email {Email} matches AdminEmails configuration", email);
+                return true;
+            }
+        }
+
+        // Check AdminEmailDomain (e.g., "@admin.test.local")
+        if (!string.IsNullOrWhiteSpace(_configuration.AdminEmailDomain))
+        {
+            var domain = _configuration.AdminEmailDomain.ToLowerInvariant();
+            // Ensure domain starts with @ for proper suffix matching
+            if (!domain.StartsWith("@"))
+                domain = "@" + domain;
+
+            if (emailLower.EndsWith(domain))
+            {
+                _logger.LogDebug("Email {Email} matches AdminEmailDomain {Domain}", email, domain);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public async Task<(StatusCodes, AccountResponse?)> GetAccountAsync(
@@ -174,7 +232,7 @@ public class AccountsService : IAccountsService
                 EmailVerified = account.IsVerified,
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
-                Roles = new List<string>(),
+                Roles = account.Roles, // Return stored roles
                 AuthMethods = new List<AuthMethodInfo>()
             };
 
@@ -221,7 +279,20 @@ public class AccountsService : IAccountsService
                 newValues["displayName"] = body.DisplayName;
                 account.DisplayName = body.DisplayName;
             }
-            // TODO: Handle roles and metadata from body
+
+            // Handle roles update if provided
+            if (body.Roles != null)
+            {
+                var newRoles = body.Roles.ToList();
+                if (!account.Roles.SequenceEqual(newRoles))
+                {
+                    changedFields.Add("roles");
+                    previousValues["roles"] = account.Roles;
+                    newValues["roles"] = newRoles;
+                    account.Roles = newRoles;
+                }
+            }
+            // TODO: Handle metadata from body
 
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -247,7 +318,7 @@ public class AccountsService : IAccountsService
                 EmailVerified = account.IsVerified,
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
-                Roles = new List<string>(),
+                Roles = account.Roles, // Return stored roles
                 AuthMethods = new List<AuthMethodInfo>()
             };
 
@@ -309,7 +380,7 @@ public class AccountsService : IAccountsService
                 EmailVerified = account.IsVerified,
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
-                Roles = new List<string>(), // TODO: Implement roles from account data
+                Roles = account.Roles, // Return stored roles
                 AuthMethods = new List<AuthMethodInfo>() // TODO: Implement auth methods from account data
             };
 
@@ -437,7 +508,7 @@ public class AccountsService : IAccountsService
                     EmailVerified = account.IsVerified,
                     CreatedAt = account.CreatedAt,
                     UpdatedAt = account.UpdatedAt,
-                    Roles = new List<string>(),
+                    Roles = account.Roles, // Return stored roles
                     AuthMethods = new List<AuthMethodInfo>()
                 };
 
@@ -578,7 +649,7 @@ public class AccountsService : IAccountsService
                 AccountId = Guid.Parse(account.AccountId),
                 Email = account.Email,
                 DisplayName = account.DisplayName,
-                Roles = new List<string>() // TODO: Load actual roles from account
+                Roles = account.Roles // Use stored roles
             };
 
             await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_CREATED_TOPIC, eventModel);
@@ -660,6 +731,7 @@ public class AccountModel
     public string? DisplayName { get; set; }
     public string? PasswordHash { get; set; } // BCrypt hashed password for authentication
     public bool IsVerified { get; set; }
+    public List<string> Roles { get; set; } = new List<string>(); // User roles (admin, user, etc.)
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }

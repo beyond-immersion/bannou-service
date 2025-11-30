@@ -1,7 +1,7 @@
-using System.Text.Json;
-using StackExchange.Redis;
-using Microsoft.Extensions.Logging;
 using BeyondImmersion.BannouService.Orchestrator;
+using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
+using System.Text.Json;
 
 namespace LibOrchestrator;
 
@@ -9,10 +9,10 @@ namespace LibOrchestrator;
 /// Manages direct Redis connections for orchestrator service.
 /// CRITICAL: Uses direct connection (NOT Dapr) to avoid chicken-and-egg dependency.
 /// </summary>
-public class OrchestratorRedisManager : IAsyncDisposable
+public class OrchestratorRedisManager : IOrchestratorRedisManager
 {
     private readonly ILogger<OrchestratorRedisManager> _logger;
-    private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly string _connectionString;
     private ConnectionMultiplexer? _redis;
     private IDatabase? _database;
 
@@ -20,12 +20,17 @@ public class OrchestratorRedisManager : IAsyncDisposable
     private const int INITIAL_RETRY_DELAY_MS = 1000;
     private const int MAX_RETRY_DELAY_MS = 60000;
 
-    public OrchestratorRedisManager(
-        ILogger<OrchestratorRedisManager> logger,
-        OrchestratorServiceConfiguration configuration)
+    /// <summary>
+    /// Creates OrchestratorRedisManager with connection string read directly from environment.
+    /// This avoids DI lifetime conflicts with scoped configuration classes.
+    /// </summary>
+    public OrchestratorRedisManager(ILogger<OrchestratorRedisManager> logger)
     {
         _logger = logger;
-        _configuration = configuration;
+        // Read connection string directly from environment to avoid DI lifetime conflicts
+        _connectionString = Environment.GetEnvironmentVariable("BANNOU_RedisConnectionString")
+            ?? Environment.GetEnvironmentVariable("RedisConnectionString")
+            ?? "redis:6379";
     }
 
     /// <summary>
@@ -42,9 +47,9 @@ public class OrchestratorRedisManager : IAsyncDisposable
             {
                 _logger.LogInformation(
                     "Attempting Redis connection (attempt {Attempt}/{MaxAttempts}): {ConnectionString}",
-                    attempt, MAX_RETRY_ATTEMPTS, _configuration.RedisConnectionString);
+                    attempt, MAX_RETRY_ATTEMPTS, _connectionString);
 
-                var options = ConfigurationOptions.Parse(_configuration.RedisConnectionString ?? "redis:6379");
+                var options = ConfigurationOptions.Parse(_connectionString);
                 options.AbortOnConnectFail = false;  // ✅ Automatic reconnection
                 options.ConnectTimeout = 5000;
                 options.SyncTimeout = 5000;
@@ -200,6 +205,22 @@ public class OrchestratorRedisManager : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Synchronous dispose for DI container compatibility.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_redis != null)
+        {
+            _redis.Close();
+            _redis.Dispose();
+            _logger.LogDebug("Redis connection closed synchronously");
+        }
+    }
+
+    /// <summary>
+    /// Async dispose for async-aware disposal contexts.
+    /// </summary>
     public async ValueTask DisposeAsync()
     {
         if (_redis != null)

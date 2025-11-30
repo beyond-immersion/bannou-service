@@ -158,17 +158,6 @@ echo ""
 
 if [ $FAILED_COUNT -eq 0 ]; then
     echo -e "${GREEN}🎉 All requested components generated successfully!${NC}"
-
-    # If everything was generated, suggest next steps
-    if [[ " ${COMPONENTS[*]} " =~ " all " ]]; then
-        echo ""
-        echo -e "${YELLOW}🔔 Next steps:${NC}"
-        echo "1. Review generated files in lib-${SERVICE_NAME}/"
-        echo "2. Implement TODO methods in ${SERVICE_PASCAL}Service.cs"
-        echo "3. Build the solution: make build"
-        echo "4. Test the service: make test-http"
-    fi
-
     exit 0
 else
     echo -e "${RED}⚠️  $FAILED_COUNT component(s) failed to generate${NC}"

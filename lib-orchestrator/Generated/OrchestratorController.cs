@@ -59,23 +59,6 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceHealthReport>> GetServicesHealthAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Execute test batch via API
-    /// </summary>
-
-    /// <remarks>
-    /// Executes tests via API calls to test services (no --exit-code-from).
-    /// <br/>
-    /// <br/>Supports three test types:
-    /// <br/>- infrastructure: Basic service availability (testing plugin)
-    /// <br/>- http: Service-to-service HTTP testing (http-tester)
-    /// <br/>- edge: WebSocket protocol testing (edge-tester)
-    /// </remarks>
-
-    /// <returns>Test execution results</returns>
-
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TestExecutionResult>> RunTestsAsync(TestExecutionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <summary>
     /// Restart service with optional configuration
     /// </summary>
 
@@ -108,9 +91,258 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestartRecommendation>> ShouldRestartServiceAsync(ShouldRestartServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Detect available container orchestration backends
+    /// </summary>
+
+    /// <remarks>
+    /// Detects which container orchestration backends are available on this system.
+    /// <br/>Returns availability status and capabilities for each backend.
+    /// <br/>
+    /// <br/>**Priority Order** (for automatic selection):
+    /// <br/>1. Kubernetes - Full cluster orchestration with operators
+    /// <br/>2. Portainer - API abstraction over Compose/Swarm with web UI
+    /// <br/>3. Docker Swarm - Native Docker cluster orchestration
+    /// <br/>4. Docker Compose - Single-host container management
+    /// <br/>
+    /// <br/>Detection methods:
+    /// <br/>- Kubernetes: Check for kubectl and cluster connectivity
+    /// <br/>- Portainer: Check for Portainer API endpoint
+    /// <br/>- Swarm: Check `docker info` for swarm mode
+    /// <br/>- Compose: Check for docker compose v2 availability
+    /// </remarks>
+
+    /// <returns>Available backends with capabilities</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackendsResponse>> GetBackendsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// List available deployment presets
+    /// </summary>
+
+    /// <remarks>
+    /// Returns all available deployment presets from the orchestrator's preset directory.
+    /// <br/>Presets define service combinations and configuration for specific use cases.
+    /// <br/>
+    /// <br/>Built-in presets:
+    /// <br/>- `local-development`: All services in single container with Dapr
+    /// <br/>- `local-testing`: Test environment with infrastructure services
+    /// <br/>- `integration-http`: HTTP integration testing preset
+    /// <br/>- `integration-edge`: WebSocket/edge testing preset
+    /// <br/>- `split-auth-accounts`: Auth and Accounts in separate containers
+    /// <br/>- `distributed-npc`: NPC processing distributed across nodes
+    /// </remarks>
+
+    /// <returns>Available deployment presets</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PresetsResponse>> GetPresetsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Deploy or update an environment
+    /// </summary>
+
+    /// <remarks>
+    /// Deploys a complete environment using a preset or custom configuration.
+    /// <br/>Supports graceful transitions, forced deployments, and clean rebuilds.
+    /// <br/>
+    /// <br/>**Deployment Modes**:
+    /// <br/>- `graceful`: Wait for existing connections to drain before changing topology
+    /// <br/>- `force`: Immediately apply changes (may interrupt active connections)
+    /// <br/>- `clean`: Tear down completely and rebuild from scratch
+    /// <br/>
+    /// <br/>**Backend Selection**:
+    /// <br/>- If `backend` not specified, uses highest-priority available backend
+    /// <br/>- If `backend` specified but unavailable, returns error (no fallback)
+    /// <br/>
+    /// <br/>**Live Topology Changes**:
+    /// <br/>Supports changing service distribution without full restart:
+    /// <br/>- Move auth/accounts to separate container while keeping other services together
+    /// <br/>- Scale specific services to additional nodes
+    /// <br/>- Update environment variables without restart (where supported)
+    /// </remarks>
+
+    /// <returns>Deployment initiated successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeployResponse>> DeployAsync(DeployRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get current environment status
+    /// </summary>
+
+    /// <remarks>
+    /// Returns comprehensive status of the current deployment including:
+    /// <br/>- Active backend and deployment configuration
+    /// <br/>- Service topology (which services on which containers)
+    /// <br/>- Container health and resource usage
+    /// <br/>- Infrastructure component status
+    /// <br/>- Active preset and any customizations
+    /// </remarks>
+
+    /// <returns>Current environment status</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EnvironmentStatus>> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Tear down the current environment
+    /// </summary>
+
+    /// <remarks>
+    /// Tears down all containers and services in the current deployment.
+    /// <br/>Optionally preserves volumes and networks for faster redeployment.
+    /// <br/>
+    /// <br/>**Teardown Modes**:
+    /// <br/>- `graceful`: Signal shutdown and wait for clean exit
+    /// <br/>- `force`: Immediately stop all containers (SIGKILL)
+    /// <br/>- `preserve-data`: Keep volumes and networks, only remove containers
+    /// </remarks>
+
+    /// <returns>Teardown completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TeardownResponse>> TeardownAsync(TeardownRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Clean up unused resources
+    /// </summary>
+
+    /// <remarks>
+    /// Prunes unused Docker resources to reclaim disk space and clean up
+    /// <br/>orphaned containers, networks, volumes, and images.
+    /// <br/>
+    /// <br/>Equivalent to running various `docker system prune` commands.
+    /// <br/>
+    /// <br/>**Clean Targets**:
+    /// <br/>- `containers`: Remove stopped containers
+    /// <br/>- `networks`: Remove unused networks
+    /// <br/>- `volumes`: Remove unused volumes (CAUTION: data loss)
+    /// <br/>- `images`: Remove dangling images
+    /// <br/>- `all`: All of the above
+    /// </remarks>
+
+    /// <returns>Cleanup completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanResponse>> CleanAsync(CleanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get service/container logs
+    /// </summary>
+
+    /// <remarks>
+    /// Retrieves logs from services or containers with filtering options.
+    /// <br/>Supports real-time streaming via WebSocket upgrade.
+    /// </remarks>
+
+    /// <param name="service">Service name to get logs for</param>
+
+    /// <param name="container">Container ID or name (alternative to service)</param>
+
+    /// <param name="since">Return logs since timestamp (RFC3339 or relative like "5m")</param>
+
+    /// <param name="until">Return logs until timestamp</param>
+
+    /// <param name="tail">Number of lines from end of logs</param>
+
+    /// <param name="follow">Stream logs in real-time (WebSocket upgrade)</param>
+
+    /// <returns>Log output</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LogsResponse>> GetLogsAsync(string? service, string? container, string? since, string? until, int tail, bool follow, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Update service topology without full redeploy
+    /// </summary>
+
+    /// <remarks>
+    /// Changes which services run on which containers without tearing down
+    /// <br/>the entire environment. Enables live topology changes.
+    /// <br/>
+    /// <br/>**Use Cases**:
+    /// <br/>- Move auth service to dedicated container for scaling
+    /// <br/>- Consolidate services during low-traffic periods
+    /// <br/>- Split services for debugging/isolation
+    /// <br/>- Add new service nodes to running environment
+    /// </remarks>
+
+    /// <returns>Topology update applied</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TopologyUpdateResponse>> UpdateTopologyAsync(TopologyUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Request container restart (self-service pattern)
+    /// </summary>
+
+    /// <remarks>
+    /// Plugins call this endpoint to request restart of their own container.
+    /// <br/>This is part of the self-service configuration update pattern where
+    /// <br/>plugins decide if they care about config changes and request restarts.
+    /// <br/>
+    /// <br/>**Flow**:
+    /// <br/>1. Orchestrator publishes ConfigurationChangedEvent with changed keys
+    /// <br/>2. Plugins check if any changed keys match their dependencies
+    /// <br/>3. Plugins that care call this endpoint to request restart
+    /// <br/>4. Orchestrator performs rolling restart of requested containers
+    /// <br/>
+    /// <br/>**Priority Levels**:
+    /// <br/>- `graceful`: Rolling update, wait for healthy before cycling next instance
+    /// <br/>- `immediate`: Rolling update but don't wait for connection drain
+    /// <br/>- `force`: Kill all instances simultaneously (causes downtime)
+    /// </remarks>
+
+    /// <param name="appName">Container's Dapr app name (e.g., "bannou", "npc-omega")</param>
+
+
+    /// <returns>Restart request accepted</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerRestartResponse>> RequestContainerRestartAsync(string appName, ContainerRestartRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get container health and restart history
+    /// </summary>
+
+    /// <remarks>
+    /// Returns detailed status of a container including health, restart history,
+    /// <br/>running plugins, and current configuration.
+    /// </remarks>
+
+    /// <param name="appName">Container's Dapr app name</param>
+
+    /// <returns>Container status</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerStatus>> GetContainerStatusAsync(string appName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Rollback to previous configuration
+    /// </summary>
+
+    /// <remarks>
+    /// Quickly rollback to the previous configuration without waiting for CI.
+    /// <br/>Swaps currentConfig with previousConfig and publishes ConfigurationChangedEvent
+    /// <br/>with the reverted keys so services can request restart.
+    /// <br/>
+    /// <br/>**Note**: This is a quick fix. GitHub secrets should still be corrected
+    /// <br/>to prevent re-breaking on next orchestrator deploy.
+    /// </remarks>
+
+    /// <returns>Rollback completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigRollbackResponse>> RollbackConfigurationAsync(ConfigRollbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get current configuration version and metadata
+    /// </summary>
+
+    /// <remarks>
+    /// Returns the current configuration version, last update time,
+    /// <br/>and summary of configuration state (not actual values for security).
+    /// </remarks>
+
+    /// <returns>Configuration version info</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigVersionResponse>> GetConfigVersionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+[Microsoft.AspNetCore.Mvc.Route("v1.0/invoke/bannou/method")]
 
 public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
@@ -198,27 +430,6 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     }
 
     /// <summary>
-    /// Execute test batch via API
-    /// </summary>
-    /// <remarks>
-    /// Executes tests via API calls to test services (no --exit-code-from).
-    /// <br/>
-    /// <br/>Supports three test types:
-    /// <br/>- infrastructure: Basic service availability (testing plugin)
-    /// <br/>- http: Service-to-service HTTP testing (http-tester)
-    /// <br/>- edge: WebSocket protocol testing (edge-tester)
-    /// </remarks>
-    /// <returns>Test execution results</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/tests/run")]
-
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TestExecutionResult>> RunTests([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TestExecutionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-
-        var (statusCode, result) = await _implementation.RunTestsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
-    }
-
-    /// <summary>
     /// Restart service with optional configuration
     /// </summary>
     /// <remarks>
@@ -256,6 +467,293 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     {
 
         var (statusCode, result) = await _implementation.ShouldRestartServiceAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Detect available container orchestration backends
+    /// </summary>
+    /// <remarks>
+    /// Detects which container orchestration backends are available on this system.
+    /// <br/>Returns availability status and capabilities for each backend.
+    /// <br/>
+    /// <br/>**Priority Order** (for automatic selection):
+    /// <br/>1. Kubernetes - Full cluster orchestration with operators
+    /// <br/>2. Portainer - API abstraction over Compose/Swarm with web UI
+    /// <br/>3. Docker Swarm - Native Docker cluster orchestration
+    /// <br/>4. Docker Compose - Single-host container management
+    /// <br/>
+    /// <br/>Detection methods:
+    /// <br/>- Kubernetes: Check for kubectl and cluster connectivity
+    /// <br/>- Portainer: Check for Portainer API endpoint
+    /// <br/>- Swarm: Check `docker info` for swarm mode
+    /// <br/>- Compose: Check for docker compose v2 availability
+    /// </remarks>
+    /// <returns>Available backends with capabilities</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/backends")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackendsResponse>> GetBackends(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetBackendsAsync(cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// List available deployment presets
+    /// </summary>
+    /// <remarks>
+    /// Returns all available deployment presets from the orchestrator's preset directory.
+    /// <br/>Presets define service combinations and configuration for specific use cases.
+    /// <br/>
+    /// <br/>Built-in presets:
+    /// <br/>- `local-development`: All services in single container with Dapr
+    /// <br/>- `local-testing`: Test environment with infrastructure services
+    /// <br/>- `integration-http`: HTTP integration testing preset
+    /// <br/>- `integration-edge`: WebSocket/edge testing preset
+    /// <br/>- `split-auth-accounts`: Auth and Accounts in separate containers
+    /// <br/>- `distributed-npc`: NPC processing distributed across nodes
+    /// </remarks>
+    /// <returns>Available deployment presets</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/presets")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PresetsResponse>> GetPresets(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetPresetsAsync(cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Deploy or update an environment
+    /// </summary>
+    /// <remarks>
+    /// Deploys a complete environment using a preset or custom configuration.
+    /// <br/>Supports graceful transitions, forced deployments, and clean rebuilds.
+    /// <br/>
+    /// <br/>**Deployment Modes**:
+    /// <br/>- `graceful`: Wait for existing connections to drain before changing topology
+    /// <br/>- `force`: Immediately apply changes (may interrupt active connections)
+    /// <br/>- `clean`: Tear down completely and rebuild from scratch
+    /// <br/>
+    /// <br/>**Backend Selection**:
+    /// <br/>- If `backend` not specified, uses highest-priority available backend
+    /// <br/>- If `backend` specified but unavailable, returns error (no fallback)
+    /// <br/>
+    /// <br/>**Live Topology Changes**:
+    /// <br/>Supports changing service distribution without full restart:
+    /// <br/>- Move auth/accounts to separate container while keeping other services together
+    /// <br/>- Scale specific services to additional nodes
+    /// <br/>- Update environment variables without restart (where supported)
+    /// </remarks>
+    /// <returns>Deployment initiated successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/deploy")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeployResponse>> Deploy([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeployRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.DeployAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get current environment status
+    /// </summary>
+    /// <remarks>
+    /// Returns comprehensive status of the current deployment including:
+    /// <br/>- Active backend and deployment configuration
+    /// <br/>- Service topology (which services on which containers)
+    /// <br/>- Container health and resource usage
+    /// <br/>- Infrastructure component status
+    /// <br/>- Active preset and any customizations
+    /// </remarks>
+    /// <returns>Current environment status</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/status")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EnvironmentStatus>> GetStatus(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetStatusAsync(cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Tear down the current environment
+    /// </summary>
+    /// <remarks>
+    /// Tears down all containers and services in the current deployment.
+    /// <br/>Optionally preserves volumes and networks for faster redeployment.
+    /// <br/>
+    /// <br/>**Teardown Modes**:
+    /// <br/>- `graceful`: Signal shutdown and wait for clean exit
+    /// <br/>- `force`: Immediately stop all containers (SIGKILL)
+    /// <br/>- `preserve-data`: Keep volumes and networks, only remove containers
+    /// </remarks>
+    /// <returns>Teardown completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/teardown")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TeardownResponse>> Teardown([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TeardownRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.TeardownAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Clean up unused resources
+    /// </summary>
+    /// <remarks>
+    /// Prunes unused Docker resources to reclaim disk space and clean up
+    /// <br/>orphaned containers, networks, volumes, and images.
+    /// <br/>
+    /// <br/>Equivalent to running various `docker system prune` commands.
+    /// <br/>
+    /// <br/>**Clean Targets**:
+    /// <br/>- `containers`: Remove stopped containers
+    /// <br/>- `networks`: Remove unused networks
+    /// <br/>- `volumes`: Remove unused volumes (CAUTION: data loss)
+    /// <br/>- `images`: Remove dangling images
+    /// <br/>- `all`: All of the above
+    /// </remarks>
+    /// <returns>Cleanup completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/clean")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanResponse>> Clean([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.CleanAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get service/container logs
+    /// </summary>
+    /// <remarks>
+    /// Retrieves logs from services or containers with filtering options.
+    /// <br/>Supports real-time streaming via WebSocket upgrade.
+    /// </remarks>
+    /// <param name="service">Service name to get logs for</param>
+    /// <param name="container">Container ID or name (alternative to service)</param>
+    /// <param name="since">Return logs since timestamp (RFC3339 or relative like "5m")</param>
+    /// <param name="until">Return logs until timestamp</param>
+    /// <param name="tail">Number of lines from end of logs</param>
+    /// <param name="follow">Stream logs in real-time (WebSocket upgrade)</param>
+    /// <returns>Log output</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/logs")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LogsResponse>> GetLogs([Microsoft.AspNetCore.Mvc.FromQuery] string? service, [Microsoft.AspNetCore.Mvc.FromQuery] string? container, [Microsoft.AspNetCore.Mvc.FromQuery] string? since, [Microsoft.AspNetCore.Mvc.FromQuery] string? until, [Microsoft.AspNetCore.Mvc.FromQuery] int? tail, [Microsoft.AspNetCore.Mvc.FromQuery] bool? follow, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetLogsAsync(service, container, since, until, tail ?? 100, follow ?? false, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Update service topology without full redeploy
+    /// </summary>
+    /// <remarks>
+    /// Changes which services run on which containers without tearing down
+    /// <br/>the entire environment. Enables live topology changes.
+    /// <br/>
+    /// <br/>**Use Cases**:
+    /// <br/>- Move auth service to dedicated container for scaling
+    /// <br/>- Consolidate services during low-traffic periods
+    /// <br/>- Split services for debugging/isolation
+    /// <br/>- Add new service nodes to running environment
+    /// </remarks>
+    /// <returns>Topology update applied</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/topology")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TopologyUpdateResponse>> UpdateTopology([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TopologyUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.UpdateTopologyAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Request container restart (self-service pattern)
+    /// </summary>
+    /// <remarks>
+    /// Plugins call this endpoint to request restart of their own container.
+    /// <br/>This is part of the self-service configuration update pattern where
+    /// <br/>plugins decide if they care about config changes and request restarts.
+    /// <br/>
+    /// <br/>**Flow**:
+    /// <br/>1. Orchestrator publishes ConfigurationChangedEvent with changed keys
+    /// <br/>2. Plugins check if any changed keys match their dependencies
+    /// <br/>3. Plugins that care call this endpoint to request restart
+    /// <br/>4. Orchestrator performs rolling restart of requested containers
+    /// <br/>
+    /// <br/>**Priority Levels**:
+    /// <br/>- `graceful`: Rolling update, wait for healthy before cycling next instance
+    /// <br/>- `immediate`: Rolling update but don't wait for connection drain
+    /// <br/>- `force`: Kill all instances simultaneously (causes downtime)
+    /// </remarks>
+    /// <param name="appName">Container's Dapr app name (e.g., "bannou", "npc-omega")</param>
+    /// <returns>Restart request accepted</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/{appName}/request-restart")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerRestartResponse>> RequestContainerRestart([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string appName, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ContainerRestartRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.RequestContainerRestartAsync(appName, body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get container health and restart history
+    /// </summary>
+    /// <remarks>
+    /// Returns detailed status of a container including health, restart history,
+    /// <br/>running plugins, and current configuration.
+    /// </remarks>
+    /// <param name="appName">Container's Dapr app name</param>
+    /// <returns>Container status</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/{appName}/status")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerStatus>> GetContainerStatus([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string appName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetContainerStatusAsync(appName, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Rollback to previous configuration
+    /// </summary>
+    /// <remarks>
+    /// Quickly rollback to the previous configuration without waiting for CI.
+    /// <br/>Swaps currentConfig with previousConfig and publishes ConfigurationChangedEvent
+    /// <br/>with the reverted keys so services can request restart.
+    /// <br/>
+    /// <br/>**Note**: This is a quick fix. GitHub secrets should still be corrected
+    /// <br/>to prevent re-breaking on next orchestrator deploy.
+    /// </remarks>
+    /// <returns>Rollback completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/rollback")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigRollbackResponse>> RollbackConfiguration([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ConfigRollbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.RollbackConfigurationAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get current configuration version and metadata
+    /// </summary>
+    /// <remarks>
+    /// Returns the current configuration version, last update time,
+    /// <br/>and summary of configuration state (not actual values for security).
+    /// </remarks>
+    /// <returns>Configuration version info</returns>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/version")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigVersionResponse>> GetConfigVersion(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetConfigVersionAsync(cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
