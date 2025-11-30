@@ -1,8 +1,8 @@
 # Orchestrator Service Design
 
-**Version**: 2.2.0
+**Version**: 2.3.0
 **Last Updated**: 2025-11-29
-**Status**: Implementation In Progress + Secrets & Configuration Update Design Complete
+**Status**: Core Implementation Complete + Unit Tests (28 passing) + Service Mapping Gap Identified
 
 ---
 
@@ -13,19 +13,25 @@
 3. [Architecture Overview](#architecture-overview)
 4. [Backend Priority System](#backend-priority-system)
 5. [Core Components](#core-components)
-6. [API Design](#api-design)
-7. [Deployment Presets](#deployment-presets)
-8. [Service Topology Management](#service-topology-management)
-9. [Health Monitoring](#health-monitoring)
-10. [Secrets and Configuration Management](#secrets-and-configuration-management)
-11. [Configuration Update Event System](#configuration-update-event-system)
-12. [CI/CD Integration Strategy](#cicd-integration-strategy)
-13. [Docker Socket Security](#docker-socket-security)
-14. [Implementation Status](#implementation-status)
-15. [Risk Assessment](#risk-assessment)
-16. [Future Enhancements](#future-enhancements)
-17. [Related Documentation](#related-documentation)
-18. [Appendix: Configuration Reference](#appendix-configuration-reference)
+6. [Interface-Based Architecture](#interface-based-architecture)
+7. [Unit Testing](#unit-testing)
+8. [Service Mapping Architecture](#service-mapping-architecture)
+9. [API Design](#api-design)
+10. [Makefile Commands](#makefile-commands)
+11. [Deployment Presets](#deployment-presets)
+12. [Service Topology Management](#service-topology-management)
+13. [Health Monitoring](#health-monitoring)
+14. [Secrets and Configuration Management](#secrets-and-configuration-management)
+15. [Configuration Update Event System](#configuration-update-event-system)
+16. [CI/CD Integration Strategy](#cicd-integration-strategy)
+17. [Docker Socket Security](#docker-socket-security)
+18. [Implementation Status](#implementation-status)
+19. [Critical Unimplemented TODOs](#critical-unimplemented-todos)
+20. [Edge-Tester Blockers](#edge-tester-blockers)
+21. [Risk Assessment](#risk-assessment)
+22. [Future Enhancements](#future-enhancements)
+23. [Related Documentation](#related-documentation)
+24. [Appendix: Configuration Reference](#appendix-configuration-reference)
 
 ---
 
@@ -291,6 +297,190 @@ Intelligent service restart logic - **only restart when truly necessary**:
 
 ---
 
+## Interface-Based Architecture
+
+All helper classes implement interfaces to enable unit testing with Moq:
+
+### Interfaces
+
+| Interface | Implementation | Purpose |
+|-----------|---------------|---------|
+| `IOrchestratorRedisManager` | `OrchestratorRedisManager` | Direct Redis connection for heartbeats |
+| `IOrchestratorEventManager` | `OrchestratorEventManager` | Direct RabbitMQ pub/sub |
+| `IServiceHealthMonitor` | `ServiceHealthMonitor` | Health aggregation and restart recommendations |
+| `ISmartRestartManager` | `SmartRestartManager` | Docker container lifecycle management |
+| `IBackendDetector` | `BackendDetector` | Multi-backend detection and orchestrator creation |
+
+### OrchestratorService Constructor
+
+```csharp
+public OrchestratorService(
+    DaprClient daprClient,
+    ILogger<OrchestratorService> logger,
+    OrchestratorServiceConfiguration configuration,
+    IOrchestratorRedisManager redisManager,
+    IOrchestratorEventManager eventManager,
+    IServiceHealthMonitor healthMonitor,
+    ISmartRestartManager restartManager,
+    IBackendDetector backendDetector)
+```
+
+All dependencies are injected via interfaces, enabling full mocking in unit tests.
+
+---
+
+## Unit Testing
+
+The orchestrator has comprehensive unit tests in `lib-orchestrator.tests/OrchestratorServiceTests.cs`.
+
+### Test Coverage (28 Tests)
+
+| Category | Tests | Description |
+|----------|-------|-------------|
+| Constructor Validation | 8 | Null argument checks for all dependencies |
+| GetInfrastructureHealthAsync | 3 | Success, degraded, and unhealthy scenarios |
+| GetServicesHealthAsync | 1 | Service health report aggregation |
+| RestartServiceAsync | 2 | Forced restart and health-based restart |
+| ShouldRestartServiceAsync | 1 | Restart recommendation logic |
+| GetBackendsAsync | 1 | Backend detection |
+| GetStatusAsync | 2 | Status response building |
+| GetContainerStatusAsync | 2 | Container health and history |
+| ServiceHealthMonitor | 5 | Degradation threshold logic |
+| Configuration | 2 | Configuration binding tests |
+
+### Running Tests
+
+```bash
+# Run orchestrator tests only
+dotnet test lib-orchestrator.tests/
+
+# Run with verbose output
+dotnet test lib-orchestrator.tests/ -v n
+
+# Run as part of full test suite
+make test
+```
+
+### Test Architecture
+
+Tests use Moq to mock all interface dependencies:
+
+```csharp
+[Fact]
+public async Task GetInfrastructureHealthAsync_ReturnsHealthyStatus_WhenAllComponentsHealthy()
+{
+    // Arrange
+    _mockRedisManager
+        .Setup(x => x.CheckHealthAsync())
+        .ReturnsAsync((true, "OK", TimeSpan.FromMilliseconds(5)));
+
+    _mockEventManager
+        .Setup(x => x.CheckHealth())
+        .Returns((true, "Connected"));
+
+    // Act
+    var (status, response) = await _service.GetInfrastructureHealthAsync();
+
+    // Assert
+    Assert.Equal(StatusCodes.Status200OK, status);
+    Assert.True(response?.IsHealthy);
+}
+```
+
+---
+
+## Service Mapping Architecture
+
+### Current State
+
+The orchestrator monitors service heartbeats and manages container topology. However, there's a **critical gap** in the service mapping event flow.
+
+### ServiceAppMappingResolver
+
+Located in `bannou-service/Services/ServiceAppMappingResolver.cs`, this class resolves service names to Dapr app-ids:
+
+```csharp
+public class ServiceAppMappingResolver : IServiceAppMappingResolver
+{
+    private const string DEFAULT_APP_ID = "bannou"; // Omnipotent default
+    private readonly ConcurrentDictionary<string, string> _serviceMappings;
+
+    public string GetAppIdForService(string serviceName)
+    {
+        return _serviceMappings.GetValueOrDefault(serviceName, DEFAULT_APP_ID);
+    }
+
+    public async Task UpdateServiceMapping(string serviceName, string appId)
+    {
+        _serviceMappings.AddOrUpdate(serviceName, appId, (key, old) => appId);
+    }
+}
+```
+
+### The Gap: Missing Service Mapping Events
+
+**Problem**: `ServiceAppMappingResolver` has methods to update mappings from RabbitMQ events, but **no component currently publishes these events**.
+
+**Expected Flow**:
+```
+1. Orchestrator deploys/moves service to new container
+2. Orchestrator publishes ServiceMappingEvent to RabbitMQ
+3. All bannou instances consume event
+4. ServiceAppMappingResolver updates mappings
+5. Future service calls route to correct app-id
+```
+
+**Current State**:
+- ✅ ServiceAppMappingResolver can consume events
+- ✅ ServiceAppMappingResolver can update mappings
+- ❌ OrchestratorEventManager doesn't publish service mapping events
+- ❌ No `bannou-service-mappings` exchange defined
+
+### Required Implementation
+
+Add to `OrchestratorEventManager`:
+
+```csharp
+// New exchange for service mappings
+private const string SERVICE_MAPPINGS_EXCHANGE = "bannou-service-mappings";
+
+// Publish when topology changes
+public async Task PublishServiceMappingEventAsync(ServiceMappingEvent mappingEvent)
+{
+    var json = JsonSerializer.Serialize(mappingEvent);
+    var body = Encoding.UTF8.GetBytes(json);
+
+    _channel.BasicPublish(
+        exchange: SERVICE_MAPPINGS_EXCHANGE,
+        routingKey: mappingEvent.ServiceName,
+        body: body);
+}
+```
+
+**ServiceMappingEvent Model**:
+```yaml
+ServiceMappingEvent:
+  properties:
+    eventId: string (uuid)
+    timestamp: string (date-time)
+    serviceName: string      # e.g., "auth", "accounts"
+    appId: string            # e.g., "bannou-auth", "npc-omega"
+    action: enum [register, unregister, update]
+    region: string           # Optional: for geographic routing
+    priority: integer        # Optional: for load balancing
+```
+
+### When to Publish Service Mapping Events
+
+| Orchestrator Action | Mapping Event |
+|---------------------|---------------|
+| Deploy service to new container | `register` with new app-id |
+| Move service between containers | `update` with new app-id |
+| Teardown container with service | `unregister` to fall back to default |
+| Scale service replicas | No event (same app-id) |
+
+---
+
 ## API Design
 
 The orchestrator exposes a comprehensive REST API for all environment management operations. Full schema available in `schemas/orchestrator-api.yaml`.
@@ -361,6 +551,74 @@ The orchestrator exposes a comprehensive REST API for all environment management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/orchestrator/tests/run` | POST | Execute test batch via API |
+
+---
+
+## Makefile Commands
+
+The orchestrator has dedicated Makefile targets for standalone operation and API testing.
+
+### Starting the Orchestrator
+
+```bash
+# Start orchestrator in standalone mode with infrastructure
+make up-orchestrator
+
+# Stop orchestrator stack
+make down-orchestrator
+
+# View orchestrator logs
+make logs-orchestrator
+```
+
+### Testing Orchestrator APIs
+
+```bash
+# Test all orchestrator APIs
+make test-orchestrator
+
+# Individual API tests
+make orchestrator-status      # GET /orchestrator/status
+make orchestrator-health      # GET /orchestrator/health
+make orchestrator-services    # GET /orchestrator/services
+make orchestrator-backends    # GET /orchestrator/backends
+make orchestrator-containers  # GET /orchestrator/containers
+```
+
+### Docker Compose Configuration
+
+The orchestrator uses `provisioning/docker-compose.orchestrator.yml`:
+
+```yaml
+services:
+  bannou-orchestrator:
+    environment:
+      # Only orchestrator service enabled
+      - ORCHESTRATOR_SERVICE_ENABLED=true
+      - ACCOUNTS_SERVICE_ENABLED=false
+      # Direct connections (NOT Dapr)
+      - BANNOU_RedisConnectionString=bannou-redis:6379
+      - BANNOU_RabbitMqConnectionString=amqp://guest:guest@rabbitmq:5672
+      - BANNOU_DockerHost=unix:///var/run/docker.sock
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    ports:
+      - "8090:80"   # Orchestrator HTTP API
+      - "8493:443"  # Orchestrator HTTPS API
+```
+
+### API Endpoints Summary
+
+After running `make up-orchestrator`, the following endpoints are available at `http://localhost:8090`:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /orchestrator/status` | Overall orchestrator status |
+| `GET /orchestrator/health` | Infrastructure health (Redis, RabbitMQ, Dapr) |
+| `GET /orchestrator/services` | Service health from heartbeats |
+| `GET /orchestrator/backends` | Available container backends |
+| `GET /orchestrator/containers` | Container status |
+| `POST /orchestrator/restart` | Restart a service |
 
 ---
 
@@ -1075,22 +1333,32 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 - [x] SmartRestartManager with Docker.DotNet integration
 - [x] OrchestratorEventManager for RabbitMQ pub/sub
 - [x] Basic API endpoints (health, restart, should-restart)
+- [x] **Interface-based architecture** for all helper classes
+- [x] **28 unit tests passing** with full Moq coverage
+- [x] **Makefile commands** for standalone orchestrator operation
 
 ### Phase 2: Environment Management 🔧 In Progress
 
-- [x] API schema design (orchestrator-api.yaml v2.0.0)
-- [x] Backend detection framework
+- [x] API schema design (orchestrator-api.yaml v2.2.0)
+- [x] Backend detection framework with 4-backend support
+- [x] Docker Compose orchestrator (DockerComposeOrchestrator.cs)
+- [x] Docker Swarm orchestrator (DockerSwarmOrchestrator.cs)
+- [x] Portainer orchestrator (PortainerOrchestrator.cs)
+- [x] Kubernetes orchestrator (KubernetesOrchestrator.cs)
+- [x] BackendDetector with priority-based selection
 - [ ] Deployment preset system
-- [ ] Deploy/teardown/status implementation
-- [ ] Topology update without full redeploy
+- [ ] Deploy/teardown/status implementation (see TODOs below)
+- [ ] Topology update without full redeploy (see TODOs below)
 - [ ] Log streaming
 
-### Phase 3: Multi-Backend Support 📋 Planned
+### Phase 3: Service Mapping Events 🚨 Critical Gap
 
-- [ ] Docker Compose backend (Docker.DotNet)
-- [ ] Docker Swarm backend
-- [ ] Portainer backend (REST API)
-- [ ] Kubernetes backend (KubernetesClient)
+- [x] ServiceAppMappingResolver can consume events
+- [x] ServiceAppMappingResolver can update mappings dynamically
+- [ ] **Service mapping exchange** (`bannou-service-mappings`)
+- [ ] **PublishServiceMappingEventAsync** in OrchestratorEventManager
+- [ ] **ServiceMappingEvent** model in orchestrator schema
+- [ ] **Publish on topology changes** (deploy, move, teardown)
 
 ### Phase 4: Secrets Integration 📋 Planned (Research Complete)
 
@@ -1114,9 +1382,123 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 
 ---
 
+## Critical Unimplemented TODOs
+
+The following TODOs in `OrchestratorService.cs` represent core functionality that needs implementation:
+
+| Location | TODO | Priority | Blocker For |
+|----------|------|----------|-------------|
+| Line 190 | Implement test execution via API calls to test services | Medium | Test orchestration feature |
+| Line 347 | Implement actual deployment via container orchestrator | **HIGH** | Deploy endpoint |
+| Line 421 | Implement actual teardown via container orchestrator | **HIGH** | Teardown endpoint |
+| Line 453 | Implement cleanup via container orchestrator | Medium | Clean endpoint |
+| Line 544 | Implement topology update via container orchestrator | **HIGH** | Live topology changes |
+| Line 632 | Implement configuration rollback | Low | Rollback endpoint |
+
+### Deployment TODO (Line 347)
+
+```csharp
+// TODO: Implement actual deployment via container orchestrator
+// Currently returns success without deploying
+```
+
+**Required Implementation**:
+1. Get appropriate orchestrator from `_backendDetector`
+2. Parse deployment preset from request
+3. Create/update containers with service configuration
+4. Wait for health checks
+5. Publish ServiceMappingEvents for new services
+
+### Teardown TODO (Line 421)
+
+```csharp
+// TODO: Implement actual teardown via container orchestrator
+// Currently returns success without tearing down
+```
+
+**Required Implementation**:
+1. Get appropriate orchestrator from `_backendDetector`
+2. Stop containers gracefully
+3. Remove containers if requested
+4. Publish ServiceMappingEvents to unregister services
+
+### Topology Update TODO (Line 544)
+
+```csharp
+// TODO: Implement topology update via container orchestrator
+// Currently returns success without updating topology
+```
+
+**Required Implementation**:
+1. Parse topology change requests (move-service, add-node, remove-node)
+2. Coordinate container lifecycle changes
+3. **Publish ServiceMappingEvents** for any service moves
+4. Wait for health verification
+
+---
+
+## Edge-Tester Blockers
+
+The edge-tester (`edge-tester/`) validates WebSocket binary protocol functionality. Current blockers prevent full test execution.
+
+### Current Blockers
+
+| Blocker | Description | Required Fix |
+|---------|-------------|--------------|
+| **Auth Service Dependency** | Edge-tester requires successful login before WebSocket tests | Fix auth registration/login in http-tester first |
+| **Connect WebSocket Handler** | Binary protocol routing not implemented | Implement WebSocket message handler in Connect service |
+| **Service Discovery Response** | Server doesn't return capability discovery | Implement API discovery via WebSocket |
+| **Channel-Based Routing** | Binary protocol uses channels 0/1/2 but server ignores channel field | Add channel-based message routing |
+
+### Edge-Tester Test Suite
+
+Located in `edge-tester/Tests/ConnectWebSocketTestHandler.cs`:
+
+| Test | Description | Status |
+|------|-------------|--------|
+| WebSocket - Upgrade | JWT authentication for WebSocket connections | ⚠️ Blocked by auth |
+| WebSocket - Binary Protocol | 31-byte header message exchange | ⚠️ Blocked by Connect handler |
+| WebSocket - Service Discovery | API discovery via binary protocol | ⚠️ Blocked by implementation |
+| WebSocket - Internal API Proxy | HTTP proxy through WebSocket | ⚠️ Blocked by Connect handler |
+
+### Required Connect Service Work
+
+1. **WebSocket Connection Handler**: Accept connections, validate JWT, create session
+2. **Binary Message Parser**: Parse 31-byte header, extract serviceGuid
+3. **Message Router**: Route messages based on serviceGuid to correct backend
+4. **Capability Updates**: Push permission changes via RabbitMQ to connected clients
+5. **Channel Multiplexing**: Handle channels 0 (discovery), 1 (API), 2 (proxy)
+
+### Edge-Tester Flow
+
+```
+1. HTTP: Register account
+2. HTTP: Login → get JWT
+3. WebSocket: Connect with JWT in Authorization header
+4. WebSocket: Send binary protocol message
+5. WebSocket: Receive binary protocol response
+6. WebSocket: Test API discovery
+7. WebSocket: Test API proxy
+```
+
+Steps 1-2 currently blocked by auth service issues in http-tester.
+
+---
+
 ## Risk Assessment
 
-### Risk 1: Docker Socket Security Breach (HIGH)
+### Risk 1: Service Mapping Event Gap (HIGH)
+
+**Impact**: Distributed service deployments will not route correctly
+**Likelihood**: Certain (gap exists today)
+**Current State**: ServiceAppMappingResolver expects events but no publisher exists
+**Mitigation**:
+- Implement `PublishServiceMappingEventAsync` in OrchestratorEventManager
+- Add `bannou-service-mappings` exchange to RabbitMQ
+- Integrate with deploy/teardown/topology endpoints
+- Test with multi-container deployment preset
+
+### Risk 2: Docker Socket Security Breach (HIGH)
 
 **Impact**: Root privilege escalation, host compromise
 **Likelihood**: Medium (if deployed to production with socket mounted)
@@ -1125,7 +1507,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 - Dual implementation (socket for dev, Kubernetes API for prod)
 - CI/CD pipeline validation (reject prod deployments with socket mounts)
 
-### Risk 2: Docker Compose Production Limitations (HIGH)
+### Risk 3: Docker Compose Production Limitations (HIGH)
 
 **Impact**: Single point of failure, no high availability
 **Likelihood**: High (as project scales beyond 20 containers)
@@ -1134,7 +1516,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 - Plan Kubernetes migration
 - Use orchestrator to smooth transition (same API, different backend)
 
-### Risk 3: Orchestrator Service Failure (MEDIUM)
+### Risk 4: Orchestrator Service Failure (MEDIUM)
 
 **Impact**: No health monitoring, no test execution, no smart restarts
 **Likelihood**: Low (with proper implementation)
@@ -1144,7 +1526,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 - Health check on orchestrator itself
 - Future: Multiple orchestrator instances (leader election)
 
-### Risk 4: Secrets Propagation Delay (MEDIUM)
+### Risk 5: Secrets Propagation Delay (MEDIUM)
 
 **Impact**: Configuration changes don't apply promptly
 **Target**: Secrets should propagate within 30 minutes
