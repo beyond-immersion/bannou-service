@@ -118,6 +118,138 @@ public class Program
         }
     }
 
+    /// <summary>
+    /// Waits for OpenResty gateway and backend services to become ready.
+    /// Polls the health endpoint with exponential backoff, then verifies
+    /// that Dapr-dependent services are also ready by making a warmup call.
+    /// </summary>
+    /// <returns>True if services are ready, false if timeout exceeded.</returns>
+    private static async Task<bool> WaitForServiceReadiness()
+    {
+        const int maxWaitSeconds = 120;
+        const int initialDelayMs = 500;
+        const int maxDelayMs = 5000;
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var delayMs = initialDelayMs;
+
+        // Construct health check URL from OpenResty configuration
+        var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Configuration.OpenResty_Port ?? 80;
+        var healthUrl = $"http://{openrestyHost}:{openrestyPort}/health";
+        var authHealthUrl = $"http://{openrestyHost}:{openrestyPort}/auth/health";
+
+        Console.WriteLine($"⏳ Waiting for services to become ready...");
+        Console.WriteLine($"   OpenResty health URL: {healthUrl}");
+        Console.WriteLine($"   Auth service health URL: {authHealthUrl}");
+
+        // Phase 1: Wait for OpenResty and basic bannou service
+        while (stopwatch.Elapsed.TotalSeconds < maxWaitSeconds)
+        {
+            try
+            {
+                // First check OpenResty itself
+                var openrestyResponse = await HttpClient.GetAsync(healthUrl);
+                if (!openrestyResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"⏳ OpenResty not ready ({openrestyResponse.StatusCode}), retrying in {delayMs}ms...");
+                    await Task.Delay(delayMs);
+                    delayMs = Math.Min(delayMs * 2, maxDelayMs);
+                    continue;
+                }
+
+                // Then check that auth service is reachable through OpenResty
+                var authResponse = await HttpClient.GetAsync(authHealthUrl);
+                if (authResponse.IsSuccessStatusCode || authResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    // NotFound is OK - it means OpenResty reached bannou but the health endpoint doesn't exist
+                    // That's fine - the service is available
+                    Console.WriteLine($"✅ Basic services ready after {stopwatch.Elapsed.TotalSeconds:F1}s");
+                    break;
+                }
+
+                if (authResponse.StatusCode == System.Net.HttpStatusCode.BadGateway ||
+                    authResponse.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+                {
+                    Console.WriteLine($"⏳ Backend service not ready ({authResponse.StatusCode}), retrying in {delayMs}ms...");
+                }
+                else
+                {
+                    Console.WriteLine($"⏳ Unexpected response ({authResponse.StatusCode}), retrying in {delayMs}ms...");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"⏳ Connection failed ({ex.Message}), retrying in {delayMs}ms...");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⏳ Error ({ex.GetType().Name}: {ex.Message}), retrying in {delayMs}ms...");
+            }
+
+            await Task.Delay(delayMs);
+            delayMs = Math.Min(delayMs * 2, maxDelayMs);
+        }
+
+        if (stopwatch.Elapsed.TotalSeconds >= maxWaitSeconds)
+        {
+            Console.WriteLine($"❌ Services failed to become ready within {maxWaitSeconds}s");
+            return false;
+        }
+
+        // Phase 2: Wait for Dapr sidecar to be ready by making a warmup registration attempt
+        // The registration endpoint calls AccountsClient through Dapr, so this actually exercises
+        // the full Dapr dependency chain. We expect 200 (created) or 409 (conflict) when working,
+        // but 500/502/503 when Dapr isn't ready yet. Login with empty credentials doesn't work
+        // because validation fails before Dapr is touched.
+        Console.WriteLine($"⏳ Verifying Dapr sidecar readiness...");
+        var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+        delayMs = initialDelayMs;
+
+        while (stopwatch.Elapsed.TotalSeconds < maxWaitSeconds)
+        {
+            try
+            {
+                // Make a registration request with a unique warmup username - this will exercise Dapr
+                var warmupUsername = $"warmup_{Guid.NewGuid():N}@test.local";
+                var warmupContent = new StringContent(
+                    $"{{\"username\":\"{warmupUsername}\",\"password\":\"warmup-password-123\"}}",
+                    Encoding.UTF8,
+                    "application/json");
+                var warmupResponse = await HttpClient.PostAsync(registerUrl, warmupContent);
+
+                // 500/502/503 typically indicates Dapr sidecar isn't ready
+                if (warmupResponse.StatusCode == System.Net.HttpStatusCode.InternalServerError ||
+                    warmupResponse.StatusCode == System.Net.HttpStatusCode.BadGateway ||
+                    warmupResponse.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+                {
+                    Console.WriteLine($"⏳ Dapr sidecar not ready ({warmupResponse.StatusCode}), retrying in {delayMs}ms...");
+                    await Task.Delay(delayMs);
+                    delayMs = Math.Min(delayMs * 2, maxDelayMs);
+                    continue;
+                }
+
+                // 200 OK or 409 Conflict means the service chain is fully working
+                Console.WriteLine($"✅ Dapr sidecar ready after {stopwatch.Elapsed.TotalSeconds:F1}s (warmup returned {warmupResponse.StatusCode})");
+                return true;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"⏳ Warmup connection failed ({ex.Message}), retrying in {delayMs}ms...");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⏳ Warmup error ({ex.GetType().Name}: {ex.Message}), retrying in {delayMs}ms...");
+            }
+
+            await Task.Delay(delayMs);
+            delayMs = Math.Min(delayMs * 2, maxDelayMs);
+        }
+
+        Console.WriteLine($"❌ Dapr sidecar failed to become ready within {maxWaitSeconds}s");
+        return false;
+    }
+
     internal static async Task Main(string[] args)
     {
         try
@@ -125,6 +257,12 @@ public class Program
             // configuration is auto-created on first get, so this call creates the config too
             if (Configuration == null || !Configuration.HasRequired())
                 throw new InvalidOperationException("Required client configuration missing.");
+
+            // Wait for OpenResty gateway and backend services to be ready
+            if (!await WaitForServiceReadiness())
+            {
+                throw new InvalidOperationException("Services failed to become ready within timeout.");
+            }
 
             Console.WriteLine("Attempting to log in.");
 

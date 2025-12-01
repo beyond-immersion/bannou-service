@@ -217,6 +217,14 @@ public class Program
                 // Don't fail here - individual tests that need pubsub will report meaningful errors
             }
 
+            // Wait for statestore component to be ready (Redis connectivity)
+            // This ensures Accounts service tests will work properly
+            if (!await WaitForStateStoreReadiness(daprClient))
+            {
+                Console.WriteLine("⚠️ Statestore readiness check failed, continuing anyway...");
+                // Don't fail here - individual tests that need statestore will report meaningful errors
+            }
+
             Console.WriteLine("✅ Service provider setup completed successfully");
             Console.WriteLine("✅ Dapr client connectivity verified");
 
@@ -315,6 +323,56 @@ public class Program
         Console.WriteLine($"⚠️ Pubsub readiness check timed out after {timeout.TotalSeconds}s. Event-driven tests may fail.");
         // Return true anyway - we don't want to block all tests just because pubsub isn't ready
         // Individual tests that need pubsub will fail with meaningful errors
+        return true;
+    }
+
+    /// <summary>
+    /// Waits for the Dapr statestore component to be fully connected to Redis.
+    /// This ensures Accounts service tests will work properly.
+    /// </summary>
+    /// <param name="daprClient">The Dapr client to use for statestore checks.</param>
+    /// <returns>True if statestore is ready, false if timeout or error occurs.</returns>
+    private static async Task<bool> WaitForStateStoreReadiness(DaprClient daprClient)
+    {
+        var timeout = TimeSpan.FromSeconds(60);
+        var checkInterval = TimeSpan.FromSeconds(2);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var storeName = "statestore";
+        var testKey = "test-connectivity-check";
+
+        Console.WriteLine($"Waiting for statestore component '{storeName}' to be ready (timeout: {timeout.TotalSeconds}s)...");
+
+        while (stopwatch.Elapsed < timeout)
+        {
+            try
+            {
+                // Try to save and retrieve a test value to verify Redis connectivity
+                await daprClient.SaveStateAsync(storeName, testKey, new { test = "connectivity-check", timestamp = DateTime.UtcNow });
+                var result = await daprClient.GetStateAsync<object>(storeName, testKey);
+                if (result != null)
+                {
+                    // Clean up test key
+                    await daprClient.DeleteStateAsync(storeName, testKey);
+                    Console.WriteLine($"✅ Statestore component '{storeName}' is ready and connected to Redis");
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                var elapsed = stopwatch.Elapsed.TotalSeconds;
+                // Only log every few seconds to reduce noise
+                if (elapsed < 5 || (int)elapsed % 5 == 0)
+                {
+                    Console.WriteLine($"⏳ Statestore not ready, retrying... ({elapsed:F1}s elapsed) - {ex.Message}");
+                }
+            }
+
+            await Task.Delay(checkInterval);
+        }
+
+        Console.WriteLine($"⚠️ Statestore readiness check timed out after {timeout.TotalSeconds}s. Accounts tests may fail.");
+        // Return true anyway - we don't want to block all tests just because statestore isn't ready
+        // Individual tests that need statestore will fail with meaningful errors
         return true;
     }
 

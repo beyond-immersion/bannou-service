@@ -11,6 +11,18 @@ public sealed class ClientConfiguration
     public string? Login_Token_Endpoint { get; set; }
 
     /// <summary>
+    /// OpenResty gateway hostname (internal container name, e.g., "openresty").
+    /// Used for health checks before running tests.
+    /// </summary>
+    public string? OpenResty_Host { get; set; }
+
+    /// <summary>
+    /// OpenResty gateway port (internal container port, e.g., 80).
+    /// Used for health checks before running tests.
+    /// </summary>
+    public int? OpenResty_Port { get; set; }
+
+    /// <summary>
     /// Regular user credentials (email format, will be created with user role)
     /// </summary>
     public string? Client_Username { get; set; }
