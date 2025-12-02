@@ -1073,106 +1073,22 @@ public class OrchestratorService : IOrchestratorService
 
     /// <summary>
     /// Registers service permissions for the Orchestrator API endpoints.
+    /// Uses the generated OrchestratorPermissionRegistration to publish to the correct pub/sub topic.
     /// All orchestrator operations require admin role access.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {
+        _logger.LogInformation("Registering Orchestrator service permissions... (starting)");
         try
         {
-            var serviceName = "orchestrator";
-            _logger.LogInformation("Registering permissions for {ServiceName} service", serviceName);
-
-            var endpoints = CreateServiceEndpoints();
-
-            await _daprClient.PublishEventAsync(
-                "bannou-pubsub",
-                "bannou-service-registered",
-                new Events.ServiceRegistrationEvent
-                {
-                    EventId = Guid.NewGuid().ToString(),
-                    Timestamp = DateTime.UtcNow,
-                    ServiceId = serviceName,
-                    Version = "2.2.0",
-                    AppId = "bannou",
-                    Endpoints = endpoints,
-                    Metadata = new Dictionary<string, object>
-                    {
-                        { "generatedFrom", "OrchestratorService.RegisterServicePermissionsAsync" },
-                        { "extractedAt", DateTime.UtcNow },
-                        { "endpointCount", endpoints.Count }
-                    }
-                });
-
-            _logger.LogInformation("Successfully registered {Count} permission rules for {ServiceName}",
-                endpoints.Count, serviceName);
+            await OrchestratorPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+            _logger.LogInformation("Orchestrator service permissions registered via event (complete)");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to register permissions for orchestrator service");
+            _logger.LogError(ex, "Failed to register Orchestrator service permissions");
+            throw;
         }
-    }
-
-    /// <summary>
-    /// Creates ServiceEndpoint objects for all orchestrator API endpoints.
-    /// All endpoints require admin role as orchestrator is infrastructure-only.
-    /// </summary>
-    private List<Events.ServiceEndpoint> CreateServiceEndpoints()
-    {
-        var endpoints = new List<Events.ServiceEndpoint>();
-
-        // All orchestrator endpoints require admin role in any authenticated state
-        var adminPermission = new Events.PermissionRequirement
-        {
-            Role = "admin",
-            RequiredStates = new Dictionary<string, string>
-            {
-                { "auth", "authenticated" }
-            },
-            Description = "Admin access required for orchestrator operations"
-        };
-
-        // Health endpoints
-        endpoints.Add(CreateEndpoint("GET", "/orchestrator/health/infrastructure", "Check infrastructure health", adminPermission));
-        endpoints.Add(CreateEndpoint("GET", "/orchestrator/health/services", "Get services health report", adminPermission));
-
-        // Service management endpoints
-        endpoints.Add(CreateEndpoint("POST", "/orchestrator/services/restart", "Restart service", adminPermission));
-        endpoints.Add(CreateEndpoint("POST", "/orchestrator/services/should-restart", "Check if restart needed", adminPermission));
-
-        // Environment management endpoints
-        endpoints.Add(CreateEndpoint("GET", "/orchestrator/backends", "Detect available backends", adminPermission));
-        endpoints.Add(CreateEndpoint("GET", "/orchestrator/presets", "List deployment presets", adminPermission));
-        endpoints.Add(CreateEndpoint("POST", "/orchestrator/deploy", "Deploy environment", adminPermission));
-        endpoints.Add(CreateEndpoint("GET", "/orchestrator/status", "Get environment status", adminPermission));
-        endpoints.Add(CreateEndpoint("POST", "/orchestrator/teardown", "Teardown environment", adminPermission));
-        endpoints.Add(CreateEndpoint("POST", "/orchestrator/clean", "Clean unused resources", adminPermission));
-        endpoints.Add(CreateEndpoint("GET", "/orchestrator/logs", "Get service logs", adminPermission));
-        endpoints.Add(CreateEndpoint("POST", "/orchestrator/topology", "Update service topology", adminPermission));
-
-        // Container management endpoints
-        endpoints.Add(CreateEndpoint("POST", "/orchestrator/containers/{appName}/request-restart", "Request container restart", adminPermission));
-        endpoints.Add(CreateEndpoint("GET", "/orchestrator/containers/{appName}/status", "Get container status", adminPermission));
-
-        // Configuration management endpoints
-        endpoints.Add(CreateEndpoint("POST", "/orchestrator/config/rollback", "Rollback configuration", adminPermission));
-        endpoints.Add(CreateEndpoint("GET", "/orchestrator/config/version", "Get config version", adminPermission));
-
-        return endpoints;
-    }
-
-    /// <summary>
-    /// Helper to create a ServiceEndpoint with proper formatting.
-    /// </summary>
-    private static Events.ServiceEndpoint CreateEndpoint(string method, string path, string description, Events.PermissionRequirement permission)
-    {
-        return new Events.ServiceEndpoint
-        {
-            Path = path,
-            Method = Enum.Parse<Events.ServiceEndpointMethod>(method),
-            Description = description,
-            Category = "orchestrator",
-            Permissions = new List<Events.PermissionRequirement> { permission }
-        };
     }
 
     /// <summary>

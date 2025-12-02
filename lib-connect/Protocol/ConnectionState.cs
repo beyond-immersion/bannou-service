@@ -74,6 +74,15 @@ public class ConnectionState
     }
 
     /// <summary>
+    /// Clears all service mappings (used before rebuilding capabilities).
+    /// </summary>
+    public void ClearServiceMappings()
+    {
+        ServiceMappings.Clear();
+        GuidMappings.Clear();
+    }
+
+    /// <summary>
     /// Gets the next sequence number for a channel.
     /// </summary>
     public uint GetNextSequenceNumber(ushort channel)

@@ -27,9 +27,11 @@ public class OrchestratorEventManager : IOrchestratorEventManager
     private const string HEARTBEAT_QUEUE = "orchestrator-heartbeat-queue";
     private const string RESTART_EXCHANGE = "bannou-service-restarts";
     private const string MAPPINGS_EXCHANGE = "bannou-service-mappings";
+    private const string MAPPINGS_QUEUE = "orchestrator-mappings-queue";
     private const string DEPLOYMENT_EXCHANGE = "bannou-deployment-events";
 
     public event Action<ServiceHeartbeatEvent>? HeartbeatReceived;
+    public event Action<ServiceMappingEvent>? ServiceMappingReceived;
 
     /// <summary>
     /// Creates OrchestratorEventManager with connection string read directly from environment.
@@ -72,20 +74,33 @@ public class OrchestratorEventManager : IOrchestratorEventManager
                 _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
                 // Declare exchanges and queues
-                await _channel.ExchangeDeclareAsync(HEARTBEAT_EXCHANGE, ExchangeType.Topic, durable: true, cancellationToken: cancellationToken);
+                // CRITICAL: Match Dapr pub/sub default settings exactly: durable=true, autoDelete=true
+                // Dapr creates fanout exchanges with these settings, so we must match to avoid PRECONDITION_FAILED
+                await _channel.ExchangeDeclareAsync(HEARTBEAT_EXCHANGE, ExchangeType.Fanout, durable: true, autoDelete: true, cancellationToken: cancellationToken);
                 await _channel.QueueDeclareAsync(HEARTBEAT_QUEUE, durable: false, exclusive: false, autoDelete: true, cancellationToken: cancellationToken);
-                await _channel.QueueBindAsync(HEARTBEAT_QUEUE, HEARTBEAT_EXCHANGE, "service.heartbeat.#", cancellationToken: cancellationToken);
+                // Fanout exchanges ignore routing keys - use empty string
+                await _channel.QueueBindAsync(HEARTBEAT_QUEUE, HEARTBEAT_EXCHANGE, string.Empty, cancellationToken: cancellationToken);
 
+                // These exchanges are used by Orchestrator only (not Dapr pub/sub), so can keep durable
                 await _channel.ExchangeDeclareAsync(RESTART_EXCHANGE, ExchangeType.Topic, durable: true, cancellationToken: cancellationToken);
                 await _channel.ExchangeDeclareAsync(MAPPINGS_EXCHANGE, ExchangeType.Fanout, durable: true, cancellationToken: cancellationToken);
                 await _channel.ExchangeDeclareAsync(DEPLOYMENT_EXCHANGE, ExchangeType.Fanout, durable: true, cancellationToken: cancellationToken);
 
-                // Start consuming heartbeat events
-                var consumer = new AsyncEventingBasicConsumer(_channel);
-                consumer.ReceivedAsync += OnHeartbeatMessageReceived;
-                await _channel.BasicConsumeAsync(HEARTBEAT_QUEUE, autoAck: true, consumer: consumer, cancellationToken: cancellationToken);
+                // Set up mappings queue for this orchestrator instance
+                await _channel.QueueDeclareAsync(MAPPINGS_QUEUE, durable: false, exclusive: false, autoDelete: true, cancellationToken: cancellationToken);
+                await _channel.QueueBindAsync(MAPPINGS_QUEUE, MAPPINGS_EXCHANGE, string.Empty, cancellationToken: cancellationToken);
 
-                _logger.LogInformation("RabbitMQ connection established successfully");
+                // Start consuming heartbeat events
+                var heartbeatConsumer = new AsyncEventingBasicConsumer(_channel);
+                heartbeatConsumer.ReceivedAsync += OnHeartbeatMessageReceived;
+                await _channel.BasicConsumeAsync(HEARTBEAT_QUEUE, autoAck: true, consumer: heartbeatConsumer, cancellationToken: cancellationToken);
+
+                // Start consuming service mapping events
+                var mappingsConsumer = new AsyncEventingBasicConsumer(_channel);
+                mappingsConsumer.ReceivedAsync += OnMappingMessageReceived;
+                await _channel.BasicConsumeAsync(MAPPINGS_QUEUE, autoAck: true, consumer: mappingsConsumer, cancellationToken: cancellationToken);
+
+                _logger.LogInformation("RabbitMQ connection established successfully (heartbeats + mappings)");
 
                 return true;
             }
@@ -139,6 +154,38 @@ public class OrchestratorEventManager : IOrchestratorEventManager
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing heartbeat message");
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Handle incoming service mapping messages from RabbitMQ.
+    /// </summary>
+    private Task OnMappingMessageReceived(object sender, BasicDeliverEventArgs args)
+    {
+        try
+        {
+            var body = args.Body.ToArray();
+            var message = Encoding.UTF8.GetString(body);
+
+            var mappingEvent = JsonSerializer.Deserialize<ServiceMappingEvent>(message);
+            if (mappingEvent != null)
+            {
+                _logger.LogInformation(
+                    "Received mapping event: {ServiceName} -> {AppId} ({Action})",
+                    mappingEvent.ServiceName, mappingEvent.AppId, mappingEvent.Action);
+
+                ServiceMappingReceived?.Invoke(mappingEvent);
+            }
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Failed to deserialize mapping message");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing mapping message");
         }
 
         return Task.CompletedTask;

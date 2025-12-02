@@ -52,8 +52,8 @@ public class ConnectController : ConnectControllerBase
                 return StatusCode(500, "Service implementation not available");
             }
 
-            // Validate and parse JWT token
-            var sessionId = await connectService.ValidateJWTAndExtractSessionAsync(authorization, cancellationToken);
+            // Validate and parse JWT token, extracting session ID and roles
+            var (sessionId, roles) = await connectService.ValidateJWTAndExtractSessionAsync(authorization, cancellationToken);
             if (sessionId == null)
             {
                 return Unauthorized("Invalid or expired JWT token");
@@ -62,8 +62,8 @@ public class ConnectController : ConnectControllerBase
             // Accept WebSocket connection
             var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 
-            // Handle WebSocket communication with binary protocol
-            await connectService.HandleWebSocketCommunicationAsync(webSocket, sessionId, cancellationToken);
+            // Handle WebSocket communication with binary protocol, passing user roles for capability initialization
+            await connectService.HandleWebSocketCommunicationAsync(webSocket, sessionId, roles, cancellationToken);
 
             return Ok();
         }

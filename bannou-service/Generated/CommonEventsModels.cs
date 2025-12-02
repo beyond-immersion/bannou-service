@@ -192,8 +192,9 @@ public partial class PermissionRequirement
 }
 
 /// <summary>
-/// Published periodically by all services to indicate health and capacity.
-/// <br/>Used for load balancing and service discovery.
+/// Published periodically by each bannou instance to indicate health and capacity.
+/// <br/>Contains aggregated information for ALL services hosted by this app instance.
+/// <br/>Used for load balancing and service discovery by the orchestrator.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -215,21 +216,21 @@ public partial class ServiceHeartbeatEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Service ID sending the heartbeat
+    /// Unique GUID identifying this bannou instance (for log correlation/debugging)
     /// </summary>
     [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceId { get; set; } = default!;
+    public System.Guid ServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Dapr app-id for this service instance
+    /// Dapr app-id for this instance (e.g., "bannou", "jobberwocky")
     /// </summary>
     [Newtonsoft.Json.JsonProperty("appId", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string AppId { get; set; } = default!;
 
     /// <summary>
-    /// Current service health status
+    /// Overall instance health status (worst of all services + app-level issues)
     /// </summary>
     [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -237,16 +238,120 @@ public partial class ServiceHeartbeatEvent
     public ServiceHeartbeatEventStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// Service capacity and load information
+    /// Status of each service/plugin hosted by this instance
     /// </summary>
+    [Newtonsoft.Json.JsonProperty("services", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<ServiceStatus> Services { get; set; } = new System.Collections.ObjectModel.Collection<ServiceStatus>();
+
     [Newtonsoft.Json.JsonProperty("capacity", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public Capacity Capacity { get; set; } = default!;
+    public InstanceCapacity Capacity { get; set; } = default!;
 
     /// <summary>
-    /// Additional service-specific metadata
+    /// List of current issues affecting this instance
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("issues", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string> Issues { get; set; } = default!;
+
+    /// <summary>
+    /// Additional instance-level metadata
     /// </summary>
     [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
     public object Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Status of an individual service/plugin within an app instance
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServiceStatus
+{
+
+    /// <summary>
+    /// Unique GUID identifying this plugin instance (for log correlation/debugging)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid ServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Service name (e.g., "auth", "accounts", "behavior")
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceName", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Individual service health status
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public ServiceStatusStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Service API version
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Version { get; set; } = default!;
+
+    /// <summary>
+    /// Service-specific metadata from OnHeartbeat callback
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public object Metadata { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Instance-level capacity and load information
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class InstanceCapacity
+{
+
+    /// <summary>
+    /// Maximum connections this instance can handle
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("maxConnections", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int MaxConnections { get; set; } = default!;
+
+    /// <summary>
+    /// Current active connections
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("currentConnections", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public int CurrentConnections { get; set; } = default!;
+
+    /// <summary>
+    /// CPU usage percentage (0.0 - 1.0)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("cpuUsage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public float CpuUsage { get; set; } = default!;
+
+    /// <summary>
+    /// Memory usage percentage (0.0 - 1.0)
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("memoryUsage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public float MemoryUsage { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -370,44 +475,23 @@ public enum ServiceHeartbeatEventStatus
     [System.Runtime.Serialization.EnumMember(Value = @"shutting_down")]
     Shutting_down = 3,
 
+    [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
+    Unavailable = 4,
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Capacity
+public enum ServiceStatusStatus
 {
 
-    /// <summary>
-    /// Maximum connections this instance can handle
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("maxConnections", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int MaxConnections { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
+    Healthy = 0,
 
-    /// <summary>
-    /// Current active connections
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("currentConnections", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public int CurrentConnections { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
+    Degraded = 1,
 
-    /// <summary>
-    /// CPU usage percentage (0.0 - 1.0)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("cpuUsage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public float CpuUsage { get; set; } = default!;
-
-    /// <summary>
-    /// Memory usage percentage (0.0 - 1.0)
-    /// </summary>
-    [Newtonsoft.Json.JsonProperty("memoryUsage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public float MemoryUsage { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    [Newtonsoft.Json.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    {
-        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-        set { _additionalProperties = value; }
-    }
+    [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
+    Unavailable = 2,
 
 }
 

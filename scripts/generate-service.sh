@@ -26,6 +26,7 @@ if [ $# -lt 1 ]; then
     echo "  config         - Generate service configuration class"
     echo "  implementation - Generate service implementation template"
     echo "  plugin         - Generate plugin wrapper for service discovery"
+    echo "  permissions    - Generate permission registration from x-permissions"
     echo "  tests          - Generate unit test project with solution integration"
     echo "  all            - Generate all components (default)"
     echo ""
@@ -118,6 +119,7 @@ declare -a GENERATION_ORDER=(
     "config"
     "implementation"
     "plugin"
+    "permissions"
     "tests"
 )
 

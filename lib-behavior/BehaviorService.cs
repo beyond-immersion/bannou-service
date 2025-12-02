@@ -33,7 +33,7 @@ public class BehaviorService : IBehaviorService
     {
         try
         {
-            _logger.LogDebug("Processing ABML behavior compilation request");
+            _logger.LogInformation("Processing ABML behavior compilation request");
 
             // TODO: Implement ABML behavior compilation logic
             // This should parse YAML behavior definitions and compile them
@@ -54,7 +54,7 @@ public class BehaviorService : IBehaviorService
     {
         try
         {
-            _logger.LogDebug("Processing behavior stack compilation request");
+            _logger.LogInformation("Processing behavior stack compilation request");
 
             // TODO: Implement behavior stack compilation logic
             // This should handle stackable behavior sets with priority resolution
@@ -75,7 +75,7 @@ public class BehaviorService : IBehaviorService
     {
         try
         {
-            _logger.LogDebug("Processing ABML validation request");
+            _logger.LogInformation("Processing ABML validation request");
 
             // TODO: Implement ABML YAML validation logic
             // This should validate YAML syntax and ABML schema compliance
@@ -96,7 +96,7 @@ public class BehaviorService : IBehaviorService
     {
         try
         {
-            _logger.LogDebug("Processing cached behavior retrieval request");
+            _logger.LogInformation("Processing cached behavior retrieval request for: {BehaviorId}", behavior_id);
 
             // TODO: Implement cached behavior retrieval logic
             // This should retrieve compiled behaviors from cache (Redis)
@@ -117,7 +117,7 @@ public class BehaviorService : IBehaviorService
     {
         try
         {
-            _logger.LogDebug("Processing context variable resolution request");
+            _logger.LogInformation("Processing context variable resolution request");
 
             // TODO: Implement context variable resolution logic
             // This should resolve context variables and cultural adaptations
@@ -138,7 +138,7 @@ public class BehaviorService : IBehaviorService
     {
         try
         {
-            _logger.LogDebug("Processing cached behavior invalidation request for: {BehaviorId}", behavior_id);
+            _logger.LogInformation("Invalidating cached behavior: {BehaviorId}", behavior_id);
 
             // TODO: Implement cached behavior invalidation logic
             // This should remove compiled behaviors from cache (Redis)

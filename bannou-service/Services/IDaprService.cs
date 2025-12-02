@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Events;
 using Microsoft.AspNetCore.Builder;
 
 namespace BeyondImmersion.BannouService.Services;
@@ -14,6 +15,47 @@ namespace BeyondImmersion.BannouService.Services;
 public interface IDaprService
 {
     private static (Type, Type, DaprServiceAttribute)[]? _services;
+
+    // Static storage for instance IDs (using ConditionalWeakTable to avoid memory leaks)
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<IDaprService, GuidBox> _instanceIds = new();
+
+    // Helper class to wrap Guid as a reference type for ConditionalWeakTable
+    private sealed class GuidBox
+    {
+        public Guid Value { get; }
+        public GuidBox() => Value = Guid.NewGuid();
+    }
+
+    /// <summary>
+    /// Unique instance identifier for this service plugin.
+    /// Used for log correlation and debugging across distributed systems.
+    /// Generated once per service instance lifetime.
+    /// Default implementation generates a GUID on first access.
+    /// </summary>
+    Guid InstanceId => _instanceIds.GetOrCreateValue(this).Value;
+
+    /// <summary>
+    /// Gets the service version string for heartbeat reporting.
+    /// Override to provide a custom version. Default returns "1.0.0".
+    /// </summary>
+    string ServiceVersion => "1.0.0";
+
+    /// <summary>
+    /// Called during heartbeat collection to gather service-specific status and metadata.
+    /// Override to provide custom status reporting, capacity info, or metadata.
+    /// Default implementation returns healthy status with no additional metadata.
+    /// </summary>
+    /// <returns>ServiceStatus with this service's current health information</returns>
+    ServiceStatus OnHeartbeat()
+    {
+        return new ServiceStatus
+        {
+            ServiceId = InstanceId,
+            ServiceName = GetName() ?? GetType().Name,
+            Status = ServiceStatusStatus.Healthy,
+            Version = ServiceVersion
+        };
+    }
 
     /// <summary>
     /// Called when a Dapr event is received by this service.

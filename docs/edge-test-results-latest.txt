@@ -1,0 +1,65 @@
+🧪 Running Edge/WebSocket integration tests...
+time="2025-12-02T02:10:52-05:00" level=warning msg="The \"SERVICE_DOMAIN\" variable is not set. Defaulting to a blank string."
+Compose can now delegate builds to bake for better performance.
+ To do so, set COMPOSE_BAKE=true.
+#0 building with "default" instance using docker driver
+
+#1 [bannou-edge-tester internal] load build definition from Dockerfile
+#1 transferring dockerfile: 983B done
+#1 DONE 0.0s
+
+#2 [bannou internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.60kB done
+#2 DONE 0.0s
+
+#3 [bannou-edge-tester internal] load metadata for docker.io/library/bannou:latest
+#3 DONE 0.0s
+
+#4 [bannou internal] load metadata for mcr.microsoft.com/dotnet/sdk:9.0
+#4 DONE 0.2s
+
+#5 [bannou-edge-tester internal] load metadata for mcr.microsoft.com/dotnet/aspnet:9.0
+#5 DONE 0.2s
+
+#6 [bannou internal] load .dockerignore
+#6 transferring context: 382B done
+#6 DONE 0.0s
+
+#7 [bannou-edge-tester internal] load .dockerignore
+#7 transferring context: 382B done
+#7 DONE 0.1s
+
+#8 [bannou intermediate 1/8] FROM mcr.microsoft.com/dotnet/sdk:9.0@sha256:584cdb686f8ff7d2ffd636581b9bba8c9de38df1e751e9275438cddecdfbbcd2
+#8 CACHED
+
+#9 [bannou stage-1 1/8] FROM mcr.microsoft.com/dotnet/aspnet:9.0@sha256:925a86ec775fe737f1d65371ad7b2e01e81390c3c327ce3c06866a8ce8a4e1a2
+#9 CACHED
+
+#10 [bannou-edge-tester bannou-base 1/1] FROM docker.io/library/bannou:latest
+#10 ...
+
+#11 [bannou-edge-tester runtime 2/4] WORKDIR /app
+#11 CACHED
+
+#12 [bannou-edge-tester build 2/4] WORKDIR /app
+#12 CACHED
+
+#13 [bannou internal] load build context
+#13 transferring context: 95.43kB 0.0s done
+#13 DONE 0.1s
+
+#14 [bannou-edge-tester internal] load build context
+#14 transferring context: 96.11kB 0.0s done
+#14 DONE 0.1s
+
+#10 [bannou-edge-tester bannou-base 1/1] FROM docker.io/library/bannou:latest
+#10 DONE 0.3s
+
+#15 [bannou-edge-tester build 3/4] COPY . .
+#15 DONE 0.2s
+
+#16 [bannou intermediate 2/8] COPY ./ /app/
+#16 DONE 0.3s
+
+#17 [bannou-edge-tester build 4/4] RUN dotnet build edge-tester --configuration Release
+#17 0.882   Determining projects to restore...

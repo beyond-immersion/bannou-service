@@ -94,6 +94,12 @@ public class AuthService : IAuthService
                     return (StatusCodes.Unauthorized, null);
                 }
             }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // Account not found - return Unauthorized (don't reveal whether account exists)
+                _logger.LogWarning("Account not found for email: {Email}", body.Email);
+                return (StatusCodes.Unauthorized, null);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to lookup account by email via AccountsClient");
@@ -1242,6 +1248,20 @@ public class AuthService : IAuthService
             _logger.LogError(ex, "Failed to invalidate sessions for account {AccountId}", accountId);
             throw; // Re-throw to let the event handler know about the failure
         }
+    }
+
+    #endregion
+
+    #region Permission Registration
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Auth service permissions...");
+        await AuthPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
     }
 
     #endregion

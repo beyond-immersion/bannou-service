@@ -14,6 +14,11 @@ paths:
       operationId: listAccounts
       tags:
         - Account Management
+      x-permissions:
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
       parameters:
         - name: email
           in: query
@@ -71,6 +76,11 @@ paths:
       operationId: createAccount
       tags:
         - Account Management
+      x-permissions:
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
       requestBody:
         required: true
         content:
@@ -95,6 +105,11 @@ paths:
       operationId: getAccount
       tags:
         - Account Management
+      x-permissions:
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
       parameters:
         - name: accountId
           in: path
@@ -117,6 +132,11 @@ paths:
       operationId: updateAccount
       tags:
         - Account Management
+      x-permissions:
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
       parameters:
         - name: accountId
           in: path
@@ -147,6 +167,9 @@ paths:
       operationId: deleteAccount
       tags:
         - Account Management
+      x-permissions:
+        - role: admin
+          states: {}
       parameters:
         - name: accountId
           in: path
@@ -168,6 +191,9 @@ paths:
       operationId: getAccountByEmail
       tags:
         - Account Lookup
+      x-permissions:
+        - role: service
+          states: {}
       parameters:
         - name: email
           in: path
@@ -191,6 +217,11 @@ paths:
       operationId: getAuthMethods
       tags:
         - Authentication Methods
+      x-permissions:
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
       parameters:
         - name: accountId
           in: path
@@ -213,6 +244,11 @@ paths:
       operationId: addAuthMethod
       tags:
         - Authentication Methods
+      x-permissions:
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
       parameters:
         - name: accountId
           in: path
@@ -244,6 +280,11 @@ paths:
       operationId: removeAuthMethod
       tags:
         - Authentication Methods
+      x-permissions:
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
       parameters:
         - name: accountId
           in: path
@@ -271,6 +312,9 @@ paths:
       operationId: getAccountByProvider
       tags:
         - Account Lookup
+      x-permissions:
+        - role: service
+          states: {}
       parameters:
         - name: provider
           in: path
@@ -299,6 +343,14 @@ paths:
       operationId: updateProfile
       tags:
         - Profile Management
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
       parameters:
         - name: accountId
           in: path
@@ -328,6 +380,9 @@ paths:
       operationId: updatePasswordHash
       tags:
         - Account Management
+      x-permissions:
+        - role: service
+          states: {}
       parameters:
         - name: accountId
           in: path
@@ -353,6 +408,9 @@ paths:
       operationId: updateVerificationStatus
       tags:
         - Account Management
+      x-permissions:
+        - role: service
+          states: {}
       parameters:
         - name: accountId
           in: path

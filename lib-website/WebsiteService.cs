@@ -33,7 +33,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing status request");
+            _logger.LogInformation("Processing status request");
             return Task.FromResult<(StatusCodes, StatusResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -50,7 +50,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing page content request for slug: {Slug}", slug);
+            _logger.LogInformation("Processing page content request for slug: {Slug}", slug);
             return Task.FromResult<(StatusCodes, PageContent?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -67,7 +67,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing news request");
+            _logger.LogInformation("Processing news request");
             return Task.FromResult<(StatusCodes, NewsResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -84,7 +84,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing server status request");
+            _logger.LogInformation("Processing server status request");
             return Task.FromResult<(StatusCodes, ServerStatusResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -101,7 +101,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing downloads request");
+            _logger.LogInformation("Processing downloads request");
             return Task.FromResult<(StatusCodes, DownloadsResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -118,7 +118,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing contact submission");
+            _logger.LogInformation("Processing contact submission");
             return Task.FromResult<(StatusCodes, ContactResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -135,7 +135,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing account profile request");
+            _logger.LogInformation("Processing account profile request");
             return Task.FromResult<(StatusCodes, AccountProfile?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -152,7 +152,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing account characters request");
+            _logger.LogInformation("Processing account characters request");
             return Task.FromResult<(StatusCodes, CharacterListResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -170,7 +170,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing create page request");
+            _logger.LogInformation("Processing create page request");
             return Task.FromResult<(StatusCodes, PageContent?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -187,7 +187,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing update page request for slug: {Slug}", slug);
+            _logger.LogInformation("Processing update page request for slug: {Slug}", slug);
             return Task.FromResult<(StatusCodes, PageContent?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -204,7 +204,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing get site settings request");
+            _logger.LogInformation("Processing get site settings request");
             return Task.FromResult<(StatusCodes, SiteSettings?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -221,7 +221,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing update site settings request");
+            _logger.LogInformation("Processing update site settings request");
             return Task.FromResult<(StatusCodes, SiteSettings?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -238,7 +238,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing get theme request");
+            _logger.LogInformation("Processing get theme request");
             return Task.FromResult<(StatusCodes, ThemeConfig?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -255,7 +255,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing update theme request");
+            _logger.LogInformation("Processing update theme request");
             return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -272,7 +272,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing get subscription request");
+            _logger.LogInformation("Processing get subscription request");
             return Task.FromResult<(StatusCodes, SubscriptionResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -289,7 +289,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing delete page request for slug: {Slug}", slug);
+            _logger.LogInformation("Processing delete page request for slug: {Slug}", slug);
             return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)
@@ -306,7 +306,7 @@ public class WebsiteService : IWebsiteService
     {
         try
         {
-            _logger.LogDebug("Processing list pages request");
+            _logger.LogInformation("Processing list pages request");
             return Task.FromResult<(StatusCodes, ICollection<PageMetadata>?)>((StatusCodes.OK, null)); // TODO: Return actual response
         }
         catch (Exception ex)

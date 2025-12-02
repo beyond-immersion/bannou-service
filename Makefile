@@ -425,7 +425,14 @@ test-edge-dev: test-logs-dir ## Edge tests: keep containers running, save logs t
 		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
-		up --build --no-cache -d
+		build --no-cache
+	docker compose -p bannou-test-edge \
+		-f "./provisioning/docker-compose.yml" \
+		-f "./provisioning/docker-compose.services.yml" \
+		-f "./provisioning/docker-compose.ingress.yml" \
+		-f "./provisioning/docker-compose.test.yml" \
+		-f "./provisioning/docker-compose.test.edge.yml" \
+		up -d
 	@echo "⏳ Waiting for test to start..."
 	@sleep 5
 	@$(MAKE) test-edge-logs

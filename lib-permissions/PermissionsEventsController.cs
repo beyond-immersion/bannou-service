@@ -117,7 +117,29 @@ public class PermissionsEventsController : ControllerBase
             foreach (var endpointElement in endpoints.EnumerateArray())
             {
                 var path = endpointElement.GetProperty("path").GetString();
-                var method = endpointElement.GetProperty("method").GetString();
+                // Method can be either a string ("GET") or a number (0 = GET, 1 = POST, etc.)
+                var methodElement = endpointElement.GetProperty("method");
+                string? method;
+                if (methodElement.ValueKind == JsonValueKind.Number)
+                {
+                    // Convert numeric method to string (HttpMethodTypes enum values)
+                    var methodIndex = methodElement.GetInt32();
+                    method = methodIndex switch
+                    {
+                        0 => "GET",
+                        1 => "POST",
+                        2 => "PUT",
+                        3 => "DELETE",
+                        4 => "HEAD",
+                        5 => "PATCH",
+                        6 => "OPTIONS",
+                        _ => $"UNKNOWN_{methodIndex}"
+                    };
+                }
+                else
+                {
+                    method = methodElement.GetString();
+                }
                 var permissions = endpointElement.GetProperty("permissions");
 
                 var methodSignature = $"{method}:{path}";

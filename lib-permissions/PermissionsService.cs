@@ -32,6 +32,8 @@ public class PermissionsService : IPermissionsService
 
     // State key patterns
     private const string ACTIVE_SESSIONS_KEY = "active_sessions";
+    private const string REGISTERED_SERVICES_KEY = "registered_services"; // List of all services that have registered permissions
+    private const string SERVICE_REGISTERED_KEY = "service-registered:{0}"; // Individual service registration marker (race-condition safe)
     private const string SESSION_STATES_KEY = "session:{0}:states";
     private const string SESSION_PERMISSIONS_KEY = "session:{0}:permissions";
     private const string PERMISSION_MATRIX_KEY = "permissions:{0}:{1}:{2}"; // service:state:role
@@ -203,6 +205,9 @@ public class PermissionsService : IPermissionsService
             // Update permission matrix atomically
             if (body.Permissions != null)
             {
+                _logger.LogInformation("Processing {PermissionCount} permission states for {ServiceId}",
+                    body.Permissions.Count, body.ServiceId);
+
                 foreach (var stateEntry in body.Permissions)
                 {
                     var stateName = stateEntry.Key;
@@ -218,6 +223,9 @@ public class PermissionsService : IPermissionsService
                             stateName,
                             roleName);
 
+                        _logger.LogInformation("Storing {MethodCount} methods at key: {MatrixKey}",
+                            methods.Count, matrixKey);
+
                         // Get existing endpoints and add new ones
                         var existingEndpoints = await _daprClient.GetStateAsync<HashSet<string>>(
                             STATE_STORE, matrixKey, cancellationToken: cancellationToken) ?? new HashSet<string>();
@@ -232,6 +240,10 @@ public class PermissionsService : IPermissionsService
                     }
                 }
             }
+            else
+            {
+                _logger.LogWarning("No permissions to register for {ServiceId}", body.ServiceId);
+            }
 
             // Update service version
             transactionRequests.Add(new StateTransactionRequest(
@@ -241,6 +253,68 @@ public class PermissionsService : IPermissionsService
 
             // Execute atomic transaction
             await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
+
+            // Track this service using individual key pattern (race-condition safe)
+            // Each service has its own key, eliminating the need to modify a shared list
+            var serviceRegisteredKey = string.Format(SERVICE_REGISTERED_KEY, body.ServiceId);
+            var registrationInfo = new
+            {
+                ServiceId = body.ServiceId,
+                Version = body.Version,
+                RegisteredAt = DateTimeOffset.UtcNow
+            };
+            await _daprClient.SaveStateAsync(STATE_STORE, serviceRegisteredKey, registrationInfo, cancellationToken: cancellationToken);
+            _logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}", body.ServiceId, serviceRegisteredKey);
+
+            // Also update the legacy registered_services list with retry for backwards compatibility
+            var maxRetries = 5;
+            var retryDelay = 100; // ms
+
+            for (var attempt = 0; attempt < maxRetries; attempt++)
+            {
+                try
+                {
+                    var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
+                        STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+
+                    _logger.LogInformation("Current registered services (attempt {Attempt}): {Services}",
+                        attempt + 1, string.Join(", ", registeredServices));
+
+                    if (!registeredServices.Contains(body.ServiceId))
+                    {
+                        registeredServices.Add(body.ServiceId);
+                        await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, registeredServices, cancellationToken: cancellationToken);
+                        _logger.LogInformation("Added {ServiceId} to registered services list. Now: {Services}",
+                            body.ServiceId, string.Join(", ", registeredServices));
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Service {ServiceId} already in registered services list", body.ServiceId);
+                    }
+
+                    // Verify the write succeeded by re-reading
+                    var verifyServices = await _daprClient.GetStateAsync<HashSet<string>>(
+                        STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+
+                    if (verifyServices.Contains(body.ServiceId))
+                    {
+                        _logger.LogInformation("Verified {ServiceId} is in registered services list: {Services}",
+                            body.ServiceId, string.Join(", ", verifyServices));
+                        break; // Success
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Service {ServiceId} was not found in registered services after write, retrying... (attempt {Attempt}/{Max})",
+                            body.ServiceId, attempt + 1, maxRetries);
+                        await Task.Delay(retryDelay * (attempt + 1), cancellationToken); // Exponential backoff
+                    }
+                }
+                catch (Exception retryEx)
+                {
+                    _logger.LogWarning(retryEx, "Error during registered services update attempt {Attempt}, retrying...", attempt + 1);
+                    await Task.Delay(retryDelay * (attempt + 1), cancellationToken);
+                }
+            }
 
             // Get all active sessions and recompile
             var activeSessions = await _daprClient.GetStateAsync<HashSet<string>>(
@@ -256,6 +330,29 @@ public class PermissionsService : IPermissionsService
 
             _logger.LogInformation("Service {ServiceId} registered successfully, recompiled {Count} sessions",
                 body.ServiceId, recompiledCount);
+
+            // Publish capability update event so Connect service can push updates to connected clients
+            try
+            {
+                await _daprClient.PublishEventAsync(
+                    "bannou-pubsub",
+                    "permissions.capabilities-updated",
+                    new
+                    {
+                        eventId = Guid.NewGuid().ToString(),
+                        timestamp = DateTimeOffset.UtcNow,
+                        serviceId = body.ServiceId,
+                        affectedSessions = activeSessions.ToList(),
+                        reason = "service_registered"
+                    },
+                    cancellationToken);
+                _logger.LogDebug("Published capabilities-updated event for service {ServiceId}", body.ServiceId);
+            }
+            catch (Exception pubEx)
+            {
+                // Don't fail registration if event publishing fails - Connect will get updates on next client request
+                _logger.LogWarning(pubEx, "Failed to publish capabilities-updated event for {ServiceId}", body.ServiceId);
+            }
 
             return (StatusCodes.OK, new RegistrationResponse
             {
@@ -482,21 +579,68 @@ public class PermissionsService : IPermissionsService
             }
 
             var role = sessionStates.GetValueOrDefault("role", "user");
+            _logger.LogInformation("Recompiling permissions for session {SessionId}, role: {Role}, reason: {Reason}",
+                sessionId, role, reason);
 
             // Compile permissions for each service
             var compiledPermissions = new Dictionary<string, List<string>>();
 
+            // First, get all registered services and check "default" state permissions for the role
+            var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
+                STATE_STORE, REGISTERED_SERVICES_KEY) ?? new HashSet<string>();
+
+            _logger.LogInformation("Found {Count} registered services: {Services}",
+                registeredServices.Count, string.Join(", ", registeredServices));
+
+            foreach (var serviceId in registeredServices)
+            {
+                // Check for "authenticated" state permissions (endpoints with no required states)
+                // Note: The event handler defaults to "authenticated" state when no states are required
+                var authenticatedMatrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, "authenticated", role);
+                var defaultEndpoints = await _daprClient.GetStateAsync<HashSet<string>>(STATE_STORE, authenticatedMatrixKey);
+
+                _logger.LogDebug("Looking up {Key}, found {Count} endpoints",
+                    authenticatedMatrixKey, defaultEndpoints?.Count ?? 0);
+
+                if (defaultEndpoints != null && defaultEndpoints.Count > 0)
+                {
+                    if (!compiledPermissions.ContainsKey(serviceId))
+                    {
+                        compiledPermissions[serviceId] = new List<string>();
+                    }
+                    compiledPermissions[serviceId].AddRange(defaultEndpoints);
+                    _logger.LogInformation("Added {Count} endpoints for service {ServiceId} to session {SessionId}",
+                        defaultEndpoints.Count, serviceId, sessionId);
+                }
+            }
+
+            // Then, also check service-specific states that the session has
             foreach (var serviceState in sessionStates.Where(s => s.Key != "role"))
             {
                 var serviceId = serviceState.Key;
                 var state = serviceState.Value;
+
+                // Skip "default" state as we already checked it above
+                if (state == "default")
+                    continue;
 
                 var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, state, role);
                 var endpoints = await _daprClient.GetStateAsync<HashSet<string>>(STATE_STORE, matrixKey);
 
                 if (endpoints != null && endpoints.Count > 0)
                 {
-                    compiledPermissions[serviceId] = endpoints.ToList();
+                    if (!compiledPermissions.ContainsKey(serviceId))
+                    {
+                        compiledPermissions[serviceId] = new List<string>();
+                    }
+                    // Add unique endpoints (avoid duplicates)
+                    foreach (var endpoint in endpoints)
+                    {
+                        if (!compiledPermissions[serviceId].Contains(endpoint))
+                        {
+                            compiledPermissions[serviceId].Add(endpoint);
+                        }
+                    }
                 }
             }
 

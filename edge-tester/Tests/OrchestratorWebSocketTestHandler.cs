@@ -230,6 +230,26 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
+        // Debug: Log token info to verify correct token is being used
+        Console.WriteLine($"🔑 Using admin access token: {accessToken.Substring(0, Math.Min(20, accessToken.Length))}...");
+        try
+        {
+            // Decode JWT to show which account it's for (without validation)
+            var tokenParts = accessToken.Split('.');
+            if (tokenParts.Length >= 2)
+            {
+                var payload = tokenParts[1];
+                // Add padding if needed
+                payload = payload.PadRight((payload.Length + 3) / 4 * 4, '=');
+                var payloadJson = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload.Replace('-', '+').Replace('_', '/')));
+                Console.WriteLine($"   JWT payload: {payloadJson}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Could not decode JWT: {ex.Message}");
+        }
+
         var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
         using var webSocket = new ClientWebSocket();
         webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
@@ -238,6 +258,18 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
         {
             await webSocket.ConnectAsync(serverUri, CancellationToken.None);
             Console.WriteLine("✅ WebSocket connected for orchestrator API test");
+
+            // First, receive the capability manifest pushed by the server
+            Console.WriteLine("📥 Waiting for capability manifest...");
+            var serviceGuid = await ReceiveCapabilityManifestAndGetGuid(webSocket, method, path);
+
+            if (serviceGuid == Guid.Empty)
+            {
+                Console.WriteLine("❌ Failed to receive capability manifest or find GUID for endpoint");
+                return false;
+            }
+
+            Console.WriteLine($"✅ Found service GUID for {method}:{path}: {serviceGuid}");
 
             // Create an API proxy request using binary protocol
             var apiRequest = new
@@ -253,7 +285,7 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
                 flags: MessageFlags.None,
                 channel: 2, // API proxy channel
                 sequenceNumber: 1,
-                serviceGuid: Guid.NewGuid(),
+                serviceGuid: serviceGuid, // Use the GUID from capability manifest
                 messageId: GuidGenerator.GenerateMessageId(),
                 payload: requestPayload
             );
@@ -261,6 +293,7 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
             Console.WriteLine($"📤 Sending orchestrator API request:");
             Console.WriteLine($"   Method: {method}");
             Console.WriteLine($"   Path: {path}");
+            Console.WriteLine($"   ServiceGuid: {serviceGuid}");
 
             // Send the API proxy request
             var messageBytes = binaryMessage.ToByteArray();
@@ -347,5 +380,157 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Test complete", CancellationToken.None);
             }
         }
+    }
+
+    /// <summary>
+    /// Receives the capability manifest from the server and extracts the service GUID for the requested endpoint.
+    /// The server pushes the capability manifest immediately after WebSocket connection is established.
+    /// If the API isn't available initially, waits for capability updates (up to 30 seconds).
+    /// </summary>
+    private async Task<Guid> ReceiveCapabilityManifestAndGetGuid(
+        ClientWebSocket webSocket,
+        string method,
+        string path)
+    {
+        var overallTimeout = TimeSpan.FromSeconds(30);
+        var startTime = DateTime.UtcNow;
+        var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
+
+        while (DateTime.UtcNow - startTime < overallTimeout)
+        {
+            try
+            {
+                var remainingTime = overallTimeout - (DateTime.UtcNow - startTime);
+                if (remainingTime <= TimeSpan.Zero) break;
+
+                using var cts = new CancellationTokenSource(remainingTime);
+                var result = await webSocket.ReceiveAsync(receiveBuffer, cts.Token);
+
+                if (receiveBuffer.Array == null || result.Count == 0)
+                {
+                    Console.WriteLine("⚠️ Received empty message, waiting for more...");
+                    continue;
+                }
+
+                // Parse the binary message
+                var receivedMessage = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
+
+                // Check if this is an event message (capability manifest)
+                if (!receivedMessage.Flags.HasFlag(MessageFlags.Event))
+                {
+                    Console.WriteLine($"⚠️ Received non-Event message (flags: {receivedMessage.Flags}), waiting for capability manifest...");
+                    continue;
+                }
+
+                if (receivedMessage.Payload.Length == 0)
+                {
+                    Console.WriteLine("⚠️ Event message has no payload, waiting for more...");
+                    continue;
+                }
+
+                var payloadJson = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
+
+                JObject manifest;
+                try
+                {
+                    manifest = JObject.Parse(payloadJson);
+                }
+                catch
+                {
+                    Console.WriteLine("⚠️ Failed to parse event payload as JSON, waiting for more...");
+                    continue;
+                }
+
+                // Verify this is a capability manifest
+                var type = (string?)manifest["type"];
+                if (type != "capability_manifest")
+                {
+                    Console.WriteLine($"⚠️ Received event type '{type}', waiting for capability_manifest...");
+                    continue;
+                }
+
+                var reason = (string?)manifest["reason"];
+                Console.WriteLine($"📥 Received capability manifest: {result.Count} bytes (reason: {reason ?? "initial"})");
+                Console.WriteLine($"   Manifest preview: {payloadJson.Substring(0, Math.Min(300, payloadJson.Length))}...");
+
+                var availableApis = manifest["availableAPIs"] as JArray;
+                if (availableApis == null)
+                {
+                    Console.WriteLine("⚠️ No availableAPIs in manifest, waiting for update...");
+                    continue;
+                }
+
+                Console.WriteLine($"   Available APIs: {availableApis.Count}");
+
+                // Try to find the GUID for our endpoint
+                var guid = FindGuidInManifest(availableApis, method, path);
+                if (guid != Guid.Empty)
+                {
+                    return guid;
+                }
+
+                // API not found yet - if this is the initial manifest, wait for updates
+                Console.WriteLine($"⚠️ API {method}:{path} not found yet, waiting for capability updates...");
+                Console.WriteLine("   Currently available endpoints:");
+                foreach (var api in availableApis)
+                {
+                    Console.WriteLine($"     - {api["method"]}:{api["path"]} ({api["serviceName"]})");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Timeout - check if we should continue waiting
+                break;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Error receiving message: {ex.Message}, retrying...");
+            }
+        }
+
+        Console.WriteLine($"❌ Timeout waiting for API {method}:{path} to become available (waited {overallTimeout.TotalSeconds}s)");
+        return Guid.Empty;
+    }
+
+    /// <summary>
+    /// Finds the GUID for a specific endpoint in the capability manifest.
+    /// </summary>
+    private Guid FindGuidInManifest(JArray availableApis, string method, string path)
+    {
+        // Try exact match first
+        foreach (var api in availableApis)
+        {
+            var apiMethod = (string?)api["method"];
+            var apiPath = (string?)api["path"];
+            var apiGuid = (string?)api["serviceGuid"];
+
+            if (apiMethod == method && apiPath == path && !string.IsNullOrEmpty(apiGuid))
+            {
+                if (Guid.TryParse(apiGuid, out var guid))
+                {
+                    Console.WriteLine($"   ✅ Found API by exact match: {method}:{path}");
+                    return guid;
+                }
+            }
+        }
+
+        // Try by endpoint key format
+        foreach (var api in availableApis)
+        {
+            var endpointKey = (string?)api["endpointKey"];
+            var apiGuid = (string?)api["serviceGuid"];
+
+            // The endpoint key format is "serviceName:METHOD:/path"
+            if (!string.IsNullOrEmpty(endpointKey) && endpointKey.Contains($":{method}:{path}"))
+            {
+                if (Guid.TryParse(apiGuid, out var guid))
+                {
+                    Console.WriteLine($"   ✅ Found API by endpointKey: {endpointKey}");
+                    return guid;
+                }
+            }
+        }
+
+        return Guid.Empty;
     }
 }

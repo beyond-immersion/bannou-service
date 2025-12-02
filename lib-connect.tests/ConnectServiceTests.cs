@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Connect.Protocol;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;

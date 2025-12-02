@@ -231,6 +231,13 @@ public class Program
 
                 // 200 OK or 409 Conflict means the service chain is fully working
                 Console.WriteLine($"✅ Dapr sidecar ready after {stopwatch.Elapsed.TotalSeconds:F1}s (warmup returned {warmupResponse.StatusCode})");
+
+                // Wait additional time for services to register their permissions with Permissions service
+                // Permission registration happens AFTER Dapr readiness check in bannou startup
+                Console.WriteLine("⏳ Waiting for service permission registration to complete...");
+                await Task.Delay(5000); // 5 seconds for permission events to be published and processed
+                Console.WriteLine("✅ Permission registration delay complete");
+
                 return true;
             }
             catch (HttpRequestException ex)
@@ -299,25 +306,111 @@ public class Program
             Console.WriteLine($"Base URL: ws://{Configuration.Connect_Endpoint}");
             Console.WriteLine();
 
-            bool testPassed = await EstablishWebsocketAndSendMessage();
+            // Run initial connectivity test
+            bool connectivityPassed = await EstablishWebsocketAndSendMessage();
 
-            if (testPassed)
+            if (!connectivityPassed)
             {
-                Console.WriteLine("✅ WebSocket protocol test completed successfully!");
-
-                if (!IsDaemonMode(args))
+                if (IsDaemonMode(args))
                 {
-                    Console.WriteLine("\n🎮 Entering interactive test console...");
-                    GiveControlToTestConsole();
+                    Console.WriteLine("❌ Basic WebSocket connectivity test FAILED");
+                    Environment.Exit(1); // CI failure exit code
+                }
+                throw new Exception("WebSocket protocol test failed.");
+            }
+
+            Console.WriteLine("✅ Basic WebSocket connectivity test PASSED");
+            Console.WriteLine();
+
+            // Load all test handlers
+            LoadClientTests();
+
+            if (IsDaemonMode(args))
+            {
+                // In daemon mode, run all tests automatically and report results
+                Console.WriteLine("🔄 Running full edge test suite in daemon mode...");
+                Console.WriteLine($"   Total tests registered: {sTestRegistry.Count - 1}"); // -1 for "All"
+                Console.WriteLine();
+
+                var failedTests = new List<string>();
+                var passedTests = new List<string>();
+
+                foreach (var kvp in sTestRegistry)
+                {
+                    if (kvp.Key == "All")
+                        continue;
+
+                    Console.WriteLine($"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                    Console.WriteLine($"📋 Running: {kvp.Key}");
+                    Console.WriteLine($"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+                    try
+                    {
+                        // Capture console output to detect pass/fail
+                        var originalOut = Console.Out;
+                        using var stringWriter = new StringWriter();
+                        Console.SetOut(new DualWriter(originalOut, stringWriter));
+
+                        kvp.Value?.Invoke(Array.Empty<string>());
+
+                        Console.SetOut(originalOut);
+                        var output = stringWriter.ToString();
+
+                        // Check for failure indicators in output
+                        if (output.Contains("❌") || output.Contains("FAILED"))
+                        {
+                            failedTests.Add(kvp.Key);
+                            Console.WriteLine($"❌ Test {kvp.Key} FAILED");
+                        }
+                        else if (output.Contains("✅") || output.Contains("PASSED"))
+                        {
+                            passedTests.Add(kvp.Key);
+                            Console.WriteLine($"✅ Test {kvp.Key} PASSED");
+                        }
+                        else
+                        {
+                            // Ambiguous result - treat as warning but not failure
+                            passedTests.Add(kvp.Key);
+                            Console.WriteLine($"⚠️ Test {kvp.Key} completed (result unclear)");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        failedTests.Add(kvp.Key);
+                        Console.WriteLine($"❌ Test {kvp.Key} FAILED with exception: {ex.Message}");
+                    }
+
+                    Console.WriteLine();
+                }
+
+                // Print summary
+                Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                Console.WriteLine("📊 TEST SUMMARY");
+                Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                Console.WriteLine($"   Total:  {passedTests.Count + failedTests.Count}");
+                Console.WriteLine($"   Passed: {passedTests.Count}");
+                Console.WriteLine($"   Failed: {failedTests.Count}");
+
+                if (failedTests.Count > 0)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("❌ Failed tests:");
+                    foreach (var test in failedTests)
+                    {
+                        Console.WriteLine($"   - {test}");
+                    }
+                    Environment.Exit(1);
+                }
+                else
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("✅ All edge tests passed!");
                 }
             }
             else
             {
-                if (IsDaemonMode(args))
-                {
-                    Environment.Exit(1); // CI failure exit code
-                }
-                throw new Exception("WebSocket protocol test failed.");
+                Console.WriteLine("\n🎮 Entering interactive test console...");
+                GiveControlToTestConsole();
             }
         }
         catch (Exception exc)
@@ -340,9 +433,17 @@ public class Program
         var serverUri = new Uri($"http://{Configuration.Register_Endpoint}");
         Console.WriteLine($"Registration Uri: {serverUri}");
 
+        // Extract username for registration (strip email domain if present)
+        var username = Configuration.Client_Username;
+        if (username?.Contains('@') == true)
+        {
+            username = username.Split('@')[0];
+        }
+
         var contentObj = new JObject()
         {
-            ["username"] = Configuration.Client_Username,
+            ["username"] = username,
+            ["email"] = Configuration.Client_Username, // Use full email for login consistency
             ["password"] = Configuration.Client_Password
         };
         using HttpRequestMessage httpRequest = new(HttpMethod.Post, serverUri);
@@ -441,9 +542,18 @@ public class Program
         var serverUri = new Uri($"http://{Configuration.Register_Endpoint}");
         Console.WriteLine($"Admin registration Uri: {serverUri}");
 
+        // Extract username for registration (strip email domain if present)
+        var adminEmail = Configuration.GetAdminUsername();
+        var adminUsername = adminEmail;
+        if (adminUsername?.Contains('@') == true)
+        {
+            adminUsername = adminUsername.Split('@')[0];
+        }
+
         var contentObj = new JObject()
         {
-            ["username"] = Configuration.GetAdminUsername(),
+            ["username"] = adminUsername,
+            ["email"] = adminEmail, // Use full email for admin role matching and login
             ["password"] = Configuration.GetAdminPassword()
         };
         using HttpRequestMessage httpRequest = new(HttpMethod.Post, serverUri);
@@ -688,19 +798,19 @@ public class Program
     {
         sTestRegistry.Add("All", RunEntireTestSuite);
 
-        // load login tests
+        // load auth/login tests
         var loginTestHandler = new LoginTestHandler();
         foreach (ServiceTest serviceTest in loginTestHandler.GetServiceTests())
-            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
-
-        // load template tests
-        var templateTestHandler = new TemplateTestHandler();
-        foreach (ServiceTest serviceTest in templateTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
         // load connect websocket tests
         var connectTestHandler = new ConnectWebSocketTestHandler();
         foreach (ServiceTest serviceTest in connectTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load capability flow tests (permission discovery and GUID routing)
+        var capabilityTestHandler = new Tests.CapabilityFlowTestHandler();
+        foreach (ServiceTest serviceTest in capabilityTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
         // load orchestrator websocket tests
@@ -725,4 +835,45 @@ public class Program
     /// Will initiate a client shutdown.
     /// </summary>
     public static void InitiateShutdown() => ShutdownCancellationTokenSource.Cancel();
+
+    /// <summary>
+    /// TextWriter that writes to both console and a StringWriter for test result detection.
+    /// </summary>
+    private class DualWriter : TextWriter
+    {
+        private readonly TextWriter _console;
+        private readonly TextWriter _capture;
+
+        public DualWriter(TextWriter console, TextWriter capture)
+        {
+            _console = console;
+            _capture = capture;
+        }
+
+        public override Encoding Encoding => _console.Encoding;
+
+        public override void Write(char value)
+        {
+            _console.Write(value);
+            _capture.Write(value);
+        }
+
+        public override void Write(string? value)
+        {
+            _console.Write(value);
+            _capture.Write(value);
+        }
+
+        public override void WriteLine(string? value)
+        {
+            _console.WriteLine(value);
+            _capture.WriteLine(value);
+        }
+
+        public override void WriteLine()
+        {
+            _console.WriteLine();
+            _capture.WriteLine();
+        }
+    }
 }

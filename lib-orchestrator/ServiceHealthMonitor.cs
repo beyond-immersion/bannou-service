@@ -1,11 +1,13 @@
 using BeyondImmersion.BannouService.Orchestrator;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace LibOrchestrator;
 
 /// <summary>
 /// Monitors service health based on ServiceHeartbeatEvent data from Redis.
 /// Uses existing heartbeat schema from common-events.yaml.
+/// Writes heartbeat data and service routing to Redis for NGINX to read.
 /// </summary>
 public class ServiceHealthMonitor : IServiceHealthMonitor
 {
@@ -13,6 +15,9 @@ public class ServiceHealthMonitor : IServiceHealthMonitor
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly IOrchestratorRedisManager _redisManager;
     private readonly IOrchestratorEventManager _eventManager;
+
+    // Cache of current service routings to detect changes
+    private readonly ConcurrentDictionary<string, ServiceRouting> _currentRoutings = new();
 
     public ServiceHealthMonitor(
         ILogger<ServiceHealthMonitor> logger,
@@ -27,20 +32,155 @@ public class ServiceHealthMonitor : IServiceHealthMonitor
 
         // Subscribe to real-time heartbeat events from RabbitMQ
         _eventManager.HeartbeatReceived += OnHeartbeatReceived;
+
+        // Subscribe to service mapping events from RabbitMQ
+        _eventManager.ServiceMappingReceived += OnServiceMappingReceived;
     }
 
     /// <summary>
     /// Handle real-time heartbeat events from RabbitMQ.
+    /// Writes heartbeat to Redis and updates service routing for each service in the heartbeat.
     /// </summary>
     private void OnHeartbeatReceived(ServiceHeartbeatEvent heartbeat)
     {
+        var serviceNames = heartbeat.Services?.Select(s => s.ServiceName) ?? Enumerable.Empty<string>();
         _logger.LogDebug(
-            "Real-time heartbeat: {ServiceId}:{AppId} - {Status} (Connections: {Current}/{Max})",
-            heartbeat.ServiceId,
+            "Aggregated heartbeat from {AppId}: InstanceId={InstanceId}, Status={Status}, Services=[{Services}]",
             heartbeat.AppId,
+            heartbeat.ServiceId,
             heartbeat.Status,
-            heartbeat.Capacity?.CurrentConnections,
-            heartbeat.Capacity?.MaxConnections);
+            string.Join(", ", serviceNames));
+
+        // Write heartbeat to Redis (fire and forget, but log errors)
+        _ = WriteHeartbeatAndUpdateRoutingAsync(heartbeat);
+    }
+
+    /// <summary>
+    /// Handle service mapping events from RabbitMQ.
+    /// Updates Redis routing when topology changes.
+    /// </summary>
+    private void OnServiceMappingReceived(ServiceMappingEvent mappingEvent)
+    {
+        _logger.LogInformation(
+            "Service mapping event: {ServiceName} -> {AppId} ({Action})",
+            mappingEvent.ServiceName,
+            mappingEvent.AppId,
+            mappingEvent.Action);
+
+        _ = UpdateServiceRoutingFromMappingAsync(mappingEvent);
+    }
+
+    /// <summary>
+    /// Write heartbeat to Redis and update routing for each service in the heartbeat.
+    /// </summary>
+    private async Task WriteHeartbeatAndUpdateRoutingAsync(ServiceHeartbeatEvent heartbeat)
+    {
+        try
+        {
+            // Write instance heartbeat to Redis
+            await _redisManager.WriteServiceHeartbeatAsync(heartbeat);
+
+            // Update routing for each service in the aggregated heartbeat
+            if (heartbeat.Services == null || heartbeat.Services.Count == 0)
+            {
+                _logger.LogWarning("Heartbeat from {AppId} contains no services", heartbeat.AppId);
+                return;
+            }
+
+            var loadPercent = CalculateLoadPercent(heartbeat);
+
+            foreach (var serviceStatus in heartbeat.Services)
+            {
+                var serviceName = serviceStatus.ServiceName;
+                var newRouting = new ServiceRouting
+                {
+                    AppId = heartbeat.AppId,
+                    Host = heartbeat.AppId, // In Docker, container name = app_id
+                    Port = 80,
+                    Status = serviceStatus.Status,
+                    LoadPercent = loadPercent
+                };
+
+                // Only update if routing changed or doesn't exist
+                if (ShouldUpdateRouting(serviceName, newRouting))
+                {
+                    await _redisManager.WriteServiceRoutingAsync(serviceName, newRouting);
+                    _currentRoutings[serviceName] = newRouting;
+
+                    _logger.LogInformation(
+                        "Updated routing for {ServiceName} -> {AppId} (status: {Status})",
+                        serviceName, heartbeat.AppId, serviceStatus.Status);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to write heartbeat/routing for instance {InstanceId} ({AppId})",
+                heartbeat.ServiceId, heartbeat.AppId);
+        }
+    }
+
+    /// <summary>
+    /// Update service routing from explicit mapping event.
+    /// </summary>
+    private async Task UpdateServiceRoutingFromMappingAsync(ServiceMappingEvent mappingEvent)
+    {
+        try
+        {
+            if (mappingEvent.Action == ServiceMappingAction.Unregister)
+            {
+                await _redisManager.RemoveServiceRoutingAsync(mappingEvent.ServiceName);
+                _currentRoutings.TryRemove(mappingEvent.ServiceName, out _);
+            }
+            else
+            {
+                var routing = new ServiceRouting
+                {
+                    AppId = mappingEvent.AppId,
+                    Host = mappingEvent.AppId,
+                    Port = 80,
+                    Status = "healthy"
+                };
+
+                await _redisManager.WriteServiceRoutingAsync(mappingEvent.ServiceName, routing);
+                _currentRoutings[mappingEvent.ServiceName] = routing;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update routing from mapping event for {ServiceName}",
+                mappingEvent.ServiceName);
+        }
+    }
+
+    /// <summary>
+    /// Check if routing should be updated (changed or new).
+    /// </summary>
+    private bool ShouldUpdateRouting(string serviceName, ServiceRouting newRouting)
+    {
+        if (!_currentRoutings.TryGetValue(serviceName, out var existingRouting))
+        {
+            return true; // New service
+        }
+
+        // Check if significant changes
+        return existingRouting.AppId != newRouting.AppId ||
+                existingRouting.Host != newRouting.Host ||
+                existingRouting.Port != newRouting.Port;
+    }
+
+    /// <summary>
+    /// Calculate load percentage from heartbeat capacity data.
+    /// </summary>
+    private static int CalculateLoadPercent(ServiceHeartbeatEvent heartbeat)
+    {
+        if (heartbeat.Capacity == null || heartbeat.Capacity.MaxConnections == 0)
+        {
+            return 0;
+        }
+
+        return (int)((double)heartbeat.Capacity.CurrentConnections /
+                    heartbeat.Capacity.MaxConnections * 100);
     }
 
     /// <summary>

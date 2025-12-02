@@ -14,6 +14,11 @@ paths:
       operationId: login
       tags:
         - Authentication
+      x-permissions:
+        - role: anonymous
+          states: {}
+        - role: user
+          states: {}  # Allow re-login when already authenticated
       requestBody:
         required: true
         content:
@@ -38,6 +43,9 @@ paths:
       operationId: register
       tags:
         - Authentication
+      x-permissions:
+        - role: anonymous
+          states: {}
       requestBody:
         required: true
         content:
@@ -62,6 +70,9 @@ paths:
       operationId: initOAuth
       tags:
         - OAuth
+      x-permissions:
+        - role: anonymous
+          states: {}
       parameters:
         - name: provider
           in: path
@@ -88,6 +99,9 @@ paths:
       operationId: completeOAuth
       tags:
         - OAuth
+      x-permissions:
+        - role: anonymous
+          states: {}
       parameters:
         - name: provider
           in: path
@@ -114,6 +128,9 @@ paths:
       operationId: initSteamAuth
       tags:
         - Steam
+      x-permissions:
+        - role: anonymous
+          states: {}
       parameters:
         - name: returnUrl
           in: query
@@ -131,6 +148,9 @@ paths:
       operationId: verifySteamAuth
       tags:
         - Steam
+      x-permissions:
+        - role: anonymous
+          states: {}
       requestBody:
         required: true
         content:
@@ -151,6 +171,10 @@ paths:
       operationId: refreshToken
       tags:
         - Tokens
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
       parameters:
         - name: jwt
           in: header
@@ -179,6 +203,12 @@ paths:
       operationId: validateToken
       tags:
         - Tokens
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
+        - role: service
+          states: {}  # Services can validate tokens without auth
       parameters:
         - name: jwt
           in: header
@@ -205,6 +235,10 @@ paths:
       operationId: logout
       tags:
         - Authentication
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
       parameters:
         - name: jwt
           in: header
@@ -228,6 +262,10 @@ paths:
       operationId: getSessions
       tags:
         - Sessions
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
       parameters:
         - name: jwt
           in: header
@@ -250,6 +288,10 @@ paths:
       operationId: terminateSession
       tags:
         - Sessions
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
       security:
         - BearerAuth: []
       parameters:
@@ -269,6 +311,9 @@ paths:
       operationId: requestPasswordReset
       tags:
         - Password
+      x-permissions:
+        - role: anonymous
+          states: {}
       requestBody:
         required: true
         content:
@@ -285,6 +330,9 @@ paths:
       operationId: confirmPasswordReset
       tags:
         - Password
+      x-permissions:
+        - role: anonymous
+          states: {}
       requestBody:
         required: true
         content:

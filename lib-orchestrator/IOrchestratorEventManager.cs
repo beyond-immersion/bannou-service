@@ -14,6 +14,12 @@ public interface IOrchestratorEventManager : IAsyncDisposable, IDisposable
     event Action<ServiceHeartbeatEvent>? HeartbeatReceived;
 
     /// <summary>
+    /// Event raised when a service mapping event is received from RabbitMQ.
+    /// Used to update NGINX routing when topology changes.
+    /// </summary>
+    event Action<ServiceMappingEvent>? ServiceMappingReceived;
+
+    /// <summary>
     /// Initialize RabbitMQ connection with wait-on-startup retry logic.
     /// Uses exponential backoff to handle infrastructure startup delays.
     /// </summary>
