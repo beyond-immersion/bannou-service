@@ -719,10 +719,6 @@ public class PluginLoader
             {
                 _logger.LogDebug("Initializing centrally resolved service for plugin: {PluginName}", pluginName);
                 await service.OnStartAsync(CancellationToken.None);
-
-                // STAGE 2.5: Register service permissions automatically
-                _logger.LogDebug("Registering permissions for service: {PluginName}", pluginName);
-                await service.RegisterServicePermissionsAsync();
             }
             catch (Exception ex)
             {
@@ -732,6 +728,36 @@ public class PluginLoader
         }
 
         _logger.LogInformation("All enabled plugins and services initialized successfully");
+        return true;
+    }
+
+    /// <summary>
+    /// Registers service permissions for all enabled plugins with the Permissions service.
+    /// This should be called AFTER Dapr connectivity is confirmed to ensure events are delivered.
+    /// </summary>
+    /// <returns>True if all permissions were registered successfully</returns>
+    public async Task<bool> RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering service permissions for {ServiceCount} services: {ServiceNames}",
+            _resolvedServices.Count, string.Join(", ", _resolvedServices.Keys));
+
+        foreach (var (pluginName, service) in _resolvedServices)
+        {
+            try
+            {
+                _logger.LogInformation("Registering permissions for service: {PluginName} (type: {ServiceType})",
+                    pluginName, service.GetType().Name);
+                await service.RegisterServicePermissionsAsync();
+                _logger.LogInformation("Permissions registered successfully for service: {PluginName}", pluginName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to register permissions for {PluginName}", pluginName);
+                return false;
+            }
+        }
+
+        _logger.LogInformation("All service permissions registered successfully");
         return true;
     }
 

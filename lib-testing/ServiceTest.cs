@@ -19,19 +19,4 @@ public sealed class ServiceTest
         Type = type;
         TestAction = testAction;
     }
-
-    /// <summary>
-    /// Legacy constructor for backward compatibility with Action-based tests
-    /// </summary>
-    public ServiceTest(Action<string[]> legacyAction, string name, string type, string description)
-    {
-        Name = name;
-        Description = description;
-        Type = type;
-        TestAction = (client, args) =>
-        {
-            legacyAction(args);
-            return Task.FromResult(new TestResult(true, "Legacy test completed"));
-        };
-    }
 }

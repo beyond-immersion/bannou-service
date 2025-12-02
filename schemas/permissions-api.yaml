@@ -4,7 +4,7 @@ info:
   description: Redis-backed high-performance permission system for WebSocket services
   version: 2.0.0
 servers:
-  - url: http://localhost:3500/v1.0/invoke/permissions/method
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
     description: Dapr sidecar endpoint (internal only)
 
 paths:

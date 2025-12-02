@@ -1,0 +1,51 @@
+# Edge (WebSocket) Testing Preset
+# Tests client-facing WebSocket binary protocol through Connect service
+# Used by: edge-tester project, make test-edge
+
+name: edge-tests
+description: WebSocket protocol testing preset for validating binary protocol and client-facing APIs
+category: testing
+
+topology:
+  nodes:
+    - name: bannou-edge
+      services:
+        - accounts
+        - auth
+        - behavior
+        - connect
+        - game-session
+        - permissions
+        - orchestrator
+        - website
+        - testing
+      replicas: 1
+      environment:
+        ASPNETCORE_ENVIRONMENT: Development
+        TESTING_SERVICE_ENABLED: "true"
+
+  infrastructure:
+    mysql:
+      enabled: true
+      version: "8.0"
+    redis:
+      enabled: true
+      version: "7"
+    rabbitmq:
+      enabled: true
+      version: "3.12-management"
+
+environment:
+  # Logging - quieter for edge testing
+  APP_LOGGING_LEVEL: Information
+  WEB_HOST_LOGGING_LEVEL: Warning
+
+  # Admin configuration for orchestrator API tests
+  BANNOU_AdminEmailDomain: "@admin.test.local"
+
+  # Test user credentials
+  Admin_Username: admin@admin.test.local
+  Admin_Password: admin-test-password-2025
+
+requiredBackends:
+  - docker-compose

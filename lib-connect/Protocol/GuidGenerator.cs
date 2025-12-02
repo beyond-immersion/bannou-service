@@ -102,7 +102,8 @@ public static class GuidGenerator
         var entropy = Random.Shared.Next(0, 65536);
 
         // Combine timestamp (48 bits) with entropy (16 bits)
-        return ((ulong)timestamp << 16) | (ulong)entropy;
+        // Cast entropy to uint first to avoid sign extension issues
+        return ((ulong)timestamp << 16) | (uint)entropy;
     }
 
     /// <summary>

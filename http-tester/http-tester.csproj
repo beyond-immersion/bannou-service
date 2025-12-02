@@ -36,6 +36,7 @@
     <ProjectReference Include="..\lib-permissions\lib-permissions.csproj" />
     <ProjectReference Include="..\lib-testing\lib-testing.csproj" />
     <ProjectReference Include="..\lib-website\lib-website.csproj" />
+    <ProjectReference Include="..\lib-orchestrator\lib-orchestrator.csproj" />
   </ItemGroup>
 
 </Project>

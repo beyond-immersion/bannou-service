@@ -109,14 +109,16 @@ components:
     ServiceHeartbeatEvent:
       type: object
       description: |
-        Published periodically by all services to indicate health and capacity.
-        Used for load balancing and service discovery.
+        Published periodically by each bannou instance to indicate health and capacity.
+        Contains aggregated information for ALL services hosted by this app instance.
+        Used for load balancing and service discovery by the orchestrator.
       required:
         - eventId
         - timestamp
         - serviceId
         - appId
         - status
+        - services
       properties:
         eventId:
           type: string
@@ -127,36 +129,80 @@ components:
           description: When the heartbeat was sent
         serviceId:
           type: string
-          description: Service ID sending the heartbeat
+          format: uuid
+          description: Unique GUID identifying this bannou instance (for log correlation/debugging)
         appId:
           type: string
-          description: Dapr app-id for this service instance
+          description: Dapr app-id for this instance (e.g., "bannou", "jobberwocky")
         status:
           type: string
-          enum: [healthy, degraded, overloaded, shutting_down]
-          description: Current service health status
+          enum: [healthy, degraded, overloaded, shutting_down, unavailable]
+          description: Overall instance health status (worst of all services + app-level issues)
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceStatus'
+          description: Status of each service/plugin hosted by this instance
         capacity:
-          type: object
-          properties:
-            maxConnections:
-              type: integer
-              description: Maximum connections this instance can handle
-            currentConnections:
-              type: integer
-              description: Current active connections
-            cpuUsage:
-              type: number
-              format: float
-              description: CPU usage percentage (0.0 - 1.0)
-            memoryUsage:
-              type: number
-              format: float
-              description: Memory usage percentage (0.0 - 1.0)
-          description: Service capacity and load information
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/InstanceCapacity'
+        issues:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: List of current issues affecting this instance
         metadata:
           type: object
           additionalProperties: true
-          description: Additional service-specific metadata
+          description: Additional instance-level metadata
+
+    ServiceStatus:
+      type: object
+      description: Status of an individual service/plugin within an app instance
+      required:
+        - serviceId
+        - serviceName
+        - status
+      properties:
+        serviceId:
+          type: string
+          format: uuid
+          description: Unique GUID identifying this plugin instance (for log correlation/debugging)
+        serviceName:
+          type: string
+          description: Service name (e.g., "auth", "accounts", "behavior")
+        status:
+          type: string
+          enum: [healthy, degraded, unavailable]
+          description: Individual service health status
+        version:
+          type: string
+          description: Service API version
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Service-specific metadata from OnHeartbeat callback
+
+    InstanceCapacity:
+      type: object
+      description: Instance-level capacity and load information
+      properties:
+        maxConnections:
+          type: integer
+          description: Maximum connections this instance can handle
+        currentConnections:
+          type: integer
+          description: Current active connections
+        cpuUsage:
+          type: number
+          format: float
+          description: CPU usage percentage (0.0 - 1.0)
+        memoryUsage:
+          type: number
+          format: float
+          description: Memory usage percentage (0.0 - 1.0)
 
     ServiceMappingEvent:
       type: object

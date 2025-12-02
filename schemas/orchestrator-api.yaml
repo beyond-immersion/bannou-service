@@ -1,20 +1,32 @@
 openapi: 3.0.3
 info:
   title: Orchestrator API
-  version: 1.0.0
+  version: 2.2.0
   description: |
-    Service lifecycle management and testing orchestration for Bannou.
+    **Central intelligence for Bannou environment management and service orchestration.**
 
-    The orchestrator service provides:
-    - Infrastructure health monitoring (Redis, RabbitMQ, MySQL)
-    - API-driven test execution (infrastructure, HTTP, edge tests)
-    - Smart service restart logic based on actual health metrics
-    - Container lifecycle management via Docker API
+    The orchestrator service provides comprehensive environment lifecycle management:
+    - **Environment Provisioning**: Deploy complete environments via API (replaces Makefile/docker-compose)
+    - **Dynamic Service Topology**: Reconfigure which services run on which containers at runtime
+    - **Multi-Backend Support**: Docker Compose, Docker Swarm, Portainer, and Kubernetes
+    - **Infrastructure Health**: Monitor Redis, RabbitMQ, Dapr placement, and custom services
+    - **Smart Service Management**: Restart, scale, and configure services based on health metrics
+    - **Deployment Presets**: Testing is configured via deployment presets (e.g., http-tests, edge-tests)
 
-    **CRITICAL**: This service uses DIRECT connections to Redis and RabbitMQ
-    (not via Dapr) to avoid chicken-and-egg dependency issues.
+    **Backend Priority** (automatic detection):
+    1. Kubernetes (most enterprise)
+    2. Portainer (API abstraction over Compose/Swarm)
+    3. Docker Swarm (cluster orchestration)
+    4. Docker Compose (single-host containers)
 
-servers: []
+    **Architecture**: The orchestrator uses DIRECT connections to Redis, RabbitMQ,
+    and container APIs for its own infrastructure monitoring. It ALSO has a Dapr
+    sidecar (app-id: "orchestrator") so other services can call its APIs via Dapr
+    service invocation.
+
+servers:
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
+    description: Dapr sidecar endpoint for service-to-service invocation (orchestrator runs as plugin within bannou)
 
 paths:
   /orchestrator/health/infrastructure:
@@ -26,6 +38,9 @@ paths:
         - RabbitMQ (direct connection via RabbitMQ.Client)
         - Dapr Placement service
       operationId: GetInfrastructureHealth
+      x-permissions:
+        - role: admin
+          states: {}
       responses:
         '200':
           description: Infrastructure health status
@@ -47,6 +62,9 @@ paths:
         Retrieves health information from all services via Redis heartbeat monitoring.
         Uses existing ServiceHeartbeatEvent schema from common-events.yaml.
       operationId: GetServicesHealth
+      x-permissions:
+        - role: admin
+          states: {}
       responses:
         '200':
           description: Service health report
@@ -54,35 +72,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ServiceHealthReport'
-
-  /orchestrator/tests/run:
-    post:
-      summary: Execute test batch via API
-      description: |
-        Executes tests via API calls to test services (no --exit-code-from).
-
-        Supports three test types:
-        - infrastructure: Basic service availability (testing plugin)
-        - http: Service-to-service HTTP testing (http-tester)
-        - edge: WebSocket protocol testing (edge-tester)
-      operationId: RunTests
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TestExecutionRequest'
-      responses:
-        '200':
-          description: Test execution results
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TestExecutionResult'
-        '400':
-          description: Invalid test configuration
-        '500':
-          description: Test execution failed
 
   /orchestrator/services/restart:
     post:
@@ -93,6 +82,9 @@ paths:
 
         Supports optional environment variable updates during restart.
       operationId: RestartService
+      x-permissions:
+        - role: admin
+          states: {}
       requestBody:
         required: true
         content:
@@ -123,6 +115,9 @@ paths:
         - Degraded > 5 min: Restart recommended
         - Unavailable: Restart needed
       operationId: ShouldRestartService
+      x-permissions:
+        - role: admin
+          states: {}
       requestBody:
         required: true
         content:
@@ -136,6 +131,445 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RestartRecommendation'
+
+  # ============================================================================
+  # ENVIRONMENT MANAGEMENT APIs
+  # ============================================================================
+
+  /orchestrator/backends:
+    get:
+      summary: Detect available container orchestration backends
+      description: |
+        Detects which container orchestration backends are available on this system.
+        Returns availability status and capabilities for each backend.
+
+        **Priority Order** (for automatic selection):
+        1. Kubernetes - Full cluster orchestration with operators
+        2. Portainer - API abstraction over Compose/Swarm with web UI
+        3. Docker Swarm - Native Docker cluster orchestration
+        4. Docker Compose - Single-host container management
+
+        Detection methods:
+        - Kubernetes: Check for kubectl and cluster connectivity
+        - Portainer: Check for Portainer API endpoint
+        - Swarm: Check `docker info` for swarm mode
+        - Compose: Check for docker compose v2 availability
+      operationId: GetBackends
+      x-permissions:
+        - role: admin
+          states: {}
+      responses:
+        '200':
+          description: Available backends with capabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackendsResponse'
+
+  /orchestrator/presets:
+    get:
+      summary: List available deployment presets
+      description: |
+        Returns all available deployment presets from the orchestrator's preset directory.
+        Presets define service combinations and configuration for specific use cases.
+
+        Built-in presets:
+        - `local-development`: All services in single container with Dapr
+        - `local-testing`: Test environment with infrastructure services
+        - `integration-http`: HTTP integration testing preset
+        - `integration-edge`: WebSocket/edge testing preset
+        - `split-auth-accounts`: Auth and Accounts in separate containers
+        - `distributed-npc`: NPC processing distributed across nodes
+      operationId: GetPresets
+      x-permissions:
+        - role: admin
+          states: {}
+      responses:
+        '200':
+          description: Available deployment presets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresetsResponse'
+
+  /orchestrator/deploy:
+    post:
+      summary: Deploy or update an environment
+      description: |
+        Deploys a complete environment using a preset or custom configuration.
+        Supports graceful transitions, forced deployments, and clean rebuilds.
+
+        **Deployment Modes**:
+        - `graceful`: Wait for existing connections to drain before changing topology
+        - `force`: Immediately apply changes (may interrupt active connections)
+        - `clean`: Tear down completely and rebuild from scratch
+
+        **Backend Selection**:
+        - If `backend` not specified, uses highest-priority available backend
+        - If `backend` specified but unavailable, returns error (no fallback)
+
+        **Live Topology Changes**:
+        Supports changing service distribution without full restart:
+        - Move auth/accounts to separate container while keeping other services together
+        - Scale specific services to additional nodes
+        - Update environment variables without restart (where supported)
+      operationId: Deploy
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeployRequest'
+      responses:
+        '200':
+          description: Deployment initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeployResponse'
+        '400':
+          description: Invalid deployment configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Backend not available (when explicitly requested)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Deployment failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /orchestrator/status:
+    get:
+      summary: Get current environment status
+      description: |
+        Returns comprehensive status of the current deployment including:
+        - Active backend and deployment configuration
+        - Service topology (which services on which containers)
+        - Container health and resource usage
+        - Infrastructure component status
+        - Active preset and any customizations
+      operationId: GetStatus
+      x-permissions:
+        - role: admin
+          states: {}
+      responses:
+        '200':
+          description: Current environment status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvironmentStatus'
+
+  /orchestrator/teardown:
+    post:
+      summary: Tear down the current environment
+      description: |
+        Tears down all containers and services in the current deployment.
+        Optionally preserves volumes and networks for faster redeployment.
+
+        **Teardown Modes**:
+        - `graceful`: Signal shutdown and wait for clean exit
+        - `force`: Immediately stop all containers (SIGKILL)
+        - `preserve-data`: Keep volumes and networks, only remove containers
+      operationId: Teardown
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeardownRequest'
+      responses:
+        '200':
+          description: Teardown completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeardownResponse'
+        '500':
+          description: Teardown failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /orchestrator/clean:
+    post:
+      summary: Clean up unused resources
+      description: |
+        Prunes unused Docker resources to reclaim disk space and clean up
+        orphaned containers, networks, volumes, and images.
+
+        Equivalent to running various `docker system prune` commands.
+
+        **Clean Targets**:
+        - `containers`: Remove stopped containers
+        - `networks`: Remove unused networks
+        - `volumes`: Remove unused volumes (CAUTION: data loss)
+        - `images`: Remove dangling images
+        - `all`: All of the above
+      operationId: Clean
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanResponse'
+        '500':
+          description: Cleanup failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /orchestrator/logs:
+    get:
+      summary: Get service/container logs
+      description: |
+        Retrieves logs from services or containers with filtering options.
+        Supports real-time streaming via WebSocket upgrade.
+      operationId: GetLogs
+      x-permissions:
+        - role: admin
+          states: {}
+      parameters:
+        - name: service
+          in: query
+          description: Service name to get logs for
+          schema:
+            type: string
+        - name: container
+          in: query
+          description: Container ID or name (alternative to service)
+          schema:
+            type: string
+        - name: since
+          in: query
+          description: Return logs since timestamp (RFC3339 or relative like "5m")
+          schema:
+            type: string
+        - name: until
+          in: query
+          description: Return logs until timestamp
+          schema:
+            type: string
+        - name: tail
+          in: query
+          description: Number of lines from end of logs
+          schema:
+            type: integer
+            default: 100
+        - name: follow
+          in: query
+          description: Stream logs in real-time (WebSocket upgrade)
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Log output
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogsResponse'
+            text/plain:
+              schema:
+                type: string
+        '101':
+          description: Switching to WebSocket for streaming (when follow=true)
+        '404':
+          description: Service or container not found
+
+  /orchestrator/topology:
+    post:
+      summary: Update service topology without full redeploy
+      description: |
+        Changes which services run on which containers without tearing down
+        the entire environment. Enables live topology changes.
+
+        **Use Cases**:
+        - Move auth service to dedicated container for scaling
+        - Consolidate services during low-traffic periods
+        - Split services for debugging/isolation
+        - Add new service nodes to running environment
+      operationId: UpdateTopology
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyUpdateRequest'
+      responses:
+        '200':
+          description: Topology update applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopologyUpdateResponse'
+        '400':
+          description: Invalid topology configuration
+        '409':
+          description: Topology change conflicts with current state
+        '500':
+          description: Topology update failed
+
+  # ============================================================================
+  # CONTAINER MANAGEMENT APIs (Self-Service Restart Pattern)
+  # ============================================================================
+
+  /orchestrator/containers/{appName}/request-restart:
+    post:
+      summary: Request container restart (self-service pattern)
+      description: |
+        Plugins call this endpoint to request restart of their own container.
+        This is part of the self-service configuration update pattern where
+        plugins decide if they care about config changes and request restarts.
+
+        **Flow**:
+        1. Orchestrator publishes ConfigurationChangedEvent with changed keys
+        2. Plugins check if any changed keys match their dependencies
+        3. Plugins that care call this endpoint to request restart
+        4. Orchestrator performs rolling restart of requested containers
+
+        **Priority Levels**:
+        - `graceful`: Rolling update, wait for healthy before cycling next instance
+        - `immediate`: Rolling update but don't wait for connection drain
+        - `force`: Kill all instances simultaneously (causes downtime)
+      operationId: RequestContainerRestart
+      x-permissions:
+        - role: admin
+          states: {}
+      parameters:
+        - name: appName
+          in: path
+          required: true
+          description: Container's Dapr app name (e.g., "bannou", "npc-omega")
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContainerRestartRequest'
+      responses:
+        '200':
+          description: Restart request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerRestartResponse'
+        '400':
+          description: Invalid restart request
+        '404':
+          description: Container not found
+
+  /orchestrator/containers/{appName}/status:
+    get:
+      summary: Get container health and restart history
+      description: |
+        Returns detailed status of a container including health, restart history,
+        running plugins, and current configuration.
+      operationId: GetContainerStatus
+      x-permissions:
+        - role: admin
+          states: {}
+      parameters:
+        - name: appName
+          in: path
+          required: true
+          description: Container's Dapr app name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Container status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerStatus'
+        '404':
+          description: Container not found
+
+  # ============================================================================
+  # CONFIGURATION MANAGEMENT APIs
+  # ============================================================================
+
+  /orchestrator/config/rollback:
+    post:
+      summary: Rollback to previous configuration
+      description: |
+        Quickly rollback to the previous configuration without waiting for CI.
+        Swaps currentConfig with previousConfig and publishes ConfigurationChangedEvent
+        with the reverted keys so services can request restart.
+
+        **Note**: This is a quick fix. GitHub secrets should still be corrected
+        to prevent re-breaking on next orchestrator deploy.
+      operationId: RollbackConfiguration
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigRollbackRequest'
+      responses:
+        '200':
+          description: Rollback completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigRollbackResponse'
+        '400':
+          description: No previous configuration to rollback to
+        '500':
+          description: Rollback failed
+
+  /orchestrator/config/version:
+    get:
+      summary: Get current configuration version and metadata
+      description: |
+        Returns the current configuration version, last update time,
+        and summary of configuration state (not actual values for security).
+      operationId: GetConfigVersion
+      x-permissions:
+        - role: admin
+          states: {}
+      responses:
+        '200':
+          description: Configuration version info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigVersionResponse'
 
 components:
   schemas:
@@ -412,8 +846,962 @@ components:
           type: string
           description: Explanation for recommendation
 
+    # ==========================================================================
+    # ENVIRONMENT MANAGEMENT SCHEMAS
+    # ==========================================================================
+
+    BackendType:
+      type: string
+      enum: [kubernetes, portainer, swarm, compose]
+      description: |
+        Container orchestration backend type.
+        Priority order: kubernetes > portainer > swarm > compose
+
+    BackendInfo:
+      type: object
+      required:
+        - type
+        - available
+        - priority
+      properties:
+        type:
+          $ref: '#/components/schemas/BackendType'
+        available:
+          type: boolean
+          description: Whether this backend is currently available
+        priority:
+          type: integer
+          description: Selection priority (1 = highest)
+        version:
+          type: string
+          description: Backend version (e.g., "1.28.0" for Docker)
+        endpoint:
+          type: string
+          description: Backend API endpoint (if applicable)
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: |
+            Supported capabilities for this backend:
+            - live-topology: Can change service distribution without restart
+            - scaling: Can scale services horizontally
+            - rolling-update: Supports rolling deployments
+            - secrets: Native secrets management
+            - volumes: Persistent volume support
+            - networks: Custom network creation
+        error:
+          type: string
+          description: Error message if detection failed
+
+    BackendsResponse:
+      type: object
+      required:
+        - timestamp
+        - backends
+        - recommended
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: When detection was performed
+        backends:
+          type: array
+          items:
+            $ref: '#/components/schemas/BackendInfo'
+          description: All detected backends with status
+        recommended:
+          $ref: '#/components/schemas/BackendType'
+        activeBackend:
+          $ref: '#/components/schemas/BackendType'
+          description: Currently active backend (if environment deployed)
+
+    DeploymentPreset:
+      type: object
+      required:
+        - name
+        - description
+        - topology
+      properties:
+        name:
+          type: string
+          description: Unique preset identifier (e.g., "local-development")
+        description:
+          type: string
+          description: Human-readable preset description
+        category:
+          type: string
+          enum: [development, testing, production, custom]
+          description: Preset category
+        topology:
+          $ref: '#/components/schemas/ServiceTopology'
+        environment:
+          type: object
+          additionalProperties:
+            type: string
+          description: Default environment variables for this preset
+        requiredBackends:
+          type: array
+          items:
+            $ref: '#/components/schemas/BackendType'
+          description: Backends that support this preset (empty = all)
+        builtIn:
+          type: boolean
+          description: Whether this is a built-in preset
+        filePath:
+          type: string
+          description: Path to preset configuration file
+
+    PresetsResponse:
+      type: object
+      required:
+        - presets
+      properties:
+        presets:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeploymentPreset'
+          description: Available deployment presets
+        activePreset:
+          type: string
+          description: Currently active preset name (if any)
+
+    ServiceTopology:
+      type: object
+      required:
+        - nodes
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopologyNode'
+          description: Container/pod definitions with service assignments
+        infrastructure:
+          $ref: '#/components/schemas/InfrastructureConfig'
+          description: Infrastructure service configuration
+
+    TopologyNode:
+      type: object
+      required:
+        - name
+        - services
+      properties:
+        name:
+          type: string
+          description: Node/container name (e.g., "bannou-main", "bannou-auth")
+        services:
+          type: array
+          items:
+            type: string
+          description: |
+            Services enabled on this node.
+            Uses {SERVICE}_SERVICE_ENABLED=true pattern.
+            Example: ["accounts", "auth", "permissions"]
+        replicas:
+          type: integer
+          default: 1
+          description: Number of replicas for this node
+        resources:
+          $ref: '#/components/schemas/ResourceLimits'
+        environment:
+          type: object
+          additionalProperties:
+            type: string
+          description: Node-specific environment overrides
+        daprEnabled:
+          type: boolean
+          default: true
+          description: Whether to attach Dapr sidecar
+        daprAppId:
+          type: string
+          description: Dapr app-id override (default derives from node name)
+
+    InfrastructureConfig:
+      type: object
+      properties:
+        redis:
+          $ref: '#/components/schemas/InfraServiceConfig'
+        rabbitmq:
+          $ref: '#/components/schemas/InfraServiceConfig'
+        mysql:
+          $ref: '#/components/schemas/InfraServiceConfig'
+        placement:
+          $ref: '#/components/schemas/InfraServiceConfig'
+          description: Dapr placement service
+        ingress:
+          $ref: '#/components/schemas/IngressConfig'
+
+    InfraServiceConfig:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        image:
+          type: string
+          description: Docker image override
+        resources:
+          $ref: '#/components/schemas/ResourceLimits'
+        environment:
+          type: object
+          additionalProperties:
+            type: string
+        volumes:
+          type: array
+          items:
+            type: string
+          description: Volume mounts
+
+    IngressConfig:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        type:
+          type: string
+          enum: [openresty, nginx, traefik, none]
+          default: openresty
+        ports:
+          type: object
+          properties:
+            http:
+              type: integer
+              default: 80
+            https:
+              type: integer
+              default: 443
+        ssl:
+          type: boolean
+          default: false
+
+    ResourceLimits:
+      type: object
+      properties:
+        cpuLimit:
+          type: string
+          description: CPU limit (e.g., "0.5", "2")
+        memoryLimit:
+          type: string
+          description: Memory limit (e.g., "512m", "2g")
+        cpuRequest:
+          type: string
+          description: CPU request (Kubernetes)
+        memoryRequest:
+          type: string
+          description: Memory request (Kubernetes)
+
+    DeploymentMode:
+      type: string
+      enum: [graceful, force, clean]
+      description: |
+        Deployment mode:
+        - graceful: Wait for connections to drain
+        - force: Apply immediately
+        - clean: Tear down and rebuild
+
+    DeployRequest:
+      type: object
+      properties:
+        preset:
+          type: string
+          description: Preset name to deploy (mutually exclusive with topology)
+        topology:
+          $ref: '#/components/schemas/ServiceTopology'
+          description: Custom topology (mutually exclusive with preset)
+        backend:
+          $ref: '#/components/schemas/BackendType'
+          description: Specific backend to use (fails if unavailable)
+        mode:
+          $ref: '#/components/schemas/DeploymentMode'
+          default: graceful
+        environment:
+          type: object
+          additionalProperties:
+            type: string
+          description: Environment variable overrides
+        timeout:
+          type: integer
+          default: 300
+          description: Deployment timeout in seconds
+        waitForHealthy:
+          type: boolean
+          default: true
+          description: Wait for all services to report healthy
+
+    DeployResponse:
+      type: object
+      required:
+        - success
+        - deploymentId
+        - backend
+        - duration
+      properties:
+        success:
+          type: boolean
+          description: Deployment succeeded
+        deploymentId:
+          type: string
+          description: Unique deployment identifier for tracking
+        backend:
+          $ref: '#/components/schemas/BackendType'
+        preset:
+          type: string
+          description: Preset used (if applicable)
+        duration:
+          type: string
+          description: Time taken to deploy
+        topology:
+          $ref: '#/components/schemas/ServiceTopology'
+          description: Final applied topology
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeployedService'
+          description: Status of deployed services
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Non-fatal warnings during deployment
+        message:
+          type: string
+          description: Human-readable deployment summary
+
+    DeployedService:
+      type: object
+      required:
+        - name
+        - status
+        - node
+      properties:
+        name:
+          type: string
+          description: Service name
+        status:
+          type: string
+          enum: [starting, running, healthy, unhealthy, stopped]
+        node:
+          type: string
+          description: Node/container hosting this service
+        containerId:
+          type: string
+          description: Container ID (Compose/Swarm)
+        podName:
+          type: string
+          description: Pod name (Kubernetes)
+        endpoints:
+          type: array
+          items:
+            type: string
+          description: Exposed endpoints
+
+    EnvironmentStatus:
+      type: object
+      required:
+        - deployed
+        - timestamp
+      properties:
+        deployed:
+          type: boolean
+          description: Whether an environment is currently deployed
+        timestamp:
+          type: string
+          format: date-time
+        deploymentId:
+          type: string
+          description: Current deployment identifier
+        backend:
+          $ref: '#/components/schemas/BackendType'
+        preset:
+          type: string
+          description: Active preset name
+        topology:
+          $ref: '#/components/schemas/ServiceTopology'
+          description: Current topology configuration
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeployedService'
+          description: All deployed services with status
+        infrastructure:
+          $ref: '#/components/schemas/InfrastructureHealthResponse'
+          description: Infrastructure component health
+        resources:
+          $ref: '#/components/schemas/ResourceUsage'
+          description: Overall resource usage
+        uptime:
+          type: string
+          description: Time since deployment
+
+    ResourceUsage:
+      type: object
+      properties:
+        cpuPercent:
+          type: number
+          format: float
+          description: Total CPU usage percentage
+        memoryUsedMb:
+          type: integer
+          description: Total memory used (MB)
+        memoryTotalMb:
+          type: integer
+          description: Total memory available (MB)
+        diskUsedGb:
+          type: number
+          format: float
+          description: Disk space used (GB)
+        networkInMb:
+          type: number
+          format: float
+          description: Network input (MB)
+        networkOutMb:
+          type: number
+          format: float
+          description: Network output (MB)
+
+    TeardownMode:
+      type: string
+      enum: [graceful, force, preserve-data]
+      description: |
+        Teardown mode:
+        - graceful: Signal shutdown, wait for clean exit
+        - force: Immediately stop (SIGKILL)
+        - preserve-data: Keep volumes/networks, remove containers
+
+    TeardownRequest:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/TeardownMode'
+          default: graceful
+        timeout:
+          type: integer
+          default: 60
+          description: Graceful shutdown timeout in seconds
+        removeVolumes:
+          type: boolean
+          default: false
+          description: Also remove associated volumes
+        removeNetworks:
+          type: boolean
+          default: false
+          description: Also remove associated networks
+
+    TeardownResponse:
+      type: object
+      required:
+        - success
+        - duration
+      properties:
+        success:
+          type: boolean
+        duration:
+          type: string
+        stoppedContainers:
+          type: array
+          items:
+            type: string
+          description: Container IDs that were stopped
+        removedVolumes:
+          type: array
+          items:
+            type: string
+          description: Volumes that were removed
+        removedNetworks:
+          type: array
+          items:
+            type: string
+          description: Networks that were removed
+        errors:
+          type: array
+          items:
+            type: string
+          description: Non-fatal errors during teardown
+        message:
+          type: string
+
+    CleanTarget:
+      type: string
+      enum: [containers, networks, volumes, images, all]
+      description: Type of resource to clean
+
+    CleanRequest:
+      type: object
+      required:
+        - targets
+      properties:
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/CleanTarget'
+          description: Resources to clean (or "all")
+        force:
+          type: boolean
+          default: false
+          description: Force removal without confirmation
+        olderThan:
+          type: string
+          description: Only clean resources older than (e.g., "24h", "7d")
+        labelFilter:
+          type: object
+          additionalProperties:
+            type: string
+          description: Only clean resources matching labels
+
+    CleanResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+        reclaimedSpaceMb:
+          type: integer
+          description: Disk space reclaimed (MB)
+        removedContainers:
+          type: integer
+        removedNetworks:
+          type: integer
+        removedVolumes:
+          type: integer
+        removedImages:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+
+    LogsResponse:
+      type: object
+      required:
+        - logs
+      properties:
+        service:
+          type: string
+          description: Service name (if queried by service)
+        container:
+          type: string
+          description: Container ID/name
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogEntry'
+        truncated:
+          type: boolean
+          description: Whether output was truncated
+
+    LogEntry:
+      type: object
+      required:
+        - timestamp
+        - message
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        stream:
+          type: string
+          enum: [stdout, stderr]
+        message:
+          type: string
+
+    TopologyUpdateRequest:
+      type: object
+      required:
+        - changes
+      properties:
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopologyChange'
+          description: List of topology changes to apply
+        mode:
+          $ref: '#/components/schemas/DeploymentMode'
+          default: graceful
+        timeout:
+          type: integer
+          default: 120
+          description: Timeout for topology update
+
+    TopologyChange:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum: [add-node, remove-node, move-service, scale, update-env]
+          description: Type of topology change
+        nodeName:
+          type: string
+          description: Target node name
+        services:
+          type: array
+          items:
+            type: string
+          description: Services affected by this change
+        replicas:
+          type: integer
+          description: New replica count (for scale action)
+        environment:
+          type: object
+          additionalProperties:
+            type: string
+          description: Environment updates (for update-env action)
+        nodeConfig:
+          $ref: '#/components/schemas/TopologyNode'
+          description: Full node config (for add-node action)
+
+    TopologyUpdateResponse:
+      type: object
+      required:
+        - success
+        - appliedChanges
+      properties:
+        success:
+          type: boolean
+        appliedChanges:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedChange'
+        topology:
+          $ref: '#/components/schemas/ServiceTopology'
+          description: New topology after changes
+        duration:
+          type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+
+    AppliedChange:
+      type: object
+      required:
+        - action
+        - success
+      properties:
+        action:
+          type: string
+        target:
+          type: string
+          description: Node or service affected
+        success:
+          type: boolean
+        error:
+          type: string
+          description: Error message if failed
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error context
+
+    # ==========================================================================
+    # EVENT SCHEMAS (for RabbitMQ pub/sub)
+    # ==========================================================================
+
+    DeploymentEvent:
+      type: object
+      description: |
+        Published when deployment state changes.
+        Topic: bannou-deployment-events
+      required:
+        - eventId
+        - timestamp
+        - action
+        - deploymentId
+      properties:
+        eventId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        action:
+          type: string
+          enum: [started, completed, failed, topology-changed]
+        deploymentId:
+          type: string
+        preset:
+          type: string
+        backend:
+          $ref: '#/components/schemas/BackendType'
+        changes:
+          type: array
+          items:
+            type: string
+          description: Summary of changes made
+        error:
+          type: string
+          nullable: true
+          description: Error message if failed
+
+    ServiceRestartEvent:
+      type: object
+      description: |
+        Published when a service is restarted.
+        Topic: bannou-service-lifecycle
+      required:
+        - eventId
+        - serviceName
+        - reason
+      properties:
+        eventId:
+          type: string
+        serviceName:
+          type: string
+        reason:
+          type: string
+        forced:
+          type: boolean
+        newEnvironment:
+          type: object
+          additionalProperties:
+            type: string
+
+    ConfigurationChangedEvent:
+      type: object
+      description: |
+        Published by orchestrator when configuration or secrets change.
+        All containers receive this event via RabbitMQ. Plugins decide if they care
+        based on the changedKeys prefixes and request restart if needed.
+        Topic: bannou-configuration-events
+      required:
+        - eventId
+        - timestamp
+        - configVersion
+        - changedKeys
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        configVersion:
+          type: integer
+          description: Monotonically increasing version number
+        changedKeys:
+          type: array
+          items:
+            type: string
+          description: |
+            Configuration keys that changed (not values for security).
+            Key prefixes indicate scope:
+            - "auth.*" - Authentication-related
+            - "database.*" - Database connections
+            - "dapr.*" - Dapr components (typically global impact)
+            - "connect.*" - WebSocket/connection settings
+
+    # ==========================================================================
+    # CONTAINER MANAGEMENT SCHEMAS
+    # ==========================================================================
+
+    RestartPriority:
+      type: string
+      enum: [graceful, immediate, force]
+      description: |
+        Restart urgency level:
+        - graceful: Rolling update, wait for healthy before cycling next instance
+        - immediate: Rolling update but don't wait for connection drain
+        - force: Kill all instances simultaneously (causes downtime)
+
+    ContainerRestartRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          description: Why restart is needed (for logging/auditing)
+          example: "configuration_change"
+        priority:
+          $ref: '#/components/schemas/RestartPriority'
+          default: graceful
+        shutdownGracePeriod:
+          type: integer
+          default: 30
+          description: Seconds to allow graceful shutdown before force-kill
+
+    ContainerRestartResponse:
+      type: object
+      required:
+        - accepted
+        - appName
+      properties:
+        accepted:
+          type: boolean
+          description: Whether the restart request was accepted
+        appName:
+          type: string
+          description: Container that will be restarted
+        scheduledFor:
+          type: string
+          format: date-time
+          description: When restart is scheduled (may be queued)
+        currentInstances:
+          type: integer
+          description: Number of running instances
+        restartStrategy:
+          type: string
+          enum: [rolling, simultaneous]
+          description: How restart will be performed
+        message:
+          type: string
+          description: Additional information
+
+    ContainerStatus:
+      type: object
+      required:
+        - appName
+        - status
+        - timestamp
+      properties:
+        appName:
+          type: string
+          description: Container's Dapr app name
+        status:
+          type: string
+          enum: [running, starting, stopping, stopped, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        instances:
+          type: integer
+          description: Number of running instances
+        plugins:
+          type: array
+          items:
+            type: string
+          description: Plugins running in this container
+        lastRestart:
+          type: string
+          format: date-time
+          description: When container was last restarted
+        restartCount:
+          type: integer
+          description: Number of restarts in last 24 hours
+        restartHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/RestartHistoryEntry'
+          description: Recent restart history
+        healthChecks:
+          type: object
+          properties:
+            lastCheck:
+              type: string
+              format: date-time
+            status:
+              type: string
+            consecutiveFailures:
+              type: integer
+
+    RestartHistoryEntry:
+      type: object
+      required:
+        - timestamp
+        - reason
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        reason:
+          type: string
+        priority:
+          $ref: '#/components/schemas/RestartPriority'
+        duration:
+          type: string
+          description: Time taken to restart
+        success:
+          type: boolean
+        error:
+          type: string
+          description: Error message if restart failed
+
+    # ==========================================================================
+    # CONFIGURATION MANAGEMENT SCHEMAS
+    # ==========================================================================
+
+    ConfigRollbackRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          description: Why rollback is needed (for auditing)
+          example: "auth.jwt_secret broke authentication"
+
+    ConfigRollbackResponse:
+      type: object
+      required:
+        - success
+        - previousVersion
+        - currentVersion
+      properties:
+        success:
+          type: boolean
+        previousVersion:
+          type: integer
+          description: Config version before rollback
+        currentVersion:
+          type: integer
+          description: Config version after rollback (now active)
+        changedKeys:
+          type: array
+          items:
+            type: string
+          description: Keys that were reverted
+        message:
+          type: string
+
+    ConfigVersionResponse:
+      type: object
+      required:
+        - version
+        - timestamp
+      properties:
+        version:
+          type: integer
+          description: Current configuration version number
+        timestamp:
+          type: string
+          format: date-time
+          description: When current config was applied
+        hasPreviousConfig:
+          type: boolean
+          description: Whether a previous config is available for rollback
+        keyCount:
+          type: integer
+          description: Number of configuration keys (not values for security)
+        keyPrefixes:
+          type: array
+          items:
+            type: string
+          description: Configuration key prefixes present (e.g., "auth", "database")
+
 x-service-configuration:
   properties:
+    # ==========================================================================
+    # DIRECT CONNECTIONS (Orchestrator runs without Dapr sidecar)
+    # ==========================================================================
     RedisConnectionString:
       type: string
       default: "redis:6379"
@@ -422,10 +1810,58 @@ x-service-configuration:
       type: string
       default: "amqp://guest:guest@rabbitmq:5672"
       description: Direct RabbitMQ connection (not Dapr component)
+
+    # ==========================================================================
+    # BACKEND CONFIGURATION
+    # ==========================================================================
     DockerHost:
       type: string
       default: "unix:///var/run/docker.sock"
       description: Docker API endpoint (socket for dev, TLS for prod)
+    DockerTlsCertPath:
+      type: string
+      description: Path to TLS certificates for Docker API (production)
+
+    KubernetesConfig:
+      type: string
+      description: "Path to kubeconfig file for Kubernetes backend. If empty, uses in-cluster config or KUBECONFIG env var."
+    KubernetesNamespace:
+      type: string
+      default: "bannou"
+      description: Kubernetes namespace for deployments
+
+    PortainerUrl:
+      type: string
+      description: Portainer API URL (e.g., "https://portainer.local:9443")
+    PortainerApiKey:
+      type: string
+      description: Portainer API key for authentication
+    PortainerEndpointId:
+      type: integer
+      default: 1
+      description: Portainer environment/endpoint ID
+
+    PreferredBackend:
+      type: string
+      enum: [auto, kubernetes, portainer, swarm, compose]
+      default: "auto"
+      description: "Preferred backend. auto uses priority detection. If specified backend unavailable, deployment fails (no fallback)."
+
+    # ==========================================================================
+    # PRESET CONFIGURATION
+    # ==========================================================================
+    PresetsDirectory:
+      type: string
+      default: "provisioning/orchestrator/presets"
+      description: Directory containing deployment preset YAML files
+    ComposeFilesDirectory:
+      type: string
+      default: "provisioning"
+      description: Directory containing reference compose files
+
+    # ==========================================================================
+    # HEALTH MONITORING
+    # ==========================================================================
     ServiceHealthCheckInterval:
       type: integer
       default: 30
@@ -442,3 +1878,23 @@ x-service-configuration:
       type: integer
       default: 90
       description: Seconds before heartbeat considered expired
+
+    # ==========================================================================
+    # DEPLOYMENT BEHAVIOR
+    # ==========================================================================
+    DefaultDeploymentTimeout:
+      type: integer
+      default: 300
+      description: Default timeout for deployments (seconds)
+    GracefulShutdownTimeout:
+      type: integer
+      default: 30
+      description: Default graceful shutdown wait time (seconds)
+    HealthCheckRetries:
+      type: integer
+      default: 10
+      description: Number of health check retries before marking unhealthy
+    HealthCheckInterval:
+      type: integer
+      default: 5
+      description: Interval between health check retries (seconds)

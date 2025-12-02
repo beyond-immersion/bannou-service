@@ -1,0 +1,88 @@
+# Orchestrator with Dapr Sidecar
+# The orchestrator connects directly to Redis and RabbitMQ for infrastructure
+# monitoring, but ALSO has a Dapr sidecar so other services can call its APIs
+# via Dapr service invocation (app-id: "orchestrator").
+#
+# Usage with Makefile:
+#   make up-orchestrator    - Start orchestrator with infrastructure
+#   make down-orchestrator  - Stop orchestrator stack
+#   make test-orchestrator  - Test orchestrator APIs via http-tester
+#
+# Architecture:
+#   - Direct Redis/RabbitMQ for orchestrator's own infrastructure monitoring
+#   - Dapr sidecar for service-to-service communication (other services call orchestrator)
+#   - Docker socket access for container management operations
+
+services:
+
+  # Orchestrator instance - with Dapr sidecar for service invocation
+  bannou-orchestrator:
+    image: bannou:latest
+    build:
+      context: ../
+      dockerfile: provisioning/Dockerfile
+    environment:
+      # Orchestrator service only
+      - ORCHESTRATOR_SERVICE_ENABLED=true
+      - TESTING_SERVICE_ENABLED=false
+      - ACCOUNTS_SERVICE_ENABLED=false
+      - AUTH_SERVICE_ENABLED=false
+      - BEHAVIOR_SERVICE_ENABLED=false
+      - CONNECT_SERVICE_ENABLED=false
+      - GAMESESSION_SERVICE_ENABLED=false
+      - PERMISSIONS_SERVICE_ENABLED=false
+      - WEBSITE_SERVICE_ENABLED=false
+      # Direct infrastructure connections for orchestrator's own monitoring
+      - BANNOU_RedisConnectionString=bannou-redis:6379
+      - BANNOU_RabbitMqConnectionString=amqp://guest:guest@rabbitmq:5672
+      - BANNOU_DockerHost=unix:///var/run/docker.sock
+      # Dapr endpoints - use 127.0.0.1 since sidecar shares network stack
+      - DAPR_HTTP_ENDPOINT=http://127.0.0.1:3500
+      - DAPR_GRPC_ENDPOINT=http://127.0.0.1:50001
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"  # Docker socket access
+      - "./certificates:/certificates"
+      - "orchestrator-logs:/app/logs/"
+    ports:
+      - "8090:80"   # Orchestrator HTTP API (direct access for debugging)
+      - "8493:443"  # Orchestrator HTTPS API
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://127.0.0.1:80/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      bannou-redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      placement:
+        condition: service_started
+
+  # Dapr sidecar for orchestrator - shares network stack
+  orchestrator-dapr:
+    image: "daprio/daprd:edge"
+    command: [
+      "./daprd",
+      "--app-id", "orchestrator",
+      "--app-port", "80",
+      "--app-protocol", "http",
+      "--dapr-http-port", "3500",
+      "--dapr-grpc-port", "50001",
+      "--placement-host-address", "placement:50006",
+      "--resources-path", "./components",
+      "--log-level", "info"
+    ]
+    volumes:
+      - "./dapr/components/:/components"
+      - "./certificates:/certificates"
+    environment:
+      - "SSL_CERT_DIR=/certificates"
+    network_mode: "service:bannou-orchestrator"  # Share network stack with orchestrator
+    restart: always
+    depends_on:
+      - bannou-orchestrator
+
+volumes:
+  orchestrator-logs:

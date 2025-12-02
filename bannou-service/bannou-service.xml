@@ -942,8 +942,9 @@
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent">
             <summary>
-            Published periodically by all services to indicate health and capacity.
-            <br/>Used for load balancing and service discovery.
+            Published periodically by each bannou instance to indicate health and capacity.
+            <br/>Contains aggregated information for ALL services hosted by this app instance.
+            <br/>Used for load balancing and service discovery by the orchestrator.
             <br/>
             </summary>
         </member>
@@ -959,27 +960,87 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.ServiceId">
             <summary>
-            Service ID sending the heartbeat
+            Unique GUID identifying this bannou instance (for log correlation/debugging)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.AppId">
             <summary>
-            Dapr app-id for this service instance
+            Dapr app-id for this instance (e.g., "bannou", "jobberwocky")
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.Status">
             <summary>
-            Current service health status
+            Overall instance health status (worst of all services + app-level issues)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.Capacity">
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.Services">
             <summary>
-            Service capacity and load information
+            Status of each service/plugin hosted by this instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.Issues">
+            <summary>
+            List of current issues affecting this instance
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.ServiceHeartbeatEvent.Metadata">
             <summary>
-            Additional service-specific metadata
+            Additional instance-level metadata
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ServiceStatus">
+            <summary>
+            Status of an individual service/plugin within an app instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceStatus.ServiceId">
+            <summary>
+            Unique GUID identifying this plugin instance (for log correlation/debugging)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceStatus.ServiceName">
+            <summary>
+            Service name (e.g., "auth", "accounts", "behavior")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceStatus.Status">
+            <summary>
+            Individual service health status
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceStatus.Version">
+            <summary>
+            Service API version
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceStatus.Metadata">
+            <summary>
+            Service-specific metadata from OnHeartbeat callback
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.InstanceCapacity">
+            <summary>
+            Instance-level capacity and load information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InstanceCapacity.MaxConnections">
+            <summary>
+            Maximum connections this instance can handle
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InstanceCapacity.CurrentConnections">
+            <summary>
+            Current active connections
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InstanceCapacity.CpuUsage">
+            <summary>
+            CPU usage percentage (0.0 - 1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.InstanceCapacity.MemoryUsage">
+            <summary>
+            Memory usage percentage (0.0 - 1.0)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.ServiceMappingEvent">
@@ -1027,26 +1088,6 @@
         <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Metadata">
             <summary>
             Additional mapping metadata
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.Capacity.MaxConnections">
-            <summary>
-            Maximum connections this instance can handle
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.Capacity.CurrentConnections">
-            <summary>
-            Current active connections
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.Capacity.CpuUsage">
-            <summary>
-            CPU usage percentage (0.0 - 1.0)
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.Capacity.MemoryUsage">
-            <summary>
-            Memory usage percentage (0.0 - 1.0)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ExtensionMethods">
@@ -1475,6 +1516,13 @@
             </summary>
             <returns>True if all plugins and services initialized successfully</returns>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.RegisterServicePermissionsAsync">
+            <summary>
+            Registers service permissions for all enabled plugins with the Permissions service.
+            This should be called AFTER Dapr connectivity is confirmed to ensure events are delivered.
+            </summary>
+            <returns>True if all permissions were registered successfully</returns>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.StartAsync">
             <summary>
             Start enabled plugins and their resolved services.
@@ -1543,6 +1591,11 @@
             Plugin loader for managing service plugins.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Program.HeartbeatManager">
+            <summary>
+            Service heartbeat manager for publishing instance health to orchestrator.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Program.ShutdownCancellationTokenSource">
             <summary>
             Token source for initiating a clean shutdown.
@@ -1568,13 +1621,6 @@
             <summary>
             Will stop the webhost and initiate a service shutdown.
             </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.Program.WaitForDaprReadiness">
-            <summary>
-            Waits for Dapr to be ready before proceeding with service startup.
-            Uses configurable timeout from Dapr_Readiness_Timeout.
-            </summary>
-            <returns>True if Dapr is ready, false if timeout or error occurs.</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase">
             <summary>
@@ -1805,6 +1851,14 @@
         <member name="T:BeyondImmersion.BannouService.Services.DaprService">
             <summary>
             Optional base type for service handlers.
+            Provides default implementation for InstanceId and other common service functionality.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.DaprService.InstanceId">
+            <summary>
+            Unique instance identifier for this service plugin.
+            Generated once per service instance lifetime.
+            Used for log correlation and debugging across distributed systems.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.DaprService`1">
@@ -1825,6 +1879,28 @@
              any API calls that desire to create/modify inventory
              data in the game.
              </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.IDaprService.InstanceId">
+            <summary>
+            Unique instance identifier for this service plugin.
+            Used for log correlation and debugging across distributed systems.
+            Generated once per service instance lifetime.
+            Default implementation generates a GUID on first access.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.IDaprService.ServiceVersion">
+            <summary>
+            Gets the service version string for heartbeat reporting.
+            Override to provide a custom version. Default returns "1.0.0".
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IDaprService.OnHeartbeat">
+            <summary>
+            Called during heartbeat collection to gather service-specific status and metadata.
+            Override to provide custom status reporting, capacity info, or metadata.
+            Default implementation returns healthy status with no additional metadata.
+            </summary>
+            <returns>ServiceStatus with this service's current health information</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IDaprService.OnEventReceivedAsync``1(System.String,``0)">
             <summary>
@@ -2001,6 +2077,115 @@
         <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.GetAllMappings">
             <summary>
             Gets all current service mappings for debugging/monitoring.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager">
+            <summary>
+            Manages heartbeat publishing for all services in a bannou instance.
+            Publishes aggregated heartbeats via Dapr pub/sub on startup and periodically.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.InstanceId">
+            <summary>
+            Unique instance identifier for this bannou application instance.
+            Used for log correlation across distributed systems.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.AppId">
+            <summary>
+            The Dapr app-id for this instance. Resolved from environment variables.
+            Order: DAPR_APP_ID -> APP_ID -> "bannou" default
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.HeartbeatIntervalSeconds">
+            <summary>
+            Heartbeat interval in seconds. Default is 30 seconds.
+            Configurable via HEARTBEAT_INTERVAL_SECONDS environment variable.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.PUBSUB_NAME">
+            <summary>
+            The pub/sub component name for heartbeat events.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.HEARTBEAT_TOPIC">
+            <summary>
+            The topic name for heartbeat events.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Services.ServiceHeartbeatManager},BeyondImmersion.BannouService.Plugins.PluginLoader)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.PublishStartupHeartbeatAsync(System.Threading.CancellationToken)">
+            <summary>
+            Publish startup heartbeats for all enabled services.
+            This serves as both a heartbeat announcement and Dapr pub/sub connectivity check.
+            Should be called after all plugins are initialized and started.
+            </summary>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if heartbeat published successfully (Dapr is ready), false otherwise</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.WaitForDaprConnectivityAsync(System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Wait for Dapr connectivity by attempting to publish heartbeats with retries.
+            This blocks startup until Dapr sidecar is ready to send/receive events.
+            </summary>
+            <param name="maxRetries">Maximum number of retry attempts</param>
+            <param name="retryDelayMs">Delay between retries in milliseconds</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if Dapr is ready, false if all retries exhausted</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.StartPeriodicHeartbeats">
+            <summary>
+            Start the periodic heartbeat timer.
+            Heartbeats will be published at the configured interval.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.PublishPeriodicHeartbeatAsync">
+            <summary>
+            Publish a periodic heartbeat with current service statuses.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.PublishShutdownHeartbeatAsync(System.Threading.CancellationToken)">
+            <summary>
+            Publish a shutdown heartbeat to notify orchestrator this instance is going down.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.BuildHeartbeatEvent(BeyondImmersion.BannouService.Events.ServiceHeartbeatEventStatus)">
+            <summary>
+            Build the heartbeat event with all service statuses.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.DetermineOverallStatus">
+            <summary>
+            Determine the overall status based on all service statuses.
+            Returns the worst status among all services.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.GetInstanceCapacity">
+            <summary>
+            Get instance-level capacity information.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.ReportIssue(System.String)">
+            <summary>
+            Report an issue affecting this instance.
+            Issues are included in heartbeat messages.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.ClearIssue(System.String)">
+            <summary>
+            Clear a previously reported issue.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.ClearAllIssues">
+            <summary>
+            Clear all reported issues.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.DisposeAsync">
+            <summary>
+            Stop periodic heartbeats and clean up resources.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceResponse">

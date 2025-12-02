@@ -4,6 +4,8 @@
 **Implemented Solution:** `restart: always` policy on Dapr sidecars
 **Status:** ⚠️ PROBLEMATIC - Violates production resilience requirements
 
+> **Note**: This is a detailed analysis reference document explaining the root cause that led to the orchestrator design. For the consolidated orchestrator design including architecture decisions, API design, and secrets management, see **[ORCHESTRATOR-SERVICE-DESIGN.md](./ORCHESTRATOR-SERVICE-DESIGN.md)**.
+
 ## Executive Summary
 
 The implemented solution (using `restart: always` on Dapr sidecars) successfully allows tests to pass by restarting Dapr containers when RabbitMQ isn't immediately available. However, **this approach directly contradicts the stated requirement that "containers need to be resilient, not restart when connections fail."**

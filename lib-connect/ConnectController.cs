@@ -17,13 +17,17 @@ public class ConnectController : ConnectControllerBase
         _connectService = connectService;
     }
 
-    [Obsolete("This method is deprecated and will be removed in future versions")]
+    /// <summary>
+    /// Handles WebSocket connection via GET upgrade request.
+    /// </summary>
     public override async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocket([Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection connection, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade upgrade, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         return await HandleWebSocketConnectionAsync(authorization, cancellationToken);
     }
 
-    [Obsolete("This method is deprecated and will be removed in future versions")]
+    /// <summary>
+    /// Handles WebSocket connection via POST request with optional body.
+    /// </summary>
     public override async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         return await HandleWebSocketConnectionAsync(authorization, cancellationToken);
@@ -31,8 +35,8 @@ public class ConnectController : ConnectControllerBase
 
     /// <summary>
     /// Common WebSocket connection handling logic.
+    /// Validates JWT, accepts WebSocket upgrade, and initiates binary protocol communication.
     /// </summary>
-    [Obsolete]
     private async Task<IActionResult> HandleWebSocketConnectionAsync(
         string authorization,
         CancellationToken cancellationToken = default)
@@ -52,8 +56,8 @@ public class ConnectController : ConnectControllerBase
                 return StatusCode(500, "Service implementation not available");
             }
 
-            // Validate and parse JWT token
-            var sessionId = await connectService.ValidateJWTAndExtractSessionAsync(authorization, cancellationToken);
+            // Validate and parse JWT token, extracting session ID and roles
+            var (sessionId, roles) = await connectService.ValidateJWTAndExtractSessionAsync(authorization, cancellationToken);
             if (sessionId == null)
             {
                 return Unauthorized("Invalid or expired JWT token");
@@ -62,8 +66,8 @@ public class ConnectController : ConnectControllerBase
             // Accept WebSocket connection
             var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 
-            // Handle WebSocket communication with binary protocol
-            await connectService.HandleWebSocketCommunicationAsync(webSocket, sessionId, cancellationToken);
+            // Handle WebSocket communication with binary protocol, passing user roles for capability initialization
+            await connectService.HandleWebSocketCommunicationAsync(webSocket, sessionId, roles, cancellationToken);
 
             return Ok();
         }

@@ -10,7 +10,9 @@ using System.Threading.Tasks;
 namespace BeyondImmersion.BannouService.Behavior;
 
 /// <summary>
-/// Generated service implementation for Behavior API
+/// Behavior service implementation for ABML (Agent Behavior Markup Language) processing.
+/// Note: This service is not yet implemented - planned for future release.
+/// Methods return placeholder responses until implementation is complete.
 /// </summary>
 [DaprService("behavior", typeof(IBehaviorService), lifetime: ServiceLifetime.Scoped)]
 public class BehaviorService : IBehaviorService
@@ -27,18 +29,14 @@ public class BehaviorService : IBehaviorService
     }
 
     /// <summary>
-    /// CompileAbmlBehavior operation implementation
+    /// Compiles ABML behavior definition. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, CompileBehaviorResponse?)> CompileAbmlBehaviorAsync(CompileBehaviorRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing ABML behavior compilation request");
-
-            // TODO: Implement ABML behavior compilation logic
-            // This should parse YAML behavior definitions and compile them
-
-            return Task.FromResult<(StatusCodes, CompileBehaviorResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method CompileAbmlBehaviorAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, CompileBehaviorResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -48,18 +46,14 @@ public class BehaviorService : IBehaviorService
     }
 
     /// <summary>
-    /// CompileBehaviorStack operation implementation
+    /// Compiles a stack of behaviors with priority resolution. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, CompileBehaviorResponse?)> CompileBehaviorStackAsync(BehaviorStackRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing behavior stack compilation request");
-
-            // TODO: Implement behavior stack compilation logic
-            // This should handle stackable behavior sets with priority resolution
-
-            return Task.FromResult<(StatusCodes, CompileBehaviorResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method CompileBehaviorStackAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, CompileBehaviorResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -69,18 +63,14 @@ public class BehaviorService : IBehaviorService
     }
 
     /// <summary>
-    /// ValidateAbml operation implementation
+    /// Validates ABML YAML syntax and schema. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(ValidateAbmlRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing ABML validation request");
-
-            // TODO: Implement ABML YAML validation logic
-            // This should validate YAML syntax and ABML schema compliance
-
-            return Task.FromResult<(StatusCodes, ValidateAbmlResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method ValidateAbmlAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, ValidateAbmlResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -90,18 +80,14 @@ public class BehaviorService : IBehaviorService
     }
 
     /// <summary>
-    /// GetCachedBehavior operation implementation
+    /// Retrieves a cached compiled behavior. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(string behavior_id, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing cached behavior retrieval request");
-
-            // TODO: Implement cached behavior retrieval logic
-            // This should retrieve compiled behaviors from cache (Redis)
-
-            return Task.FromResult<(StatusCodes, CachedBehaviorResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method GetCachedBehaviorAsync called but not implemented for: {BehaviorId}", behavior_id);
+            return Task.FromResult<(StatusCodes, CachedBehaviorResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -111,18 +97,14 @@ public class BehaviorService : IBehaviorService
     }
 
     /// <summary>
-    /// ResolveContextVariables operation implementation
+    /// Resolves context variables and cultural adaptations. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, ResolveContextResponse?)> ResolveContextVariablesAsync(ResolveContextRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing context variable resolution request");
-
-            // TODO: Implement context variable resolution logic
-            // This should resolve context variables and cultural adaptations
-
-            return Task.FromResult<(StatusCodes, ResolveContextResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method ResolveContextVariablesAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, ResolveContextResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -132,17 +114,13 @@ public class BehaviorService : IBehaviorService
     }
 
     /// <summary>
-    /// InvalidateCachedBehavior operation implementation
+    /// Invalidates a cached compiled behavior. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, object?)> InvalidateCachedBehaviorAsync(string behavior_id, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Processing cached behavior invalidation request for: {BehaviorId}", behavior_id);
-
-            // TODO: Implement cached behavior invalidation logic
-            // This should remove compiled behaviors from cache (Redis)
-
+            _logger.LogWarning("Method InvalidateCachedBehaviorAsync called but not implemented for: {BehaviorId}", behavior_id);
             return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)

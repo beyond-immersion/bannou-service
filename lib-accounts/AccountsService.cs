@@ -55,8 +55,8 @@ public class AccountsService : IAccountsService
             if (page <= 0) page = 1;
             if (pageSize <= 0) pageSize = 20;
 
-            _logger.LogDebug("Listing accounts with filters - Email: {Email}, DisplayName: {DisplayName}, Provider: {Provider}, Verified: {Verified}, Page: {Page}, PageSize: {PageSize}",
-                email, displayName, provider, verified, page, pageSize);
+            _logger.LogInformation("Listing accounts - Page: {Page}, PageSize: {PageSize}, Filters: Email={Email}, DisplayName={DisplayName}, Provider={Provider}, Verified={Verified}",
+                page, pageSize, email ?? "(none)", displayName ?? "(none)", provider?.ToString() ?? "(none)", verified?.ToString() ?? "(none)");
 
             // TODO: Implement pagination and filtering with Dapr state store queries
             // For now, return empty list as placeholder
@@ -83,10 +83,23 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            _logger.LogDebug("Creating account for email: {Email}", body.Email);
+            _logger.LogInformation("Creating account for email: {Email}", body.Email);
 
             // Create account entity
             var accountId = Guid.NewGuid();
+
+            // Determine roles - start with roles from request body
+            var roles = body.Roles?.ToList() ?? new List<string>();
+
+            // Apply ENV-based admin role assignment
+            if (ShouldAssignAdminRole(body.Email))
+            {
+                if (!roles.Contains("admin"))
+                {
+                    roles.Add("admin");
+                    _logger.LogInformation("Auto-assigning admin role to {Email} based on configuration", body.Email);
+                }
+            }
 
             var account = new AccountModel
             {
@@ -95,6 +108,7 @@ public class AccountsService : IAccountsService
                 DisplayName = body.DisplayName,
                 PasswordHash = body.PasswordHash, // Store pre-hashed password from Auth service
                 IsVerified = body.EmailVerified == true,
+                Roles = roles, // Store roles in account model
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             };
@@ -111,11 +125,11 @@ public class AccountsService : IAccountsService
                 $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
                 accountId.ToString());
 
-            _logger.LogInformation("Account created: {AccountId} for email: {Email}", accountId, body.Email);
+            _logger.LogInformation("Account created: {AccountId} for email: {Email} with roles: {Roles}",
+                accountId, body.Email, string.Join(", ", roles));
 
             // Publish account created event
-            // TODO: Temporarily disabled to debug segfault
-            // await PublishAccountCreatedEventAsync(account);
+            await PublishAccountCreatedEventAsync(account);
 
             // Return success response
             var response = new AccountResponse
@@ -126,7 +140,7 @@ public class AccountsService : IAccountsService
                 EmailVerified = account.IsVerified,
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
-                Roles = new List<string>(),
+                Roles = account.Roles, // Return stored roles
                 AuthMethods = new List<AuthMethodInfo>()
             };
 
@@ -139,13 +153,56 @@ public class AccountsService : IAccountsService
         }
     }
 
+    /// <summary>
+    /// Determines if admin role should be auto-assigned based on email configuration.
+    /// Checks AdminEmails (comma-separated list) and AdminEmailDomain settings.
+    /// </summary>
+    private bool ShouldAssignAdminRole(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        var emailLower = email.ToLowerInvariant();
+
+        // Check AdminEmails (comma-separated list of exact email addresses)
+        if (!string.IsNullOrWhiteSpace(_configuration.AdminEmails))
+        {
+            var adminEmails = _configuration.AdminEmails
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(e => e.ToLowerInvariant());
+
+            if (adminEmails.Contains(emailLower))
+            {
+                _logger.LogDebug("Email {Email} matches AdminEmails configuration", email);
+                return true;
+            }
+        }
+
+        // Check AdminEmailDomain (e.g., "@admin.test.local")
+        if (!string.IsNullOrWhiteSpace(_configuration.AdminEmailDomain))
+        {
+            var domain = _configuration.AdminEmailDomain.ToLowerInvariant();
+            // Ensure domain starts with @ for proper suffix matching
+            if (!domain.StartsWith("@"))
+                domain = "@" + domain;
+
+            if (emailLower.EndsWith(domain))
+            {
+                _logger.LogDebug("Email {Email} matches AdminEmailDomain {Domain}", email, domain);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public async Task<(StatusCodes, AccountResponse?)> GetAccountAsync(
         Guid accountId,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogDebug("Retrieving account: {AccountId}", accountId);
+            _logger.LogInformation("Retrieving account: {AccountId}", accountId);
 
             // Get from Dapr state store (replaces Entity Framework query)
             var account = await _daprClient.GetStateAsync<AccountModel>(
@@ -174,7 +231,7 @@ public class AccountsService : IAccountsService
                 EmailVerified = account.IsVerified,
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
-                Roles = new List<string>(),
+                Roles = account.Roles, // Return stored roles
                 AuthMethods = new List<AuthMethodInfo>()
             };
 
@@ -194,7 +251,7 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            _logger.LogDebug("Updating account: {AccountId}", accountId);
+            _logger.LogInformation("Updating account: {AccountId}", accountId);
 
             // Get existing account
             var account = await _daprClient.GetStateAsync<AccountModel>(
@@ -221,7 +278,20 @@ public class AccountsService : IAccountsService
                 newValues["displayName"] = body.DisplayName;
                 account.DisplayName = body.DisplayName;
             }
-            // TODO: Handle roles and metadata from body
+
+            // Handle roles update if provided
+            if (body.Roles != null)
+            {
+                var newRoles = body.Roles.ToList();
+                if (!account.Roles.SequenceEqual(newRoles))
+                {
+                    changedFields.Add("roles");
+                    previousValues["roles"] = account.Roles;
+                    newValues["roles"] = newRoles;
+                    account.Roles = newRoles;
+                }
+            }
+            // TODO: Handle metadata from body
 
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -247,7 +317,7 @@ public class AccountsService : IAccountsService
                 EmailVerified = account.IsVerified,
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
-                Roles = new List<string>(),
+                Roles = account.Roles, // Return stored roles
                 AuthMethods = new List<AuthMethodInfo>()
             };
 
@@ -266,7 +336,7 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            _logger.LogDebug("Retrieving account by email: {Email}", email);
+            _logger.LogInformation("Retrieving account by email: {Email}", email);
 
             // Get the account ID from email index
             var accountId = await _daprClient.GetStateAsync<string>(
@@ -309,11 +379,11 @@ public class AccountsService : IAccountsService
                 EmailVerified = account.IsVerified,
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
-                Roles = new List<string>(), // TODO: Implement roles from account data
+                Roles = account.Roles, // Return stored roles
                 AuthMethods = new List<AuthMethodInfo>() // TODO: Implement auth methods from account data
             };
 
-            _logger.LogDebug("Account retrieved for email: {Email}, AccountId: {AccountId}", email, accountId);
+            _logger.LogInformation("Account retrieved for email: {Email}, AccountId: {AccountId}", email, accountId);
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
@@ -329,7 +399,7 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            _logger.LogDebug("Getting auth methods for account: {AccountId}", accountId);
+            _logger.LogInformation("Getting auth methods for account: {AccountId}", accountId);
 
             // TODO: Implement auth methods retrieval
             var response = new AuthMethodsResponse
@@ -353,7 +423,7 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            _logger.LogDebug("Adding auth method for account: {AccountId}, provider: {Provider}", accountId, body.Provider);
+            _logger.LogInformation("Adding auth method for account: {AccountId}, provider: {Provider}", accountId, body.Provider);
 
             // TODO: Implement auth method addition
             var response = new AuthMethodResponse
@@ -380,7 +450,7 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            _logger.LogDebug("Getting account by provider: {Provider}, externalId: {ExternalId}", provider, externalId);
+            _logger.LogInformation("Getting account by provider: {Provider}, externalId: {ExternalId}", provider, externalId);
 
             // TODO: Implement provider-based account lookup
             _logger.LogWarning("GetAccountByProvider not fully implemented - requires provider indexing");
@@ -400,7 +470,7 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            _logger.LogDebug("Updating profile for account: {AccountId}", accountId);
+            _logger.LogInformation("Updating profile for account: {AccountId}", accountId);
 
             // Handle profile update similar to account update
             try
@@ -437,7 +507,7 @@ public class AccountsService : IAccountsService
                     EmailVerified = account.IsVerified,
                     CreatedAt = account.CreatedAt,
                     UpdatedAt = account.UpdatedAt,
-                    Roles = new List<string>(),
+                    Roles = account.Roles, // Return stored roles
                     AuthMethods = new List<AuthMethodInfo>()
                 };
 
@@ -463,7 +533,7 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            _logger.LogDebug("Deleting account: {AccountId}", accountId);
+            _logger.LogInformation("Deleting account: {AccountId}", accountId);
 
             // Get existing account for event publishing
             var account = await _daprClient.GetStateAsync<AccountModel>(
@@ -514,7 +584,7 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            _logger.LogDebug("Removing auth method {MethodId} for account: {AccountId}", methodId, accountId);
+            _logger.LogInformation("Removing auth method {MethodId} for account: {AccountId}", methodId, accountId);
             // TODO: Implement auth method removal
             _logger.LogWarning("RemoveAuthMethod not fully implemented");
             return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
@@ -533,7 +603,7 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            _logger.LogDebug("Updating password hash for account: {AccountId}", accountId);
+            _logger.LogInformation("Updating password hash for account: {AccountId}", accountId);
             // TODO: Implement password hash update with secure hashing
             _logger.LogWarning("UpdatePasswordHash not fully implemented");
             return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
@@ -552,7 +622,7 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            _logger.LogDebug("Updating verification status for account: {AccountId}", accountId);
+            _logger.LogInformation("Updating verification status for account: {AccountId}", accountId);
             // TODO: Implement verification status update
             _logger.LogWarning("UpdateVerificationStatus not fully implemented");
             return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
@@ -578,7 +648,7 @@ public class AccountsService : IAccountsService
                 AccountId = Guid.Parse(account.AccountId),
                 Email = account.Email,
                 DisplayName = account.DisplayName,
-                Roles = new List<string>() // TODO: Load actual roles from account
+                Roles = account.Roles // Use stored roles
             };
 
             await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_CREATED_TOPIC, eventModel);
@@ -647,6 +717,29 @@ public class AccountsService : IAccountsService
             // Don't throw - event publishing failure shouldn't break account deletion
         }
     }
+
+    #region Permission Registration
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Accounts service permissions... (starting)");
+        try
+        {
+            await AccountsPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+            _logger.LogInformation("Accounts service permissions registered via event (complete)");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to register Accounts service permissions");
+            throw;
+        }
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -660,6 +753,7 @@ public class AccountModel
     public string? DisplayName { get; set; }
     public string? PasswordHash { get; set; } // BCrypt hashed password for authentication
     public bool IsVerified { get; set; }
+    public List<string> Roles { get; set; } = new List<string>(); // User roles (admin, user, etc.)
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }

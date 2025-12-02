@@ -644,37 +644,8 @@ components:
         - PermissionChange
       description: Type of authentication event that occurred
 
-    ServiceRegistrationEvent:
-      type: object
-      description: |
-        Event published when a service registers new API endpoints.
-        Triggers permission recompilation for all active sessions.
-      required:
-        - serviceId
-        - timestamp
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this registration event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the service registration occurred
-        serviceId:
-          type: string
-          description: Service ID that registered (e.g., "behavior", "accounts")
-        version:
-          type: string
-          description: Service version that was registered
-        endpoints:
-          type: array
-          items:
-            type: string
-          description: New API endpoints registered by the service
-        metadata:
-          type: object
-          additionalProperties: true
-          description: Additional service registration metadata
+    # Note: ServiceRegistrationEvent is defined in common-events.yaml
+    # Use BeyondImmersion.BannouService.Events.ServiceRegistrationEvent
 
     ClientMessageEvent:
       type: object

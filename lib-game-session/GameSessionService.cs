@@ -14,7 +14,9 @@ using System.Threading.Tasks;
 namespace BeyondImmersion.BannouService.GameSession;
 
 /// <summary>
-/// Generated service implementation for GameSession API
+/// GameSession service implementation.
+/// Note: This service is not yet implemented - planned for future release.
+/// All methods will throw NotImplementedException until implementation is complete.
 /// </summary>
 [DaprService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped)]
 public class GameSessionService : IGameSessionService
@@ -34,7 +36,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// ListGameSessionsAsync implementation - TODO: Add business logic
+    /// Lists game sessions. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, GameSessionListResponse?)> ListGameSessionsAsync(GameType? gameType, Status? status, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -44,7 +46,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// CreateGameSessionAsync implementation - TODO: Add business logic
+    /// Creates a new game session. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, GameSessionResponse?)> CreateGameSessionAsync(CreateGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -54,7 +56,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// GetGameSessionAsync implementation - TODO: Add business logic
+    /// Gets a game session by ID. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, GameSessionResponse?)> GetGameSessionAsync(Guid sessionId, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -64,7 +66,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// JoinGameSessionAsync implementation - TODO: Add business logic
+    /// Joins a game session. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, JoinGameSessionResponse?)> JoinGameSessionAsync(Guid sessionId, JoinGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -74,7 +76,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// PerformGameActionAsync implementation - TODO: Add business logic
+    /// Performs a game action. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, GameActionResponse?)> PerformGameActionAsync(Guid sessionId, GameActionRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -84,7 +86,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// LeaveGameSessionAsync implementation - TODO: Add business logic
+    /// Leaves a game session. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, object?)> LeaveGameSessionAsync(Guid sessionId, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -94,7 +96,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// KickPlayerAsync implementation - TODO: Add business logic
+    /// Kicks a player from a game session. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, object?)> KickPlayerAsync(Guid sessionId, KickPlayerRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -104,7 +106,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// SendChatMessageAsync implementation - TODO: Add business logic
+    /// Sends a chat message in a game session. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, object?)> SendChatMessageAsync(Guid sessionId, ChatMessageRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -113,110 +115,17 @@ public class GameSessionService : IGameSessionService
         return (StatusCodes.OK, null);
     }
 
+    #region Permission Registration
+
     /// <summary>
-    /// Registers service permissions extracted from x-permissions sections in the OpenAPI schema.
-    /// This method is automatically generated and called during service startup.
+    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
     public async Task RegisterServicePermissionsAsync()
     {
-        try
-        {
-            var serviceName = GetType().GetServiceName() ?? "game-session";
-            _logger?.LogInformation("Registering permissions for {ServiceName} service", serviceName);
-
-            // Build endpoints directly from x-permissions data
-            var endpoints = CreateServiceEndpoints();
-
-            // Publish service registration event to Permissions service
-            await _daprClient.PublishEventAsync(
-                "bannou-pubsub",
-                "bannou-service-registered",
-                new ServiceRegistrationEvent
-                {
-                    EventId = Guid.NewGuid().ToString(),
-                    Timestamp = DateTime.UtcNow,
-                    ServiceId = serviceName,
-                    Version = "1.0.0", // TODO: Extract from schema info.version
-                    AppId = "bannou", // Default routing
-                    Endpoints = endpoints,
-                    Metadata = new Dictionary<string, object>
-                    {
-                        { "generatedFrom", "x-permissions" },
-                        { "extractedAt", DateTime.UtcNow },
-                        { "endpointCount", endpoints.Count }
-                    }
-                });
-
-            _logger?.LogInformation("Successfully registered {Count} permission rules for {ServiceName}",
-                endpoints.Count, serviceName);
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Failed to register permissions for service {ServiceName}", GetType().GetServiceName() ?? "game-session");
-            // Don't throw - permission registration failure shouldn't crash the service
-        }
+        _logger.LogInformation("Registering GameSession service permissions...");
+        await GameSessionPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
     }
 
-    /// <summary>
-    /// Create ServiceEndpoint objects from extracted x-permissions data.
-    /// </summary>
-    private List<ServiceEndpoint> CreateServiceEndpoints()
-    {
-        var endpoints = new List<ServiceEndpoint>();
-
-        // Permission mapping extracted from x-permissions sections:
-        // State -> Role -> Methods
-        var permissionData = new Dictionary<string, Dictionary<string, List<string>>>
-        {
-            ["anonymous"] = new Dictionary<string, List<string>>
-            {
-                ["user"] = new List<string> { "GET:/sessions", "GET:/sessions/{sessionId}", "POST:/sessions/{sessionId}/actions", "POST:/sessions/{sessionId}/chat", "POST:/sessions/{sessionId}/leave" },
-                ["admin"] = new List<string> { "POST:/sessions/{sessionId}/kick" }
-            },
-            ["authenticated"] = new Dictionary<string, List<string>>
-            {
-                ["user"] = new List<string> { "POST:/sessions", "POST:/sessions/{sessionId}/join" }
-            }
-        };
-
-        foreach (var stateEntry in permissionData)
-        {
-            var stateName = stateEntry.Key;
-            var statePermissions = stateEntry.Value;
-
-            foreach (var roleEntry in statePermissions)
-            {
-                var roleName = roleEntry.Key;
-                var methods = roleEntry.Value;
-
-                foreach (var method in methods)
-                {
-                    var parts = method.Split(':', 2);
-                    if (parts.Length == 2 && Enum.TryParse<ServiceEndpointMethod>(parts[0], out var httpMethod))
-                    {
-                        endpoints.Add(new ServiceEndpoint
-                        {
-                            Path = parts[1],
-                            Method = httpMethod,
-                            Permissions = new List<PermissionRequirement>
-                            {
-                                new PermissionRequirement
-                                {
-                                    Role = roleName,
-                                    RequiredStates = new Dictionary<string, string>
-                                    {
-                                        { "game-session", stateName }
-                                    }
-                                }
-                            },
-                            Description = $"{httpMethod} {parts[1]} ({roleName} in {stateName} state)",
-                            Category = "game-session"
-                        });
-                    }
-                }
-            }
-        }
-
-        return endpoints;
-    }
+    #endregion
 }

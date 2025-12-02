@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect.Protocol;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using System.Net.Http;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
@@ -33,12 +35,13 @@ public class ConnectService : IConnectService
     private readonly IAuthClient _authClient;
     private readonly IPermissionsClient _permissionsClient;
     private readonly DaprClient _daprClient;
+    private readonly HttpClient _httpClient;
     private readonly IServiceAppMappingResolver _appMappingResolver;
     private readonly ILogger<ConnectService> _logger;
     private readonly WebSocketConnectionManager _connectionManager;
     private readonly RedisSessionManager? _sessionManager;
 
-    // Session to service GUID mappings (legacy - moving to Redis)
+    // Session to service GUID mappings (in-memory for low-latency lookups, persisted via RedisSessionManager)
     private readonly ConcurrentDictionary<string, Dictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
     private readonly string _instanceId;
@@ -55,6 +58,7 @@ public class ConnectService : IConnectService
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
         _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _httpClient = new HttpClient(); // Reusable HttpClient for Dapr service invocation
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _sessionManager = sessionManager; // Optional Redis session management
@@ -304,9 +308,10 @@ public class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Validates JWT token and extracts session ID.
+    /// Validates JWT token and extracts session ID and user roles.
+    /// Returns a tuple with session ID and roles for capability initialization.
     /// </summary>
-    public async Task<string?> ValidateJWTAndExtractSessionAsync(
+    public async Task<(string? SessionId, ICollection<string>? Roles)> ValidateJWTAndExtractSessionAsync(
         string authorization,
         CancellationToken cancellationToken)
     {
@@ -314,7 +319,7 @@ public class ConnectService : IConnectService
         {
             if (string.IsNullOrEmpty(authorization))
             {
-                return null;
+                return (null, null);
             }
 
             // Handle "Bearer <token>" format
@@ -329,7 +334,8 @@ public class ConnectService : IConnectService
 
                 if (validationResponse.Valid && !string.IsNullOrEmpty(validationResponse.SessionId))
                 {
-                    return validationResponse.SessionId;
+                    // Return both session ID and roles for capability initialization
+                    return (validationResponse.SessionId, validationResponse.Roles);
                 }
             }
             // Handle "Reconnect <token>" format (future enhancement)
@@ -337,26 +343,53 @@ public class ConnectService : IConnectService
             {
                 // TODO: Implement reconnection logic with stored session tokens
                 _logger.LogWarning("Reconnection tokens not yet implemented");
-                return null;
+                return (null, null);
             }
 
-            return null;
+            return (null, null);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "JWT validation failed");
-            return null;
+            return (null, null);
         }
+    }
+
+    /// <summary>
+    /// Determines the highest priority role from a collection of roles.
+    /// Priority: admin > user > anonymous
+    /// </summary>
+    private static string DetermineHighestPriorityRole(ICollection<string>? roles)
+    {
+        if (roles == null || roles.Count == 0)
+        {
+            return "anonymous";
+        }
+
+        // Check for admin role (highest priority)
+        if (roles.Any(r => r.Equals("admin", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "admin";
+        }
+
+        // Check for user role
+        if (roles.Any(r => r.Equals("user", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "user";
+        }
+
+        // If roles exist but none are recognized, use the first one
+        return roles.FirstOrDefault() ?? "anonymous";
     }
 
     /// <summary>
     /// Handles WebSocket communication using the enhanced 31-byte binary protocol.
     /// Creates persistent connection state and processes messages with proper routing.
     /// </summary>
-    [Obsolete]
     public async Task HandleWebSocketCommunicationAsync(
         WebSocket webSocket,
         string sessionId,
+        ICollection<string>? userRoles,
         CancellationToken cancellationToken)
     {
         // Create connection state with service mappings from discovery
@@ -375,6 +408,16 @@ public class ConnectService : IConnectService
         {
             // Fallback to in-memory mappings
             sessionMappings = fallbackMappings;
+        }
+
+        // If no mappings exist, initialize capabilities from Permissions service
+        if (sessionMappings == null || sessionMappings.Count == 0)
+        {
+            // Determine the highest-priority role for capability initialization
+            // Priority: admin > user > anonymous
+            var role = DetermineHighestPriorityRole(userRoles);
+            _logger.LogInformation("No existing mappings for session {SessionId}, initializing capabilities for role {Role}", sessionId, role);
+            sessionMappings = await InitializeSessionCapabilitiesAsync(sessionId, role, cancellationToken);
         }
 
         if (sessionMappings != null)
@@ -399,6 +442,10 @@ public class ConnectService : IConnectService
             {
                 await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, _instanceId);
             }
+
+            // Push initial capability manifest to client
+            // This tells the client what APIs they can access and provides their client-salted GUIDs
+            await SendCapabilityManifestAsync(webSocket, sessionId, connectionState, cancellationToken);
 
             while (webSocket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
             {
@@ -429,7 +476,7 @@ public class ConnectService : IConnectService
                 {
                     // For backwards compatibility, handle text messages as JSON-wrapped binary
                     var textMessage = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    await HandleLegacyTextMessageAsync(sessionId, connectionState, textMessage, cancellationToken);
+                    await HandleTextMessageFallbackAsync(sessionId, connectionState, textMessage, cancellationToken);
                 }
             }
         }
@@ -553,6 +600,7 @@ public class ConnectService : IConnectService
 
     /// <summary>
     /// Routes a message to a Dapr service and handles the response.
+    /// ServiceName format: "servicename:METHOD:/path" (e.g., "orchestrator:GET:/orchestrator/health/infrastructure")
     /// </summary>
     private async Task RouteToServiceAsync(
         BinaryMessage message,
@@ -563,42 +611,162 @@ public class ConnectService : IConnectService
     {
         try
         {
-            // Validate service name early
-            var serviceName = routeInfo.ServiceName ?? throw new InvalidOperationException("Service name is null in route info");
+            // Validate service name early - format: "servicename:METHOD:/path"
+            var endpointKey = routeInfo.ServiceName ?? throw new InvalidOperationException("Service name is null in route info");
 
             // Add to pending messages for response correlation
             if (routeInfo.RequiresResponse)
             {
-                connectionState.AddPendingMessage(message.MessageId, serviceName, DateTimeOffset.UtcNow);
+                connectionState.AddPendingMessage(message.MessageId, endpointKey, DateTimeOffset.UtcNow);
             }
 
-            // Get JSON payload for service call
-            var jsonPayload = message.GetJsonPayload();
+            // Parse endpoint key to extract service name, HTTP method, and path
+            // Format: "servicename:METHOD:/path"
+            var parts = endpointKey.Split(':', 3);
+            if (parts.Length < 3)
+            {
+                throw new InvalidOperationException($"Invalid endpoint key format: {endpointKey}");
+            }
 
-            // Use ServiceAppMappingResolver for dynamic app-id resolution
+            var serviceName = parts[0];
+            var httpMethod = parts[1].ToUpperInvariant();
+            var path = parts[2];
+
+            // Use ServiceAppMappingResolver for dynamic app-id resolution (using just service name)
             var appId = _appMappingResolver.GetAppIdForService(serviceName);
 
-            _logger.LogDebug("Routing WebSocket message to service {Service} via app-id {AppId}",
-                routeInfo.ServiceName, appId);
+            _logger.LogInformation("Routing WebSocket message to service {Service} ({Method} {Path}) via app-id {AppId}",
+                serviceName, httpMethod, path, appId);
 
-            // TODO: Parse the JSON payload to determine the specific API endpoint
-            // For now, this is a placeholder - we need to implement proper JSON-RPC or similar
-            // to determine which endpoint and HTTP method to call
+            // Get JSON payload from message - may contain request body for POST/PUT
+            var jsonPayload = message.GetJsonPayload();
+            object? requestBody = null;
 
-            // Create a simple service response for now
+            // Parse the JSON payload if present - client may send structured request
+            if (!string.IsNullOrWhiteSpace(jsonPayload))
+            {
+                try
+                {
+                    using var jsonDoc = JsonDocument.Parse(jsonPayload);
+                    var root = jsonDoc.RootElement;
+
+                    // Check if client sent body in the payload
+                    if (root.TryGetProperty("body", out var bodyElement) &&
+                        bodyElement.ValueKind != JsonValueKind.Null)
+                    {
+                        // If body is a string, parse it as JSON; otherwise use as-is
+                        if (bodyElement.ValueKind == JsonValueKind.String)
+                        {
+                            var bodyStr = bodyElement.GetString();
+                            if (!string.IsNullOrWhiteSpace(bodyStr))
+                            {
+                                requestBody = JsonSerializer.Deserialize<JsonElement>(bodyStr);
+                            }
+                        }
+                        else
+                        {
+                            requestBody = bodyElement.Clone();
+                        }
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogDebug(ex, "Could not parse JSON payload as structured request, using raw payload");
+                    // If parsing fails, use raw payload for POST/PUT body
+                    if (httpMethod is "POST" or "PUT" or "PATCH")
+                    {
+                        requestBody = jsonPayload;
+                    }
+                }
+            }
+
+            // Make the actual Dapr service invocation via direct HTTP
+            // This preserves the full path including /v1.0/invoke/{appId}/method/ prefix
+            // which is required because NSwag-generated controllers have route prefix [Route("v1.0/invoke/bannou/method")]
+            string? responseJson = null;
+            HttpResponseMessage? httpResponse = null;
+
+            try
+            {
+                // Build full Dapr URL like DaprServiceClientBase does
+                var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "http://localhost:3500";
+                var daprUrl = $"{daprHttpEndpoint}/v1.0/invoke/{appId}/method/{path.TrimStart('/')}";
+
+                // Create HTTP request with proper headers
+                using var request = new HttpRequestMessage(new HttpMethod(httpMethod), daprUrl);
+
+                // Add dapr-app-id header for routing (like DaprServiceClientBase.PrepareRequest)
+                request.Headers.Add("dapr-app-id", appId);
+                request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                _logger.LogInformation("Created Dapr HTTP request: Method={Method}, URI={Uri}, AppId={AppId}",
+                    request.Method, daprUrl, appId);
+
+                // Add request body for methods that support it
+                if (requestBody != null && httpMethod is "POST" or "PUT" or "PATCH")
+                {
+                    request.Content = new StringContent(
+                        requestBody is string str ? str : JsonSerializer.Serialize(requestBody),
+                        Encoding.UTF8,
+                        "application/json");
+                }
+
+                // Invoke the service via direct HTTP (preserves full path)
+                httpResponse = await _httpClient.SendAsync(request, cancellationToken);
+
+                // Read response content
+                responseJson = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
+
+                // Log response details - use Info level for non-success to help debug routing issues
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    _logger.LogDebug("Service {Service} responded with status {Status}: {ResponsePreview}",
+                        serviceName, httpResponse.StatusCode,
+                        responseJson?.Substring(0, Math.Min(200, responseJson?.Length ?? 0)) ?? "(empty)");
+                }
+                else
+                {
+                    _logger.LogWarning("Service {Service} returned non-success status {StatusCode}: {ResponsePreview}",
+                        serviceName, (int)httpResponse.StatusCode,
+                        responseJson?.Substring(0, Math.Min(500, responseJson?.Length ?? 0)) ?? "(empty body)");
+                }
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogWarning(httpEx, "HTTP request to Dapr failed for {Service} {Method} {Path}",
+                    serviceName, httpMethod, path);
+
+                // Create error response
+                var errorPayload = new
+                {
+                    error = "Service invocation failed",
+                    statusCode = (int?)httpEx.StatusCode ?? 500,
+                    message = httpEx.Message
+                };
+                responseJson = JsonSerializer.Serialize(errorPayload);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error invoking service {Service} {Method} {Path}",
+                    serviceName, httpMethod, path);
+
+                var errorPayload = new
+                {
+                    error = "Internal server error",
+                    message = ex.Message
+                };
+                responseJson = JsonSerializer.Serialize(errorPayload);
+            }
+
+            // Send response back to WebSocket client
             if (routeInfo.RequiresResponse)
             {
-                var responsePayload = new
-                {
-                    status = "success",
-                    message = "Service routing not fully implemented yet",
-                    originalMessageId = message.MessageId,
-                    targetService = routeInfo.ServiceName
-                };
+                var responseCode = httpResponse?.IsSuccessStatusCode == true
+                    ? ResponseCodes.OK
+                    : ResponseCodes.Service_InternalServerError;
 
-                var responseJson = JsonSerializer.Serialize(responsePayload);
                 var responseMessage = BinaryMessage.CreateResponse(
-                    message, ResponseCodes.OK, Encoding.UTF8.GetBytes(responseJson));
+                    message, responseCode, Encoding.UTF8.GetBytes(responseJson ?? "{}"));
 
                 await _connectionManager.SendMessageAsync(sessionId, responseMessage, cancellationToken);
             }
@@ -683,9 +851,10 @@ public class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Handles legacy text messages by wrapping them in binary protocol format.
+    /// Handles text WebSocket messages by wrapping them in binary protocol response format.
+    /// This provides backwards compatibility for clients not yet using the binary protocol.
     /// </summary>
-    private async Task HandleLegacyTextMessageAsync(
+    private async Task HandleTextMessageFallbackAsync(
         string sessionId,
         ConnectionState connectionState,
         string textMessage,
@@ -693,7 +862,7 @@ public class ConnectService : IConnectService
     {
         try
         {
-            _logger.LogDebug("Received legacy text message from session {SessionId}: {Message}",
+            _logger.LogDebug("Received text message from session {SessionId}: {Message}",
                 sessionId, textMessage);
 
             // For now, just echo back the message wrapped in a binary response
@@ -712,7 +881,7 @@ public class ConnectService : IConnectService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling legacy text message from session {SessionId}", sessionId);
+            _logger.LogError(ex, "Error handling text message from session {SessionId}", sessionId);
         }
     }
 
@@ -1129,6 +1298,288 @@ public class ConnectService : IConnectService
             _logger.LogWarning(ex, "Session validation failed for {SessionId}", sessionId);
             return Task.FromResult(false);
         }
+    }
+
+    /// <summary>
+    /// Initializes session capabilities by querying the Permissions service.
+    /// Generates client-salted GUIDs for each available API endpoint.
+    /// </summary>
+    internal async Task<Dictionary<string, Guid>> InitializeSessionCapabilitiesAsync(
+        string sessionId,
+        string? role = "anonymous",
+        CancellationToken cancellationToken = default)
+    {
+        var serviceMappings = new Dictionary<string, Guid>();
+
+        try
+        {
+            _logger.LogInformation("Initializing capabilities for session {SessionId} with role {Role}", sessionId, role);
+
+            // Initialize session in Permissions service with role
+            if (role != null && role != "anonymous")
+            {
+                await _permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
+                {
+                    SessionId = sessionId,
+                    NewRole = role
+                }, cancellationToken);
+            }
+
+            // Get available capabilities from Permissions service
+            var capabilityResponse = await _permissionsClient.GetCapabilitiesAsync(
+                new CapabilityRequest { SessionId = sessionId },
+                cancellationToken);
+
+            if (capabilityResponse?.Permissions == null)
+            {
+                _logger.LogWarning("No capabilities returned for session {SessionId}", sessionId);
+                return serviceMappings;
+            }
+
+            _logger.LogInformation("Session {SessionId} has access to {ServiceCount} services",
+                sessionId, capabilityResponse.Permissions.Count);
+
+            // Generate client-salted GUIDs for each service:method combination
+            foreach (var servicePermissions in capabilityResponse.Permissions)
+            {
+                var serviceName = servicePermissions.Key;
+                var methods = servicePermissions.Value;
+
+                foreach (var method in methods)
+                {
+                    // Create unique key combining service and method
+                    var endpointKey = $"{serviceName}:{method}";
+
+                    // Generate client-salted GUID using session ID as salt
+                    var guid = GuidGenerator.GenerateServiceGuid(endpointKey, sessionId, _serverSalt);
+
+                    serviceMappings[endpointKey] = guid;
+
+                    _logger.LogDebug("Generated GUID {Guid} for endpoint {Endpoint} in session {SessionId}",
+                        guid, endpointKey, sessionId);
+                }
+            }
+
+            // Store mappings in session manager for persistence
+            if (_sessionManager != null)
+            {
+                await _sessionManager.SetSessionServiceMappingsAsync(sessionId, serviceMappings);
+            }
+
+            // Store in in-memory cache as fallback
+            _sessionServiceMappings[sessionId] = serviceMappings;
+
+            _logger.LogInformation("Initialized {Count} service GUIDs for session {SessionId}",
+                serviceMappings.Count, sessionId);
+
+            return serviceMappings;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to initialize capabilities for session {SessionId}", sessionId);
+            return serviceMappings;
+        }
+    }
+
+    /// <summary>
+    /// Sends the capability manifest to the client after WebSocket connection is established.
+    /// This tells the client what APIs they can access and provides their client-salted GUIDs.
+    /// </summary>
+    private async Task SendCapabilityManifestAsync(
+        WebSocket webSocket,
+        string sessionId,
+        ConnectionState connectionState,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Build the capability manifest with available APIs and their GUIDs
+            var availableApis = new List<object>();
+
+            foreach (var mapping in connectionState.ServiceMappings)
+            {
+                // Parse the endpoint key format: "serviceName:METHOD:/path"
+                var endpointKey = mapping.Key;
+                var guid = mapping.Value;
+
+                // Split into service name and method:path
+                var firstColon = endpointKey.IndexOf(':');
+                if (firstColon <= 0) continue;
+
+                var serviceName = endpointKey[..firstColon];
+                var methodAndPath = endpointKey[(firstColon + 1)..];
+
+                // Split method and path (format: "GET:/some/path")
+                var methodPathColon = methodAndPath.IndexOf(':');
+                var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
+                var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
+
+                availableApis.Add(new
+                {
+                    serviceGuid = guid.ToString(),
+                    serviceName = serviceName,
+                    method = method,
+                    path = path,
+                    endpointKey = endpointKey
+                });
+            }
+
+            var capabilityManifest = new
+            {
+                type = "capability_manifest",
+                sessionId = sessionId,
+                availableAPIs = availableApis,
+                version = 1,
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            };
+
+            var manifestJson = JsonSerializer.Serialize(capabilityManifest);
+            var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
+
+            // Create a binary message as an Event (no response expected)
+            var capabilityMessage = new BinaryMessage(
+                flags: MessageFlags.Event, // Server-initiated event, no response expected
+                channel: 0, // Control channel for system messages
+                sequenceNumber: 0,
+                serviceGuid: Guid.Empty, // System message
+                messageId: GuidGenerator.GenerateMessageId(),
+                payload: manifestBytes
+            );
+
+            var messageBytes = capabilityMessage.ToByteArray();
+
+            _logger.LogInformation(
+                "Sending capability manifest to session {SessionId} with {ApiCount} available APIs",
+                sessionId, availableApis.Count);
+
+            await webSocket.SendAsync(
+                new ArraySegment<byte>(messageBytes),
+                WebSocketMessageType.Binary,
+                endOfMessage: true,
+                cancellationToken);
+
+            _logger.LogDebug("Capability manifest sent successfully to session {SessionId}", sessionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send capability manifest to session {SessionId}", sessionId);
+            // Don't throw - capability manifest is informational, connection can continue
+        }
+    }
+
+    /// <summary>
+    /// Pushes updated capability manifest to a connected WebSocket client.
+    /// Called when permissions change (e.g., new service registered, role change, state change).
+    /// </summary>
+    public async Task PushCapabilityUpdateAsync(string sessionId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var connection = _connectionManager.GetConnection(sessionId);
+            if (connection == null)
+            {
+                _logger.LogDebug("No active connection found for session {SessionId}, skipping capability update", sessionId);
+                return;
+            }
+
+            // Re-fetch capabilities from permissions service
+            var capabilityRequest = new Permissions.CapabilityRequest { SessionId = sessionId };
+            var capabilitiesResult = await _permissionsClient.GetCapabilitiesAsync(capabilityRequest, cancellationToken);
+            if (capabilitiesResult == null || capabilitiesResult.Permissions == null)
+            {
+                _logger.LogWarning("Failed to get capabilities for session {SessionId}", sessionId);
+                return;
+            }
+
+            // Regenerate client-salted GUIDs and update connection state
+            var connectionState = connection.ConnectionState;
+            connectionState.ClearServiceMappings();
+
+            // Generate client-salted GUIDs for each service:method combination
+            foreach (var servicePermissions in capabilitiesResult.Permissions)
+            {
+                var serviceName = servicePermissions.Key;
+                var methods = servicePermissions.Value;
+
+                foreach (var method in methods)
+                {
+                    var endpointKey = $"{serviceName}:{method}";
+                    var guid = GuidGenerator.GenerateServiceGuid(endpointKey, sessionId, _serverSalt);
+                    connectionState.AddServiceMapping(endpointKey, guid);
+                }
+            }
+
+            // Build and send updated capability manifest
+            var availableApis = new List<object>();
+            foreach (var mapping in connectionState.ServiceMappings)
+            {
+                var endpointKey = mapping.Key;
+                var guid = mapping.Value;
+
+                var firstColon = endpointKey.IndexOf(':');
+                if (firstColon <= 0) continue;
+
+                var serviceName = endpointKey[..firstColon];
+                var methodAndPath = endpointKey[(firstColon + 1)..];
+                var methodPathColon = methodAndPath.IndexOf(':');
+                var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
+                var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
+
+                availableApis.Add(new
+                {
+                    serviceGuid = guid.ToString(),
+                    serviceName = serviceName,
+                    method = method,
+                    path = path,
+                    endpointKey = endpointKey
+                });
+            }
+
+            var capabilityManifest = new
+            {
+                type = "capability_manifest",
+                sessionId = sessionId,
+                availableAPIs = availableApis,
+                version = 1,
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                reason = "capabilities_updated"
+            };
+
+            var manifestJson = JsonSerializer.Serialize(capabilityManifest);
+            var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
+
+            var capabilityMessage = new BinaryMessage(
+                flags: MessageFlags.Event,
+                channel: 0,
+                sequenceNumber: 0,
+                serviceGuid: Guid.Empty,
+                messageId: GuidGenerator.GenerateMessageId(),
+                payload: manifestBytes
+            );
+
+            await _connectionManager.SendMessageAsync(sessionId, capabilityMessage, cancellationToken);
+
+            _logger.LogInformation(
+                "Pushed capability update to session {SessionId} with {ApiCount} available APIs",
+                sessionId, availableApis.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to push capability update to session {SessionId}", sessionId);
+        }
+    }
+
+    /// <summary>
+    /// Pushes capability updates to all connected WebSocket clients.
+    /// Called when a new service registers (no specific sessions affected).
+    /// </summary>
+    public async Task PushCapabilityUpdateToAllAsync(CancellationToken cancellationToken = default)
+    {
+        var sessionIds = _connectionManager.GetActiveSessionIds().ToList();
+        _logger.LogInformation("Pushing capability updates to {Count} connected sessions", sessionIds.Count);
+
+        var tasks = sessionIds.Select(sessionId => PushCapabilityUpdateAsync(sessionId, cancellationToken));
+        await Task.WhenAll(tasks);
     }
 
     #endregion

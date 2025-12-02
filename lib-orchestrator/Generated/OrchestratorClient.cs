@@ -62,22 +62,6 @@ public partial interface IOrchestratorClient
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Execute test batch via API
-    /// </summary>
-    /// <remarks>
-    /// Executes tests via API calls to test services (no --exit-code-from).
-    /// <br/>
-    /// <br/>Supports three test types:
-    /// <br/>- infrastructure: Basic service availability (testing plugin)
-    /// <br/>- http: Service-to-service HTTP testing (http-tester)
-    /// <br/>- edge: WebSocket protocol testing (edge-tester)
-    /// </remarks>
-    /// <returns>Test execution results</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<TestExecutionResult> RunTestsAsync(TestExecutionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
     /// Restart service with optional configuration
     /// </summary>
     /// <remarks>
@@ -107,6 +91,233 @@ public partial interface IOrchestratorClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<RestartRecommendation> ShouldRestartServiceAsync(ShouldRestartServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Detect available container orchestration backends
+    /// </summary>
+    /// <remarks>
+    /// Detects which container orchestration backends are available on this system.
+    /// <br/>Returns availability status and capabilities for each backend.
+    /// <br/>
+    /// <br/>**Priority Order** (for automatic selection):
+    /// <br/>1. Kubernetes - Full cluster orchestration with operators
+    /// <br/>2. Portainer - API abstraction over Compose/Swarm with web UI
+    /// <br/>3. Docker Swarm - Native Docker cluster orchestration
+    /// <br/>4. Docker Compose - Single-host container management
+    /// <br/>
+    /// <br/>Detection methods:
+    /// <br/>- Kubernetes: Check for kubectl and cluster connectivity
+    /// <br/>- Portainer: Check for Portainer API endpoint
+    /// <br/>- Swarm: Check `docker info` for swarm mode
+    /// <br/>- Compose: Check for docker compose v2 availability
+    /// </remarks>
+    /// <returns>Available backends with capabilities</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<BackendsResponse> GetBackendsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// List available deployment presets
+    /// </summary>
+    /// <remarks>
+    /// Returns all available deployment presets from the orchestrator's preset directory.
+    /// <br/>Presets define service combinations and configuration for specific use cases.
+    /// <br/>
+    /// <br/>Built-in presets:
+    /// <br/>- `local-development`: All services in single container with Dapr
+    /// <br/>- `local-testing`: Test environment with infrastructure services
+    /// <br/>- `integration-http`: HTTP integration testing preset
+    /// <br/>- `integration-edge`: WebSocket/edge testing preset
+    /// <br/>- `split-auth-accounts`: Auth and Accounts in separate containers
+    /// <br/>- `distributed-npc`: NPC processing distributed across nodes
+    /// </remarks>
+    /// <returns>Available deployment presets</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<PresetsResponse> GetPresetsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Deploy or update an environment
+    /// </summary>
+    /// <remarks>
+    /// Deploys a complete environment using a preset or custom configuration.
+    /// <br/>Supports graceful transitions, forced deployments, and clean rebuilds.
+    /// <br/>
+    /// <br/>**Deployment Modes**:
+    /// <br/>- `graceful`: Wait for existing connections to drain before changing topology
+    /// <br/>- `force`: Immediately apply changes (may interrupt active connections)
+    /// <br/>- `clean`: Tear down completely and rebuild from scratch
+    /// <br/>
+    /// <br/>**Backend Selection**:
+    /// <br/>- If `backend` not specified, uses highest-priority available backend
+    /// <br/>- If `backend` specified but unavailable, returns error (no fallback)
+    /// <br/>
+    /// <br/>**Live Topology Changes**:
+    /// <br/>Supports changing service distribution without full restart:
+    /// <br/>- Move auth/accounts to separate container while keeping other services together
+    /// <br/>- Scale specific services to additional nodes
+    /// <br/>- Update environment variables without restart (where supported)
+    /// </remarks>
+    /// <returns>Deployment initiated successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<DeployResponse> DeployAsync(DeployRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get current environment status
+    /// </summary>
+    /// <remarks>
+    /// Returns comprehensive status of the current deployment including:
+    /// <br/>- Active backend and deployment configuration
+    /// <br/>- Service topology (which services on which containers)
+    /// <br/>- Container health and resource usage
+    /// <br/>- Infrastructure component status
+    /// <br/>- Active preset and any customizations
+    /// </remarks>
+    /// <returns>Current environment status</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<EnvironmentStatus> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Tear down the current environment
+    /// </summary>
+    /// <remarks>
+    /// Tears down all containers and services in the current deployment.
+    /// <br/>Optionally preserves volumes and networks for faster redeployment.
+    /// <br/>
+    /// <br/>**Teardown Modes**:
+    /// <br/>- `graceful`: Signal shutdown and wait for clean exit
+    /// <br/>- `force`: Immediately stop all containers (SIGKILL)
+    /// <br/>- `preserve-data`: Keep volumes and networks, only remove containers
+    /// </remarks>
+    /// <returns>Teardown completed</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<TeardownResponse> TeardownAsync(TeardownRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Clean up unused resources
+    /// </summary>
+    /// <remarks>
+    /// Prunes unused Docker resources to reclaim disk space and clean up
+    /// <br/>orphaned containers, networks, volumes, and images.
+    /// <br/>
+    /// <br/>Equivalent to running various `docker system prune` commands.
+    /// <br/>
+    /// <br/>**Clean Targets**:
+    /// <br/>- `containers`: Remove stopped containers
+    /// <br/>- `networks`: Remove unused networks
+    /// <br/>- `volumes`: Remove unused volumes (CAUTION: data loss)
+    /// <br/>- `images`: Remove dangling images
+    /// <br/>- `all`: All of the above
+    /// </remarks>
+    /// <returns>Cleanup completed</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<CleanResponse> CleanAsync(CleanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get service/container logs
+    /// </summary>
+    /// <remarks>
+    /// Retrieves logs from services or containers with filtering options.
+    /// <br/>Supports real-time streaming via WebSocket upgrade.
+    /// </remarks>
+    /// <param name="service">Service name to get logs for</param>
+    /// <param name="container">Container ID or name (alternative to service)</param>
+    /// <param name="since">Return logs since timestamp (RFC3339 or relative like "5m")</param>
+    /// <param name="until">Return logs until timestamp</param>
+    /// <param name="tail">Number of lines from end of logs</param>
+    /// <param name="follow">Stream logs in real-time (WebSocket upgrade)</param>
+    /// <returns>Log output</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<LogsResponse> GetLogsAsync(string? service = null, string? container = null, string? since = null, string? until = null, int? tail = null, bool? follow = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update service topology without full redeploy
+    /// </summary>
+    /// <remarks>
+    /// Changes which services run on which containers without tearing down
+    /// <br/>the entire environment. Enables live topology changes.
+    /// <br/>
+    /// <br/>**Use Cases**:
+    /// <br/>- Move auth service to dedicated container for scaling
+    /// <br/>- Consolidate services during low-traffic periods
+    /// <br/>- Split services for debugging/isolation
+    /// <br/>- Add new service nodes to running environment
+    /// </remarks>
+    /// <returns>Topology update applied</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<TopologyUpdateResponse> UpdateTopologyAsync(TopologyUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Request container restart (self-service pattern)
+    /// </summary>
+    /// <remarks>
+    /// Plugins call this endpoint to request restart of their own container.
+    /// <br/>This is part of the self-service configuration update pattern where
+    /// <br/>plugins decide if they care about config changes and request restarts.
+    /// <br/>
+    /// <br/>**Flow**:
+    /// <br/>1. Orchestrator publishes ConfigurationChangedEvent with changed keys
+    /// <br/>2. Plugins check if any changed keys match their dependencies
+    /// <br/>3. Plugins that care call this endpoint to request restart
+    /// <br/>4. Orchestrator performs rolling restart of requested containers
+    /// <br/>
+    /// <br/>**Priority Levels**:
+    /// <br/>- `graceful`: Rolling update, wait for healthy before cycling next instance
+    /// <br/>- `immediate`: Rolling update but don't wait for connection drain
+    /// <br/>- `force`: Kill all instances simultaneously (causes downtime)
+    /// </remarks>
+    /// <param name="appName">Container's Dapr app name (e.g., "bannou", "npc-omega")</param>
+    /// <returns>Restart request accepted</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<ContainerRestartResponse> RequestContainerRestartAsync(string appName, ContainerRestartRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get container health and restart history
+    /// </summary>
+    /// <remarks>
+    /// Returns detailed status of a container including health, restart history,
+    /// <br/>running plugins, and current configuration.
+    /// </remarks>
+    /// <param name="appName">Container's Dapr app name</param>
+    /// <returns>Container status</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<ContainerStatus> GetContainerStatusAsync(string appName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Rollback to previous configuration
+    /// </summary>
+    /// <remarks>
+    /// Quickly rollback to the previous configuration without waiting for CI.
+    /// <br/>Swaps currentConfig with previousConfig and publishes ConfigurationChangedEvent
+    /// <br/>with the reverted keys so services can request restart.
+    /// <br/>
+    /// <br/>**Note**: This is a quick fix. GitHub secrets should still be corrected
+    /// <br/>to prevent re-breaking on next orchestrator deploy.
+    /// </remarks>
+    /// <returns>Rollback completed</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<ConfigRollbackResponse> RollbackConfigurationAsync(ConfigRollbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get current configuration version and metadata
+    /// </summary>
+    /// <remarks>
+    /// Returns the current configuration version, last update time,
+    /// <br/>and summary of configuration state (not actual values for security).
+    /// </remarks>
+    /// <returns>Configuration version info</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<ConfigVersionResponse> GetConfigVersionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -115,7 +326,7 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
     private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
     private Newtonsoft.Json.JsonSerializerSettings? _instanceSettings;
 
-    public OrchestratorClient(string baseUrl)
+    public OrchestratorClient()
     {
         Initialize();
     }
@@ -296,108 +507,6 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
-        }
-    }
-
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Execute test batch via API
-    /// </summary>
-    /// <remarks>
-    /// Executes tests via API calls to test services (no --exit-code-from).
-    /// <br/>
-    /// <br/>Supports three test types:
-    /// <br/>- infrastructure: Basic service availability (testing plugin)
-    /// <br/>- http: Service-to-service HTTP testing (http-tester)
-    /// <br/>- edge: WebSocket protocol testing (edge-tester)
-    /// </remarks>
-    /// <returns>Test execution results</returns>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<TestExecutionResult> RunTestsAsync(TestExecutionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        if (body == null)
-            throw new System.ArgumentNullException("body");
-
-        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
-        var disposeClient_ = true;
-        try
-        {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
-            {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
-                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-                request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("POST");
-                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
-
-                // Operation Path: "orchestrator/tests/run"
-                urlBuilder_.Append("orchestrator/tests/run");
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    ProcessResponse(client_, response_);
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<TestExecutionResult>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Invalid test configuration", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 500)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Test execution failed", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -610,6 +719,1225 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
         }
     }
 
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Detect available container orchestration backends
+    /// </summary>
+    /// <remarks>
+    /// Detects which container orchestration backends are available on this system.
+    /// <br/>Returns availability status and capabilities for each backend.
+    /// <br/>
+    /// <br/>**Priority Order** (for automatic selection):
+    /// <br/>1. Kubernetes - Full cluster orchestration with operators
+    /// <br/>2. Portainer - API abstraction over Compose/Swarm with web UI
+    /// <br/>3. Docker Swarm - Native Docker cluster orchestration
+    /// <br/>4. Docker Compose - Single-host container management
+    /// <br/>
+    /// <br/>Detection methods:
+    /// <br/>- Kubernetes: Check for kubectl and cluster connectivity
+    /// <br/>- Portainer: Check for Portainer API endpoint
+    /// <br/>- Swarm: Check `docker info` for swarm mode
+    /// <br/>- Compose: Check for docker compose v2 availability
+    /// </remarks>
+    /// <returns>Available backends with capabilities</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<BackendsResponse> GetBackendsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "orchestrator/backends"
+                urlBuilder_.Append("orchestrator/backends");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<BackendsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// List available deployment presets
+    /// </summary>
+    /// <remarks>
+    /// Returns all available deployment presets from the orchestrator's preset directory.
+    /// <br/>Presets define service combinations and configuration for specific use cases.
+    /// <br/>
+    /// <br/>Built-in presets:
+    /// <br/>- `local-development`: All services in single container with Dapr
+    /// <br/>- `local-testing`: Test environment with infrastructure services
+    /// <br/>- `integration-http`: HTTP integration testing preset
+    /// <br/>- `integration-edge`: WebSocket/edge testing preset
+    /// <br/>- `split-auth-accounts`: Auth and Accounts in separate containers
+    /// <br/>- `distributed-npc`: NPC processing distributed across nodes
+    /// </remarks>
+    /// <returns>Available deployment presets</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<PresetsResponse> GetPresetsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "orchestrator/presets"
+                urlBuilder_.Append("orchestrator/presets");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<PresetsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Deploy or update an environment
+    /// </summary>
+    /// <remarks>
+    /// Deploys a complete environment using a preset or custom configuration.
+    /// <br/>Supports graceful transitions, forced deployments, and clean rebuilds.
+    /// <br/>
+    /// <br/>**Deployment Modes**:
+    /// <br/>- `graceful`: Wait for existing connections to drain before changing topology
+    /// <br/>- `force`: Immediately apply changes (may interrupt active connections)
+    /// <br/>- `clean`: Tear down completely and rebuild from scratch
+    /// <br/>
+    /// <br/>**Backend Selection**:
+    /// <br/>- If `backend` not specified, uses highest-priority available backend
+    /// <br/>- If `backend` specified but unavailable, returns error (no fallback)
+    /// <br/>
+    /// <br/>**Live Topology Changes**:
+    /// <br/>Supports changing service distribution without full restart:
+    /// <br/>- Move auth/accounts to separate container while keeping other services together
+    /// <br/>- Scale specific services to additional nodes
+    /// <br/>- Update environment variables without restart (where supported)
+    /// </remarks>
+    /// <returns>Deployment initiated successfully</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<DeployResponse> DeployAsync(DeployRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "orchestrator/deploy"
+                urlBuilder_.Append("orchestrator/deploy");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<DeployResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new ApiException<ErrorResponse>("Invalid deployment configuration", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    if (status_ == 409)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new ApiException<ErrorResponse>("Backend not available (when explicitly requested)", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    if (status_ == 500)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new ApiException<ErrorResponse>("Deployment failed", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get current environment status
+    /// </summary>
+    /// <remarks>
+    /// Returns comprehensive status of the current deployment including:
+    /// <br/>- Active backend and deployment configuration
+    /// <br/>- Service topology (which services on which containers)
+    /// <br/>- Container health and resource usage
+    /// <br/>- Infrastructure component status
+    /// <br/>- Active preset and any customizations
+    /// </remarks>
+    /// <returns>Current environment status</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<EnvironmentStatus> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "orchestrator/status"
+                urlBuilder_.Append("orchestrator/status");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<EnvironmentStatus>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Tear down the current environment
+    /// </summary>
+    /// <remarks>
+    /// Tears down all containers and services in the current deployment.
+    /// <br/>Optionally preserves volumes and networks for faster redeployment.
+    /// <br/>
+    /// <br/>**Teardown Modes**:
+    /// <br/>- `graceful`: Signal shutdown and wait for clean exit
+    /// <br/>- `force`: Immediately stop all containers (SIGKILL)
+    /// <br/>- `preserve-data`: Keep volumes and networks, only remove containers
+    /// </remarks>
+    /// <returns>Teardown completed</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<TeardownResponse> TeardownAsync(TeardownRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "orchestrator/teardown"
+                urlBuilder_.Append("orchestrator/teardown");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<TeardownResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 500)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new ApiException<ErrorResponse>("Teardown failed", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Clean up unused resources
+    /// </summary>
+    /// <remarks>
+    /// Prunes unused Docker resources to reclaim disk space and clean up
+    /// <br/>orphaned containers, networks, volumes, and images.
+    /// <br/>
+    /// <br/>Equivalent to running various `docker system prune` commands.
+    /// <br/>
+    /// <br/>**Clean Targets**:
+    /// <br/>- `containers`: Remove stopped containers
+    /// <br/>- `networks`: Remove unused networks
+    /// <br/>- `volumes`: Remove unused volumes (CAUTION: data loss)
+    /// <br/>- `images`: Remove dangling images
+    /// <br/>- `all`: All of the above
+    /// </remarks>
+    /// <returns>Cleanup completed</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<CleanResponse> CleanAsync(CleanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "orchestrator/clean"
+                urlBuilder_.Append("orchestrator/clean");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<CleanResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 500)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ErrorResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        throw new ApiException<ErrorResponse>("Cleanup failed", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get service/container logs
+    /// </summary>
+    /// <remarks>
+    /// Retrieves logs from services or containers with filtering options.
+    /// <br/>Supports real-time streaming via WebSocket upgrade.
+    /// </remarks>
+    /// <param name="service">Service name to get logs for</param>
+    /// <param name="container">Container ID or name (alternative to service)</param>
+    /// <param name="since">Return logs since timestamp (RFC3339 or relative like "5m")</param>
+    /// <param name="until">Return logs until timestamp</param>
+    /// <param name="tail">Number of lines from end of logs</param>
+    /// <param name="follow">Stream logs in real-time (WebSocket upgrade)</param>
+    /// <returns>Log output</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<LogsResponse> GetLogsAsync(string? service = null, string? container = null, string? since = null, string? until = null, int? tail = null, bool? follow = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "orchestrator/logs"
+                urlBuilder_.Append("orchestrator/logs");
+                urlBuilder_.Append('?');
+                if (service != null)
+                {
+                    urlBuilder_.Append(System.Uri.EscapeDataString("service")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(service, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                }
+                if (container != null)
+                {
+                    urlBuilder_.Append(System.Uri.EscapeDataString("container")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(container, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                }
+                if (since != null)
+                {
+                    urlBuilder_.Append(System.Uri.EscapeDataString("since")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(since, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                }
+                if (until != null)
+                {
+                    urlBuilder_.Append(System.Uri.EscapeDataString("until")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(until, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                }
+                if (tail != null)
+                {
+                    urlBuilder_.Append(System.Uri.EscapeDataString("tail")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(tail, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                }
+                if (follow != null)
+                {
+                    urlBuilder_.Append(System.Uri.EscapeDataString("follow")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(follow, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                }
+                urlBuilder_.Length--;
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 101)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Switching to WebSocket for streaming (when follow=true)", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<LogsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Service or container not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Update service topology without full redeploy
+    /// </summary>
+    /// <remarks>
+    /// Changes which services run on which containers without tearing down
+    /// <br/>the entire environment. Enables live topology changes.
+    /// <br/>
+    /// <br/>**Use Cases**:
+    /// <br/>- Move auth service to dedicated container for scaling
+    /// <br/>- Consolidate services during low-traffic periods
+    /// <br/>- Split services for debugging/isolation
+    /// <br/>- Add new service nodes to running environment
+    /// </remarks>
+    /// <returns>Topology update applied</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<TopologyUpdateResponse> UpdateTopologyAsync(TopologyUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "orchestrator/topology"
+                urlBuilder_.Append("orchestrator/topology");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<TopologyUpdateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Invalid topology configuration", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 409)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Topology change conflicts with current state", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 500)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Topology update failed", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Request container restart (self-service pattern)
+    /// </summary>
+    /// <remarks>
+    /// Plugins call this endpoint to request restart of their own container.
+    /// <br/>This is part of the self-service configuration update pattern where
+    /// <br/>plugins decide if they care about config changes and request restarts.
+    /// <br/>
+    /// <br/>**Flow**:
+    /// <br/>1. Orchestrator publishes ConfigurationChangedEvent with changed keys
+    /// <br/>2. Plugins check if any changed keys match their dependencies
+    /// <br/>3. Plugins that care call this endpoint to request restart
+    /// <br/>4. Orchestrator performs rolling restart of requested containers
+    /// <br/>
+    /// <br/>**Priority Levels**:
+    /// <br/>- `graceful`: Rolling update, wait for healthy before cycling next instance
+    /// <br/>- `immediate`: Rolling update but don't wait for connection drain
+    /// <br/>- `force`: Kill all instances simultaneously (causes downtime)
+    /// </remarks>
+    /// <param name="appName">Container's Dapr app name (e.g., "bannou", "npc-omega")</param>
+    /// <returns>Restart request accepted</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<ContainerRestartResponse> RequestContainerRestartAsync(string appName, ContainerRestartRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (appName == null)
+            throw new System.ArgumentNullException("appName");
+
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "orchestrator/containers/{appName}/request-restart"
+                urlBuilder_.Append("orchestrator/containers/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(appName, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/request-restart");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ContainerRestartResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Invalid restart request", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Container not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get container health and restart history
+    /// </summary>
+    /// <remarks>
+    /// Returns detailed status of a container including health, restart history,
+    /// <br/>running plugins, and current configuration.
+    /// </remarks>
+    /// <param name="appName">Container's Dapr app name</param>
+    /// <returns>Container status</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<ContainerStatus> GetContainerStatusAsync(string appName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (appName == null)
+            throw new System.ArgumentNullException("appName");
+
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "orchestrator/containers/{appName}/status"
+                urlBuilder_.Append("orchestrator/containers/");
+                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(appName, System.Globalization.CultureInfo.InvariantCulture)));
+                urlBuilder_.Append("/status");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ContainerStatus>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Container not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Rollback to previous configuration
+    /// </summary>
+    /// <remarks>
+    /// Quickly rollback to the previous configuration without waiting for CI.
+    /// <br/>Swaps currentConfig with previousConfig and publishes ConfigurationChangedEvent
+    /// <br/>with the reverted keys so services can request restart.
+    /// <br/>
+    /// <br/>**Note**: This is a quick fix. GitHub secrets should still be corrected
+    /// <br/>to prevent re-breaking on next orchestrator deploy.
+    /// </remarks>
+    /// <returns>Rollback completed</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<ConfigRollbackResponse> RollbackConfigurationAsync(ConfigRollbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "orchestrator/config/rollback"
+                urlBuilder_.Append("orchestrator/config/rollback");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ConfigRollbackResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("No previous configuration to rollback to", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 500)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Rollback failed", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get current configuration version and metadata
+    /// </summary>
+    /// <remarks>
+    /// Returns the current configuration version, last update time,
+    /// <br/>and summary of configuration state (not actual values for security).
+    /// </remarks>
+    /// <returns>Configuration version info</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<ConfigVersionResponse> GetConfigVersionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "orchestrator/config/version"
+                urlBuilder_.Append("orchestrator/config/version");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ConfigVersionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
     protected struct ObjectResponseResult<T>
     {
         public ObjectResponseResult(T responseObject, string responseText)
@@ -702,7 +2030,7 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -714,7 +2042,7 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

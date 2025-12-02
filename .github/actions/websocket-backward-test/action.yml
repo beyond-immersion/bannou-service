@@ -50,10 +50,13 @@ runs:
         set -a && source .env.test.edge && set +a
         # Override Docker hostnames with localhost for CI host access
         # (edge-tester runs on CI host, not in Docker, so it needs localhost)
-        export REGISTER_ENDPOINT=localhost:80/auth/register
-        export LOGIN_CREDENTIALS_ENDPOINT=localhost:80/auth/login
-        export LOGIN_TOKEN_ENDPOINT=localhost:80/auth/login/token
-        export CONNECT_ENDPOINT=localhost:80/connect
+        # OpenResty maps internal port 80 to host port 9080 (see docker-compose.ingress.yml)
+        export OPENRESTY_HOST=localhost
+        export OPENRESTY_PORT=9080
+        export REGISTER_ENDPOINT=localhost:9080/auth/register
+        export LOGIN_CREDENTIALS_ENDPOINT=localhost:9080/auth/login
+        export LOGIN_TOKEN_ENDPOINT=localhost:9080/auth/refresh
+        export CONNECT_ENDPOINT=localhost:9080/connect
         DAEMON_MODE=true dotnet run --project edge-tester --configuration Release --no-build
 
     - name: Skip Notice

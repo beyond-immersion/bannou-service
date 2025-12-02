@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Controllers.Filters;
 using BeyondImmersion.BannouService.Logging;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebSockets;
@@ -83,6 +84,11 @@ public static class Program
     public static PluginLoader PluginLoader { get; private set; }
 
     /// <summary>
+    /// Service heartbeat manager for publishing instance health to orchestrator.
+    /// </summary>
+    public static ServiceHeartbeatManager? HeartbeatManager { get; private set; }
+
+    /// <summary>
     /// Token source for initiating a clean shutdown.
     /// </summary>
     public static CancellationTokenSource ShutdownCancellationTokenSource { get; } = new CancellationTokenSource();
@@ -98,25 +104,6 @@ public static class Program
             Logger.Log(LogLevel.Error, null, "Service configuration missing- exiting application.");
             return 1;
         }
-
-
-        // TODO: DEPRECATED - Replace with Plugin system
-        // load the assemblies (backward compatibility for existing IDaprService implementations)
-        // LoadAssemblies();
-
-        // get info for dapr services in loaded assemblies
-        // if (!IDaprService.EnabledServices.Any())
-        // {
-        //     Logger.Log(LogLevel.Error, null, "No services have been enabled- exiting application.");
-        //     return;
-        // }
-
-        // ensure dapr services have their required configuration
-        // if (!EnabledServicesHaveRequiredConfiguration())
-        // {
-        //     Logger.Log(LogLevel.Error, null, "Required configuration missing for enabled services- exiting application.");
-        //     return;
-        // }
 
         Logger.Log(LogLevel.Information, null, "Configuration built and validated.");
 
@@ -189,12 +176,6 @@ public static class Program
                         RequireSignedTokens = true
                     };
                 });
-
-            // TODO: DEPRECATED - Replace with Plugin system controller registration
-            // get all loaded assemblies hosting enabled DaprController types
-            // IEnumerable<Assembly>? daprControllerAssemblies = IDaprController.EnabledServiceControllers
-            //     .Where(t => t.Item1.Assembly != Assembly.GetEntryAssembly())
-            //     .Select(t => t.Item1.Assembly);
 
             _ = webAppBuilder.Services
                 .AddControllers(mvcOptions =>
@@ -284,13 +265,6 @@ public static class Program
             return 1;
         }
 
-        // Final override: Ensure configuration lifetimes are correct (after all auto-registration)
-        Logger.Log(LogLevel.Information, null, "Final configuration lifetime check and override...");
-
-        // DISABLED: This was destroying properly bound configurations by replacing them with default constructor instances
-        // The PluginLoader already registers configurations properly with environment binding
-        // PluginLoader?.FinalizeConfigurationRegistrations(webAppBuilder.Services);
-
         // build the application
         Logger.Log(LogLevel.Information, null, "About to build WebApplication - checking for DI conflicts...");
 
@@ -372,14 +346,6 @@ public static class Program
                 }
             }
 
-            // TODO: DEPRECATED - Replace with Plugin system lifecycle
-            // invoke all Service.Start() methods on enabled service handlers
-            // if (!await webApp.InvokeAllServiceStartMethods())
-            // {
-            //     Logger.Log(LogLevel.Error, "An enabled service handler has failed to start- exiting application.");
-            //     return;
-            // }
-
             // Start plugins
             if (PluginLoader != null)
             {
@@ -398,16 +364,57 @@ public static class Program
             var webHostTask = webApp.RunAsync(ShutdownCancellationTokenSource.Token);
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // Now that web server is running, ensure dapr is ready for service communication
-            if (!await WaitForDaprReadiness())
-            {
-                Logger.Log(LogLevel.Error, null, "Dapr readiness check failed after web server startup - exiting application.");
-                return 1;
-            }
+            // Create heartbeat manager for Dapr connectivity check and ongoing health reporting
+            // HEARTBEAT_ENABLED defaults to true - only set to false for minimal infrastructure testing
+            // where Dapr pub/sub components are intentionally not configured
+            var heartbeatEnabledEnv = Environment.GetEnvironmentVariable("HEARTBEAT_ENABLED");
+            var heartbeatEnabled = string.IsNullOrEmpty(heartbeatEnabledEnv) ||
+                !string.Equals(heartbeatEnabledEnv, "false", StringComparison.OrdinalIgnoreCase);
 
-            // TODO: DEPRECATED - Replace with Plugin system lifecycle
-            // invoke all Service.Running() methods on enabled service handlers
-            // await webApp.InvokeAllServiceRunningMethods();
+            if (heartbeatEnabled)
+            {
+                if (PluginLoader == null)
+                {
+                    Logger.Log(LogLevel.Error, null, "PluginLoader not initialized - cannot create heartbeat manager.");
+                    return 1;
+                }
+
+                using var heartbeatLoggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                var heartbeatLogger = heartbeatLoggerFactory.CreateLogger<ServiceHeartbeatManager>();
+                HeartbeatManager = new ServiceHeartbeatManager(DaprClient, heartbeatLogger, PluginLoader);
+
+                // Wait for Dapr connectivity using heartbeat publishing as the test
+                // This replaces the old WaitForDaprReadiness() - publishing a heartbeat proves both
+                // Dapr sidecar connectivity AND RabbitMQ pub/sub readiness
+                Logger.Log(LogLevel.Information, null, "Waiting for Dapr pub/sub connectivity via startup heartbeat...");
+                if (!await HeartbeatManager.WaitForDaprConnectivityAsync(
+                    maxRetries: Configuration.Dapr_Readiness_Timeout > 0 ? 30 : 1,
+                    retryDelayMs: 2000,
+                    ShutdownCancellationTokenSource.Token))
+                {
+                    Logger.Log(LogLevel.Error, null, "Dapr pub/sub connectivity check failed - exiting application.");
+                    return 1;
+                }
+
+                // Start periodic heartbeats now that we've confirmed connectivity
+                HeartbeatManager.StartPeriodicHeartbeats();
+
+                // Register service permissions now that Dapr pub/sub is confirmed ready
+                // This ensures permission registration events are delivered to the Permissions service
+                if (PluginLoader != null)
+                {
+                    Logger.Log(LogLevel.Information, null, "Registering service permissions with Permissions service...");
+                    if (!await PluginLoader.RegisterServicePermissionsAsync())
+                    {
+                        Logger.Log(LogLevel.Error, null, "Service permission registration failed - exiting application.");
+                        return 1;
+                    }
+                }
+            }
+            else
+            {
+                Logger.Log(LogLevel.Warning, null, "Heartbeat system disabled via HEARTBEAT_ENABLED=false (infrastructure testing mode).");
+            }
 
             // Invoke plugin running methods
             if (PluginLoader != null)
@@ -424,10 +431,13 @@ public static class Program
 
             Logger.Log(LogLevel.Information, null, "WebHost stopped- starting controlled application shutdown.");
 
-            // TODO: DEPRECATED - Replace with Plugin system lifecycle
-            // invoke all Service.Shutdown() methods on enabled service handlers
-            // if (webApp != null)
-            //     await webApp.InvokeAllServiceShutdownMethods();
+            // Publish shutdown heartbeat to notify orchestrator
+            if (HeartbeatManager != null)
+            {
+                await HeartbeatManager.PublishShutdownHeartbeatAsync();
+                await HeartbeatManager.DisposeAsync();
+                HeartbeatManager = null;
+            }
 
             // Shutdown plugins
             if (PluginLoader != null)
@@ -576,46 +586,4 @@ public static class Program
     /// </summary>
     public static void InitiateShutdown() => ShutdownCancellationTokenSource.Cancel();
 
-    /// <summary>
-    /// Waits for Dapr to be ready before proceeding with service startup.
-    /// Uses configurable timeout from Dapr_Readiness_Timeout.
-    /// </summary>
-    /// <returns>True if Dapr is ready, false if timeout or error occurs.</returns>
-    private static async Task<bool> WaitForDaprReadiness()
-    {
-        if (Configuration.Dapr_Readiness_Timeout <= 0)
-        {
-            Logger.Log(LogLevel.Information, null, "Dapr readiness check disabled (timeout = 0)");
-            return true;
-        }
-
-        var timeout = TimeSpan.FromMilliseconds(Configuration.Dapr_Readiness_Timeout);
-        var checkInterval = TimeSpan.FromSeconds(1);
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-
-        Logger.Log(LogLevel.Information, null, $"Waiting for Dapr to be ready (timeout: {timeout.TotalSeconds}s)...");
-
-        while (stopwatch.Elapsed < timeout)
-        {
-            try
-            {
-                // Try to get Dapr metadata as a basic connectivity check
-                var metadata = await DaprClient.GetMetadataAsync();
-                if (metadata != null)
-                {
-                    Logger.Log(LogLevel.Information, null, $"Dapr is ready (sidecar ID: {metadata.Id})");
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Log(LogLevel.Debug, ex, $"Dapr readiness check failed, retrying... ({stopwatch.Elapsed.TotalSeconds:F1}s elapsed)");
-            }
-
-            await Task.Delay(checkInterval);
-        }
-
-        Logger.Log(LogLevel.Error, null, $"Dapr readiness check timed out after {timeout.TotalSeconds}s. Ensure Dapr sidecar is running.");
-        return false;
-    }
 }

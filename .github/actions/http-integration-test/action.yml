@@ -20,12 +20,31 @@ runs:
       shell: bash
       run: |
         echo "🔗 Running HTTP integration tests via Dapr service invocation..."
+        # Start all services in detached mode
         docker compose -p bannou-ci-http \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.http.yml" \
-          up --exit-code-from=bannou-http-tester
+          up -d
+
+        # Stream logs in background for visibility
+        docker compose -p bannou-ci-http \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.http.yml" \
+          logs -f bannou-http-tester &
+
+        # Wait for the http-tester container to complete and capture its exit code
+        # Using 'wait' instead of '--exit-code-from' to allow orchestrator tests
+        # to create/destroy containers without aborting the test suite
+        docker compose -p bannou-ci-http \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.http.yml" \
+          wait bannou-http-tester
 
     - name: Cleanup HTTP Integration Services
       if: always()

@@ -1,7 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
-using System.ComponentModel.DataAnnotations;
 
 namespace BeyondImmersion.BannouService.Accounts;
 
@@ -32,5 +32,17 @@ public class AccountsServiceConfiguration : IServiceConfiguration
     /// Environment variable: ACCOUNTRETENTIONDAYS or BANNOU_ACCOUNTRETENTIONDAYS
     /// </summary>
     public int AccountRetentionDays { get; set; } = 30;
+
+    /// <summary>
+    /// Comma-separated list of emails that automatically get admin role assigned
+    /// Environment variable: ADMINEMAILS or BANNOU_ADMINEMAILS
+    /// </summary>
+    public string AdminEmails { get; set; } = "";
+
+    /// <summary>
+    /// Email domain that automatically gets admin role (e.g., "@admin.test.local")
+    /// Environment variable: ADMINEMAILDOMAIN or BANNOU_ADMINEMAILDOMAIN
+    /// </summary>
+    public string AdminEmailDomain { get; set; } = "";
 
 }

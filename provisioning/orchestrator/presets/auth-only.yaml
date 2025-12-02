@@ -1,0 +1,36 @@
+# Auth Service Only Testing Preset
+# Tests authentication service in isolation
+# Used for focused auth service testing
+
+name: auth-only
+description: Auth service isolation preset for focused authentication testing
+category: testing
+
+topology:
+  nodes:
+    - name: bannou-auth
+      services:
+        - accounts
+        - auth
+        - testing
+      replicas: 1
+      environment:
+        ASPNETCORE_ENVIRONMENT: Development
+        TESTING_SERVICE_ENABLED: "true"
+
+  infrastructure:
+    mysql:
+      enabled: true
+      version: "8.0"
+    redis:
+      enabled: true
+      version: "7"
+    rabbitmq:
+      enabled: false
+
+environment:
+  APP_LOGGING_LEVEL: Debug
+  WEB_HOST_LOGGING_LEVEL: Warning
+
+requiredBackends:
+  - docker-compose

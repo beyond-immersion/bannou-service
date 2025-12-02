@@ -1,18 +1,20 @@
-using System.Text.Json;
-using StackExchange.Redis;
-using Microsoft.Extensions.Logging;
 using BeyondImmersion.BannouService.Orchestrator;
+using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
+using System.Text.Json;
+using ServiceHealthStatus = BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus;
 
 namespace LibOrchestrator;
 
 /// <summary>
 /// Manages direct Redis connections for orchestrator service.
 /// CRITICAL: Uses direct connection (NOT Dapr) to avoid chicken-and-egg dependency.
+/// Writes service heartbeats and routing information for NGINX to read.
 /// </summary>
-public class OrchestratorRedisManager : IAsyncDisposable
+public class OrchestratorRedisManager : IOrchestratorRedisManager
 {
     private readonly ILogger<OrchestratorRedisManager> _logger;
-    private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly string _connectionString;
     private ConnectionMultiplexer? _redis;
     private IDatabase? _database;
 
@@ -20,12 +22,25 @@ public class OrchestratorRedisManager : IAsyncDisposable
     private const int INITIAL_RETRY_DELAY_MS = 1000;
     private const int MAX_RETRY_DELAY_MS = 60000;
 
-    public OrchestratorRedisManager(
-        ILogger<OrchestratorRedisManager> logger,
-        OrchestratorServiceConfiguration configuration)
+    // Redis key patterns - must match what NGINX Lua reads
+    private const string HEARTBEAT_KEY_PREFIX = "service:heartbeat:";
+    private const string ROUTING_KEY_PREFIX = "service:routing:";
+
+    // TTL values
+    private static readonly TimeSpan HEARTBEAT_TTL = TimeSpan.FromSeconds(90);
+    private static readonly TimeSpan ROUTING_TTL = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Creates OrchestratorRedisManager with connection string read directly from environment.
+    /// This avoids DI lifetime conflicts with scoped configuration classes.
+    /// </summary>
+    public OrchestratorRedisManager(ILogger<OrchestratorRedisManager> logger)
     {
         _logger = logger;
-        _configuration = configuration;
+        // Read connection string directly from environment to avoid DI lifetime conflicts
+        _connectionString = Environment.GetEnvironmentVariable("BANNOU_RedisConnectionString")
+            ?? Environment.GetEnvironmentVariable("RedisConnectionString")
+            ?? "redis:6379";
     }
 
     /// <summary>
@@ -42,9 +57,9 @@ public class OrchestratorRedisManager : IAsyncDisposable
             {
                 _logger.LogInformation(
                     "Attempting Redis connection (attempt {Attempt}/{MaxAttempts}): {ConnectionString}",
-                    attempt, MAX_RETRY_ATTEMPTS, _configuration.RedisConnectionString);
+                    attempt, MAX_RETRY_ATTEMPTS, _connectionString);
 
-                var options = ConfigurationOptions.Parse(_configuration.RedisConnectionString ?? "redis:6379");
+                var options = ConfigurationOptions.Parse(_connectionString);
                 options.AbortOnConnectFail = false;  // ✅ Automatic reconnection
                 options.ConnectTimeout = 5000;
                 options.SyncTimeout = 5000;
@@ -200,6 +215,22 @@ public class OrchestratorRedisManager : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Synchronous dispose for DI container compatibility.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_redis != null)
+        {
+            _redis.Close();
+            _redis.Dispose();
+            _logger.LogDebug("Redis connection closed synchronously");
+        }
+    }
+
+    /// <summary>
+    /// Async dispose for async-aware disposal contexts.
+    /// </summary>
     public async ValueTask DisposeAsync()
     {
         if (_redis != null)
@@ -207,6 +238,167 @@ public class OrchestratorRedisManager : IAsyncDisposable
             await _redis.CloseAsync();
             _redis.Dispose();
             _logger.LogInformation("Redis connection closed");
+        }
+    }
+
+    /// <summary>
+    /// Write aggregated instance heartbeat data to Redis.
+    /// Called when heartbeat events are received from RabbitMQ.
+    /// Pattern: service:heartbeat:{appId} (keyed by app-id, not service name)
+    /// TTL: 90 seconds
+    /// </summary>
+    public async Task WriteServiceHeartbeatAsync(ServiceHeartbeatEvent heartbeat)
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot write heartbeat.");
+            return;
+        }
+
+        try
+        {
+            // Key by AppId since heartbeat is now aggregated per-instance
+            var key = $"{HEARTBEAT_KEY_PREFIX}{heartbeat.AppId}";
+
+            // Store the full aggregated heartbeat
+            var healthStatus = new InstanceHealthStatus
+            {
+                InstanceId = heartbeat.ServiceId,
+                AppId = heartbeat.AppId,
+                Status = heartbeat.Status,
+                LastSeen = DateTimeOffset.UtcNow,
+                Services = heartbeat.Services?.Select(s => s.ServiceName).ToList() ?? new List<string>(),
+                Issues = heartbeat.Issues,
+                MaxConnections = heartbeat.Capacity?.MaxConnections ?? 0,
+                CurrentConnections = heartbeat.Capacity?.CurrentConnections ?? 0,
+                CpuUsage = heartbeat.Capacity?.CpuUsage ?? 0,
+                MemoryUsage = heartbeat.Capacity?.MemoryUsage ?? 0
+            };
+
+            var value = JsonSerializer.Serialize(healthStatus);
+            await _database.StringSetAsync(key, value, HEARTBEAT_TTL);
+
+            _logger.LogDebug(
+                "Written instance heartbeat to Redis: {Key} - {Status} ({ServiceCount} services)",
+                key, heartbeat.Status, healthStatus.Services.Count);
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to write heartbeat for instance {AppId}",
+                heartbeat.AppId);
+        }
+    }
+
+    /// <summary>
+    /// Write service routing mapping to Redis for NGINX to read.
+    /// Pattern: service:routing:{serviceName}
+    /// Contains: app_id, host, port for NGINX to route requests.
+    /// </summary>
+    public async Task WriteServiceRoutingAsync(string serviceName, ServiceRouting routing)
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot write routing.");
+            return;
+        }
+
+        try
+        {
+            var key = $"{ROUTING_KEY_PREFIX}{serviceName}";
+            routing.LastUpdated = DateTimeOffset.UtcNow;
+
+            var value = JsonSerializer.Serialize(routing);
+            await _database.StringSetAsync(key, value, ROUTING_TTL);
+
+            _logger.LogInformation(
+                "Written routing to Redis: {ServiceName} -> {AppId} @ {Host}:{Port}",
+                serviceName, routing.AppId, routing.Host, routing.Port);
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to write routing for {ServiceName}", serviceName);
+        }
+    }
+
+    /// <summary>
+    /// Get all service routing mappings from Redis.
+    /// Used by NGINX Lua script for dynamic routing.
+    /// </summary>
+    public async Task<Dictionary<string, ServiceRouting>> GetServiceRoutingsAsync()
+    {
+        var routings = new Dictionary<string, ServiceRouting>();
+
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot retrieve routings.");
+            return routings;
+        }
+
+        try
+        {
+            var server = _redis?.GetServer(_redis.GetEndPoints().First());
+            if (server == null)
+            {
+                _logger.LogWarning("Cannot get Redis server endpoint");
+                return routings;
+            }
+
+            var keys = server.Keys(pattern: $"{ROUTING_KEY_PREFIX}*").ToArray();
+
+            foreach (var key in keys)
+            {
+                try
+                {
+                    var value = await _database.StringGetAsync(key);
+                    if (value.IsNullOrEmpty)
+                    {
+                        continue;
+                    }
+
+                    var routing = JsonSerializer.Deserialize<ServiceRouting>(value.ToString());
+                    if (routing != null)
+                    {
+                        // Extract service name from key
+                        var serviceName = key.ToString().Replace(ROUTING_KEY_PREFIX, "");
+                        routings[serviceName] = routing;
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to deserialize routing from key: {Key}", key);
+                }
+            }
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Redis error while retrieving service routings");
+        }
+
+        return routings;
+    }
+
+    /// <summary>
+    /// Remove service routing mapping from Redis.
+    /// Called when a service is unregistered.
+    /// </summary>
+    public async Task RemoveServiceRoutingAsync(string serviceName)
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot remove routing.");
+            return;
+        }
+
+        try
+        {
+            var key = $"{ROUTING_KEY_PREFIX}{serviceName}";
+            await _database.KeyDeleteAsync(key);
+
+            _logger.LogInformation("Removed routing from Redis: {ServiceName}", serviceName);
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to remove routing for {ServiceName}", serviceName);
         }
     }
 }

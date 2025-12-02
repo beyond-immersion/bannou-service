@@ -1,19 +1,37 @@
--- Service Routing with Heartbeat Integration
--- Implements service discovery and load balancing based on Redis heartbeat data
--- Based on API-DESIGN.md service heartbeat patterns
+-- Service Routing with Dynamic Backend Selection
+-- Reads service routing from Redis (written by orchestrator)
+-- Sets nginx variables for dynamic upstream selection
+-- Redis key pattern: service:routing:{serviceName}
 
 local redis = require "resty.redis"
 local cjson = require "cjson"
 
 local _M = {}
 
--- Redis connection helper
+-- Redis key patterns - must match what orchestrator writes
+local ROUTING_KEY_PREFIX = "service:routing:"
+local DEFAULT_APP_ID = "bannou"
+local DEFAULT_HOST = "bannou"
+local DEFAULT_PORT = 80
+
+-- Cache TTL for routing data (seconds)
+local CACHE_TTL = 10
+
+-- Service name to routing key mapping for exposed endpoints
+local SERVICE_MAPPING = {
+    auth = "auth",
+    connect = "connect",
+    website = "website",
+    accounts = "accounts"
+}
+
+-- Redis connection helper with connection pooling
 local function get_redis_connection()
     local red = redis:new()
     red:set_timeouts(1000, 1000, 1000) -- 1sec timeout
 
     local redis_host = ngx.shared.service_routes:get("redis_host") or "routing-redis"
-    local redis_port = ngx.shared.service_routes:get("redis_port") or 6379
+    local redis_port = tonumber(ngx.shared.service_routes:get("redis_port")) or 6379
 
     local ok, err = red:connect(redis_host, redis_port)
     if not ok then
@@ -24,112 +42,133 @@ local function get_redis_connection()
     return red
 end
 
--- Get service heartbeat data from Redis
-local function get_service_heartbeats(service_name)
+-- Release Redis connection back to pool
+local function release_redis_connection(red)
+    if red then
+        local ok, err = red:set_keepalive(10000, 100) -- 10s timeout, 100 connections
+        if not ok then
+            ngx.log(ngx.WARN, "Failed to set keepalive: ", err)
+        end
+    end
+end
+
+-- Get service routing from Redis
+local function get_service_routing(service_name)
+    -- Check shared dict cache first
+    local cache_key = "route_cache:" .. service_name
+    local cached = ngx.shared.service_routes:get(cache_key)
+    if cached then
+        local routing = cjson.decode(cached)
+        ngx.log(ngx.DEBUG, "Using cached routing for ", service_name, ": ", routing.app_id)
+        return routing
+    end
+
+    -- Query Redis
     local red = get_redis_connection()
     if not red then
-        return {}
-    end
-
-    -- Get all services matching pattern
-    local pattern = "heartbeat:" .. service_name .. ":*"
-    local keys, err = red:keys(pattern)
-
-    if not keys or err then
-        ngx.log(ngx.WARN, "Failed to get service keys: ", err)
-        red:close()
-        return {}
-    end
-
-    local heartbeats = {}
-    for _, key in ipairs(keys) do
-        local data, err = red:hgetall(key)
-        if data and not err then
-            local heartbeat = red:array_to_hash(data)
-            table.insert(heartbeats, heartbeat)
-        end
-    end
-
-    red:close()
-    return heartbeats
-end
-
--- Select best service instance based on load
-local function select_service_instance(heartbeats)
-    if #heartbeats == 0 then
+        ngx.log(ngx.WARN, "Redis unavailable, using default routing for ", service_name)
         return nil
     end
 
-    -- Filter healthy services (updated within 90 seconds)
-    local healthy_services = {}
-    local now = ngx.time()
+    local key = ROUTING_KEY_PREFIX .. service_name
+    local value, err = red:get(key)
 
-    for _, hb in ipairs(heartbeats) do
-        local last_update = tonumber(hb.timestamp) or 0
-        local age = now - last_update
+    release_redis_connection(red)
 
-        if age <= 90 then  -- Service heartbeat TTL
-            table.insert(healthy_services, hb)
-        end
-    end
-
-    if #healthy_services == 0 then
-        ngx.log(ngx.WARN, "No healthy service instances found")
+    if not value or value == ngx.null then
+        ngx.log(ngx.DEBUG, "No routing found for ", service_name, ", using default")
         return nil
     end
 
-    -- Select service with lowest load
-    table.sort(healthy_services, function(a, b)
-        local load_a = tonumber(a.current_load) or 100
-        local load_b = tonumber(b.current_load) or 100
-        return load_a < load_b
-    end)
+    -- Parse JSON routing data
+    local ok, routing = pcall(cjson.decode, value)
+    if not ok then
+        ngx.log(ngx.ERR, "Failed to parse routing for ", service_name, ": ", routing)
+        return nil
+    end
 
-    return healthy_services[1]
+    -- Cache the result
+    local cache_value = cjson.encode(routing)
+    ngx.shared.service_routes:set(cache_key, cache_value, CACHE_TTL)
+
+    ngx.log(ngx.INFO, "Loaded routing for ", service_name, ": ", routing.AppId or routing.app_id, " @ ", routing.Host or routing.host)
+
+    return routing
 end
 
--- Route request to appropriate service instance
+-- Determine service name from request URI
+local function get_service_from_uri(uri)
+    -- Check known service prefixes
+    if string.match(uri, "^/auth/") then
+        return "auth"
+    elseif string.match(uri, "^/connect") then
+        return "connect"
+    elseif string.match(uri, "^/accounts/") then
+        return "accounts"
+    elseif string.match(uri, "^/website/") or string.match(uri, "^/$") then
+        return "website"
+    end
+
+    return nil -- Unknown service
+end
+
+-- Main routing function - sets nginx variables for upstream selection
 function _M.route_request()
     local uri = ngx.var.uri
-    local service_name = "bannou"  -- Default service
+    local service_name = get_service_from_uri(uri)
 
-    -- Determine service based on URI prefix
-    if string.match(uri, "^/authorization/") then
-        service_name = "auth"
-    elseif string.match(uri, "^/connect/") then
-        service_name = "connect"
-    elseif string.match(uri, "^/accounts/") then
-        service_name = "accounts"
-    end
-
-    -- Check cache first
-    local cache_key = "route:" .. service_name
-    local cached_instance = ngx.shared.service_routes:get(cache_key)
-
-    if cached_instance then
-        -- Use cached route (valid for 30 seconds)
-        ngx.log(ngx.DEBUG, "Using cached route for ", service_name, ": ", cached_instance)
+    if not service_name then
+        -- Not a known service route, use default
+        ngx.var.target_app_id = DEFAULT_APP_ID
+        ngx.var.target_host = DEFAULT_HOST
+        ngx.var.target_port = DEFAULT_PORT
+        ngx.log(ngx.DEBUG, "Unknown service for URI: ", uri, ", using default routing")
         return
     end
 
-    -- Get service heartbeats and select best instance
-    local heartbeats = get_service_heartbeats(service_name)
-    local selected = select_service_instance(heartbeats)
+    -- Get routing from Redis (or cache)
+    local routing = get_service_routing(service_name)
 
-    if selected then
-        local instance_info = selected.app_id .. ":" .. selected.port
+    if routing then
+        -- Use dynamic routing from orchestrator
+        -- Handle both camelCase (C# JSON) and lowercase field names
+        ngx.var.target_app_id = routing.AppId or routing.app_id or DEFAULT_APP_ID
+        ngx.var.target_host = routing.Host or routing.host or DEFAULT_HOST
+        ngx.var.target_port = routing.Port or routing.port or DEFAULT_PORT
 
-        -- Cache the selection
-        ngx.shared.service_routes:set(cache_key, instance_info, 30)
-
-        -- Set upstream for this request
-        if selected.app_id ~= "bannou" then
-            -- Custom upstream configuration would go here
-            ngx.log(ngx.INFO, "Routing to service instance: ", instance_info)
-        end
+        ngx.log(ngx.INFO, "Routing ", service_name, " to app_id=", ngx.var.target_app_id,
+                " host=", ngx.var.target_host, ":", ngx.var.target_port)
     else
-        ngx.log(ngx.WARN, "No healthy instances for service: ", service_name)
+        -- No routing data, use defaults
+        ngx.var.target_app_id = DEFAULT_APP_ID
+        ngx.var.target_host = DEFAULT_HOST
+        ngx.var.target_port = DEFAULT_PORT
+
+        ngx.log(ngx.DEBUG, "Using default routing for ", service_name, ": ", DEFAULT_APP_ID)
     end
+end
+
+-- Health check function - verify routing data is available
+function _M.check_health()
+    local red = get_redis_connection()
+    if not red then
+        return false, "Cannot connect to Redis"
+    end
+
+    -- Check for any routing keys
+    local keys, err = red:keys(ROUTING_KEY_PREFIX .. "*")
+    release_redis_connection(red)
+
+    if err then
+        return false, "Redis error: " .. err
+    end
+
+    local count = 0
+    if keys then
+        count = #keys
+    end
+
+    return true, "Found " .. count .. " service routings"
 end
 
 -- Main access phase handler

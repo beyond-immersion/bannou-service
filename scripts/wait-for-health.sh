@@ -1,30 +1,49 @@
 #!/bin/sh
 
-# Wait for bannou health endpoint
+# Wait for bannou and Dapr sidecar health endpoints
 # Uses 127.0.0.1 because this script runs with network_mode: service:bannou
-ENDPOINT="http://127.0.0.1:80/health"
+# Both bannou-dapr and infra-tester share bannou's network stack
+
+BANNOU_ENDPOINT="http://127.0.0.1:80/health"
+DAPR_ENDPOINT="http://127.0.0.1:3500/v1.0/healthz"
 MAX_RETRIES=60
 RETRY_TIME=5
-COUNT=0
 
-echo "⏳ Waiting for Bannou service to become ready..."
+# Wait for Bannou service
+wait_for_service() {
+    local SERVICE_NAME="$1"
+    local ENDPOINT="$2"
+    local EXPECTED_CODE="$3"
+    local COUNT=0
 
-while [ $COUNT -lt $MAX_RETRIES ]
-do
-    RESPONSE_CODE=$(curl --connect-timeout 5 -o /dev/null -s -w "%{http_code}" $ENDPOINT 2>/dev/null)
+    echo "⏳ Waiting for $SERVICE_NAME to become ready..."
 
-    if [ $RESPONSE_CODE -eq 200 ]; then
-        echo "✅ Bannou service is ready!"
-        exit 0
-    elif [ $RESPONSE_CODE -eq 503 ] || [ $RESPONSE_CODE -eq 0 ]; then
-        echo "⏳ Service not ready (status: $RESPONSE_CODE). Retrying in ${RETRY_TIME}s..."
-        sleep $RETRY_TIME
-        COUNT=$((COUNT+1))
-    else
-        echo "❌ Unexpected response code: $RESPONSE_CODE. Exiting."
-        exit 1
-    fi
-done
+    while [ $COUNT -lt $MAX_RETRIES ]
+    do
+        RESPONSE_CODE=$(curl --connect-timeout 5 -o /dev/null -s -w "%{http_code}" "$ENDPOINT" 2>/dev/null)
 
-echo "❌ Service did not become ready in time (${MAX_RETRIES} retries). Exiting."
-exit 1
+        if [ "$RESPONSE_CODE" = "$EXPECTED_CODE" ]; then
+            echo "✅ $SERVICE_NAME is ready!"
+            return 0
+        elif [ "$RESPONSE_CODE" = "503" ] || [ "$RESPONSE_CODE" = "000" ] || [ "$RESPONSE_CODE" = "0" ]; then
+            echo "⏳ $SERVICE_NAME not ready (status: $RESPONSE_CODE). Retrying in ${RETRY_TIME}s..."
+            sleep $RETRY_TIME
+            COUNT=$((COUNT+1))
+        else
+            echo "❌ $SERVICE_NAME unexpected response code: $RESPONSE_CODE. Exiting."
+            return 1
+        fi
+    done
+
+    echo "❌ $SERVICE_NAME did not become ready in time (${MAX_RETRIES} retries). Exiting."
+    return 1
+}
+
+# Wait for Bannou service (expects 200)
+wait_for_service "Bannou service" "$BANNOU_ENDPOINT" "200" || exit 1
+
+# Wait for Dapr sidecar (expects 204 - No Content means healthy)
+wait_for_service "Dapr sidecar" "$DAPR_ENDPOINT" "204" || exit 1
+
+echo "✅ All services ready!"
+exit 0

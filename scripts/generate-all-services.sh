@@ -131,15 +131,6 @@ echo -e "  Failed: $((TOTAL_SERVICES - SUCCESSFUL_SERVICES))"
 if [ $SUCCESSFUL_SERVICES -eq $TOTAL_SERVICES ]; then
     echo ""
     echo -e "${GREEN}🎉 All services generated successfully!${NC}"
-
-    if [ "$COMPONENTS" = "all" ] || [[ " ${COMPONENTS[*]} " =~ " all " ]]; then
-        echo ""
-        echo -e "${YELLOW}🔔 Next steps:${NC}"
-        echo "1. Build the solution: make build (or dotnet build)"
-        echo "2. Run tests: make test-ci"
-        echo "3. Review generated files in lib-*/Generated/ directories"
-    fi
-
     exit 0
 else
     echo ""

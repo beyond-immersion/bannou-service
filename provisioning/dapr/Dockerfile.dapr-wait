@@ -1,0 +1,20 @@
+# Custom Dapr sidecar image that waits for RabbitMQ before starting
+# This avoids cascading restarts from depends_on while ensuring pubsub initializes properly
+
+FROM daprio/daprd:edge AS dapr
+
+# Use Alpine as base with shell support
+FROM alpine:3.19
+
+# Install minimal tools needed for wait script
+RUN apk add --no-cache netcat-openbsd
+
+# Copy daprd binary from official image
+COPY --from=dapr /daprd /daprd
+
+# Copy wait script
+COPY wait-for-rabbitmq.sh /wait-for-rabbitmq.sh
+RUN chmod +x /wait-for-rabbitmq.sh
+
+# Use shell to run the wait script, which then execs daprd
+ENTRYPOINT ["/bin/sh", "/wait-for-rabbitmq.sh"]

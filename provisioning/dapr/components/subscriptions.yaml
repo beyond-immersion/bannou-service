@@ -1,0 +1,32 @@
+apiVersion: dapr.io/v2alpha1
+kind: Subscription
+metadata:
+  name: permissions-service-registered
+spec:
+  pubsubname: bannou-pubsub
+  topic: permissions.service-registered
+  route: /permissionsevents/handle-service-registration
+scopes:
+  - bannou
+---
+apiVersion: dapr.io/v2alpha1
+kind: Subscription
+metadata:
+  name: permissions-session-state-changed
+spec:
+  pubsubname: bannou-pubsub
+  topic: permissions.session-state-changed
+  route: /permissionsevents/handle-session-state-change
+scopes:
+  - bannou
+---
+apiVersion: dapr.io/v2alpha1
+kind: Subscription
+metadata:
+  name: permissions-capabilities-updated
+spec:
+  pubsubname: bannou-pubsub
+  topic: permissions.capabilities-updated
+  route: /connectevents/handle-capabilities-updated
+scopes:
+  - bannou

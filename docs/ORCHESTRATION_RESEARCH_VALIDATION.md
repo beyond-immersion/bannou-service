@@ -3,6 +3,8 @@
 *Date: 2025-10-04*
 *Research Conducted: 10+ web searches, 50+ sources analyzed*
 
+> **Note**: This is a detailed research reference document. For the consolidated orchestrator design including architecture decisions, API design, and secrets management, see **[ORCHESTRATOR-SERVICE-DESIGN.md](./ORCHESTRATOR-SERVICE-DESIGN.md)**.
+
 ## Executive Summary
 
 **Verdict**: ✅ **Our orchestration approach is VALID and ALIGNED with industry best practices**, with some important modifications needed for production security and Docker Compose limitations.

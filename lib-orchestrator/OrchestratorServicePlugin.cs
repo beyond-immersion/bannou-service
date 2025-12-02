@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
+using LibOrchestrator;
+using LibOrchestrator.Backends;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -41,15 +43,25 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
 
         Logger?.LogInformation("Configuring Orchestrator service dependencies");
 
+        // Register HttpClientFactory for BackendDetector (Portainer/Kubernetes API calls)
+        services.AddHttpClient();
+
+        // NOTE: OrchestratorServiceConfiguration registration is handled by the centralized PluginLoader
+        // based on the [ServiceConfiguration] attribute. The managers read env vars directly
+        // to avoid DI lifetime conflicts.
+
+        // Register orchestrator helper classes as Singletons to maintain persistent connections
+        // These manage Redis and RabbitMQ connections that should persist across requests
+        // Note: These read connection strings directly from environment variables
+        services.AddSingleton<IOrchestratorRedisManager, OrchestratorRedisManager>();
+        services.AddSingleton<IOrchestratorEventManager, OrchestratorEventManager>();
+        services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
+        services.AddSingleton<ISmartRestartManager, SmartRestartManager>();
+        services.AddSingleton<IBackendDetector, BackendDetector>();
+
         // Register the service implementation (existing pattern from [DaprService] attribute)
         services.AddScoped<IOrchestratorService, OrchestratorService>();
         services.AddScoped<OrchestratorService>();
-
-        // Register generated configuration class
-        services.AddScoped<OrchestratorServiceConfiguration>();
-
-        // Add any service-specific dependencies
-        // The generated clients should already be registered by AddAllBannouServiceClients()
 
         Logger?.LogInformation("Orchestrator service dependencies configured");
     }
@@ -77,7 +89,7 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
     }
 
     /// <summary>
-    /// Start the service - calls existing IDaprService lifecycle if present.
+    /// Start the service - initializes infrastructure connections and calls existing IDaprService lifecycle if present.
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
@@ -87,6 +99,30 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
 
         try
         {
+            // Initialize Redis and RabbitMQ connections (Singleton services, no scope needed)
+            var redisManager = _serviceProvider?.GetService<IOrchestratorRedisManager>();
+            var eventManager = _serviceProvider?.GetService<IOrchestratorEventManager>();
+
+            if (redisManager != null)
+            {
+                Logger?.LogInformation("Initializing Redis connection for orchestrator...");
+                var redisInitialized = await redisManager.InitializeAsync();
+                if (!redisInitialized)
+                {
+                    Logger?.LogWarning("Redis connection initialization failed - health checks will report unhealthy");
+                }
+            }
+
+            if (eventManager != null)
+            {
+                Logger?.LogInformation("Initializing RabbitMQ connection for orchestrator...");
+                var rabbitInitialized = await eventManager.InitializeAsync();
+                if (!rabbitInitialized)
+                {
+                    Logger?.LogWarning("RabbitMQ connection initialization failed - health checks will report unhealthy");
+                }
+            }
+
             // Get service instance from DI container with proper scope handling
             // Note: CreateScope() is required for Scoped services to avoid "Cannot resolve scoped service from root provider" error
             using var scope = _serviceProvider?.CreateScope();
