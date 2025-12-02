@@ -61,7 +61,7 @@ services:
 
   # RabbitMQ message broker - uses default bridge network
   rabbitmq:
-    image: rabbitmq:3.12-management
+    image: rabbitmq:4.0-management
     ports:
       - "5672:5672"   # AMQP port
       - "15672:15672" # Management UI
