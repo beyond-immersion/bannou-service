@@ -1,5 +1,5 @@
-using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect.Protocol;
+using BeyondImmersion.EdgeTester.Application;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.WebSockets;
@@ -17,10 +17,10 @@ public class Program
     // Enhanced ServiceRequestItem and ServiceResponseItem available from Connect service protocol
     // These include additional fields like Channel and Sequence for improved functionality
 
-    private static ClientConfiguration _configuration;
+    private static ClientConfiguration? _configuration;
     /// <summary>
     /// Client configuration.
-    /// Pull from .env files, Config.json, ENVs, and command line args using bannou-service configuration system.
+    /// Pull from .env files, ENVs, and command line args.
     /// </summary>
     public static ClientConfiguration Configuration
     {
@@ -29,9 +29,7 @@ public class Program
             if (_configuration != null)
                 return _configuration;
 
-            var configRoot = IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
-            _configuration = configRoot.Get<ClientConfiguration>() ?? new ClientConfiguration();
-
+            _configuration = ConfigurationHelper.BuildClientConfiguration(Environment.GetCommandLineArgs());
             return _configuration;
         }
 

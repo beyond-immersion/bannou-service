@@ -156,8 +156,19 @@ public class ConnectionState
 /// </summary>
 public class PendingMessageInfo
 {
+    /// <summary>
+    /// Name of the service the message was sent to.
+    /// </summary>
     public string ServiceName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// When the message was sent.
+    /// </summary>
     public DateTimeOffset SentAt { get; set; }
+
+    /// <summary>
+    /// When the message will be considered timed out.
+    /// </summary>
     public DateTimeOffset TimeoutAt { get; set; }
 }
 
@@ -167,10 +178,21 @@ public class PendingMessageInfo
 [Flags]
 public enum ConnectionFlags : byte
 {
+    /// <summary>No special capabilities.</summary>
     None = 0x00,
+
+    /// <summary>Connection has been authenticated with a valid JWT.</summary>
     Authenticated = 0x01,
+
+    /// <summary>Client-to-client messaging is enabled.</summary>
     ClientToClientEnabled = 0x02,
+
+    /// <summary>High-priority message routing is enabled.</summary>
     HighPriorityAccess = 0x04,
+
+    /// <summary>Message compression is enabled.</summary>
     CompressionEnabled = 0x08,
+
+    /// <summary>End-to-end encryption is enabled.</summary>
     EncryptionEnabled = 0x10
 }
