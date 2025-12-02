@@ -1,22 +1,17 @@
+using BeyondImmersion.Bannou.Client.SDK;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.EdgeTester.Application;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Net.WebSockets;
 using System.Text;
 
 namespace BeyondImmersion.EdgeTester;
 
+/// <summary>
+/// Edge tester main program. Uses BannouClient SDK for authentication and WebSocket connection,
+/// then runs comprehensive protocol tests.
+/// </summary>
 public class Program
 {
-    // Protocol definitions now imported from BeyondImmersion.BannouService.Connect.Protocol
-    // MessageFlags, ServiceRequestItem, ServiceResponseItem, BinaryMessage are available
-
-    // ResponseCodes enum available from Connect service protocol
-
-    // Enhanced ServiceRequestItem and ServiceResponseItem available from Connect service protocol
-    // These include additional fields like Channel and Sequence for improved functionality
-
     private static ClientConfiguration? _configuration;
     /// <summary>
     /// Client configuration.
@@ -58,10 +53,6 @@ public class Program
         }
     }
 
-    private static List<string> ServiceNames { get; } = new List<string> { "accounts", "authorization", "connect", "leaderboards" };
-    private static Dictionary<string, Guid>? ServiceLookup { get; set; }
-    private static Dictionary<Guid, string>? ServiceReverseLookup { get; set; }
-
     /// <summary>
     /// Token source for initiating a clean shutdown.
     /// </summary>
@@ -72,19 +63,28 @@ public class Program
     /// </summary>
     private static readonly Dictionary<string, Action<string[]>> sTestRegistry = new();
 
-    // tokens generated from login (regular user)
-    private static string? sAccessToken = null;
-    private static string? sRefreshToken = null;
+    // BannouClient instances for SDK-based connections
+    private static BannouClient? _client;
+    private static BannouClient? _adminClient;
 
-    // tokens generated from admin login (for orchestrator APIs)
-    private static string? sAdminAccessToken = null;
-    private static string? sAdminRefreshToken = null;
+    /// <summary>
+    /// Gets the BannouClient for regular user operations.
+    /// </summary>
+    public static BannouClient? Client => _client;
+
+    /// <summary>
+    /// Gets the BannouClient for admin operations.
+    /// </summary>
+    public static BannouClient? AdminClient => _adminClient;
+
+    // Legacy accessor for EstablishWebsocketAndSendMessage - tests should use Client.AccessToken
+    private static string? sAccessToken => _client?.AccessToken;
 
     /// <summary>
     /// Gets the admin access token (for orchestrator API tests).
     /// Returns null if admin login hasn't been performed.
     /// </summary>
-    public static string? AdminAccessToken => sAdminAccessToken;
+    public static string? AdminAccessToken => _adminClient?.AccessToken;
 
     /// <summary>
     /// Checks if the application is running in daemon mode (non-interactive).
@@ -269,27 +269,42 @@ public class Program
                 throw new InvalidOperationException("Services failed to become ready within timeout.");
             }
 
-            Console.WriteLine("Attempting to log in.");
+            Console.WriteLine("Attempting to authenticate using BannouClient SDK...");
 
-            JObject? accessTokens = await LoginWithCredentials();
-            if (accessTokens == null)
+            // Build server URL from configuration
+            var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
+            var openrestyPort = Configuration.OpenResty_Port ?? 80;
+            var serverUrl = $"http://{openrestyHost}:{openrestyPort}";
+
+            // Use BannouClient for authentication and WebSocket connection
+            _client = new BannouClient(HttpClient);
+
+            // Try login first, then registration
+            var email = Configuration.Client_Username ?? throw new InvalidOperationException("Client_Username is required");
+            var password = Configuration.Client_Password ?? throw new InvalidOperationException("Client_Password is required");
+            var username = email.Contains('@') ? email.Split('@')[0] : email;
+
+            var connected = await _client.ConnectAsync(serverUrl, email, password);
+            if (!connected)
             {
-                accessTokens = await RegisterWithCredentials();
-                if (accessTokens == null)
-                    throw new InvalidOperationException("Failed to register user account.");
+                Console.WriteLine($"Login failed: {_client.LastError}");
+                Console.WriteLine("Attempting registration...");
+                connected = await _client.RegisterAndConnectAsync(serverUrl, username, email, password);
+                if (!connected)
+                {
+                    Console.WriteLine($"Registration failed: {_client.LastError}");
+                    throw new InvalidOperationException($"Failed to register and connect using BannouClient: {_client.LastError}");
+                }
 
-                Console.WriteLine("Registration successful.");
+                Console.WriteLine("✅ Registration and connection successful via BannouClient.");
             }
             else
-                Console.WriteLine("Login successful.");
+            {
+                Console.WriteLine("✅ Login and connection successful via BannouClient.");
+            }
 
-            // Auth API returns camelCase property names per OpenAPI schema
-            sAccessToken = (string?)accessTokens["accessToken"];
-            sRefreshToken = (string?)accessTokens["refreshToken"];
-            if (sAccessToken == null)
-                throw new InvalidOperationException("Failed to parse JWT from login result.");
-
-            Console.WriteLine("Parsing access token and refresh token from login result successful.");
+            Console.WriteLine($"   Session ID: {_client.SessionId}");
+            Console.WriteLine($"   Available APIs: {_client.AvailableApis.Count}");
 
             // Also authenticate with admin credentials for orchestrator API tests
             Console.WriteLine("\n=== Admin Authentication ===");
@@ -426,230 +441,53 @@ public class Program
         }
     }
 
-    private static async Task<JObject?> RegisterWithCredentials()
-    {
-        var serverUri = new Uri($"http://{Configuration.Register_Endpoint}");
-        Console.WriteLine($"Registration Uri: {serverUri}");
-
-        // Extract username for registration (strip email domain if present)
-        var username = Configuration.Client_Username;
-        if (username?.Contains('@') == true)
-        {
-            username = username.Split('@')[0];
-        }
-
-        var contentObj = new JObject()
-        {
-            ["username"] = username,
-            ["email"] = Configuration.Client_Username, // Use full email for login consistency
-            ["password"] = Configuration.Client_Password
-        };
-        using HttpRequestMessage httpRequest = new(HttpMethod.Post, serverUri);
-        var jsonContentStr = JsonConvert.SerializeObject(contentObj);
-        var strContent = new StringContent(jsonContentStr, Encoding.UTF8, "application/json");
-        httpRequest.Content = strContent;
-
-        using var response = await HttpClient.SendAsync(httpRequest, ShutdownCancellationTokenSource.Token);
-        if (response == null)
-        {
-            Console.WriteLine($"No server response received");
-            return null;
-        }
-
-        if (response.StatusCode != System.Net.HttpStatusCode.OK)
-        {
-            Console.WriteLine($"Server responded with: {response.StatusCode}, Reason: {response.ReasonPhrase}");
-            return null;
-        }
-
-        var responseStr = await response.Content.ReadAsStringAsync();
-        var responseObj = JObject.Parse(responseStr);
-
-        return responseObj;
-    }
-
-    private static async Task<JObject?> LoginWithCredentials()
-    {
-        var serverUri = new Uri($"http://{Configuration.Login_Credentials_Endpoint}");
-        Console.WriteLine($"Credential login Uri: {serverUri}");
-
-        // Auth API expects JSON body with email/password per auth-api.yaml
-        var contentObj = new JObject()
-        {
-            ["email"] = Configuration.Client_Username, // Using username as email for testing
-            ["password"] = Configuration.Client_Password
-        };
-        using HttpRequestMessage httpRequest = new(HttpMethod.Post, serverUri);
-        var jsonContentStr = JsonConvert.SerializeObject(contentObj);
-        var strContent = new StringContent(jsonContentStr, Encoding.UTF8, "application/json");
-        httpRequest.Content = strContent;
-
-        using var response = await HttpClient.SendAsync(httpRequest, ShutdownCancellationTokenSource.Token);
-        if (response == null)
-        {
-            Console.WriteLine($"No server response received");
-            return null;
-        }
-
-        if (response.StatusCode != System.Net.HttpStatusCode.OK)
-        {
-            Console.WriteLine($"Server responded with: {response.StatusCode}, Reason: {response.ReasonPhrase}");
-            return null;
-        }
-
-        var responseStr = await response.Content.ReadAsStringAsync();
-        var responseObj = JObject.Parse(responseStr);
-
-        return responseObj;
-    }
-
-    private static async Task<JObject?> LoginWithRefreshToken()
-    {
-        var serverUri = new Uri($"http://{Configuration.Login_Token_Endpoint}");
-        Console.WriteLine($"Token login Uri: {serverUri}");
-
-        using HttpRequestMessage httpRequest = new(HttpMethod.Post, serverUri);
-        httpRequest.Headers.Add("token", sRefreshToken);
-        httpRequest.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-
-        using var response = await HttpClient.SendAsync(httpRequest, ShutdownCancellationTokenSource.Token);
-        if (response == null)
-        {
-            Console.WriteLine($"No server response received");
-            return null;
-        }
-
-        if (response.StatusCode != System.Net.HttpStatusCode.OK)
-        {
-            Console.WriteLine($"Server responded with: {response.StatusCode}, Reason: {response.ReasonPhrase}");
-            return null;
-        }
-
-        var responseStr = await response.Content.ReadAsStringAsync();
-        var responseObj = JObject.Parse(responseStr);
-
-        return responseObj;
-    }
-
-    /// <summary>
-    /// Registers an admin user account using admin credentials from configuration.
-    /// Admin email should match AdminEmails or AdminEmailDomain configuration for auto-admin role.
-    /// </summary>
-    private static async Task<JObject?> RegisterAdminWithCredentials()
-    {
-        var serverUri = new Uri($"http://{Configuration.Register_Endpoint}");
-        Console.WriteLine($"Admin registration Uri: {serverUri}");
-
-        // Extract username for registration (strip email domain if present)
-        var adminEmail = Configuration.GetAdminUsername();
-        var adminUsername = adminEmail;
-        if (adminUsername?.Contains('@') == true)
-        {
-            adminUsername = adminUsername.Split('@')[0];
-        }
-
-        var contentObj = new JObject()
-        {
-            ["username"] = adminUsername,
-            ["email"] = adminEmail, // Use full email for admin role matching and login
-            ["password"] = Configuration.GetAdminPassword()
-        };
-        using HttpRequestMessage httpRequest = new(HttpMethod.Post, serverUri);
-        var jsonContentStr = JsonConvert.SerializeObject(contentObj);
-        var strContent = new StringContent(jsonContentStr, Encoding.UTF8, "application/json");
-        httpRequest.Content = strContent;
-
-        using var response = await HttpClient.SendAsync(httpRequest, ShutdownCancellationTokenSource.Token);
-        if (response == null)
-        {
-            Console.WriteLine($"No server response received for admin registration");
-            return null;
-        }
-
-        if (response.StatusCode != System.Net.HttpStatusCode.OK)
-        {
-            Console.WriteLine($"Admin registration responded with: {response.StatusCode}, Reason: {response.ReasonPhrase}");
-            return null;
-        }
-
-        var responseStr = await response.Content.ReadAsStringAsync();
-        var responseObj = JObject.Parse(responseStr);
-
-        return responseObj;
-    }
-
-    /// <summary>
-    /// Logs in with admin credentials from configuration.
-    /// </summary>
-    private static async Task<JObject?> LoginAdminWithCredentials()
-    {
-        var serverUri = new Uri($"http://{Configuration.Login_Credentials_Endpoint}");
-        Console.WriteLine($"Admin credential login Uri: {serverUri}");
-
-        var contentObj = new JObject()
-        {
-            ["email"] = Configuration.GetAdminUsername(),
-            ["password"] = Configuration.GetAdminPassword()
-        };
-        using HttpRequestMessage httpRequest = new(HttpMethod.Post, serverUri);
-        var jsonContentStr = JsonConvert.SerializeObject(contentObj);
-        var strContent = new StringContent(jsonContentStr, Encoding.UTF8, "application/json");
-        httpRequest.Content = strContent;
-
-        using var response = await HttpClient.SendAsync(httpRequest, ShutdownCancellationTokenSource.Token);
-        if (response == null)
-        {
-            Console.WriteLine($"No server response received for admin login");
-            return null;
-        }
-
-        if (response.StatusCode != System.Net.HttpStatusCode.OK)
-        {
-            Console.WriteLine($"Admin login responded with: {response.StatusCode}, Reason: {response.ReasonPhrase}");
-            return null;
-        }
-
-        var responseStr = await response.Content.ReadAsStringAsync();
-        var responseObj = JObject.Parse(responseStr);
-
-        return responseObj;
-    }
-
     /// <summary>
     /// Ensures admin user exists and is logged in. Stores admin tokens for orchestrator API tests.
+    /// Uses BannouClient SDK for authentication.
     /// </summary>
     private static async Task<bool> EnsureAdminAuthenticated()
     {
-        Console.WriteLine("Attempting to log in with admin credentials...");
+        Console.WriteLine("Attempting to authenticate admin using BannouClient SDK...");
 
-        JObject? adminTokens = await LoginAdminWithCredentials();
-        if (adminTokens == null)
+        var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Configuration.OpenResty_Port ?? 80;
+        var serverUrl = $"http://{openrestyHost}:{openrestyPort}";
+
+        _adminClient = new BannouClient(HttpClient);
+
+        var adminEmail = Configuration.GetAdminUsername();
+        var adminPassword = Configuration.GetAdminPassword();
+
+        if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
         {
-            Console.WriteLine("Admin login failed, attempting registration...");
-            adminTokens = await RegisterAdminWithCredentials();
-            if (adminTokens == null)
-            {
-                Console.WriteLine("⚠️ Failed to create admin account - orchestrator tests will be skipped.");
-                return false;
-            }
-
-            Console.WriteLine("Admin registration successful.");
-        }
-        else
-        {
-            Console.WriteLine("Admin login successful.");
-        }
-
-        sAdminAccessToken = (string?)adminTokens["accessToken"];
-        sAdminRefreshToken = (string?)adminTokens["refreshToken"];
-
-        if (string.IsNullOrEmpty(sAdminAccessToken))
-        {
-            Console.WriteLine("⚠️ Failed to parse admin JWT from login result.");
+            Console.WriteLine("⚠️ Admin credentials not configured - orchestrator tests will be skipped.");
             return false;
         }
 
-        Console.WriteLine($"✅ Admin authenticated as: {Configuration.GetAdminUsername()}");
+        var adminUsername = adminEmail.Contains('@') ? adminEmail.Split('@')[0] : adminEmail;
+
+        var connected = await _adminClient.ConnectAsync(serverUrl, adminEmail, adminPassword);
+        if (!connected)
+        {
+            Console.WriteLine("Admin login failed, attempting registration...");
+            connected = await _adminClient.RegisterAndConnectAsync(serverUrl, adminUsername, adminEmail, adminPassword);
+            if (!connected)
+            {
+                Console.WriteLine("⚠️ Failed to create admin account - orchestrator tests will be skipped.");
+                _adminClient = null;
+                return false;
+            }
+
+            Console.WriteLine("✅ Admin registration and connection successful via BannouClient.");
+        }
+        else
+        {
+            Console.WriteLine("✅ Admin login and connection successful via BannouClient.");
+        }
+
+        Console.WriteLine($"   Admin Session ID: {_adminClient.SessionId}");
+        Console.WriteLine($"   Admin Available APIs: {_adminClient.AvailableApis.Count}");
+        Console.WriteLine($"✅ Admin authenticated as: {adminEmail}");
         return true;
     }
 

@@ -32,8 +32,9 @@
   </ItemGroup>
 
   <!-- Backwards Compatibility Testing: Use Published NuGet SDK -->
+  <!-- Version="*-*" includes pre-release packages (e.g., 0.1.0-preview.123) -->
   <ItemGroup Condition="'$(UsePublishedSDK)' == 'true'">
-    <PackageReference Include="BeyondImmersion.Bannou.Client.SDK" Version="*" />
+    <PackageReference Include="BeyondImmersion.Bannou.Client.SDK" Version="*-*" />
   </ItemGroup>
 
   <!-- Forward Compatibility Testing: Use Current Generated SDK -->

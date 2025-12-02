@@ -491,12 +491,10 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Helper to get access token from Program.
+    /// Helper to get access token from BannouClient.
     /// </summary>
     private static string? GetAccessToken()
     {
-        var accessTokenField = typeof(Program).GetField("sAccessToken",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        return (string?)accessTokenField?.GetValue(null);
+        return Program.Client?.AccessToken;
     }
 }

@@ -125,28 +125,28 @@ jobs:
           run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           repository-url: ${{ github.server_url }}/${{ github.repository }}
 
-      # NuGet Publishing (only on master branch success)
-      - name: Calculate Semantic Version
+      # NuGet Pre-Release Publishing (only on master branch success)
+      # Publishes unlisted preview packages for staging/testing
+      # Stable releases will be handled by a separate workflow
+      - name: Build and Pack Client SDK Preview
         if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
-        id: version
-        uses: mathieudutour/github-tag-action@v6.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: patch
-          dry_run: false
-
-      - name: Build and Pack Client SDK for Release
-        if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
+        id: pack
         run: |
-          echo "📦 Building and packing Client SDK v${{ steps.version.outputs.new_version }}..."
+          # Generate preview version: 0.1.0-preview.{run_number}
+          PREVIEW_VERSION="0.1.0-preview.${{ github.run_number }}"
+          echo "📦 Building and packing Client SDK v${PREVIEW_VERSION} (pre-release)..."
+          echo "preview_version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT
+
           dotnet build Bannou.Client.SDK --configuration Release --no-dependencies
-          dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=${{ steps.version.outputs.new_version }} --output ./nuget-packages --no-build
+          dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
 
-      - name: Publish to NuGet
+      - name: Publish Preview to NuGet
         if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
-          echo "🚀 Publishing to NuGet.org..."
+          echo "🚀 Publishing preview v${{ steps.pack.outputs.preview_version }} to NuGet.org..."
           dotnet nuget push ./nuget-packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          echo "✅ Preview package published (listed for backward compatibility testing)"
+          echo "   Pre-release packages are not installed by default - users must explicitly opt-in"
 
       - name: Notify Pipeline Complete
         if: always() && steps.setup.conclusion == 'success'
