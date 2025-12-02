@@ -41,7 +41,7 @@ runs:
         export OPENRESTY_PORT=9080
         export REGISTER_ENDPOINT=localhost:9080/auth/register
         export LOGIN_CREDENTIALS_ENDPOINT=localhost:9080/auth/login
-        export LOGIN_TOKEN_ENDPOINT=localhost:9080/auth/login/token
+        export LOGIN_TOKEN_ENDPOINT=localhost:9080/auth/refresh
         export CONNECT_ENDPOINT=localhost:9080/connect
         DAEMON_MODE=true dotnet run --project edge-tester --configuration Release --no-build
 
