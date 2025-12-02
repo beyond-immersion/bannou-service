@@ -41,7 +41,7 @@ public class ConnectService : IConnectService
     private readonly WebSocketConnectionManager _connectionManager;
     private readonly RedisSessionManager? _sessionManager;
 
-    // Session to service GUID mappings (legacy - moving to Redis)
+    // Session to service GUID mappings (in-memory for low-latency lookups, persisted via RedisSessionManager)
     private readonly ConcurrentDictionary<string, Dictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
     private readonly string _instanceId;
@@ -476,7 +476,7 @@ public class ConnectService : IConnectService
                 {
                     // For backwards compatibility, handle text messages as JSON-wrapped binary
                     var textMessage = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    await HandleLegacyTextMessageAsync(sessionId, connectionState, textMessage, cancellationToken);
+                    await HandleTextMessageFallbackAsync(sessionId, connectionState, textMessage, cancellationToken);
                 }
             }
         }
@@ -851,9 +851,10 @@ public class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Handles legacy text messages by wrapping them in binary protocol format.
+    /// Handles text WebSocket messages by wrapping them in binary protocol response format.
+    /// This provides backwards compatibility for clients not yet using the binary protocol.
     /// </summary>
-    private async Task HandleLegacyTextMessageAsync(
+    private async Task HandleTextMessageFallbackAsync(
         string sessionId,
         ConnectionState connectionState,
         string textMessage,
@@ -861,7 +862,7 @@ public class ConnectService : IConnectService
     {
         try
         {
-            _logger.LogDebug("Received legacy text message from session {SessionId}: {Message}",
+            _logger.LogDebug("Received text message from session {SessionId}: {Message}",
                 sessionId, textMessage);
 
             // For now, just echo back the message wrapped in a binary response
@@ -880,7 +881,7 @@ public class ConnectService : IConnectService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling legacy text message from session {SessionId}", sessionId);
+            _logger.LogError(ex, "Error handling text message from session {SessionId}", sessionId);
         }
     }
 
@@ -1315,7 +1316,7 @@ public class ConnectService : IConnectService
             _logger.LogInformation("Initializing capabilities for session {SessionId} with role {Role}", sessionId, role);
 
             // Initialize session in Permissions service with role
-            if (role != "anonymous")
+            if (role != null && role != "anonymous")
             {
                 await _permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
                 {

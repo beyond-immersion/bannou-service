@@ -408,13 +408,13 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             // Prepare environment variables
             var envVars = new List<V1EnvVar>
             {
-                new($"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED", "true"),
-                new("DAPR_APP_ID", appId)
+                new() { Name = $"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED", Value = "true" },
+                new() { Name = "DAPR_APP_ID", Value = appId }
             };
 
             if (environment != null)
             {
-                envVars.AddRange(environment.Select(kv => new V1EnvVar(kv.Key, kv.Value)));
+                envVars.AddRange(environment.Select(kv => new V1EnvVar { Name = kv.Key, Value = kv.Value }));
             }
 
             // Create deployment
@@ -466,7 +466,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
                                     Env = envVars,
                                     Ports = new List<V1ContainerPort>
                                     {
-                                        new(80, name: "http")
+                                        new() { ContainerPort = 80, Name = "http" }
                                     }
                                 }
                             }

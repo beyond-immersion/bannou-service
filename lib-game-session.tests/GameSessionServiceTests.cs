@@ -21,8 +21,8 @@ public class GameSessionServiceTests
 
     // Note: Service doesn't validate null parameters, so no ArgumentNullException tests
 
-    // TODO: Add service-specific tests based on schema operations
-    // Schema file: ../schemas/game-session-api.yaml
+    // Note: GameSessionService methods are not yet implemented - planned for future release.
+    // Additional tests will be added when service implementation begins.
 }
 
 public class GameSessionConfigurationTests
@@ -37,5 +37,5 @@ public class GameSessionConfigurationTests
         Assert.NotNull(config);
     }
 
-    // TODO: Add configuration-specific tests
+    // Note: Configuration tests will expand when GameSessionService implementation begins.
 }

@@ -266,7 +266,7 @@ public class PermissionsService : IPermissionsService
             await _daprClient.SaveStateAsync(STATE_STORE, serviceRegisteredKey, registrationInfo, cancellationToken: cancellationToken);
             _logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}", body.ServiceId, serviceRegisteredKey);
 
-            // Also update the legacy registered_services list with retry for backwards compatibility
+            // Also update the centralized registered_services list (enables "list all registered services" queries)
             var maxRetries = 5;
             var retryDelay = 100; // ms
 

@@ -129,8 +129,7 @@ public class AccountsService : IAccountsService
                 accountId, body.Email, string.Join(", ", roles));
 
             // Publish account created event
-            // TODO: Temporarily disabled to debug segfault
-            // await PublishAccountCreatedEventAsync(account);
+            await PublishAccountCreatedEventAsync(account);
 
             // Return success response
             var response = new AccountResponse

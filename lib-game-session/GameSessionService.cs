@@ -14,7 +14,9 @@ using System.Threading.Tasks;
 namespace BeyondImmersion.BannouService.GameSession;
 
 /// <summary>
-/// Generated service implementation for GameSession API
+/// GameSession service implementation.
+/// Note: This service is not yet implemented - planned for future release.
+/// All methods will throw NotImplementedException until implementation is complete.
 /// </summary>
 [DaprService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped)]
 public class GameSessionService : IGameSessionService
@@ -34,7 +36,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// ListGameSessionsAsync implementation - TODO: Add business logic
+    /// Lists game sessions. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, GameSessionListResponse?)> ListGameSessionsAsync(GameType? gameType, Status? status, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -44,7 +46,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// CreateGameSessionAsync implementation - TODO: Add business logic
+    /// Creates a new game session. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, GameSessionResponse?)> CreateGameSessionAsync(CreateGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -54,7 +56,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// GetGameSessionAsync implementation - TODO: Add business logic
+    /// Gets a game session by ID. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, GameSessionResponse?)> GetGameSessionAsync(Guid sessionId, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -64,7 +66,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// JoinGameSessionAsync implementation - TODO: Add business logic
+    /// Joins a game session. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, JoinGameSessionResponse?)> JoinGameSessionAsync(Guid sessionId, JoinGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -74,7 +76,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// PerformGameActionAsync implementation - TODO: Add business logic
+    /// Performs a game action. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, GameActionResponse?)> PerformGameActionAsync(Guid sessionId, GameActionRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -84,7 +86,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// LeaveGameSessionAsync implementation - TODO: Add business logic
+    /// Leaves a game session. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, object?)> LeaveGameSessionAsync(Guid sessionId, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -94,7 +96,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// KickPlayerAsync implementation - TODO: Add business logic
+    /// Kicks a player from a game session. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, object?)> KickPlayerAsync(Guid sessionId, KickPlayerRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -104,7 +106,7 @@ public class GameSessionService : IGameSessionService
     }
 
     /// <summary>
-    /// SendChatMessageAsync implementation - TODO: Add business logic
+    /// Sends a chat message in a game session. Not yet implemented - planned for future release.
     /// </summary>
     public async Task<(StatusCodes, object?)> SendChatMessageAsync(Guid sessionId, ChatMessageRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {

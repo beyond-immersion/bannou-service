@@ -54,9 +54,8 @@ public class PermissionsServiceTests
     {
         // Arrange
         var service = CreateService();
-        var sessionId = "test-session-001";
 
-        // Set up empty existing state
+        // Set up empty existing state (using default! to satisfy Moq's nullability requirements)
         _mockDaprClient
             .Setup(d => d.GetStateAsync<HashSet<string>>(
                 STATE_STORE,
@@ -64,7 +63,7 @@ public class PermissionsServiceTests
                 null,
                 null,
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((HashSet<string>?)null);
+            .ReturnsAsync(default(HashSet<string>)!);
 
         // Create permission matrix for orchestrator-like service
         var permissions = new ServicePermissionMatrix
@@ -334,7 +333,7 @@ public class PermissionsServiceTests
                 null,
                 null,
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Dictionary<string, object>?)null);
+            .ReturnsAsync(default(Dictionary<string, object>)!);
 
         var request = new CapabilityRequest
         {
@@ -389,7 +388,7 @@ public class PermissionsServiceTests
                 null,
                 null,
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((HashSet<string>?)null);
+            .ReturnsAsync(default(HashSet<string>)!);
 
         // Set up admin session states
         var adminStatesKey = string.Format(SESSION_STATES_KEY, adminSessionId);

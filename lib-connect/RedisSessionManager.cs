@@ -235,8 +235,8 @@ public class RedisSessionManager
 
     /// <summary>
     /// Publishes a session event to Redis pub/sub for cross-instance communication.
+    /// Used for disconnect notifications and other session lifecycle events.
     /// </summary>
-    [Obsolete]
     public async Task PublishSessionEventAsync(string eventType, string sessionId, object? eventData = null)
     {
         try
@@ -252,7 +252,7 @@ public class RedisSessionManager
             var channel = "bannou:connect:session-events";
             var message = JsonSerializer.Serialize(sessionEvent);
 
-            await _database.Multiplexer.GetSubscriber().PublishAsync(channel, message);
+            await _database.Multiplexer.GetSubscriber().PublishAsync(RedisChannel.Literal(channel), message);
 
             _logger.LogDebug("Published session event {EventType} for session {SessionId}",
                 eventType, sessionId);

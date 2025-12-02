@@ -1549,6 +1549,7 @@ components:
           description: Summary of changes made
         error:
           type: string
+          nullable: true
           description: Error message if failed
 
     ServiceRestartEvent:

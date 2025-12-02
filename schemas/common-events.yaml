@@ -144,9 +144,12 @@ components:
             $ref: '#/components/schemas/ServiceStatus'
           description: Status of each service/plugin hosted by this instance
         capacity:
-          $ref: '#/components/schemas/InstanceCapacity'
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/InstanceCapacity'
         issues:
           type: array
+          nullable: true
           items:
             type: string
           description: List of current issues affecting this instance

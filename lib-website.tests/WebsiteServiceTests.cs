@@ -32,7 +32,6 @@ public class WebsiteServiceTests
     }
 
 
-    // TODO: Add service-specific unit tests here
-    // For service-to-service communication tests, add references to other service client projects
-    // Example: Add reference to lib-accounts project to test AuthService → AccountsClient integration
+    // Note: WebsiteService methods are not yet implemented - planned for future release.
+    // Additional tests will be added when service implementation begins.
 }

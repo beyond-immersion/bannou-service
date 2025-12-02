@@ -105,25 +105,6 @@ public static class Program
             return 1;
         }
 
-
-        // TODO: DEPRECATED - Replace with Plugin system
-        // load the assemblies (backward compatibility for existing IDaprService implementations)
-        // LoadAssemblies();
-
-        // get info for dapr services in loaded assemblies
-        // if (!IDaprService.EnabledServices.Any())
-        // {
-        //     Logger.Log(LogLevel.Error, null, "No services have been enabled- exiting application.");
-        //     return;
-        // }
-
-        // ensure dapr services have their required configuration
-        // if (!EnabledServicesHaveRequiredConfiguration())
-        // {
-        //     Logger.Log(LogLevel.Error, null, "Required configuration missing for enabled services- exiting application.");
-        //     return;
-        // }
-
         Logger.Log(LogLevel.Information, null, "Configuration built and validated.");
 
         // build the dapr client
@@ -195,12 +176,6 @@ public static class Program
                         RequireSignedTokens = true
                     };
                 });
-
-            // TODO: DEPRECATED - Replace with Plugin system controller registration
-            // get all loaded assemblies hosting enabled DaprController types
-            // IEnumerable<Assembly>? daprControllerAssemblies = IDaprController.EnabledServiceControllers
-            //     .Where(t => t.Item1.Assembly != Assembly.GetEntryAssembly())
-            //     .Select(t => t.Item1.Assembly);
 
             _ = webAppBuilder.Services
                 .AddControllers(mvcOptions =>
@@ -290,13 +265,6 @@ public static class Program
             return 1;
         }
 
-        // Final override: Ensure configuration lifetimes are correct (after all auto-registration)
-        Logger.Log(LogLevel.Information, null, "Final configuration lifetime check and override...");
-
-        // DISABLED: This was destroying properly bound configurations by replacing them with default constructor instances
-        // The PluginLoader already registers configurations properly with environment binding
-        // PluginLoader?.FinalizeConfigurationRegistrations(webAppBuilder.Services);
-
         // build the application
         Logger.Log(LogLevel.Information, null, "About to build WebApplication - checking for DI conflicts...");
 
@@ -377,14 +345,6 @@ public static class Program
                     return 1;
                 }
             }
-
-            // TODO: DEPRECATED - Replace with Plugin system lifecycle
-            // invoke all Service.Start() methods on enabled service handlers
-            // if (!await webApp.InvokeAllServiceStartMethods())
-            // {
-            //     Logger.Log(LogLevel.Error, "An enabled service handler has failed to start- exiting application.");
-            //     return;
-            // }
 
             // Start plugins
             if (PluginLoader != null)

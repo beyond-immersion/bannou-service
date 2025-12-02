@@ -244,14 +244,14 @@ public partial class ServiceHeartbeatEvent
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.ICollection<ServiceStatus> Services { get; set; } = new System.Collections.ObjectModel.Collection<ServiceStatus>();
 
-    [Newtonsoft.Json.JsonProperty("capacity", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public InstanceCapacity Capacity { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("capacity", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public InstanceCapacity? Capacity { get; set; } = default!;
 
     /// <summary>
     /// List of current issues affecting this instance
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("issues", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public System.Collections.Generic.ICollection<string> Issues { get; set; } = default!;
+    [Newtonsoft.Json.JsonProperty("issues", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Collections.Generic.ICollection<string>? Issues { get; set; } = default!;
 
     /// <summary>
     /// Additional instance-level metadata

@@ -10,7 +10,9 @@ using System.Threading.Tasks;
 namespace BeyondImmersion.BannouService.Website;
 
 /// <summary>
-/// Service implementation for Website API
+/// Website service implementation for public-facing website APIs.
+/// Note: This service is not yet implemented - planned for future release.
+/// Methods return placeholder responses until implementation is complete.
 /// </summary>
 [DaprService("website", typeof(IWebsiteService), lifetime: ServiceLifetime.Scoped)]
 public class WebsiteService : IWebsiteService
@@ -27,14 +29,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// GetStatus operation implementation
+    /// Gets website status. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, StatusResponse?)> GetStatusAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing status request");
-            return Task.FromResult<(StatusCodes, StatusResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method GetStatusAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, StatusResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -44,14 +46,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// GetPageContent operation implementation
+    /// Gets page content by slug. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, PageContent?)> GetPageContentAsync(string slug, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing page content request for slug: {Slug}", slug);
-            return Task.FromResult<(StatusCodes, PageContent?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method GetPageContentAsync called but not implemented for slug: {Slug}", slug);
+            return Task.FromResult<(StatusCodes, PageContent?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -61,14 +63,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// GetNews operation implementation
+    /// Gets news articles. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, NewsResponse?)> GetNewsAsync(int? limit = 10, int? offset = 0, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing news request");
-            return Task.FromResult<(StatusCodes, NewsResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method GetNewsAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, NewsResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -78,14 +80,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// GetServerStatus operation implementation
+    /// Gets game server status. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, ServerStatusResponse?)> GetServerStatusAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing server status request");
-            return Task.FromResult<(StatusCodes, ServerStatusResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method GetServerStatusAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, ServerStatusResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -95,14 +97,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// GetDownloads operation implementation
+    /// Gets download links. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, DownloadsResponse?)> GetDownloadsAsync(Platform? platform = null, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing downloads request");
-            return Task.FromResult<(StatusCodes, DownloadsResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method GetDownloadsAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, DownloadsResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -112,14 +114,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// SubmitContact operation implementation
+    /// Submits a contact form. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, ContactResponse?)> SubmitContactAsync(ContactRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing contact submission");
-            return Task.FromResult<(StatusCodes, ContactResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method SubmitContactAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, ContactResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -129,14 +131,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// GetAccountProfile operation implementation
+    /// Gets account profile. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, AccountProfile?)> GetAccountProfileAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing account profile request");
-            return Task.FromResult<(StatusCodes, AccountProfile?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method GetAccountProfileAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, AccountProfile?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -146,14 +148,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// GetAccountCharacters operation implementation
+    /// Gets account characters. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, CharacterListResponse?)> GetAccountCharactersAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing account characters request");
-            return Task.FromResult<(StatusCodes, CharacterListResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method GetAccountCharactersAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, CharacterListResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -162,16 +164,15 @@ public class WebsiteService : IWebsiteService
         }
     }
 
-
     /// <summary>
-    /// CreatePage operation implementation
+    /// Creates a new page. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, PageContent?)> CreatePageAsync(PageContent body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing create page request");
-            return Task.FromResult<(StatusCodes, PageContent?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method CreatePageAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, PageContent?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -181,14 +182,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// UpdatePage operation implementation
+    /// Updates a page. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, PageContent?)> UpdatePageAsync(string slug, PageContent body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing update page request for slug: {Slug}", slug);
-            return Task.FromResult<(StatusCodes, PageContent?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method UpdatePageAsync called but not implemented for slug: {Slug}", slug);
+            return Task.FromResult<(StatusCodes, PageContent?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -198,14 +199,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// GetSiteSettings operation implementation
+    /// Gets site settings. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, SiteSettings?)> GetSiteSettingsAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing get site settings request");
-            return Task.FromResult<(StatusCodes, SiteSettings?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method GetSiteSettingsAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, SiteSettings?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -215,14 +216,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// UpdateSiteSettings operation implementation
+    /// Updates site settings. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, SiteSettings?)> UpdateSiteSettingsAsync(SiteSettings body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing update site settings request");
-            return Task.FromResult<(StatusCodes, SiteSettings?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method UpdateSiteSettingsAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, SiteSettings?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -232,14 +233,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// GetTheme operation implementation
+    /// Gets theme configuration. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, ThemeConfig?)> GetThemeAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing get theme request");
-            return Task.FromResult<(StatusCodes, ThemeConfig?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method GetThemeAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, ThemeConfig?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -249,14 +250,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// UpdateTheme operation implementation
+    /// Updates theme configuration. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, object?)> UpdateThemeAsync(ThemeConfig body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing update theme request");
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method UpdateThemeAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -266,14 +267,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// GetSubscription operation implementation
+    /// Gets subscription information. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, SubscriptionResponse?)> GetSubscriptionAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing get subscription request");
-            return Task.FromResult<(StatusCodes, SubscriptionResponse?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method GetSubscriptionAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, SubscriptionResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -283,14 +284,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// DeletePage operation implementation
+    /// Deletes a page. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, object?)> DeletePageAsync(string slug, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing delete page request for slug: {Slug}", slug);
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method DeletePageAsync called but not implemented for slug: {Slug}", slug);
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -300,14 +301,14 @@ public class WebsiteService : IWebsiteService
     }
 
     /// <summary>
-    /// ListPages operation implementation
+    /// Lists all pages. Not yet implemented - planned for future release.
     /// </summary>
     public Task<(StatusCodes, ICollection<PageMetadata>?)> ListPagesAsync(bool? includeUnpublished = false, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing list pages request");
-            return Task.FromResult<(StatusCodes, ICollection<PageMetadata>?)>((StatusCodes.OK, null)); // TODO: Return actual response
+            _logger.LogWarning("Method ListPagesAsync called but not implemented");
+            return Task.FromResult<(StatusCodes, ICollection<PageMetadata>?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
@@ -315,11 +316,4 @@ public class WebsiteService : IWebsiteService
             return Task.FromResult<(StatusCodes, System.Collections.Generic.ICollection<PageMetadata>?)>((StatusCodes.InternalServerError, null));
         }
     }
-
-    #region IDaprService Implementation
-
-    // IDaprService lifecycle methods are implemented by the default interface implementations
-    // No need to override unless custom logic is required beyond the default logging
-
-    #endregion
 }
