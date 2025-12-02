@@ -716,6 +716,9 @@ public class PermissionsTestHandler : IServiceTestHandler
                 PreviousState = "lobby"
             });
 
+            // Small delay to allow permission updates to propagate
+            await Task.Delay(200);
+
             // Check capabilities after transition
             var gameCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
             {
@@ -866,6 +869,9 @@ public class PermissionsTestHandler : IServiceTestHandler
                 NewRole = "admin",
                 PreviousRole = "user"
             });
+
+            // Small delay to allow permission updates to propagate
+            await Task.Delay(200);
 
             // Count admin methods
             var adminCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
@@ -1207,6 +1213,9 @@ public class PermissionsTestHandler : IServiceTestHandler
                 NewRole = "admin",
                 PreviousRole = "user"
             });
+
+            // Small delay to allow permission updates to propagate
+            await Task.Delay(200);
 
             // Get admin capabilities
             var adminCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
