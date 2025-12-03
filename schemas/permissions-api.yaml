@@ -134,6 +134,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionInfo'
 
+  /permissions/services:
+    get:
+      summary: List all registered services
+      description: |
+        Returns list of all services that have registered their permissions.
+        This endpoint is used by testers to wait for service readiness - a service
+        appearing in this list means it has completed startup and registered its
+        API permissions, indicating it's ready to handle requests.
+
+        For service-to-service calls (via Dapr), this endpoint is unrestricted.
+        For client calls through WebSocket/Connect, only admin users can access it.
+      operationId: getRegisteredServices
+      tags:
+        - Service Management
+      x-permissions:
+        - role: admin
+          requiredStates: {}
+      responses:
+        '200':
+          description: List of registered services
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisteredServicesResponse'
+
 components:
   schemas:
     # Core API Request/Response Models
@@ -378,3 +403,44 @@ components:
           type: string
           format: date-time
           description: When permissions were last recompiled
+
+    # Service Readiness Models
+    RegisteredServicesResponse:
+      type: object
+      required:
+        - services
+        - timestamp
+      properties:
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegisteredServiceInfo'
+          description: List of all registered services
+        timestamp:
+          type: string
+          format: date-time
+          description: When this response was generated
+
+    RegisteredServiceInfo:
+      type: object
+      required:
+        - serviceId
+        - registeredAt
+        - endpointCount
+      properties:
+        serviceId:
+          type: string
+          description: Unique service identifier
+        serviceName:
+          type: string
+          description: Human-readable service name
+        version:
+          type: string
+          description: Service API version
+        registeredAt:
+          type: string
+          format: date-time
+          description: When the service registered its permissions
+        endpointCount:
+          type: integer
+          description: Number of API endpoints registered by this service

@@ -216,9 +216,9 @@ public class PermissionsServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(registeredServices);
 
-        // Pre-populate permission matrix: permissions:orchestrator:authenticated:admin
+        // Pre-populate permission matrix: permissions:orchestrator:default:admin
         var adminEndpoints = new HashSet<string> { "GET:/orchestrator/health", "POST:/orchestrator/deploy" };
-        var adminMatrixKey = string.Format(PERMISSION_MATRIX_KEY, "orchestrator", "authenticated", "admin");
+        var adminMatrixKey = string.Format(PERMISSION_MATRIX_KEY, "orchestrator", "default", "admin");
         _mockDaprClient
             .Setup(d => d.GetStateAsync<HashSet<string>>(
                 STATE_STORE,
@@ -381,9 +381,9 @@ public class PermissionsServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(registeredServices);
 
-        // Admin-only endpoints at permissions:orchestrator:authenticated:admin
+        // Admin-only endpoints at permissions:orchestrator:default:admin
         var adminEndpoints = new HashSet<string> { "GET:/orchestrator/health", "POST:/orchestrator/deploy" };
-        var adminMatrixKey = string.Format(PERMISSION_MATRIX_KEY, "orchestrator", "authenticated", "admin");
+        var adminMatrixKey = string.Format(PERMISSION_MATRIX_KEY, "orchestrator", "default", "admin");
         _mockDaprClient
             .Setup(d => d.GetStateAsync<HashSet<string>>(
                 STATE_STORE,
@@ -394,7 +394,7 @@ public class PermissionsServiceTests
             .ReturnsAsync(adminEndpoints);
 
         // User endpoints - empty for orchestrator (no user access)
-        var userMatrixKey = string.Format(PERMISSION_MATRIX_KEY, "orchestrator", "authenticated", "user");
+        var userMatrixKey = string.Format(PERMISSION_MATRIX_KEY, "orchestrator", "default", "user");
         _mockDaprClient
             .Setup(d => d.GetStateAsync<HashSet<string>>(
                 STATE_STORE,

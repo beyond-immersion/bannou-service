@@ -122,29 +122,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
 
-  /auth/steam/init:
-    get:
-      summary: Initialize Steam authentication
-      operationId: initSteamAuth
-      tags:
-        - Steam
-      x-permissions:
-        - role: anonymous
-          states: {}
-      parameters:
-        - name: returnUrl
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uri
-      responses:
-        '302':
-          description: Redirect to Steam login
-
   /auth/steam/verify:
     post:
-      summary: Verify Steam authentication response
+      summary: Verify Steam Session Ticket
+      description: |
+        Validates a Steam Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().
+        The server validates the ticket with Steam's Web API and retrieves the SteamID from Steam's response.
+        NEVER trust client-provided SteamID - it must come from Steam's authenticated response.
       operationId: verifySteamAuth
       tags:
         - Steam
@@ -164,6 +148,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid or expired Steam ticket
+        '503':
+          description: Steam API unavailable
 
   /auth/refresh:
     post:
@@ -304,6 +292,8 @@ paths:
       responses:
         '204':
           description: Session terminated
+        '404':
+          description: Session not found
 
   /auth/password/reset:
     post:
@@ -478,14 +468,19 @@ components:
 
     SteamVerifyRequest:
       type: object
+      description: |
+        Request to verify a Steam Session Ticket. The ticket is obtained client-side via
+        ISteamUser::GetAuthTicketForWebApi("bannou"). SteamID is NOT included because
+        it must be obtained from Steam's Web API response (never trust client-provided SteamID).
       required:
         - ticket
       properties:
         ticket:
           type: string
-          description: Steam session ticket
-        steamId:
-          type: string
+          description: |
+            Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().
+            Client converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace("-", "")
+          example: "140000006A7B3C8E..."
         deviceInfo:
           $ref: '#/components/schemas/DeviceInfo'
 
@@ -635,6 +630,7 @@ components:
 
 x-service-configuration:
   properties:
+    # JWT Configuration
     BcryptWorkFactor:
       type: integer
       description: Bcrypt work factor for password hashing (higher = more secure but slower)
@@ -659,6 +655,68 @@ x-service-configuration:
       type: integer
       description: Access token expiration time in minutes (alias for JwtExpirationMinutes)
       default: 1440
+
+    # Mock Provider Configuration (for CI/staging testing)
+    MockProviders:
+      type: boolean
+      description: When true, use mock providers instead of real OAuth/Steam APIs
+      default: false
+    MockSteamId:
+      type: string
+      description: Mock SteamID returned when MockProviders=true (64-bit Steam ID)
+      default: "76561198000000001"
+    MockDiscordId:
+      type: string
+      description: Mock Discord user ID returned when MockProviders=true
+      default: "123456789012345678"
+    MockGoogleId:
+      type: string
+      description: Mock Google user ID returned when MockProviders=true
+      default: "mock-google-user-id-12345"
+
+    # Steam Configuration (Session Tickets)
+    SteamApiKey:
+      type: string
+      description: Steam Web API Publisher Key for ticket validation (from partner.steamgames.com)
+    SteamAppId:
+      type: string
+      description: Steam Application ID for the game
+
+    # Discord OAuth2 Configuration
+    DiscordClientId:
+      type: string
+      description: Discord application client ID (from discord.com/developers)
+    DiscordClientSecret:
+      type: string
+      description: Discord application client secret
+    DiscordRedirectUri:
+      type: string
+      description: Discord OAuth2 redirect URI
+      default: "http://localhost:5012/auth/oauth/discord/callback"
+
+    # Google OAuth2 Configuration
+    GoogleClientId:
+      type: string
+      description: Google OAuth2 client ID (from console.cloud.google.com)
+    GoogleClientSecret:
+      type: string
+      description: Google OAuth2 client secret
+    GoogleRedirectUri:
+      type: string
+      description: Google OAuth2 redirect URI
+      default: "http://localhost:5012/auth/oauth/google/callback"
+
+    # Twitch OAuth2 Configuration
+    TwitchClientId:
+      type: string
+      description: Twitch application client ID (from dev.twitch.tv)
+    TwitchClientSecret:
+      type: string
+      description: Twitch application client secret
+    TwitchRedirectUri:
+      type: string
+      description: Twitch OAuth2 redirect URI
+      default: "http://localhost:5012/auth/oauth/twitch/callback"
 
 x-event-subscriptions:
   - topic: account.deleted

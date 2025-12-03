@@ -828,11 +828,15 @@ public class OrchestratorTestHandler : IServiceTestHandler
                 $"reclaimedMB={response.ReclaimedSpaceMb}, " +
                 $"removedImages={response.RemovedImages}");
         }
-        catch (ApiException ex) when (ex.StatusCode == 400 || ex.StatusCode == 501)
+        catch (ApiException ex) when (ex.StatusCode == 400)
         {
             // 400 with success=false is valid when there's nothing to clean
-            // 501 is valid if clean operation isn't implemented for current backend
-            return TestResult.Successful($"Clean operation returned {ex.StatusCode} (nothing to clean or not supported)");
+            return TestResult.Successful($"Clean operation returned 400 (nothing to clean)");
+        }
+        catch (ApiException ex) when (ex.StatusCode == 501)
+        {
+            // 501 Not Implemented means the endpoint needs to be implemented
+            return TestResult.Failed($"Clean operation not implemented: {ex.Message}");
         }
         catch (ApiException ex)
         {

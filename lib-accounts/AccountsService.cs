@@ -25,6 +25,8 @@ public class AccountsService : IAccountsService
     private const string ACCOUNTS_STATE_STORE = "statestore";
     private const string ACCOUNTS_KEY_PREFIX = "account-";
     private const string EMAIL_INDEX_KEY_PREFIX = "email-index-";
+    private const string PROVIDER_INDEX_KEY_PREFIX = "provider-index-"; // provider:externalId -> accountId
+    private const string AUTH_METHODS_KEY_PREFIX = "auth-methods-"; // accountId -> List<AuthMethodInfo>
     private const string PUBSUB_NAME = "bannou-pubsub";
     private const string ACCOUNT_CREATED_TOPIC = "account.created";
     private const string ACCOUNT_UPDATED_TOPIC = "account.updated";
@@ -85,11 +87,31 @@ public class AccountsService : IAccountsService
         {
             _logger.LogInformation("Creating account for email: {Email}", body.Email);
 
+            // Check if email already exists
+            var existingAccountId = await _daprClient.GetStateAsync<string>(
+                ACCOUNTS_STATE_STORE,
+                $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
+                cancellationToken: cancellationToken);
+
+            if (!string.IsNullOrEmpty(existingAccountId))
+            {
+                _logger.LogWarning("Account with email {Email} already exists (AccountId: {AccountId})", body.Email, existingAccountId);
+                return (StatusCodes.Conflict, null);
+            }
+
             // Create account entity
             var accountId = Guid.NewGuid();
 
-            // Determine roles - start with roles from request body
+            // Determine roles - start with roles from request body, default to "user" role
             var roles = body.Roles?.ToList() ?? new List<string>();
+
+            // All registered accounts get the "user" role by default if no roles specified
+            // This ensures they have basic authenticated access to APIs
+            if (roles.Count == 0)
+            {
+                roles.Add("user");
+                _logger.LogDebug("Assigning default 'user' role to new account: {Email}", body.Email);
+            }
 
             // Apply ENV-based admin role assignment
             if (ShouldAssignAdminRole(body.Email))
@@ -393,7 +415,7 @@ public class AccountsService : IAccountsService
         }
     }
 
-    public Task<(StatusCodes, AuthMethodsResponse?)> GetAuthMethodsAsync(
+    public async Task<(StatusCodes, AuthMethodsResponse?)> GetAuthMethodsAsync(
         Guid accountId,
         CancellationToken cancellationToken = default)
     {
@@ -401,22 +423,35 @@ public class AccountsService : IAccountsService
         {
             _logger.LogInformation("Getting auth methods for account: {AccountId}", accountId);
 
-            // TODO: Implement auth methods retrieval
+            // Verify account exists
+            var account = await _daprClient.GetStateAsync<AccountModel>(
+                ACCOUNTS_STATE_STORE,
+                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                cancellationToken: cancellationToken);
+
+            if (account == null || account.DeletedAt.HasValue)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get auth methods for the account
+            var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
+
             var response = new AuthMethodsResponse
             {
-                AuthMethods = new List<AuthMethodInfo>()
+                AuthMethods = authMethods
             };
 
-            return Task.FromResult<(StatusCodes, AuthMethodsResponse?)>(((StatusCodes, AuthMethodsResponse?))(StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting auth methods: {AccountId}", accountId);
-            return Task.FromResult<(StatusCodes, AuthMethodsResponse?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    public Task<(StatusCodes, AuthMethodResponse?)> AddAuthMethodAsync(
+    public async Task<(StatusCodes, AuthMethodResponse?)> AddAuthMethodAsync(
         Guid accountId,
         AddAuthMethodRequest body,
         CancellationToken cancellationToken = default)
@@ -425,25 +460,111 @@ public class AccountsService : IAccountsService
         {
             _logger.LogInformation("Adding auth method for account: {AccountId}, provider: {Provider}", accountId, body.Provider);
 
-            // TODO: Implement auth method addition
-            var response = new AuthMethodResponse
+            // Verify account exists
+            var account = await _daprClient.GetStateAsync<AccountModel>(
+                ACCOUNTS_STATE_STORE,
+                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                cancellationToken: cancellationToken);
+
+            if (account == null || account.DeletedAt.HasValue)
             {
-                MethodId = Guid.NewGuid(),
-                Provider = AuthMethodResponseProvider.Google, // TODO: Parse body.Provider to enum
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get existing auth methods
+            var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
+            var authMethods = await _daprClient.GetStateAsync<List<AuthMethodInfo>>(
+                ACCOUNTS_STATE_STORE,
+                authMethodsKey,
+                cancellationToken: cancellationToken) ?? new List<AuthMethodInfo>();
+
+            // Check if this provider is already linked
+            var existingMethod = authMethods.FirstOrDefault(m =>
+                m.Provider.ToString() == body.Provider.ToString() && m.ExternalId == body.ExternalId);
+
+            if (existingMethod != null)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Create new auth method
+            var methodId = Guid.NewGuid();
+            var newMethod = new AuthMethodInfo
+            {
+                MethodId = methodId,
+                Provider = MapProviderToAuthMethodProvider(body.Provider),
                 ExternalId = body.ExternalId ?? string.Empty,
                 LinkedAt = DateTimeOffset.UtcNow
             };
 
-            return Task.FromResult<(StatusCodes, AuthMethodResponse?)>(((StatusCodes, AuthMethodResponse?))(StatusCodes.OK, response));
+            authMethods.Add(newMethod);
+
+            // Save updated auth methods
+            await _daprClient.SaveStateAsync(
+                ACCOUNTS_STATE_STORE,
+                authMethodsKey,
+                authMethods,
+                cancellationToken: cancellationToken);
+
+            // Create provider index for lookup
+            var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{body.Provider}:{body.ExternalId}";
+            await _daprClient.SaveStateAsync(
+                ACCOUNTS_STATE_STORE,
+                providerIndexKey,
+                accountId.ToString(),
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Auth method added for account: {AccountId}, methodId: {MethodId}, provider: {Provider}",
+                accountId, methodId, body.Provider);
+
+            var response = new AuthMethodResponse
+            {
+                MethodId = methodId,
+                Provider = MapProviderToAuthMethodResponseProvider(body.Provider),
+                ExternalId = body.ExternalId ?? string.Empty,
+                LinkedAt = DateTimeOffset.UtcNow
+            };
+
+            return (StatusCodes.Created, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding auth method: {AccountId}", accountId);
-            return Task.FromResult<(StatusCodes, AuthMethodResponse?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    public Task<(StatusCodes, AccountResponse?)> GetAccountByProviderAsync(
+    /// <summary>
+    /// Maps AddAuthMethodRequestProvider to AuthMethodInfoProvider
+    /// </summary>
+    private static AuthMethodInfoProvider MapProviderToAuthMethodProvider(AddAuthMethodRequestProvider provider)
+    {
+        return provider switch
+        {
+            AddAuthMethodRequestProvider.Discord => AuthMethodInfoProvider.Discord,
+            AddAuthMethodRequestProvider.Google => AuthMethodInfoProvider.Google,
+            AddAuthMethodRequestProvider.Steam => AuthMethodInfoProvider.Steam,
+            AddAuthMethodRequestProvider.Twitch => AuthMethodInfoProvider.Twitch,
+            _ => AuthMethodInfoProvider.Google // Default fallback
+        };
+    }
+
+    /// <summary>
+    /// Maps AddAuthMethodRequestProvider to AuthMethodResponseProvider
+    /// </summary>
+    private static AuthMethodResponseProvider MapProviderToAuthMethodResponseProvider(AddAuthMethodRequestProvider provider)
+    {
+        return provider switch
+        {
+            AddAuthMethodRequestProvider.Discord => AuthMethodResponseProvider.Discord,
+            AddAuthMethodRequestProvider.Google => AuthMethodResponseProvider.Google,
+            AddAuthMethodRequestProvider.Steam => AuthMethodResponseProvider.Steam,
+            AddAuthMethodRequestProvider.Twitch => AuthMethodResponseProvider.Twitch,
+            _ => AuthMethodResponseProvider.Google // Default fallback
+        };
+    }
+
+    public async Task<(StatusCodes, AccountResponse?)> GetAccountByProviderAsync(
         Provider2 provider,
         string externalId,
         CancellationToken cancellationToken = default)
@@ -452,14 +573,84 @@ public class AccountsService : IAccountsService
         {
             _logger.LogInformation("Getting account by provider: {Provider}, externalId: {ExternalId}", provider, externalId);
 
-            // TODO: Implement provider-based account lookup
-            _logger.LogWarning("GetAccountByProvider not fully implemented - requires provider indexing");
-            return Task.FromResult<(StatusCodes, AccountResponse?)>((StatusCodes.InternalServerError, null));
+            // Build the provider index key
+            var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{provider}:{externalId}";
+
+            // Get the account ID from provider index
+            var accountId = await _daprClient.GetStateAsync<string>(
+                ACCOUNTS_STATE_STORE,
+                providerIndexKey,
+                cancellationToken: cancellationToken);
+
+            if (string.IsNullOrEmpty(accountId))
+            {
+                _logger.LogWarning("No account found for provider: {Provider}, externalId: {ExternalId}", provider, externalId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get the full account data
+            var account = await _daprClient.GetStateAsync<AccountModel>(
+                ACCOUNTS_STATE_STORE,
+                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                cancellationToken: cancellationToken);
+
+            if (account == null)
+            {
+                _logger.LogWarning("Account data not found for ID: {AccountId} (from provider: {Provider})", accountId, provider);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Check if account is soft-deleted
+            if (account.DeletedAt.HasValue)
+            {
+                _logger.LogWarning("Account is deleted for provider: {Provider}, externalId: {ExternalId}", provider, externalId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get auth methods for the account
+            var authMethods = await GetAuthMethodsForAccountAsync(accountId, cancellationToken);
+
+            var response = new AccountResponse
+            {
+                AccountId = Guid.Parse(account.AccountId),
+                Email = account.Email,
+                DisplayName = account.DisplayName,
+                EmailVerified = account.IsVerified,
+                CreatedAt = account.CreatedAt,
+                UpdatedAt = account.UpdatedAt,
+                Roles = account.Roles,
+                AuthMethods = authMethods
+            };
+
+            _logger.LogInformation("Account retrieved for provider: {Provider}, externalId: {ExternalId}", provider, externalId);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting account by provider: {Provider}", provider);
-            return Task.FromResult<(StatusCodes, AccountResponse?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Helper method to get auth methods for an account
+    /// </summary>
+    private async Task<List<AuthMethodInfo>> GetAuthMethodsForAccountAsync(string accountId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
+            var authMethods = await _daprClient.GetStateAsync<List<AuthMethodInfo>>(
+                ACCOUNTS_STATE_STORE,
+                authMethodsKey,
+                cancellationToken: cancellationToken);
+
+            return authMethods ?? new List<AuthMethodInfo>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get auth methods for account: {AccountId}", accountId);
+            return new List<AuthMethodInfo>();
         }
     }
 
@@ -577,7 +768,7 @@ public class AccountsService : IAccountsService
         }
     }
 
-    public Task<(StatusCodes, object?)> RemoveAuthMethodAsync(
+    public async Task<(StatusCodes, object?)> RemoveAuthMethodAsync(
         Guid accountId,
         Guid methodId,
         CancellationToken cancellationToken = default)
@@ -585,18 +776,62 @@ public class AccountsService : IAccountsService
         try
         {
             _logger.LogInformation("Removing auth method {MethodId} for account: {AccountId}", methodId, accountId);
-            // TODO: Implement auth method removal
-            _logger.LogWarning("RemoveAuthMethod not fully implemented");
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
+
+            // Verify account exists
+            var account = await _daprClient.GetStateAsync<AccountModel>(
+                ACCOUNTS_STATE_STORE,
+                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                cancellationToken: cancellationToken);
+
+            if (account == null || account.DeletedAt.HasValue)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Get existing auth methods
+            var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
+            var authMethods = await _daprClient.GetStateAsync<List<AuthMethodInfo>>(
+                ACCOUNTS_STATE_STORE,
+                authMethodsKey,
+                cancellationToken: cancellationToken) ?? new List<AuthMethodInfo>();
+
+            // Find the auth method to remove
+            var methodToRemove = authMethods.FirstOrDefault(m => m.MethodId == methodId);
+            if (methodToRemove == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Remove the auth method
+            authMethods.Remove(methodToRemove);
+
+            // Save updated auth methods
+            await _daprClient.SaveStateAsync(
+                ACCOUNTS_STATE_STORE,
+                authMethodsKey,
+                authMethods,
+                cancellationToken: cancellationToken);
+
+            // Remove provider index
+            var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{methodToRemove.Provider}:{methodToRemove.ExternalId}";
+            await _daprClient.DeleteStateAsync(
+                ACCOUNTS_STATE_STORE,
+                providerIndexKey,
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Auth method removed for account: {AccountId}, methodId: {MethodId}",
+                accountId, methodId);
+
+            return (StatusCodes.NoContent, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing auth method: {AccountId}", accountId);
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    public Task<(StatusCodes, object?)> UpdatePasswordHashAsync(
+    public async Task<(StatusCodes, object?)> UpdatePasswordHashAsync(
         Guid accountId,
         UpdatePasswordRequest body,
         CancellationToken cancellationToken = default)
@@ -604,33 +839,81 @@ public class AccountsService : IAccountsService
         try
         {
             _logger.LogInformation("Updating password hash for account: {AccountId}", accountId);
-            // TODO: Implement password hash update with secure hashing
-            _logger.LogWarning("UpdatePasswordHash not fully implemented");
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
+
+            // Get existing account
+            var account = await _daprClient.GetStateAsync<AccountModel>(
+                ACCOUNTS_STATE_STORE,
+                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                cancellationToken: cancellationToken);
+
+            if (account == null)
+            {
+                _logger.LogWarning("Account not found for password update: {AccountId}", accountId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Update password hash (should already be hashed by Auth service)
+            account.PasswordHash = body.PasswordHash;
+            account.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // Save updated account
+            await _daprClient.SaveStateAsync(
+                ACCOUNTS_STATE_STORE,
+                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                account,
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Password hash updated for account: {AccountId}", accountId);
+            return (StatusCodes.OK, new { Message = "Password updated successfully" });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating password hash: {AccountId}", accountId);
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    public Task<(StatusCodes, object?)> UpdateVerificationStatusAsync(
+    public async Task<(StatusCodes, object?)> UpdateVerificationStatusAsync(
         Guid accountId,
         UpdateVerificationRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Updating verification status for account: {AccountId}", accountId);
-            // TODO: Implement verification status update
-            _logger.LogWarning("UpdateVerificationStatus not fully implemented");
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
+            _logger.LogInformation("Updating verification status for account: {AccountId}, Verified: {Verified}",
+                accountId, body.EmailVerified);
+
+            // Get existing account
+            var account = await _daprClient.GetStateAsync<AccountModel>(
+                ACCOUNTS_STATE_STORE,
+                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                cancellationToken: cancellationToken);
+
+            if (account == null)
+            {
+                _logger.LogWarning("Account not found for verification update: {AccountId}", accountId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Update verification status
+            account.IsVerified = body.EmailVerified;
+            account.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // Save updated account
+            await _daprClient.SaveStateAsync(
+                ACCOUNTS_STATE_STORE,
+                $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                account,
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Verification status updated for account: {AccountId} -> {Verified}",
+                accountId, body.EmailVerified);
+            return (StatusCodes.OK, new { Message = "Verification status updated successfully" });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating verification status: {AccountId}", accountId);
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 

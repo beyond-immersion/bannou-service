@@ -397,30 +397,9 @@ public class ConnectServiceTests
 
     #region RabbitMQ Event Handler Tests
 
-    [Fact]
-    public async Task ProcessSessionCapabilityUpdateAsync_WithValidEvent_ShouldProcessSuccessfully()
-    {
-        // Arrange
-        var service = CreateConnectServiceWithConnectionManager();
-        var eventData = new SessionCapabilityUpdateEvent
-        {
-            SessionId = "test-session-123",
-            AddedCapabilities = new List<string> { "accounts:read", "auth:login" },
-            RemovedCapabilities = new List<string> { "admin:delete" },
-            Version = 42
-        };
-
-        // Act
-        var result = await service.ProcessSessionCapabilityUpdateAsync(eventData);
-
-        // Assert
-        Assert.NotNull(result);
-        var resultJson = JsonSerializer.Serialize(result);
-        var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson);
-        Assert.NotNull(resultDict);
-        Assert.Equal("processed", resultDict["status"].ToString());
-        Assert.Equal("test-session-123", resultDict["sessionId"].ToString());
-    }
+    // Note: ProcessSessionCapabilityUpdateAsync was removed - capability updates are now
+    // handled by ConnectEventsController.HandleCapabilitiesUpdatedAsync() which calls
+    // PushCapabilityUpdateAsync(sessionId) for each affected session.
 
     [Fact]
     public async Task ProcessAuthEventAsync_WithLoginEvent_ShouldRefreshCapabilities()

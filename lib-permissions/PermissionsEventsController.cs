@@ -165,10 +165,12 @@ public class PermissionsEventsController : ControllerBase
                         }
                     }
 
-                    // If no specific states required, default to "authenticated"
+                    // If no specific states required, use "default" state key
+                    // This matches the generated BuildPermissionMatrix() behavior which uses "default"
+                    // when permission.RequiredStates.Count == 0
                     if (stateKeys.Count == 0)
                     {
-                        stateKeys.Add("authenticated");
+                        stateKeys.Add("default");
                     }
 
                     // Add method to each required state/role combination

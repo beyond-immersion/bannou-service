@@ -94,7 +94,7 @@ public class AuthServiceTests
         // Assert
         Assert.NotNull(endpoints);
         Assert.NotEmpty(endpoints);
-        Assert.Equal(13, endpoints.Count); // 13 endpoints defined in auth-api.yaml with x-permissions
+        Assert.Equal(12, endpoints.Count); // 12 endpoints defined in auth-api.yaml with x-permissions (removed steam/init)
     }
 
     [Fact]
@@ -123,8 +123,8 @@ public class AuthServiceTests
         var anonymousEndpoints = endpoints.Where(e =>
             e.Permissions.Any(p => p.Role == "anonymous")).ToList();
 
-        // Registration, login, OAuth endpoints should be accessible anonymously
-        Assert.True(anonymousEndpoints.Count >= 7);
+        // Registration, login, OAuth, Steam verify endpoints should be accessible anonymously
+        Assert.True(anonymousEndpoints.Count >= 6); // Reduced by 1 after removing steam/init
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class AuthServiceTests
         Assert.Equal("auth", registrationEvent.ServiceId);
         Assert.NotNull(registrationEvent.EventId);
         Assert.NotNull(registrationEvent.Endpoints);
-        Assert.Equal(13, registrationEvent.Endpoints.Count);
+        Assert.Equal(12, registrationEvent.Endpoints.Count); // 12 endpoints (removed steam/init)
         Assert.NotEmpty(registrationEvent.Version);
     }
 
@@ -630,9 +630,27 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task ConfirmPasswordResetAsync_ShouldReturnOK()
+    public async Task ConfirmPasswordResetAsync_WithValidToken_ShouldReturnOK()
     {
         // Arrange
+        var accountId = Guid.NewGuid();
+        var resetToken = "valid-reset-token";
+
+        // Set up the mock to return valid reset data
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<AuthService.PasswordResetData>(
+                It.IsAny<string>(),
+                It.Is<string>(s => s.Contains(resetToken)),
+                It.IsAny<ConsistencyMode?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AuthService.PasswordResetData
+            {
+                AccountId = accountId,
+                Email = "test@example.com",
+                ExpiresAt = DateTimeOffset.UtcNow.AddHours(1) // Not expired
+            });
+
         var service = new AuthService(
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
@@ -641,7 +659,7 @@ public class AuthServiceTests
 
         var request = new PasswordResetConfirmRequest
         {
-            Token = "reset-token",
+            Token = resetToken,
             NewPassword = "newpassword123"
         };
 
@@ -651,6 +669,29 @@ public class AuthServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task ConfirmPasswordResetAsync_WithInvalidToken_ShouldReturnBadRequest()
+    {
+        // Arrange - No mock setup means GetStateAsync returns null (invalid token)
+        var service = new AuthService(
+            _mockAccountsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object);
+
+        var request = new PasswordResetConfirmRequest
+        {
+            Token = "invalid-token",
+            NewPassword = "newpassword123"
+        };
+
+        // Act
+        var (status, response) = await service.ConfirmPasswordResetAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
     }
 
     #endregion

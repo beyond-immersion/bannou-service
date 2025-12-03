@@ -40,4 +40,9 @@ public interface IPermissionsService : IDaprService
     /// </summary>
     Task<(StatusCodes, SessionInfo?)> GetSessionInfoAsync(SessionInfoRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+    /// <summary>
+    /// GetRegisteredServices operation
+    /// </summary>
+    Task<(StatusCodes, RegisteredServicesResponse?)> GetRegisteredServicesAsync(CancellationToken cancellationToken = default(CancellationToken));
+
 }

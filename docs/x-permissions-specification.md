@@ -160,3 +160,39 @@ When services start, they call `RegisterServicePermissionsAsync()` which publish
 4. **Permissions Service**: Receives event, updates Redis permission matrices
 5. **Session Recompilation**: All active sessions get updated capabilities
 6. **Connect Service**: Receives capability updates, notifies WebSocket clients
+
+## State Key Storage Format
+
+The Permissions service stores permission matrices in Redis using the following key format:
+
+```
+permissions:{serviceId}:{stateKey}:{role}
+```
+
+### State Key Construction
+
+The `stateKey` is constructed differently depending on the permission configuration:
+
+| x-permissions `states` value | State Key | Example Redis Key |
+|------------------------------|-----------|-------------------|
+| `{}` (empty object) | `"default"` | `permissions:accounts:default:user` |
+| `{auth: authenticated}` (same service) | `"authenticated"` | `permissions:auth:authenticated:user` |
+| `{auth: authenticated}` (different service) | `"auth:authenticated"` | `permissions:accounts:auth:authenticated:user` |
+
+### Key Matching Rules
+
+When a session's state changes (e.g., user logs in), the Permissions service recompiles capabilities by:
+
+1. **Default permissions**: Always include endpoints stored at `permissions:{serviceId}:default:{role}`
+2. **State-based permissions**: For each session state `{stateServiceId: stateValue}`:
+   - If `stateServiceId == serviceId`: look up `permissions:{serviceId}:{stateValue}:{role}`
+   - If `stateServiceId != serviceId`: look up `permissions:{serviceId}:{stateServiceId}:{stateValue}:{role}`
+
+### Example Flow
+
+1. User logs in, setting `auth=authenticated` state
+2. Permissions service checks all registered services:
+   - For `auth` service: looks up `permissions:auth:authenticated:user`
+   - For `accounts` service: looks up `permissions:accounts:auth:authenticated:user`
+   - For `game-session` service: looks up `permissions:game-session:auth:authenticated:user`
+3. All matching endpoints are added to the session's capability manifest

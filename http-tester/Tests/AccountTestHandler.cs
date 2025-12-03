@@ -15,11 +15,28 @@ public class AccountTestHandler : IServiceTestHandler
     {
         return new[]
         {
+            // Core CRUD operations
             new ServiceTest(TestCreateAccount, "CreateAccount", "Account", "Test account creation endpoint"),
             new ServiceTest(TestGetAccount, "GetAccount", "Account", "Test account retrieval endpoint"),
             new ServiceTest(TestListAccounts, "ListAccounts", "Account", "Test account listing endpoint"),
             new ServiceTest(TestUpdateAccount, "UpdateAccount", "Account", "Test account update endpoint"),
             new ServiceTest(TestDeleteAccount, "DeleteAccount", "Account", "Test account deletion endpoint"),
+
+            // Account lookup by different identifiers
+            new ServiceTest(TestGetAccountByEmail, "GetAccountByEmail", "Account", "Test account lookup by email"),
+            new ServiceTest(TestGetAccountByProvider, "GetAccountByProvider", "Account", "Test account lookup by provider ID"),
+
+            // Authentication methods management
+            new ServiceTest(TestGetAuthMethods, "GetAuthMethods", "Account", "Test get authentication methods for account"),
+            new ServiceTest(TestAddAuthMethod, "AddAuthMethod", "Account", "Test add authentication method to account"),
+            new ServiceTest(TestRemoveAuthMethod, "RemoveAuthMethod", "Account", "Test remove authentication method from account"),
+
+            // Profile and password management
+            new ServiceTest(TestUpdateProfile, "UpdateProfile", "Account", "Test update account profile"),
+            new ServiceTest(TestUpdatePasswordHash, "UpdatePasswordHash", "Account", "Test update account password hash"),
+            new ServiceTest(TestUpdateVerificationStatus, "UpdateVerificationStatus", "Account", "Test update email verification status"),
+
+            // Event-driven tests (requires Accounts event system)
             new ServiceTest(TestAccountDeletionSessionInvalidation, "AccountDeletionSessionInvalidation", "Account", "Test account deletion → session invalidation flow"),
         };
     }
@@ -201,6 +218,306 @@ public class AccountTestHandler : IServiceTestHandler
         catch (ApiException ex)
         {
             return TestResult.Failed($"Account deletion failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<TestResult> TestGetAccountByEmail(ITestClient client, string[] args)
+    {
+        try
+        {
+            var accountsClient = new AccountsClient();
+
+            // First create a test account
+            var testUsername = $"emailtest_{DateTime.Now.Ticks}";
+            var testEmail = $"{testUsername}@example.com";
+            var createRequest = new CreateAccountRequest
+            {
+                DisplayName = testUsername,
+                Email = testEmail
+            };
+
+            var createResponse = await accountsClient.CreateAccountAsync(createRequest);
+            if (createResponse.AccountId == Guid.Empty)
+                return TestResult.Failed("Failed to create test account for email lookup test");
+
+            // Now test retrieving by email
+            var response = await accountsClient.GetAccountByEmailAsync(testEmail);
+
+            if (response.AccountId != createResponse.AccountId || response.Email != testEmail)
+                return TestResult.Failed("Retrieved account doesn't match created account");
+
+            return TestResult.Successful($"Account retrieved by email successfully: ID={response.AccountId}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Account email lookup failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<TestResult> TestGetAccountByProvider(ITestClient client, string[] args)
+    {
+        try
+        {
+            var accountsClient = new AccountsClient();
+
+            // Try to look up a non-existent provider account (should return 404)
+            try
+            {
+                await accountsClient.GetAccountByProviderAsync(Provider2.Discord, "nonexistent_id_12345");
+                return TestResult.Failed("GetAccountByProvider should have returned 404 for non-existent account");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // 404 proves endpoint works - correctly reports provider account doesn't exist
+                return TestResult.Successful("GetAccountByProvider correctly returned 404 for non-existent provider account");
+            }
+            catch (ApiException ex)
+            {
+                return TestResult.Failed($"GetAccountByProvider failed: {ex.StatusCode} - {ex.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<TestResult> TestGetAuthMethods(ITestClient client, string[] args)
+    {
+        try
+        {
+            var accountsClient = new AccountsClient();
+
+            // First create a test account
+            var testUsername = $"authmethodtest_{DateTime.Now.Ticks}";
+            var createRequest = new CreateAccountRequest
+            {
+                DisplayName = testUsername,
+                Email = $"{testUsername}@example.com"
+            };
+
+            var createResponse = await accountsClient.CreateAccountAsync(createRequest);
+            if (createResponse.AccountId == Guid.Empty)
+                return TestResult.Failed("Failed to create test account for auth methods test");
+
+            // Get auth methods for the account
+            var response = await accountsClient.GetAuthMethodsAsync(createResponse.AccountId);
+            return TestResult.Successful($"GetAuthMethods returned {response.AuthMethods?.Count ?? 0} auth methods");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"GetAuthMethods failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<TestResult> TestAddAuthMethod(ITestClient client, string[] args)
+    {
+        try
+        {
+            var accountsClient = new AccountsClient();
+
+            // First create a test account
+            var testUsername = $"addauthtest_{DateTime.Now.Ticks}";
+            var createRequest = new CreateAccountRequest
+            {
+                DisplayName = testUsername,
+                Email = $"{testUsername}@example.com"
+            };
+
+            var createResponse = await accountsClient.CreateAccountAsync(createRequest);
+            if (createResponse.AccountId == Guid.Empty)
+                return TestResult.Failed("Failed to create test account for add auth method test");
+
+            // Add a Discord auth method
+            var addAuthRequest = new AddAuthMethodRequest
+            {
+                Provider = AddAuthMethodRequestProvider.Discord,
+                ExternalId = $"discord_{DateTime.Now.Ticks}",
+                DisplayName = "Test Discord User"
+            };
+
+            var response = await accountsClient.AddAuthMethodAsync(createResponse.AccountId, addAuthRequest);
+            return TestResult.Successful($"AddAuthMethod completed: MethodId={response.MethodId}, Provider={response.Provider}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"AddAuthMethod failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<TestResult> TestRemoveAuthMethod(ITestClient client, string[] args)
+    {
+        try
+        {
+            var accountsClient = new AccountsClient();
+
+            // First create a test account
+            var testUsername = $"removeauthtest_{DateTime.Now.Ticks}";
+            var createRequest = new CreateAccountRequest
+            {
+                DisplayName = testUsername,
+                Email = $"{testUsername}@example.com"
+            };
+
+            var createResponse = await accountsClient.CreateAccountAsync(createRequest);
+            if (createResponse.AccountId == Guid.Empty)
+                return TestResult.Failed("Failed to create test account for remove auth method test");
+
+            // Try to remove a non-existent auth method (should return 404)
+            var fakeMethodId = Guid.NewGuid();
+            try
+            {
+                await accountsClient.RemoveAuthMethodAsync(createResponse.AccountId, fakeMethodId);
+                return TestResult.Successful("RemoveAuthMethod completed for test method ID");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                return TestResult.Successful("RemoveAuthMethod correctly returned 404 for non-existent method");
+            }
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"RemoveAuthMethod failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<TestResult> TestUpdateProfile(ITestClient client, string[] args)
+    {
+        try
+        {
+            var accountsClient = new AccountsClient();
+
+            // First create a test account
+            var testUsername = $"profiletest_{DateTime.Now.Ticks}";
+            var createRequest = new CreateAccountRequest
+            {
+                DisplayName = testUsername,
+                Email = $"{testUsername}@example.com"
+            };
+
+            var createResponse = await accountsClient.CreateAccountAsync(createRequest);
+            if (createResponse.AccountId == Guid.Empty)
+                return TestResult.Failed("Failed to create test account for profile update test");
+
+            // Update profile
+            var newDisplayName = $"Updated Profile {DateTime.Now.Ticks}";
+            var updateRequest = new UpdateProfileRequest
+            {
+                DisplayName = newDisplayName
+            };
+
+            var response = await accountsClient.UpdateProfileAsync(createResponse.AccountId, updateRequest);
+            if (response.DisplayName != newDisplayName)
+                return TestResult.Failed("Profile update did not persist the display name change");
+
+            return TestResult.Successful($"Profile updated successfully: DisplayName={response.DisplayName}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"UpdateProfile failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<TestResult> TestUpdatePasswordHash(ITestClient client, string[] args)
+    {
+        try
+        {
+            var accountsClient = new AccountsClient();
+
+            // First create a test account
+            var testUsername = $"passwordtest_{DateTime.Now.Ticks}";
+            var createRequest = new CreateAccountRequest
+            {
+                DisplayName = testUsername,
+                Email = $"{testUsername}@example.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("OldPassword123!")
+            };
+
+            var createResponse = await accountsClient.CreateAccountAsync(createRequest);
+            if (createResponse.AccountId == Guid.Empty)
+                return TestResult.Failed("Failed to create test account for password update test");
+
+            // Update password hash
+            var newPasswordHash = BCrypt.Net.BCrypt.HashPassword("NewPassword456!");
+            var updateRequest = new UpdatePasswordRequest
+            {
+                PasswordHash = newPasswordHash
+            };
+
+            await accountsClient.UpdatePasswordHashAsync(createResponse.AccountId, updateRequest);
+            return TestResult.Successful("Password hash updated successfully");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"UpdatePasswordHash failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<TestResult> TestUpdateVerificationStatus(ITestClient client, string[] args)
+    {
+        try
+        {
+            var accountsClient = new AccountsClient();
+
+            // First create a test account (default emailVerified=false)
+            var testUsername = $"verifytest_{DateTime.Now.Ticks}";
+            var createRequest = new CreateAccountRequest
+            {
+                DisplayName = testUsername,
+                Email = $"{testUsername}@example.com",
+                EmailVerified = false
+            };
+
+            var createResponse = await accountsClient.CreateAccountAsync(createRequest);
+            if (createResponse.AccountId == Guid.Empty)
+                return TestResult.Failed("Failed to create test account for verification update test");
+
+            // Update verification status to true
+            var updateRequest = new UpdateVerificationRequest
+            {
+                EmailVerified = true
+            };
+
+            await accountsClient.UpdateVerificationStatusAsync(createResponse.AccountId, updateRequest);
+
+            // Verify the change by getting the account
+            var verifyResponse = await accountsClient.GetAccountAsync(createResponse.AccountId);
+            if (!verifyResponse.EmailVerified)
+                return TestResult.Failed("Verification status update did not persist");
+
+            return TestResult.Successful("Email verification status updated successfully");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"UpdateVerificationStatus failed: {ex.StatusCode} - {ex.Message}");
         }
         catch (Exception ex)
         {

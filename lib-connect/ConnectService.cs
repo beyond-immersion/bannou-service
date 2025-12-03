@@ -889,15 +889,12 @@ public class ConnectService : IConnectService
 
     /// <summary>
     /// Service startup method - registers RabbitMQ event handler endpoints.
+    /// Note: Capability updates are handled via ConnectEventsController which subscribes
+    /// to permissions.capabilities-updated topic via subscriptions.yaml.
     /// </summary>
     public Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
-
-        // Register session capability update handler
-        webApp.MapPost("/events/session-capabilities", ProcessSessionCapabilityUpdateAsync)
-            .WithTopic("bannou-pubsub", "bannou-session-capabilities")
-            .WithMetadata("Connect service capability update handler");
 
         // Register auth event handler
         webApp.MapPost("/events/auth-events", ProcessAuthEventAsync)
@@ -927,67 +924,8 @@ public class ConnectService : IConnectService
 
     #region RabbitMQ Event Processing Methods
 
-    /// <summary>
-    /// Processes session capability updates from Permission service.
-    /// Triggers real-time capability updates for connected WebSocket clients.
-    /// </summary>
-    internal async Task<object> ProcessSessionCapabilityUpdateAsync(SessionCapabilityUpdateEvent eventData)
-    {
-        try
-        {
-            _logger.LogInformation("Processing capability update for session {SessionId}: Added={Added}, Removed={Removed}",
-                eventData.SessionId, eventData.AddedCapabilities?.Count ?? 0, eventData.RemovedCapabilities?.Count ?? 0);
-
-            // Check if the session has an active WebSocket connection
-            if (HasConnection(eventData.SessionId))
-            {
-                // Send capability update directly without API discovery
-                // The client can request fresh capabilities from the Permissions service if needed
-                var updatePayload = new
-                {
-                    type = "capability_update",
-                    sessionId = eventData.SessionId,
-                    version = eventData.Version,
-                    addedCapabilities = eventData.AddedCapabilities,
-                    removedCapabilities = eventData.RemovedCapabilities,
-                    updatedAt = DateTimeOffset.UtcNow,
-                    message = "Capabilities updated. Use Permissions service to get fresh capability list."
-                };
-
-                // Send real-time update via WebSocket
-                var messageId = MessageRouter.GenerateMessageId();
-                var updateMessage = BinaryMessage.FromJson(
-                    channel: 4, // Permissions channel
-                    sequenceNumber: 0, // Event message (no sequence)
-                    serviceGuid: Guid.Empty, // System message
-                    messageId: messageId,
-                    JsonSerializer.Serialize(updatePayload)
-                );
-
-                var sent = await SendMessageAsync(eventData.SessionId, updateMessage, CancellationToken.None);
-
-                if (sent)
-                {
-                    _logger.LogInformation("Sent capability update to session {SessionId}", eventData.SessionId);
-                }
-                else
-                {
-                    _logger.LogWarning("Failed to send capability update to session {SessionId} - connection not found", eventData.SessionId);
-                }
-            }
-            else
-            {
-                _logger.LogDebug("Session {SessionId} not connected to this instance, skipping capability update", eventData.SessionId);
-            }
-
-            return new { status = "processed", sessionId = eventData.SessionId };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to process capability update for session {SessionId}", eventData.SessionId);
-            throw;
-        }
-    }
+    // Note: Capability updates are handled by ConnectEventsController.HandleCapabilitiesUpdatedAsync()
+    // which subscribes to permissions.capabilities-updated topic via subscriptions.yaml.
 
     /// <summary>
     /// Processes authentication events (login/logout) from Auth service.

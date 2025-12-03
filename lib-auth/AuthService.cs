@@ -191,6 +191,16 @@ public class AuthService : IAuthService
                     return (StatusCodes.InternalServerError, null);
                 }
             }
+            catch (ApiException ex) when (ex.StatusCode == 409)
+            {
+                _logger.LogWarning("Account with email {Email} already exists", body.Email ?? body.Username);
+                return (StatusCodes.Conflict, null);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 400)
+            {
+                _logger.LogWarning(ex, "Invalid account data for registration");
+                return (StatusCodes.BadRequest, null);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to create account via AccountsClient");
@@ -526,34 +536,32 @@ public class AuthService : IAuthService
             // Since we store sessions with session_key, we need to find sessions by session_id
             var sessionKey = await FindSessionKeyBySessionIdAsync(sessionId.ToString(), cancellationToken);
 
-            if (sessionKey != null)
-            {
-                // Get session data to find account ID for index cleanup
-                var sessionData = await _daprClient.GetStateAsync<SessionDataModel>(
-                    REDIS_STATE_STORE,
-                    $"session:{sessionKey}",
-                    cancellationToken: cancellationToken);
-
-                // Remove the session data from Redis
-                await _daprClient.DeleteStateAsync(
-                    REDIS_STATE_STORE,
-                    $"session:{sessionKey}",
-                    cancellationToken: cancellationToken);
-
-                // Remove session from account index if we found the session data
-                if (sessionData != null)
-                {
-                    await RemoveSessionFromAccountIndexAsync(sessionData.AccountId.ToString(), sessionKey, cancellationToken);
-                }
-
-                _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
-            }
-            else
+            if (sessionKey == null)
             {
                 _logger.LogWarning("Session {SessionId} not found for termination", sessionId);
+                return (StatusCodes.NotFound, null);
             }
 
-            return (StatusCodes.OK, new { Message = "Session terminated successfully" });
+            // Get session data to find account ID for index cleanup
+            var sessionData = await _daprClient.GetStateAsync<SessionDataModel>(
+                REDIS_STATE_STORE,
+                $"session:{sessionKey}",
+                cancellationToken: cancellationToken);
+
+            // Remove the session data from Redis
+            await _daprClient.DeleteStateAsync(
+                REDIS_STATE_STORE,
+                $"session:{sessionKey}",
+                cancellationToken: cancellationToken);
+
+            // Remove session from account index if we found the session data
+            if (sessionData != null)
+            {
+                await RemoveSessionFromAccountIndexAsync(sessionData.AccountId.ToString(), sessionKey, cancellationToken);
+            }
+
+            _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
+            return (StatusCodes.NoContent, null);
         }
         catch (Exception ex)
         {
@@ -584,24 +592,72 @@ public class AuthService : IAuthService
     }
 
     /// <inheritdoc/>
-    public Task<(StatusCodes, object?)> ConfirmPasswordResetAsync(
+    public async Task<(StatusCodes, object?)> ConfirmPasswordResetAsync(
         PasswordResetConfirmRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Processing password reset confirmation");
+            _logger.LogInformation("Processing password reset confirmation with token: {TokenPrefix}...",
+                body.Token?.Length > 10 ? body.Token.Substring(0, 10) : body.Token);
 
-            // TODO: Validate reset token and update password
-            // For now, return success
+            if (string.IsNullOrWhiteSpace(body.Token) || string.IsNullOrWhiteSpace(body.NewPassword))
+            {
+                _logger.LogWarning("Invalid password reset confirmation request - missing token or password");
+                return (StatusCodes.BadRequest, null);
+            }
 
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { Message = "Password reset successful" }));
+            // Look up the reset token in Redis
+            var resetData = await _daprClient.GetStateAsync<PasswordResetData>(
+                REDIS_STATE_STORE,
+                $"password-reset:{body.Token}",
+                cancellationToken: cancellationToken);
+
+            if (resetData == null)
+            {
+                _logger.LogWarning("Invalid or expired password reset token");
+                return (StatusCodes.BadRequest, new { Error = "Invalid or expired reset token" });
+            }
+
+            // Check if token has expired
+            if (resetData.ExpiresAt < DateTimeOffset.UtcNow)
+            {
+                _logger.LogWarning("Password reset token has expired");
+                // Clean up expired token
+                await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, $"password-reset:{body.Token}", cancellationToken: cancellationToken);
+                return (StatusCodes.BadRequest, new { Error = "Reset token has expired" });
+            }
+
+            // Hash the new password
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.NewPassword, workFactor: 12);
+
+            // Update password via AccountsClient
+            await _accountsClient.UpdatePasswordHashAsync(resetData.AccountId, new UpdatePasswordRequest
+            {
+                PasswordHash = passwordHash
+            }, cancellationToken);
+
+            // Remove the used token
+            await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, $"password-reset:{body.Token}", cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Password reset successful for account {AccountId}", resetData.AccountId);
+            return (StatusCodes.OK, new { Message = "Password reset successful" });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error confirming password reset");
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    /// <summary>
+    /// Data stored for password reset tokens.
+    /// </summary>
+    internal class PasswordResetData
+    {
+        public Guid AccountId { get; set; }
+        public string Email { get; set; } = "";
+        public DateTimeOffset ExpiresAt { get; set; }
     }
 
     /// <inheritdoc/>

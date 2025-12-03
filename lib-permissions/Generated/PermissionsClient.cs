@@ -100,6 +100,23 @@ public partial interface IPermissionsClient
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<SessionInfo> GetSessionInfoAsync(SessionInfoRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// List all registered services
+    /// </summary>
+    /// <remarks>
+    /// Returns list of all services that have registered their permissions.
+    /// <br/>This endpoint is used by testers to wait for service readiness - a service
+    /// <br/>appearing in this list means it has completed startup and registered its
+    /// <br/>API permissions, indicating it's ready to handle requests.
+    /// <br/>
+    /// <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+    /// <br/>For client calls through WebSocket/Connect, only admin users can access it.
+    /// </remarks>
+    /// <returns>List of registered services</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<RegisteredServicesResponse> GetRegisteredServicesAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -624,6 +641,90 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
                     if (status_ == 200)
                     {
                         var objectResponse_ = await ReadObjectResponseAsync<SessionInfo>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// List all registered services
+    /// </summary>
+    /// <remarks>
+    /// Returns list of all services that have registered their permissions.
+    /// <br/>This endpoint is used by testers to wait for service readiness - a service
+    /// <br/>appearing in this list means it has completed startup and registered its
+    /// <br/>API permissions, indicating it's ready to handle requests.
+    /// <br/>
+    /// <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+    /// <br/>For client calls through WebSocket/Connect, only admin users can access it.
+    /// </remarks>
+    /// <returns>List of registered services</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<RegisteredServicesResponse> GetRegisteredServicesAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "permissions/services"
+                urlBuilder_.Append("permissions/services");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                PrepareRequest(client_, request_, url_);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<RegisteredServicesResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);

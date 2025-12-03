@@ -66,16 +66,14 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IDa
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Initialize Steam authentication
+    /// Verify Steam Session Ticket
     /// </summary>
 
-
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitSteamAuthAsync(string returnUrl, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <summary>
-    /// Verify Steam authentication response
-    /// </summary>
-
+    /// <remarks>
+    /// Validates a Steam Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().
+    /// <br/>The server validates the ticket with Steam's Web API and retrieves the SteamID from Steam's response.
+    /// <br/>NEVER trust client-provided SteamID - it must come from Steam's authenticated response.
+    /// </remarks>
 
     /// <returns>Steam authentication successful</returns>
 
@@ -256,20 +254,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Initialize Steam authentication
+    /// Verify Steam Session Ticket
     /// </summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/steam/init")]
-
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitSteamAuth([Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string returnUrl, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-
-        var (statusCode, result) = await _implementation.InitSteamAuthAsync(returnUrl, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
-    }
-
-    /// <summary>
-    /// Verify Steam authentication response
-    /// </summary>
+    /// <remarks>
+    /// Validates a Steam Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().
+    /// <br/>The server validates the ticket with Steam's Web API and retrieves the SteamID from Steam's response.
+    /// <br/>NEVER trust client-provided SteamID - it must come from Steam's authenticated response.
+    /// </remarks>
     /// <returns>Steam authentication successful</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/steam/verify")]
 

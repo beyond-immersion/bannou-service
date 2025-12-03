@@ -250,19 +250,24 @@ public partial class OAuthCallbackRequest
 
 }
 
+/// <summary>
+/// Request to verify a Steam Session Ticket. The ticket is obtained client-side via
+/// <br/>ISteamUser::GetAuthTicketForWebApi("bannou"). SteamID is NOT included because
+/// <br/>it must be obtained from Steam's Web API response (never trust client-provided SteamID).
+/// <br/>
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SteamVerifyRequest
 {
 
     /// <summary>
-    /// Steam session ticket
+    /// Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().
+    /// <br/>Client converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace("-", "")
+    /// <br/>
     /// </summary>
     [Newtonsoft.Json.JsonProperty("ticket", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Ticket { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("steamId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string SteamId { get; set; } = default!;
 
     [Newtonsoft.Json.JsonProperty("deviceInfo", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
     public DeviceInfo DeviceInfo { get; set; } = default!;

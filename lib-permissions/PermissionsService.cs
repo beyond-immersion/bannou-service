@@ -310,15 +310,44 @@ public class PermissionsService : IPermissionsService
                 }
                 else
                 {
-                    // Failed to acquire lock - this shouldn't happen often, log and continue
-                    // The service is still registered via the individual marker, so this isn't critical
-                    _logger.LogWarning("Failed to acquire lock for {ServiceId}, registered_services list may not include this service immediately", body.ServiceId);
+                    // Failed to acquire lock - fall back to optimistic update
+                    _logger.LogWarning("Failed to acquire lock for {ServiceId}, falling back to optimistic update", body.ServiceId);
+
+                    var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
+                        STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+
+                    if (!registeredServices.Contains(body.ServiceId))
+                    {
+                        registeredServices.Add(body.ServiceId);
+                        await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, registeredServices, cancellationToken: cancellationToken);
+                        _logger.LogInformation("Added {ServiceId} to registered services via fallback (lock failed). Now: {Services}",
+                            body.ServiceId, string.Join(", ", registeredServices));
+                    }
                 }
             }
             catch (Exception lockEx)
             {
-                // Lock acquisition or state update failed
-                _logger.LogWarning(lockEx, "Error during registered services update for {ServiceId}, service is registered but may not appear in service list immediately", body.ServiceId);
+                // Lock acquisition or state update failed - fall back to non-locked update
+                _logger.LogWarning(lockEx, "Lock-based update failed for {ServiceId}, falling back to optimistic update", body.ServiceId);
+
+                try
+                {
+                    // Optimistic update without lock - HashSet deduplication handles race conditions
+                    var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
+                        STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+
+                    if (!registeredServices.Contains(body.ServiceId))
+                    {
+                        registeredServices.Add(body.ServiceId);
+                        await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, registeredServices, cancellationToken: cancellationToken);
+                        _logger.LogInformation("Added {ServiceId} to registered services via fallback (optimistic update). Now: {Services}",
+                            body.ServiceId, string.Join(", ", registeredServices));
+                    }
+                }
+                catch (Exception fallbackEx)
+                {
+                    _logger.LogWarning(fallbackEx, "Fallback update also failed for {ServiceId}", body.ServiceId);
+                }
             }
 
             // Get all active sessions and recompile
@@ -590,6 +619,13 @@ public class PermissionsService : IPermissionsService
     /// <summary>
     /// Recompile permissions for a session using provided session states.
     /// This overload avoids read-after-write consistency issues by using states already in memory.
+    ///
+    /// Permission state key matching:
+    /// - "default" state permissions are always included for the session's role
+    /// - For each session state (e.g., auth=authenticated), checks all registered services
+    /// - State key construction matches registration logic:
+    ///   - Same service (stateServiceId == serviceId): stateKey = stateValue (e.g., "authenticated")
+    ///   - Cross-service (stateServiceId != serviceId): stateKey = "{stateServiceId}:{stateValue}" (e.g., "auth:authenticated")
     /// </summary>
     private async Task RecompileSessionPermissionsAsync(string sessionId, Dictionary<string, string> sessionStates, string reason)
     {
@@ -617,13 +653,13 @@ public class PermissionsService : IPermissionsService
 
             foreach (var serviceId in registeredServices)
             {
-                // Check for "authenticated" state permissions (endpoints with no required states)
-                // Note: The event handler defaults to "authenticated" state when no states are required
-                var authenticatedMatrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, "authenticated", role);
-                var defaultEndpoints = await _daprClient.GetStateAsync<HashSet<string>>(STATE_STORE, authenticatedMatrixKey);
+                // Check for "default" state permissions (endpoints with states: {} in x-permissions)
+                // Generated permission registration uses "default" as the state key when RequiredStates is empty
+                var defaultMatrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, "default", role);
+                var defaultEndpoints = await _daprClient.GetStateAsync<HashSet<string>>(STATE_STORE, defaultMatrixKey);
 
                 _logger.LogDebug("Looking up {Key}, found {Count} endpoints",
-                    authenticatedMatrixKey, defaultEndpoints?.Count ?? 0);
+                    defaultMatrixKey, defaultEndpoints?.Count ?? 0);
 
                 if (defaultEndpoints != null && defaultEndpoints.Count > 0)
                 {
@@ -637,32 +673,46 @@ public class PermissionsService : IPermissionsService
                 }
             }
 
-            // Then, also check service-specific states that the session has
-            foreach (var serviceState in sessionStates.Where(s => s.Key != "role"))
+            // Then, for each registered service, check if any session states unlock additional permissions
+            // This handles cross-service state dependencies (e.g., "auth:authenticated" state unlocking permissions on other services)
+            foreach (var serviceId in registeredServices)
             {
-                var serviceId = serviceState.Key;
-                var state = serviceState.Value;
-
-                // Skip "default" state as we already checked it above
-                if (state == "default")
-                    continue;
-
-                var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, state, role);
-                var endpoints = await _daprClient.GetStateAsync<HashSet<string>>(STATE_STORE, matrixKey);
-
-                if (endpoints != null && endpoints.Count > 0)
+                foreach (var serviceState in sessionStates.Where(s => s.Key != "role"))
                 {
-                    if (!compiledPermissions.ContainsKey(serviceId))
+                    var stateServiceId = serviceState.Key;
+                    var stateValue = serviceState.Value;
+
+                    // Skip "default" state as we already checked it above
+                    if (stateValue == "default")
+                        continue;
+
+                    // Construct state key the same way registration does:
+                    // - If stateServiceId == serviceId (same service): stateKey = stateValue
+                    // - If stateServiceId != serviceId (different service): stateKey = "{stateServiceId}:{stateValue}"
+                    var stateKey = stateServiceId == serviceId ? stateValue : $"{stateServiceId}:{stateValue}";
+
+                    var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, stateKey, role);
+                    var endpoints = await _daprClient.GetStateAsync<HashSet<string>>(STATE_STORE, matrixKey);
+
+                    _logger.LogDebug("State-based lookup: service={ServiceId}, stateKey={StateKey}, role={Role}, key={Key}, found={Count}",
+                        serviceId, stateKey, role, matrixKey, endpoints?.Count ?? 0);
+
+                    if (endpoints != null && endpoints.Count > 0)
                     {
-                        compiledPermissions[serviceId] = new List<string>();
-                    }
-                    // Add unique endpoints (avoid duplicates)
-                    foreach (var endpoint in endpoints)
-                    {
-                        if (!compiledPermissions[serviceId].Contains(endpoint))
+                        if (!compiledPermissions.ContainsKey(serviceId))
                         {
-                            compiledPermissions[serviceId].Add(endpoint);
+                            compiledPermissions[serviceId] = new List<string>();
                         }
+                        // Add unique endpoints (avoid duplicates)
+                        foreach (var endpoint in endpoints)
+                        {
+                            if (!compiledPermissions[serviceId].Contains(endpoint))
+                            {
+                                compiledPermissions[serviceId].Add(endpoint);
+                            }
+                        }
+                        _logger.LogInformation("Added {Count} state-based endpoints for service {ServiceId} (state: {StateKey})",
+                            endpoints.Count, serviceId, stateKey);
                     }
                 }
             }
@@ -705,7 +755,8 @@ public class PermissionsService : IPermissionsService
     }
 
     /// <summary>
-    /// Publish capability update to specific Connect service instance.
+    /// Publish capability update to Connect service via the permissions.capabilities-updated topic.
+    /// Connect service subscribes to this topic and pushes updates to affected WebSocket clients.
     /// </summary>
     private async Task PublishCapabilityUpdateAsync(string sessionId, Dictionary<string, List<string>> permissions, string reason)
     {
@@ -713,28 +764,138 @@ public class PermissionsService : IPermissionsService
         {
             var capabilityUpdate = new
             {
-                SessionId = sessionId,
-                Version = DateTimeOffset.UtcNow.Ticks, // Simple version using timestamp
-                UpdateType = "full", // Always send full for now
-                FullCapabilities = permissions.ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => (ICollection<string>)kvp.Value
-                ),
-                GeneratedAt = DateTimeOffset.UtcNow,
-                ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
-                Reason = reason
+                serviceId = "permissions",
+                affectedSessions = new[] { sessionId },
+                version = DateTimeOffset.UtcNow.Ticks,
+                reason = reason
             };
 
-            // Publish to session-specific Connect channel
-            var connectChannel = $"CONNECT_{sessionId}";
-            await _daprClient.PublishEventAsync("bannou-pubsub", connectChannel, capabilityUpdate);
+            // Publish to the topic that Connect service subscribes to (via subscriptions.yaml)
+            await _daprClient.PublishEventAsync("bannou-pubsub", "permissions.capabilities-updated", capabilityUpdate);
 
-            _logger.LogDebug("Published capability update to {Channel} for session {SessionId}",
-                connectChannel, sessionId);
+            _logger.LogDebug("Published capability update to permissions.capabilities-updated for session {SessionId}",
+                sessionId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error publishing capability update for session {SessionId}", sessionId);
         }
     }
+
+    /// <summary>
+    /// Get list of all registered services with their registration information.
+    /// Used by testers to poll for service readiness - services only register after they're ready to handle requests.
+    /// </summary>
+    public async Task<(StatusCodes, RegisteredServicesResponse?)> GetRegisteredServicesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Getting list of registered services");
+
+            // Get all registered service IDs
+            var registeredServiceIds = await _daprClient.GetStateAsync<HashSet<string>>(
+                STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+
+            _logger.LogDebug("Found {Count} registered services: {Services}",
+                registeredServiceIds.Count, string.Join(", ", registeredServiceIds));
+
+            var services = new List<RegisteredServiceInfo>();
+
+            foreach (var serviceId in registeredServiceIds)
+            {
+                // Get individual registration info for this service
+                var serviceRegisteredKey = string.Format(SERVICE_REGISTERED_KEY, serviceId);
+                var registrationData = await _daprClient.GetStateAsync<Dictionary<string, object>>(
+                    STATE_STORE, serviceRegisteredKey, cancellationToken: cancellationToken);
+
+                // Count endpoints for this service by scanning permission matrix keys
+                // We look for all state/role combinations and sum unique endpoints
+                var endpointCount = 0;
+                var uniqueEndpoints = new HashSet<string>();
+
+                // Check common states and roles
+                var states = new[] { "authenticated", "default", "lobby", "in_game" };
+                var roles = new[] { "user", "admin", "anonymous" };
+
+                foreach (var state in states)
+                {
+                    foreach (var role in roles)
+                    {
+                        var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, state, role);
+                        var endpoints = await _daprClient.GetStateAsync<HashSet<string>>(
+                            STATE_STORE, matrixKey, cancellationToken: cancellationToken);
+
+                        if (endpoints != null)
+                        {
+                            foreach (var endpoint in endpoints)
+                            {
+                                uniqueEndpoints.Add(endpoint);
+                            }
+                        }
+                    }
+                }
+                endpointCount = uniqueEndpoints.Count;
+
+                // Parse registration data
+                var version = "";
+                var registeredAt = DateTimeOffset.UtcNow;
+
+                if (registrationData != null)
+                {
+                    if (registrationData.TryGetValue("Version", out var versionObj) && versionObj != null)
+                    {
+                        version = versionObj.ToString() ?? "";
+                    }
+                    if (registrationData.TryGetValue("RegisteredAt", out var registeredAtObj) && registeredAtObj != null)
+                    {
+                        if (registeredAtObj is JsonElement jsonElement)
+                        {
+                            DateTimeOffset.TryParse(jsonElement.GetString(), out registeredAt);
+                        }
+                        else
+                        {
+                            DateTimeOffset.TryParse(registeredAtObj.ToString(), out registeredAt);
+                        }
+                    }
+                }
+
+                services.Add(new RegisteredServiceInfo
+                {
+                    ServiceId = serviceId,
+                    ServiceName = serviceId, // Use serviceId as name if not stored separately
+                    Version = version,
+                    RegisteredAt = registeredAt,
+                    EndpointCount = endpointCount
+                });
+            }
+
+            _logger.LogInformation("Returning {Count} registered services", services.Count);
+
+            return (StatusCodes.OK, new RegisteredServicesResponse
+            {
+                Services = services,
+                Timestamp = DateTimeOffset.UtcNow
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting registered services");
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    #region Permission Registration
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Even though Permissions service publishes to itself, this follows the same pattern
+    /// as other services for consistency.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Permissions service permissions...");
+        await PermissionsPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+    }
+
+    #endregion
 }

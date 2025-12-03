@@ -318,8 +318,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 if (receiveBuffer.Array == null || result.Count == 0)
                 {
-                    Console.WriteLine("⚠️ No data received");
-                    return true; // Connection worked, manifest push may not be implemented yet
+                    Console.WriteLine("❌ No data received from server");
+                    return false;
                 }
 
                 var receivedMessage = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
@@ -342,20 +342,25 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                         Console.WriteLine("✅ Message correctly flagged as Event (push-based)");
                     }
 
+                    // Must have APIs to be meaningful
+                    if (apiCount == 0)
+                    {
+                        Console.WriteLine("❌ Capability manifest has 0 APIs - permissions not working");
+                        return false;
+                    }
+
                     return true;
                 }
                 else
                 {
-                    Console.WriteLine($"⚠️ Received message type '{messageType}' instead of capability_manifest");
-                    // Still consider success if we got a valid response
-                    return true;
+                    Console.WriteLine($"❌ Expected capability_manifest but received '{messageType}'");
+                    return false;
                 }
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("⚠️ Timeout waiting for capability manifest");
-                Console.WriteLine("✅ WebSocket connection established (capability push may not be implemented yet)");
-                return true;
+                Console.WriteLine("❌ Timeout waiting for capability manifest - server did not push capabilities");
+                return false;
             }
         }
         catch (Exception ex)

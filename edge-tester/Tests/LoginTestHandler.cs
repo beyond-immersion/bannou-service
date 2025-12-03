@@ -14,6 +14,7 @@ public class LoginTestHandler : IServiceTestHandler
     {
         return new ServiceTest[]
         {
+            // Core authentication flows
             new ServiceTest(TestRegistrationFlow, "Auth - Registration Flow", "HTTP",
                 "Test user registration through OpenResty gateway returns valid tokens"),
             new ServiceTest(TestLoginWithCredentials, "Auth - Login with Credentials", "HTTP",
@@ -21,7 +22,25 @@ public class LoginTestHandler : IServiceTestHandler
             new ServiceTest(TestTokenRefresh, "Auth - Token Refresh", "HTTP",
                 "Test refresh token can be used to obtain new access token"),
             new ServiceTest(TestInvalidCredentials, "Auth - Invalid Credentials", "HTTP",
-                "Test login with invalid credentials returns proper error")
+                "Test login with invalid credentials returns proper error"),
+
+            // Token validation and session management
+            new ServiceTest(TestTokenValidation, "Auth - Token Validation", "HTTP",
+                "Test token validation endpoint returns session info"),
+            new ServiceTest(TestGetSessions, "Auth - Get Sessions", "HTTP",
+                "Test get active sessions for authenticated user"),
+            new ServiceTest(TestLogout, "Auth - Logout", "HTTP",
+                "Test logout invalidates the current session"),
+
+            // OAuth flows (init only - callback requires real provider)
+            new ServiceTest(TestOAuthInitDiscord, "Auth - OAuth Init Discord", "HTTP",
+                "Test Discord OAuth init returns redirect URL"),
+            new ServiceTest(TestOAuthInitGoogle, "Auth - OAuth Init Google", "HTTP",
+                "Test Google OAuth init returns redirect URL"),
+
+            // Steam Session Ticket flow
+            new ServiceTest(TestSteamVerify, "Auth - Steam Session Ticket", "HTTP",
+                "Test Steam Session Ticket verification through gateway"),
         };
     }
 
@@ -368,6 +387,466 @@ public class LoginTestHandler : IServiceTestHandler
 
         Console.WriteLine($"⚠️ Unexpected response for invalid credentials: {response.StatusCode}");
         Console.WriteLine($"   Body: {responseBody}");
+        return false;
+    }
+
+    private void TestTokenValidation(string[] args)
+    {
+        Console.WriteLine("=== Token Validation Test ===");
+        Console.WriteLine("Testing token validation endpoint...");
+
+        try
+        {
+            var result = Task.Run(async () => await PerformTokenValidationTest()).Result;
+            if (result)
+            {
+                Console.WriteLine("✅ Token validation test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Token validation test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Token validation test FAILED with exception: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> PerformTokenValidationTest()
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("❌ Configuration not available");
+            return false;
+        }
+
+        // First login to get a valid token
+        var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
+        var loginContent = new JObject
+        {
+            ["email"] = Program.Configuration.Client_Username,
+            ["password"] = Program.Configuration.Client_Password
+        };
+
+        using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
+        loginRequest.Content = new StringContent(JsonConvert.SerializeObject(loginContent), Encoding.UTF8, "application/json");
+
+        using var loginResponse = await Program.HttpClient.SendAsync(loginRequest);
+        if (loginResponse.StatusCode != System.Net.HttpStatusCode.OK)
+        {
+            Console.WriteLine($"❌ Login failed: {loginResponse.StatusCode}");
+            return false;
+        }
+
+        var loginBody = await loginResponse.Content.ReadAsStringAsync();
+        var loginObj = JObject.Parse(loginBody);
+        var accessToken = (string?)loginObj["accessToken"];
+
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            Console.WriteLine("❌ No access token from login");
+            return false;
+        }
+
+        // Now validate the token
+        var loginEndpoint = Program.Configuration.Login_Credentials_Endpoint
+            ?? throw new InvalidOperationException("Login_Credentials_Endpoint not configured");
+        var validateUrl = $"http://{loginEndpoint.Replace("/auth/login", "/auth/validate")}";
+        Console.WriteLine($"📡 Testing token validation at: {validateUrl}");
+
+        using var validateRequest = new HttpRequestMessage(HttpMethod.Post, validateUrl);
+        validateRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+        using var validateResponse = await Program.HttpClient.SendAsync(validateRequest);
+        var validateBody = await validateResponse.Content.ReadAsStringAsync();
+
+        Console.WriteLine($"📥 Response: {validateResponse.StatusCode}");
+
+        if (validateResponse.StatusCode == System.Net.HttpStatusCode.OK)
+        {
+            var validateObj = JObject.Parse(validateBody);
+            var valid = (bool?)validateObj["valid"];
+            if (valid != true)
+            {
+                Console.WriteLine($"❌ Token validation returned valid={valid} (expected true)");
+                return false;
+            }
+            Console.WriteLine($"✅ Token validation returned valid={valid}");
+            return true;
+        }
+
+        Console.WriteLine($"❌ Token validation failed with status: {validateResponse.StatusCode}");
+        Console.WriteLine($"   Body: {validateBody}");
+        return false;
+    }
+
+    private void TestGetSessions(string[] args)
+    {
+        Console.WriteLine("=== Get Sessions Test ===");
+        Console.WriteLine("Testing get sessions endpoint...");
+
+        try
+        {
+            var result = Task.Run(async () => await PerformGetSessionsTest()).Result;
+            if (result)
+            {
+                Console.WriteLine("✅ Get sessions test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Get sessions test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Get sessions test FAILED with exception: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> PerformGetSessionsTest()
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("❌ Configuration not available");
+            return false;
+        }
+
+        // First login to get a valid token
+        var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
+        var loginContent = new JObject
+        {
+            ["email"] = Program.Configuration.Client_Username,
+            ["password"] = Program.Configuration.Client_Password
+        };
+
+        using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
+        loginRequest.Content = new StringContent(JsonConvert.SerializeObject(loginContent), Encoding.UTF8, "application/json");
+
+        using var loginResponse = await Program.HttpClient.SendAsync(loginRequest);
+        if (loginResponse.StatusCode != System.Net.HttpStatusCode.OK)
+        {
+            Console.WriteLine($"❌ Login failed: {loginResponse.StatusCode}");
+            return false;
+        }
+
+        var loginBody = await loginResponse.Content.ReadAsStringAsync();
+        var loginObj = JObject.Parse(loginBody);
+        var accessToken = (string?)loginObj["accessToken"];
+
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            Console.WriteLine("❌ No access token from login");
+            return false;
+        }
+
+        // Now get sessions
+        var sessionsLoginEndpoint = Program.Configuration.Login_Credentials_Endpoint
+            ?? throw new InvalidOperationException("Login_Credentials_Endpoint not configured");
+        var sessionsUrl = $"http://{sessionsLoginEndpoint.Replace("/auth/login", "/auth/sessions")}";
+        Console.WriteLine($"📡 Testing get sessions at: {sessionsUrl}");
+
+        using var sessionsRequest = new HttpRequestMessage(HttpMethod.Get, sessionsUrl);
+        sessionsRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+        using var sessionsResponse = await Program.HttpClient.SendAsync(sessionsRequest);
+        var sessionsBody = await sessionsResponse.Content.ReadAsStringAsync();
+
+        Console.WriteLine($"📥 Response: {sessionsResponse.StatusCode}");
+
+        if (sessionsResponse.StatusCode == System.Net.HttpStatusCode.OK)
+        {
+            var sessionsObj = JObject.Parse(sessionsBody);
+            var sessions = sessionsObj["sessions"] as JArray;
+            if (sessions == null)
+            {
+                Console.WriteLine("❌ Get sessions response missing sessions array");
+                return false;
+            }
+            // Should have at least one session (the one we just logged in with)
+            if (sessions.Count == 0)
+            {
+                Console.WriteLine("❌ Get sessions returned 0 sessions (expected at least 1)");
+                return false;
+            }
+            Console.WriteLine($"✅ Get sessions returned {sessions.Count} session(s)");
+            return true;
+        }
+
+        Console.WriteLine($"❌ Get sessions failed with status: {sessionsResponse.StatusCode}");
+        Console.WriteLine($"   Body: {sessionsBody}");
+        return false;
+    }
+
+    private void TestLogout(string[] args)
+    {
+        Console.WriteLine("=== Logout Test ===");
+        Console.WriteLine("Testing logout endpoint...");
+
+        try
+        {
+            var result = Task.Run(async () => await PerformLogoutTest()).Result;
+            if (result)
+            {
+                Console.WriteLine("✅ Logout test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Logout test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Logout test FAILED with exception: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> PerformLogoutTest()
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("❌ Configuration not available");
+            return false;
+        }
+
+        // First login to get a valid token
+        var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
+        var loginContent = new JObject
+        {
+            ["email"] = Program.Configuration.Client_Username,
+            ["password"] = Program.Configuration.Client_Password
+        };
+
+        using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
+        loginRequest.Content = new StringContent(JsonConvert.SerializeObject(loginContent), Encoding.UTF8, "application/json");
+
+        using var loginResponse = await Program.HttpClient.SendAsync(loginRequest);
+        if (loginResponse.StatusCode != System.Net.HttpStatusCode.OK)
+        {
+            Console.WriteLine($"❌ Login failed: {loginResponse.StatusCode}");
+            return false;
+        }
+
+        var loginBody = await loginResponse.Content.ReadAsStringAsync();
+        var loginObj = JObject.Parse(loginBody);
+        var accessToken = (string?)loginObj["accessToken"];
+
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            Console.WriteLine("❌ No access token from login");
+            return false;
+        }
+
+        // Now logout
+        var logoutLoginEndpoint = Program.Configuration.Login_Credentials_Endpoint
+            ?? throw new InvalidOperationException("Login_Credentials_Endpoint not configured");
+        var logoutUrl = $"http://{logoutLoginEndpoint.Replace("/auth/login", "/auth/logout")}";
+        Console.WriteLine($"📡 Testing logout at: {logoutUrl}");
+
+        var logoutContent = new JObject { ["allSessions"] = false };
+
+        using var logoutRequest = new HttpRequestMessage(HttpMethod.Post, logoutUrl);
+        logoutRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+        logoutRequest.Content = new StringContent(JsonConvert.SerializeObject(logoutContent), Encoding.UTF8, "application/json");
+
+        using var logoutResponse = await Program.HttpClient.SendAsync(logoutRequest);
+
+        Console.WriteLine($"📥 Response: {logoutResponse.StatusCode}");
+
+        if (logoutResponse.StatusCode == System.Net.HttpStatusCode.OK ||
+            logoutResponse.StatusCode == System.Net.HttpStatusCode.NoContent)
+        {
+            Console.WriteLine("✅ Logout completed successfully");
+            return true;
+        }
+
+        var logoutBody = await logoutResponse.Content.ReadAsStringAsync();
+        Console.WriteLine($"❌ Logout failed with status: {logoutResponse.StatusCode}");
+        Console.WriteLine($"   Body: {logoutBody}");
+        return false;
+    }
+
+    private void TestOAuthInitDiscord(string[] args)
+    {
+        Console.WriteLine("=== OAuth Init Discord Test ===");
+        Console.WriteLine("Testing Discord OAuth initialization...");
+
+        try
+        {
+            var result = Task.Run(async () => await PerformOAuthInitTest("discord")).Result;
+            if (result)
+            {
+                Console.WriteLine("✅ OAuth init Discord test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ OAuth init Discord test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ OAuth init Discord test FAILED with exception: {ex.Message}");
+        }
+    }
+
+    private void TestOAuthInitGoogle(string[] args)
+    {
+        Console.WriteLine("=== OAuth Init Google Test ===");
+        Console.WriteLine("Testing Google OAuth initialization...");
+
+        try
+        {
+            var result = Task.Run(async () => await PerformOAuthInitTest("google")).Result;
+            if (result)
+            {
+                Console.WriteLine("✅ OAuth init Google test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ OAuth init Google test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ OAuth init Google test FAILED with exception: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> PerformOAuthInitTest(string provider)
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("❌ Configuration not available");
+            return false;
+        }
+
+        // Build OAuth init URL
+        var oauthLoginEndpoint = Program.Configuration.Login_Credentials_Endpoint
+            ?? throw new InvalidOperationException("Login_Credentials_Endpoint not configured");
+        var baseUrl = oauthLoginEndpoint.Replace("/auth/login", "");
+        var oauthUrl = $"http://{baseUrl}/auth/oauth/{provider}/init?redirectUri=http://localhost:5012/callback&state=test_state";
+        Console.WriteLine($"📡 Testing OAuth init at: {oauthUrl}");
+
+        // Note: We don't follow redirects for this test - we just verify the endpoint works
+        var handler = new HttpClientHandler { AllowAutoRedirect = false };
+        using var client = new HttpClient(handler);
+
+        using var oauthRequest = new HttpRequestMessage(HttpMethod.Get, oauthUrl);
+        using var oauthResponse = await client.SendAsync(oauthRequest);
+
+        Console.WriteLine($"📥 Response: {oauthResponse.StatusCode}");
+
+        // OAuth init should return 302 redirect or 200 with auth URL
+        if (oauthResponse.StatusCode == System.Net.HttpStatusCode.Redirect ||
+            oauthResponse.StatusCode == System.Net.HttpStatusCode.Found)
+        {
+            var location = oauthResponse.Headers.Location?.ToString();
+            if (string.IsNullOrEmpty(location))
+            {
+                Console.WriteLine("❌ OAuth redirect missing Location header");
+                return false;
+            }
+            Console.WriteLine($"✅ OAuth init returned redirect to: {location.Substring(0, Math.Min(100, location.Length))}...");
+            return true;
+        }
+
+        if (oauthResponse.StatusCode == System.Net.HttpStatusCode.OK)
+        {
+            var body = await oauthResponse.Content.ReadAsStringAsync();
+            // Verify the response contains an auth URL
+            if (!body.Contains("http") && !body.Contains("url"))
+            {
+                Console.WriteLine($"❌ OAuth init returned OK but no auth URL in response");
+                return false;
+            }
+            Console.WriteLine($"✅ OAuth init returned OK with auth URL");
+            return true;
+        }
+
+        var errorBody = await oauthResponse.Content.ReadAsStringAsync();
+        Console.WriteLine($"❌ OAuth init for {provider} failed with status: {oauthResponse.StatusCode}");
+        Console.WriteLine($"   Body: {errorBody.Substring(0, Math.Min(200, errorBody.Length))}");
+        return false;
+    }
+
+    private void TestSteamVerify(string[] args)
+    {
+        Console.WriteLine("=== Steam Session Ticket Test ===");
+        Console.WriteLine("Testing Steam Session Ticket verification...");
+
+        try
+        {
+            var result = Task.Run(async () => await PerformSteamVerifyTest()).Result;
+            if (result)
+            {
+                Console.WriteLine("✅ Steam verify test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Steam verify test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Steam verify test FAILED with exception: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> PerformSteamVerifyTest()
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("❌ Configuration not available");
+            return false;
+        }
+
+        // Build Steam verify URL
+        var steamLoginEndpoint = Program.Configuration.Login_Credentials_Endpoint
+            ?? throw new InvalidOperationException("Login_Credentials_Endpoint not configured");
+        var steamBaseUrl = steamLoginEndpoint.Replace("/auth/login", "");
+        var steamUrl = $"http://{steamBaseUrl}/auth/steam/verify";
+        Console.WriteLine($"📡 Testing Steam verify at: {steamUrl}");
+
+        // Send a mock Steam Session Ticket - this should fail validation but test the endpoint
+        var steamContent = new JObject
+        {
+            ["ticket"] = "140000006A7B3C8E0123456789ABCDEF0123456789ABCDEF"
+        };
+
+        using var steamRequest = new HttpRequestMessage(HttpMethod.Post, steamUrl);
+        steamRequest.Content = new StringContent(JsonConvert.SerializeObject(steamContent), Encoding.UTF8, "application/json");
+
+        using var steamResponse = await Program.HttpClient.SendAsync(steamRequest);
+        var steamBody = await steamResponse.Content.ReadAsStringAsync();
+
+        Console.WriteLine($"📥 Response: {steamResponse.StatusCode}");
+
+        // With mock data, we expect either:
+        // - 200 OK (MockProviders enabled)
+        // - 401 Unauthorized (correctly rejected invalid ticket)
+        if (steamResponse.StatusCode == System.Net.HttpStatusCode.OK)
+        {
+            // Verify we got tokens back
+            var responseObj = JObject.Parse(steamBody);
+            var accessToken = (string?)responseObj["accessToken"];
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Console.WriteLine("❌ Steam verify returned OK but no access token");
+                return false;
+            }
+            Console.WriteLine("✅ Steam verify succeeded (MockProviders enabled)");
+            return true;
+        }
+
+        // 401 is expected when ticket validation fails - this proves the endpoint works
+        if (steamResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            Console.WriteLine("✅ Steam verify correctly rejected invalid ticket (401)");
+            return true;
+        }
+
+        Console.WriteLine($"❌ Steam verify failed with status: {steamResponse.StatusCode}");
+        Console.WriteLine($"   Body: {steamBody.Substring(0, Math.Min(200, steamBody.Length))}");
         return false;
     }
 }

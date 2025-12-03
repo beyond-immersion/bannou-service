@@ -449,6 +449,82 @@ public partial class SessionInfo
 
 }
 
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RegisteredServicesResponse
+{
+
+    /// <summary>
+    /// List of all registered services
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("services", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<RegisteredServiceInfo> Services { get; set; } = new System.Collections.ObjectModel.Collection<RegisteredServiceInfo>();
+
+    /// <summary>
+    /// When this response was generated
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RegisteredServiceInfo
+{
+
+    /// <summary>
+    /// Unique service identifier
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable service name
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("serviceName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Service API version
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public string Version { get; set; } = default!;
+
+    /// <summary>
+    /// When the service registered its permissions
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("registeredAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset RegisteredAt { get; set; } = default!;
+
+    /// <summary>
+    /// Number of API endpoints registered by this service
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("endpointCount", Required = Newtonsoft.Json.Required.Always)]
+    public int EndpointCount { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
 
 
 #pragma warning restore  108
