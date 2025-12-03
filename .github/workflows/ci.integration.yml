@@ -126,16 +126,18 @@ jobs:
           repository-url: ${{ github.server_url }}/${{ github.repository }}
 
       # NuGet Pre-Release Publishing (only on master branch success)
-      # Publishes unlisted preview packages for staging/testing
-      # Stable releases will be handled by a separate workflow
+      # Publishes preview packages for staging/testing
+      # Stable releases are handled by ci.sdk-release.yml workflow
       - name: Build and Pack Client SDK Preview
         if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
         id: pack
         run: |
-          # Generate preview version: 0.1.0-preview.{run_number}
-          PREVIEW_VERSION="0.1.0-preview.${{ github.run_number }}"
+          # Read base version from VERSION file
+          BASE_VERSION=$(cat Bannou.Client.SDK/VERSION | tr -d '[:space:]')
+          PREVIEW_VERSION="${BASE_VERSION}-preview.${{ github.run_number }}"
           echo "📦 Building and packing Client SDK v${PREVIEW_VERSION} (pre-release)..."
           echo "preview_version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "base_version=${BASE_VERSION}" >> $GITHUB_OUTPUT
 
           dotnet build Bannou.Client.SDK --configuration Release --no-dependencies
           dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build

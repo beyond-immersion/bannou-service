@@ -1,0 +1,95 @@
+name: 'SDK Label Check'
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches: [master]
+
+jobs:
+  check-sdk-label:
+    name: Verify SDK Version Label
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Changed Files
+        id: changed
+        run: |
+          # Get list of changed files in this PR
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD 2>/dev/null || echo "")
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Check if any SDK-related files were modified
+          SDK_CHANGED=false
+
+          # Files that affect the SDK
+          SDK_PATTERNS=(
+            "Bannou.Client.SDK/"
+            "sdk-sources/"
+            "scripts/generate-client-sdk.sh"
+            "lib-connect/Protocol/"
+          )
+
+          for pattern in "${SDK_PATTERNS[@]}"; do
+            if echo "$CHANGED_FILES" | grep -q "^${pattern}"; then
+              SDK_CHANGED=true
+              echo "📦 SDK-affecting file pattern matched: ${pattern}"
+              break
+            fi
+          done
+
+          echo "sdk_changed=${SDK_CHANGED}" >> $GITHUB_OUTPUT
+
+      - name: Check PR Labels
+        if: steps.changed.outputs.sdk_changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "🔍 Checking PR labels..."
+
+          # Get labels on this PR
+          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name' 2>/dev/null || echo "")
+
+          echo "PR labels: ${LABELS}"
+
+          # Check for required SDK labels
+          HAS_SDK_LABEL=false
+          SDK_LABELS=("sdk:major" "sdk:minor" "sdk:patch" "sdk:none")
+
+          for label in "${SDK_LABELS[@]}"; do
+            if echo "$LABELS" | grep -q "^${label}$"; then
+              HAS_SDK_LABEL=true
+              echo "✅ Found SDK label: ${label}"
+              break
+            fi
+          done
+
+          if [ "$HAS_SDK_LABEL" = false ]; then
+            echo ""
+            echo "❌ ERROR: This PR modifies SDK files but is missing an SDK version label!"
+            echo ""
+            echo "Please add one of the following labels to this PR:"
+            echo "  • sdk:major - Breaking changes to the SDK API"
+            echo "  • sdk:minor - New features (backward compatible)"
+            echo "  • sdk:patch - Bug fixes (no API changes)"
+            echo "  • sdk:none  - Changes don't affect SDK functionality"
+            echo ""
+            echo "These labels help determine version bumps for stable SDK releases."
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ SDK label check passed!"
+
+      - name: Skip Check (No SDK Changes)
+        if: steps.changed.outputs.sdk_changed == 'false'
+        run: |
+          echo "✅ No SDK-affecting files changed - label check not required"
