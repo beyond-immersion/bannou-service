@@ -417,8 +417,9 @@ public class PermissionsService : IPermissionsService
 
             await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
 
-            // Recompile session permissions
-            await RecompileSessionPermissionsAsync(body.SessionId, "session_state_changed");
+            // Recompile session permissions using the states we already have
+            // (avoids read-after-write consistency issues by not re-reading from Dapr)
+            await RecompileSessionPermissionsAsync(body.SessionId, sessionStates, "session_state_changed");
 
             return (StatusCodes.OK, new SessionUpdateResponse
             {
@@ -469,8 +470,9 @@ public class PermissionsService : IPermissionsService
 
             await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
 
-            // Recompile all permissions for this session
-            await RecompileSessionPermissionsAsync(body.SessionId, "role_changed");
+            // Recompile all permissions for this session using the states we already have
+            // (avoids read-after-write consistency issues by not re-reading from Dapr)
+            await RecompileSessionPermissionsAsync(body.SessionId, sessionStates, "role_changed");
 
             return (StatusCodes.OK, new SessionUpdateResponse
             {
@@ -562,19 +564,35 @@ public class PermissionsService : IPermissionsService
 
     /// <summary>
     /// Recompile permissions for a session and publish update to Connect service.
+    /// Reads session states from Dapr (used when states are not already in memory).
     /// </summary>
     private async Task RecompileSessionPermissionsAsync(string sessionId, string reason)
     {
+        // Get session states from Dapr
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var sessionStates = await _daprClient.GetStateAsync<Dictionary<string, string>>(
+            STATE_STORE, statesKey);
+
+        if (sessionStates == null || sessionStates.Count == 0)
+        {
+            _logger.LogDebug("No session states found for {SessionId}, skipping recompilation", sessionId);
+            return;
+        }
+
+        await RecompileSessionPermissionsAsync(sessionId, sessionStates, reason);
+    }
+
+    /// <summary>
+    /// Recompile permissions for a session using provided session states.
+    /// This overload avoids read-after-write consistency issues by using states already in memory.
+    /// </summary>
+    private async Task RecompileSessionPermissionsAsync(string sessionId, Dictionary<string, string> sessionStates, string reason)
+    {
         try
         {
-            // Get session states
-            var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-            var sessionStates = await _daprClient.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE, statesKey);
-
             if (sessionStates == null || sessionStates.Count == 0)
             {
-                _logger.LogDebug("No session states found for {SessionId}, skipping recompilation", sessionId);
+                _logger.LogDebug("No session states provided for {SessionId}, skipping recompilation", sessionId);
                 return;
             }
 
@@ -655,24 +673,25 @@ public class PermissionsService : IPermissionsService
                 int.TryParse(existingPermissions["version"]?.ToString(), out currentVersion);
             }
 
+            var newVersion = currentVersion + 1;
             var newPermissionData = new Dictionary<string, object>();
             foreach (var kvp in compiledPermissions)
             {
                 newPermissionData[kvp.Key] = kvp.Value;
             }
-            newPermissionData["version"] = currentVersion + 1;
+            newPermissionData["version"] = newVersion;
             newPermissionData["generated_at"] = DateTimeOffset.UtcNow.ToString();
 
             await _daprClient.SaveStateAsync(STATE_STORE, permissionsKey, newPermissionData);
 
-            // Clear in-memory cache
+            // Clear in-memory cache after write
             _sessionCapabilityCache.TryRemove(sessionId, out _);
 
             // Publish capability update to Connect service
             await PublishCapabilityUpdateAsync(sessionId, compiledPermissions, reason);
 
-            _logger.LogInformation("Recompiled permissions for session {SessionId}: {ServiceCount} services",
-                sessionId, compiledPermissions.Count);
+            _logger.LogInformation("Recompiled permissions for session {SessionId}: {ServiceCount} services, version {Version}",
+                sessionId, compiledPermissions.Count, newVersion);
         }
         catch (Exception ex)
         {
