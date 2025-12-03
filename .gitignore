@@ -10,8 +10,6 @@ nupkg/
 
 # Generated Client SDK (regenerated on build)
 Bannou.Client.SDK/
-# Keep VERSION file for semantic versioning
-!Bannou.Client.SDK/VERSION
 test-nuget/
 nuget-packages/
 

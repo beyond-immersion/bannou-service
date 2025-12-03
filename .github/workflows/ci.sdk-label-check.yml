@@ -32,6 +32,7 @@ jobs:
 
           # Files that affect the SDK
           SDK_PATTERNS=(
+            "SDK_VERSION"
             "Bannou.Client.SDK/"
             "sdk-sources/"
             "scripts/generate-client-sdk.sh"

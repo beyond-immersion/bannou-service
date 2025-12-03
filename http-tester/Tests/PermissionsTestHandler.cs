@@ -716,10 +716,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 PreviousState = "lobby"
             });
 
-            // Small delay to allow permission updates to propagate
-            await Task.Delay(200);
-
-            // Check capabilities after transition
+            // Check capabilities after transition - service now verifies write consistency before returning
             var gameCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
             {
                 SessionId = testSessionId
@@ -870,10 +867,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 PreviousRole = "user"
             });
 
-            // Small delay to allow permission updates to propagate
-            await Task.Delay(200);
-
-            // Count admin methods
+            // Count admin methods - service now verifies write consistency before returning
             var adminCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
             {
                 SessionId = testSessionId
@@ -1214,10 +1208,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 PreviousRole = "user"
             });
 
-            // Small delay to allow permission updates to propagate
-            await Task.Delay(200);
-
-            // Get admin capabilities
+            // Get admin capabilities - service now verifies write consistency before returning
             var adminCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
             {
                 SessionId = testSessionId

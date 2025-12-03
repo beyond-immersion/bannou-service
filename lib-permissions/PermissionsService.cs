@@ -267,53 +267,58 @@ public class PermissionsService : IPermissionsService
             _logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}", body.ServiceId, serviceRegisteredKey);
 
             // Also update the centralized registered_services list (enables "list all registered services" queries)
-            var maxRetries = 5;
-            var retryDelay = 100; // ms
+            // Uses Dapr distributed lock to prevent race conditions when multiple services register concurrently
+            const string LOCK_STORE = "lockstore";
+            const string LOCK_RESOURCE = "registered_services_lock";
+            var lockOwnerId = $"{body.ServiceId}-{Guid.NewGuid():N}";
 
-            for (var attempt = 0; attempt < maxRetries; attempt++)
+            try
             {
-                try
+                // Acquire distributed lock to serialize updates to the shared registered_services list
+                // Note: Dapr distributed lock API is alpha, suppress the warning
+#pragma warning disable DAPR_DISTRIBUTEDLOCK
+                await using var serviceLock = await _daprClient.Lock(
+                    LOCK_STORE,
+                    LOCK_RESOURCE,
+                    lockOwnerId,
+                    expiryInSeconds: 30,  // Lock expires after 30 seconds if not released
+                    cancellationToken: cancellationToken);
+#pragma warning restore DAPR_DISTRIBUTEDLOCK
+
+                if (serviceLock.Success)
                 {
+                    _logger.LogInformation("Acquired lock for {ServiceId} to update registered services", body.ServiceId);
+
+                    // Now we have exclusive access - safe to read-modify-write
                     var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
                         STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
 
-                    _logger.LogInformation("Current registered services (attempt {Attempt}): {Services}",
-                        attempt + 1, string.Join(", ", registeredServices));
+                    _logger.LogInformation("Current registered services (locked): {Services}",
+                        string.Join(", ", registeredServices));
 
                     if (!registeredServices.Contains(body.ServiceId))
                     {
                         registeredServices.Add(body.ServiceId);
                         await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, registeredServices, cancellationToken: cancellationToken);
-                        _logger.LogInformation("Added {ServiceId} to registered services list. Now: {Services}",
+                        _logger.LogInformation("Successfully added {ServiceId} to registered services list. Now: {Services}",
                             body.ServiceId, string.Join(", ", registeredServices));
                     }
                     else
                     {
                         _logger.LogInformation("Service {ServiceId} already in registered services list", body.ServiceId);
                     }
-
-                    // Verify the write succeeded by re-reading
-                    var verifyServices = await _daprClient.GetStateAsync<HashSet<string>>(
-                        STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
-
-                    if (verifyServices.Contains(body.ServiceId))
-                    {
-                        _logger.LogInformation("Verified {ServiceId} is in registered services list: {Services}",
-                            body.ServiceId, string.Join(", ", verifyServices));
-                        break; // Success
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Service {ServiceId} was not found in registered services after write, retrying... (attempt {Attempt}/{Max})",
-                            body.ServiceId, attempt + 1, maxRetries);
-                        await Task.Delay(retryDelay * (attempt + 1), cancellationToken); // Exponential backoff
-                    }
                 }
-                catch (Exception retryEx)
+                else
                 {
-                    _logger.LogWarning(retryEx, "Error during registered services update attempt {Attempt}, retrying...", attempt + 1);
-                    await Task.Delay(retryDelay * (attempt + 1), cancellationToken);
+                    // Failed to acquire lock - this shouldn't happen often, log and continue
+                    // The service is still registered via the individual marker, so this isn't critical
+                    _logger.LogWarning("Failed to acquire lock for {ServiceId}, registered_services list may not include this service immediately", body.ServiceId);
                 }
+            }
+            catch (Exception lockEx)
+            {
+                // Lock acquisition or state update failed
+                _logger.LogWarning(lockEx, "Error during registered services update for {ServiceId}, service is registered but may not appear in service list immediately", body.ServiceId);
             }
 
             // Get all active sessions and recompile
@@ -417,8 +422,9 @@ public class PermissionsService : IPermissionsService
 
             await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
 
-            // Recompile session permissions
-            await RecompileSessionPermissionsAsync(body.SessionId, "session_state_changed");
+            // Recompile session permissions using the states we already have
+            // (avoids read-after-write consistency issues by not re-reading from Dapr)
+            await RecompileSessionPermissionsAsync(body.SessionId, sessionStates, "session_state_changed");
 
             return (StatusCodes.OK, new SessionUpdateResponse
             {
@@ -469,8 +475,9 @@ public class PermissionsService : IPermissionsService
 
             await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
 
-            // Recompile all permissions for this session
-            await RecompileSessionPermissionsAsync(body.SessionId, "role_changed");
+            // Recompile all permissions for this session using the states we already have
+            // (avoids read-after-write consistency issues by not re-reading from Dapr)
+            await RecompileSessionPermissionsAsync(body.SessionId, sessionStates, "role_changed");
 
             return (StatusCodes.OK, new SessionUpdateResponse
             {
@@ -562,19 +569,35 @@ public class PermissionsService : IPermissionsService
 
     /// <summary>
     /// Recompile permissions for a session and publish update to Connect service.
+    /// Reads session states from Dapr (used when states are not already in memory).
     /// </summary>
     private async Task RecompileSessionPermissionsAsync(string sessionId, string reason)
     {
+        // Get session states from Dapr
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var sessionStates = await _daprClient.GetStateAsync<Dictionary<string, string>>(
+            STATE_STORE, statesKey);
+
+        if (sessionStates == null || sessionStates.Count == 0)
+        {
+            _logger.LogDebug("No session states found for {SessionId}, skipping recompilation", sessionId);
+            return;
+        }
+
+        await RecompileSessionPermissionsAsync(sessionId, sessionStates, reason);
+    }
+
+    /// <summary>
+    /// Recompile permissions for a session using provided session states.
+    /// This overload avoids read-after-write consistency issues by using states already in memory.
+    /// </summary>
+    private async Task RecompileSessionPermissionsAsync(string sessionId, Dictionary<string, string> sessionStates, string reason)
+    {
         try
         {
-            // Get session states
-            var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
-            var sessionStates = await _daprClient.GetStateAsync<Dictionary<string, string>>(
-                STATE_STORE, statesKey);
-
             if (sessionStates == null || sessionStates.Count == 0)
             {
-                _logger.LogDebug("No session states found for {SessionId}, skipping recompilation", sessionId);
+                _logger.LogDebug("No session states provided for {SessionId}, skipping recompilation", sessionId);
                 return;
             }
 
@@ -655,24 +678,25 @@ public class PermissionsService : IPermissionsService
                 int.TryParse(existingPermissions["version"]?.ToString(), out currentVersion);
             }
 
+            var newVersion = currentVersion + 1;
             var newPermissionData = new Dictionary<string, object>();
             foreach (var kvp in compiledPermissions)
             {
                 newPermissionData[kvp.Key] = kvp.Value;
             }
-            newPermissionData["version"] = currentVersion + 1;
+            newPermissionData["version"] = newVersion;
             newPermissionData["generated_at"] = DateTimeOffset.UtcNow.ToString();
 
             await _daprClient.SaveStateAsync(STATE_STORE, permissionsKey, newPermissionData);
 
-            // Clear in-memory cache
+            // Clear in-memory cache after write
             _sessionCapabilityCache.TryRemove(sessionId, out _);
 
             // Publish capability update to Connect service
             await PublishCapabilityUpdateAsync(sessionId, compiledPermissions, reason);
 
-            _logger.LogInformation("Recompiled permissions for session {SessionId}: {ServiceCount} services",
-                sessionId, compiledPermissions.Count);
+            _logger.LogInformation("Recompiled permissions for session {SessionId}: {ServiceCount} services, version {Version}",
+                sessionId, compiledPermissions.Count, newVersion);
         }
         catch (Exception ex)
         {
