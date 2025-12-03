@@ -2103,6 +2103,13 @@
             Configurable via HEARTBEAT_INTERVAL_SECONDS environment variable.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.PermissionHeartbeatEnabled">
+            <summary>
+            Whether to re-register permissions on each periodic heartbeat.
+            Default is true. Configurable via PERMISSION_HEARTBEAT_ENABLED environment variable.
+            This ensures late-joining permission services receive all API mappings.
+            </summary>
+        </member>
         <member name="F:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.PUBSUB_NAME">
             <summary>
             The pub/sub component name for heartbeat events.
@@ -2144,6 +2151,13 @@
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.PublishPeriodicHeartbeatAsync">
             <summary>
             Publish a periodic heartbeat with current service statuses.
+            Also re-registers permissions if enabled (solves late-subscriber and race condition issues).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.ReRegisterPermissionsAsync">
+            <summary>
+            Re-register permissions for all services as part of periodic heartbeat.
+            This ensures late-joining permission services receive API mappings.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.PublishShutdownHeartbeatAsync(System.Threading.CancellationToken)">

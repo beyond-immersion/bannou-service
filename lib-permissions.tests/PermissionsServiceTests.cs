@@ -65,6 +65,20 @@ public class PermissionsServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(default(HashSet<string>)!);
 
+        // Set up distributed lock to succeed
+        // TryLockResponse is sealed so we create a real instance with Success = true
+#pragma warning disable DAPR_DISTRIBUTEDLOCK
+        var lockResponse = new TryLockResponse { Success = true };
+        _mockDaprClient
+            .Setup(d => d.Lock(
+                "lockstore",
+                "registered_services_lock",
+                It.IsAny<string>(),
+                30,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lockResponse);
+#pragma warning restore DAPR_DISTRIBUTEDLOCK
+
         // Create permission matrix for orchestrator-like service
         var permissions = new ServicePermissionMatrix
         {
@@ -92,7 +106,7 @@ public class PermissionsServiceTests
         Assert.True(response.Success);
         Assert.Equal("orchestrator", response.ServiceId);
 
-        // Verify state transaction was executed
+        // Verify state transaction was executed (stores permission matrix)
         _mockDaprClient.Verify(d => d.ExecuteStateTransactionAsync(
             STATE_STORE,
             It.IsAny<IReadOnlyList<StateTransactionRequest>>(),

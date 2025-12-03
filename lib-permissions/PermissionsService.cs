@@ -267,53 +267,58 @@ public class PermissionsService : IPermissionsService
             _logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}", body.ServiceId, serviceRegisteredKey);
 
             // Also update the centralized registered_services list (enables "list all registered services" queries)
-            var maxRetries = 5;
-            var retryDelay = 100; // ms
+            // Uses Dapr distributed lock to prevent race conditions when multiple services register concurrently
+            const string LOCK_STORE = "lockstore";
+            const string LOCK_RESOURCE = "registered_services_lock";
+            var lockOwnerId = $"{body.ServiceId}-{Guid.NewGuid():N}";
 
-            for (var attempt = 0; attempt < maxRetries; attempt++)
+            try
             {
-                try
+                // Acquire distributed lock to serialize updates to the shared registered_services list
+                // Note: Dapr distributed lock API is alpha, suppress the warning
+#pragma warning disable DAPR_DISTRIBUTEDLOCK
+                await using var serviceLock = await _daprClient.Lock(
+                    LOCK_STORE,
+                    LOCK_RESOURCE,
+                    lockOwnerId,
+                    expiryInSeconds: 30,  // Lock expires after 30 seconds if not released
+                    cancellationToken: cancellationToken);
+#pragma warning restore DAPR_DISTRIBUTEDLOCK
+
+                if (serviceLock.Success)
                 {
+                    _logger.LogInformation("Acquired lock for {ServiceId} to update registered services", body.ServiceId);
+
+                    // Now we have exclusive access - safe to read-modify-write
                     var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
                         STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
 
-                    _logger.LogInformation("Current registered services (attempt {Attempt}): {Services}",
-                        attempt + 1, string.Join(", ", registeredServices));
+                    _logger.LogInformation("Current registered services (locked): {Services}",
+                        string.Join(", ", registeredServices));
 
                     if (!registeredServices.Contains(body.ServiceId))
                     {
                         registeredServices.Add(body.ServiceId);
                         await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, registeredServices, cancellationToken: cancellationToken);
-                        _logger.LogInformation("Added {ServiceId} to registered services list. Now: {Services}",
+                        _logger.LogInformation("Successfully added {ServiceId} to registered services list. Now: {Services}",
                             body.ServiceId, string.Join(", ", registeredServices));
                     }
                     else
                     {
                         _logger.LogInformation("Service {ServiceId} already in registered services list", body.ServiceId);
                     }
-
-                    // Verify the write succeeded by re-reading
-                    var verifyServices = await _daprClient.GetStateAsync<HashSet<string>>(
-                        STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
-
-                    if (verifyServices.Contains(body.ServiceId))
-                    {
-                        _logger.LogInformation("Verified {ServiceId} is in registered services list: {Services}",
-                            body.ServiceId, string.Join(", ", verifyServices));
-                        break; // Success
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Service {ServiceId} was not found in registered services after write, retrying... (attempt {Attempt}/{Max})",
-                            body.ServiceId, attempt + 1, maxRetries);
-                        await Task.Delay(retryDelay * (attempt + 1), cancellationToken); // Exponential backoff
-                    }
                 }
-                catch (Exception retryEx)
+                else
                 {
-                    _logger.LogWarning(retryEx, "Error during registered services update attempt {Attempt}, retrying...", attempt + 1);
-                    await Task.Delay(retryDelay * (attempt + 1), cancellationToken);
+                    // Failed to acquire lock - this shouldn't happen often, log and continue
+                    // The service is still registered via the individual marker, so this isn't critical
+                    _logger.LogWarning("Failed to acquire lock for {ServiceId}, registered_services list may not include this service immediately", body.ServiceId);
                 }
+            }
+            catch (Exception lockEx)
+            {
+                // Lock acquisition or state update failed
+                _logger.LogWarning(lockEx, "Error during registered services update for {ServiceId}, service is registered but may not appear in service list immediately", body.ServiceId);
             }
 
             // Get all active sessions and recompile
