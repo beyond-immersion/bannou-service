@@ -96,6 +96,21 @@ cat >> "$SDK_PROJECT" << 'EOF'
     <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
   </ItemGroup>
 
+  <!-- WebSocket Binary Protocol (Client Mode Support) -->
+  <!-- These are dependency-free classes for client-side WebSocket communication -->
+  <ItemGroup>
+    <Compile Include="../lib-connect/Protocol/BinaryMessage.cs" Condition="Exists('../lib-connect/Protocol/BinaryMessage.cs')" />
+    <Compile Include="../lib-connect/Protocol/MessageFlags.cs" Condition="Exists('../lib-connect/Protocol/MessageFlags.cs')" />
+    <Compile Include="../lib-connect/Protocol/NetworkByteOrder.cs" Condition="Exists('../lib-connect/Protocol/NetworkByteOrder.cs')" />
+    <Compile Include="../lib-connect/Protocol/GuidGenerator.cs" Condition="Exists('../lib-connect/Protocol/GuidGenerator.cs')" />
+    <Compile Include="../lib-connect/Protocol/ConnectionState.cs" Condition="Exists('../lib-connect/Protocol/ConnectionState.cs')" />
+  </ItemGroup>
+
+  <!-- SDK Source Files (stable, version-controlled sources for SDK-specific classes) -->
+  <ItemGroup>
+    <Compile Include="../sdk-sources/**/*.cs" />
+  </ItemGroup>
+
 </Project>
 EOF
 

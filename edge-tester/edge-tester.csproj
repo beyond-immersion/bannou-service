@@ -23,23 +23,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="../bannou-service/bannou-service.csproj" />
-    <ProjectReference Include="../lib-connect/lib-connect.csproj" />
-    <ProjectReference Include="..\lib-accounts\lib-accounts.csproj" />
-    <ProjectReference Include="..\lib-auth\lib-auth.csproj" />
-    <ProjectReference Include="..\lib-behavior\lib-behavior.csproj" />
-    <ProjectReference Include="..\lib-game-session\lib-game-session.csproj" />
-    <ProjectReference Include="..\lib-permissions\lib-permissions.csproj" />
-    <ProjectReference Include="..\lib-website\lib-website.csproj" />
-  </ItemGroup>
-
   <!-- Backwards Compatibility Testing: Use Published NuGet SDK -->
+  <!-- Version="*-*" includes pre-release packages (e.g., 0.1.0-preview.123) -->
   <ItemGroup Condition="'$(UsePublishedSDK)' == 'true'">
-    <PackageReference Include="BeyondImmersion.Bannou.Client.SDK" Version="*" />
+    <PackageReference Include="BeyondImmersion.Bannou.Client.SDK" Version="*-*" />
   </ItemGroup>
 
   <!-- Forward Compatibility Testing: Use Current Generated SDK -->

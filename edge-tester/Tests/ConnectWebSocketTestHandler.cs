@@ -126,13 +126,12 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        // Get access token from Program (should already be set from login)
-        var accessTokenField = typeof(Program).GetField("sAccessToken", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        var accessToken = (string?)accessTokenField?.GetValue(null);
+        // Get access token from BannouClient
+        var accessToken = Program.Client?.AccessToken;
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure login completed successfully");
+            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
             return false;
         }
 
@@ -181,12 +180,11 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessTokenField = typeof(Program).GetField("sAccessToken", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        var accessToken = (string?)accessTokenField?.GetValue(null);
+        var accessToken = Program.Client?.AccessToken;
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available");
+            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
             return false;
         }
 
@@ -289,12 +287,11 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessTokenField = typeof(Program).GetField("sAccessToken", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        var accessToken = (string?)accessTokenField?.GetValue(null);
+        var accessToken = Program.Client?.AccessToken;
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available");
+            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
             return false;
         }
 
@@ -383,12 +380,11 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessTokenField = typeof(Program).GetField("sAccessToken", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        var accessToken = (string?)accessTokenField?.GetValue(null);
+        var accessToken = Program.Client?.AccessToken;
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available");
+            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
             return false;
         }
 
