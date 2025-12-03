@@ -199,13 +199,13 @@ lib-{service}/                        # Single consolidated service plugin
 scripts/generate-all-services.sh     # Generate controllers/models/clients from schemas
 make format                    # Fix line endings + C# formatting
 make build                     # Build all services
-make test-all-v2              # Run all tests (unit + integration + websocket)
+make all                       # Complete dev cycle (clean, generate, build, all tests)
 
 # Testing
-make test-integration-v2       # Quick infrastructure validation
-make test-http                 # Service-to-service HTTP testing  
-make test-websocket            # WebSocket protocol testing
-make ci-test-v2               # Full CI pipeline locally
+make test                      # Run unit tests (dotnet test)
+make test-infrastructure       # Infrastructure validation (Docker health)
+make test-http                 # Service-to-service HTTP testing
+make test-edge                 # WebSocket protocol testing
 ```
 
 ### Code Quality Requirements
@@ -344,14 +344,14 @@ await _daprClient.PublishEventAsync("bannou-pubsub", "event-topic", eventModel);
 - **Never commit** unless explicitly instructed by user
 - **Always run `git diff` against last commit** before committing to review all changes
 - **Always format** code with `make format` before committing
-- **Run tests** locally before committing (use `make test-all-v2`)
+- **Run tests** locally before committing (use `make all`)
 - Present changes for user review and get explicit approval first
 
 ### Pre-Commit Checklist
 ```bash
 # Required before every commit:
 make format                    # Fix formatting and line endings
-make test-all-v2              # Run full test suite
+make all                       # Run full test suite (or individual: make test && make test-http && make test-edge)
 git diff HEAD~1               # Review ALL changes since last commit
 # Only commit after user explicitly requests it
 ```

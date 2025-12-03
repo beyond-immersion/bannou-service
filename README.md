@@ -52,7 +52,7 @@ Bannou features an innovative **Connect service edge gateway** that enables zero
 - **Progressive Access Control**: Service mappings dynamically update based on authentication state
 
 ### Binary Protocol
-- **24-byte Header**: 16-byte service GUID + 8-byte message ID for correlation
+- **31-byte Header**: [Flags: 1][Channel: 2][Sequence: 4][Service GUID: 16][Message ID: 8]
 - **Variable Payload**: JSON or binary data support with automatic serialization
 - **Service Discovery**: Clients receive method → GUID mappings at connection time
 - **Bidirectional RPC**: RabbitMQ integration enables server-initiated requests to clients
