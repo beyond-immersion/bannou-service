@@ -49,16 +49,33 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IDa
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterResponse>> RegisterAsync(RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Initialize OAuth2 flow
+    /// Initialize OAuth2 flow (browser redirect)
     /// </summary>
+
+    /// <remarks>
+    /// Browser-facing endpoint for initiating OAuth flows. The user's browser navigates
+    /// <br/>to this URL directly, which then redirects to the OAuth provider.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses GET with path parameters because it's a browser
+    /// <br/>redirect flow, not a WebSocket-routed API call.
+    /// </remarks>
 
 
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuthAsync(Provider provider, string redirectUri, string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Complete OAuth2 flow
+    /// Complete OAuth2 flow (browser redirect callback)
     /// </summary>
+
+    /// <remarks>
+    /// Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects
+    /// <br/>the user's browser back to this URL after authentication.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses path parameters because the callback URL is registered
+    /// <br/>with OAuth providers and cannot be changed without updating provider configurations.
+    /// </remarks>
+
 
 
     /// <returns>OAuth authentication successful</returns>
@@ -125,10 +142,12 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IDa
     /// Terminate specific session
     /// </summary>
 
+    /// <param name="jwt">JWT access token for session identification</param>
+
 
     /// <returns>Session terminated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSessionAsync(string jwt, TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Request password reset
@@ -229,8 +248,15 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Initialize OAuth2 flow
+    /// Initialize OAuth2 flow (browser redirect)
     /// </summary>
+    /// <remarks>
+    /// Browser-facing endpoint for initiating OAuth flows. The user's browser navigates
+    /// <br/>to this URL directly, which then redirects to the OAuth provider.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses GET with path parameters because it's a browser
+    /// <br/>redirect flow, not a WebSocket-routed API call.
+    /// </remarks>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/init")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuth([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider provider, [Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string redirectUri, [Microsoft.AspNetCore.Mvc.FromQuery] string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
@@ -241,8 +267,15 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Complete OAuth2 flow
+    /// Complete OAuth2 flow (browser redirect callback)
     /// </summary>
+    /// <remarks>
+    /// Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects
+    /// <br/>the user's browser back to this URL after authentication.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses path parameters because the callback URL is registered
+    /// <br/>with OAuth providers and cannot be changed without updating provider configurations.
+    /// </remarks>
     /// <returns>OAuth authentication successful</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/callback")]
 
@@ -330,7 +363,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <param name="jwt">JWT access token for session identification</param>
     /// <returns>Active sessions retrieved</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/sessions")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/sessions/list")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionsResponse>> GetSessions(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -346,13 +379,18 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <summary>
     /// Terminate specific session
     /// </summary>
+    /// <param name="jwt">JWT access token for session identification</param>
     /// <returns>Session terminated</returns>
-    [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("auth/sessions/{sessionId}")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/sessions/terminate")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSession([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSession([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.TerminateSessionAsync(sessionId, cancellationToken);
+        var jwt = HttpContext.ExtractBearerToken();
+        if (string.IsNullOrEmpty(jwt))
+            return Unauthorized("Missing or invalid Authorization header");
+
+        var (statusCode, result) = await _implementation.TerminateSessionAsync(jwt, body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -390,7 +428,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </remarks>
     [Dapr.Topic("bannou-pubsub", "account.deleted")]
     [Microsoft.AspNetCore.Mvc.HttpPost("/dapr/events/account-deleted")]
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleAccountdeletedEvent([Microsoft.AspNetCore.Mvc.FromBody] object eventData)
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleAccountDeletedEvent([Microsoft.AspNetCore.Mvc.FromBody] object eventData)
     {
         try
         {

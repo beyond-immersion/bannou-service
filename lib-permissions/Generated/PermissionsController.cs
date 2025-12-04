@@ -118,7 +118,7 @@ public interface IPermissionsController : BeyondImmersion.BannouService.Controll
 
     /// <returns>List of registered services</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisteredServicesResponse>> GetRegisteredServicesAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisteredServicesResponse>> GetRegisteredServicesAsync(ListServicesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -283,12 +283,12 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     /// <br/>For client calls through WebSocket/Connect, only admin users can access it.
     /// </remarks>
     /// <returns>List of registered services</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("permissions/services")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("permissions/services/list")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisteredServicesResponse>> GetRegisteredServices(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisteredServicesResponse>> GetRegisteredServices([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListServicesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetRegisteredServicesAsync(cancellationToken);
+        var (statusCode, result) = await _implementation.GetRegisteredServicesAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

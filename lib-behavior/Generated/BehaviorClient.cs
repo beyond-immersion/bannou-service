@@ -78,10 +78,9 @@ public partial interface IBehaviorClient
     /// Retrieves a previously compiled behavior from the cache.
     /// <br/>Used for performance optimization in high-frequency behavior execution.
     /// </remarks>
-    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
     /// <returns>Cached behavior retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<CachedBehaviorResponse> GetCachedBehaviorAsync(string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<CachedBehaviorResponse> GetCachedBehaviorAsync(GetCachedBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -91,10 +90,9 @@ public partial interface IBehaviorClient
     /// Removes a behavior from the cache, forcing recompilation on next access.
     /// <br/>Used when behavior definitions are updated.
     /// </remarks>
-    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
     /// <returns>Cache invalidated successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task InvalidateCachedBehaviorAsync(string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -454,13 +452,12 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
     /// Retrieves a previously compiled behavior from the cache.
     /// <br/>Used for performance optimization in high-frequency behavior execution.
     /// </remarks>
-    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
     /// <returns>Cached behavior retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<CachedBehaviorResponse> GetCachedBehaviorAsync(string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<CachedBehaviorResponse> GetCachedBehaviorAsync(GetCachedBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (behavior_id == null)
-            throw new System.ArgumentNullException("behavior_id");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -468,15 +465,18 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "cache/{behavior_id}"
-                urlBuilder_.Append("cache/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(behavior_id, System.Globalization.CultureInfo.InvariantCulture)));
+                // Operation Path: "cache/get"
+                urlBuilder_.Append("cache/get");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -548,13 +548,12 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
     /// Removes a behavior from the cache, forcing recompilation on next access.
     /// <br/>Used when behavior definitions are updated.
     /// </remarks>
-    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
     /// <returns>Cache invalidated successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task InvalidateCachedBehaviorAsync(string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (behavior_id == null)
-            throw new System.ArgumentNullException("behavior_id");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -562,14 +561,17 @@ public partial class BehaviorClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("DELETE");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "cache/{behavior_id}"
-                urlBuilder_.Append("cache/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(behavior_id, System.Globalization.CultureInfo.InvariantCulture)));
+                // Operation Path: "cache/invalidate"
+                urlBuilder_.Append("cache/invalidate");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 

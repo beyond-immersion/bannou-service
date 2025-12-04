@@ -82,11 +82,11 @@ public class BehaviorService : IBehaviorService
     /// <summary>
     /// Retrieves a cached compiled behavior. Not yet implemented - planned for future release.
     /// </summary>
-    public Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(string behavior_id, CancellationToken cancellationToken = default)
+    public Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(GetCachedBehaviorRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogWarning("Method GetCachedBehaviorAsync called but not implemented for: {BehaviorId}", behavior_id);
+            _logger.LogWarning("Method GetCachedBehaviorAsync called but not implemented for: {BehaviorId}", body.BehaviorId);
             return Task.FromResult<(StatusCodes, CachedBehaviorResponse?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
@@ -116,16 +116,16 @@ public class BehaviorService : IBehaviorService
     /// <summary>
     /// Invalidates a cached compiled behavior. Not yet implemented - planned for future release.
     /// </summary>
-    public Task<(StatusCodes, object?)> InvalidateCachedBehaviorAsync(string behavior_id, CancellationToken cancellationToken = default)
+    public Task<(StatusCodes, object?)> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogWarning("Method InvalidateCachedBehaviorAsync called but not implemented for: {BehaviorId}", behavior_id);
+            _logger.LogWarning("Method InvalidateCachedBehaviorAsync called but not implemented for: {BehaviorId}", body.BehaviorId);
             return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, null));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error invalidating cached behavior: {BehaviorId}", behavior_id);
+            _logger.LogError(ex, "Error invalidating cached behavior: {BehaviorId}", body.BehaviorId);
             return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
         }
     }

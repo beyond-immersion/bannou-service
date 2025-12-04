@@ -17,6 +17,7 @@ public class AuthServiceTests
     private readonly AuthServiceConfiguration _configuration;
     private readonly Mock<IAccountsClient> _mockAccountsClient;
     private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
 
     public AuthServiceTests()
     {
@@ -26,10 +27,29 @@ public class AuthServiceTests
             JwtSecret = "test-jwt-secret-at-least-32-chars-long",
             JwtIssuer = "test-issuer",
             JwtAudience = "test-audience",
-            JwtExpirationMinutes = 60
+            JwtExpirationMinutes = 60,
+            MockProviders = true,  // Enable mock providers for testing
+            // OAuth provider test configuration
+            DiscordClientId = "test-discord-client-id",
+            DiscordClientSecret = "test-discord-client-secret",
+            DiscordRedirectUri = "http://localhost:5012/auth/oauth/discord/callback",
+            GoogleClientId = "test-google-client-id",
+            GoogleClientSecret = "test-google-client-secret",
+            GoogleRedirectUri = "http://localhost:5012/auth/oauth/google/callback",
+            TwitchClientId = "test-twitch-client-id",
+            TwitchClientSecret = "test-twitch-client-secret",
+            TwitchRedirectUri = "http://localhost:5012/auth/oauth/twitch/callback",
+            // Steam test configuration
+            SteamApiKey = "test-steam-api-key",
+            SteamAppId = "123456"
         };
         _mockAccountsClient = new Mock<IAccountsClient>();
         _mockDaprClient = new Mock<DaprClient>();
+        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+
+        // Setup default HttpClient for mock factory
+        var mockHttpClient = new HttpClient();
+        _mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(mockHttpClient);
     }
 
     [Fact]
@@ -40,7 +60,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         Assert.NotNull(service);
     }
@@ -209,7 +230,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         var request = new LoginRequest
         {
@@ -233,7 +255,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         var request = new LoginRequest
         {
@@ -257,7 +280,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         var request = new LoginRequest
         {
@@ -281,7 +305,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         var request = new RegisterRequest
         {
@@ -305,7 +330,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         var request = new RegisterRequest
         {
@@ -329,7 +355,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         var request = new RegisterRequest
         {
@@ -353,7 +380,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         var request = new OAuthCallbackRequest
         {
@@ -376,7 +404,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         var request = new SteamVerifyRequest
         {
@@ -399,7 +428,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         var request = new RefreshRequest
         {
@@ -422,7 +452,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         // Act
         var (status, response) = await service.ValidateTokenAsync("");
@@ -440,7 +471,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         // Act
         var (status, response) = await service.ValidateTokenAsync(null!);
@@ -458,7 +490,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         // Act - pass a clearly invalid JWT format
         var (status, response) = await service.ValidateTokenAsync("not-a-valid-jwt");
@@ -476,7 +509,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         // Act
         var (status, response) = await service.LogoutAsync("", null);
@@ -494,7 +528,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         // Act
         var (status, response) = await service.GetSessionsAsync("");
@@ -516,7 +551,8 @@ public class AuthServiceTests
             null!,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object));
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object));
     }
 
     [Fact]
@@ -527,7 +563,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             null!,
             _configuration,
-            _mockLogger.Object));
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object));
     }
 
     [Fact]
@@ -538,7 +575,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             null!,
-            _mockLogger.Object));
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object));
     }
 
     [Fact]
@@ -549,6 +587,19 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
+            null!,
+            _mockHttpClientFactory.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullHttpClientFactory_ShouldThrow()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new AuthService(
+            _mockAccountsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
             null!));
     }
 
@@ -575,7 +626,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         // Act
         var (status, response) = await service.InitOAuthAsync(
@@ -596,7 +648,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         // Act
         var (status, response) = await service.InitSteamAuthAsync("https://example.com/steam-callback");
@@ -614,7 +667,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         var request = new PasswordResetRequest
         {
@@ -655,7 +709,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         var request = new PasswordResetConfirmRequest
         {
@@ -679,7 +734,8 @@ public class AuthServiceTests
             _mockAccountsClient.Object,
             _mockDaprClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
 
         var request = new PasswordResetConfirmRequest
         {
@@ -692,6 +748,121 @@ public class AuthServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    #endregion
+
+    #region Session Invalidation Event Tests
+
+    [Fact]
+    public async Task OnEventReceivedAsync_AccountDeleted_ShouldInvalidateSessionsAndPublishEvent()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionKey1 = $"session:{Guid.NewGuid()}";
+        var sessionKey2 = $"session:{Guid.NewGuid()}";
+
+        // Mock the account sessions lookup
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>>(
+                "statestore",
+                $"account-sessions:{accountId}",
+                It.IsAny<ConsistencyMode?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { sessionKey1, sessionKey2 });
+
+        var service = new AuthService(
+            _mockAccountsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
+
+        var accountDeletedEvent = new BeyondImmersion.BannouService.Accounts.AccountDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            AccountId = accountId,
+            DeletionReason = "user_requested"
+        };
+
+        // Act
+        await service.OnEventReceivedAsync("account.deleted", accountDeletedEvent);
+
+        // Assert - verify session invalidation event was published
+        _mockDaprClient.Verify(d => d.PublishEventAsync(
+            "bannou-pubsub",
+            "session.invalidated",
+            It.Is<SessionInvalidatedEvent>(e =>
+                e.AccountId == accountId &&
+                e.Reason == SessionInvalidatedEventReason.Account_deleted &&
+                e.DisconnectClients == true),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task OnEventReceivedAsync_AccountDeleted_WithNoSessions_ShouldNotPublishEvent()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+
+        // Mock returns empty session list
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>?>(
+                "statestore",
+                $"account-sessions:{accountId}",
+                It.IsAny<ConsistencyMode?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<string>?)null);
+
+        var service = new AuthService(
+            _mockAccountsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
+
+        var accountDeletedEvent = new BeyondImmersion.BannouService.Accounts.AccountDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            AccountId = accountId,
+            DeletionReason = "user_requested"
+        };
+
+        // Act
+        await service.OnEventReceivedAsync("account.deleted", accountDeletedEvent);
+
+        // Assert - no event should be published since there were no sessions
+        _mockDaprClient.Verify(d => d.PublishEventAsync(
+            "bannou-pubsub",
+            "session.invalidated",
+            It.IsAny<SessionInvalidatedEvent>(),
+            It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task OnEventReceivedAsync_UnknownEventTopic_ShouldNotThrow()
+    {
+        // Arrange
+        var service = new AuthService(
+            _mockAccountsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
+
+        var unknownEvent = new { SomeProperty = "value" };
+
+        // Act & Assert - should complete without throwing
+        var exception = await Record.ExceptionAsync(() =>
+            service.OnEventReceivedAsync("unknown.topic", unknownEvent));
+
+        Assert.Null(exception);
     }
 
     #endregion

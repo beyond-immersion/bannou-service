@@ -1,8 +1,18 @@
 openapi: 3.0.0
 info:
   title: Bannou Auth Service API
-  description: Authentication and session management service (Internet-facing)
-  version: 3.0.0
+  description: |
+    Authentication and session management service (Internet-facing).
+
+    **POST-Only API Pattern**: This API uses POST for all WebSocket-routable operations.
+    Path parameters are passed in request bodies instead of URLs.
+
+    **Exceptions**: OAuth endpoints (`/auth/oauth/*`) retain path parameters because they
+    are browser-facing redirect flows, not WebSocket-routed. The browser navigates to
+    these URLs directly for OAuth provider authentication.
+
+    See API-DESIGN.md for architectural rationale.
+  version: 4.0.0
 servers:
   - url: http://localhost:3500/v1.0/invoke/bannou/method
     description: Dapr sidecar endpoint
@@ -64,12 +74,21 @@ paths:
         '409':
           description: Username already exists
 
+  # OAuth endpoints use path parameters because they are browser-facing redirect flows.
+  # These are NOT routed through WebSocket and are accessed directly via browser navigation.
   /auth/oauth/{provider}/init:
     get:
-      summary: Initialize OAuth2 flow
+      summary: Initialize OAuth2 flow (browser redirect)
+      description: |
+        Browser-facing endpoint for initiating OAuth flows. The user's browser navigates
+        to this URL directly, which then redirects to the OAuth provider.
+
+        **Note**: This endpoint uses GET with path parameters because it's a browser
+        redirect flow, not a WebSocket-routed API call.
       operationId: initOAuth
       tags:
         - OAuth
+      x-browser-facing: true
       x-permissions:
         - role: anonymous
           states: {}
@@ -95,10 +114,17 @@ paths:
 
   /auth/oauth/{provider}/callback:
     post:
-      summary: Complete OAuth2 flow
+      summary: Complete OAuth2 flow (browser redirect callback)
+      description: |
+        Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects
+        the user's browser back to this URL after authentication.
+
+        **Note**: This endpoint uses path parameters because the callback URL is registered
+        with OAuth providers and cannot be changed without updating provider configurations.
       operationId: completeOAuth
       tags:
         - OAuth
+      x-browser-facing: true
       x-permissions:
         - role: anonymous
           states: {}
@@ -244,8 +270,8 @@ paths:
         '200':
           description: Logged out successfully
 
-  /auth/sessions:
-    get:
+  /auth/sessions/list:
+    post:
       summary: Get active sessions for account
       operationId: getSessions
       tags:
@@ -270,8 +296,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionsResponse'
 
-  /auth/sessions/{sessionId}:
-    delete:
+  /auth/sessions/terminate:
+    post:
       summary: Terminate specific session
       operationId: terminateSession
       tags:
@@ -280,15 +306,20 @@ paths:
         - role: user
           states:
             auth: authenticated
-      security:
-        - BearerAuth: []
       parameters:
-        - name: sessionId
-          in: path
+        - name: jwt
+          in: header
           required: true
           schema:
             type: string
-            format: uuid
+          description: JWT access token for session identification
+          x-from-authorization: bearer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminateSessionRequest'
       responses:
         '204':
           description: Session terminated
@@ -345,6 +376,18 @@ components:
       type: string
       enum: [google, discord, twitch]
       description: OAuth provider type
+
+    # Request Models for POST-only pattern
+    TerminateSessionRequest:
+      type: object
+      description: Request to terminate a specific session
+      required:
+        - sessionId
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the session to terminate
 
     LoginRequest:
       type: object
@@ -627,6 +670,45 @@ components:
           type: string
           description: The preferred Connect service instance ID
           example: "connect-omega-01"
+
+    # Event Models for Auth Lifecycle
+    SessionInvalidatedEvent:
+      type: object
+      description: Event published when sessions are invalidated (logout, account deletion, etc.)
+      required:
+        - eventId
+        - timestamp
+        - sessionIds
+        - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account whose sessions were invalidated
+        sessionIds:
+          type: array
+          items:
+            type: string
+          description: List of session IDs that were invalidated
+        reason:
+          $ref: '#/components/schemas/SessionInvalidatedEventReason'
+        disconnectClients:
+          type: boolean
+          default: true
+          description: Whether Connect service should disconnect WebSocket clients
+
+    SessionInvalidatedEventReason:
+      type: string
+      enum: [logout, account_deleted, security_revocation, admin_action, session_expired]
+      description: Reason for session invalidation
 
 x-service-configuration:
   properties:

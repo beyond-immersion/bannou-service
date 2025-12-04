@@ -40,7 +40,7 @@ public class ConnectTestHandler : IServiceTestHandler
         try
         {
             var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync();
+            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
 
             if (response?.Mappings == null)
                 return TestResult.Failed("Service mappings response is null or missing mappings");
@@ -115,7 +115,7 @@ public class ConnectTestHandler : IServiceTestHandler
         try
         {
             var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync();
+            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
 
             if (response?.DefaultMapping == null)
                 return TestResult.Failed("Default mapping is null");
@@ -146,7 +146,7 @@ public class ConnectTestHandler : IServiceTestHandler
         try
         {
             var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync();
+            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
 
             if (response?.Mappings == null)
                 return TestResult.Failed("Mappings are null");
@@ -184,7 +184,7 @@ public class ConnectTestHandler : IServiceTestHandler
         try
         {
             var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync();
+            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
 
             if (response == null)
                 return TestResult.Failed("Response is null");
@@ -218,7 +218,7 @@ public class ConnectTestHandler : IServiceTestHandler
         try
         {
             var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync();
+            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
 
             if (response == null)
                 return TestResult.Failed("Response is null");

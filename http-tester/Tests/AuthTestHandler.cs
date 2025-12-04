@@ -518,7 +518,7 @@ public class AuthTestHandler : IServiceTestHandler
             {
                 await ((AuthClient)authClient)
                     .WithAuthorization(accessToken)
-                    .TerminateSessionAsync(testSessionId);
+                    .TerminateSessionAsync(new TerminateSessionRequest { SessionId = testSessionId });
                 return TestResult.Successful("Session termination endpoint responded successfully");
             }
             catch (ApiException ex) when (ex.StatusCode == 404)

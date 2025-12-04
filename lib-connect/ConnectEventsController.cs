@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Auth;
 using Dapr;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -126,6 +127,116 @@ public class ConnectEventsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling capabilities-updated event");
+            return Ok(); // Don't fail Dapr retries - log and continue
+        }
+    }
+
+    /// <summary>
+    /// Handle session invalidation events from the Auth service.
+    /// Called by Dapr when sessions are invalidated (logout, account deletion, security revocation).
+    /// Disconnects affected WebSocket clients.
+    /// </summary>
+    [Topic("bannou-pubsub", "session.invalidated")]
+    [HttpPost("handle-session-invalidated")]
+    public async Task<IActionResult> HandleSessionInvalidatedAsync()
+    {
+        try
+        {
+            // Read the request body - Dapr pubsub delivers CloudEvents format
+            string rawBody;
+            using (var reader = new StreamReader(Request.Body, leaveOpen: true))
+            {
+                rawBody = await reader.ReadToEndAsync();
+            }
+
+            _logger.LogInformation("Received session-invalidated event - raw body length: {Length}",
+                rawBody?.Length ?? 0);
+
+            if (string.IsNullOrWhiteSpace(rawBody))
+            {
+                _logger.LogWarning("Received empty session-invalidated event body");
+                return Ok(); // Don't fail - just ignore empty events
+            }
+
+            // Parse the JSON
+            JsonElement eventObj;
+            try
+            {
+                using var document = JsonDocument.Parse(rawBody);
+                eventObj = document.RootElement.Clone();
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Failed to parse session-invalidated event as JSON");
+                return Ok(); // Don't fail - malformed events shouldn't break the system
+            }
+
+            // Extract data from CloudEvents format if present
+            JsonElement actualEventData = eventObj;
+            if (eventObj.ValueKind == JsonValueKind.Object && eventObj.TryGetProperty("data", out var dataElement))
+            {
+                actualEventData = dataElement;
+            }
+
+            // Extract session IDs and reason
+            var sessionIds = new List<string>();
+            string? reason = null;
+            bool disconnectClients = true;
+
+            if (actualEventData.TryGetProperty("sessionIds", out var sessionsElement) &&
+                sessionsElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var sessionElement in sessionsElement.EnumerateArray())
+                {
+                    var sessionId = sessionElement.GetString();
+                    if (!string.IsNullOrEmpty(sessionId))
+                    {
+                        sessionIds.Add(sessionId);
+                    }
+                }
+            }
+
+            if (actualEventData.TryGetProperty("reason", out var reasonElement))
+            {
+                reason = reasonElement.GetString();
+            }
+
+            if (actualEventData.TryGetProperty("disconnectClients", out var disconnectElement))
+            {
+                disconnectClients = disconnectElement.GetBoolean();
+            }
+
+            _logger.LogInformation(
+                "Processing session invalidation: {SessionCount} sessions, reason: {Reason}, disconnect: {Disconnect}",
+                sessionIds.Count, reason, disconnectClients);
+
+            if (!disconnectClients)
+            {
+                _logger.LogInformation("Session invalidation event received but disconnectClients=false, skipping");
+                return Ok();
+            }
+
+            // Cast to concrete service to call disconnect method
+            var connectService = _connectService as ConnectService;
+            if (connectService == null)
+            {
+                _logger.LogWarning("Connect service implementation not available for session disconnection");
+                return Ok();
+            }
+
+            // Disconnect affected sessions
+            foreach (var sessionId in sessionIds)
+            {
+                await connectService.DisconnectSessionAsync(sessionId, reason ?? "session_invalidated");
+            }
+
+            _logger.LogInformation("Disconnected {SessionCount} sessions due to invalidation (reason: {Reason})",
+                sessionIds.Count, reason);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling session-invalidated event");
             return Ok(); // Don't fail Dapr retries - log and continue
         }
     }

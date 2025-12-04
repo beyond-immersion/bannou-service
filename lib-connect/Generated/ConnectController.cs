@@ -55,7 +55,7 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
 
     /// <returns>Service mappings retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceMappingsResponse>> GetServiceMappingsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceMappingsResponse>> GetServiceMappingsAsync(GetServiceMappingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Establish WebSocket connection
@@ -181,12 +181,12 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     /// <br/>Shows how services are mapped in the current deployment topology.
     /// </remarks>
     /// <returns>Service mappings retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("service-mappings")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("service-mappings")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceMappingsResponse>> GetServiceMappings(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceMappingsResponse>> GetServiceMappings([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetServiceMappingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetServiceMappingsAsync(cancellationToken);
+        var (statusCode, result) = await _implementation.GetServiceMappingsAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

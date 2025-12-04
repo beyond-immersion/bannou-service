@@ -75,7 +75,7 @@ public class OrchestratorService : IOrchestratorService
     /// Implementation of GetInfrastructureHealth operation.
     /// Validates connectivity and health of core infrastructure components.
     /// </summary>
-    public async Task<(StatusCodes, InfrastructureHealthResponse?)> GetInfrastructureHealthAsync(CancellationToken cancellationToken)
+    public async Task<(StatusCodes, InfrastructureHealthResponse?)> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetInfrastructureHealth operation");
 
@@ -156,7 +156,7 @@ public class OrchestratorService : IOrchestratorService
     /// Implementation of GetServicesHealth operation.
     /// Retrieves health information from all services via Redis heartbeat monitoring.
     /// </summary>
-    public async Task<(StatusCodes, ServiceHealthReport?)> GetServicesHealthAsync(CancellationToken cancellationToken)
+    public async Task<(StatusCodes, ServiceHealthReport?)> GetServicesHealthAsync(ServiceHealthRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetServicesHealth operation");
 
@@ -231,7 +231,7 @@ public class OrchestratorService : IOrchestratorService
     /// Implementation of GetBackends operation.
     /// Detects and returns available container orchestration backends.
     /// </summary>
-    public async Task<(StatusCodes, BackendsResponse?)> GetBackendsAsync(CancellationToken cancellationToken)
+    public async Task<(StatusCodes, BackendsResponse?)> GetBackendsAsync(ListBackendsRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetBackends operation");
 
@@ -251,7 +251,7 @@ public class OrchestratorService : IOrchestratorService
     /// Implementation of GetPresets operation.
     /// Returns available deployment preset configurations.
     /// </summary>
-    public Task<(StatusCodes, PresetsResponse?)> GetPresetsAsync(CancellationToken cancellationToken)
+    public Task<(StatusCodes, PresetsResponse?)> GetPresetsAsync(ListPresetsRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetPresets operation");
 
@@ -467,7 +467,7 @@ public class OrchestratorService : IOrchestratorService
     /// Implementation of GetStatus operation.
     /// Returns the current environment status including running services.
     /// </summary>
-    public async Task<(StatusCodes, EnvironmentStatus?)> GetStatusAsync(CancellationToken cancellationToken)
+    public async Task<(StatusCodes, EnvironmentStatus?)> GetStatusAsync(GetStatusRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetStatus operation");
 
@@ -666,14 +666,14 @@ public class OrchestratorService : IOrchestratorService
     /// Retrieves logs from containers.
     /// </summary>
     public async Task<(StatusCodes, LogsResponse?)> GetLogsAsync(
-        string? service,
-        string? container,
-        string? since,
-        string? until,
-        int? tail = 100,
-        bool? follow = false,
+        GetLogsRequest body,
         CancellationToken cancellationToken = default)
     {
+        var service = body.Service;
+        var container = body.Container;
+        var since = body.Since;
+        var tail = body.Tail;
+
         _logger.LogInformation(
             "Executing GetLogs operation: service={Service}, container={Container}, tail={Tail}",
             service, container, tail);
@@ -690,7 +690,7 @@ public class OrchestratorService : IOrchestratorService
             }
 
             var appName = service ?? container ?? "bannou";
-            var logsText = await orchestrator.GetContainerLogsAsync(appName, tail ?? 100, sinceTime, cancellationToken);
+            var logsText = await orchestrator.GetContainerLogsAsync(appName, tail, sinceTime, cancellationToken);
 
             // Parse log text into LogEntry objects
             var logEntries = logsText
@@ -959,10 +959,10 @@ public class OrchestratorService : IOrchestratorService
     /// Restarts a specific container by Dapr app name.
     /// </summary>
     public async Task<(StatusCodes, ContainerRestartResponse?)> RequestContainerRestartAsync(
-        string appName,
-        ContainerRestartRequest body,
+        ContainerRestartRequestBody body,
         CancellationToken cancellationToken)
     {
+        var appName = body.AppName;
         _logger.LogInformation(
             "Executing RequestContainerRestart operation: app={AppName}, priority={Priority}",
             appName, body.Priority);
@@ -970,7 +970,13 @@ public class OrchestratorService : IOrchestratorService
         try
         {
             var orchestrator = await GetOrchestratorAsync(cancellationToken);
-            var response = await orchestrator.RestartContainerAsync(appName, body, cancellationToken);
+            // Create ContainerRestartRequest from the body for the orchestrator
+            var restartRequest = new ContainerRestartRequest
+            {
+                Priority = body.Priority,
+                Reason = body.Reason
+            };
+            var response = await orchestrator.RestartContainerAsync(appName, restartRequest, cancellationToken);
 
             if (!response.Accepted)
             {
@@ -990,8 +996,9 @@ public class OrchestratorService : IOrchestratorService
     /// Implementation of GetContainerStatus operation.
     /// Gets the status of a specific container by Dapr app name.
     /// </summary>
-    public async Task<(StatusCodes, ContainerStatus?)> GetContainerStatusAsync(string appName, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, ContainerStatus?)> GetContainerStatusAsync(GetContainerStatusRequest body, CancellationToken cancellationToken)
     {
+        var appName = body.AppName;
         _logger.LogInformation("Executing GetContainerStatus operation: app={AppName}", appName);
 
         try
@@ -1047,7 +1054,7 @@ public class OrchestratorService : IOrchestratorService
     /// Implementation of GetConfigVersion operation.
     /// Gets the current configuration version.
     /// </summary>
-    public Task<(StatusCodes, ConfigVersionResponse?)> GetConfigVersionAsync(CancellationToken cancellationToken)
+    public Task<(StatusCodes, ConfigVersionResponse?)> GetConfigVersionAsync(GetConfigVersionRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetConfigVersion operation");
 

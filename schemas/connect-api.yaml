@@ -1,10 +1,17 @@
 openapi: 3.0.0
 info:
   title: Bannou Connect API
-  version: 1.0.0
+  version: 2.0.0
   description: |
     Real-time communication and WebSocket connection management for Bannou services.
-    
+
+    **POST-Only API Pattern**: This API uses POST for all service operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See API-DESIGN.md for architectural rationale.
+
+    **Exception**: The `/connect` WebSocket endpoint uses GET/POST for the HTTP upgrade handshake,
+    which is required by the WebSocket protocol specification.
+
     This API handles:
     - WebSocket connection establishment with JWT authentication
     - Bi-directional real-time messaging between clients and services
@@ -12,11 +19,11 @@ info:
     - Client reconnection and session management
     - Integration with Dapr service mesh for service-to-service communication
     - Redis-backed connection state management
-    
+
     ## Connection Protocol
-    
+
     The connect service uses a custom binary protocol over WebSockets with the following features:
-    
+
     - **Message Flags**: Control message behavior (binary, encrypted, compressed, high priority, events vs RPC)
     - **Channel System**: Support for sequential message processing on specific channels
     - **Service Routing**: Route messages to appropriate Dapr services via GUID-based service lookup
@@ -60,7 +67,7 @@ paths:
 
 
   /service-mappings:
-    get:
+    post:
       summary: Get current service routing mappings
       operationId: getServiceMappings
       tags:
@@ -68,6 +75,12 @@ paths:
       description: |
         Returns current service-to-app-id routing mappings for monitoring and debugging.
         Shows how services are mapped in the current deployment topology.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetServiceMappingsRequest'
       responses:
         '200':
           description: Service mappings retrieved successfully
@@ -256,6 +269,16 @@ paths:
 
 components:
   schemas:
+    # Request Models for POST-only pattern
+    GetServiceMappingsRequest:
+      type: object
+      description: Request to get service mappings (empty body allowed)
+      properties:
+        serviceFilter:
+          type: string
+          description: Optional filter by service name prefix
+          nullable: true
+
     InternalProxyRequest:
       type: object
       required:
@@ -889,6 +912,10 @@ x-service-configuration:
       type: integer
       description: Interval for refreshing service discovery from Redis
       default: 60
+
+# Note: Event subscriptions are handled manually in ConnectEventsController.cs
+# because they require specialized CloudEvents parsing and custom service method calls.
+# Topics subscribed: session.invalidated, permissions.capabilities-updated
 
 externalDocs:
   description: Binary Protocol Documentation

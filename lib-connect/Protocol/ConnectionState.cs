@@ -6,9 +6,12 @@ namespace BeyondImmersion.BannouService.Connect.Protocol;
 /// <summary>
 /// Represents the state of a WebSocket connection.
 /// Dependency-free class for Client SDK extraction.
+/// Thread-safe for concurrent capability updates.
 /// </summary>
 public class ConnectionState
 {
+    private readonly object _mappingsLock = new object();
+
     /// <summary>
     /// Unique session ID for this connection
     /// </summary>
@@ -65,21 +68,57 @@ public class ConnectionState
     }
 
     /// <summary>
-    /// Adds a service mapping for this connection.
+    /// Adds a service mapping for this connection (thread-safe).
     /// </summary>
     public void AddServiceMapping(string serviceName, Guid serviceGuid)
     {
-        ServiceMappings[serviceName] = serviceGuid;
-        GuidMappings[serviceGuid] = serviceName;
+        lock (_mappingsLock)
+        {
+            ServiceMappings[serviceName] = serviceGuid;
+            GuidMappings[serviceGuid] = serviceName;
+        }
     }
 
     /// <summary>
-    /// Clears all service mappings (used before rebuilding capabilities).
+    /// Clears all service mappings (used before rebuilding capabilities, thread-safe).
     /// </summary>
     public void ClearServiceMappings()
     {
-        ServiceMappings.Clear();
-        GuidMappings.Clear();
+        lock (_mappingsLock)
+        {
+            ServiceMappings.Clear();
+            GuidMappings.Clear();
+        }
+    }
+
+    /// <summary>
+    /// Atomically updates all service mappings at once (thread-safe).
+    /// This prevents race conditions during capability updates.
+    /// </summary>
+    public void UpdateAllServiceMappings(Dictionary<string, Guid> newMappings)
+    {
+        lock (_mappingsLock)
+        {
+            ServiceMappings.Clear();
+            GuidMappings.Clear();
+
+            foreach (var mapping in newMappings)
+            {
+                ServiceMappings[mapping.Key] = mapping.Value;
+                GuidMappings[mapping.Value] = mapping.Key;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tries to get a service name from a GUID (thread-safe).
+    /// </summary>
+    public bool TryGetServiceName(Guid guid, out string? serviceName)
+    {
+        lock (_mappingsLock)
+        {
+            return GuidMappings.TryGetValue(guid, out serviceName);
+        }
     }
 
     /// <summary>

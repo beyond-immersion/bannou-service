@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.HttpTester.Tests;
+using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 using Dapr.Client;
@@ -409,7 +410,7 @@ public class Program
         {
             try
             {
-                var response = await permissionsClient.GetRegisteredServicesAsync();
+                var response = await permissionsClient.GetRegisteredServicesAsync(new ListServicesRequest());
                 if (response != null && response.Services != null)
                 {
                     var registeredServiceIds = response.Services.Select(s => s.ServiceId).ToHashSet(StringComparer.OrdinalIgnoreCase);

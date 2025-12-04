@@ -12,9 +12,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Web;
 
 namespace BeyondImmersion.BannouService.Auth;
 
@@ -29,40 +32,35 @@ public class AuthService : IAuthService
     private readonly DaprClient _daprClient;
     private readonly ILogger<AuthService> _logger;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly IHttpClientFactory _httpClientFactory;
     private const string REDIS_STATE_STORE = "statestore";
+    private const string PUBSUB_NAME = "bannou-pubsub";
+    private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
 
-    // Configuration loaded from environment variables
+    // OAuth provider URLs
+    private const string DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
+    private const string DISCORD_USER_URL = "https://discord.com/api/users/@me";
+    private const string GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+    private const string GOOGLE_USER_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
+    private const string TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
+    private const string TWITCH_USER_URL = "https://api.twitch.tv/helix/users";
+    private const string STEAM_AUTH_URL = "https://partner.steam-api.com/ISteamUserAuth/AuthenticateUserTicket/v1/";
 
     public AuthService(
         IAccountsClient accountsClient,
         DaprClient daprClient,
         AuthServiceConfiguration configuration,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger,
+        IHttpClientFactory httpClientFactory)
     {
         _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
-        logger.LogInformation("AuthService constructor starting - dependencies being injected");
-        logger.LogInformation("AccountsClient dependency successfully assigned");
-        logger.LogInformation("DaprClient dependency successfully assigned");
-        logger.LogInformation("Configuration dependency successfully assigned");
-
-        try
-        {
-            _logger.LogInformation("AuthService initialized with JwtSecret length: {Length}, Issuer: {Issuer}, Audience: {Audience}",
-                _configuration.JwtSecret?.Length ?? 0, _configuration.JwtIssuer, _configuration.JwtAudience);
-
-            _logger.LogInformation("Testing AccountsClient type: {Type}", _accountsClient.GetType().FullName);
-
-            _logger.LogInformation("AuthService constructor completed successfully");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during AuthService constructor completion");
-            throw;
-        }
+        _logger.LogInformation("AuthService initialized with JwtSecret length: {Length}, Issuer: {Issuer}, Audience: {Audience}, MockProviders: {MockProviders}",
+            _configuration.JwtSecret?.Length ?? 0, _configuration.JwtIssuer, _configuration.JwtAudience, _configuration.MockProviders);
     }
 
     /// <inheritdoc/>
@@ -85,7 +83,7 @@ public class AuthService : IAuthService
             AccountResponse account;
             try
             {
-                account = await _accountsClient.GetAccountByEmailAsync(body.Email, cancellationToken);
+                account = await _accountsClient.GetAccountByEmailAsync(new GetAccountByEmailRequest { Email = body.Email }, cancellationToken);
                 _logger.LogInformation("Account found via service call: {AccountId}", account?.AccountId);
 
                 if (account == null)
@@ -242,30 +240,57 @@ public class AuthService : IAuthService
 
             if (string.IsNullOrWhiteSpace(body.Code))
             {
+                _logger.LogWarning("OAuth callback missing authorization code");
                 return (StatusCodes.BadRequest, null);
             }
 
-            // TODO: Implement actual OAuth provider integration
-            // For now, return mock implementation
-            _logger.LogInformation("Mock OAuth callback processing for provider: {Provider}", provider);
-
-            var mockAccount = new AccountResponse
+            // Check for mock mode (for testing)
+            if (_configuration.MockProviders)
             {
-                AccountId = Guid.NewGuid(),
-                Email = $"oauth-user@{provider.ToString().ToLower()}.com",
-                DisplayName = $"OAuth User ({provider})"
+                return await HandleMockOAuthAsync(provider, cancellationToken);
+            }
+
+            // Exchange authorization code for tokens and get user info
+            OAuthUserInfo? userInfo = provider switch
+            {
+                Provider.Discord => await ExchangeDiscordCodeAsync(body.Code, cancellationToken),
+                Provider.Google => await ExchangeGoogleCodeAsync(body.Code, cancellationToken),
+                Provider.Twitch => await ExchangeTwitchCodeAsync(body.Code, cancellationToken),
+                _ => null
             };
 
-            var accessToken = await GenerateAccessTokenAsync(mockAccount, cancellationToken);
+            if (userInfo == null)
+            {
+                _logger.LogWarning("Failed to get user info from OAuth provider: {Provider}", provider);
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            _logger.LogInformation("OAuth user info retrieved for provider {Provider}: ProviderId={ProviderId}, Email={Email}",
+                provider, userInfo.ProviderId, userInfo.Email);
+
+            // Find or create account linked to this OAuth identity
+            var account = await FindOrCreateOAuthAccountAsync(provider, userInfo, cancellationToken);
+            if (account == null)
+            {
+                _logger.LogError("Failed to find or create account for OAuth user: {ProviderId}", userInfo.ProviderId);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Generate tokens
+            var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
             var refreshToken = GenerateRefreshToken();
+            await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+
+            _logger.LogInformation("OAuth authentication successful for account {AccountId} via {Provider}",
+                account.AccountId, provider);
 
             return (StatusCodes.OK, new AuthResponse
             {
-                AccountId = mockAccount.AccountId,
+                AccountId = account.AccountId,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-                ConnectUrl = new Uri($"ws://localhost:8080/api/ws") // Connect service WebSocket endpoint
+                ConnectUrl = new Uri("ws://localhost:8080/api/ws")
             });
         }
         catch (Exception ex)
@@ -282,34 +307,67 @@ public class AuthService : IAuthService
     {
         try
         {
-            _logger.LogInformation("Processing Steam authentication verification");
+            _logger.LogInformation("Processing Steam Session Ticket verification");
 
             if (string.IsNullOrWhiteSpace(body.Ticket))
             {
+                _logger.LogWarning("Steam verification missing ticket");
                 return (StatusCodes.BadRequest, null);
             }
 
-            // TODO: Implement actual Steam OpenID verification
-            // For now, return mock implementation
-            _logger.LogInformation("Mock Steam verification processing");
-
-            var mockAccount = new AccountResponse
+            // Check for mock mode (for testing)
+            if (_configuration.MockProviders)
             {
-                AccountId = Guid.NewGuid(),
-                Email = "steam-user@example.com",
-                DisplayName = "Steam User"
+                return await HandleMockSteamAuthAsync(cancellationToken);
+            }
+
+            // Validate Steam configuration
+            if (string.IsNullOrWhiteSpace(_configuration.SteamApiKey) ||
+                string.IsNullOrWhiteSpace(_configuration.SteamAppId))
+            {
+                _logger.LogError("Steam API Key or App ID not configured");
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Call Steam Web API to validate ticket
+            var steamId = await ValidateSteamTicketAsync(body.Ticket, cancellationToken);
+            if (string.IsNullOrEmpty(steamId))
+            {
+                _logger.LogWarning("Steam ticket validation failed");
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            _logger.LogInformation("Steam ticket validated successfully for SteamID: {SteamId}", steamId);
+
+            // Find or create account linked to this Steam identity
+            var userInfo = new OAuthUserInfo
+            {
+                ProviderId = steamId,
+                DisplayName = $"Steam_{steamId.Substring(steamId.Length - 6)}", // Last 6 chars of Steam ID
+                Email = null // Steam doesn't provide email
             };
 
-            var accessToken = await GenerateAccessTokenAsync(mockAccount, cancellationToken);
+            var account = await FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, cancellationToken, "steam");
+            if (account == null)
+            {
+                _logger.LogError("Failed to find or create account for Steam user: {SteamId}", steamId);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Generate tokens
+            var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
             var refreshToken = GenerateRefreshToken();
+            await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+
+            _logger.LogInformation("Steam authentication successful for account {AccountId}", account.AccountId);
 
             return (StatusCodes.OK, new AuthResponse
             {
-                AccountId = mockAccount.AccountId,
+                AccountId = account.AccountId,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-                ConnectUrl = new Uri($"ws://localhost:8080/api/ws") // Connect service WebSocket endpoint
+                ConnectUrl = new Uri("ws://localhost:8080/api/ws")
             });
         }
         catch (Exception ex)
@@ -347,7 +405,7 @@ public class AuthService : IAuthService
             AccountResponse account;
             try
             {
-                account = await _accountsClient.GetAccountAsync(Guid.Parse(accountId), cancellationToken);
+                account = await _accountsClient.GetAccountAsync(new GetAccountRequest { AccountId = Guid.Parse(accountId) }, cancellationToken);
                 _logger.LogInformation("Account found for refresh: {AccountId}", account?.AccountId);
 
                 if (account == null)
@@ -398,10 +456,47 @@ public class AuthService : IAuthService
         {
             _logger.LogInformation("Initializing OAuth for provider: {Provider}", provider);
 
-            // TODO: Implement actual OAuth initialization
-            // For now, return mock authorization URL
-            var authUrl = $"https://oauth.{provider.ToString().ToLower()}.com/authorize?redirect_uri={redirectUri}&state={state}";
+            string? authUrl = null;
+            var encodedState = HttpUtility.UrlEncode(state ?? Guid.NewGuid().ToString());
 
+            switch (provider)
+            {
+                case Provider.Discord:
+                    if (string.IsNullOrWhiteSpace(_configuration.DiscordClientId))
+                    {
+                        _logger.LogError("Discord Client ID not configured");
+                        return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+                    }
+                    var discordRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.DiscordRedirectUri);
+                    authUrl = $"https://discord.com/oauth2/authorize?client_id={_configuration.DiscordClientId}&response_type=code&redirect_uri={discordRedirectUri}&scope=identify%20email&state={encodedState}";
+                    break;
+
+                case Provider.Google:
+                    if (string.IsNullOrWhiteSpace(_configuration.GoogleClientId))
+                    {
+                        _logger.LogError("Google Client ID not configured");
+                        return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+                    }
+                    var googleRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.GoogleRedirectUri);
+                    authUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={_configuration.GoogleClientId}&response_type=code&redirect_uri={googleRedirectUri}&scope=openid%20email%20profile&state={encodedState}";
+                    break;
+
+                case Provider.Twitch:
+                    if (string.IsNullOrWhiteSpace(_configuration.TwitchClientId))
+                    {
+                        _logger.LogError("Twitch Client ID not configured");
+                        return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+                    }
+                    var twitchRedirectUri = HttpUtility.UrlEncode(redirectUri ?? _configuration.TwitchRedirectUri);
+                    authUrl = $"https://id.twitch.tv/oauth2/authorize?client_id={_configuration.TwitchClientId}&response_type=code&redirect_uri={twitchRedirectUri}&scope=user:read:email&state={encodedState}";
+                    break;
+
+                default:
+                    _logger.LogWarning("Unknown OAuth provider: {Provider}", provider);
+                    return Task.FromResult<(StatusCodes, object?)>((StatusCodes.BadRequest, null));
+            }
+
+            _logger.LogDebug("Generated OAuth URL for {Provider}: {Url}", provider, authUrl);
             return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { AuthorizationUrl = authUrl }));
         }
         catch (Exception ex)
@@ -418,17 +513,25 @@ public class AuthService : IAuthService
     {
         try
         {
-            _logger.LogInformation("Initializing Steam authentication");
+            _logger.LogInformation("Steam authentication info requested");
 
-            // TODO: Implement actual Steam OpenID initialization
-            // For now, return mock Steam URL
-            var steamUrl = $"https://steamcommunity.com/openid/login?openid.return_to={returnUrl}";
+            // Steam uses Session Tickets, not OAuth/OpenID flow
+            // The game client calls ISteamUser::GetAuthTicketForWebApi("bannou")
+            // Then sends the ticket to POST /auth/steam/verify
+            var response = new
+            {
+                Message = "Steam uses Session Tickets, not browser-based OAuth",
+                Endpoint = "/auth/steam/verify",
+                Method = "POST",
+                ClientSide = "Call ISteamUser::GetAuthTicketForWebApi(\"bannou\") in your game client",
+                Documentation = "https://partner.steamgames.com/doc/features/auth#web_api"
+            };
 
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { AuthorizationUrl = steamUrl }));
+            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, response));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error initializing Steam authentication");
+            _logger.LogError(ex, "Error providing Steam authentication info");
             return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
         }
     }
@@ -465,6 +568,8 @@ public class AuthService : IAuthService
                 return (StatusCodes.Unauthorized, null);
             }
 
+            var invalidatedSessions = new List<string>();
+
             if (body?.AllSessions == true)
             {
                 _logger.LogInformation("AllSessions logout requested for account: {AccountId}", validateResponse.AccountId);
@@ -491,6 +596,8 @@ public class AuthService : IAuthService
                         // Remove the account sessions index
                         await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, indexKey, cancellationToken: cancellationToken);
 
+                        invalidatedSessions.AddRange(sessionKeys);
+
                         _logger.LogInformation("All {SessionCount} sessions logged out for account: {AccountId}",
                             sessionKeys.Count, validateResponse.AccountId);
                     }
@@ -511,7 +618,18 @@ public class AuthService : IAuthService
                 // Remove session from account index
                 await RemoveSessionFromAccountIndexAsync(validateResponse.AccountId.ToString(), sessionKey, cancellationToken);
 
+                invalidatedSessions.Add(sessionKey);
+
                 _logger.LogInformation("Session logged out successfully for account: {AccountId}", validateResponse.AccountId);
+            }
+
+            // Publish session invalidation event for Connect service to disconnect clients
+            if (invalidatedSessions.Count > 0)
+            {
+                await PublishSessionInvalidatedEventAsync(
+                    validateResponse.AccountId,
+                    invalidatedSessions,
+                    SessionInvalidatedEventReason.Logout);
             }
 
             return (StatusCodes.OK, new { Message = "Logout successful" });
@@ -525,11 +643,13 @@ public class AuthService : IAuthService
 
     /// <inheritdoc/>
     public async Task<(StatusCodes, object?)> TerminateSessionAsync(
-        Guid sessionId,
+        string jwt,
+        TerminateSessionRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var sessionId = body.SessionId;
             _logger.LogInformation("Terminating session: {SessionId}", sessionId);
 
             // Find and remove the session from Redis
@@ -565,7 +685,7 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error terminating session: {SessionId}", sessionId);
+            _logger.LogError(ex, "Error terminating session: {SessionId}", body.SessionId);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -632,8 +752,9 @@ public class AuthService : IAuthService
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(body.NewPassword, workFactor: 12);
 
             // Update password via AccountsClient
-            await _accountsClient.UpdatePasswordHashAsync(resetData.AccountId, new UpdatePasswordRequest
+            await _accountsClient.UpdatePasswordHashAsync(new UpdatePasswordRequest
             {
+                AccountId = resetData.AccountId,
                 PasswordHash = passwordHash
             }, cancellationToken);
 
@@ -771,11 +892,14 @@ public class AuthService : IAuthService
                 _logger.LogInformation("JWT token validated successfully for account: {AccountId}", sessionData.AccountId);
 
                 // Return session information
+                // IMPORTANT: Return sessionKey (not sessionData.SessionId) so Connect service
+                // tracks connections by the same key used in account-sessions index and
+                // published in SessionInvalidatedEvent for proper WebSocket disconnection
                 return (StatusCodes.OK, new ValidateTokenResponse
                 {
                     Valid = true,
                     AccountId = sessionData.AccountId,
-                    SessionId = sessionData.SessionId,
+                    SessionId = sessionKey,
                     Roles = sessionData.Roles ?? new List<string>(),
                     RemainingTime = (int)(sessionData.ExpiresAt - DateTime.UtcNow).TotalSeconds
                 });
@@ -1202,6 +1326,636 @@ public class AuthService : IAuthService
 
     #endregion
 
+    #region OAuth Helper Methods
+
+    /// <summary>
+    /// User info retrieved from OAuth provider
+    /// </summary>
+    private class OAuthUserInfo
+    {
+        public string ProviderId { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string? DisplayName { get; set; }
+        public string? AvatarUrl { get; set; }
+    }
+
+    /// <summary>
+    /// Response from Discord token exchange
+    /// </summary>
+    private class DiscordTokenResponse
+    {
+        [JsonPropertyName("access_token")]
+        public string AccessToken { get; set; } = string.Empty;
+
+        [JsonPropertyName("token_type")]
+        public string TokenType { get; set; } = string.Empty;
+
+        [JsonPropertyName("expires_in")]
+        public int ExpiresIn { get; set; }
+
+        [JsonPropertyName("refresh_token")]
+        public string? RefreshToken { get; set; }
+
+        [JsonPropertyName("scope")]
+        public string? Scope { get; set; }
+    }
+
+    /// <summary>
+    /// Response from Discord user info endpoint
+    /// </summary>
+    private class DiscordUserResponse
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+
+        [JsonPropertyName("username")]
+        public string Username { get; set; } = string.Empty;
+
+        [JsonPropertyName("email")]
+        public string? Email { get; set; }
+
+        [JsonPropertyName("avatar")]
+        public string? Avatar { get; set; }
+
+        [JsonPropertyName("global_name")]
+        public string? GlobalName { get; set; }
+    }
+
+    /// <summary>
+    /// Response from Google token exchange
+    /// </summary>
+    private class GoogleTokenResponse
+    {
+        [JsonPropertyName("access_token")]
+        public string AccessToken { get; set; } = string.Empty;
+
+        [JsonPropertyName("expires_in")]
+        public int ExpiresIn { get; set; }
+
+        [JsonPropertyName("token_type")]
+        public string TokenType { get; set; } = string.Empty;
+
+        [JsonPropertyName("id_token")]
+        public string? IdToken { get; set; }
+    }
+
+    /// <summary>
+    /// Response from Google user info endpoint
+    /// </summary>
+    private class GoogleUserResponse
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+
+        [JsonPropertyName("email")]
+        public string? Email { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("picture")]
+        public string? Picture { get; set; }
+    }
+
+    /// <summary>
+    /// Response from Twitch token exchange
+    /// </summary>
+    private class TwitchTokenResponse
+    {
+        [JsonPropertyName("access_token")]
+        public string AccessToken { get; set; } = string.Empty;
+
+        [JsonPropertyName("expires_in")]
+        public int ExpiresIn { get; set; }
+
+        [JsonPropertyName("token_type")]
+        public string TokenType { get; set; } = string.Empty;
+
+        [JsonPropertyName("refresh_token")]
+        public string? RefreshToken { get; set; }
+    }
+
+    /// <summary>
+    /// Response from Twitch users endpoint
+    /// </summary>
+    private class TwitchUsersResponse
+    {
+        [JsonPropertyName("data")]
+        public List<TwitchUser>? Data { get; set; }
+    }
+
+    private class TwitchUser
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+
+        [JsonPropertyName("login")]
+        public string Login { get; set; } = string.Empty;
+
+        [JsonPropertyName("display_name")]
+        public string DisplayName { get; set; } = string.Empty;
+
+        [JsonPropertyName("email")]
+        public string? Email { get; set; }
+
+        [JsonPropertyName("profile_image_url")]
+        public string? ProfileImageUrl { get; set; }
+    }
+
+    /// <summary>
+    /// Response from Steam ticket validation
+    /// </summary>
+    private class SteamAuthResponse
+    {
+        [JsonPropertyName("response")]
+        public SteamAuthResponseData? Response { get; set; }
+    }
+
+    private class SteamAuthResponseData
+    {
+        [JsonPropertyName("params")]
+        public SteamAuthParams? Params { get; set; }
+
+        [JsonPropertyName("error")]
+        public SteamAuthError? Error { get; set; }
+    }
+
+    private class SteamAuthParams
+    {
+        [JsonPropertyName("result")]
+        public string Result { get; set; } = string.Empty;
+
+        [JsonPropertyName("steamid")]
+        public string SteamId { get; set; } = string.Empty;
+
+        [JsonPropertyName("ownersteamid")]
+        public string OwnerSteamId { get; set; } = string.Empty;
+
+        [JsonPropertyName("vacbanned")]
+        public bool VacBanned { get; set; }
+
+        [JsonPropertyName("publisherbanned")]
+        public bool PublisherBanned { get; set; }
+    }
+
+    private class SteamAuthError
+    {
+        [JsonPropertyName("errorcode")]
+        public int ErrorCode { get; set; }
+
+        [JsonPropertyName("errordesc")]
+        public string ErrorDesc { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Exchange Discord authorization code for user info
+    /// </summary>
+    private async Task<OAuthUserInfo?> ExchangeDiscordCodeAsync(string code, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var httpClient = _httpClientFactory.CreateClient();
+
+            // Exchange code for access token
+            var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                { "client_id", _configuration.DiscordClientId },
+                { "client_secret", _configuration.DiscordClientSecret },
+                { "code", code },
+                { "grant_type", "authorization_code" },
+                { "redirect_uri", _configuration.DiscordRedirectUri }
+            });
+
+            var tokenResponse = await httpClient.PostAsync(DISCORD_TOKEN_URL, tokenRequest, cancellationToken);
+            if (!tokenResponse.IsSuccessStatusCode)
+            {
+                var errorContent = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("Discord token exchange failed: {Status} - {Error}", tokenResponse.StatusCode, errorContent);
+                return null;
+            }
+
+            var tokenJson = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
+            var tokenData = JsonSerializer.Deserialize<DiscordTokenResponse>(tokenJson);
+            if (tokenData == null || string.IsNullOrEmpty(tokenData.AccessToken))
+            {
+                _logger.LogWarning("Discord token response missing access_token");
+                return null;
+            }
+
+            // Get user info
+            using var userRequest = new HttpRequestMessage(HttpMethod.Get, DISCORD_USER_URL);
+            userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.AccessToken);
+
+            var userResponse = await httpClient.SendAsync(userRequest, cancellationToken);
+            if (!userResponse.IsSuccessStatusCode)
+            {
+                var errorContent = await userResponse.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("Discord user info request failed: {Status} - {Error}", userResponse.StatusCode, errorContent);
+                return null;
+            }
+
+            var userJson = await userResponse.Content.ReadAsStringAsync(cancellationToken);
+            var userData = JsonSerializer.Deserialize<DiscordUserResponse>(userJson);
+            if (userData == null)
+            {
+                _logger.LogWarning("Failed to parse Discord user response");
+                return null;
+            }
+
+            return new OAuthUserInfo
+            {
+                ProviderId = userData.Id,
+                Email = userData.Email,
+                DisplayName = userData.GlobalName ?? userData.Username,
+                AvatarUrl = userData.Avatar != null ? $"https://cdn.discordapp.com/avatars/{userData.Id}/{userData.Avatar}.png" : null
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exchanging Discord authorization code");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Exchange Google authorization code for user info
+    /// </summary>
+    private async Task<OAuthUserInfo?> ExchangeGoogleCodeAsync(string code, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var httpClient = _httpClientFactory.CreateClient();
+
+            // Exchange code for access token
+            var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                { "client_id", _configuration.GoogleClientId },
+                { "client_secret", _configuration.GoogleClientSecret },
+                { "code", code },
+                { "grant_type", "authorization_code" },
+                { "redirect_uri", _configuration.GoogleRedirectUri }
+            });
+
+            var tokenResponse = await httpClient.PostAsync(GOOGLE_TOKEN_URL, tokenRequest, cancellationToken);
+            if (!tokenResponse.IsSuccessStatusCode)
+            {
+                var errorContent = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("Google token exchange failed: {Status} - {Error}", tokenResponse.StatusCode, errorContent);
+                return null;
+            }
+
+            var tokenJson = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
+            var tokenData = JsonSerializer.Deserialize<GoogleTokenResponse>(tokenJson);
+            if (tokenData == null || string.IsNullOrEmpty(tokenData.AccessToken))
+            {
+                _logger.LogWarning("Google token response missing access_token");
+                return null;
+            }
+
+            // Get user info
+            using var userRequest = new HttpRequestMessage(HttpMethod.Get, GOOGLE_USER_URL);
+            userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.AccessToken);
+
+            var userResponse = await httpClient.SendAsync(userRequest, cancellationToken);
+            if (!userResponse.IsSuccessStatusCode)
+            {
+                var errorContent = await userResponse.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("Google user info request failed: {Status} - {Error}", userResponse.StatusCode, errorContent);
+                return null;
+            }
+
+            var userJson = await userResponse.Content.ReadAsStringAsync(cancellationToken);
+            var userData = JsonSerializer.Deserialize<GoogleUserResponse>(userJson);
+            if (userData == null)
+            {
+                _logger.LogWarning("Failed to parse Google user response");
+                return null;
+            }
+
+            return new OAuthUserInfo
+            {
+                ProviderId = userData.Id,
+                Email = userData.Email,
+                DisplayName = userData.Name,
+                AvatarUrl = userData.Picture
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exchanging Google authorization code");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Exchange Twitch authorization code for user info
+    /// </summary>
+    private async Task<OAuthUserInfo?> ExchangeTwitchCodeAsync(string code, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var httpClient = _httpClientFactory.CreateClient();
+
+            // Exchange code for access token
+            var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                { "client_id", _configuration.TwitchClientId },
+                { "client_secret", _configuration.TwitchClientSecret },
+                { "code", code },
+                { "grant_type", "authorization_code" },
+                { "redirect_uri", _configuration.TwitchRedirectUri }
+            });
+
+            var tokenResponse = await httpClient.PostAsync(TWITCH_TOKEN_URL, tokenRequest, cancellationToken);
+            if (!tokenResponse.IsSuccessStatusCode)
+            {
+                var errorContent = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("Twitch token exchange failed: {Status} - {Error}", tokenResponse.StatusCode, errorContent);
+                return null;
+            }
+
+            var tokenJson = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
+            var tokenData = JsonSerializer.Deserialize<TwitchTokenResponse>(tokenJson);
+            if (tokenData == null || string.IsNullOrEmpty(tokenData.AccessToken))
+            {
+                _logger.LogWarning("Twitch token response missing access_token");
+                return null;
+            }
+
+            // Get user info
+            using var userRequest = new HttpRequestMessage(HttpMethod.Get, TWITCH_USER_URL);
+            userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenData.AccessToken);
+            userRequest.Headers.Add("Client-Id", _configuration.TwitchClientId);
+
+            var userResponse = await httpClient.SendAsync(userRequest, cancellationToken);
+            if (!userResponse.IsSuccessStatusCode)
+            {
+                var errorContent = await userResponse.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("Twitch user info request failed: {Status} - {Error}", userResponse.StatusCode, errorContent);
+                return null;
+            }
+
+            var userJson = await userResponse.Content.ReadAsStringAsync(cancellationToken);
+            var usersData = JsonSerializer.Deserialize<TwitchUsersResponse>(userJson);
+            var userData = usersData?.Data?.FirstOrDefault();
+            if (userData == null)
+            {
+                _logger.LogWarning("Failed to parse Twitch user response");
+                return null;
+            }
+
+            return new OAuthUserInfo
+            {
+                ProviderId = userData.Id,
+                Email = userData.Email,
+                DisplayName = userData.DisplayName,
+                AvatarUrl = userData.ProfileImageUrl
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exchanging Twitch authorization code");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Validate Steam Session Ticket and retrieve SteamID
+    /// </summary>
+    private async Task<string?> ValidateSteamTicketAsync(string ticket, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var httpClient = _httpClientFactory.CreateClient();
+
+            var requestUrl = $"{STEAM_AUTH_URL}?key={_configuration.SteamApiKey}&appid={_configuration.SteamAppId}&ticket={ticket}";
+
+            var response = await httpClient.GetAsync(requestUrl, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("Steam ticket validation failed: {Status} - {Error}", response.StatusCode, errorContent);
+                return null;
+            }
+
+            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+            var steamResponse = JsonSerializer.Deserialize<SteamAuthResponse>(responseJson);
+
+            if (steamResponse?.Response?.Error != null)
+            {
+                _logger.LogWarning("Steam API returned error: {ErrorCode} - {ErrorDesc}",
+                    steamResponse.Response.Error.ErrorCode, steamResponse.Response.Error.ErrorDesc);
+                return null;
+            }
+
+            if (steamResponse?.Response?.Params == null || steamResponse.Response.Params.Result != "OK")
+            {
+                _logger.LogWarning("Steam ticket validation returned unexpected result");
+                return null;
+            }
+
+            // Check for bans
+            if (steamResponse.Response.Params.VacBanned || steamResponse.Response.Params.PublisherBanned)
+            {
+                _logger.LogWarning("Steam user is banned: VacBanned={VacBanned}, PublisherBanned={PublisherBanned}",
+                    steamResponse.Response.Params.VacBanned, steamResponse.Response.Params.PublisherBanned);
+                return null;
+            }
+
+            return steamResponse.Response.Params.SteamId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating Steam ticket");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Find or create an account linked to an OAuth provider identity
+    /// </summary>
+    private async Task<AccountResponse?> FindOrCreateOAuthAccountAsync(
+        Provider provider,
+        OAuthUserInfo userInfo,
+        CancellationToken cancellationToken,
+        string? providerOverride = null)
+    {
+        var providerName = providerOverride ?? provider.ToString().ToLower();
+        var oauthLinkKey = $"oauth-link:{providerName}:{userInfo.ProviderId}";
+
+        try
+        {
+            // Check if we have an existing link for this OAuth identity
+            var existingAccountId = await _daprClient.GetStateAsync<Guid?>(
+                REDIS_STATE_STORE,
+                oauthLinkKey,
+                cancellationToken: cancellationToken);
+
+            if (existingAccountId.HasValue && existingAccountId.Value != Guid.Empty)
+            {
+                // Found existing account link, retrieve the account
+                try
+                {
+                    var account = await _accountsClient.GetAccountAsync(
+                        new GetAccountRequest { AccountId = existingAccountId.Value },
+                        cancellationToken);
+                    _logger.LogInformation("Found existing account {AccountId} for {Provider} user {ProviderId}",
+                        account.AccountId, providerName, userInfo.ProviderId);
+                    return account;
+                }
+                catch (ApiException ex) when (ex.StatusCode == 404)
+                {
+                    // Account was deleted, remove stale link
+                    _logger.LogWarning("Linked account {AccountId} not found, removing stale OAuth link", existingAccountId.Value);
+                    await _daprClient.DeleteStateAsync(REDIS_STATE_STORE, oauthLinkKey, cancellationToken: cancellationToken);
+                }
+            }
+
+            // Create new account for this OAuth identity
+            var createRequest = new CreateAccountRequest
+            {
+                Email = userInfo.Email ?? $"{providerName}_{userInfo.ProviderId}@oauth.local",
+                DisplayName = userInfo.DisplayName ?? $"{providerName}_user",
+                EmailVerified = userInfo.Email != null, // Consider OAuth-provided emails as verified
+                PasswordHash = null // OAuth accounts don't have passwords
+            };
+
+            AccountResponse? newAccount;
+            try
+            {
+                newAccount = await _accountsClient.CreateAccountAsync(createRequest, cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 409)
+            {
+                // Email already exists - try to find by email
+                if (!string.IsNullOrEmpty(userInfo.Email))
+                {
+                    try
+                    {
+                        newAccount = await _accountsClient.GetAccountByEmailAsync(
+                            new GetAccountByEmailRequest { Email = userInfo.Email },
+                            cancellationToken);
+                        _logger.LogInformation("Found existing account by email {Email} for {Provider} user",
+                            userInfo.Email, providerName);
+                    }
+                    catch
+                    {
+                        _logger.LogError("Email conflict but couldn't find account: {Email}", userInfo.Email);
+                        return null;
+                    }
+                }
+                else
+                {
+                    _logger.LogError("Account creation conflict but no email to search by");
+                    return null;
+                }
+            }
+
+            if (newAccount == null)
+            {
+                _logger.LogError("Failed to create account for {Provider} user {ProviderId}", providerName, userInfo.ProviderId);
+                return null;
+            }
+
+            // Store the OAuth link
+            await _daprClient.SaveStateAsync(
+                REDIS_STATE_STORE,
+                oauthLinkKey,
+                newAccount.AccountId,
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Created new account {AccountId} and linked to {Provider} user {ProviderId}",
+                newAccount.AccountId, providerName, userInfo.ProviderId);
+
+            return newAccount;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error finding or creating OAuth account for {Provider} user {ProviderId}",
+                providerName, userInfo.ProviderId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Handle mock OAuth authentication for testing
+    /// </summary>
+    private async Task<(StatusCodes, AuthResponse?)> HandleMockOAuthAsync(Provider provider, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Using mock OAuth provider for {Provider}", provider);
+
+        var mockProviderId = provider switch
+        {
+            Provider.Discord => _configuration.MockDiscordId,
+            Provider.Google => _configuration.MockGoogleId,
+            Provider.Twitch => "mock-twitch-user-id-12345",
+            _ => Guid.NewGuid().ToString()
+        };
+
+        var userInfo = new OAuthUserInfo
+        {
+            ProviderId = mockProviderId,
+            Email = $"mock-{provider.ToString().ToLower()}@test.local",
+            DisplayName = $"Mock {provider} User"
+        };
+
+        var account = await FindOrCreateOAuthAccountAsync(provider, userInfo, cancellationToken);
+        if (account == null)
+        {
+            return (StatusCodes.InternalServerError, null);
+        }
+
+        var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
+        var refreshToken = GenerateRefreshToken();
+        await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+
+        return (StatusCodes.OK, new AuthResponse
+        {
+            AccountId = account.AccountId,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            ExpiresIn = _configuration.JwtExpirationMinutes * 60,
+            ConnectUrl = new Uri("ws://localhost:8080/api/ws")
+        });
+    }
+
+    /// <summary>
+    /// Handle mock Steam authentication for testing
+    /// </summary>
+    private async Task<(StatusCodes, AuthResponse?)> HandleMockSteamAuthAsync(CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Using mock Steam provider");
+
+        var userInfo = new OAuthUserInfo
+        {
+            ProviderId = _configuration.MockSteamId,
+            Email = null, // Steam doesn't provide email
+            DisplayName = $"Steam_{_configuration.MockSteamId.Substring(_configuration.MockSteamId.Length - 6)}"
+        };
+
+        // Use a fake provider for Steam since it's not in the enum
+        var account = await FindOrCreateOAuthAccountAsync(Provider.Discord, userInfo, cancellationToken, "steam");
+        if (account == null)
+        {
+            return (StatusCodes.InternalServerError, null);
+        }
+
+        var accessToken = await GenerateAccessTokenAsync(account, cancellationToken);
+        var refreshToken = GenerateRefreshToken();
+        await StoreRefreshTokenAsync(account.AccountId.ToString(), refreshToken, cancellationToken);
+
+        return (StatusCodes.OK, new AuthResponse
+        {
+            AccountId = account.AccountId,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            ExpiresIn = _configuration.JwtExpirationMinutes * 60,
+            ConnectUrl = new Uri("ws://localhost:8080/api/ws")
+        });
+    }
+
+    #endregion
+
     #region Event Handlers
 
     /// <summary>
@@ -1259,8 +2013,9 @@ public class AuthService : IAuthService
     /// <summary>
     /// Invalidate all sessions for a specific account.
     /// Used when account is deleted to ensure security.
+    /// Publishes SessionInvalidatedEvent to notify Connect service to disconnect clients.
     /// </summary>
-    private async Task InvalidateAllSessionsForAccountAsync(Guid accountId)
+    private async Task InvalidateAllSessionsForAccountAsync(Guid accountId, SessionInvalidatedEventReason reason = SessionInvalidatedEventReason.Account_deleted)
     {
         try
         {
@@ -1298,11 +2053,42 @@ public class AuthService : IAuthService
 
             _logger.LogInformation("Invalidated {SessionCount} sessions for account {AccountId}",
                 sessionKeys.Count, accountId);
+
+            // Publish session invalidation event for Connect service to disconnect clients
+            await PublishSessionInvalidatedEventAsync(accountId, sessionKeys, reason);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to invalidate sessions for account {AccountId}", accountId);
             throw; // Re-throw to let the event handler know about the failure
+        }
+    }
+
+    /// <summary>
+    /// Publish SessionInvalidatedEvent to notify Connect service to disconnect affected WebSocket clients.
+    /// </summary>
+    private async Task PublishSessionInvalidatedEventAsync(Guid accountId, List<string> sessionIds, SessionInvalidatedEventReason reason)
+    {
+        try
+        {
+            var eventModel = new SessionInvalidatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = accountId,
+                SessionIds = sessionIds,
+                Reason = reason,
+                DisconnectClients = true
+            };
+
+            await _daprClient.PublishEventAsync(PUBSUB_NAME, SESSION_INVALIDATED_TOPIC, eventModel);
+            _logger.LogInformation("Published SessionInvalidatedEvent for account {AccountId}: {SessionCount} sessions, reason: {Reason}",
+                accountId, sessionIds.Count, reason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish SessionInvalidatedEvent for account {AccountId}", accountId);
+            // Don't throw - session invalidation succeeded, event publishing failure shouldn't fail the operation
         }
     }
 

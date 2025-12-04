@@ -786,7 +786,7 @@ public class PermissionsService : IPermissionsService
     /// Get list of all registered services with their registration information.
     /// Used by testers to poll for service readiness - services only register after they're ready to handle requests.
     /// </summary>
-    public async Task<(StatusCodes, RegisteredServicesResponse?)> GetRegisteredServicesAsync(CancellationToken cancellationToken = default)
+    public async Task<(StatusCodes, RegisteredServicesResponse?)> GetRegisteredServicesAsync(ListServicesRequest body, CancellationToken cancellationToken = default)
     {
         try
         {

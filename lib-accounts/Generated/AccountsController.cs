@@ -35,12 +35,9 @@ public interface IAccountsController : BeyondImmersion.BannouService.Controllers
     /// </summary>
 
 
-
-
-
     /// <returns>Accounts retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountListResponse>> ListAccountsAsync(string? email, string? displayName, Provider? provider, bool? verified, int page, int pageSize, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountListResponse>> ListAccountsAsync(ListAccountsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Create new account
@@ -58,7 +55,7 @@ public interface IAccountsController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Account retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountAsync(GetAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Update account
@@ -67,7 +64,7 @@ public interface IAccountsController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Account updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateAccountAsync(System.Guid accountId, UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateAccountAsync(UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Delete account
@@ -76,7 +73,7 @@ public interface IAccountsController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Account deleted successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteAccountAsync(DeleteAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Get account by email
@@ -85,7 +82,7 @@ public interface IAccountsController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Account retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByEmailAsync(string email, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByEmailAsync(GetAccountByEmailRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Get authentication methods for account
@@ -94,7 +91,7 @@ public interface IAccountsController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Authentication methods retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodsResponse>> GetAuthMethodsAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodsResponse>> GetAuthMethodsAsync(GetAuthMethodsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Add authentication method to account
@@ -103,7 +100,7 @@ public interface IAccountsController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Authentication method added successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodResponse>> AddAuthMethodAsync(System.Guid accountId, AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodResponse>> AddAuthMethodAsync(AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Remove authentication method from account
@@ -112,7 +109,7 @@ public interface IAccountsController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Authentication method removed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveAuthMethodAsync(System.Guid accountId, System.Guid methodId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveAuthMethodAsync(RemoveAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Get account by external provider ID
@@ -121,7 +118,7 @@ public interface IAccountsController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Account retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByProviderAsync(Provider2 provider, string externalId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByProviderAsync(GetAccountByProviderRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Update account profile
@@ -130,7 +127,7 @@ public interface IAccountsController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Profile updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateProfileAsync(System.Guid accountId, UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateProfileAsync(UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Update account password hash
@@ -139,7 +136,7 @@ public interface IAccountsController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Password hash updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdatePasswordHashAsync(System.Guid accountId, UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdatePasswordHashAsync(UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Update email verification status
@@ -148,7 +145,7 @@ public interface IAccountsController : BeyondImmersion.BannouService.Controllers
 
     /// <returns>Verification status updated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateVerificationStatusAsync(System.Guid accountId, UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateVerificationStatusAsync(UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -208,12 +205,12 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// List accounts with filtering
     /// </summary>
     /// <returns>Accounts retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/list")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountListResponse>> ListAccounts([Microsoft.AspNetCore.Mvc.FromQuery] string? email, [Microsoft.AspNetCore.Mvc.FromQuery] string? displayName, [Microsoft.AspNetCore.Mvc.FromQuery] Provider? provider, [Microsoft.AspNetCore.Mvc.FromQuery] bool? verified, [Microsoft.AspNetCore.Mvc.FromQuery] int? page, [Microsoft.AspNetCore.Mvc.FromQuery] int? pageSize, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountListResponse>> ListAccounts([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListAccountsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListAccountsAsync(email, displayName, provider, verified, page ?? 1, pageSize ?? 20, cancellationToken);
+        var (statusCode, result) = await _implementation.ListAccountsAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -221,7 +218,7 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Create new account
     /// </summary>
     /// <returns>Account created successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/create")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> CreateAccount([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -234,12 +231,12 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Get account by ID
     /// </summary>
     /// <returns>Account retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/get")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccount([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccount([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetAccountAsync(accountId, cancellationToken);
+        var (statusCode, result) = await _implementation.GetAccountAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -247,12 +244,12 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Update account
     /// </summary>
     /// <returns>Account updated successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/update")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateAccount([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateAccount([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdateAccountAsync(accountId, body, cancellationToken);
+        var (statusCode, result) = await _implementation.UpdateAccountAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -260,12 +257,12 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Delete account
     /// </summary>
     /// <returns>Account deleted successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/delete")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteAccount([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteAccount([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteAccountAsync(accountId, cancellationToken);
+        var (statusCode, result) = await _implementation.DeleteAccountAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -273,12 +270,12 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Get account by email
     /// </summary>
     /// <returns>Account retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-email/{email}")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/by-email")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByEmail([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string email, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByEmail([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAccountByEmailRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetAccountByEmailAsync(email, cancellationToken);
+        var (statusCode, result) = await _implementation.GetAccountByEmailAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -286,12 +283,12 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Get authentication methods for account
     /// </summary>
     /// <returns>Authentication methods retrieved</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/auth-methods")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/list")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodsResponse>> GetAuthMethods([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodsResponse>> GetAuthMethods([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAuthMethodsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetAuthMethodsAsync(accountId, cancellationToken);
+        var (statusCode, result) = await _implementation.GetAuthMethodsAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -299,12 +296,12 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Add authentication method to account
     /// </summary>
     /// <returns>Authentication method added successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/auth-methods")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/add")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodResponse>> AddAuthMethod([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodResponse>> AddAuthMethod([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.AddAuthMethodAsync(accountId, body, cancellationToken);
+        var (statusCode, result) = await _implementation.AddAuthMethodAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -312,12 +309,12 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Remove authentication method from account
     /// </summary>
     /// <returns>Authentication method removed successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/auth-methods/{methodId}")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/auth-methods/remove")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveAuthMethod([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid methodId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveAuthMethod([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RemoveAuthMethodAsync(accountId, methodId, cancellationToken);
+        var (statusCode, result) = await _implementation.RemoveAuthMethodAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -325,12 +322,12 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Get account by external provider ID
     /// </summary>
     /// <returns>Account retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("accounts/by-provider/{provider}/{externalId}")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/by-provider")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByProvider([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider2 provider, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string externalId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByProvider([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAccountByProviderRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetAccountByProviderAsync(provider, externalId, cancellationToken);
+        var (statusCode, result) = await _implementation.GetAccountByProviderAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -338,12 +335,12 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Update account profile
     /// </summary>
     /// <returns>Profile updated successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/profile")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/profile/update")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateProfile([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateProfile([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdateProfileAsync(accountId, body, cancellationToken);
+        var (statusCode, result) = await _implementation.UpdateProfileAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -351,12 +348,12 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Update account password hash
     /// </summary>
     /// <returns>Password hash updated successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/password")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/password/update")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdatePasswordHash([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdatePasswordHash([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdatePasswordHashAsync(accountId, body, cancellationToken);
+        var (statusCode, result) = await _implementation.UpdatePasswordHashAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -364,12 +361,12 @@ public partial class AccountsController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Update email verification status
     /// </summary>
     /// <returns>Verification status updated successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPut, Microsoft.AspNetCore.Mvc.Route("accounts/{accountId}/verification")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("accounts/verification/update")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateVerificationStatus([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid accountId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateVerificationStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdateVerificationStatusAsync(accountId, body, cancellationToken);
+        var (statusCode, result) = await _implementation.UpdateVerificationStatusAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

@@ -222,7 +222,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetInfrastructureHealthAsync(CancellationToken.None);
+        var (statusCode, response) = await service.GetInfrastructureHealthAsync(new InfrastructureHealthRequest(), CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -250,7 +250,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetInfrastructureHealthAsync(CancellationToken.None);
+        var (statusCode, response) = await service.GetInfrastructureHealthAsync(new InfrastructureHealthRequest(), CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
@@ -280,7 +280,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetInfrastructureHealthAsync(CancellationToken.None);
+        var (statusCode, response) = await service.GetInfrastructureHealthAsync(new InfrastructureHealthRequest(), CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.InternalServerError, statusCode);
@@ -320,7 +320,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetServicesHealthAsync(CancellationToken.None);
+        var (statusCode, response) = await service.GetServicesHealthAsync(new ServiceHealthRequest(), CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -462,7 +462,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetBackendsAsync(CancellationToken.None);
+        var (statusCode, response) = await service.GetBackendsAsync(new ListBackendsRequest(), CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -498,7 +498,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetStatusAsync(CancellationToken.None);
+        var (statusCode, response) = await service.GetStatusAsync(new GetStatusRequest(), CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -527,7 +527,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetStatusAsync(CancellationToken.None);
+        var (statusCode, response) = await service.GetStatusAsync(new GetStatusRequest(), CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -562,7 +562,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetContainerStatusAsync("bannou", CancellationToken.None);
+        var (statusCode, response) = await service.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = "bannou" }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
@@ -592,7 +592,7 @@ public class OrchestratorServiceTests
         var service = CreateService();
 
         // Act
-        var (statusCode, response) = await service.GetContainerStatusAsync("unknown-app", CancellationToken.None);
+        var (statusCode, response) = await service.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = "unknown-app" }, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);

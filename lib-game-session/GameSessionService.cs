@@ -38,7 +38,7 @@ public class GameSessionService : IGameSessionService
     /// <summary>
     /// Lists game sessions. Not yet implemented - planned for future release.
     /// </summary>
-    public async Task<(StatusCodes, GameSessionListResponse?)> ListGameSessionsAsync(GameType? gameType, Status? status, CancellationToken cancellationToken = default(CancellationToken))
+    public async Task<(StatusCodes, GameSessionListResponse?)> ListGameSessionsAsync(ListGameSessionsRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
         _logger.LogWarning("Method ListGameSessionsAsync called but not implemented");
         await Task.Delay(1); // Avoid async warning
@@ -58,9 +58,9 @@ public class GameSessionService : IGameSessionService
     /// <summary>
     /// Gets a game session by ID. Not yet implemented - planned for future release.
     /// </summary>
-    public async Task<(StatusCodes, GameSessionResponse?)> GetGameSessionAsync(Guid sessionId, CancellationToken cancellationToken = default(CancellationToken))
+    public async Task<(StatusCodes, GameSessionResponse?)> GetGameSessionAsync(GetGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
-        _logger.LogWarning("Method GetGameSessionAsync called but not implemented");
+        _logger.LogWarning("Method GetGameSessionAsync called but not implemented for: {SessionId}", body.SessionId);
         await Task.Delay(1); // Avoid async warning
         throw new NotImplementedException("Method GetGameSessionAsync is not implemented");
     }
@@ -68,9 +68,9 @@ public class GameSessionService : IGameSessionService
     /// <summary>
     /// Joins a game session. Not yet implemented - planned for future release.
     /// </summary>
-    public async Task<(StatusCodes, JoinGameSessionResponse?)> JoinGameSessionAsync(Guid sessionId, JoinGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken))
+    public async Task<(StatusCodes, JoinGameSessionResponse?)> JoinGameSessionAsync(JoinGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
-        _logger.LogWarning("Method JoinGameSessionAsync called but not implemented");
+        _logger.LogWarning("Method JoinGameSessionAsync called but not implemented for: {SessionId}", body.SessionId);
         await Task.Delay(1); // Avoid async warning
         throw new NotImplementedException("Method JoinGameSessionAsync is not implemented");
     }
@@ -78,9 +78,9 @@ public class GameSessionService : IGameSessionService
     /// <summary>
     /// Performs a game action. Not yet implemented - planned for future release.
     /// </summary>
-    public async Task<(StatusCodes, GameActionResponse?)> PerformGameActionAsync(Guid sessionId, GameActionRequest body, CancellationToken cancellationToken = default(CancellationToken))
+    public async Task<(StatusCodes, GameActionResponse?)> PerformGameActionAsync(GameActionRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
-        _logger.LogWarning("Method PerformGameActionAsync called but not implemented");
+        _logger.LogWarning("Method PerformGameActionAsync called but not implemented for: {SessionId}", body.SessionId);
         await Task.Delay(1); // Avoid async warning
         throw new NotImplementedException("Method PerformGameActionAsync is not implemented");
     }
@@ -88,9 +88,9 @@ public class GameSessionService : IGameSessionService
     /// <summary>
     /// Leaves a game session. Not yet implemented - planned for future release.
     /// </summary>
-    public async Task<(StatusCodes, object?)> LeaveGameSessionAsync(Guid sessionId, CancellationToken cancellationToken = default(CancellationToken))
+    public async Task<(StatusCodes, object?)> LeaveGameSessionAsync(LeaveGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
-        _logger.LogWarning("Method LeaveGameSessionAsync called but not implemented");
+        _logger.LogWarning("Method LeaveGameSessionAsync called but not implemented for: {SessionId}", body.SessionId);
         await Task.Delay(1); // Avoid async warning
         return (StatusCodes.OK, null);
     }
@@ -98,9 +98,9 @@ public class GameSessionService : IGameSessionService
     /// <summary>
     /// Kicks a player from a game session. Not yet implemented - planned for future release.
     /// </summary>
-    public async Task<(StatusCodes, object?)> KickPlayerAsync(Guid sessionId, KickPlayerRequest body, CancellationToken cancellationToken = default(CancellationToken))
+    public async Task<(StatusCodes, object?)> KickPlayerAsync(KickPlayerRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
-        _logger.LogWarning("Method KickPlayerAsync called but not implemented");
+        _logger.LogWarning("Method KickPlayerAsync called but not implemented for: {SessionId}", body.SessionId);
         await Task.Delay(1); // Avoid async warning
         return (StatusCodes.OK, null);
     }
@@ -108,9 +108,9 @@ public class GameSessionService : IGameSessionService
     /// <summary>
     /// Sends a chat message in a game session. Not yet implemented - planned for future release.
     /// </summary>
-    public async Task<(StatusCodes, object?)> SendChatMessageAsync(Guid sessionId, ChatMessageRequest body, CancellationToken cancellationToken = default(CancellationToken))
+    public async Task<(StatusCodes, object?)> SendChatMessageAsync(ChatMessageRequest body, CancellationToken cancellationToken = default(CancellationToken))
     {
-        _logger.LogWarning("Method SendChatMessageAsync called but not implemented");
+        _logger.LogWarning("Method SendChatMessageAsync called but not implemented for: {SessionId}", body.SessionId);
         await Task.Delay(1); // Avoid async warning
         return (StatusCodes.OK, null);
     }

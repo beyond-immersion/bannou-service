@@ -540,14 +540,15 @@ public class LoginTestHandler : IServiceTestHandler
             return false;
         }
 
-        // Now get sessions
+        // Now get sessions - POST /auth/sessions/list
         var sessionsLoginEndpoint = Program.Configuration.Login_Credentials_Endpoint
             ?? throw new InvalidOperationException("Login_Credentials_Endpoint not configured");
-        var sessionsUrl = $"http://{sessionsLoginEndpoint.Replace("/auth/login", "/auth/sessions")}";
+        var sessionsUrl = $"http://{sessionsLoginEndpoint.Replace("/auth/login", "/auth/sessions/list")}";
         Console.WriteLine($"📡 Testing get sessions at: {sessionsUrl}");
 
-        using var sessionsRequest = new HttpRequestMessage(HttpMethod.Get, sessionsUrl);
+        using var sessionsRequest = new HttpRequestMessage(HttpMethod.Post, sessionsUrl);
         sessionsRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+        sessionsRequest.Content = new StringContent("{}", Encoding.UTF8, "application/json");
 
         using var sessionsResponse = await Program.HttpClient.SendAsync(sessionsRequest);
         var sessionsBody = await sessionsResponse.Content.ReadAsStringAsync();

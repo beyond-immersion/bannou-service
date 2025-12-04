@@ -13,7 +13,7 @@ public interface IGameSessionService : IDaprService
     /// <summary>
     /// ListGameSessions operation
     /// </summary>
-    Task<(StatusCodes, GameSessionListResponse?)> ListGameSessionsAsync(GameType? gameType, Status? status, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, GameSessionListResponse?)> ListGameSessionsAsync(ListGameSessionsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// CreateGameSession operation
@@ -23,31 +23,31 @@ public interface IGameSessionService : IDaprService
     /// <summary>
     /// GetGameSession operation
     /// </summary>
-    Task<(StatusCodes, GameSessionResponse?)> GetGameSessionAsync(Guid sessionId, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, GameSessionResponse?)> GetGameSessionAsync(GetGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// JoinGameSession operation
     /// </summary>
-    Task<(StatusCodes, JoinGameSessionResponse?)> JoinGameSessionAsync(Guid sessionId, JoinGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, JoinGameSessionResponse?)> JoinGameSessionAsync(JoinGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// LeaveGameSession operation
     /// </summary>
-    Task<(StatusCodes, object?)> LeaveGameSessionAsync(Guid sessionId, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, object?)> LeaveGameSessionAsync(LeaveGameSessionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// KickPlayer operation
     /// </summary>
-    Task<(StatusCodes, object?)> KickPlayerAsync(Guid sessionId, KickPlayerRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, object?)> KickPlayerAsync(KickPlayerRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// SendChatMessage operation
     /// </summary>
-    Task<(StatusCodes, object?)> SendChatMessageAsync(Guid sessionId, ChatMessageRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, object?)> SendChatMessageAsync(ChatMessageRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// PerformGameAction operation
     /// </summary>
-    Task<(StatusCodes, GameActionResponse?)> PerformGameActionAsync(Guid sessionId, GameActionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, GameActionResponse?)> PerformGameActionAsync(GameActionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

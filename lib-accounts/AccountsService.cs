@@ -43,16 +43,19 @@ public class AccountsService : IAccountsService
     }
 
     public Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(
-        string? email = null,
-        string? displayName = null,
-        Provider? provider = null,
-        bool? verified = null,
-        int? page = 1,
-        int? pageSize = 20,
+        ListAccountsRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            // Extract parameters from request body
+            var email = body.Email;
+            var displayName = body.DisplayName;
+            var provider = body.Provider;
+            var verified = body.Verified;
+            var page = body.Page;
+            var pageSize = body.PageSize;
+
             // Apply default values for pagination parameters
             if (page <= 0) page = 1;
             if (pageSize <= 0) pageSize = 20;
@@ -66,8 +69,8 @@ public class AccountsService : IAccountsService
             {
                 Accounts = new List<AccountResponse>(),
                 TotalCount = 0,
-                Page = page ?? 1,
-                PageSize = pageSize ?? 20
+                Page = page,
+                PageSize = pageSize
             };
 
             return Task.FromResult<(StatusCodes, AccountListResponse?)>(((StatusCodes, AccountListResponse?))(StatusCodes.OK, response));
@@ -219,11 +222,12 @@ public class AccountsService : IAccountsService
     }
 
     public async Task<(StatusCodes, AccountResponse?)> GetAccountAsync(
-        Guid accountId,
+        GetAccountRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var accountId = body.AccountId;
             _logger.LogInformation("Retrieving account: {AccountId}", accountId);
 
             // Get from Dapr state store (replaces Entity Framework query)
@@ -261,18 +265,18 @@ public class AccountsService : IAccountsService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving account: {AccountId}", accountId);
+            _logger.LogError(ex, "Error retrieving account: {AccountId}", body.AccountId);
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     public async Task<(StatusCodes, AccountResponse?)> UpdateAccountAsync(
-        Guid accountId,
         UpdateAccountRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var accountId = body.AccountId;
             _logger.LogInformation("Updating account: {AccountId}", accountId);
 
             // Get existing account
@@ -347,17 +351,18 @@ public class AccountsService : IAccountsService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating account: {AccountId}", accountId);
+            _logger.LogError(ex, "Error updating account: {AccountId}", body.AccountId);
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     public async Task<(StatusCodes, AccountResponse?)> GetAccountByEmailAsync(
-        string email,
+        GetAccountByEmailRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var email = body.Email;
             _logger.LogInformation("Retrieving account by email: {Email}", email);
 
             // Get the account ID from email index
@@ -410,17 +415,18 @@ public class AccountsService : IAccountsService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving account by email: {Email}", email);
+            _logger.LogError(ex, "Error retrieving account by email: {Email}", body.Email);
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     public async Task<(StatusCodes, AuthMethodsResponse?)> GetAuthMethodsAsync(
-        Guid accountId,
+        GetAuthMethodsRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var accountId = body.AccountId;
             _logger.LogInformation("Getting auth methods for account: {AccountId}", accountId);
 
             // Verify account exists
@@ -446,18 +452,18 @@ public class AccountsService : IAccountsService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting auth methods: {AccountId}", accountId);
+            _logger.LogError(ex, "Error getting auth methods: {AccountId}", body.AccountId);
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     public async Task<(StatusCodes, AuthMethodResponse?)> AddAuthMethodAsync(
-        Guid accountId,
         AddAuthMethodRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var accountId = body.AccountId;
             _logger.LogInformation("Adding auth method for account: {AccountId}, provider: {Provider}", accountId, body.Provider);
 
             // Verify account exists
@@ -529,7 +535,7 @@ public class AccountsService : IAccountsService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error adding auth method: {AccountId}", accountId);
+            _logger.LogError(ex, "Error adding auth method: {AccountId}", body.AccountId);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -565,12 +571,13 @@ public class AccountsService : IAccountsService
     }
 
     public async Task<(StatusCodes, AccountResponse?)> GetAccountByProviderAsync(
-        Provider2 provider,
-        string externalId,
+        GetAccountByProviderRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var provider = body.Provider;
+            var externalId = body.ExternalId;
             _logger.LogInformation("Getting account by provider: {Provider}, externalId: {ExternalId}", provider, externalId);
 
             // Build the provider index key
@@ -627,7 +634,7 @@ public class AccountsService : IAccountsService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting account by provider: {Provider}", provider);
+            _logger.LogError(ex, "Error getting account by provider: {Provider}", body.Provider);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -655,12 +662,12 @@ public class AccountsService : IAccountsService
     }
 
     public async Task<(StatusCodes, AccountResponse?)> UpdateProfileAsync(
-        Guid accountId,
         UpdateProfileRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var accountId = body.AccountId;
             _logger.LogInformation("Updating profile for account: {AccountId}", accountId);
 
             // Handle profile update similar to account update
@@ -706,24 +713,25 @@ public class AccountsService : IAccountsService
             }
             catch (Exception innerEx)
             {
-                _logger.LogError(innerEx, "Inner exception updating profile: {AccountId}", accountId);
+                _logger.LogError(innerEx, "Inner exception updating profile: {AccountId}", body.AccountId);
                 throw;
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating profile: {AccountId}", accountId);
+            _logger.LogError(ex, "Error updating profile: {AccountId}", body.AccountId);
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     // Add missing methods from interface
     public async Task<(StatusCodes, object?)> DeleteAccountAsync(
-        Guid accountId,
+        DeleteAccountRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var accountId = body.AccountId;
             _logger.LogInformation("Deleting account: {AccountId}", accountId);
 
             // Get existing account for event publishing
@@ -763,18 +771,19 @@ public class AccountsService : IAccountsService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting account: {AccountId}", accountId);
+            _logger.LogError(ex, "Error deleting account: {AccountId}", body.AccountId);
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     public async Task<(StatusCodes, object?)> RemoveAuthMethodAsync(
-        Guid accountId,
-        Guid methodId,
+        RemoveAuthMethodRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var accountId = body.AccountId;
+            var methodId = body.MethodId;
             _logger.LogInformation("Removing auth method {MethodId} for account: {AccountId}", methodId, accountId);
 
             // Verify account exists
@@ -826,18 +835,18 @@ public class AccountsService : IAccountsService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing auth method: {AccountId}", accountId);
+            _logger.LogError(ex, "Error removing auth method: {AccountId}", body.AccountId);
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     public async Task<(StatusCodes, object?)> UpdatePasswordHashAsync(
-        Guid accountId,
         UpdatePasswordRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var accountId = body.AccountId;
             _logger.LogInformation("Updating password hash for account: {AccountId}", accountId);
 
             // Get existing account
@@ -868,18 +877,18 @@ public class AccountsService : IAccountsService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating password hash: {AccountId}", accountId);
+            _logger.LogError(ex, "Error updating password hash: {AccountId}", body.AccountId);
             return (StatusCodes.InternalServerError, null);
         }
     }
 
     public async Task<(StatusCodes, object?)> UpdateVerificationStatusAsync(
-        Guid accountId,
         UpdateVerificationRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var accountId = body.AccountId;
             _logger.LogInformation("Updating verification status for account: {AccountId}, Verified: {Verified}",
                 accountId, body.EmailVerified);
 
@@ -912,7 +921,7 @@ public class AccountsService : IAccountsService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating verification status: {AccountId}", accountId);
+            _logger.LogError(ex, "Error updating verification status: {AccountId}", body.AccountId);
             return (StatusCodes.InternalServerError, null);
         }
     }

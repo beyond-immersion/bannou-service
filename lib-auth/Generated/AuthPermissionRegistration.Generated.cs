@@ -183,8 +183,8 @@ public static class AuthPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/auth/sessions",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/auth/sessions/list",
+            Method = ServiceEndpointMethod.POST,
             Description = "getSessions",
             Permissions = new List<PermissionRequirement>
             {
@@ -198,8 +198,8 @@ public static class AuthPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/auth/sessions/{sessionId}",
-            Method = ServiceEndpointMethod.DELETE,
+            Path = "/auth/sessions/terminate",
+            Method = ServiceEndpointMethod.POST,
             Description = "terminateSession",
             Permissions = new List<PermissionRequirement>
             {

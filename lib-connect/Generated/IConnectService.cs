@@ -18,6 +18,6 @@ public interface IConnectService : IDaprService
     /// <summary>
     /// GetServiceMappings operation
     /// </summary>
-    Task<(StatusCodes, ServiceMappingsResponse?)> GetServiceMappingsAsync(CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, ServiceMappingsResponse?)> GetServiceMappingsAsync(GetServiceMappingsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

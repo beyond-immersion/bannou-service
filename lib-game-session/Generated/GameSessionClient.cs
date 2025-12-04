@@ -40,7 +40,7 @@ public partial interface IGameSessionClient
     /// </summary>
     /// <returns>Game sessions retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<GameSessionListResponse> ListGameSessionsAsync(GameType? gameType = null, Status? status = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<GameSessionListResponse> ListGameSessionsAsync(ListGameSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -56,7 +56,7 @@ public partial interface IGameSessionClient
     /// </summary>
     /// <returns>Game session retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<GameSessionResponse> GetGameSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<GameSessionResponse> GetGameSessionAsync(GetGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -64,7 +64,7 @@ public partial interface IGameSessionClient
     /// </summary>
     /// <returns>Successfully joined game session</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<JoinGameSessionResponse> JoinGameSessionAsync(System.Guid sessionId, JoinGameSessionRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<JoinGameSessionResponse> JoinGameSessionAsync(JoinGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -72,7 +72,7 @@ public partial interface IGameSessionClient
     /// </summary>
     /// <returns>Successfully left game session</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task LeaveGameSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task LeaveGameSessionAsync(LeaveGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -80,7 +80,7 @@ public partial interface IGameSessionClient
     /// </summary>
     /// <returns>Player kicked successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task KickPlayerAsync(System.Guid sessionId, KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task KickPlayerAsync(KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -88,7 +88,7 @@ public partial interface IGameSessionClient
     /// </summary>
     /// <returns>Chat message sent successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task SendChatMessageAsync(System.Guid sessionId, ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task SendChatMessageAsync(ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -96,7 +96,7 @@ public partial interface IGameSessionClient
     /// </summary>
     /// <returns>Game action performed successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<GameActionResponse> PerformGameActionAsync(System.Guid sessionId, GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<GameActionResponse> PerformGameActionAsync(GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -144,32 +144,29 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
     /// </summary>
     /// <returns>Game sessions retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<GameSessionListResponse> ListGameSessionsAsync(GameType? gameType = null, Status? status = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<GameSessionListResponse> ListGameSessionsAsync(ListGameSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "sessions"
-                urlBuilder_.Append("sessions");
-                urlBuilder_.Append('?');
-                if (gameType != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("gameType")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(gameType, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                if (status != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("status")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(status, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                urlBuilder_.Length--;
+                // Operation Path: "sessions/list"
+                urlBuilder_.Append("sessions/list");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -250,8 +247,8 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "sessions"
-                urlBuilder_.Append("sessions");
+                // Operation Path: "sessions/create"
+                urlBuilder_.Append("sessions/create");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -311,10 +308,10 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
     /// </summary>
     /// <returns>Game session retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<GameSessionResponse> GetGameSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<GameSessionResponse> GetGameSessionAsync(GetGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (sessionId == null)
-            throw new System.ArgumentNullException("sessionId");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -322,15 +319,18 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "sessions/{sessionId}"
-                urlBuilder_.Append("sessions/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
+                // Operation Path: "sessions/get"
+                urlBuilder_.Append("sessions/get");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -365,6 +365,12 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
                         return objectResponse_.Object;
                     }
                     else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Game session not found", status_, responseText_, headers_, null);
+                    }
+                    else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
                         throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
@@ -390,10 +396,10 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
     /// </summary>
     /// <returns>Successfully joined game session</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<JoinGameSessionResponse> JoinGameSessionAsync(System.Guid sessionId, JoinGameSessionRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<JoinGameSessionResponse> JoinGameSessionAsync(JoinGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (sessionId == null)
-            throw new System.ArgumentNullException("sessionId");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -411,10 +417,8 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "sessions/{sessionId}/join"
-                urlBuilder_.Append("sessions/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/join");
+                // Operation Path: "sessions/join"
+                urlBuilder_.Append("sessions/join");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -449,6 +453,18 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
                         return objectResponse_.Object;
                     }
                     else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Game session not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 409)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Session full or already joined", status_, responseText_, headers_, null);
+                    }
+                    else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
                         throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
@@ -474,10 +490,10 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
     /// </summary>
     /// <returns>Successfully left game session</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task LeaveGameSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task LeaveGameSessionAsync(LeaveGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (sessionId == null)
-            throw new System.ArgumentNullException("sessionId");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -485,16 +501,17 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Content = new System.Net.Http.StringContent(string.Empty, System.Text.Encoding.UTF8, "application/json");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "sessions/{sessionId}/leave"
-                urlBuilder_.Append("sessions/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/leave");
+                // Operation Path: "sessions/leave"
+                urlBuilder_.Append("sessions/leave");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -522,6 +539,12 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
                     if (status_ == 200)
                     {
                         return;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Game session not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -549,11 +572,8 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
     /// </summary>
     /// <returns>Player kicked successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task KickPlayerAsync(System.Guid sessionId, KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task KickPlayerAsync(KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (sessionId == null)
-            throw new System.ArgumentNullException("sessionId");
-
         if (body == null)
             throw new System.ArgumentNullException("body");
 
@@ -572,10 +592,8 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "sessions/{sessionId}/kick"
-                urlBuilder_.Append("sessions/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/kick");
+                // Operation Path: "sessions/kick"
+                urlBuilder_.Append("sessions/kick");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -603,6 +621,18 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
                     if (status_ == 200)
                     {
                         return;
+                    }
+                    else
+                    if (status_ == 403)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Not authorized to kick players", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Game session or player not found", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -630,11 +660,8 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
     /// </summary>
     /// <returns>Chat message sent successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task SendChatMessageAsync(System.Guid sessionId, ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task SendChatMessageAsync(ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (sessionId == null)
-            throw new System.ArgumentNullException("sessionId");
-
         if (body == null)
             throw new System.ArgumentNullException("body");
 
@@ -653,10 +680,8 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "sessions/{sessionId}/chat"
-                urlBuilder_.Append("sessions/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/chat");
+                // Operation Path: "sessions/chat"
+                urlBuilder_.Append("sessions/chat");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -686,6 +711,12 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
                         return;
                     }
                     else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Game session not found", status_, responseText_, headers_, null);
+                    }
+                    else
                     {
                         var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
                         throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
@@ -711,11 +742,8 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
     /// </summary>
     /// <returns>Game action performed successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<GameActionResponse> PerformGameActionAsync(System.Guid sessionId, GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<GameActionResponse> PerformGameActionAsync(GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (sessionId == null)
-            throw new System.ArgumentNullException("sessionId");
-
         if (body == null)
             throw new System.ArgumentNullException("body");
 
@@ -735,10 +763,8 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "sessions/{sessionId}/actions"
-                urlBuilder_.Append("sessions/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/actions");
+                // Operation Path: "sessions/actions"
+                urlBuilder_.Append("sessions/actions");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -771,6 +797,18 @@ public partial class GameSessionClient : BeyondImmersion.BannouService.ServiceCl
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Invalid game action", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Game session not found", status_, responseText_, headers_, null);
                     }
                     else
                     {

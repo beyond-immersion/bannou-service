@@ -54,7 +54,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/health/infrastructure",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.POST,
             Description = "GetInfrastructureHealth",
             Permissions = new List<PermissionRequirement>
             {
@@ -69,7 +69,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/health/services",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.POST,
             Description = "GetServicesHealth",
             Permissions = new List<PermissionRequirement>
             {
@@ -113,8 +113,8 @@ public static class OrchestratorPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/orchestrator/backends",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/orchestrator/backends/list",
+            Method = ServiceEndpointMethod.POST,
             Description = "GetBackends",
             Permissions = new List<PermissionRequirement>
             {
@@ -128,8 +128,8 @@ public static class OrchestratorPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/orchestrator/presets",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/orchestrator/presets/list",
+            Method = ServiceEndpointMethod.POST,
             Description = "GetPresets",
             Permissions = new List<PermissionRequirement>
             {
@@ -159,7 +159,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/status",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.POST,
             Description = "GetStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -204,7 +204,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/logs",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.POST,
             Description = "GetLogs",
             Permissions = new List<PermissionRequirement>
             {
@@ -233,7 +233,7 @@ public static class OrchestratorPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/orchestrator/containers/{appName}/request-restart",
+            Path = "/orchestrator/containers/request-restart",
             Method = ServiceEndpointMethod.POST,
             Description = "RequestContainerRestart",
             Permissions = new List<PermissionRequirement>
@@ -248,8 +248,8 @@ public static class OrchestratorPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/orchestrator/containers/{appName}/status",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/orchestrator/containers/status",
+            Method = ServiceEndpointMethod.POST,
             Description = "GetContainerStatus",
             Permissions = new List<PermissionRequirement>
             {
@@ -279,7 +279,7 @@ public static class OrchestratorPermissionRegistration
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/orchestrator/config/version",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.POST,
             Description = "GetConfigVersion",
             Permissions = new List<PermissionRequirement>
             {

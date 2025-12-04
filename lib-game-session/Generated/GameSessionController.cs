@@ -37,7 +37,7 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 
     /// <returns>Game sessions retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionListResponse>> ListGameSessionsAsync(GameType? gameType, Status? status, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionListResponse>> ListGameSessionsAsync(ListGameSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Create new game session
@@ -55,7 +55,7 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 
     /// <returns>Game session retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> GetGameSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> GetGameSessionAsync(GetGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Join a game session
@@ -64,7 +64,7 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 
     /// <returns>Successfully joined game session</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSessionAsync(System.Guid sessionId, JoinGameSessionRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSessionAsync(JoinGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Leave a game session
@@ -73,7 +73,7 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 
     /// <returns>Successfully left game session</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSessionAsync(LeaveGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Kick player from game session (admin only)
@@ -82,7 +82,7 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 
     /// <returns>Player kicked successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> KickPlayerAsync(System.Guid sessionId, KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> KickPlayerAsync(KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Send chat message to game session
@@ -91,7 +91,7 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 
     /// <returns>Chat message sent successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SendChatMessageAsync(System.Guid sessionId, ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SendChatMessageAsync(ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Perform game action (enhanced permissions after joining)
@@ -100,7 +100,7 @@ public interface IGameSessionController : BeyondImmersion.BannouService.Controll
 
     /// <returns>Game action performed successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameActionResponse>> PerformGameActionAsync(System.Guid sessionId, GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameActionResponse>> PerformGameActionAsync(GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -160,12 +160,12 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// List available game sessions
     /// </summary>
     /// <returns>Game sessions retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/list")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionListResponse>> ListGameSessions([Microsoft.AspNetCore.Mvc.FromQuery] GameType? gameType, [Microsoft.AspNetCore.Mvc.FromQuery] Status? status, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionListResponse>> ListGameSessions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListGameSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListGameSessionsAsync(gameType, status, cancellationToken);
+        var (statusCode, result) = await _implementation.ListGameSessionsAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -173,7 +173,7 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// Create new game session
     /// </summary>
     /// <returns>Game session created successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/create")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> CreateGameSession([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -186,12 +186,12 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// Get game session details
     /// </summary>
     /// <returns>Game session retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("sessions/{sessionId}")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/get")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> GetGameSession([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> GetGameSession([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetGameSessionAsync(sessionId, cancellationToken);
+        var (statusCode, result) = await _implementation.GetGameSessionAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -199,12 +199,12 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// Join a game session
     /// </summary>
     /// <returns>Successfully joined game session</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/{sessionId}/join")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/join")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSession([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, [Microsoft.AspNetCore.Mvc.FromBody] JoinGameSessionRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSession([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] JoinGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.JoinGameSessionAsync(sessionId, body, cancellationToken);
+        var (statusCode, result) = await _implementation.JoinGameSessionAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -212,12 +212,12 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// Leave a game session
     /// </summary>
     /// <returns>Successfully left game session</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/{sessionId}/leave")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/leave")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSession([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSession([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.LeaveGameSessionAsync(sessionId, cancellationToken);
+        var (statusCode, result) = await _implementation.LeaveGameSessionAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -225,12 +225,12 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// Kick player from game session (admin only)
     /// </summary>
     /// <returns>Player kicked successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/{sessionId}/kick")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/kick")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> KickPlayer([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> KickPlayer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.KickPlayerAsync(sessionId, body, cancellationToken);
+        var (statusCode, result) = await _implementation.KickPlayerAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -238,12 +238,12 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// Send chat message to game session
     /// </summary>
     /// <returns>Chat message sent successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/{sessionId}/chat")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/chat")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SendChatMessage([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SendChatMessage([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.SendChatMessageAsync(sessionId, body, cancellationToken);
+        var (statusCode, result) = await _implementation.SendChatMessageAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -251,12 +251,12 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     /// Perform game action (enhanced permissions after joining)
     /// </summary>
     /// <returns>Game action performed successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/{sessionId}/actions")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("sessions/actions")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameActionResponse>> PerformGameAction([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameActionResponse>> PerformGameAction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.PerformGameActionAsync(sessionId, body, cancellationToken);
+        var (statusCode, result) = await _implementation.PerformGameActionAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

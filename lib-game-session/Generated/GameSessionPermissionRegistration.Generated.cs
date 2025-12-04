@@ -53,8 +53,8 @@ public static class GameSessionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/sessions",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/sessions/list",
+            Method = ServiceEndpointMethod.POST,
             Description = "listGameSessions",
             Permissions = new List<PermissionRequirement>
             {
@@ -68,7 +68,7 @@ public static class GameSessionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/sessions",
+            Path = "/sessions/create",
             Method = ServiceEndpointMethod.POST,
             Description = "createGameSession",
             Permissions = new List<PermissionRequirement>
@@ -88,8 +88,8 @@ public static class GameSessionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/sessions/{sessionId}",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/sessions/get",
+            Method = ServiceEndpointMethod.POST,
             Description = "getGameSession",
             Permissions = new List<PermissionRequirement>
             {
@@ -103,7 +103,7 @@ public static class GameSessionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/sessions/{sessionId}/join",
+            Path = "/sessions/join",
             Method = ServiceEndpointMethod.POST,
             Description = "joinGameSession",
             Permissions = new List<PermissionRequirement>
@@ -123,7 +123,7 @@ public static class GameSessionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/sessions/{sessionId}/leave",
+            Path = "/sessions/leave",
             Method = ServiceEndpointMethod.POST,
             Description = "leaveGameSession",
             Permissions = new List<PermissionRequirement>
@@ -138,7 +138,7 @@ public static class GameSessionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/sessions/{sessionId}/kick",
+            Path = "/sessions/kick",
             Method = ServiceEndpointMethod.POST,
             Description = "kickPlayer",
             Permissions = new List<PermissionRequirement>
@@ -158,7 +158,7 @@ public static class GameSessionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/sessions/{sessionId}/chat",
+            Path = "/sessions/chat",
             Method = ServiceEndpointMethod.POST,
             Description = "sendChatMessage",
             Permissions = new List<PermissionRequirement>
@@ -173,7 +173,7 @@ public static class GameSessionPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/sessions/{sessionId}/actions",
+            Path = "/sessions/actions",
             Method = ServiceEndpointMethod.POST,
             Description = "performGameAction",
             Permissions = new List<PermissionRequirement>

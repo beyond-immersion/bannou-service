@@ -1,15 +1,20 @@
 openapi: 3.0.0
 info:
   title: Bannou Accounts Service API
-  description: Internal account management service (CRUD operations only, never exposed to internet)
-  version: 1.0.0
+  description: |
+    Internal account management service (CRUD operations only, never exposed to internet).
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See API-DESIGN.md for architectural rationale.
+  version: 2.0.0
 servers:
   - url: http://localhost:3500/v1.0/invoke/bannou/method
     description: Dapr sidecar endpoint (internal only)
 
 paths:
-  /accounts:
-    get:
+  /accounts/list:
+    post:
       summary: List accounts with filtering
       operationId: listAccounts
       tags:
@@ -19,50 +24,12 @@ paths:
           states: {}
         - role: service
           states: {}
-      parameters:
-        - name: email
-          in: query
-          required: false
-          schema:
-            type: string
-            format: email
-            nullable: true
-        - name: displayName
-          in: query
-          required: false
-          schema:
-            type: string
-            nullable: true
-        - name: provider
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [email, google, discord, twitch, steam]
-            nullable: true
-        - name: verified
-          in: query
-          required: false
-          schema:
-            type: boolean
-            nullable: true
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-            nullable: true
-        - name: pageSize
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-            nullable: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListAccountsRequest'
       responses:
         '200':
           description: Accounts retrieved successfully
@@ -71,6 +38,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AccountListResponse'
 
+  /accounts/create:
     post:
       summary: Create new account
       operationId: createAccount
@@ -99,8 +67,8 @@ paths:
         '409':
           description: Account already exists
 
-  /accounts/{accountId}:
-    get:
+  /accounts/get:
+    post:
       summary: Get account by ID
       operationId: getAccount
       tags:
@@ -110,13 +78,12 @@ paths:
           states: {}
         - role: service
           states: {}
-      parameters:
-        - name: accountId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAccountRequest'
       responses:
         '200':
           description: Account retrieved successfully
@@ -127,7 +94,8 @@ paths:
         '404':
           description: Account not found
 
-    put:
+  /accounts/update:
+    post:
       summary: Update account
       operationId: updateAccount
       tags:
@@ -137,13 +105,6 @@ paths:
           states: {}
         - role: service
           states: {}
-      parameters:
-        - name: accountId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
         required: true
         content:
@@ -162,7 +123,8 @@ paths:
         '400':
           description: Invalid update data
 
-    delete:
+  /accounts/delete:
+    post:
       summary: Delete account
       operationId: deleteAccount
       tags:
@@ -170,13 +132,12 @@ paths:
       x-permissions:
         - role: admin
           states: {}
-      parameters:
-        - name: accountId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAccountRequest'
       responses:
         '204':
           description: Account deleted successfully
@@ -185,8 +146,8 @@ paths:
         '409':
           description: Account cannot be deleted (active sessions exist)
 
-  /accounts/by-email/{email}:
-    get:
+  /accounts/by-email:
+    post:
       summary: Get account by email
       operationId: getAccountByEmail
       tags:
@@ -194,13 +155,12 @@ paths:
       x-permissions:
         - role: service
           states: {}
-      parameters:
-        - name: email
-          in: path
-          required: true
-          schema:
-            type: string
-            format: email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAccountByEmailRequest'
       responses:
         '200':
           description: Account retrieved successfully
@@ -211,8 +171,8 @@ paths:
         '404':
           description: Account not found
 
-  /accounts/{accountId}/auth-methods:
-    get:
+  /accounts/auth-methods/list:
+    post:
       summary: Get authentication methods for account
       operationId: getAuthMethods
       tags:
@@ -222,13 +182,12 @@ paths:
           states: {}
         - role: service
           states: {}
-      parameters:
-        - name: accountId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAuthMethodsRequest'
       responses:
         '200':
           description: Authentication methods retrieved
@@ -239,6 +198,7 @@ paths:
         '404':
           description: Account not found
 
+  /accounts/auth-methods/add:
     post:
       summary: Add authentication method to account
       operationId: addAuthMethod
@@ -249,13 +209,6 @@ paths:
           states: {}
         - role: service
           states: {}
-      parameters:
-        - name: accountId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
         required: true
         content:
@@ -274,8 +227,8 @@ paths:
         '409':
           description: Authentication method already exists
 
-  /accounts/{accountId}/auth-methods/{methodId}:
-    delete:
+  /accounts/auth-methods/remove:
+    post:
       summary: Remove authentication method from account
       operationId: removeAuthMethod
       tags:
@@ -285,19 +238,12 @@ paths:
           states: {}
         - role: service
           states: {}
-      parameters:
-        - name: accountId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: methodId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveAuthMethodRequest'
       responses:
         '204':
           description: Authentication method removed successfully
@@ -306,8 +252,8 @@ paths:
         '400':
           description: Cannot remove last authentication method
 
-  /accounts/by-provider/{provider}/{externalId}:
-    get:
+  /accounts/by-provider:
+    post:
       summary: Get account by external provider ID
       operationId: getAccountByProvider
       tags:
@@ -315,18 +261,12 @@ paths:
       x-permissions:
         - role: service
           states: {}
-      parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [google, discord, twitch, steam]
-        - name: externalId
-          in: path
-          required: true
-          schema:
-            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAccountByProviderRequest'
       responses:
         '200':
           description: Account retrieved successfully
@@ -337,8 +277,8 @@ paths:
         '404':
           description: Account not found
 
-  /accounts/{accountId}/profile:
-    put:
+  /accounts/profile/update:
+    post:
       summary: Update account profile
       operationId: updateProfile
       tags:
@@ -351,13 +291,6 @@ paths:
           states: {}
         - role: service
           states: {}
-      parameters:
-        - name: accountId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
         required: true
         content:
@@ -374,8 +307,8 @@ paths:
         '404':
           description: Account not found
 
-  /accounts/{accountId}/password:
-    put:
+  /accounts/password/update:
+    post:
       summary: Update account password hash
       operationId: updatePasswordHash
       tags:
@@ -383,13 +316,6 @@ paths:
       x-permissions:
         - role: service
           states: {}
-      parameters:
-        - name: accountId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
         required: true
         content:
@@ -402,8 +328,8 @@ paths:
         '404':
           description: Account not found
 
-  /accounts/{accountId}/verification:
-    put:
+  /accounts/verification/update:
+    post:
       summary: Update email verification status
       operationId: updateVerificationStatus
       tags:
@@ -411,13 +337,6 @@ paths:
       x-permissions:
         - role: service
           states: {}
-      parameters:
-        - name: accountId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
         required: true
         content:
@@ -432,6 +351,110 @@ paths:
 
 components:
   schemas:
+    # Request Models for POST-only pattern
+    ListAccountsRequest:
+      type: object
+      description: Request to list accounts with optional filtering
+      properties:
+        email:
+          type: string
+          format: email
+          nullable: true
+        displayName:
+          type: string
+          nullable: true
+        provider:
+          type: string
+          enum: [email, google, discord, twitch, steam]
+          nullable: true
+        verified:
+          type: boolean
+          nullable: true
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    GetAccountRequest:
+      type: object
+      description: Request to get a specific account by ID
+      required:
+        - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to retrieve
+
+    DeleteAccountRequest:
+      type: object
+      description: Request to delete a specific account
+      required:
+        - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to delete
+
+    GetAccountByEmailRequest:
+      type: object
+      description: Request to get account by email address
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address to look up
+
+    GetAuthMethodsRequest:
+      type: object
+      description: Request to get authentication methods for an account
+      required:
+        - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account
+
+    RemoveAuthMethodRequest:
+      type: object
+      description: Request to remove an authentication method from an account
+      required:
+        - accountId
+        - methodId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account
+        methodId:
+          type: string
+          format: uuid
+          description: ID of the authentication method to remove
+
+    GetAccountByProviderRequest:
+      type: object
+      description: Request to get account by external provider ID
+      required:
+        - provider
+        - externalId
+      properties:
+        provider:
+          type: string
+          enum: [google, discord, twitch, steam]
+          description: OAuth provider type
+        externalId:
+          type: string
+          description: External ID from the provider
+
     CreateAccountRequest:
       type: object
       required:
@@ -463,7 +486,13 @@ components:
 
     UpdateAccountRequest:
       type: object
+      required:
+        - accountId
       properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to update
         displayName:
           type: string
           nullable: true
@@ -479,7 +508,13 @@ components:
 
     UpdateProfileRequest:
       type: object
+      required:
+        - accountId
       properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to update
         displayName:
           type: string
           nullable: true
@@ -492,8 +527,13 @@ components:
     UpdatePasswordRequest:
       type: object
       required:
+        - accountId
         - passwordHash
       properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to update
         passwordHash:
           type: string
           description: New pre-hashed password from Auth service
@@ -501,16 +541,26 @@ components:
     UpdateVerificationRequest:
       type: object
       required:
+        - accountId
         - emailVerified
       properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to update
         emailVerified:
           type: boolean
 
     AddAuthMethodRequest:
       type: object
       required:
+        - accountId
         - provider
       properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to add auth method to
         provider:
           type: string
           enum: [google, discord, twitch, steam]
@@ -520,6 +570,7 @@ components:
           type: string
           nullable: true
 
+    # Response Models
     AccountResponse:
       type: object
       required:

@@ -43,7 +43,7 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
 
     /// <returns>Infrastructure health status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InfrastructureHealthResponse>> GetInfrastructureHealthAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InfrastructureHealthResponse>> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Get health status of all services
@@ -56,7 +56,7 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
 
     /// <returns>Service health report</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceHealthReport>> GetServicesHealthAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceHealthReport>> GetServicesHealthAsync(ServiceHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Restart service with optional configuration
@@ -114,7 +114,7 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
 
     /// <returns>Available backends with capabilities</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackendsResponse>> GetBackendsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackendsResponse>> GetBackendsAsync(ListBackendsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// List available deployment presets
@@ -135,7 +135,7 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
 
     /// <returns>Available deployment presets</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PresetsResponse>> GetPresetsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PresetsResponse>> GetPresetsAsync(ListPresetsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Deploy or update an environment
@@ -180,7 +180,7 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
 
     /// <returns>Current environment status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EnvironmentStatus>> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EnvironmentStatus>> GetStatusAsync(GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Tear down the current environment
@@ -231,21 +231,9 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>Supports real-time streaming via WebSocket upgrade.
     /// </remarks>
 
-    /// <param name="service">Service name to get logs for</param>
-
-    /// <param name="container">Container ID or name (alternative to service)</param>
-
-    /// <param name="since">Return logs since timestamp (RFC3339 or relative like "5m")</param>
-
-    /// <param name="until">Return logs until timestamp</param>
-
-    /// <param name="tail">Number of lines from end of logs</param>
-
-    /// <param name="follow">Stream logs in real-time (WebSocket upgrade)</param>
-
     /// <returns>Log output</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LogsResponse>> GetLogsAsync(string? service, string? container, string? since, string? until, int tail, bool follow, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LogsResponse>> GetLogsAsync(GetLogsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Update service topology without full redeploy
@@ -287,12 +275,9 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>- `force`: Kill all instances simultaneously (causes downtime)
     /// </remarks>
 
-    /// <param name="appName">Container's Dapr app name (e.g., "bannou", "npc-omega")</param>
-
-
     /// <returns>Restart request accepted</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerRestartResponse>> RequestContainerRestartAsync(string appName, ContainerRestartRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerRestartResponse>> RequestContainerRestartAsync(ContainerRestartRequestBody body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Get container health and restart history
@@ -303,11 +288,9 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     /// <br/>running plugins, and current configuration.
     /// </remarks>
 
-    /// <param name="appName">Container's Dapr app name</param>
-
     /// <returns>Container status</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerStatus>> GetContainerStatusAsync(string appName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerStatus>> GetContainerStatusAsync(GetContainerStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Rollback to previous configuration
@@ -337,7 +320,7 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
 
     /// <returns>Configuration version info</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigVersionResponse>> GetConfigVersionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigVersionResponse>> GetConfigVersionAsync(GetConfigVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -403,12 +386,12 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// <br/>- Dapr Placement service
     /// </remarks>
     /// <returns>Infrastructure health status</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/infrastructure")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/infrastructure")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InfrastructureHealthResponse>> GetInfrastructureHealth(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InfrastructureHealthResponse>> GetInfrastructureHealth([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetInfrastructureHealthAsync(cancellationToken);
+        var (statusCode, result) = await _implementation.GetInfrastructureHealthAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -420,12 +403,12 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// <br/>Uses existing ServiceHeartbeatEvent schema from common-events.yaml.
     /// </remarks>
     /// <returns>Service health report</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/services")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/health/services")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceHealthReport>> GetServicesHealth(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceHealthReport>> GetServicesHealth([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ServiceHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetServicesHealthAsync(cancellationToken);
+        var (statusCode, result) = await _implementation.GetServicesHealthAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -490,12 +473,12 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// <br/>- Compose: Check for docker compose v2 availability
     /// </remarks>
     /// <returns>Available backends with capabilities</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/backends")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/backends/list")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackendsResponse>> GetBackends(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackendsResponse>> GetBackends([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListBackendsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetBackendsAsync(cancellationToken);
+        var (statusCode, result) = await _implementation.GetBackendsAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -515,12 +498,12 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// <br/>- `distributed-npc`: NPC processing distributed across nodes
     /// </remarks>
     /// <returns>Available deployment presets</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/presets")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/presets/list")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PresetsResponse>> GetPresets(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PresetsResponse>> GetPresets([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListPresetsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetPresetsAsync(cancellationToken);
+        var (statusCode, result) = await _implementation.GetPresetsAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -568,12 +551,12 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// <br/>- Active preset and any customizations
     /// </remarks>
     /// <returns>Current environment status</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/status")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/status")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EnvironmentStatus>> GetStatus(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EnvironmentStatus>> GetStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetStatusAsync(cancellationToken);
+        var (statusCode, result) = await _implementation.GetStatusAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -632,19 +615,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// Retrieves logs from services or containers with filtering options.
     /// <br/>Supports real-time streaming via WebSocket upgrade.
     /// </remarks>
-    /// <param name="service">Service name to get logs for</param>
-    /// <param name="container">Container ID or name (alternative to service)</param>
-    /// <param name="since">Return logs since timestamp (RFC3339 or relative like "5m")</param>
-    /// <param name="until">Return logs until timestamp</param>
-    /// <param name="tail">Number of lines from end of logs</param>
-    /// <param name="follow">Stream logs in real-time (WebSocket upgrade)</param>
     /// <returns>Log output</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/logs")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/logs")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LogsResponse>> GetLogs([Microsoft.AspNetCore.Mvc.FromQuery] string? service, [Microsoft.AspNetCore.Mvc.FromQuery] string? container, [Microsoft.AspNetCore.Mvc.FromQuery] string? since, [Microsoft.AspNetCore.Mvc.FromQuery] string? until, [Microsoft.AspNetCore.Mvc.FromQuery] int? tail, [Microsoft.AspNetCore.Mvc.FromQuery] bool? follow, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LogsResponse>> GetLogs([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetLogsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetLogsAsync(service, container, since, until, tail ?? 100, follow ?? false, cancellationToken);
+        var (statusCode, result) = await _implementation.GetLogsAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -690,14 +667,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// <br/>- `immediate`: Rolling update but don't wait for connection drain
     /// <br/>- `force`: Kill all instances simultaneously (causes downtime)
     /// </remarks>
-    /// <param name="appName">Container's Dapr app name (e.g., "bannou", "npc-omega")</param>
     /// <returns>Restart request accepted</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/{appName}/request-restart")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/request-restart")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerRestartResponse>> RequestContainerRestart([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string appName, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ContainerRestartRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerRestartResponse>> RequestContainerRestart([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ContainerRestartRequestBody body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RequestContainerRestartAsync(appName, body, cancellationToken);
+        var (statusCode, result) = await _implementation.RequestContainerRestartAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -708,14 +684,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// Returns detailed status of a container including health, restart history,
     /// <br/>running plugins, and current configuration.
     /// </remarks>
-    /// <param name="appName">Container's Dapr app name</param>
     /// <returns>Container status</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/{appName}/status")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/containers/status")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerStatus>> GetContainerStatus([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string appName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerStatus>> GetContainerStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetContainerStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetContainerStatusAsync(appName, cancellationToken);
+        var (statusCode, result) = await _implementation.GetContainerStatusAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -748,12 +723,12 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     /// <br/>and summary of configuration state (not actual values for security).
     /// </remarks>
     /// <returns>Configuration version info</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/version")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/config/version")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigVersionResponse>> GetConfigVersion(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigVersionResponse>> GetConfigVersion([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetConfigVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetConfigVersionAsync(cancellationToken);
+        var (statusCode, result) = await _implementation.GetConfigVersionAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

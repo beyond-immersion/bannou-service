@@ -115,7 +115,7 @@ public partial interface IPermissionsClient
     /// </remarks>
     /// <returns>List of registered services</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<RegisteredServicesResponse> GetRegisteredServicesAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<RegisteredServicesResponse> GetRegisteredServicesAsync(ListServicesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -682,22 +682,29 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
     /// </remarks>
     /// <returns>List of registered services</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<RegisteredServicesResponse> GetRegisteredServicesAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<RegisteredServicesResponse> GetRegisteredServicesAsync(ListServicesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "permissions/services"
-                urlBuilder_.Append("permissions/services");
+                // Operation Path: "permissions/services/list"
+                urlBuilder_.Append("permissions/services/list");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 

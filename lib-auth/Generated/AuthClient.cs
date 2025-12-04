@@ -52,15 +52,29 @@ public partial interface IAuthClient
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Initialize OAuth2 flow
+    /// Initialize OAuth2 flow (browser redirect)
     /// </summary>
+    /// <remarks>
+    /// Browser-facing endpoint for initiating OAuth flows. The user's browser navigates
+    /// <br/>to this URL directly, which then redirects to the OAuth provider.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses GET with path parameters because it's a browser
+    /// <br/>redirect flow, not a WebSocket-routed API call.
+    /// </remarks>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task InitOAuthAsync(Provider provider, System.Uri redirectUri, string? state = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Complete OAuth2 flow
+    /// Complete OAuth2 flow (browser redirect callback)
     /// </summary>
+    /// <remarks>
+    /// Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects
+    /// <br/>the user's browser back to this URL after authentication.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses path parameters because the callback URL is registered
+    /// <br/>with OAuth providers and cannot be changed without updating provider configurations.
+    /// </remarks>
     /// <returns>OAuth authentication successful</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AuthResponse> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
@@ -116,7 +130,7 @@ public partial interface IAuthClient
     /// </summary>
     /// <returns>Session terminated</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task TerminateSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task TerminateSessionAsync(TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -364,8 +378,15 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Initialize OAuth2 flow
+    /// Initialize OAuth2 flow (browser redirect)
     /// </summary>
+    /// <remarks>
+    /// Browser-facing endpoint for initiating OAuth flows. The user's browser navigates
+    /// <br/>to this URL directly, which then redirects to the OAuth provider.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses GET with path parameters because it's a browser
+    /// <br/>redirect flow, not a WebSocket-routed API call.
+    /// </remarks>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task InitOAuthAsync(Provider provider, System.Uri redirectUri, string? state = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -455,8 +476,15 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Complete OAuth2 flow
+    /// Complete OAuth2 flow (browser redirect callback)
     /// </summary>
+    /// <remarks>
+    /// Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects
+    /// <br/>the user's browser back to this URL after authentication.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses path parameters because the callback URL is registered
+    /// <br/>with OAuth providers and cannot be changed without updating provider configurations.
+    /// </remarks>
     /// <returns>OAuth authentication successful</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AuthResponse> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
@@ -896,14 +924,15 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Content = new System.Net.Http.StringContent(string.Empty, System.Text.Encoding.UTF8, "application/json");
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "auth/sessions"
-                urlBuilder_.Append("auth/sessions");
+                // Operation Path: "auth/sessions/list"
+                urlBuilder_.Append("auth/sessions/list");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -963,10 +992,10 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
     /// </summary>
     /// <returns>Session terminated</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task TerminateSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task TerminateSessionAsync(TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (sessionId == null)
-            throw new System.ArgumentNullException("sessionId");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -974,14 +1003,17 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("DELETE");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "auth/sessions/{sessionId}"
-                urlBuilder_.Append("auth/sessions/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
+                // Operation Path: "auth/sessions/terminate"
+                urlBuilder_.Append("auth/sessions/terminate");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 

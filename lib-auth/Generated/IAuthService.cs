@@ -58,7 +58,7 @@ public interface IAuthService : IDaprService
     /// <summary>
     /// TerminateSession operation
     /// </summary>
-    Task<(StatusCodes, object?)> TerminateSessionAsync(Guid sessionId, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, object?)> TerminateSessionAsync(string jwt, TerminateSessionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// RequestPasswordReset operation

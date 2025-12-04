@@ -43,6 +43,6 @@ public interface IPermissionsService : IDaprService
     /// <summary>
     /// GetRegisteredServices operation
     /// </summary>
-    Task<(StatusCodes, RegisteredServicesResponse?)> GetRegisteredServicesAsync(CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, RegisteredServicesResponse?)> GetRegisteredServicesAsync(ListServicesRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

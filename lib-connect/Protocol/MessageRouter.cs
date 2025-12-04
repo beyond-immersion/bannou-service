@@ -41,8 +41,8 @@ public static class MessageRouter
         {
             routeInfo.RouteType = RouteType.Service;
 
-            // Look up service name from GUID
-            if (connectionState.GuidMappings.TryGetValue(message.ServiceGuid, out var serviceName))
+            // Look up service name from GUID (thread-safe)
+            if (connectionState.TryGetServiceName(message.ServiceGuid, out var serviceName) && serviceName != null)
             {
                 routeInfo.TargetType = "service";
                 routeInfo.TargetId = serviceName;

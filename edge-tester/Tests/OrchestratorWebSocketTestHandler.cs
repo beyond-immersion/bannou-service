@@ -38,9 +38,9 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
         try
         {
             var result = Task.Run(async () => await PerformOrchestratorApiTest(
-                "GET",
+                "POST",
                 "/orchestrator/health/infrastructure",
-                null,
+                new { }, // Empty request body for POST-only pattern
                 response =>
                 {
                     if (response["healthy"] != null)
@@ -82,9 +82,9 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
         try
         {
             var result = Task.Run(async () => await PerformOrchestratorApiTest(
-                "GET",
+                "POST",
                 "/orchestrator/health/services",
-                null,
+                new { }, // Empty request body for POST-only pattern
                 response =>
                 {
                     if (response["totalServices"] != null)
@@ -120,14 +120,14 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
     private void TestGetBackendsViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Orchestrator Get Backends Test (WebSocket) ===");
-        Console.WriteLine("Testing /orchestrator/backends via WebSocket binary protocol...");
+        Console.WriteLine("Testing /orchestrator/backends/list via WebSocket binary protocol...");
 
         try
         {
             var result = Task.Run(async () => await PerformOrchestratorApiTest(
-                "GET",
-                "/orchestrator/backends",
-                null,
+                "POST",
+                "/orchestrator/backends/list",
+                new { }, // Empty request body for POST-only pattern
                 response =>
                 {
                     if (response["backends"] != null)
@@ -168,9 +168,9 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
         try
         {
             var result = Task.Run(async () => await PerformOrchestratorApiTest(
-                "GET",
+                "POST",
                 "/orchestrator/status",
-                null,
+                new { }, // Empty request body for POST-only pattern
                 response =>
                 {
                     if (response["deployed"] != null)
@@ -300,26 +300,23 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
             var buffer = new ArraySegment<byte>(messageBytes);
             await webSocket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
 
-            // Receive response with timeout
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            var receiveBuffer = new ArraySegment<byte>(new byte[16384]); // Larger buffer for full responses
-            var result = await webSocket.ReceiveAsync(receiveBuffer, cts.Token);
+            // Receive response with timeout - wait for a Response message, skip any Event messages
+            var responseResult = await WaitForResponseMessage(webSocket, TimeSpan.FromSeconds(15));
 
-            Console.WriteLine($"📥 Received API response: {result.Count} bytes");
-
-            if (receiveBuffer.Array == null)
+            if (responseResult == null)
             {
-                Console.WriteLine("❌ Received buffer is null");
+                Console.WriteLine("❌ Timeout waiting for API response message");
                 return false;
             }
 
+            var response = responseResult.Value;
+            Console.WriteLine($"📥 Received API response: {response.Payload.Length} bytes payload");
+
             try
             {
-                var receivedMessage = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
-
-                if (receivedMessage.Payload.Length > 0)
+                if (response.Payload.Length > 0)
                 {
-                    var responsePayload = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
+                    var responsePayload = Encoding.UTF8.GetString(response.Payload.Span);
                     Console.WriteLine($"   Response payload: {responsePayload.Substring(0, Math.Min(500, responsePayload.Length))}...");
 
                     // Parse as JSON and validate
@@ -352,14 +349,14 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
             catch (JsonException)
             {
                 // Not JSON - may be a text error message
-                var responseText = Encoding.UTF8.GetString(receiveBuffer.Array, 0, result.Count);
+                var responseText = Encoding.UTF8.GetString(response.Payload.Span);
                 Console.WriteLine($"⚠️ Non-JSON response: {responseText}");
                 return false;
             }
             catch (Exception parseEx)
             {
                 Console.WriteLine($"❌ Failed to parse API response: {parseEx.Message}");
-                Console.WriteLine($"   Raw data (first 100 bytes): {Convert.ToHexString(receiveBuffer.Array, 0, Math.Min(100, result.Count))}");
+                Console.WriteLine($"   Raw data (first 100 bytes): {Convert.ToHexString(response.Payload.ToArray(), 0, Math.Min(100, response.Payload.Length))}");
                 return false;
             }
         }
@@ -532,5 +529,93 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
         }
 
         return Guid.Empty;
+    }
+
+    /// <summary>
+    /// Waits for a Response message from the WebSocket, skipping any Event messages.
+    /// Event messages (like capability_manifest updates) can arrive asynchronously,
+    /// so we need to filter for actual API responses.
+    /// </summary>
+    private async Task<BinaryMessage?> WaitForResponseMessage(ClientWebSocket webSocket, TimeSpan timeout)
+    {
+        var startTime = DateTime.UtcNow;
+        var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
+
+        while (DateTime.UtcNow - startTime < timeout)
+        {
+            try
+            {
+                var remainingTime = timeout - (DateTime.UtcNow - startTime);
+                if (remainingTime <= TimeSpan.Zero) break;
+
+                using var cts = new CancellationTokenSource(remainingTime);
+                var result = await webSocket.ReceiveAsync(receiveBuffer, cts.Token);
+
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    Console.WriteLine("⚠️ WebSocket closed while waiting for response");
+                    return null;
+                }
+
+                if (receiveBuffer.Array == null || result.Count == 0)
+                {
+                    Console.WriteLine("⚠️ Received empty message, continuing to wait...");
+                    continue;
+                }
+
+                // Parse the binary message
+                var message = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
+
+                Console.WriteLine($"   Received message: flags={message.Flags}, channel={message.Channel}, msgId={message.MessageId}");
+
+                // Check if this is a Response message (not an Event)
+                if (message.Flags.HasFlag(MessageFlags.Response))
+                {
+                    Console.WriteLine($"   ✅ Found Response message");
+                    return message;
+                }
+
+                // If it's an Event message, skip it and continue waiting
+                if (message.Flags.HasFlag(MessageFlags.Event))
+                {
+                    // Log what type of event we're skipping
+                    try
+                    {
+                        var payloadJson = Encoding.UTF8.GetString(message.Payload.Span);
+                        var eventObj = JObject.Parse(payloadJson);
+                        var eventType = (string?)eventObj["type"];
+                        Console.WriteLine($"   ⏭️ Skipping Event message (type: {eventType ?? "unknown"})");
+                    }
+                    catch
+                    {
+                        Console.WriteLine($"   ⏭️ Skipping Event message (could not parse type)");
+                    }
+                    continue;
+                }
+
+                // Message is neither Response nor Event - could be an error or unexpected format
+                Console.WriteLine($"   ⚠️ Received non-Response, non-Event message (flags: {message.Flags})");
+
+                // For backwards compatibility, return messages that look like they might be responses
+                // (no Event flag and has payload)
+                if (message.Payload.Length > 0)
+                {
+                    Console.WriteLine($"   Treating as response due to payload presence");
+                    return message;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Timeout - check if we should continue
+                break;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"   ⚠️ Error receiving message: {ex.Message}, retrying...");
+            }
+        }
+
+        Console.WriteLine($"❌ Timeout waiting for Response message (waited {timeout.TotalSeconds}s)");
+        return null;
     }
 }

@@ -193,10 +193,17 @@ Generate event handler methods from x-event-subscriptions in OpenAPI spec
 {%- endcomment -%}
 {%- if ExtensionData["x-event-subscriptions"] -%}
 {%-     for subscription in ExtensionData["x-event-subscriptions"] -%}
-{%-         assign topicParts = subscription.topic | split: "." -%}
+{%-         comment -%}
+            Convert topic name to PascalCase method name
+            Handle both dots and hyphens as word separators
+            e.g., "permissions.capabilities-updated" -> "PermissionsCapabilitiesUpdated"
+{%-         endcomment -%}
+{%-         assign normalizedTopic = subscription.topic | replace: "-", "." -%}
+{%-         assign topicParts = normalizedTopic | split: "." -%}
 {%-         assign eventName = "" -%}
 {%-         for part in topicParts -%}
-{%-             assign eventName = eventName | append: part | capitalize -%}
+{%-             assign capitalizedPart = part | capitalize -%}
+{%-             assign eventName = eventName | append: capitalizedPart -%}
 {%-         endfor -%}
 {%-         assign methodName = "Handle" | append: eventName | append: "Event" -%}
 
@@ -293,10 +300,17 @@ Generate event handler methods from x-event-subscriptions in OpenAPI spec (for a
 {%- endcomment -%}
 {%- if ExtensionData["x-event-subscriptions"] -%}
 {%-     for subscription in ExtensionData["x-event-subscriptions"] -%}
-{%-         assign topicParts = subscription.topic | split: "." -%}
+{%-         comment -%}
+            Convert topic name to PascalCase method name
+            Handle both dots and hyphens as word separators
+            e.g., "permissions.capabilities-updated" -> "PermissionsCapabilitiesUpdated"
+{%-         endcomment -%}
+{%-         assign normalizedTopic = subscription.topic | replace: "-", "." -%}
+{%-         assign topicParts = normalizedTopic | split: "." -%}
 {%-         assign eventName = "" -%}
 {%-         for part in topicParts -%}
-{%-             assign eventName = eventName | append: part | capitalize -%}
+{%-             assign capitalizedPart = part | capitalize -%}
+{%-             assign eventName = eventName | append: capitalizedPart -%}
 {%-         endfor -%}
 {%-         assign methodName = "Handle" | append: eventName | append: "Event" -%}
 

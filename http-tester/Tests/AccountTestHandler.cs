@@ -95,7 +95,7 @@ public class AccountTestHandler : IServiceTestHandler
             var accountId = createResponse.AccountId;
 
             // Now test retrieving the account
-            var response = await accountsClient.GetAccountAsync(accountId);
+            var response = await accountsClient.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
 
             if (response.AccountId != accountId || response.Email != createRequest.Email)
                 return TestResult.Failed("Retrieved account data doesn't match created account");
@@ -119,7 +119,7 @@ public class AccountTestHandler : IServiceTestHandler
             // Create AccountsClient directly with parameterless constructor
             var accountsClient = new AccountsClient();
 
-            var response = await accountsClient.ListAccountsAsync(page: 1, pageSize: 10);
+            var response = await accountsClient.ListAccountsAsync(new ListAccountsRequest { Page = 1, PageSize = 10 });
 
             return TestResult.Successful($"Account listing successful: Found {response.TotalCount} total accounts, returned {response.Accounts?.Count ?? 0} accounts");
         }
@@ -158,10 +158,11 @@ public class AccountTestHandler : IServiceTestHandler
             // Now test updating the account
             var updateRequest = new UpdateAccountRequest
             {
+                AccountId = accountId,
                 DisplayName = newDisplayName
             };
 
-            var response = await accountsClient.UpdateAccountAsync(accountId, updateRequest);
+            var response = await accountsClient.UpdateAccountAsync(updateRequest);
 
             if (response.DisplayName != newDisplayName)
                 return TestResult.Failed("Account update did not persist the display name change");
@@ -201,12 +202,12 @@ public class AccountTestHandler : IServiceTestHandler
             var accountId = createResponse.AccountId;
 
             // Now delete the account
-            await accountsClient.DeleteAccountAsync(accountId);
+            await accountsClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
 
             // Verify the account is deleted by trying to get it (should return 404)
             try
             {
-                await accountsClient.GetAccountAsync(accountId);
+                await accountsClient.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
                 return TestResult.Failed("Account retrieval should have failed after deletion, but it succeeded");
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
@@ -245,7 +246,7 @@ public class AccountTestHandler : IServiceTestHandler
                 return TestResult.Failed("Failed to create test account for email lookup test");
 
             // Now test retrieving by email
-            var response = await accountsClient.GetAccountByEmailAsync(testEmail);
+            var response = await accountsClient.GetAccountByEmailAsync(new GetAccountByEmailRequest { Email = testEmail });
 
             if (response.AccountId != createResponse.AccountId || response.Email != testEmail)
                 return TestResult.Failed("Retrieved account doesn't match created account");
@@ -271,7 +272,7 @@ public class AccountTestHandler : IServiceTestHandler
             // Try to look up a non-existent provider account (should return 404)
             try
             {
-                await accountsClient.GetAccountByProviderAsync(Provider2.Discord, "nonexistent_id_12345");
+                await accountsClient.GetAccountByProviderAsync(new GetAccountByProviderRequest { Provider = GetAccountByProviderRequestProvider.Discord, ExternalId = "nonexistent_id_12345" });
                 return TestResult.Failed("GetAccountByProvider should have returned 404 for non-existent account");
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
@@ -309,7 +310,7 @@ public class AccountTestHandler : IServiceTestHandler
                 return TestResult.Failed("Failed to create test account for auth methods test");
 
             // Get auth methods for the account
-            var response = await accountsClient.GetAuthMethodsAsync(createResponse.AccountId);
+            var response = await accountsClient.GetAuthMethodsAsync(new GetAuthMethodsRequest { AccountId = createResponse.AccountId });
             return TestResult.Successful($"GetAuthMethods returned {response.AuthMethods?.Count ?? 0} auth methods");
         }
         catch (ApiException ex)
@@ -343,12 +344,13 @@ public class AccountTestHandler : IServiceTestHandler
             // Add a Discord auth method
             var addAuthRequest = new AddAuthMethodRequest
             {
+                AccountId = createResponse.AccountId,
                 Provider = AddAuthMethodRequestProvider.Discord,
                 ExternalId = $"discord_{DateTime.Now.Ticks}",
                 DisplayName = "Test Discord User"
             };
 
-            var response = await accountsClient.AddAuthMethodAsync(createResponse.AccountId, addAuthRequest);
+            var response = await accountsClient.AddAuthMethodAsync(addAuthRequest);
             return TestResult.Successful($"AddAuthMethod completed: MethodId={response.MethodId}, Provider={response.Provider}");
         }
         catch (ApiException ex)
@@ -383,7 +385,7 @@ public class AccountTestHandler : IServiceTestHandler
             var fakeMethodId = Guid.NewGuid();
             try
             {
-                await accountsClient.RemoveAuthMethodAsync(createResponse.AccountId, fakeMethodId);
+                await accountsClient.RemoveAuthMethodAsync(new RemoveAuthMethodRequest { AccountId = createResponse.AccountId, MethodId = fakeMethodId });
                 return TestResult.Successful("RemoveAuthMethod completed for test method ID");
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
@@ -423,10 +425,11 @@ public class AccountTestHandler : IServiceTestHandler
             var newDisplayName = $"Updated Profile {DateTime.Now.Ticks}";
             var updateRequest = new UpdateProfileRequest
             {
+                AccountId = createResponse.AccountId,
                 DisplayName = newDisplayName
             };
 
-            var response = await accountsClient.UpdateProfileAsync(createResponse.AccountId, updateRequest);
+            var response = await accountsClient.UpdateProfileAsync(updateRequest);
             if (response.DisplayName != newDisplayName)
                 return TestResult.Failed("Profile update did not persist the display name change");
 
@@ -465,10 +468,11 @@ public class AccountTestHandler : IServiceTestHandler
             var newPasswordHash = BCrypt.Net.BCrypt.HashPassword("NewPassword456!");
             var updateRequest = new UpdatePasswordRequest
             {
+                AccountId = createResponse.AccountId,
                 PasswordHash = newPasswordHash
             };
 
-            await accountsClient.UpdatePasswordHashAsync(createResponse.AccountId, updateRequest);
+            await accountsClient.UpdatePasswordHashAsync(updateRequest);
             return TestResult.Successful("Password hash updated successfully");
         }
         catch (ApiException ex)
@@ -503,13 +507,14 @@ public class AccountTestHandler : IServiceTestHandler
             // Update verification status to true
             var updateRequest = new UpdateVerificationRequest
             {
+                AccountId = createResponse.AccountId,
                 EmailVerified = true
             };
 
-            await accountsClient.UpdateVerificationStatusAsync(createResponse.AccountId, updateRequest);
+            await accountsClient.UpdateVerificationStatusAsync(updateRequest);
 
             // Verify the change by getting the account
-            var verifyResponse = await accountsClient.GetAccountAsync(createResponse.AccountId);
+            var verifyResponse = await accountsClient.GetAccountAsync(new GetAccountRequest { AccountId = createResponse.AccountId });
             if (!verifyResponse.EmailVerified)
                 return TestResult.Failed("Verification status update did not persist");
 
@@ -527,15 +532,10 @@ public class AccountTestHandler : IServiceTestHandler
 
     private static async Task<TestResult> TestAccountDeletionSessionInvalidation(ITestClient client, string[] args)
     {
-        // TODO: This test requires the Accounts Service Event System to be implemented
-        // The accounts service needs to publish account.deleted events
-        // The auth service needs to subscribe and invalidate sessions for that account
-        // See OBJECTIVES_CORE_MEMORY.md - "Implement Accounts Service Event System"
-        var skipEventTests = Environment.GetEnvironmentVariable("SKIP_EVENT_TESTS") != "false";
-        if (skipEventTests)
-        {
-            return TestResult.Successful("SKIPPED: Event-driven session invalidation not yet implemented (set SKIP_EVENT_TESTS=false to enable)");
-        }
+        // Tests the complete event chain:
+        // 1. Account deleted → AccountsService publishes account.deleted
+        // 2. AuthService receives account.deleted → invalidates all sessions → publishes session.invalidated
+        // 3. Session validation should fail after account deletion
 
         try
         {
@@ -583,7 +583,7 @@ public class AccountTestHandler : IServiceTestHandler
             var sessionCount = sessionsResponse.Sessions.Count;
 
             // Step 4: Delete the account (this should trigger session invalidation via events)
-            await accountsClient.DeleteAccountAsync(accountId);
+            await accountsClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
 
             // Step 5: Wait a moment for event processing
             await Task.Delay(2000); // 2 second delay for event processing

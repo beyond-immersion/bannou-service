@@ -78,11 +78,9 @@ public interface IBehaviorController : BeyondImmersion.BannouService.Controllers
     /// <br/>Used for performance optimization in high-frequency behavior execution.
     /// </remarks>
 
-    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
-
     /// <returns>Cached behavior retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CachedBehaviorResponse>> GetCachedBehaviorAsync(string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CachedBehaviorResponse>> GetCachedBehaviorAsync(GetCachedBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Invalidate cached behavior
@@ -93,11 +91,9 @@ public interface IBehaviorController : BeyondImmersion.BannouService.Controllers
     /// <br/>Used when behavior definitions are updated.
     /// </remarks>
 
-    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
-
     /// <returns>Cache invalidated successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InvalidateCachedBehaviorAsync(string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Resolve context variables
@@ -224,14 +220,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Retrieves a previously compiled behavior from the cache.
     /// <br/>Used for performance optimization in high-frequency behavior execution.
     /// </remarks>
-    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
     /// <returns>Cached behavior retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("cache/{behavior_id}")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("cache/get")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CachedBehaviorResponse>> GetCachedBehavior([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CachedBehaviorResponse>> GetCachedBehavior([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCachedBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetCachedBehaviorAsync(behavior_id, cancellationToken);
+        var (statusCode, result) = await _implementation.GetCachedBehaviorAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -242,14 +237,13 @@ public partial class BehaviorController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Removes a behavior from the cache, forcing recompilation on next access.
     /// <br/>Used when behavior definitions are updated.
     /// </remarks>
-    /// <param name="behavior_id">Unique identifier for the cached behavior</param>
     /// <returns>Cache invalidated successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("cache/{behavior_id}")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("cache/invalidate")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InvalidateCachedBehavior([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string behavior_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InvalidateCachedBehavior([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InvalidateCacheRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.InvalidateCachedBehaviorAsync(behavior_id, cancellationToken);
+        var (statusCode, result) = await _implementation.InvalidateCachedBehaviorAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

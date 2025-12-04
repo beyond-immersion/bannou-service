@@ -53,8 +53,8 @@ public static class PermissionsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/permissions/services",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/permissions/services/list",
+            Method = ServiceEndpointMethod.POST,
             Description = "getRegisteredServices",
             Permissions = new List<PermissionRequirement>
             {

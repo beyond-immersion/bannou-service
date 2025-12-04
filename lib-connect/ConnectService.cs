@@ -277,6 +277,7 @@ public class ConnectService : IConnectService
     /// Shows how services are mapped to app-ids in the current deployment.
     /// </summary>
     public Task<(StatusCodes, ServiceMappingsResponse?)> GetServiceMappingsAsync(
+        GetServiceMappingsRequest body,
         CancellationToken cancellationToken = default)
     {
         try
@@ -638,47 +639,9 @@ public class ConnectService : IConnectService
             _logger.LogInformation("Routing WebSocket message to service {Service} ({Method} {Path}) via app-id {AppId}",
                 serviceName, httpMethod, path, appId);
 
-            // Get JSON payload from message - may contain request body for POST/PUT
+            // Get JSON payload from message - passed directly to service without parsing
+            // Connect service should NEVER parse the payload - zero-copy routing based on GUID only
             var jsonPayload = message.GetJsonPayload();
-            object? requestBody = null;
-
-            // Parse the JSON payload if present - client may send structured request
-            if (!string.IsNullOrWhiteSpace(jsonPayload))
-            {
-                try
-                {
-                    using var jsonDoc = JsonDocument.Parse(jsonPayload);
-                    var root = jsonDoc.RootElement;
-
-                    // Check if client sent body in the payload
-                    if (root.TryGetProperty("body", out var bodyElement) &&
-                        bodyElement.ValueKind != JsonValueKind.Null)
-                    {
-                        // If body is a string, parse it as JSON; otherwise use as-is
-                        if (bodyElement.ValueKind == JsonValueKind.String)
-                        {
-                            var bodyStr = bodyElement.GetString();
-                            if (!string.IsNullOrWhiteSpace(bodyStr))
-                            {
-                                requestBody = JsonSerializer.Deserialize<JsonElement>(bodyStr);
-                            }
-                        }
-                        else
-                        {
-                            requestBody = bodyElement.Clone();
-                        }
-                    }
-                }
-                catch (JsonException ex)
-                {
-                    _logger.LogDebug(ex, "Could not parse JSON payload as structured request, using raw payload");
-                    // If parsing fails, use raw payload for POST/PUT body
-                    if (httpMethod is "POST" or "PUT" or "PATCH")
-                    {
-                        requestBody = jsonPayload;
-                    }
-                }
-            }
 
             // Make the actual Dapr service invocation via direct HTTP
             // This preserves the full path including /v1.0/invoke/{appId}/method/ prefix
@@ -702,13 +665,11 @@ public class ConnectService : IConnectService
                 _logger.LogInformation("Created Dapr HTTP request: Method={Method}, URI={Uri}, AppId={AppId}",
                     request.Method, daprUrl, appId);
 
-                // Add request body for methods that support it
-                if (requestBody != null && httpMethod is "POST" or "PUT" or "PATCH")
+                // Pass JSON payload directly to service - zero-copy forwarding
+                // All WebSocket binary protocol endpoints should be POST with JSON body
+                if (!string.IsNullOrWhiteSpace(jsonPayload) && httpMethod == "POST")
                 {
-                    request.Content = new StringContent(
-                        requestBody is string str ? str : JsonSerializer.Serialize(requestBody),
-                        Encoding.UTF8,
-                        "application/json");
+                    request.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
                 }
 
                 // Invoke the service via direct HTTP (preserves full path)
@@ -1352,6 +1313,23 @@ public class ConnectService : IConnectService
                 var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
                 var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
 
+                // CRITICAL: Skip endpoints with path templates (e.g., /accounts/{accountId})
+                // WebSocket binary protocol requires POST endpoints with JSON body parameters
+                // Template paths would require Connect to parse the payload, breaking zero-copy routing
+                if (path.Contains('{'))
+                {
+                    _logger.LogDebug("Skipping template endpoint from capability manifest: {EndpointKey}", endpointKey);
+                    continue;
+                }
+
+                // Only expose POST endpoints to WebSocket clients
+                // Other HTTP methods with path parameters should use the POST alternative
+                if (method != "POST" && method != "GET")
+                {
+                    _logger.LogDebug("Skipping non-POST/GET endpoint from capability manifest: {EndpointKey}", endpointKey);
+                    continue;
+                }
+
                 availableApis.Add(new
                 {
                     serviceGuid = guid.ToString(),
@@ -1429,9 +1407,9 @@ public class ConnectService : IConnectService
                 return;
             }
 
-            // Regenerate client-salted GUIDs and update connection state
+            // Regenerate client-salted GUIDs and update connection state atomically
             var connectionState = connection.ConnectionState;
-            connectionState.ClearServiceMappings();
+            var newMappings = new Dictionary<string, Guid>();
 
             // Generate client-salted GUIDs for each service:method combination
             foreach (var servicePermissions in capabilitiesResult.Permissions)
@@ -1443,13 +1421,16 @@ public class ConnectService : IConnectService
                 {
                     var endpointKey = $"{serviceName}:{method}";
                     var guid = GuidGenerator.GenerateServiceGuid(endpointKey, sessionId, _serverSalt);
-                    connectionState.AddServiceMapping(endpointKey, guid);
+                    newMappings[endpointKey] = guid;
                 }
             }
 
-            // Build and send updated capability manifest
+            // Atomic update to prevent race conditions
+            connectionState.UpdateAllServiceMappings(newMappings);
+
+            // Build and send updated capability manifest using the new mappings
             var availableApis = new List<object>();
-            foreach (var mapping in connectionState.ServiceMappings)
+            foreach (var mapping in newMappings)
             {
                 var endpointKey = mapping.Key;
                 var guid = mapping.Value;
@@ -1462,6 +1443,19 @@ public class ConnectService : IConnectService
                 var methodPathColon = methodAndPath.IndexOf(':');
                 var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
                 var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
+
+                // CRITICAL: Skip endpoints with path templates (e.g., /accounts/{accountId})
+                // WebSocket binary protocol requires POST endpoints with JSON body parameters
+                if (path.Contains('{'))
+                {
+                    continue;
+                }
+
+                // Only expose POST/GET endpoints to WebSocket clients
+                if (method != "POST" && method != "GET")
+                {
+                    continue;
+                }
 
                 availableApis.Add(new
                 {
@@ -1518,6 +1512,48 @@ public class ConnectService : IConnectService
 
         var tasks = sessionIds.Select(sessionId => PushCapabilityUpdateAsync(sessionId, cancellationToken));
         await Task.WhenAll(tasks);
+    }
+
+    /// <summary>
+    /// Disconnects a WebSocket session due to session invalidation (logout, account deletion, etc.).
+    /// Sends a close message with the reason and removes the connection.
+    /// </summary>
+    public async Task DisconnectSessionAsync(string sessionId, string reason, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var connection = _connectionManager.GetConnection(sessionId);
+            if (connection == null)
+            {
+                _logger.LogDebug("Session {SessionId} not found for disconnection (may already be disconnected)", sessionId);
+                return;
+            }
+
+            if (connection.WebSocket.State == System.Net.WebSockets.WebSocketState.Open)
+            {
+                // Send close message with reason
+                await connection.WebSocket.CloseAsync(
+                    System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
+                    $"Session invalidated: {reason}",
+                    cancellationToken);
+
+                _logger.LogInformation("Disconnected session {SessionId} due to: {Reason}", sessionId, reason);
+            }
+            else
+            {
+                _logger.LogDebug("Session {SessionId} WebSocket not in Open state ({State}), skipping close",
+                    sessionId, connection.WebSocket.State);
+            }
+
+            // Remove from connection manager
+            _connectionManager.RemoveConnection(sessionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error disconnecting session {SessionId}: {Reason}", sessionId, reason);
+            // Still try to remove from connection manager even if close fails
+            _connectionManager.RemoveConnection(sessionId);
+        }
     }
 
     #endregion
