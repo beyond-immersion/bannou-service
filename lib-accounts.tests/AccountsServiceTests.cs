@@ -133,11 +133,21 @@ public class AccountsServiceTests
             PasswordHash = "hashed_password"
         };
 
+        // Mock GetStateAsync for accounts-list (used by AddAccountToIndexAsync)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>>(
+                "accounts-statestore",
+                "accounts-list",
+                It.IsAny<ConsistencyMode?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
         // Track what's saved
         AccountModel? savedAccount = null;
         _mockDaprClient
             .Setup(d => d.SaveStateAsync(
-                "statestore",
+                "accounts-statestore",
                 It.Is<string>(k => k.StartsWith("account-")),
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
@@ -173,11 +183,21 @@ public class AccountsServiceTests
             PasswordHash = "hashed_password"
         };
 
+        // Mock GetStateAsync for accounts-list (used by AddAccountToIndexAsync)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>>(
+                "accounts-statestore",
+                "accounts-list",
+                It.IsAny<ConsistencyMode?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
         // Track what's saved
         AccountModel? savedAccount = null;
         _mockDaprClient
             .Setup(d => d.SaveStateAsync(
-                "statestore",
+                "accounts-statestore",
                 It.Is<string>(k => k.StartsWith("account-")),
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
@@ -213,11 +233,21 @@ public class AccountsServiceTests
             PasswordHash = "hashed_password"
         };
 
+        // Mock GetStateAsync for accounts-list (used by AddAccountToIndexAsync)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>>(
+                "accounts-statestore",
+                "accounts-list",
+                It.IsAny<ConsistencyMode?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
         // Track what's saved
         AccountModel? savedAccount = null;
         _mockDaprClient
             .Setup(d => d.SaveStateAsync(
-                "statestore",
+                "accounts-statestore",
                 It.Is<string>(k => k.StartsWith("account-")),
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
@@ -257,11 +287,21 @@ public class AccountsServiceTests
             PasswordHash = "hashed_password"
         };
 
+        // Mock GetStateAsync for accounts-list (used by AddAccountToIndexAsync)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>>(
+                "accounts-statestore",
+                "accounts-list",
+                It.IsAny<ConsistencyMode?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
         // Track what's saved
         AccountModel? savedAccount = null;
         _mockDaprClient
             .Setup(d => d.SaveStateAsync(
-                "statestore",
+                "accounts-statestore",
                 It.Is<string>(k => k.StartsWith("account-")),
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
@@ -294,11 +334,21 @@ public class AccountsServiceTests
             Roles = new List<string> { "moderator", "editor" }
         };
 
+        // Mock GetStateAsync for accounts-list (used by AddAccountToIndexAsync)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>>(
+                "accounts-statestore",
+                "accounts-list",
+                It.IsAny<ConsistencyMode?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
         // Track what's saved
         AccountModel? savedAccount = null;
         _mockDaprClient
             .Setup(d => d.SaveStateAsync(
-                "statestore",
+                "accounts-statestore",
                 It.Is<string>(k => k.StartsWith("account-")),
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),
@@ -339,11 +389,21 @@ public class AccountsServiceTests
             Roles = new List<string> { "admin" } // Already has admin
         };
 
+        // Mock GetStateAsync for accounts-list (used by AddAccountToIndexAsync)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>>(
+                "accounts-statestore",
+                "accounts-list",
+                It.IsAny<ConsistencyMode?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
         // Track what's saved
         AccountModel? savedAccount = null;
         _mockDaprClient
             .Setup(d => d.SaveStateAsync(
-                "statestore",
+                "accounts-statestore",
                 It.Is<string>(k => k.StartsWith("account-")),
                 It.IsAny<AccountModel>(),
                 It.IsAny<StateOptions?>(),

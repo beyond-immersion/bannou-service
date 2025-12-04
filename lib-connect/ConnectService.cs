@@ -339,11 +339,42 @@ public class ConnectService : IConnectService
                     return (validationResponse.SessionId, validationResponse.Roles);
                 }
             }
-            // Handle "Reconnect <token>" format (future enhancement)
+            // Handle "Reconnect <token>" format for session reconnection
             else if (authorization.StartsWith("Reconnect ", StringComparison.OrdinalIgnoreCase))
             {
-                // TODO: Implement reconnection logic with stored session tokens
-                _logger.LogWarning("Reconnection tokens not yet implemented");
+                var reconnectionToken = authorization.Substring("Reconnect ".Length).Trim();
+
+                if (string.IsNullOrEmpty(reconnectionToken))
+                {
+                    _logger.LogWarning("Empty reconnection token provided");
+                    return (null, null);
+                }
+
+                // Use Redis session manager to validate reconnection token
+                if (_sessionManager != null)
+                {
+                    var sessionId = await _sessionManager.ValidateReconnectionTokenAsync(reconnectionToken);
+
+                    if (!string.IsNullOrEmpty(sessionId))
+                    {
+                        // Restore the session from reconnection state
+                        var restoredState = await _sessionManager.RestoreSessionFromReconnectionAsync(sessionId, reconnectionToken);
+
+                        if (restoredState != null)
+                        {
+                            _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
+                            // Return stored roles from reconnection state
+                            return (sessionId, restoredState.UserRoles);
+                        }
+                    }
+
+                    _logger.LogWarning("Invalid or expired reconnection token");
+                }
+                else
+                {
+                    _logger.LogWarning("Reconnection requires Redis session manager - not configured");
+                }
+
                 return (null, null);
             }
 
@@ -496,14 +527,48 @@ public class ConnectService : IConnectService
         }
         finally
         {
+            // Check if this was a forced disconnect BEFORE removing from connection manager
+            var connection = _connectionManager.GetConnection(sessionId);
+            var isForcedDisconnect = connection?.Metadata?.ContainsKey("forced_disconnect") == true;
+
             // Remove from connection manager
             _connectionManager.RemoveConnection(sessionId);
 
-            // Clean up Redis session data
+            // Initiate reconnection window instead of immediate cleanup (unless forced disconnect)
             if (_sessionManager != null)
             {
-                await _sessionManager.RemoveSessionAsync(sessionId);
-                await _sessionManager.PublishSessionEventAsync("disconnect", sessionId, new { instanceId = _instanceId });
+                if (isForcedDisconnect)
+                {
+                    // Forced disconnect - clean up immediately
+                    await _sessionManager.RemoveSessionAsync(sessionId);
+                    await _sessionManager.PublishSessionEventAsync("disconnect", sessionId, new { instanceId = _instanceId, reconnectable = false });
+                    _logger.LogInformation("Session {SessionId} force disconnected - no reconnection allowed", sessionId);
+                }
+                else
+                {
+                    // Normal disconnect - initiate reconnection window
+                    var reconnectionToken = connectionState.InitiateReconnectionWindow(
+                        reconnectionWindowMinutes: 5,
+                        userRoles: userRoles);
+
+                    // Store reconnection state in Redis
+                    await _sessionManager.InitiateReconnectionWindowAsync(
+                        sessionId,
+                        reconnectionToken,
+                        TimeSpan.FromMinutes(5),
+                        userRoles);
+
+                    // Publish disconnect event with reconnection info
+                    await _sessionManager.PublishSessionEventAsync("disconnect", sessionId, new
+                    {
+                        instanceId = _instanceId,
+                        reconnectable = true,
+                        reconnectionExpiresAt = connectionState.ReconnectionExpiresAt
+                    });
+
+                    _logger.LogInformation("Session {SessionId} disconnected - reconnection window active until {ExpiresAt}",
+                        sessionId, connectionState.ReconnectionExpiresAt);
+                }
             }
 
             if (webSocket.State == WebSocketState.Open)
@@ -1123,21 +1188,35 @@ public class ConnectService : IConnectService
 
     /// <summary>
     /// Disconnects a session's WebSocket connection with a reason.
+    /// This is a forced disconnect that does NOT allow reconnection.
     /// </summary>
     internal async Task DisconnectAsync(string sessionId, string reason)
     {
         try
         {
             var connection = _connectionManager.GetConnection(sessionId);
-            if (connection?.WebSocket != null && connection.WebSocket.State == System.Net.WebSockets.WebSocketState.Open)
+            if (connection != null)
             {
-                await connection.WebSocket.CloseAsync(
-                    System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
-                    reason,
-                    CancellationToken.None);
+                // Mark as forced disconnect - no reconnection allowed
+                connection.Metadata["forced_disconnect"] = true;
+
+                if (connection.WebSocket.State == System.Net.WebSockets.WebSocketState.Open)
+                {
+                    await connection.WebSocket.CloseAsync(
+                        System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
+                        reason,
+                        CancellationToken.None);
+                }
             }
             _connectionManager.RemoveConnection(sessionId);
-            _logger.LogInformation("Disconnected session {SessionId}: {Reason}", sessionId, reason);
+
+            // Clean up Redis session data (forced disconnect = no reconnection)
+            if (_sessionManager != null)
+            {
+                await _sessionManager.RemoveSessionAsync(sessionId);
+            }
+
+            _logger.LogInformation("Force disconnected session {SessionId}: {Reason}", sessionId, reason);
         }
         catch (Exception ex)
         {
@@ -1517,6 +1596,7 @@ public class ConnectService : IConnectService
     /// <summary>
     /// Disconnects a WebSocket session due to session invalidation (logout, account deletion, etc.).
     /// Sends a close message with the reason and removes the connection.
+    /// This is a forced disconnect that does NOT allow reconnection.
     /// </summary>
     public async Task DisconnectSessionAsync(string sessionId, string reason, CancellationToken cancellationToken = default)
     {
@@ -1526,8 +1606,16 @@ public class ConnectService : IConnectService
             if (connection == null)
             {
                 _logger.LogDebug("Session {SessionId} not found for disconnection (may already be disconnected)", sessionId);
+                // Still clean up Redis in case session exists there
+                if (_sessionManager != null)
+                {
+                    await _sessionManager.RemoveSessionAsync(sessionId);
+                }
                 return;
             }
+
+            // Mark as forced disconnect - no reconnection allowed
+            connection.Metadata["forced_disconnect"] = true;
 
             if (connection.WebSocket.State == System.Net.WebSockets.WebSocketState.Open)
             {
@@ -1537,7 +1625,7 @@ public class ConnectService : IConnectService
                     $"Session invalidated: {reason}",
                     cancellationToken);
 
-                _logger.LogInformation("Disconnected session {SessionId} due to: {Reason}", sessionId, reason);
+                _logger.LogInformation("Force disconnected session {SessionId} due to: {Reason}", sessionId, reason);
             }
             else
             {
@@ -1547,6 +1635,12 @@ public class ConnectService : IConnectService
 
             // Remove from connection manager
             _connectionManager.RemoveConnection(sessionId);
+
+            // Clean up Redis session data (forced disconnect = no reconnection)
+            if (_sessionManager != null)
+            {
+                await _sessionManager.RemoveSessionAsync(sessionId);
+            }
         }
         catch (Exception ex)
         {

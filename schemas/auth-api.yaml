@@ -738,6 +738,16 @@ x-service-configuration:
       description: Access token expiration time in minutes (alias for JwtExpirationMinutes)
       default: 1440
 
+    # Password Reset Configuration
+    PasswordResetTokenTtlMinutes:
+      type: integer
+      description: Password reset token expiration time in minutes
+      default: 60
+    PasswordResetBaseUrl:
+      type: string
+      description: Base URL for password reset links (e.g., https://example.com/reset-password)
+      default: "https://example.com/reset-password"
+
     # Mock Provider Configuration (for CI/staging testing)
     MockProviders:
       type: boolean

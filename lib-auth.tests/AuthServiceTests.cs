@@ -866,4 +866,153 @@ public class AuthServiceTests
     }
 
     #endregion
+
+    #region Password Reset Tests
+
+    [Fact]
+    public async Task RequestPasswordResetAsync_WithEmptyEmail_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = new AuthService(
+            _mockAccountsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
+
+        var request = new PasswordResetRequest
+        {
+            Email = ""
+        };
+
+        // Act
+        var (status, response) = await service.RequestPasswordResetAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task RequestPasswordResetAsync_WithNullEmail_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = new AuthService(
+            _mockAccountsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
+
+        var request = new PasswordResetRequest
+        {
+            Email = null!
+        };
+
+        // Act
+        var (status, response) = await service.RequestPasswordResetAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task RequestPasswordResetAsync_WithWhitespaceEmail_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = new AuthService(
+            _mockAccountsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
+
+        var request = new PasswordResetRequest
+        {
+            Email = "   "
+        };
+
+        // Act
+        var (status, response) = await service.RequestPasswordResetAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task RequestPasswordResetAsync_WithNonExistentEmail_ShouldReturnOkToPreventEnumeration()
+    {
+        // Arrange - accounts client throws 404 for non-existent email
+        _mockAccountsClient.Setup(c => c.GetAccountByEmailAsync(
+            It.IsAny<GetAccountByEmailRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
+
+        var service = new AuthService(
+            _mockAccountsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
+
+        var request = new PasswordResetRequest
+        {
+            Email = "nonexistent@example.com"
+        };
+
+        // Act
+        var (status, response) = await service.RequestPasswordResetAsync(request);
+
+        // Assert - should return OK to prevent email enumeration attacks
+        Assert.Equal(StatusCodes.OK, status);
+    }
+
+    [Fact]
+    public async Task ConfirmPasswordResetAsync_WithEmptyToken_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = new AuthService(
+            _mockAccountsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
+
+        var request = new PasswordResetConfirmRequest
+        {
+            Token = "",
+            NewPassword = "validpassword123"
+        };
+
+        // Act
+        var (status, response) = await service.ConfirmPasswordResetAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task ConfirmPasswordResetAsync_WithEmptyNewPassword_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var service = new AuthService(
+            _mockAccountsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object);
+
+        var request = new PasswordResetConfirmRequest
+        {
+            Token = "valid-token",
+            NewPassword = ""
+        };
+
+        // Act
+        var (status, response) = await service.ConfirmPasswordResetAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    #endregion
 }

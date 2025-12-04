@@ -52,6 +52,18 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public int AccessTokenExpirationMinutes { get; set; } = 1440;
 
     /// <summary>
+    /// Password reset token expiration time in minutes
+    /// Environment variable: PASSWORDRESETTOKENTTLMINUTES or BANNOU_PASSWORDRESETTOKENTTLMINUTES
+    /// </summary>
+    public int PasswordResetTokenTtlMinutes { get; set; } = 60;
+
+    /// <summary>
+    /// Base URL for password reset links (e.g., https://example.com/reset-password)
+    /// Environment variable: PASSWORDRESETBASEURL or BANNOU_PASSWORDRESETBASEURL
+    /// </summary>
+    public string PasswordResetBaseUrl { get; set; } = "https://example.com/reset-password";
+
+    /// <summary>
     /// When true, use mock providers instead of real OAuth/Steam APIs
     /// Environment variable: MOCKPROVIDERS or BANNOU_MOCKPROVIDERS
     /// </summary>

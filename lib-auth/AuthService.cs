@@ -680,6 +680,9 @@ public class AuthService : IAuthService
                 await RemoveSessionFromAccountIndexAsync(sessionData.AccountId.ToString(), sessionKey, cancellationToken);
             }
 
+            // Remove reverse index entry
+            await RemoveSessionIdReverseIndexAsync(sessionId.ToString(), cancellationToken);
+
             _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
             return (StatusCodes.NoContent, null);
         }
@@ -691,7 +694,7 @@ public class AuthService : IAuthService
     }
 
     /// <inheritdoc/>
-    public Task<(StatusCodes, object?)> RequestPasswordResetAsync(
+    public async Task<(StatusCodes, object?)> RequestPasswordResetAsync(
         PasswordResetRequest body,
         CancellationToken cancellationToken = default)
     {
@@ -699,16 +702,100 @@ public class AuthService : IAuthService
         {
             _logger.LogInformation("Processing password reset request for email: {Email}", body.Email);
 
-            // TODO: Generate reset token and send email
-            // For now, return success
+            if (string.IsNullOrWhiteSpace(body.Email))
+            {
+                return (StatusCodes.BadRequest, new { Error = "Email is required" });
+            }
 
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.OK, new { Message = "Password reset email sent" }));
+            // Verify account exists (but always return success to prevent email enumeration)
+            AccountResponse? account = null;
+            try
+            {
+                account = await _accountsClient.GetAccountByEmailAsync(
+                    new GetAccountByEmailRequest { Email = body.Email },
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // Account not found - log but return success to prevent enumeration
+                _logger.LogInformation("Password reset requested for non-existent email: {Email}", body.Email);
+            }
+
+            if (account != null)
+            {
+                // Generate secure reset token
+                var resetToken = GenerateSecureToken();
+                var resetTokenTtlMinutes = _configuration.PasswordResetTokenTtlMinutes > 0
+                    ? _configuration.PasswordResetTokenTtlMinutes
+                    : 60; // Default 1 hour
+
+                var resetData = new PasswordResetData
+                {
+                    AccountId = account.AccountId,
+                    Email = account.Email,
+                    ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(resetTokenTtlMinutes)
+                };
+
+                // Store reset token in Redis with TTL
+                await _daprClient.SaveStateAsync(
+                    REDIS_STATE_STORE,
+                    $"password-reset:{resetToken}",
+                    resetData,
+                    metadata: new Dictionary<string, string> { { "ttl", (resetTokenTtlMinutes * 60).ToString() } },
+                    cancellationToken: cancellationToken);
+
+                // Send password reset email (mock implementation logs to console)
+                await SendPasswordResetEmailAsync(account.Email, resetToken, resetTokenTtlMinutes, cancellationToken);
+
+                _logger.LogInformation("Password reset token generated for account {AccountId}, expires in {Minutes} minutes",
+                    account.AccountId, resetTokenTtlMinutes);
+            }
+
+            // Always return success to prevent email enumeration attacks
+            return (StatusCodes.OK, new { Message = "If the email exists, a password reset link has been sent" });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error requesting password reset for email: {Email}", body.Email);
-            return Task.FromResult<(StatusCodes, object?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    /// <summary>
+    /// Generate a cryptographically secure token for password reset.
+    /// </summary>
+    private static string GenerateSecureToken()
+    {
+        var tokenBytes = new byte[32]; // 256 bits
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        rng.GetBytes(tokenBytes);
+        return Convert.ToBase64String(tokenBytes).Replace("+", "-").Replace("/", "_").TrimEnd('=');
+    }
+
+    /// <summary>
+    /// Send password reset email. Currently implements a mock that logs to console.
+    /// Can be replaced with actual SMTP integration later.
+    /// </summary>
+    private Task SendPasswordResetEmailAsync(string email, string resetToken, int expiresInMinutes, CancellationToken cancellationToken)
+    {
+        // Mock email implementation - logs to console
+        // In production, this would integrate with SendGrid, AWS SES, or similar
+        var resetUrl = $"{_configuration.PasswordResetBaseUrl ?? "https://example.com/reset-password"}?token={resetToken}";
+
+        _logger.LogInformation(
+            "=== PASSWORD RESET EMAIL (MOCK) ===\n" +
+            "To: {Email}\n" +
+            "Subject: Password Reset Request\n" +
+            "Body:\n" +
+            "You requested a password reset for your account.\n" +
+            "Click the link below to reset your password:\n" +
+            "{ResetUrl}\n" +
+            "This link will expire in {ExpiresInMinutes} minutes.\n" +
+            "If you did not request this reset, please ignore this email.\n" +
+            "=== END EMAIL ===",
+            email, resetUrl, expiresInMinutes);
+
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
@@ -1007,6 +1094,9 @@ public class AuthService : IAuthService
         // Maintain account-to-sessions index for efficient GetSessions implementation
         await AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
 
+        // Maintain reverse index (session_id -> session_key) for TerminateSession functionality
+        await AddSessionIdReverseIndexAsync(sessionId, sessionKey, _configuration.JwtExpirationMinutes * 60, cancellationToken);
+
         // JWT contains only opaque session key - no sensitive data
         var jwtSecret = _configuration.JwtSecret ?? throw new InvalidOperationException("JWT secret is not configured");
         var key = Encoding.UTF8.GetBytes(jwtSecret);
@@ -1097,24 +1187,75 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Find session key by session ID (requires scanning Redis keys)
+    /// Find session key by session ID using the reverse index.
     /// </summary>
-    private Task<string?> FindSessionKeyBySessionIdAsync(string sessionId, CancellationToken cancellationToken)
+    private async Task<string?> FindSessionKeyBySessionIdAsync(string sessionId, CancellationToken cancellationToken)
     {
         try
         {
-            // Note: This is not efficient for large numbers of sessions
-            // In production, consider maintaining a reverse index session_id -> session_key
-            // For now, we'll return null as this would require Redis key scanning
-            // which isn't directly available through Dapr state store
+            // Use the reverse index to find the session key
+            var sessionKey = await _daprClient.GetStateAsync<string>(
+                REDIS_STATE_STORE,
+                $"session-id-index:{sessionId}",
+                cancellationToken: cancellationToken);
 
-            _logger.LogWarning("FindSessionKeyBySessionIdAsync not fully implemented - requires Redis key scanning");
-            return Task.FromResult<string?>(null);
+            if (!string.IsNullOrEmpty(sessionKey))
+            {
+                _logger.LogDebug("Found session key {SessionKey} for session ID {SessionId}", sessionKey, sessionId);
+                return sessionKey;
+            }
+
+            _logger.LogWarning("No session key found in reverse index for session ID: {SessionId}", sessionId);
+            return null;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error finding session key for session ID: {SessionId}", sessionId);
-            return Task.FromResult<string?>(null);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Add reverse index entry mapping session_id to session_key.
+    /// </summary>
+    private async Task AddSessionIdReverseIndexAsync(string sessionId, string sessionKey, int ttlSeconds, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _daprClient.SaveStateAsync(
+                REDIS_STATE_STORE,
+                $"session-id-index:{sessionId}",
+                sessionKey,
+                metadata: new Dictionary<string, string> { { "ttl", ttlSeconds.ToString() } },
+                cancellationToken: cancellationToken);
+
+            _logger.LogDebug("Added reverse index for session ID {SessionId} -> session key {SessionKey}", sessionId, sessionKey);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to add reverse index for session ID {SessionId}", sessionId);
+            // Don't throw - session creation should succeed even if index update fails
+        }
+    }
+
+    /// <summary>
+    /// Remove reverse index entry for a session ID.
+    /// </summary>
+    private async Task RemoveSessionIdReverseIndexAsync(string sessionId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _daprClient.DeleteStateAsync(
+                REDIS_STATE_STORE,
+                $"session-id-index:{sessionId}",
+                cancellationToken: cancellationToken);
+
+            _logger.LogDebug("Removed reverse index for session ID {SessionId}", sessionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to remove reverse index for session ID {SessionId}", sessionId);
+            // Don't throw - operation should continue even if cleanup fails
         }
     }
 

@@ -22,11 +22,12 @@ public class AccountsService : IAccountsService
     private readonly AccountsServiceConfiguration _configuration;
     private readonly DaprClient _daprClient;
 
-    private const string ACCOUNTS_STATE_STORE = "statestore";
+    private const string ACCOUNTS_STATE_STORE = "accounts-statestore"; // MySQL-backed state store
     private const string ACCOUNTS_KEY_PREFIX = "account-";
     private const string EMAIL_INDEX_KEY_PREFIX = "email-index-";
     private const string PROVIDER_INDEX_KEY_PREFIX = "provider-index-"; // provider:externalId -> accountId
     private const string AUTH_METHODS_KEY_PREFIX = "auth-methods-"; // accountId -> List<AuthMethodInfo>
+    private const string ACCOUNTS_LIST_KEY = "accounts-list"; // Sorted list of all account IDs for pagination
     private const string PUBSUB_NAME = "bannou-pubsub";
     private const string ACCOUNT_CREATED_TOPIC = "account.created";
     private const string ACCOUNT_UPDATED_TOPIC = "account.updated";
@@ -42,43 +43,110 @@ public class AccountsService : IAccountsService
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
     }
 
-    public Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(
+    public async Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(
         ListAccountsRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
             // Extract parameters from request body
-            var email = body.Email;
-            var displayName = body.DisplayName;
-            var provider = body.Provider;
-            var verified = body.Verified;
+            var emailFilter = body.Email;
+            var displayNameFilter = body.DisplayName;
+            var providerFilter = body.Provider;
+            var verifiedFilter = body.Verified;
             var page = body.Page;
             var pageSize = body.PageSize;
 
             // Apply default values for pagination parameters
             if (page <= 0) page = 1;
             if (pageSize <= 0) pageSize = 20;
+            if (pageSize > 100) pageSize = 100; // Cap at 100
 
             _logger.LogInformation("Listing accounts - Page: {Page}, PageSize: {PageSize}, Filters: Email={Email}, DisplayName={DisplayName}, Provider={Provider}, Verified={Verified}",
-                page, pageSize, email ?? "(none)", displayName ?? "(none)", provider?.ToString() ?? "(none)", verified?.ToString() ?? "(none)");
+                page, pageSize, emailFilter ?? "(none)", displayNameFilter ?? "(none)", providerFilter?.ToString() ?? "(none)", verifiedFilter?.ToString() ?? "(none)");
 
-            // TODO: Implement pagination and filtering with Dapr state store queries
-            // For now, return empty list as placeholder
+            // Get the list of all account IDs
+            var accountIds = await _daprClient.GetStateAsync<List<string>>(
+                ACCOUNTS_STATE_STORE,
+                ACCOUNTS_LIST_KEY,
+                cancellationToken: cancellationToken) ?? new List<string>();
+
+            // Fetch all accounts (for filtering) - in production, this should use query API
+            var allAccounts = new List<AccountResponse>();
+            foreach (var accountId in accountIds)
+            {
+                var account = await _daprClient.GetStateAsync<AccountResponse>(
+                    ACCOUNTS_STATE_STORE,
+                    $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+                    cancellationToken: cancellationToken);
+
+                if (account != null)
+                {
+                    // Load auth methods for the account
+                    var authMethods = await _daprClient.GetStateAsync<List<AuthMethodInfo>>(
+                        ACCOUNTS_STATE_STORE,
+                        $"{AUTH_METHODS_KEY_PREFIX}{accountId}",
+                        cancellationToken: cancellationToken) ?? new List<AuthMethodInfo>();
+                    account.AuthMethods = authMethods;
+
+                    allAccounts.Add(account);
+                }
+            }
+
+            // Apply filters
+            var filteredAccounts = allAccounts.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(emailFilter))
+            {
+                filteredAccounts = filteredAccounts.Where(a =>
+                    a.Email.Contains(emailFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(displayNameFilter))
+            {
+                filteredAccounts = filteredAccounts.Where(a =>
+                    !string.IsNullOrEmpty(a.DisplayName) &&
+                    a.DisplayName.Contains(displayNameFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (providerFilter.HasValue)
+            {
+                filteredAccounts = filteredAccounts.Where(a =>
+                    a.AuthMethods?.Any(m => m.Provider.ToString() == providerFilter.Value.ToString()) == true);
+            }
+
+            if (verifiedFilter.HasValue)
+            {
+                filteredAccounts = filteredAccounts.Where(a => a.EmailVerified == verifiedFilter.Value);
+            }
+
+            // Get total count before pagination
+            var filteredList = filteredAccounts.ToList();
+            var totalCount = filteredList.Count;
+
+            // Apply pagination
+            var skip = (page - 1) * pageSize;
+            var pagedAccounts = filteredList
+                .OrderByDescending(a => a.CreatedAt)
+                .Skip(skip)
+                .Take(pageSize)
+                .ToList();
+
             var response = new AccountListResponse
             {
-                Accounts = new List<AccountResponse>(),
-                TotalCount = 0,
+                Accounts = pagedAccounts,
+                TotalCount = totalCount,
                 Page = page,
                 PageSize = pageSize
             };
 
-            return Task.FromResult<(StatusCodes, AccountListResponse?)>(((StatusCodes, AccountListResponse?))(StatusCodes.OK, response));
+            _logger.LogInformation("Returning {Count} accounts (Total: {Total})", pagedAccounts.Count, totalCount);
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing accounts");
-            return Task.FromResult<(StatusCodes, AccountListResponse?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -149,6 +217,9 @@ public class AccountsService : IAccountsService
                 ACCOUNTS_STATE_STORE,
                 $"{EMAIL_INDEX_KEY_PREFIX}{body.Email.ToLowerInvariant()}",
                 accountId.ToString());
+
+            // Add to accounts list for pagination
+            await AddAccountToIndexAsync(accountId.ToString(), cancellationToken);
 
             _logger.LogInformation("Account created: {AccountId} for email: {Email} with roles: {Roles}",
                 accountId, body.Email, string.Join(", ", roles));
@@ -249,6 +320,9 @@ public class AccountsService : IAccountsService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Get auth methods for the account
+            var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
+
             var response = new AccountResponse
             {
                 AccountId = Guid.Parse(account.AccountId),
@@ -258,7 +332,7 @@ public class AccountsService : IAccountsService
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
                 Roles = account.Roles, // Return stored roles
-                AuthMethods = new List<AuthMethodInfo>()
+                AuthMethods = authMethods
             };
 
             return (StatusCodes.OK, response);
@@ -335,6 +409,9 @@ public class AccountsService : IAccountsService
                 await PublishAccountUpdatedEventAsync(accountId, changedFields, previousValues, newValues);
             }
 
+            // Get auth methods for the account
+            var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
+
             var response = new AccountResponse
             {
                 AccountId = Guid.Parse(account.AccountId),
@@ -344,7 +421,7 @@ public class AccountsService : IAccountsService
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
                 Roles = account.Roles, // Return stored roles
-                AuthMethods = new List<AuthMethodInfo>()
+                AuthMethods = authMethods
             };
 
             return (StatusCodes.OK, response);
@@ -396,6 +473,9 @@ public class AccountsService : IAccountsService
                 return (StatusCodes.NotFound, null);
             }
 
+            // Get auth methods for the account
+            var authMethods = await GetAuthMethodsForAccountAsync(accountId, cancellationToken);
+
             // Convert to response model
             var response = new AccountResponse
             {
@@ -407,7 +487,7 @@ public class AccountsService : IAccountsService
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
                 Roles = account.Roles, // Return stored roles
-                AuthMethods = new List<AuthMethodInfo>() // TODO: Implement auth methods from account data
+                AuthMethods = authMethods
             };
 
             _logger.LogInformation("Account retrieved for email: {Email}, AccountId: {AccountId}", email, accountId);
@@ -697,6 +777,9 @@ public class AccountsService : IAccountsService
                     account,
                     cancellationToken: cancellationToken);
 
+                // Get auth methods for the account
+                var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
+
                 var response = new AccountResponse
                 {
                     AccountId = Guid.Parse(account.AccountId),
@@ -706,7 +789,7 @@ public class AccountsService : IAccountsService
                     CreatedAt = account.CreatedAt,
                     UpdatedAt = account.UpdatedAt,
                     Roles = account.Roles, // Return stored roles
-                    AuthMethods = new List<AuthMethodInfo>()
+                    AuthMethods = authMethods
                 };
 
                 return (StatusCodes.OK, response);
@@ -761,6 +844,9 @@ public class AccountsService : IAccountsService
                 ACCOUNTS_STATE_STORE,
                 $"{EMAIL_INDEX_KEY_PREFIX}{account.Email.ToLowerInvariant()}",
                 cancellationToken: cancellationToken);
+
+            // Remove from accounts list index
+            await RemoveAccountFromIndexAsync(accountId.ToString(), cancellationToken);
 
             _logger.LogInformation("Account deleted: {AccountId}", accountId);
 
@@ -1009,6 +1095,71 @@ public class AccountsService : IAccountsService
             // Don't throw - event publishing failure shouldn't break account deletion
         }
     }
+
+    #region Account Index Management
+
+    /// <summary>
+    /// Adds an account ID to the accounts list index for pagination support.
+    /// </summary>
+    private async Task AddAccountToIndexAsync(string accountId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var accountIds = await _daprClient.GetStateAsync<List<string>>(
+                ACCOUNTS_STATE_STORE,
+                ACCOUNTS_LIST_KEY,
+                cancellationToken: cancellationToken) ?? new List<string>();
+
+            if (!accountIds.Contains(accountId))
+            {
+                accountIds.Add(accountId);
+                await _daprClient.SaveStateAsync(
+                    ACCOUNTS_STATE_STORE,
+                    ACCOUNTS_LIST_KEY,
+                    accountIds,
+                    cancellationToken: cancellationToken);
+
+                _logger.LogDebug("Added account {AccountId} to accounts index (total: {Count})", accountId, accountIds.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to add account {AccountId} to index", accountId);
+            throw; // Re-throw as this is critical for account creation
+        }
+    }
+
+    /// <summary>
+    /// Removes an account ID from the accounts list index.
+    /// </summary>
+    private async Task RemoveAccountFromIndexAsync(string accountId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var accountIds = await _daprClient.GetStateAsync<List<string>>(
+                ACCOUNTS_STATE_STORE,
+                ACCOUNTS_LIST_KEY,
+                cancellationToken: cancellationToken) ?? new List<string>();
+
+            if (accountIds.Remove(accountId))
+            {
+                await _daprClient.SaveStateAsync(
+                    ACCOUNTS_STATE_STORE,
+                    ACCOUNTS_LIST_KEY,
+                    accountIds,
+                    cancellationToken: cancellationToken);
+
+                _logger.LogDebug("Removed account {AccountId} from accounts index (remaining: {Count})", accountId, accountIds.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to remove account {AccountId} from index", accountId);
+            // Don't throw - index cleanup failure shouldn't break account deletion
+        }
+    }
+
+    #endregion
 
     #region Permission Registration
 

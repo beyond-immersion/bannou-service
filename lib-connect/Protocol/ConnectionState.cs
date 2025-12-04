@@ -52,6 +52,38 @@ public class ConnectionState
     /// </summary>
     public ConnectionFlags Flags { get; set; }
 
+    #region Reconnection Support
+
+    /// <summary>
+    /// Token for reconnecting to this session (generated on disconnect, valid for reconnection window)
+    /// </summary>
+    public string? ReconnectionToken { get; set; }
+
+    /// <summary>
+    /// When the reconnection window expires (5 minutes after disconnect)
+    /// </summary>
+    public DateTimeOffset? ReconnectionExpiresAt { get; set; }
+
+    /// <summary>
+    /// When the connection was disconnected (null if still connected)
+    /// </summary>
+    public DateTimeOffset? DisconnectedAt { get; set; }
+
+    /// <summary>
+    /// User roles at time of disconnect (preserved for reconnection)
+    /// </summary>
+    public ICollection<string>? UserRoles { get; set; }
+
+    /// <summary>
+    /// Whether this session is in reconnection window (disconnected but not expired)
+    /// </summary>
+    public bool IsInReconnectionWindow =>
+        DisconnectedAt.HasValue &&
+        ReconnectionExpiresAt.HasValue &&
+        DateTimeOffset.UtcNow < ReconnectionExpiresAt.Value;
+
+    #endregion
+
     /// <summary>
     /// Creates a new connection state.
     /// </summary>
@@ -188,6 +220,51 @@ public class ConnectionState
     {
         LastActivity = DateTimeOffset.UtcNow;
     }
+
+    #region Reconnection Lifecycle Methods
+
+    /// <summary>
+    /// Initiates reconnection window for this connection.
+    /// Called when WebSocket disconnects to allow reconnection within the window.
+    /// </summary>
+    /// <param name="reconnectionWindowMinutes">Duration of reconnection window in minutes (default: 5)</param>
+    /// <param name="userRoles">User roles to preserve for reconnection</param>
+    /// <returns>Generated reconnection token</returns>
+    public string InitiateReconnectionWindow(int reconnectionWindowMinutes = 5, ICollection<string>? userRoles = null)
+    {
+        DisconnectedAt = DateTimeOffset.UtcNow;
+        ReconnectionExpiresAt = DisconnectedAt.Value.AddMinutes(reconnectionWindowMinutes);
+        UserRoles = userRoles;
+
+        // Generate secure reconnection token
+        ReconnectionToken = GenerateSecureToken();
+        return ReconnectionToken;
+    }
+
+    /// <summary>
+    /// Clears reconnection state when client successfully reconnects.
+    /// </summary>
+    public void ClearReconnectionState()
+    {
+        DisconnectedAt = null;
+        ReconnectionExpiresAt = null;
+        ReconnectionToken = null;
+        // UserRoles are preserved for the reconnected session
+        LastActivity = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Generates a cryptographically secure random token for reconnection.
+    /// </summary>
+    private static string GenerateSecureToken()
+    {
+        var tokenBytes = new byte[32];
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        rng.GetBytes(tokenBytes);
+        return Convert.ToBase64String(tokenBytes);
+    }
+
+    #endregion
 }
 
 /// <summary>
