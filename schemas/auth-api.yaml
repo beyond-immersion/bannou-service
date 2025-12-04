@@ -813,7 +813,7 @@ x-service-configuration:
 x-event-subscriptions:
   - topic: account.deleted
     pubsub: bannou-pubsub
-    path: /dapr/events/account-deleted
+    path: handle-account-deleted
     schema:
       $ref: 'accounts-events.yaml#/components/schemas/AccountDeletedEvent'
     description: Subscribe to account deletion events to invalidate sessions

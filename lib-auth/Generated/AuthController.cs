@@ -427,7 +427,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Subscribe to account deletion events to invalidate sessions
     /// </remarks>
     [Dapr.Topic("bannou-pubsub", "account.deleted")]
-    [Microsoft.AspNetCore.Mvc.HttpPost("/dapr/events/account-deleted")]
+    [Microsoft.AspNetCore.Mvc.HttpPost("handle-account-deleted")]
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleAccountDeletedEvent([Microsoft.AspNetCore.Mvc.FromBody] object eventData)
     {
         try
