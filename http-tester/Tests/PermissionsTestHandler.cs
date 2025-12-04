@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Testing;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json;
 using System.Collections.ObjectModel;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
@@ -52,7 +51,7 @@ public class PermissionsTestHandler : IServiceTestHandler
             new ServiceTest(TestStateBasedPermissionEscalation, "StateBasedEscalation", "Permissions", "Test setting auth:authenticated state grants additional permissions"),
             new ServiceTest(TestDefaultVsAuthenticatedState, "DefaultVsAuthenticated", "Permissions", "Test difference between default and auth:authenticated state permissions"),
 
-            // Dapr Event Tests (existing)
+            // Dapr Event Tests
             new ServiceTest(TestDaprEventSubscription, "DaprEventSubscription", "Permissions", "Test Dapr pubsub event subscription for service registration"),
             new ServiceTest(TestSessionStateChangeEvent, "SessionStateChangeEvent", "Permissions", "Test Dapr pubsub event subscription for session state changes"),
         };
@@ -1484,20 +1483,7 @@ public class PermissionsTestHandler : IServiceTestHandler
 
             Console.WriteLine($"  Publishing service registration event for {testServiceId} via Dapr pubsub...");
 
-            // First, verify the subscription endpoint is exposed
-            try
-            {
-                using var httpClient = new HttpClient();
-                var subscribeResponse = await httpClient.GetAsync("http://127.0.0.1:3500/v1.0/invoke/bannou/method/dapr/subscribe");
-                var subscriptions = await subscribeResponse.Content.ReadAsStringAsync();
-                Console.WriteLine($"  Subscriptions on bannou: {subscriptions.Substring(0, Math.Min(200, subscriptions.Length))}...");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"  Warning: Could not check subscriptions: {ex.Message}");
-            }
-
-            // Step 2: Publish the event via Dapr pubsub
+            // Publish the event via Dapr pubsub
             // This should be routed to PermissionsService's [Topic("bannou-pubsub", "permissions.service-registered")] handler
             await daprClient.PublishEventAsync(
                 "bannou-pubsub",
@@ -1506,29 +1492,11 @@ public class PermissionsTestHandler : IServiceTestHandler
 
             Console.WriteLine("  Event published via Dapr pubsub, waiting for processing...");
 
-            // Try direct HTTP POST to the event endpoint as a fallback diagnostic
-            try
-            {
-                using var httpClient = new HttpClient();
-                var eventJson = System.Text.Json.JsonSerializer.Serialize(serviceRegistrationEvent);
-                Console.WriteLine($"  Sending event JSON: {eventJson.Substring(0, Math.Min(200, eventJson.Length))}...");
-                var content = new StringContent(eventJson, System.Text.Encoding.UTF8, "application/json");
-                var directResponse = await httpClient.PostAsync(
-                    "http://127.0.0.1:3500/v1.0/invoke/bannou/method/PermissionsEvents/handle-service-registration",
-                    content);
-                var responseBody = await directResponse.Content.ReadAsStringAsync();
-                Console.WriteLine($"  Direct endpoint POST result: {directResponse.StatusCode}, body: {responseBody}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"  Direct endpoint POST failed: {ex.Message}");
-            }
-
-            // Step 3: Wait for event to be processed
+            // Wait for event to be processed
             // Dapr pubsub is async, so we need to wait a bit for the event to be delivered and processed
             await Task.Delay(2000);
 
-            // Step 4: Create a test session with the service state so we can query capabilities
+            // Create a test session with the service state so we can query capabilities
             var sessionStateUpdate = new SessionStateUpdate
             {
                 SessionId = testSessionId,
@@ -1547,7 +1515,7 @@ public class PermissionsTestHandler : IServiceTestHandler
             };
             await permissionsClient.UpdateSessionRoleAsync(sessionRoleUpdate);
 
-            // Step 5: Query capabilities to verify the event was processed
+            // Query capabilities to verify the event was processed
             Console.WriteLine($"  Querying capabilities for session...");
             var capabilityRequest = new CapabilityRequest
             {
@@ -1557,7 +1525,7 @@ public class PermissionsTestHandler : IServiceTestHandler
 
             var capabilities = await permissionsClient.GetCapabilitiesAsync(capabilityRequest);
 
-            // Step 6: Verify the service's methods appear in capabilities
+            // Verify the service's methods appear in capabilities
             if (capabilities.Permissions == null)
             {
                 return TestResult.Failed("Capabilities response has no permissions");
