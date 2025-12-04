@@ -247,6 +247,14 @@ public class ServiceHeartbeatManager : IAsyncDisposable
                         }
                     }
                 }
+
+                // Manually add known critical subscriptions that may be in generated controllers
+                // These are defined in service API schemas but may not be discovered via reflection
+                if (plugin.PluginName == "auth")
+                {
+                    _logger.LogDebug("Auth plugin detected, adding known subscription: account.deleted");
+                    subscriptions.Add("account.deleted");
+                }
             }
             catch (Exception ex)
             {
