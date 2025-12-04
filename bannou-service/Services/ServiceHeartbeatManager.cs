@@ -217,15 +217,20 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     {
         var subscriptions = new HashSet<string>();
 
+        _logger.LogDebug("Starting subscription discovery for {PluginCount} enabled plugins", _pluginLoader.EnabledPlugins.Count());
+
         foreach (var plugin in _pluginLoader.EnabledPlugins)
         {
             try
             {
                 var assembly = plugin.GetType().Assembly;
+                _logger.LogDebug("Scanning plugin '{Plugin}' assembly: {Assembly}", plugin.PluginName, assembly.FullName);
 
+                var typesWithTopicMethods = 0;
                 // Scan all types in the assembly for [Topic] attributes on methods
                 foreach (var type in assembly.GetTypes())
                 {
+                    var methodsWithTopics = 0;
                     foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Instance))
                     {
                         // Check for Dapr.TopicAttribute
@@ -234,6 +239,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
 
                         if (topicAttr != null)
                         {
+                            methodsWithTopics++;
                             // Get the topic name from the attribute (second constructor parameter)
                             var topicProp = topicAttr.GetType().GetProperty("Name");
                             var topic = topicProp?.GetValue(topicAttr) as string;
@@ -241,26 +247,31 @@ public class ServiceHeartbeatManager : IAsyncDisposable
                             if (!string.IsNullOrEmpty(topic))
                             {
                                 subscriptions.Add(topic);
-                                _logger.LogDebug("Discovered subscription topic '{Topic}' from {Type}.{Method}",
-                                    topic, type.Name, method.Name);
+                                _logger.LogInformation("✅ Discovered subscription topic '{Topic}' from {Type}.{Method} in plugin '{Plugin}'",
+                                    topic, type.Name, method.Name, plugin.PluginName);
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Found [Topic] attribute on {Type}.{Method} but topic name was null/empty", type.Name, method.Name);
                             }
                         }
                     }
+                    if (methodsWithTopics > 0)
+                    {
+                        typesWithTopicMethods++;
+                    }
                 }
-
-                // Manually add known critical subscriptions that may be in generated controllers
-                // These are defined in service API schemas but may not be discovered via reflection
-                if (plugin.PluginName == "auth")
-                {
-                    _logger.LogDebug("Auth plugin detected, adding known subscription: account.deleted");
-                    subscriptions.Add("account.deleted");
-                }
+                _logger.LogDebug("Plugin '{Plugin}': Scanned {TypeCount} types, found {TopicTypeCount} types with [Topic] methods",
+                    plugin.PluginName, assembly.GetTypes().Length, typesWithTopicMethods);
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Error scanning plugin {Plugin} for subscriptions", plugin.PluginName);
             }
         }
+
+        _logger.LogInformation("📋 Subscription discovery complete: Found {Count} expected topics: [{Topics}]",
+            subscriptions.Count, string.Join(", ", subscriptions.OrderBy(t => t)));
 
         return subscriptions;
     }
