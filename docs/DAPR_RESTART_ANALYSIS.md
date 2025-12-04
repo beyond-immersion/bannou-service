@@ -88,7 +88,7 @@ From GitHub Issue #8056: "when Dapr fails to initialize a component, it appears 
 - **RabbitMQ:** pub/sub component (bannou-pubsub)
 - **Redis (bannou-redis):** state store component (statestore)
 - **Redis (auth-redis):** permissions state store (permissions-store)
-- **MySQL:** account database (via Entity Framework, not Dapr component)
+- **MySQL:** account database (via Dapr MySQL state store component: `accounts-statestore`)
 
 **Question:** What happens if Redis connections fail during runtime?
 
