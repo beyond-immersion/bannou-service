@@ -62,92 +62,147 @@ public class AccountsService : IAccountsService
             if (pageSize <= 0) pageSize = 20;
             if (pageSize > 100) pageSize = 100; // Cap at 100
 
-            _logger.LogInformation("Listing accounts - Page: {Page}, PageSize: {PageSize}, Filters: Email={Email}, DisplayName={DisplayName}, Provider={Provider}, Verified={Verified}",
-                page, pageSize, emailFilter ?? "(none)", displayNameFilter ?? "(none)", providerFilter?.ToString() ?? "(none)", verifiedFilter?.ToString() ?? "(none)");
+            var hasFilters = !string.IsNullOrWhiteSpace(emailFilter) ||
+                            !string.IsNullOrWhiteSpace(displayNameFilter) ||
+                            providerFilter.HasValue ||
+                            verifiedFilter.HasValue;
 
-            // Get the list of all account IDs
+            _logger.LogInformation("Listing accounts - Page: {Page}, PageSize: {PageSize}, HasFilters: {HasFilters}",
+                page, pageSize, hasFilters);
+
+            // Get the list of all account IDs (sorted by creation order)
             var accountIds = await _daprClient.GetStateAsync<List<string>>(
                 ACCOUNTS_STATE_STORE,
                 ACCOUNTS_LIST_KEY,
                 cancellationToken: cancellationToken) ?? new List<string>();
 
-            // Fetch all accounts (for filtering) - in production, this should use query API
-            var allAccounts = new List<AccountResponse>();
-            foreach (var accountId in accountIds)
+            var totalCount = accountIds.Count;
+
+            // Optimized path: No filters - load only the page we need
+            if (!hasFilters)
             {
-                var account = await _daprClient.GetStateAsync<AccountResponse>(
-                    ACCOUNTS_STATE_STORE,
-                    $"{ACCOUNTS_KEY_PREFIX}{accountId}",
-                    cancellationToken: cancellationToken);
+                var skip = (page - 1) * pageSize;
 
-                if (account != null)
+                // Get the subset of account IDs for this page (newest first)
+                var pageAccountIds = accountIds
+                    .AsEnumerable()
+                    .Reverse() // Newest first (accounts added to end of list)
+                    .Skip(skip)
+                    .Take(pageSize)
+                    .ToList();
+
+                var pagedAccounts = new List<AccountResponse>();
+                foreach (var accountId in pageAccountIds)
                 {
-                    // Load auth methods for the account
-                    var authMethods = await _daprClient.GetStateAsync<List<AuthMethodInfo>>(
-                        ACCOUNTS_STATE_STORE,
-                        $"{AUTH_METHODS_KEY_PREFIX}{accountId}",
-                        cancellationToken: cancellationToken) ?? new List<AuthMethodInfo>();
-                    account.AuthMethods = authMethods;
+                    var account = await LoadAccountResponseAsync(accountId, cancellationToken);
+                    if (account != null)
+                    {
+                        pagedAccounts.Add(account);
+                    }
+                }
 
-                    allAccounts.Add(account);
+                var response = new AccountListResponse
+                {
+                    Accounts = pagedAccounts,
+                    TotalCount = totalCount,
+                    Page = page,
+                    PageSize = pageSize
+                };
+
+                _logger.LogInformation("Returning {Count} accounts (Total: {Total}, optimized path)", pagedAccounts.Count, totalCount);
+                return (StatusCodes.OK, response);
+            }
+
+            // Filtered path: Need to load accounts to apply filters
+            // For efficiency, we scan accounts and apply filters in batches
+            var filteredAccounts = new List<AccountResponse>();
+            var batchSize = 100; // Process 100 accounts at a time to reduce memory
+
+            // Scan in reverse order (newest first) for consistent ordering
+            var reversedIds = accountIds.AsEnumerable().Reverse().ToList();
+
+            for (var i = 0; i < reversedIds.Count; i += batchSize)
+            {
+                var batchIds = reversedIds.Skip(i).Take(batchSize);
+
+                foreach (var accountId in batchIds)
+                {
+                    var account = await LoadAccountResponseAsync(accountId, cancellationToken);
+                    if (account == null) continue;
+
+                    // Apply filters
+                    if (!string.IsNullOrWhiteSpace(emailFilter) &&
+                        !account.Email.Contains(emailFilter, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    if (!string.IsNullOrWhiteSpace(displayNameFilter) &&
+                        (string.IsNullOrEmpty(account.DisplayName) ||
+                        !account.DisplayName.Contains(displayNameFilter, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+
+                    if (providerFilter.HasValue &&
+                        account.AuthMethods?.Any(m => m.Provider.ToString() == providerFilter.Value.ToString()) != true)
+                        continue;
+
+                    if (verifiedFilter.HasValue && account.EmailVerified != verifiedFilter.Value)
+                        continue;
+
+                    filteredAccounts.Add(account);
                 }
             }
 
-            // Apply filters
-            var filteredAccounts = allAccounts.AsEnumerable();
+            var filteredTotalCount = filteredAccounts.Count;
+            var skip2 = (page - 1) * pageSize;
+            var pagedFilteredAccounts = filteredAccounts.Skip(skip2).Take(pageSize).ToList();
 
-            if (!string.IsNullOrWhiteSpace(emailFilter))
+            var filteredResponse = new AccountListResponse
             {
-                filteredAccounts = filteredAccounts.Where(a =>
-                    a.Email.Contains(emailFilter, StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (!string.IsNullOrWhiteSpace(displayNameFilter))
-            {
-                filteredAccounts = filteredAccounts.Where(a =>
-                    !string.IsNullOrEmpty(a.DisplayName) &&
-                    a.DisplayName.Contains(displayNameFilter, StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (providerFilter.HasValue)
-            {
-                filteredAccounts = filteredAccounts.Where(a =>
-                    a.AuthMethods?.Any(m => m.Provider.ToString() == providerFilter.Value.ToString()) == true);
-            }
-
-            if (verifiedFilter.HasValue)
-            {
-                filteredAccounts = filteredAccounts.Where(a => a.EmailVerified == verifiedFilter.Value);
-            }
-
-            // Get total count before pagination
-            var filteredList = filteredAccounts.ToList();
-            var totalCount = filteredList.Count;
-
-            // Apply pagination
-            var skip = (page - 1) * pageSize;
-            var pagedAccounts = filteredList
-                .OrderByDescending(a => a.CreatedAt)
-                .Skip(skip)
-                .Take(pageSize)
-                .ToList();
-
-            var response = new AccountListResponse
-            {
-                Accounts = pagedAccounts,
-                TotalCount = totalCount,
+                Accounts = pagedFilteredAccounts,
+                TotalCount = filteredTotalCount,
                 Page = page,
                 PageSize = pageSize
             };
 
-            _logger.LogInformation("Returning {Count} accounts (Total: {Total})", pagedAccounts.Count, totalCount);
-            return (StatusCodes.OK, response);
+            _logger.LogInformation("Returning {Count} accounts (Total: {Total}, filtered path)", pagedFilteredAccounts.Count, filteredTotalCount);
+            return (StatusCodes.OK, filteredResponse);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error listing accounts");
             return (StatusCodes.InternalServerError, null);
         }
+    }
+
+    /// <summary>
+    /// Load a full AccountResponse for an account ID including auth methods.
+    /// Returns null if account doesn't exist or is deleted.
+    /// </summary>
+    private async Task<AccountResponse?> LoadAccountResponseAsync(string accountId, CancellationToken cancellationToken)
+    {
+        var account = await _daprClient.GetStateAsync<AccountModel>(
+            ACCOUNTS_STATE_STORE,
+            $"{ACCOUNTS_KEY_PREFIX}{accountId}",
+            cancellationToken: cancellationToken);
+
+        if (account == null || account.DeletedAt.HasValue)
+            return null;
+
+        var authMethods = await _daprClient.GetStateAsync<List<AuthMethodInfo>>(
+            ACCOUNTS_STATE_STORE,
+            $"{AUTH_METHODS_KEY_PREFIX}{accountId}",
+            cancellationToken: cancellationToken) ?? new List<AuthMethodInfo>();
+
+        return new AccountResponse
+        {
+            AccountId = Guid.Parse(account.AccountId),
+            Email = account.Email,
+            DisplayName = account.DisplayName,
+            EmailVerified = account.IsVerified,
+            CreatedAt = account.CreatedAt,
+            UpdatedAt = account.UpdatedAt,
+            Roles = account.Roles,
+            AuthMethods = authMethods
+        };
     }
 
     public async Task<(StatusCodes, AccountResponse?)> CreateAccountAsync(

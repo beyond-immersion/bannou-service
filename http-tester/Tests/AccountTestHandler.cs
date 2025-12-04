@@ -36,6 +36,10 @@ public class AccountTestHandler : IServiceTestHandler
             new ServiceTest(TestUpdatePasswordHash, "UpdatePasswordHash", "Account", "Test update account password hash"),
             new ServiceTest(TestUpdateVerificationStatus, "UpdateVerificationStatus", "Account", "Test update email verification status"),
 
+            // Pagination tests
+            new ServiceTest(TestListAccountsPagination, "ListAccountsPagination", "Account", "Test account listing with pagination"),
+            new ServiceTest(TestListAccountsFiltering, "ListAccountsFiltering", "Account", "Test account listing with filters"),
+
             // Event-driven tests (requires Accounts event system)
             new ServiceTest(TestAccountDeletionSessionInvalidation, "AccountDeletionSessionInvalidation", "Account", "Test account deletion → session invalidation flow"),
         };
@@ -530,6 +534,168 @@ public class AccountTestHandler : IServiceTestHandler
         }
     }
 
+    private static async Task<TestResult> TestListAccountsPagination(ITestClient client, string[] args)
+    {
+        try
+        {
+            var accountsClient = new AccountsClient();
+            var testPrefix = $"pagination_{DateTime.Now.Ticks}_";
+            var createdAccounts = new List<Guid>();
+
+            // Create 5 test accounts for pagination testing
+            for (var i = 0; i < 5; i++)
+            {
+                var createRequest = new CreateAccountRequest
+                {
+                    DisplayName = $"{testPrefix}user{i}",
+                    Email = $"{testPrefix}user{i}@example.com"
+                };
+                var response = await accountsClient.CreateAccountAsync(createRequest);
+                if (response.AccountId == Guid.Empty)
+                    return TestResult.Failed($"Failed to create test account {i}");
+                createdAccounts.Add(response.AccountId);
+            }
+
+            // Test 1: Page 1 with page size 2 (should get 2 accounts)
+            var page1Response = await accountsClient.ListAccountsAsync(new ListAccountsRequest { Page = 1, PageSize = 2 });
+            if (page1Response.Page != 1)
+                return TestResult.Failed($"Page 1 response has wrong page number: {page1Response.Page}");
+            if (page1Response.PageSize != 2)
+                return TestResult.Failed($"Page 1 response has wrong page size: {page1Response.PageSize}");
+            if (page1Response.Accounts?.Count != 2)
+                return TestResult.Failed($"Page 1 should return 2 accounts, got {page1Response.Accounts?.Count}");
+            if (page1Response.TotalCount < 5)
+                return TestResult.Failed($"Total count should be at least 5, got {page1Response.TotalCount}");
+
+            // Test 2: Page 2 with page size 2 (should get 2 accounts)
+            var page2Response = await accountsClient.ListAccountsAsync(new ListAccountsRequest { Page = 2, PageSize = 2 });
+            if (page2Response.Page != 2)
+                return TestResult.Failed($"Page 2 response has wrong page number: {page2Response.Page}");
+            if (page2Response.Accounts?.Count != 2)
+                return TestResult.Failed($"Page 2 should return 2 accounts, got {page2Response.Accounts?.Count}");
+
+            // Test 3: Page beyond data (should return empty)
+            var beyondPageResponse = await accountsClient.ListAccountsAsync(new ListAccountsRequest { Page = 1000, PageSize = 10 });
+            if (beyondPageResponse.Accounts?.Count != 0)
+                return TestResult.Failed($"Beyond-last-page should return 0 accounts, got {beyondPageResponse.Accounts?.Count}");
+
+            // Test 4: Default pagination (page 1, pageSize defaults)
+            var defaultResponse = await accountsClient.ListAccountsAsync(new ListAccountsRequest());
+            if (defaultResponse.Accounts == null)
+                return TestResult.Failed("Default pagination returned null accounts");
+
+            // Clean up created accounts
+            foreach (var accountId in createdAccounts)
+            {
+                await accountsClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+            }
+
+            return TestResult.Successful($"Pagination tests passed: Page1={page1Response.Accounts?.Count}, Page2={page2Response.Accounts?.Count}, Total={page1Response.TotalCount}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Pagination test failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    private static async Task<TestResult> TestListAccountsFiltering(ITestClient client, string[] args)
+    {
+        try
+        {
+            var accountsClient = new AccountsClient();
+            var testPrefix = $"filter_{DateTime.Now.Ticks}_";
+
+            // Create test accounts with different attributes
+            var account1 = await accountsClient.CreateAccountAsync(new CreateAccountRequest
+            {
+                DisplayName = $"{testPrefix}alice",
+                Email = $"{testPrefix}alice@example.com"
+            });
+            var account2 = await accountsClient.CreateAccountAsync(new CreateAccountRequest
+            {
+                DisplayName = $"{testPrefix}bob",
+                Email = $"{testPrefix}bob@test.com"
+            });
+            var account3 = await accountsClient.CreateAccountAsync(new CreateAccountRequest
+            {
+                DisplayName = $"{testPrefix}charlie",
+                Email = $"{testPrefix}charlie@example.com"
+            });
+
+            // Mark account3 as verified
+            await accountsClient.UpdateVerificationStatusAsync(new UpdateVerificationRequest
+            {
+                AccountId = account3.AccountId,
+                EmailVerified = true
+            });
+
+            // Test 1: Filter by email domain
+            var emailFilterResponse = await accountsClient.ListAccountsAsync(new ListAccountsRequest
+            {
+                Email = "example.com",
+                Page = 1,
+                PageSize = 100
+            });
+            var matchingEmails = emailFilterResponse.Accounts?.Count(a => a.Email.Contains(testPrefix)) ?? 0;
+            if (matchingEmails < 2)
+                return TestResult.Failed($"Email filter should match at least 2 test accounts with example.com, got {matchingEmails}");
+
+            // Test 2: Filter by display name
+            var displayNameFilterResponse = await accountsClient.ListAccountsAsync(new ListAccountsRequest
+            {
+                DisplayName = testPrefix,
+                Page = 1,
+                PageSize = 100
+            });
+            var matchingNames = displayNameFilterResponse.Accounts?.Count(a => a.DisplayName?.Contains(testPrefix) == true) ?? 0;
+            if (matchingNames < 3)
+                return TestResult.Failed($"DisplayName filter should match at least 3 test accounts, got {matchingNames}");
+
+            // Test 3: Filter by verification status
+            var verifiedFilterResponse = await accountsClient.ListAccountsAsync(new ListAccountsRequest
+            {
+                Verified = true,
+                Page = 1,
+                PageSize = 100
+            });
+            var verifiedWithPrefix = verifiedFilterResponse.Accounts?.Count(a => a.DisplayName?.Contains(testPrefix) == true) ?? 0;
+            if (verifiedWithPrefix < 1)
+                return TestResult.Failed($"Verified filter should match at least 1 verified test account, got {verifiedWithPrefix}");
+
+            // Test 4: Combined filters (email + displayName)
+            var combinedFilterResponse = await accountsClient.ListAccountsAsync(new ListAccountsRequest
+            {
+                Email = "example.com",
+                DisplayName = "alice",
+                Page = 1,
+                PageSize = 100
+            });
+            var combinedMatches = combinedFilterResponse.Accounts?.Count(a =>
+                a.Email.Contains(testPrefix) && a.DisplayName?.Contains("alice") == true) ?? 0;
+            if (combinedMatches < 1)
+                return TestResult.Failed($"Combined filter should match at least 1 account, got {combinedMatches}");
+
+            // Clean up
+            await accountsClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = account1.AccountId });
+            await accountsClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = account2.AccountId });
+            await accountsClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = account3.AccountId });
+
+            return TestResult.Successful($"Filtering tests passed: EmailFilter={matchingEmails}, NameFilter={matchingNames}, VerifiedFilter={verifiedWithPrefix}, Combined={combinedMatches}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Filtering test failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
     private static async Task<TestResult> TestAccountDeletionSessionInvalidation(ITestClient client, string[] args)
     {
         // Tests the complete event chain:
@@ -585,36 +751,48 @@ public class AccountTestHandler : IServiceTestHandler
             // Step 4: Delete the account (this should trigger session invalidation via events)
             await accountsClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
 
-            // Step 5: Wait a moment for event processing
-            await Task.Delay(2000); // 2 second delay for event processing
+            // Step 5: Wait for event processing with retry loop
+            // Dapr cold-start in CI can take 10-20 seconds for subscription discovery + RabbitMQ consumer setup
+            const int maxRetries = 15;
+            const int retryDelayMs = 2000;
 
-            // Step 6: Try to get sessions again - should fail or return empty
-            try
+            for (var attempt = 1; attempt <= maxRetries; attempt++)
             {
-                var sessionsAfterDeletion = await ((AuthClient)authClient)
-                    .WithAuthorization(accessToken)
-                    .GetSessionsAsync();
+                await Task.Delay(retryDelayMs);
 
-                // Check if sessions were invalidated
-                if (sessionsAfterDeletion.Sessions != null && sessionsAfterDeletion.Sessions.Any())
+                try
                 {
-                    return TestResult.Failed($"Sessions still exist after account deletion: {sessionsAfterDeletion.Sessions.Count} sessions found");
-                }
+                    var sessionsAfterDeletion = await ((AuthClient)authClient)
+                        .WithAuthorization(accessToken)
+                        .GetSessionsAsync();
 
-                return TestResult.Successful($"Account deletion → session invalidation flow verified: {sessionCount} session(s) invalidated");
+                    // Check if sessions were invalidated
+                    if (sessionsAfterDeletion.Sessions == null || !sessionsAfterDeletion.Sessions.Any())
+                    {
+                        return TestResult.Successful($"Account deletion → session invalidation flow verified: {sessionCount} session(s) invalidated (attempt {attempt})");
+                    }
+
+                    // Sessions still exist, continue retrying
+                    if (attempt == maxRetries)
+                    {
+                        return TestResult.Failed($"Sessions still exist after account deletion after {maxRetries * retryDelayMs / 1000}s: {sessionsAfterDeletion.Sessions.Count} sessions found");
+                    }
+                }
+                catch (ApiException ex) when (ex.StatusCode == 401)
+                {
+                    // Expected behavior - unauthorized because token is now invalid
+                    return TestResult.Successful($"Account deletion → session invalidation flow verified: Token invalidated (401 response, attempt {attempt})");
+                }
+                catch (Exception ex) when (ex.Message.Contains("Connection refused") ||
+                                        ex.Message.Contains("SecurityTokenSignatureKeyNotFoundException") ||
+                                        ex.Message.Contains("Signature validation failed"))
+                {
+                    // Expected behavior - JWT validation failed because session was invalidated
+                    return TestResult.Successful($"Account deletion → session invalidation flow verified: JWT validation failed (session invalidated, attempt {attempt})");
+                }
             }
-            catch (ApiException ex) when (ex.StatusCode == 401)
-            {
-                // Expected behavior - unauthorized because token is now invalid
-                return TestResult.Successful($"Account deletion → session invalidation flow verified: Token invalidated (401 response)");
-            }
-            catch (Exception ex) when (ex.Message.Contains("Connection refused") ||
-                                    ex.Message.Contains("SecurityTokenSignatureKeyNotFoundException") ||
-                                    ex.Message.Contains("Signature validation failed"))
-            {
-                // Expected behavior - JWT validation failed because session was invalidated
-                return TestResult.Successful($"Account deletion → session invalidation flow verified: JWT validation failed (session invalidated)");
-            }
+
+            return TestResult.Failed("Session invalidation verification loop exited unexpectedly");
         }
         catch (ApiException ex)
         {
