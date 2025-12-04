@@ -28,13 +28,13 @@ runs:
           -f "./provisioning/docker-compose.test.http.yml" \
           up -d
 
-        # Stream logs in background for visibility
+        # Stream logs in background for visibility (both tester and main service)
         docker compose -p bannou-ci-http \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.http.yml" \
-          logs -f bannou-http-tester &
+          logs -f bannou-http-tester bannou &
 
         # Wait for the http-tester container to complete and capture its exit code
         # Using 'wait' instead of '--exit-code-from' to allow orchestrator tests
