@@ -575,6 +575,30 @@ public class ConnectService : IConnectService
             {
                 try
                 {
+                    // Send disconnect notification with reconnection token (if applicable)
+                    if (!isForcedDisconnect && connectionState.ReconnectionToken != null)
+                    {
+                        var disconnectNotification = new
+                        {
+                            type = "disconnect_notification",
+                            reconnectionToken = connectionState.ReconnectionToken,
+                            expiresAt = connectionState.ReconnectionExpiresAt?.ToString("O"),
+                            reconnectable = true,
+                            reason = "graceful_disconnect"
+                        };
+
+                        var notificationJson = System.Text.Json.JsonSerializer.Serialize(disconnectNotification);
+                        var notificationBytes = System.Text.Encoding.UTF8.GetBytes(notificationJson);
+
+                        await webSocket.SendAsync(
+                            new ArraySegment<byte>(notificationBytes),
+                            WebSocketMessageType.Text,
+                            endOfMessage: true,
+                            CancellationToken.None);
+
+                        _logger.LogDebug("Sent disconnect notification with reconnection token to session {SessionId}", sessionId);
+                    }
+
                     await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure,
                         "Session ended", CancellationToken.None);
                 }
