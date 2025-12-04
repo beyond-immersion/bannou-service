@@ -10,6 +10,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,6 +41,7 @@ public class PermissionsService : IPermissionsService
     private const string PERMISSION_MATRIX_KEY = "permissions:{0}:{1}:{2}"; // service:state:role
     private const string PERMISSION_VERSION_KEY = "permission_versions";
     private const string SERVICE_LOCK_KEY = "lock:service-registration:{0}";
+    private const string PERMISSION_HASH_KEY = "permission_hash:{0}"; // Stores hash of service permission data for idempotent registration
 
     // Cache for compiled permissions (in-memory cache with Dapr state backing)
     private readonly ConcurrentDictionary<string, CapabilityResponse> _sessionCapabilityCache;
@@ -54,6 +57,41 @@ public class PermissionsService : IPermissionsService
         _sessionCapabilityCache = new ConcurrentDictionary<string, CapabilityResponse>();
 
         _logger.LogInformation("Permissions service initialized with Dapr state store");
+    }
+
+    /// <summary>
+    /// Computes a deterministic hash of permission data for idempotent registration.
+    /// The hash is computed from a sorted, canonical representation of the permission matrix.
+    /// </summary>
+    private static string ComputePermissionDataHash(ServicePermissionMatrix body)
+    {
+        var builder = new StringBuilder();
+        builder.Append($"v:{body.Version};");
+
+        if (body.Permissions != null)
+        {
+            // Sort by state name for deterministic ordering
+            foreach (var stateEntry in body.Permissions.OrderBy(s => s.Key))
+            {
+                builder.Append($"s:{stateEntry.Key}[");
+
+                // Sort by role name
+                foreach (var roleEntry in stateEntry.Value.OrderBy(r => r.Key))
+                {
+                    builder.Append($"r:{roleEntry.Key}(");
+
+                    // Sort endpoints
+                    builder.Append(string.Join(",", roleEntry.Value.OrderBy(e => e)));
+                    builder.Append(')');
+                }
+
+                builder.Append(']');
+            }
+        }
+
+        // Compute SHA256 hash
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(builder.ToString()));
+        return Convert.ToBase64String(bytes);
     }
 
     /// <summary>
@@ -196,8 +234,48 @@ public class PermissionsService : IPermissionsService
     {
         try
         {
-            _logger.LogInformation("Registering service permissions for {ServiceId} version {Version}",
+            _logger.LogDebug("Registering service permissions for {ServiceId} version {Version}",
                 body.ServiceId, body.Version);
+
+            // IDEMPOTENT CHECK: Compute hash of incoming data and compare to stored hash
+            // If the hash matches AND service is already registered, skip entirely
+            var newHash = ComputePermissionDataHash(body);
+            var hashKey = string.Format(PERMISSION_HASH_KEY, body.ServiceId);
+            var storedHash = await _daprClient.GetStateAsync<string>(STATE_STORE, hashKey, cancellationToken: cancellationToken);
+
+            // Also check if service is in registered_services (might be cleared independently of hash)
+            var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
+                STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+            var isServiceAlreadyRegistered = registeredServices.Contains(body.ServiceId);
+
+            if (storedHash != null && storedHash == newHash && isServiceAlreadyRegistered)
+            {
+                _logger.LogDebug("Service {ServiceId} registration skipped - permission data unchanged and service already registered (hash: {Hash})",
+                    body.ServiceId, newHash[..8] + "...");
+                return (StatusCodes.OK, new RegistrationResponse
+                {
+                    ServiceId = body.ServiceId,
+                    Success = true,
+                    Message = "Permissions unchanged (idempotent)"
+                });
+            }
+
+            // Log why we're proceeding
+            if (storedHash == null)
+            {
+                _logger.LogInformation("Service {ServiceId} first-time registration (no stored hash), proceeding",
+                    body.ServiceId);
+            }
+            else if (storedHash != newHash)
+            {
+                _logger.LogInformation("Service {ServiceId} permission data has changed (hash mismatch), proceeding with registration",
+                    body.ServiceId);
+            }
+            else if (!isServiceAlreadyRegistered)
+            {
+                _logger.LogInformation("Service {ServiceId} hash matches but not in registered_services, proceeding to ensure consistency",
+                    body.ServiceId);
+            }
 
             // Use Dapr state transactions for atomic operations
             var transactionRequests = new List<StateTransactionRequest>();
@@ -205,7 +283,7 @@ public class PermissionsService : IPermissionsService
             // Update permission matrix atomically
             if (body.Permissions != null)
             {
-                _logger.LogInformation("Processing {PermissionCount} permission states for {ServiceId}",
+                _logger.LogDebug("Processing {PermissionCount} permission states for {ServiceId}",
                     body.Permissions.Count, body.ServiceId);
 
                 foreach (var stateEntry in body.Permissions)
@@ -223,10 +301,7 @@ public class PermissionsService : IPermissionsService
                             stateName,
                             roleName);
 
-                        _logger.LogInformation("Storing {MethodCount} methods at key: {MatrixKey}",
-                            methods.Count, matrixKey);
-
-                        // Get existing endpoints and add new ones
+                        // Get existing endpoints and merge with new ones
                         var existingEndpoints = await _daprClient.GetStateAsync<HashSet<string>>(
                             STATE_STORE, matrixKey, cancellationToken: cancellationToken) ?? new HashSet<string>();
 
@@ -290,18 +365,18 @@ public class PermissionsService : IPermissionsService
                     _logger.LogInformation("Acquired lock for {ServiceId} to update registered services", body.ServiceId);
 
                     // Now we have exclusive access - safe to read-modify-write
-                    var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
+                    var lockedServices = await _daprClient.GetStateAsync<HashSet<string>>(
                         STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
 
                     _logger.LogInformation("Current registered services (locked): {Services}",
-                        string.Join(", ", registeredServices));
+                        string.Join(", ", lockedServices));
 
-                    if (!registeredServices.Contains(body.ServiceId))
+                    if (!lockedServices.Contains(body.ServiceId))
                     {
-                        registeredServices.Add(body.ServiceId);
-                        await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, registeredServices, cancellationToken: cancellationToken);
+                        lockedServices.Add(body.ServiceId);
+                        await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, lockedServices, cancellationToken: cancellationToken);
                         _logger.LogInformation("Successfully added {ServiceId} to registered services list. Now: {Services}",
-                            body.ServiceId, string.Join(", ", registeredServices));
+                            body.ServiceId, string.Join(", ", lockedServices));
                     }
                     else
                     {
@@ -313,15 +388,15 @@ public class PermissionsService : IPermissionsService
                     // Failed to acquire lock - fall back to optimistic update
                     _logger.LogWarning("Failed to acquire lock for {ServiceId}, falling back to optimistic update", body.ServiceId);
 
-                    var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
+                    var fallbackServices = await _daprClient.GetStateAsync<HashSet<string>>(
                         STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
 
-                    if (!registeredServices.Contains(body.ServiceId))
+                    if (!fallbackServices.Contains(body.ServiceId))
                     {
-                        registeredServices.Add(body.ServiceId);
-                        await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, registeredServices, cancellationToken: cancellationToken);
+                        fallbackServices.Add(body.ServiceId);
+                        await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, fallbackServices, cancellationToken: cancellationToken);
                         _logger.LogInformation("Added {ServiceId} to registered services via fallback (lock failed). Now: {Services}",
-                            body.ServiceId, string.Join(", ", registeredServices));
+                            body.ServiceId, string.Join(", ", fallbackServices));
                     }
                 }
             }
@@ -333,15 +408,15 @@ public class PermissionsService : IPermissionsService
                 try
                 {
                     // Optimistic update without lock - HashSet deduplication handles race conditions
-                    var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
+                    var exceptionFallbackServices = await _daprClient.GetStateAsync<HashSet<string>>(
                         STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
 
-                    if (!registeredServices.Contains(body.ServiceId))
+                    if (!exceptionFallbackServices.Contains(body.ServiceId))
                     {
-                        registeredServices.Add(body.ServiceId);
-                        await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, registeredServices, cancellationToken: cancellationToken);
+                        exceptionFallbackServices.Add(body.ServiceId);
+                        await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, exceptionFallbackServices, cancellationToken: cancellationToken);
                         _logger.LogInformation("Added {ServiceId} to registered services via fallback (optimistic update). Now: {Services}",
-                            body.ServiceId, string.Join(", ", registeredServices));
+                            body.ServiceId, string.Join(", ", exceptionFallbackServices));
                     }
                 }
                 catch (Exception fallbackEx)
@@ -387,6 +462,11 @@ public class PermissionsService : IPermissionsService
                 // Don't fail registration if event publishing fails - Connect will get updates on next client request
                 _logger.LogWarning(pubEx, "Failed to publish capabilities-updated event for {ServiceId}", body.ServiceId);
             }
+
+            // Store the new hash for idempotent registration detection
+            await _daprClient.SaveStateAsync(STATE_STORE, hashKey, newHash, cancellationToken: cancellationToken);
+            _logger.LogDebug("Stored permission hash for {ServiceId}: {Hash}",
+                body.ServiceId, newHash[..8] + "...");
 
             return (StatusCodes.OK, new RegistrationResponse
             {
