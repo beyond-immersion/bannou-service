@@ -1287,6 +1287,8 @@ public class AuthService : IAuthService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
+            _logger.LogInformation("[DIAG] AddSessionToAccountIndexAsync called with accountId={AccountId}, sessionKey={SessionKey}, indexKey={IndexKey}",
+                accountId, sessionKey, indexKey);
 
             // Get existing session list
             var existingSessions = await _daprClient.GetStateAsync<List<string>>(
@@ -1308,12 +1310,13 @@ public class AuthService : IAuthService
                     metadata: new Dictionary<string, string> { { "ttl", accountIndexTtl.ToString() } },
                     cancellationToken: cancellationToken);
 
-                _logger.LogDebug("Added session {SessionKey} to account index for account {AccountId}", sessionKey, accountId);
+                _logger.LogInformation("[DIAG] SAVED session index: indexKey={IndexKey}, sessions={SessionsJson}",
+                    indexKey, System.Text.Json.JsonSerializer.Serialize(existingSessions));
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to add session {SessionKey} to account index for account {AccountId}", sessionKey, accountId);
+            _logger.LogError(ex, "[DIAG] FAILED to add session {SessionKey} to account index for account {AccountId}", sessionKey, accountId);
             // Don't throw - session creation should succeed even if index update fails
         }
     }
@@ -2104,18 +2107,31 @@ public class AuthService : IAuthService
     /// </summary>
     public async Task OnEventReceivedAsync<T>(string topic, T eventData) where T : class
     {
-        _logger.LogInformation("AuthService received event {Topic} with data type {DataType}", topic, typeof(T).Name);
+        _logger.LogInformation("[DIAG] AuthService received event {Topic} with data type {DataType}", topic, typeof(T).Name);
+
+        // Diagnostic: log raw event data for debugging CI issues
+        try
+        {
+            var eventJson = System.Text.Json.JsonSerializer.Serialize(eventData);
+            _logger.LogInformation("[DIAG] Raw event data JSON: {EventJson}", eventJson);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[DIAG] Failed to serialize event data for logging");
+        }
 
         switch (topic)
         {
             case "account.deleted":
                 if (eventData is AccountDeletedEvent deletedEvent)
                 {
+                    _logger.LogInformation("[DIAG] Cast to AccountDeletedEvent successful. EventId={EventId}, AccountId={AccountId}, AccountIdString={AccountIdString}",
+                        deletedEvent.EventId, deletedEvent.AccountId, deletedEvent.AccountId.ToString());
                     await HandleAccountDeletedEventAsync(deletedEvent);
                 }
                 else
                 {
-                    _logger.LogWarning("Received account.deleted event but data type is {DataType}, expected AccountDeletedEvent", typeof(T).Name);
+                    _logger.LogWarning("[DIAG] Cast to AccountDeletedEvent FAILED. Actual type: {ActualType}", eventData?.GetType().FullName ?? "null");
                 }
                 break;
             default:
@@ -2162,14 +2178,20 @@ public class AuthService : IAuthService
         {
             // Get session keys directly from the account index
             var indexKey = $"account-sessions:{accountId}";
+            _logger.LogInformation("[DIAG] InvalidateAllSessionsForAccountAsync called with accountId={AccountId}, indexKey={IndexKey}",
+                accountId, indexKey);
+
             var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
                 REDIS_STATE_STORE,
                 indexKey,
                 cancellationToken: CancellationToken.None);
 
+            _logger.LogInformation("[DIAG] GetStateAsync for indexKey={IndexKey} returned: {SessionKeysJson}",
+                indexKey, sessionKeys == null ? "null" : System.Text.Json.JsonSerializer.Serialize(sessionKeys));
+
             if (sessionKeys == null || !sessionKeys.Any())
             {
-                _logger.LogInformation("No sessions found for account {AccountId}", accountId);
+                _logger.LogInformation("[DIAG] No sessions found for account {AccountId} with indexKey={IndexKey} - EARLY RETURN", accountId, indexKey);
                 return;
             }
 

@@ -712,6 +712,8 @@ public class AccountTestHandler : IServiceTestHandler
             var testUsername = $"sessiontest_{DateTime.Now.Ticks}";
             var testPassword = "TestPassword123!";
 
+            Console.WriteLine($"[DIAG-TEST] Starting TestAccountDeletionSessionInvalidation with username: {testUsername}");
+
             // Step 1: Create an account
             var createRequest = new CreateAccountRequest
             {
@@ -725,6 +727,7 @@ public class AccountTestHandler : IServiceTestHandler
                 return TestResult.Failed("Failed to create test account");
 
             var accountId = createResponse.AccountId;
+            Console.WriteLine($"[DIAG-TEST] Account created: accountId={accountId}, accountIdString={accountId.ToString()}");
 
             // Step 2: Login to create a session
             var loginRequest = new LoginRequest
@@ -738,6 +741,7 @@ public class AccountTestHandler : IServiceTestHandler
                 return TestResult.Failed("Failed to login and create session");
 
             var accessToken = loginResponse.AccessToken;
+            Console.WriteLine($"[DIAG-TEST] Login successful, got access token (length={accessToken.Length})");
 
             // Step 3: Verify session exists by calling GetSessions
             var sessionsResponse = await ((AuthClient)authClient)
@@ -747,18 +751,24 @@ public class AccountTestHandler : IServiceTestHandler
                 return TestResult.Failed("No sessions found after login");
 
             var sessionCount = sessionsResponse.Sessions.Count;
+            Console.WriteLine($"[DIAG-TEST] Sessions found: {sessionCount}");
 
             // Step 4: Delete the account (this should trigger session invalidation via events)
+            Console.WriteLine($"[DIAG-TEST] Deleting account: {accountId}");
             await accountsClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+            Console.WriteLine($"[DIAG-TEST] DeleteAccountAsync completed for accountId={accountId}");
 
             // Step 5: Wait for event processing with retry loop
             // Dapr cold-start in CI can take 10-20 seconds for subscription discovery + RabbitMQ consumer setup
             const int maxRetries = 15;
             const int retryDelayMs = 2000;
 
+            Console.WriteLine($"[DIAG-TEST] Starting retry loop: {maxRetries} retries, {retryDelayMs}ms delay each");
+
             for (var attempt = 1; attempt <= maxRetries; attempt++)
             {
                 await Task.Delay(retryDelayMs);
+                Console.WriteLine($"[DIAG-TEST] Attempt {attempt}/{maxRetries}: checking sessions for accountId={accountId}");
 
                 try
                 {
@@ -769,18 +779,22 @@ public class AccountTestHandler : IServiceTestHandler
                     // Check if sessions were invalidated
                     if (sessionsAfterDeletion.Sessions == null || !sessionsAfterDeletion.Sessions.Any())
                     {
+                        Console.WriteLine($"[DIAG-TEST] SUCCESS: Sessions invalidated on attempt {attempt}");
                         return TestResult.Successful($"Account deletion → session invalidation flow verified: {sessionCount} session(s) invalidated (attempt {attempt})");
                     }
 
                     // Sessions still exist, continue retrying
+                    Console.WriteLine($"[DIAG-TEST] Attempt {attempt}: Still found {sessionsAfterDeletion.Sessions.Count} sessions");
                     if (attempt == maxRetries)
                     {
+                        Console.WriteLine($"[DIAG-TEST] FAILED: Max retries reached, sessions still exist");
                         return TestResult.Failed($"Sessions still exist after account deletion after {maxRetries * retryDelayMs / 1000}s: {sessionsAfterDeletion.Sessions.Count} sessions found");
                     }
                 }
                 catch (ApiException ex) when (ex.StatusCode == 401)
                 {
                     // Expected behavior - unauthorized because token is now invalid
+                    Console.WriteLine($"[DIAG-TEST] SUCCESS: Got 401 on attempt {attempt} - token invalidated");
                     return TestResult.Successful($"Account deletion → session invalidation flow verified: Token invalidated (401 response, attempt {attempt})");
                 }
                 catch (Exception ex) when (ex.Message.Contains("Connection refused") ||
@@ -788,7 +802,13 @@ public class AccountTestHandler : IServiceTestHandler
                                         ex.Message.Contains("Signature validation failed"))
                 {
                     // Expected behavior - JWT validation failed because session was invalidated
+                    Console.WriteLine($"[DIAG-TEST] SUCCESS: Got JWT validation failure on attempt {attempt} - session invalidated");
                     return TestResult.Successful($"Account deletion → session invalidation flow verified: JWT validation failed (session invalidated, attempt {attempt})");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DIAG-TEST] Attempt {attempt}: Unexpected exception: {ex.GetType().Name}: {ex.Message}");
+                    throw;
                 }
             }
 

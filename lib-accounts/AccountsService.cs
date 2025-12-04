@@ -1141,12 +1141,17 @@ public class AccountsService : IAccountsService
                 DeletionReason = deletionReason
             };
 
+            // Diagnostic logging for CI debugging
+            var eventJson = System.Text.Json.JsonSerializer.Serialize(eventModel);
+            _logger.LogInformation("[DIAG] Publishing AccountDeletedEvent: accountId={AccountId}, accountIdString={AccountIdString}, pubsub={PubSub}, topic={Topic}, eventJson={EventJson}",
+                accountId, accountId.ToString(), PUBSUB_NAME, ACCOUNT_DELETED_TOPIC, eventJson);
+
             await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_DELETED_TOPIC, eventModel);
-            _logger.LogDebug("Published AccountDeletedEvent for account: {AccountId}", accountId);
+            _logger.LogInformation("[DIAG] Successfully published AccountDeletedEvent for account: {AccountId}", accountId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish AccountDeletedEvent for account: {AccountId}", accountId);
+            _logger.LogError(ex, "[DIAG] FAILED to publish AccountDeletedEvent for account: {AccountId}", accountId);
             // Don't throw - event publishing failure shouldn't break account deletion
         }
     }
