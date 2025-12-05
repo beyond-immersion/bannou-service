@@ -138,7 +138,7 @@ public class AuthService : IAuthService
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-                ConnectUrl = new Uri($"ws://localhost:8080/api/ws") // Connect service WebSocket endpoint
+                ConnectUrl = new Uri(_configuration.ConnectUrl)
             });
         }
         catch (Exception ex)
@@ -290,7 +290,7 @@ public class AuthService : IAuthService
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-                ConnectUrl = new Uri("ws://localhost:8080/api/ws")
+                ConnectUrl = new Uri(_configuration.ConnectUrl)
             });
         }
         catch (Exception ex)
@@ -367,7 +367,7 @@ public class AuthService : IAuthService
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-                ConnectUrl = new Uri("ws://localhost:8080/api/ws")
+                ConnectUrl = new Uri(_configuration.ConnectUrl)
             });
         }
         catch (Exception ex)
@@ -434,7 +434,7 @@ public class AuthService : IAuthService
                 AccessToken = accessToken,
                 RefreshToken = newRefreshToken,
                 ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-                ConnectUrl = new Uri($"ws://localhost:8080/api/ws") // Connect service WebSocket endpoint
+                ConnectUrl = new Uri(_configuration.ConnectUrl)
             });
         }
         catch (Exception ex)
@@ -2081,7 +2081,7 @@ public class AuthService : IAuthService
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-            ConnectUrl = new Uri("ws://localhost:8080/api/ws")
+            ConnectUrl = new Uri(_configuration.ConnectUrl)
         });
     }
 
@@ -2116,7 +2116,7 @@ public class AuthService : IAuthService
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             ExpiresIn = _configuration.JwtExpirationMinutes * 60,
-            ConnectUrl = new Uri("ws://localhost:8080/api/ws")
+            ConnectUrl = new Uri(_configuration.ConnectUrl)
         });
     }
 

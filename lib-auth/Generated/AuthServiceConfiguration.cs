@@ -52,6 +52,12 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public int AccessTokenExpirationMinutes { get; set; } = 1440;
 
     /// <summary>
+    /// WebSocket URL for Connect service (returned in login responses for client connection)
+    /// Environment variable: CONNECTURL or BANNOU_CONNECTURL
+    /// </summary>
+    public string ConnectUrl { get; set; } = "ws://localhost:8080/connect";
+
+    /// <summary>
     /// Password reset token expiration time in minutes
     /// Environment variable: PASSWORDRESETTOKENTTLMINUTES or BANNOU_PASSWORDRESETTOKENTTLMINUTES
     /// </summary>

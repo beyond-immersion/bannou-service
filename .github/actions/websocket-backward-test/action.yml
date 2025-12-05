@@ -8,6 +8,9 @@ runs:
       shell: bash
       run: |
         echo "📋 Using .env.test.edge configuration for backward-compatibility WebSocket testing..."
+        # Override BANNOU_CONNECTURL so Auth service returns external URL accessible from CI host
+        # (Auth returns ConnectUrl in login responses, edge-tester runs on host, not in Docker)
+        BANNOU_CONNECTURL=ws://localhost:9080/connect \
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \

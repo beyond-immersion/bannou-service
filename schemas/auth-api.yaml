@@ -738,6 +738,12 @@ x-service-configuration:
       description: Access token expiration time in minutes (alias for JwtExpirationMinutes)
       default: 1440
 
+    # Connect Service Configuration
+    ConnectUrl:
+      type: string
+      description: WebSocket URL for Connect service (returned in login responses for client connection)
+      default: "ws://localhost:8080/connect"
+
     # Password Reset Configuration
     PasswordResetTokenTtlMinutes:
       type: integer
