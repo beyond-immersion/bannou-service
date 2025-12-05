@@ -26,6 +26,7 @@ services:
 
   # Override Dapr sidecar for bannou - uses custom image that waits for RabbitMQ
   bannou-dapr:
+    image: bannou-dapr-wait:latest
     build:
       context: ./dapr
       dockerfile: Dockerfile.dapr-wait
@@ -53,6 +54,7 @@ services:
   # Dapr sidecar for HTTP tester - shares network stack
   # Uses custom image that waits for RabbitMQ before starting Dapr
   bannou-http-tester-dapr:
+    image: bannou-dapr-wait:latest
     build:
       context: ./dapr
       dockerfile: Dockerfile.dapr-wait

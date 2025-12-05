@@ -47,6 +47,31 @@ public enum Provider
 
 }
 
+/// <summary>
+/// Request to terminate a specific session
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class TerminateSessionRequest
+{
+
+    /// <summary>
+    /// ID of the session to terminate
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid SessionId { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LoginRequest
 {
@@ -250,19 +275,24 @@ public partial class OAuthCallbackRequest
 
 }
 
+/// <summary>
+/// Request to verify a Steam Session Ticket. The ticket is obtained client-side via
+/// <br/>ISteamUser::GetAuthTicketForWebApi("bannou"). SteamID is NOT included because
+/// <br/>it must be obtained from Steam's Web API response (never trust client-provided SteamID).
+/// <br/>
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SteamVerifyRequest
 {
 
     /// <summary>
-    /// Steam session ticket
+    /// Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().
+    /// <br/>Client converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace("-", "")
+    /// <br/>
     /// </summary>
     [Newtonsoft.Json.JsonProperty("ticket", Required = Newtonsoft.Json.Required.Always)]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Ticket { get; set; } = default!;
-
-    [Newtonsoft.Json.JsonProperty("steamId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    public string SteamId { get; set; } = default!;
 
     [Newtonsoft.Json.JsonProperty("deviceInfo", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
     public DeviceInfo DeviceInfo { get; set; } = default!;
@@ -531,6 +561,86 @@ public partial class RoutingPreferenceResponse
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
+
+}
+
+/// <summary>
+/// Event published when sessions are invalidated (logout, account deletion, etc.)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionInvalidatedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("eventId", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the account whose sessions were invalidated
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// List of session IDs that were invalidated
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("sessionIds", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<string> SessionIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    [Newtonsoft.Json.JsonProperty("reason", Required = Newtonsoft.Json.Required.Always)]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    public SessionInvalidatedEventReason Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Whether Connect service should disconnect WebSocket clients
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty("disconnectClients", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public bool DisconnectClients { get; set; } = true;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [Newtonsoft.Json.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Reason for session invalidation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SessionInvalidatedEventReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"logout")]
+    Logout = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"account_deleted")]
+    Account_deleted = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"security_revocation")]
+    Security_revocation = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"admin_action")]
+    Admin_action = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"session_expired")]
+    Session_expired = 4,
 
 }
 

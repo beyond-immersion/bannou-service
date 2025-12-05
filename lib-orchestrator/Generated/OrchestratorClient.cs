@@ -46,7 +46,7 @@ public partial interface IOrchestratorClient
     /// </remarks>
     /// <returns>Infrastructure health status</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<InfrastructureHealthResponse> GetInfrastructureHealthAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<InfrastructureHealthResponse> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -58,7 +58,7 @@ public partial interface IOrchestratorClient
     /// </remarks>
     /// <returns>Service health report</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<ServiceHealthReport> GetServicesHealthAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<ServiceHealthReport> GetServicesHealthAsync(ServiceHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -113,7 +113,7 @@ public partial interface IOrchestratorClient
     /// </remarks>
     /// <returns>Available backends with capabilities</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<BackendsResponse> GetBackendsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<BackendsResponse> GetBackendsAsync(ListBackendsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -133,7 +133,7 @@ public partial interface IOrchestratorClient
     /// </remarks>
     /// <returns>Available deployment presets</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<PresetsResponse> GetPresetsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<PresetsResponse> GetPresetsAsync(ListPresetsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -176,7 +176,7 @@ public partial interface IOrchestratorClient
     /// </remarks>
     /// <returns>Current environment status</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<EnvironmentStatus> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<EnvironmentStatus> GetStatusAsync(GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -224,15 +224,9 @@ public partial interface IOrchestratorClient
     /// Retrieves logs from services or containers with filtering options.
     /// <br/>Supports real-time streaming via WebSocket upgrade.
     /// </remarks>
-    /// <param name="service">Service name to get logs for</param>
-    /// <param name="container">Container ID or name (alternative to service)</param>
-    /// <param name="since">Return logs since timestamp (RFC3339 or relative like "5m")</param>
-    /// <param name="until">Return logs until timestamp</param>
-    /// <param name="tail">Number of lines from end of logs</param>
-    /// <param name="follow">Stream logs in real-time (WebSocket upgrade)</param>
     /// <returns>Log output</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<LogsResponse> GetLogsAsync(string? service = null, string? container = null, string? since = null, string? until = null, int? tail = null, bool? follow = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<LogsResponse> GetLogsAsync(GetLogsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -272,10 +266,9 @@ public partial interface IOrchestratorClient
     /// <br/>- `immediate`: Rolling update but don't wait for connection drain
     /// <br/>- `force`: Kill all instances simultaneously (causes downtime)
     /// </remarks>
-    /// <param name="appName">Container's Dapr app name (e.g., "bannou", "npc-omega")</param>
     /// <returns>Restart request accepted</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<ContainerRestartResponse> RequestContainerRestartAsync(string appName, ContainerRestartRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<ContainerRestartResponse> RequestContainerRestartAsync(ContainerRestartRequestBody body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -285,10 +278,9 @@ public partial interface IOrchestratorClient
     /// Returns detailed status of a container including health, restart history,
     /// <br/>running plugins, and current configuration.
     /// </remarks>
-    /// <param name="appName">Container's Dapr app name</param>
     /// <returns>Container status</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<ContainerStatus> GetContainerStatusAsync(string appName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<ContainerStatus> GetContainerStatusAsync(GetContainerStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -316,7 +308,7 @@ public partial interface IOrchestratorClient
     /// </remarks>
     /// <returns>Configuration version info</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<ConfigVersionResponse> GetConfigVersionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<ConfigVersionResponse> GetConfigVersionAsync(GetConfigVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -370,15 +362,22 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
     /// </remarks>
     /// <returns>Infrastructure health status</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<InfrastructureHealthResponse> GetInfrastructureHealthAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<InfrastructureHealthResponse> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
@@ -459,15 +458,22 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
     /// </remarks>
     /// <returns>Service health report</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<ServiceHealthReport> GetServicesHealthAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<ServiceHealthReport> GetServicesHealthAsync(ServiceHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
@@ -741,22 +747,29 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
     /// </remarks>
     /// <returns>Available backends with capabilities</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<BackendsResponse> GetBackendsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<BackendsResponse> GetBackendsAsync(ListBackendsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "orchestrator/backends"
-                urlBuilder_.Append("orchestrator/backends");
+                // Operation Path: "orchestrator/backends/list"
+                urlBuilder_.Append("orchestrator/backends/list");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -828,22 +841,29 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
     /// </remarks>
     /// <returns>Available deployment presets</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<PresetsResponse> GetPresetsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<PresetsResponse> GetPresetsAsync(ListPresetsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "orchestrator/presets"
-                urlBuilder_.Append("orchestrator/presets");
+                // Operation Path: "orchestrator/presets/list"
+                urlBuilder_.Append("orchestrator/presets/list");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -1042,15 +1062,22 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
     /// </remarks>
     /// <returns>Current environment status</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<EnvironmentStatus> GetStatusAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<EnvironmentStatus> GetStatusAsync(GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
@@ -1325,23 +1352,24 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
     /// Retrieves logs from services or containers with filtering options.
     /// <br/>Supports real-time streaming via WebSocket upgrade.
     /// </remarks>
-    /// <param name="service">Service name to get logs for</param>
-    /// <param name="container">Container ID or name (alternative to service)</param>
-    /// <param name="since">Return logs since timestamp (RFC3339 or relative like "5m")</param>
-    /// <param name="until">Return logs until timestamp</param>
-    /// <param name="tail">Number of lines from end of logs</param>
-    /// <param name="follow">Stream logs in real-time (WebSocket upgrade)</param>
     /// <returns>Log output</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<LogsResponse> GetLogsAsync(string? service = null, string? container = null, string? since = null, string? until = null, int? tail = null, bool? follow = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<LogsResponse> GetLogsAsync(GetLogsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
@@ -1349,32 +1377,6 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
 
                 // Operation Path: "orchestrator/logs"
                 urlBuilder_.Append("orchestrator/logs");
-                urlBuilder_.Append('?');
-                if (service != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("service")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(service, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                if (container != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("container")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(container, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                if (since != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("since")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(since, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                if (until != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("until")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(until, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                if (tail != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("tail")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(tail, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                if (follow != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("follow")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(follow, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                urlBuilder_.Length--;
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -1570,14 +1572,10 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
     /// <br/>- `immediate`: Rolling update but don't wait for connection drain
     /// <br/>- `force`: Kill all instances simultaneously (causes downtime)
     /// </remarks>
-    /// <param name="appName">Container's Dapr app name (e.g., "bannou", "npc-omega")</param>
     /// <returns>Restart request accepted</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<ContainerRestartResponse> RequestContainerRestartAsync(string appName, ContainerRestartRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<ContainerRestartResponse> RequestContainerRestartAsync(ContainerRestartRequestBody body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (appName == null)
-            throw new System.ArgumentNullException("appName");
-
         if (body == null)
             throw new System.ArgumentNullException("body");
 
@@ -1597,10 +1595,8 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "orchestrator/containers/{appName}/request-restart"
-                urlBuilder_.Append("orchestrator/containers/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(appName, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/request-restart");
+                // Operation Path: "orchestrator/containers/request-restart"
+                urlBuilder_.Append("orchestrator/containers/request-restart");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -1674,13 +1670,12 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
     /// Returns detailed status of a container including health, restart history,
     /// <br/>running plugins, and current configuration.
     /// </remarks>
-    /// <param name="appName">Container's Dapr app name</param>
     /// <returns>Container status</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<ContainerStatus> GetContainerStatusAsync(string appName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<ContainerStatus> GetContainerStatusAsync(GetContainerStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (appName == null)
-            throw new System.ArgumentNullException("appName");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -1688,16 +1683,18 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "orchestrator/containers/{appName}/status"
-                urlBuilder_.Append("orchestrator/containers/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(appName, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/status");
+                // Operation Path: "orchestrator/containers/status"
+                urlBuilder_.Append("orchestrator/containers/status");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -1869,15 +1866,22 @@ public partial class OrchestratorClient : BeyondImmersion.BannouService.ServiceC
     /// </remarks>
     /// <returns>Configuration version info</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<ConfigVersionResponse> GetConfigVersionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<ConfigVersionResponse> GetConfigVersionAsync(GetConfigVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();

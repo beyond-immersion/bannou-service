@@ -230,12 +230,9 @@ public class Program
                 // 200 OK or 409 Conflict means the service chain is fully working
                 Console.WriteLine($"✅ Dapr sidecar ready after {stopwatch.Elapsed.TotalSeconds:F1}s (warmup returned {warmupResponse.StatusCode})");
 
-                // Wait additional time for services to register their permissions with Permissions service
-                // Permission registration happens AFTER Dapr readiness check in bannou startup
-                Console.WriteLine("⏳ Waiting for service permission registration to complete...");
-                await Task.Delay(5000); // 5 seconds for permission events to be published and processed
-                Console.WriteLine("✅ Permission registration delay complete");
-
+                // Phase 3 (Permission Registration) is now handled via WebSocket capability manifest
+                // The BannouClient will receive capability manifests after connection, and we verify
+                // expected APIs are present in WaitForCapabilityManifest() after connecting.
                 return true;
             }
             catch (HttpRequestException ex)
@@ -252,6 +249,87 @@ public class Program
         }
 
         Console.WriteLine($"❌ Dapr sidecar failed to become ready within {maxWaitSeconds}s");
+        return false;
+    }
+
+    /// <summary>
+    /// Waits for expected API endpoints to appear in the BannouClient's capability manifest.
+    /// After services register their permissions, the Connect service pushes capability updates
+    /// to connected clients via WebSocket. This method checks if expected service paths are
+    /// available in the client's AvailableApis dictionary.
+    /// </summary>
+    /// <param name="client">The connected BannouClient instance.</param>
+    /// <param name="timeoutSeconds">Maximum time to wait for APIs.</param>
+    /// <returns>True if expected APIs are present, false if timeout.</returns>
+    private static async Task<bool> WaitForCapabilityManifest(BannouClient client, int timeoutSeconds = 60)
+    {
+        if (client == null || !client.IsConnected)
+        {
+            Console.WriteLine("⚠️ Client not connected - cannot check capability manifest.");
+            return false;
+        }
+
+        var timeout = TimeSpan.FromSeconds(timeoutSeconds);
+        var checkInterval = TimeSpan.FromSeconds(2);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        // Expected API paths that indicate services have registered their permissions.
+        // These are sanitized paths from the capability manifest, not full URLs.
+        // NOTE: The main client is a regular user, so we expect user-role endpoints with "default" state.
+        // Admin-only endpoints (like /accounts, /permissions/services) are tested via AdminClient.
+        // Anonymous-only endpoints (like /auth/register) are not available to authenticated users.
+        var expectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "/auth/login",        // Auth service - user role, default state
+            "/sessions"           // GameSession service - user role, default state (e.g., GET:/sessions)
+        };
+
+        Console.WriteLine($"⏳ Waiting for capability manifest to include expected APIs (timeout: {timeout.TotalSeconds}s)...");
+        Console.WriteLine($"   Expected paths: {string.Join(", ", expectedPaths)}");
+        Console.WriteLine($"   Current available APIs: {client.AvailableApis.Count}");
+
+        while (stopwatch.Elapsed < timeout)
+        {
+            // Check current AvailableApis for expected paths
+            var availablePaths = client.AvailableApis.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var missingPaths = expectedPaths.Where(p => !availablePaths.Any(ap => ap.Contains(p, StringComparison.OrdinalIgnoreCase))).ToList();
+
+            if (missingPaths.Count == 0)
+            {
+                Console.WriteLine($"✅ All expected APIs available in capability manifest after {stopwatch.Elapsed.TotalSeconds:F1}s:");
+                var matchedPaths = expectedPaths.Select(expected =>
+                    availablePaths.FirstOrDefault(ap => ap.Contains(expected, StringComparison.OrdinalIgnoreCase)) ?? expected);
+                foreach (var path in matchedPaths)
+                {
+                    Console.WriteLine($"   - {path}");
+                }
+                return true;
+            }
+
+            var elapsed = stopwatch.Elapsed.TotalSeconds;
+            if (elapsed < 10 || (int)elapsed % 10 == 0)
+            {
+                Console.WriteLine($"⏳ Waiting for: {string.Join(", ", missingPaths)} ({elapsed:F1}s elapsed)");
+                Console.WriteLine($"   Currently available: {client.AvailableApis.Count} APIs");
+                if (client.AvailableApis.Count > 0 && client.AvailableApis.Count <= 10)
+                {
+                    foreach (var api in client.AvailableApis.Keys.Take(10))
+                    {
+                        Console.WriteLine($"      - {api}");
+                    }
+                }
+            }
+
+            // Wait and let the WebSocket receive capability updates
+            await Task.Delay(checkInterval);
+        }
+
+        Console.WriteLine($"⚠️ Capability manifest check timed out after {timeout.TotalSeconds}s");
+        Console.WriteLine($"   Available APIs at timeout: {client.AvailableApis.Count}");
+        foreach (var api in client.AvailableApis.Keys.Take(20))
+        {
+            Console.WriteLine($"      - {api}");
+        }
         return false;
     }
 
@@ -305,6 +383,13 @@ public class Program
 
             Console.WriteLine($"   Session ID: {_client.SessionId}");
             Console.WriteLine($"   Available APIs: {_client.AvailableApis.Count}");
+
+            // Wait for service permission registration via capability manifest
+            // The capability manifest is the source of truth for what APIs are available
+            if (!await WaitForCapabilityManifest(_client, 60))
+            {
+                Console.WriteLine("⚠️ Capability manifest check failed - some tests may fail due to missing service permissions.");
+            }
 
             // Also authenticate with admin credentials for orchestrator API tests
             Console.WriteLine("\n=== Admin Authentication ===");

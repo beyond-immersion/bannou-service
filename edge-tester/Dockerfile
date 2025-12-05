@@ -5,12 +5,16 @@ FROM bannou:latest AS bannou-base
 # Switch to build image to compile the edge-tester application
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
+# Build argument to control SDK source (current vs published)
+ARG UsePublishedSDK=false
+
 # Copy source code and solution
 WORKDIR /app
 COPY . .
 
 # Build the edge-tester application in Release configuration
-RUN dotnet build edge-tester --configuration Release
+# UsePublishedSDK=true uses NuGet package, false uses project reference
+RUN dotnet build edge-tester --configuration Release -p:UsePublishedSDK=${UsePublishedSDK}
 
 # Runtime image based on ASP.NET Core runtime (needed for bannou-service dependencies)
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime

@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.HttpTester.Tests;
+using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 using Dapr.Client;
@@ -228,10 +229,14 @@ public class Program
             Console.WriteLine("✅ Service provider setup completed successfully");
             Console.WriteLine("✅ Dapr client connectivity verified");
 
-            // Give additional time for all services to register with placement service
-            Console.WriteLine("⏳ Waiting for service discovery to stabilize...");
-            await Task.Delay(TimeSpan.FromSeconds(5));
-            Console.WriteLine("✅ Service discovery stabilization complete");
+            // Wait for services to register their permissions (signals service readiness)
+            // This is more reliable than fixed delays since services only register after startup complete
+            var permissionsClient = ServiceProvider.GetRequiredService<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
+            if (!await WaitForServiceReadiness(permissionsClient))
+            {
+                Console.WriteLine("⚠️ Service readiness check timed out, continuing anyway...");
+                // Don't fail here - tests will report meaningful errors for individual services
+            }
 
             return true;
         }
@@ -374,6 +379,87 @@ public class Program
         // Return true anyway - we don't want to block all tests just because statestore isn't ready
         // Individual tests that need statestore will fail with meaningful errors
         return true;
+    }
+
+    /// <summary>
+    /// Waits for services to register their permissions with the Permissions service.
+    /// Services only register after fully initializing, so this is a reliable readiness signal.
+    /// </summary>
+    /// <param name="permissionsClient">The permissions client to use for checking registered services.</param>
+    /// <returns>True if expected services are ready, false if timeout occurs.</returns>
+    private static async Task<bool> WaitForServiceReadiness(BeyondImmersion.BannouService.Permissions.IPermissionsClient permissionsClient)
+    {
+        var timeout = TimeSpan.FromSeconds(90);
+        var checkInterval = TimeSpan.FromSeconds(2);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        // Core services we expect to be registered before testing
+        // These are the services that provide critical functionality
+        var expectedServices = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "auth",
+            "accounts",
+            "permissions"
+            // Add more services as needed
+        };
+
+        Console.WriteLine($"Waiting for service registration (timeout: {timeout.TotalSeconds}s)...");
+        Console.WriteLine($"Expected services: {string.Join(", ", expectedServices)}");
+
+        while (stopwatch.Elapsed < timeout)
+        {
+            try
+            {
+                var response = await permissionsClient.GetRegisteredServicesAsync(new ListServicesRequest());
+                if (response != null && response.Services != null)
+                {
+                    var registeredServiceIds = response.Services.Select(s => s.ServiceId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                    var missingServices = expectedServices.Except(registeredServiceIds).ToList();
+
+                    if (missingServices.Count == 0)
+                    {
+                        Console.WriteLine($"✅ All expected services registered:");
+                        foreach (var service in response.Services)
+                        {
+                            Console.WriteLine($"   - {service.ServiceId}: {service.EndpointCount} endpoints (v{service.Version})");
+                        }
+                        return true;
+                    }
+                    else
+                    {
+                        var elapsed = stopwatch.Elapsed.TotalSeconds;
+                        // Log progress periodically
+                        if (elapsed < 10 || (int)elapsed % 10 == 0)
+                        {
+                            Console.WriteLine($"⏳ Waiting for services: {string.Join(", ", missingServices)} ({elapsed:F1}s elapsed)");
+                            Console.WriteLine($"   Currently registered: {string.Join(", ", registeredServiceIds)}");
+                        }
+                    }
+                }
+                else
+                {
+                    var elapsed = stopwatch.Elapsed.TotalSeconds;
+                    if (elapsed < 5 || (int)elapsed % 5 == 0)
+                    {
+                        Console.WriteLine($"⏳ No services registered yet ({elapsed:F1}s elapsed)");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var elapsed = stopwatch.Elapsed.TotalSeconds;
+                if (elapsed < 5 || (int)elapsed % 5 == 0)
+                {
+                    Console.WriteLine($"⏳ Service readiness check failed, retrying... ({elapsed:F1}s elapsed) - {ex.Message}");
+                }
+            }
+
+            await Task.Delay(checkInterval);
+        }
+
+        Console.WriteLine($"⚠️ Service readiness check timed out after {timeout.TotalSeconds}s.");
+        Console.WriteLine("   Some services may not have registered yet. Tests may fail.");
+        return false;
     }
 
     /// <summary>

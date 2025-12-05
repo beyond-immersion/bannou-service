@@ -202,6 +202,175 @@ public class RedisSessionManager
         }
     }
 
+    #region Reconnection Support
+
+    // Redis key patterns for reconnection
+    private const string RECONNECTION_TOKEN_KEY_PREFIX = "bannou:connect:reconnect:";
+
+    /// <summary>
+    /// Stores a reconnection token mapping to session ID.
+    /// Token is stored for the duration of the reconnection window.
+    /// </summary>
+    public async Task SetReconnectionTokenAsync(
+        string reconnectionToken,
+        string sessionId,
+        TimeSpan reconnectionWindow)
+    {
+        try
+        {
+            var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
+            await _database.StringSetAsync(key, sessionId, reconnectionWindow);
+
+            _logger.LogDebug("Stored reconnection token for session {SessionId} (window: {Window})",
+                sessionId, reconnectionWindow);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to store reconnection token for {SessionId}", sessionId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Validates a reconnection token and returns the associated session ID.
+    /// Returns null if token is invalid or expired.
+    /// </summary>
+    public async Task<string?> ValidateReconnectionTokenAsync(string reconnectionToken)
+    {
+        try
+        {
+            var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
+            var sessionId = await _database.StringGetAsync(key);
+
+            if (!sessionId.HasValue)
+            {
+                _logger.LogDebug("Reconnection token not found or expired");
+                return null;
+            }
+
+            return sessionId.ToString();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to validate reconnection token");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Removes a reconnection token after successful reconnection or expiration.
+    /// </summary>
+    public async Task RemoveReconnectionTokenAsync(string reconnectionToken)
+    {
+        try
+        {
+            var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
+            await _database.KeyDeleteAsync(key);
+
+            _logger.LogDebug("Removed reconnection token");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to remove reconnection token");
+            // Don't throw - token cleanup failures shouldn't break main functionality
+        }
+    }
+
+    /// <summary>
+    /// Initiates reconnection window for a session.
+    /// Preserves session data and service mappings for the reconnection window duration.
+    /// </summary>
+    public async Task InitiateReconnectionWindowAsync(
+        string sessionId,
+        string reconnectionToken,
+        TimeSpan reconnectionWindow,
+        ICollection<string>? userRoles)
+    {
+        try
+        {
+            // Get existing connection state
+            var existingState = await GetConnectionStateAsync(sessionId);
+
+            if (existingState == null)
+            {
+                _logger.LogWarning("Cannot initiate reconnection window - session {SessionId} not found", sessionId);
+                return;
+            }
+
+            // Update state with reconnection info
+            existingState.ReconnectionToken = reconnectionToken;
+            existingState.ReconnectionExpiresAt = DateTimeOffset.UtcNow.Add(reconnectionWindow);
+            existingState.DisconnectedAt = DateTimeOffset.UtcNow;
+            existingState.UserRoles = userRoles?.ToList();
+
+            // Store updated state with extended TTL for reconnection window
+            await SetConnectionStateAsync(sessionId, existingState, reconnectionWindow.Add(TimeSpan.FromMinutes(1)));
+
+            // Store token -> sessionId mapping
+            await SetReconnectionTokenAsync(reconnectionToken, sessionId, reconnectionWindow);
+
+            _logger.LogInformation("Initiated reconnection window for session {SessionId} (expires: {ExpiresAt})",
+                sessionId, existingState.ReconnectionExpiresAt);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to initiate reconnection window for {SessionId}", sessionId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Restores a session from reconnection state.
+    /// Clears reconnection fields and restores active session state.
+    /// </summary>
+    public async Task<ConnectionStateData?> RestoreSessionFromReconnectionAsync(string sessionId, string reconnectionToken)
+    {
+        try
+        {
+            var state = await GetConnectionStateAsync(sessionId);
+
+            if (state == null)
+            {
+                _logger.LogWarning("Session {SessionId} not found for reconnection", sessionId);
+                return null;
+            }
+
+            if (!state.IsInReconnectionWindow)
+            {
+                _logger.LogWarning("Session {SessionId} reconnection window expired", sessionId);
+                return null;
+            }
+
+            if (state.ReconnectionToken != reconnectionToken)
+            {
+                _logger.LogWarning("Invalid reconnection token for session {SessionId}", sessionId);
+                return null;
+            }
+
+            // Clear reconnection state
+            state.DisconnectedAt = null;
+            state.ReconnectionExpiresAt = null;
+            state.ReconnectionToken = null;
+            state.LastActivity = DateTimeOffset.UtcNow;
+
+            // Store updated state with normal TTL
+            await SetConnectionStateAsync(sessionId, state, SESSION_TTL);
+
+            // Remove reconnection token
+            await RemoveReconnectionTokenAsync(reconnectionToken);
+
+            _logger.LogInformation("Restored session {SessionId} from reconnection", sessionId);
+            return state;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to restore session {SessionId} from reconnection", sessionId);
+            return null;
+        }
+    }
+
+    #endregion
+
     /// <summary>
     /// Removes session data from Redis (cleanup on disconnect).
     /// </summary>
@@ -277,6 +446,20 @@ public class ConnectionStateData
     public Dictionary<string, Guid> ServiceMappings { get; set; } = new();
     public Dictionary<ushort, uint> ChannelSequences { get; set; } = new();
     public ConnectionFlags Flags { get; set; }
+
+    // Reconnection support fields
+    public string? ReconnectionToken { get; set; }
+    public DateTimeOffset? ReconnectionExpiresAt { get; set; }
+    public DateTimeOffset? DisconnectedAt { get; set; }
+    public List<string>? UserRoles { get; set; }
+
+    /// <summary>
+    /// Whether this session is in reconnection window (disconnected but not expired)
+    /// </summary>
+    public bool IsInReconnectionWindow =>
+        DisconnectedAt.HasValue &&
+        ReconnectionExpiresAt.HasValue &&
+        DateTimeOffset.UtcNow < ReconnectionExpiresAt.Value;
 }
 
 /// <summary>

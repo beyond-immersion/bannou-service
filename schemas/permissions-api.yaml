@@ -1,8 +1,13 @@
 openapi: 3.0.0
 info:
   title: Bannou Permission System API
-  description: Redis-backed high-performance permission system for WebSocket services
-  version: 2.0.0
+  description: |
+    Redis-backed high-performance permission system for WebSocket services.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See API-DESIGN.md for architectural rationale.
+  version: 3.0.0
 servers:
   - url: http://localhost:3500/v1.0/invoke/bannou/method
     description: Dapr sidecar endpoint (internal only)
@@ -134,8 +139,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionInfo'
 
+  /permissions/services/list:
+    post:
+      summary: List all registered services
+      description: |
+        Returns list of all services that have registered their permissions.
+        This endpoint is used by testers to wait for service readiness - a service
+        appearing in this list means it has completed startup and registered its
+        API permissions, indicating it's ready to handle requests.
+
+        For service-to-service calls (via Dapr), this endpoint is unrestricted.
+        For client calls through WebSocket/Connect, only admin users can access it.
+      operationId: getRegisteredServices
+      tags:
+        - Service Management
+      x-permissions:
+        - role: admin
+          requiredStates: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListServicesRequest'
+      responses:
+        '200':
+          description: List of registered services
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisteredServicesResponse'
+
 components:
   schemas:
+    # Request Models for POST-only pattern
+    ListServicesRequest:
+      type: object
+      description: Request to list registered services (empty body allowed for listing all)
+      properties:
+        serviceIdFilter:
+          type: string
+          description: Optional filter by service ID prefix
+          nullable: true
+
     # Core API Request/Response Models
     CapabilityRequest:
       type: object
@@ -378,3 +424,44 @@ components:
           type: string
           format: date-time
           description: When permissions were last recompiled
+
+    # Service Readiness Models
+    RegisteredServicesResponse:
+      type: object
+      required:
+        - services
+        - timestamp
+      properties:
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegisteredServiceInfo'
+          description: List of all registered services
+        timestamp:
+          type: string
+          format: date-time
+          description: When this response was generated
+
+    RegisteredServiceInfo:
+      type: object
+      required:
+        - serviceId
+        - registeredAt
+        - endpointCount
+      properties:
+        serviceId:
+          type: string
+          description: Unique service identifier
+        serviceName:
+          type: string
+          description: Human-readable service name
+        version:
+          type: string
+          description: Service API version
+        registeredAt:
+          type: string
+          format: date-time
+          description: When the service registered its permissions
+        endpointCount:
+          type: integer
+          description: Number of API endpoints registered by this service

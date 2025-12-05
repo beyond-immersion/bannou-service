@@ -62,7 +62,7 @@ services:
 
   # Dapr sidecar for orchestrator - shares network stack
   orchestrator-dapr:
-    image: "daprio/daprd:edge"
+    image: "daprio/daprd:1.16.3"
     command: [
       "./daprd",
       "--app-id", "orchestrator",

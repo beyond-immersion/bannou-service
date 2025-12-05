@@ -1,31 +1,72 @@
 #!/bin/sh
-# Wait for RabbitMQ to be ready before starting Dapr sidecar
-# This avoids the need for depends_on in docker-compose while ensuring
-# the pubsub component can initialize successfully
+# Wait for infrastructure services to be ready before starting Dapr sidecar
+# Total timeout: 60 seconds across all services
+# All service names configurable via environment variables
 
+# Service configuration (all configurable via ENV)
 RABBITMQ_HOST="${RABBITMQ_HOST:-rabbitmq}"
 RABBITMQ_PORT="${RABBITMQ_PORT:-5672}"
-MAX_RETRIES="${RABBITMQ_MAX_RETRIES:-30}"
-RETRY_INTERVAL="${RABBITMQ_RETRY_INTERVAL:-2}"
+REDIS_HOST="${REDIS_HOST:-bannou-redis}"
+REDIS_PORT="${REDIS_PORT:-6379}"
+AUTH_REDIS_HOST="${AUTH_REDIS_HOST:-auth-redis}"
+AUTH_REDIS_PORT="${AUTH_REDIS_PORT:-6379}"
+MYSQL_HOST="${MYSQL_HOST:-account-db}"
+MYSQL_PORT="${MYSQL_PORT:-3306}"
 
-echo "Waiting for RabbitMQ at ${RABBITMQ_HOST}:${RABBITMQ_PORT}..."
+# Timeout configuration
+TOTAL_TIMEOUT="${TOTAL_TIMEOUT:-60}"
+CHECK_INTERVAL="${CHECK_INTERVAL:-1}"
 
-retry_count=0
-while [ $retry_count -lt $MAX_RETRIES ]; do
-    # Try to connect to RabbitMQ port using nc (netcat) or timeout with /dev/tcp
-    if nc -z "$RABBITMQ_HOST" "$RABBITMQ_PORT" 2>/dev/null; then
-        echo "RabbitMQ is ready at ${RABBITMQ_HOST}:${RABBITMQ_PORT}"
-        break
+start_time=$(date +%s)
+
+time_remaining() {
+    current_time=$(date +%s)
+    elapsed=$((current_time - start_time))
+    remaining=$((TOTAL_TIMEOUT - elapsed))
+    echo $remaining
+}
+
+wait_for_service() {
+    local host="$1"
+    local port="$2"
+    local name="$3"
+
+    # Skip if host is empty or explicitly disabled
+    if [ -z "$host" ] || [ "$host" = "disabled" ]; then
+        echo "Skipping ${name} (disabled)"
+        return 0
     fi
 
-    retry_count=$((retry_count + 1))
-    echo "RabbitMQ not ready, retrying... (${retry_count}/${MAX_RETRIES})"
-    sleep "$RETRY_INTERVAL"
-done
+    echo "Waiting for ${name} at ${host}:${port}..."
 
-if [ $retry_count -eq $MAX_RETRIES ]; then
-    echo "WARNING: RabbitMQ not ready after ${MAX_RETRIES} attempts. Starting Dapr anyway..."
-fi
+    while [ $(time_remaining) -gt 0 ]; do
+        if nc -z "$host" "$port" 2>/dev/null; then
+            echo "${name} is ready at ${host}:${port}"
+            return 0
+        fi
+        sleep "$CHECK_INTERVAL"
+    done
+
+    echo "WARNING: ${name} not ready within timeout. Starting Dapr anyway..."
+    return 1
+}
+
+echo "Infrastructure wait script starting (${TOTAL_TIMEOUT}s total timeout)..."
+
+# Wait for RabbitMQ (pub/sub) - required
+wait_for_service "$RABBITMQ_HOST" "$RABBITMQ_PORT" "RabbitMQ"
+
+# Wait for Redis (statestore) - optional
+wait_for_service "$REDIS_HOST" "$REDIS_PORT" "Redis"
+
+# Wait for Auth Redis (permissions-store) - optional
+wait_for_service "$AUTH_REDIS_HOST" "$AUTH_REDIS_PORT" "Auth-Redis"
+
+# Wait for MySQL (accounts-statestore) - optional
+wait_for_service "$MYSQL_HOST" "$MYSQL_PORT" "MySQL"
+
+elapsed=$(($(date +%s) - start_time))
+echo "Infrastructure ready check completed in ${elapsed}s"
 
 # Start Dapr with all passed arguments
 echo "Starting Dapr sidecar..."

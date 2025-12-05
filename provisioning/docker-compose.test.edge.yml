@@ -7,6 +7,31 @@ services:
   bannou:
     env_file: ../.env.test.edge
 
+  # Override Dapr sidecar - uses custom image that waits for infrastructure services
+  bannou-dapr:
+    image: bannou-dapr-wait:latest
+    build:
+      context: ./dapr
+      dockerfile: Dockerfile.dapr-wait
+    command: [
+      "--app-id", "bannou",
+      "--app-port", "80",
+      "--app-protocol", "http",
+      "--dapr-http-port", "3500",
+      "--dapr-grpc-port", "50001",
+      "--placement-host-address", "placement:50006",
+      "--resources-path", "/components",
+      "--log-level", "debug",
+      "--enable-api-logging"
+    ]
+    volumes:
+      - "./dapr/components-http-test/:/components"
+      - "./certificates:/certificates"
+    environment:
+      - "SSL_CERT_DIR=/certificates"
+      - "RABBITMQ_HOST=rabbitmq"
+      - "RABBITMQ_PORT=5672"
+
   # Edge integration tester - simulates external client
   bannou-edge-tester:
     build:
@@ -15,5 +40,6 @@ services:
     networks:
       - external  # Only on external network - reaches OpenResty, not bannou directly
     env_file: ../.env.test.edge
+    environment:
+      - DAEMON_MODE=true  # Run tests and exit (don't wait for stdin)
     stdin_open: false
-    command: ["dotnet", "run", "--project", "edge-tester", "--configuration", "Release", "--no-build"]

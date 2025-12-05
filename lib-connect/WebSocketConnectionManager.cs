@@ -200,6 +200,11 @@ public class WebSocketConnection
     public ConnectionState ConnectionState { get; }
     public DateTimeOffset CreatedAt { get; }
 
+    /// <summary>
+    /// Metadata dictionary for storing connection-specific flags like forced_disconnect.
+    /// </summary>
+    public Dictionary<string, object> Metadata { get; } = new();
+
     public WebSocketConnection(string sessionId, WebSocket webSocket, ConnectionState connectionState)
     {
         SessionId = sessionId;

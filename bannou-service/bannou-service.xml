@@ -703,6 +703,32 @@
             Optional message associated with the response.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.DaprEventHelper">
+            <summary>
+            Helper class for parsing Dapr pub/sub events with CloudEvents format handling.
+            Handles both CloudEvents-wrapped events and raw payloads since Dapr's RabbitMQ
+            component can deliver events in either format depending on timing and configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.DaprEventHelper.ReadEventJsonAsync(Microsoft.AspNetCore.Http.HttpRequest)">
+            <summary>
+            Reads and parses a Dapr pub/sub event from the HTTP request body, returning the unwrapped JSON element.
+            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
+            Use this method when you need to manually extract properties from the event.
+            </summary>
+            <param name="request">The HTTP request containing the event</param>
+            <returns>The unwrapped event JSON element, or null if parsing fails</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.DaprEventHelper.ReadEventAsync``1(Microsoft.AspNetCore.Http.HttpRequest,System.Text.Json.JsonSerializerOptions)">
+            <summary>
+            Reads and parses a Dapr pub/sub event from the HTTP request body.
+            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
+            </summary>
+            <typeparam name="T">The event model type to deserialize</typeparam>
+            <param name="request">The HTTP request containing the event</param>
+            <param name="options">Optional JSON serializer options (defaults to PropertyNameCaseInsensitive)</param>
+            <returns>The deserialized event model, or null if parsing fails</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.AppRunningStates">
             <summary>
             Application running states for service lifecycle management.
@@ -1211,6 +1237,50 @@
         <member name="M:BeyondImmersion.BannouService.ExtensionMethods.AddPropertyHeaders(System.Net.Http.HttpRequestMessage,BeyondImmersion.BannouService.Controllers.Messages.ApiRequest)">
             <summary>
             Add property headers.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ILockResponse">
+            <summary>
+            Result of a distributed lock acquisition attempt.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ILockResponse.Success">
+            <summary>
+            Gets a value indicating whether the lock was successfully acquired.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.IDistributedLockProvider">
+            <summary>
+            Provides distributed locking functionality for services.
+            Uses Redis state store with ETag-based optimistic concurrency for reliable distributed locks.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.IDistributedLockProvider.LockAsync(System.String,System.String,System.String,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Attempts to acquire a distributed lock.
+            </summary>
+            <param name="storeName">The name of the lock store component</param>
+            <param name="resourceId">The identifier of the resource to lock</param>
+            <param name="lockOwner">The identifier of the lock owner</param>
+            <param name="expiryInSeconds">Lock expiration time in seconds</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Lock response indicating success and providing disposal</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RedisDistributedLockProvider">
+            <summary>
+            Redis-based implementation using Dapr state store SET NX pattern.
+            More reliable than experimental Dapr lock API.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RedisDistributedLockProvider.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.RedisDistributedLockProvider})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RedisDistributedLockProvider.LockAsync(System.String,System.String,System.String,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RedisLockResponse">
+            <summary>
+            Redis-based lock response that releases lock on disposal.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Logging.ServiceLogging">
@@ -2085,6 +2155,11 @@
             Publishes aggregated heartbeats via Dapr pub/sub on startup and periodically.
             </summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager._daprHttpPort">
+            <summary>
+            Dapr HTTP port for metadata API queries.
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.InstanceId">
             <summary>
             Unique instance identifier for this bannou application instance.
@@ -2135,12 +2210,27 @@
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.WaitForDaprConnectivityAsync(System.Int32,System.Int32,System.Threading.CancellationToken)">
             <summary>
             Wait for Dapr connectivity by attempting to publish heartbeats with retries.
-            This blocks startup until Dapr sidecar is ready to send/receive events.
+            This blocks startup until Dapr sidecar is ready to send AND receive events.
+            Verifies both publishing capability and subscription registration.
             </summary>
             <param name="maxRetries">Maximum number of retry attempts</param>
             <param name="retryDelayMs">Delay between retries in milliseconds</param>
             <param name="cancellationToken">Cancellation token</param>
-            <returns>True if Dapr is ready, false if all retries exhausted</returns>
+            <returns>True if Dapr is ready (publish + subscriptions), false if all retries exhausted</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.DiscoverExpectedSubscriptions">
+            <summary>
+            Discover expected pub/sub subscriptions by scanning plugin assemblies for [Topic] attributes.
+            </summary>
+            <returns>Set of topic names that should be registered with Dapr</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.VerifySubscriptionsRegisteredAsync(System.Collections.Generic.HashSet{System.String},System.Threading.CancellationToken)">
+            <summary>
+            Verify that expected subscriptions are registered with Dapr by querying the metadata API.
+            </summary>
+            <param name="expectedTopics">Set of topic names that should be registered</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if all expected subscriptions are registered, false otherwise</returns>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.StartPeriodicHeartbeats">
             <summary>
@@ -2200,6 +2290,37 @@
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.DisposeAsync">
             <summary>
             Stop periodic heartbeats and clean up resources.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.DaprMetadataResponse">
+            <summary>
+            Response model for Dapr metadata API (/v1.0/metadata).
+            Only includes fields needed for subscription verification.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.DaprMetadataResponse.Subscriptions">
+            <summary>
+            List of registered pub/sub subscriptions.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.DaprSubscriptionInfo">
+            <summary>
+            Subscription information from Dapr metadata.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.DaprSubscriptionInfo.PubsubName">
+            <summary>
+            The pub/sub component name (e.g., "bannou-pubsub").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.DaprSubscriptionInfo.Topic">
+            <summary>
+            The topic name (e.g., "account.deleted").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.DaprSubscriptionInfo.Type">
+            <summary>
+            The subscription type (PROGRAMMATIC or DECLARATIVE).
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceResponse">

@@ -4,46 +4,81 @@ description: 'Run WebSocket tests with current generated SDK for forward compati
 runs:
   using: 'composite'
   steps:
-    - name: Ensure WebSocket Services Running
+    - name: Build and Start WebSocket Services
       shell: bash
       run: |
         echo "📋 Using .env.test.edge configuration for forward-compatibility WebSocket testing..."
+        echo "🔧 Building edge-tester container with current SDK (UsePublishedSDK=false)..."
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
           -f "./provisioning/docker-compose.ingress.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.edge.yml" \
-          ps
-
-        echo "⏳ Waiting for services to be fully ready..."
-        sleep 15
-
-    - name: Build SDK and Edge Tester with Current SDK
-      shell: bash
-      run: |
-        echo "🔧 Building Client SDK first..."
-        dotnet build Bannou.Client.SDK --configuration Release
-        echo "🔧 Building edge-tester with current generated SDK..."
-        dotnet build edge-tester --configuration Release -p:UseCurrentSDK=true
+          build bannou-edge-tester --build-arg UsePublishedSDK=false
 
     - name: Execute WebSocket Forward Compatibility Tests
       shell: bash
       run: |
         echo "🚀 Running WebSocket tests with current generated SDK (forward compatibility)..."
-        # Source .env.test.edge to get client configuration (endpoints, credentials)
-        # Using set -a / set +a pattern to automatically export sourced variables
-        set -a && source .env.test.edge && set +a
-        # Override Docker hostnames with localhost for CI host access
-        # (edge-tester runs on CI host, not in Docker, so it needs localhost)
-        # OpenResty maps internal port 80 to host port 9080 (see docker-compose.ingress.yml)
-        export OPENRESTY_HOST=localhost
-        export OPENRESTY_PORT=9080
-        export REGISTER_ENDPOINT=localhost:9080/auth/register
-        export LOGIN_CREDENTIALS_ENDPOINT=localhost:9080/auth/login
-        export LOGIN_TOKEN_ENDPOINT=localhost:9080/auth/refresh
-        export CONNECT_ENDPOINT=localhost:9080/connect
-        DAEMON_MODE=true dotnet run --project edge-tester --configuration Release --no-build
+        # Start all services in detached mode
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          up -d
+
+        # Stream test logs in background for visibility
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          logs -f bannou-edge-tester &
+
+        # Wait for the edge-tester container to complete and capture its exit code
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          wait bannou-edge-tester
+
+    - name: Dump Service Logs on Failure
+      if: failure()
+      shell: bash
+      run: |
+        echo "📋 Dumping all service logs for debugging..."
+        echo "=== BANNOU SERVICE LOGS (ALL) ==="
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          logs bannou || echo "Failed to get bannou logs"
+        echo ""
+        echo "=== OPENRESTY LOGS (last 500) ==="
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          logs --tail=500 openresty || echo "Failed to get openresty logs"
+        echo ""
+        echo "=== RABBITMQ LOGS (last 500) ==="
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          logs --tail=500 rabbitmq || echo "Failed to get rabbitmq logs"
 
     - name: Final Cleanup
       if: always()

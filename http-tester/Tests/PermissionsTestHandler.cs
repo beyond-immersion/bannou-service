@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Testing;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json;
 using System.Collections.ObjectModel;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
@@ -48,7 +47,11 @@ public class PermissionsTestHandler : IServiceTestHandler
             new ServiceTest(TestUserRoleCapabilities, "UserRoleCapabilities", "Permissions", "Test user role receives user-level permissions"),
             new ServiceTest(TestRoleEscalation, "RoleEscalation", "Permissions", "Test role escalation from user to admin"),
 
-            // Dapr Event Tests (existing)
+            // State-Based Permission Tests
+            new ServiceTest(TestStateBasedPermissionEscalation, "StateBasedEscalation", "Permissions", "Test setting auth:authenticated state grants additional permissions"),
+            new ServiceTest(TestDefaultVsAuthenticatedState, "DefaultVsAuthenticated", "Permissions", "Test difference between default and auth:authenticated state permissions"),
+
+            // Dapr Event Tests
             new ServiceTest(TestDaprEventSubscription, "DaprEventSubscription", "Permissions", "Test Dapr pubsub event subscription for service registration"),
             new ServiceTest(TestSessionStateChangeEvent, "SessionStateChangeEvent", "Permissions", "Test Dapr pubsub event subscription for session state changes"),
         };
@@ -71,7 +74,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/test/endpoint" }
                     }
@@ -117,7 +120,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/service1/data" }
                     }
@@ -136,7 +139,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/service2/data", "POST:/service2/action" }
                     }
@@ -179,7 +182,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                     {
                         ["guest"] = new Collection<string> { "GET:/public/info" }
                     },
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/public/info", "GET:/user/profile" }
                     },
@@ -224,7 +227,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["guest"] = new Collection<string> { "GET:/info" },
                         ["user"] = new Collection<string> { "GET:/info", "GET:/data", "POST:/data" },
@@ -269,7 +272,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/cap/test1", "POST:/cap/test2" }
                     }
@@ -379,7 +382,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/svc1/data" }
                     }
@@ -392,7 +395,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/svc2/data" }
                     }
@@ -464,7 +467,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { testMethod }
                     }
@@ -529,7 +532,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { allowedMethod }
                     }
@@ -803,7 +806,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/svc1/read" },
                         ["admin"] = new Collection<string> { "GET:/svc1/read", "DELETE:/svc1/delete" }
@@ -817,7 +820,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/svc2/read" },
                         ["admin"] = new Collection<string> { "GET:/svc2/read", "PUT:/svc2/admin" }
@@ -1029,7 +1032,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/public" },
                         ["admin"] = new Collection<string> { "GET:/public", "DELETE:/admin/critical", "PUT:/admin/settings" }
@@ -1096,7 +1099,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/public", "POST:/user/action" },
                         ["admin"] = new Collection<string> { "GET:/public", "POST:/user/action", "DELETE:/admin/critical" }
@@ -1167,7 +1170,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/data" },
                         ["admin"] = new Collection<string> { "GET:/data", "POST:/data", "DELETE:/data" }
@@ -1241,6 +1244,195 @@ public class PermissionsTestHandler : IServiceTestHandler
     }
 
     /// <summary>
+    /// Test that setting auth:authenticated state grants additional permissions.
+    /// This validates the state-based permission system where:
+    /// - "default" state endpoints are always accessible (no state requirements)
+    /// - "auth:authenticated" state endpoints require the state to be explicitly set
+    /// </summary>
+    private static async Task<TestResult> TestStateBasedPermissionEscalation(ITestClient client, string[] args)
+    {
+        try
+        {
+            var permissionsClient = new PermissionsClient();
+            var testPrefix = $"state-esc-{Guid.NewGuid():N}";
+            var testSessionId = $"{testPrefix}-session";
+            var testServiceId = $"{testPrefix}-svc";
+
+            // Register service with permissions at BOTH "default" and "auth:authenticated" states
+            await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
+            {
+                ServiceId = testServiceId,
+                Version = "1.0.0",
+                Permissions = new Dictionary<string, StatePermissions>
+                {
+                    // Default state - always accessible
+                    ["default"] = new StatePermissions
+                    {
+                        ["user"] = new Collection<string> { "GET:/public/data", "GET:/public/info" }
+                    },
+                    // Auth:authenticated state - requires explicit state set
+                    ["auth:authenticated"] = new StatePermissions
+                    {
+                        ["user"] = new Collection<string> { "PUT:/account/profile", "GET:/account/settings" }
+                    }
+                }
+            });
+
+            // Create session as user (no auth:authenticated state yet)
+            await permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
+            {
+                SessionId = testSessionId,
+                NewRole = "user"
+            });
+
+            // Get capabilities - should only have "default" state permissions
+            var beforeCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
+            {
+                SessionId = testSessionId
+            });
+
+            var beforeMethodCount = 0;
+            if (beforeCapabilities.Permissions?.ContainsKey(testServiceId) == true)
+            {
+                beforeMethodCount = beforeCapabilities.Permissions[testServiceId].Count;
+            }
+
+            if (beforeMethodCount != 2)
+            {
+                return TestResult.Failed($"Before state set: expected 2 default permissions, got {beforeMethodCount}");
+            }
+
+            // Now set the auth:authenticated state
+            await permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+            {
+                SessionId = testSessionId,
+                ServiceId = "auth",  // auth service's authenticated state
+                NewState = "authenticated"
+            });
+
+            // Get capabilities again - should now have BOTH default AND auth:authenticated permissions
+            var afterCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
+            {
+                SessionId = testSessionId
+            });
+
+            var afterMethodCount = 0;
+            if (afterCapabilities.Permissions?.ContainsKey(testServiceId) == true)
+            {
+                afterMethodCount = afterCapabilities.Permissions[testServiceId].Count;
+            }
+
+            if (afterMethodCount == 4)
+            {
+                return TestResult.Successful($"State-based escalation works: before={beforeMethodCount}, after={afterMethodCount} methods");
+            }
+            else if (afterMethodCount > beforeMethodCount)
+            {
+                return TestResult.Successful($"State-based escalation increased permissions: before={beforeMethodCount}, after={afterMethodCount}");
+            }
+            return TestResult.Failed($"State-based escalation did not add permissions: before={beforeMethodCount}, after={afterMethodCount}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"State-based escalation test failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test the clear difference between default and auth:authenticated state permissions.
+    /// Validates that the permission system correctly distinguishes between:
+    /// - Endpoints with states: {} (empty) - stored at "default" state key
+    /// - Endpoints with states: {auth: authenticated} - stored at "auth:authenticated" state key
+    /// </summary>
+    private static async Task<TestResult> TestDefaultVsAuthenticatedState(ITestClient client, string[] args)
+    {
+        try
+        {
+            var permissionsClient = new PermissionsClient();
+            var testPrefix = $"state-diff-{Guid.NewGuid():N}";
+            var testSessionId = $"{testPrefix}-session";
+            var testServiceId = $"{testPrefix}-svc";
+
+            // Register service with ONLY auth:authenticated state permissions (no default)
+            await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
+            {
+                ServiceId = testServiceId,
+                Version = "1.0.0",
+                Permissions = new Dictionary<string, StatePermissions>
+                {
+                    // Only auth:authenticated - requires explicit state
+                    ["auth:authenticated"] = new StatePermissions
+                    {
+                        ["user"] = new Collection<string> { "PUT:/protected/data", "DELETE:/protected/data" }
+                    }
+                }
+            });
+
+            // Create session as user (no auth:authenticated state)
+            await permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
+            {
+                SessionId = testSessionId,
+                NewRole = "user"
+            });
+
+            // Get capabilities - should have 0 permissions (no default state endpoints)
+            var beforeCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
+            {
+                SessionId = testSessionId
+            });
+
+            var beforeMethodCount = 0;
+            if (beforeCapabilities.Permissions?.ContainsKey(testServiceId) == true)
+            {
+                beforeMethodCount = beforeCapabilities.Permissions[testServiceId].Count;
+            }
+
+            if (beforeMethodCount != 0)
+            {
+                return TestResult.Failed($"Before state set: expected 0 permissions (no default), got {beforeMethodCount}");
+            }
+
+            // Set the auth:authenticated state
+            await permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+            {
+                SessionId = testSessionId,
+                ServiceId = "auth",
+                NewState = "authenticated"
+            });
+
+            // Get capabilities - should now have the state-specific permissions
+            var afterCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
+            {
+                SessionId = testSessionId
+            });
+
+            var afterMethodCount = 0;
+            if (afterCapabilities.Permissions?.ContainsKey(testServiceId) == true)
+            {
+                afterMethodCount = afterCapabilities.Permissions[testServiceId].Count;
+            }
+
+            if (afterMethodCount == 2)
+            {
+                return TestResult.Successful($"State difference validated: without state={beforeMethodCount}, with auth:authenticated={afterMethodCount}");
+            }
+            return TestResult.Failed($"State difference test failed: before={beforeMethodCount}, after={afterMethodCount} (expected 0 → 2)");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"State difference test failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
     /// Test Dapr pubsub event subscription for service registration.
     /// This tests the full Dapr eventing flow:
     /// 1. Publish ServiceRegistrationEvent via Dapr pubsub
@@ -1291,20 +1483,7 @@ public class PermissionsTestHandler : IServiceTestHandler
 
             Console.WriteLine($"  Publishing service registration event for {testServiceId} via Dapr pubsub...");
 
-            // First, verify the subscription endpoint is exposed
-            try
-            {
-                using var httpClient = new HttpClient();
-                var subscribeResponse = await httpClient.GetAsync("http://127.0.0.1:3500/v1.0/invoke/bannou/method/dapr/subscribe");
-                var subscriptions = await subscribeResponse.Content.ReadAsStringAsync();
-                Console.WriteLine($"  Subscriptions on bannou: {subscriptions.Substring(0, Math.Min(200, subscriptions.Length))}...");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"  Warning: Could not check subscriptions: {ex.Message}");
-            }
-
-            // Step 2: Publish the event via Dapr pubsub
+            // Publish the event via Dapr pubsub
             // This should be routed to PermissionsService's [Topic("bannou-pubsub", "permissions.service-registered")] handler
             await daprClient.PublishEventAsync(
                 "bannou-pubsub",
@@ -1313,29 +1492,11 @@ public class PermissionsTestHandler : IServiceTestHandler
 
             Console.WriteLine("  Event published via Dapr pubsub, waiting for processing...");
 
-            // Try direct HTTP POST to the event endpoint as a fallback diagnostic
-            try
-            {
-                using var httpClient = new HttpClient();
-                var eventJson = System.Text.Json.JsonSerializer.Serialize(serviceRegistrationEvent);
-                Console.WriteLine($"  Sending event JSON: {eventJson.Substring(0, Math.Min(200, eventJson.Length))}...");
-                var content = new StringContent(eventJson, System.Text.Encoding.UTF8, "application/json");
-                var directResponse = await httpClient.PostAsync(
-                    "http://127.0.0.1:3500/v1.0/invoke/bannou/method/PermissionsEvents/handle-service-registration",
-                    content);
-                var responseBody = await directResponse.Content.ReadAsStringAsync();
-                Console.WriteLine($"  Direct endpoint POST result: {directResponse.StatusCode}, body: {responseBody}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"  Direct endpoint POST failed: {ex.Message}");
-            }
-
-            // Step 3: Wait for event to be processed
+            // Wait for event to be processed
             // Dapr pubsub is async, so we need to wait a bit for the event to be delivered and processed
             await Task.Delay(2000);
 
-            // Step 4: Create a test session with the service state so we can query capabilities
+            // Create a test session with the service state so we can query capabilities
             var sessionStateUpdate = new SessionStateUpdate
             {
                 SessionId = testSessionId,
@@ -1354,7 +1515,7 @@ public class PermissionsTestHandler : IServiceTestHandler
             };
             await permissionsClient.UpdateSessionRoleAsync(sessionRoleUpdate);
 
-            // Step 5: Query capabilities to verify the event was processed
+            // Query capabilities to verify the event was processed
             Console.WriteLine($"  Querying capabilities for session...");
             var capabilityRequest = new CapabilityRequest
             {
@@ -1364,7 +1525,7 @@ public class PermissionsTestHandler : IServiceTestHandler
 
             var capabilities = await permissionsClient.GetCapabilitiesAsync(capabilityRequest);
 
-            // Step 6: Verify the service's methods appear in capabilities
+            // Verify the service's methods appear in capabilities
             if (capabilities.Permissions == null)
             {
                 return TestResult.Failed("Capabilities response has no permissions");
@@ -1446,7 +1607,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                     {
                         ["guest"] = new Collection<string> { "GET:/public/info" }
                     },
-                    ["authenticated"] = new StatePermissions
+                    ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/public/info", "GET:/private/data" }
                     }

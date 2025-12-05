@@ -32,6 +32,12 @@ public class PermissionsServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register PermissionsServiceConfiguration here
 
+        // Register distributed lock provider (used for thread-safe service registration)
+        // Using Redis-based implementation instead of experimental Dapr lock API for reliability
+        services.AddSingleton<IDistributedLockProvider, RedisDistributedLockProvider>();
+
+        Logger?.LogDebug("Registered RedisDistributedLockProvider as Singleton");
+
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()
 

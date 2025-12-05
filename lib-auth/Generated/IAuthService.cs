@@ -31,11 +31,6 @@ public interface IAuthService : IDaprService
     Task<(StatusCodes, AuthResponse?)> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
-    /// InitSteamAuth operation
-    /// </summary>
-    Task<(StatusCodes, object?)> InitSteamAuthAsync(string returnUrl, CancellationToken cancellationToken = default(CancellationToken));
-
-    /// <summary>
     /// VerifySteamAuth operation
     /// </summary>
     Task<(StatusCodes, AuthResponse?)> VerifySteamAuthAsync(SteamVerifyRequest body, CancellationToken cancellationToken = default(CancellationToken));
@@ -63,7 +58,7 @@ public interface IAuthService : IDaprService
     /// <summary>
     /// TerminateSession operation
     /// </summary>
-    Task<(StatusCodes, object?)> TerminateSessionAsync(Guid sessionId, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, object?)> TerminateSessionAsync(string jwt, TerminateSessionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// RequestPasswordReset operation

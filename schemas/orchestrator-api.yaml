@@ -1,9 +1,13 @@
 openapi: 3.0.3
 info:
   title: Orchestrator API
-  version: 2.2.0
+  version: 3.0.0
   description: |
     **Central intelligence for Bannou environment management and service orchestration.**
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See API-DESIGN.md for architectural rationale.
 
     The orchestrator service provides comprehensive environment lifecycle management:
     - **Environment Provisioning**: Deploy complete environments via API (replaces Makefile/docker-compose)
@@ -30,7 +34,7 @@ servers:
 
 paths:
   /orchestrator/health/infrastructure:
-    get:
+    post:
       summary: Check infrastructure component health
       description: |
         Validates connectivity and health of core infrastructure components:
@@ -41,6 +45,12 @@ paths:
       x-permissions:
         - role: admin
           states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InfrastructureHealthRequest'
       responses:
         '200':
           description: Infrastructure health status
@@ -56,7 +66,7 @@ paths:
                 $ref: '#/components/schemas/InfrastructureHealthResponse'
 
   /orchestrator/health/services:
-    get:
+    post:
       summary: Get health status of all services
       description: |
         Retrieves health information from all services via Redis heartbeat monitoring.
@@ -65,6 +75,12 @@ paths:
       x-permissions:
         - role: admin
           states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceHealthRequest'
       responses:
         '200':
           description: Service health report
@@ -136,8 +152,8 @@ paths:
   # ENVIRONMENT MANAGEMENT APIs
   # ============================================================================
 
-  /orchestrator/backends:
-    get:
+  /orchestrator/backends/list:
+    post:
       summary: Detect available container orchestration backends
       description: |
         Detects which container orchestration backends are available on this system.
@@ -158,6 +174,12 @@ paths:
       x-permissions:
         - role: admin
           states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListBackendsRequest'
       responses:
         '200':
           description: Available backends with capabilities
@@ -166,8 +188,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/BackendsResponse'
 
-  /orchestrator/presets:
-    get:
+  /orchestrator/presets/list:
+    post:
       summary: List available deployment presets
       description: |
         Returns all available deployment presets from the orchestrator's preset directory.
@@ -184,6 +206,12 @@ paths:
       x-permissions:
         - role: admin
           states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListPresetsRequest'
       responses:
         '200':
           description: Available deployment presets
@@ -250,7 +278,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /orchestrator/status:
-    get:
+    post:
       summary: Get current environment status
       description: |
         Returns comprehensive status of the current deployment including:
@@ -263,6 +291,12 @@ paths:
       x-permissions:
         - role: admin
           states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetStatusRequest'
       responses:
         '200':
           description: Current environment status
@@ -346,7 +380,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /orchestrator/logs:
-    get:
+    post:
       summary: Get service/container logs
       description: |
         Retrieves logs from services or containers with filtering options.
@@ -355,39 +389,12 @@ paths:
       x-permissions:
         - role: admin
           states: {}
-      parameters:
-        - name: service
-          in: query
-          description: Service name to get logs for
-          schema:
-            type: string
-        - name: container
-          in: query
-          description: Container ID or name (alternative to service)
-          schema:
-            type: string
-        - name: since
-          in: query
-          description: Return logs since timestamp (RFC3339 or relative like "5m")
-          schema:
-            type: string
-        - name: until
-          in: query
-          description: Return logs until timestamp
-          schema:
-            type: string
-        - name: tail
-          in: query
-          description: Number of lines from end of logs
-          schema:
-            type: integer
-            default: 100
-        - name: follow
-          in: query
-          description: Stream logs in real-time (WebSocket upgrade)
-          schema:
-            type: boolean
-            default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLogsRequest'
       responses:
         '200':
           description: Log output
@@ -443,7 +450,7 @@ paths:
   # CONTAINER MANAGEMENT APIs (Self-Service Restart Pattern)
   # ============================================================================
 
-  /orchestrator/containers/{appName}/request-restart:
+  /orchestrator/containers/request-restart:
     post:
       summary: Request container restart (self-service pattern)
       description: |
@@ -465,19 +472,12 @@ paths:
       x-permissions:
         - role: admin
           states: {}
-      parameters:
-        - name: appName
-          in: path
-          required: true
-          description: Container's Dapr app name (e.g., "bannou", "npc-omega")
-          schema:
-            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ContainerRestartRequest'
+              $ref: '#/components/schemas/ContainerRestartRequestBody'
       responses:
         '200':
           description: Restart request accepted
@@ -490,8 +490,8 @@ paths:
         '404':
           description: Container not found
 
-  /orchestrator/containers/{appName}/status:
-    get:
+  /orchestrator/containers/status:
+    post:
       summary: Get container health and restart history
       description: |
         Returns detailed status of a container including health, restart history,
@@ -500,13 +500,12 @@ paths:
       x-permissions:
         - role: admin
           states: {}
-      parameters:
-        - name: appName
-          in: path
-          required: true
-          description: Container's Dapr app name
-          schema:
-            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetContainerStatusRequest'
       responses:
         '200':
           description: Container status
@@ -554,7 +553,7 @@ paths:
           description: Rollback failed
 
   /orchestrator/config/version:
-    get:
+    post:
       summary: Get current configuration version and metadata
       description: |
         Returns the current configuration version, last update time,
@@ -563,6 +562,12 @@ paths:
       x-permissions:
         - role: admin
           states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetConfigVersionRequest'
       responses:
         '200':
           description: Configuration version info
@@ -573,6 +578,122 @@ paths:
 
 components:
   schemas:
+    # Request Models for POST-only pattern
+    InfrastructureHealthRequest:
+      type: object
+      description: Request to check infrastructure health (empty body allowed)
+      properties:
+        components:
+          type: array
+          items:
+            type: string
+          description: Optional filter for specific components (redis, rabbitmq, placement)
+          nullable: true
+
+    ServiceHealthRequest:
+      type: object
+      description: Request to get service health status (empty body allowed)
+      properties:
+        serviceFilter:
+          type: string
+          description: Optional filter by service name
+          nullable: true
+
+    ListBackendsRequest:
+      type: object
+      description: Request to list available backends (empty body allowed)
+      properties:
+        refresh:
+          type: boolean
+          default: false
+          description: Force refresh detection instead of using cached results
+
+    ListPresetsRequest:
+      type: object
+      description: Request to list available presets (empty body allowed)
+      properties:
+        category:
+          type: string
+          enum: [development, testing, production, custom]
+          description: Optional filter by category
+          nullable: true
+
+    GetStatusRequest:
+      type: object
+      description: Request to get environment status (empty body allowed)
+      properties:
+        includeResources:
+          type: boolean
+          default: true
+          description: Include resource usage metrics
+
+    GetLogsRequest:
+      type: object
+      description: Request to get service/container logs
+      properties:
+        service:
+          type: string
+          description: Service name to get logs for
+          nullable: true
+        container:
+          type: string
+          description: Container ID or name (alternative to service)
+          nullable: true
+        since:
+          type: string
+          description: Return logs since timestamp (RFC3339 or relative like "5m")
+          nullable: true
+        until:
+          type: string
+          description: Return logs until timestamp
+          nullable: true
+        tail:
+          type: integer
+          default: 100
+          description: Number of lines from end of logs
+        follow:
+          type: boolean
+          default: false
+          description: Stream logs in real-time (WebSocket upgrade)
+
+    ContainerRestartRequestBody:
+      type: object
+      required:
+        - appName
+        - reason
+      properties:
+        appName:
+          type: string
+          description: Container's Dapr app name (e.g., "bannou", "npc-omega")
+        reason:
+          type: string
+          description: Why restart is needed (for logging/auditing)
+          example: "configuration_change"
+        priority:
+          $ref: '#/components/schemas/RestartPriority'
+        shutdownGracePeriod:
+          type: integer
+          default: 30
+          description: Seconds to allow graceful shutdown before force-kill
+
+    GetContainerStatusRequest:
+      type: object
+      required:
+        - appName
+      properties:
+        appName:
+          type: string
+          description: Container's Dapr app name
+
+    GetConfigVersionRequest:
+      type: object
+      description: Request to get configuration version (empty body allowed)
+      properties:
+        includeKeyPrefixes:
+          type: boolean
+          default: true
+          description: Include list of configuration key prefixes
+
     InfrastructureHealthResponse:
       type: object
       required:

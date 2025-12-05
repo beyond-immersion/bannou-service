@@ -277,6 +277,7 @@ public class ConnectService : IConnectService
     /// Shows how services are mapped to app-ids in the current deployment.
     /// </summary>
     public Task<(StatusCodes, ServiceMappingsResponse?)> GetServiceMappingsAsync(
+        GetServiceMappingsRequest body,
         CancellationToken cancellationToken = default)
     {
         try
@@ -338,11 +339,42 @@ public class ConnectService : IConnectService
                     return (validationResponse.SessionId, validationResponse.Roles);
                 }
             }
-            // Handle "Reconnect <token>" format (future enhancement)
+            // Handle "Reconnect <token>" format for session reconnection
             else if (authorization.StartsWith("Reconnect ", StringComparison.OrdinalIgnoreCase))
             {
-                // TODO: Implement reconnection logic with stored session tokens
-                _logger.LogWarning("Reconnection tokens not yet implemented");
+                var reconnectionToken = authorization.Substring("Reconnect ".Length).Trim();
+
+                if (string.IsNullOrEmpty(reconnectionToken))
+                {
+                    _logger.LogWarning("Empty reconnection token provided");
+                    return (null, null);
+                }
+
+                // Use Redis session manager to validate reconnection token
+                if (_sessionManager != null)
+                {
+                    var sessionId = await _sessionManager.ValidateReconnectionTokenAsync(reconnectionToken);
+
+                    if (!string.IsNullOrEmpty(sessionId))
+                    {
+                        // Restore the session from reconnection state
+                        var restoredState = await _sessionManager.RestoreSessionFromReconnectionAsync(sessionId, reconnectionToken);
+
+                        if (restoredState != null)
+                        {
+                            _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
+                            // Return stored roles from reconnection state
+                            return (sessionId, restoredState.UserRoles);
+                        }
+                    }
+
+                    _logger.LogWarning("Invalid or expired reconnection token");
+                }
+                else
+                {
+                    _logger.LogWarning("Reconnection requires Redis session manager - not configured");
+                }
+
                 return (null, null);
             }
 
@@ -495,20 +527,78 @@ public class ConnectService : IConnectService
         }
         finally
         {
+            // Check if this was a forced disconnect BEFORE removing from connection manager
+            var connection = _connectionManager.GetConnection(sessionId);
+            var isForcedDisconnect = connection?.Metadata?.ContainsKey("forced_disconnect") == true;
+
             // Remove from connection manager
             _connectionManager.RemoveConnection(sessionId);
 
-            // Clean up Redis session data
+            // Initiate reconnection window instead of immediate cleanup (unless forced disconnect)
             if (_sessionManager != null)
             {
-                await _sessionManager.RemoveSessionAsync(sessionId);
-                await _sessionManager.PublishSessionEventAsync("disconnect", sessionId, new { instanceId = _instanceId });
+                if (isForcedDisconnect)
+                {
+                    // Forced disconnect - clean up immediately
+                    await _sessionManager.RemoveSessionAsync(sessionId);
+                    await _sessionManager.PublishSessionEventAsync("disconnect", sessionId, new { instanceId = _instanceId, reconnectable = false });
+                    _logger.LogInformation("Session {SessionId} force disconnected - no reconnection allowed", sessionId);
+                }
+                else
+                {
+                    // Normal disconnect - initiate reconnection window
+                    var reconnectionToken = connectionState.InitiateReconnectionWindow(
+                        reconnectionWindowMinutes: 5,
+                        userRoles: userRoles);
+
+                    // Store reconnection state in Redis
+                    await _sessionManager.InitiateReconnectionWindowAsync(
+                        sessionId,
+                        reconnectionToken,
+                        TimeSpan.FromMinutes(5),
+                        userRoles);
+
+                    // Publish disconnect event with reconnection info
+                    await _sessionManager.PublishSessionEventAsync("disconnect", sessionId, new
+                    {
+                        instanceId = _instanceId,
+                        reconnectable = true,
+                        reconnectionExpiresAt = connectionState.ReconnectionExpiresAt
+                    });
+
+                    _logger.LogInformation("Session {SessionId} disconnected - reconnection window active until {ExpiresAt}",
+                        sessionId, connectionState.ReconnectionExpiresAt);
+                }
             }
 
             if (webSocket.State == WebSocketState.Open)
             {
                 try
                 {
+                    // Send disconnect notification with reconnection token (if applicable)
+                    if (!isForcedDisconnect && connectionState.ReconnectionToken != null)
+                    {
+                        var disconnectNotification = new
+                        {
+                            type = "disconnect_notification",
+                            reconnectionToken = connectionState.ReconnectionToken,
+                            expiresAt = connectionState.ReconnectionExpiresAt?.ToString("O"),
+                            reconnectable = true,
+                            reason = "graceful_disconnect"
+                        };
+
+                        var notificationJson = System.Text.Json.JsonSerializer.Serialize(disconnectNotification);
+                        var notificationBytes = System.Text.Encoding.UTF8.GetBytes(notificationJson);
+
+                        await webSocket.SendAsync(
+                            new ArraySegment<byte>(notificationBytes),
+                            WebSocketMessageType.Text,
+                            endOfMessage: true,
+                            CancellationToken.None);
+
+                        _logger.LogDebug("Sent disconnect notification with reconnection token to session {SessionId}", sessionId);
+                    }
+
                     await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure,
                         "Session ended", CancellationToken.None);
                 }
@@ -591,9 +681,11 @@ public class ConnectService : IConnectService
 
                 await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
             }
-            catch
+            catch (Exception parseEx)
             {
-                // If we can't even parse the message, just ignore it
+                // If we can't even parse the message or send error response, log and continue
+                // This is a last resort - the outer exception handler already logged the original error
+                _logger.LogError(parseEx, "Failed to send error response to session {SessionId} - message may be corrupted", sessionId);
             }
         }
     }
@@ -638,47 +730,9 @@ public class ConnectService : IConnectService
             _logger.LogInformation("Routing WebSocket message to service {Service} ({Method} {Path}) via app-id {AppId}",
                 serviceName, httpMethod, path, appId);
 
-            // Get JSON payload from message - may contain request body for POST/PUT
+            // Get JSON payload from message - passed directly to service without parsing
+            // Connect service should NEVER parse the payload - zero-copy routing based on GUID only
             var jsonPayload = message.GetJsonPayload();
-            object? requestBody = null;
-
-            // Parse the JSON payload if present - client may send structured request
-            if (!string.IsNullOrWhiteSpace(jsonPayload))
-            {
-                try
-                {
-                    using var jsonDoc = JsonDocument.Parse(jsonPayload);
-                    var root = jsonDoc.RootElement;
-
-                    // Check if client sent body in the payload
-                    if (root.TryGetProperty("body", out var bodyElement) &&
-                        bodyElement.ValueKind != JsonValueKind.Null)
-                    {
-                        // If body is a string, parse it as JSON; otherwise use as-is
-                        if (bodyElement.ValueKind == JsonValueKind.String)
-                        {
-                            var bodyStr = bodyElement.GetString();
-                            if (!string.IsNullOrWhiteSpace(bodyStr))
-                            {
-                                requestBody = JsonSerializer.Deserialize<JsonElement>(bodyStr);
-                            }
-                        }
-                        else
-                        {
-                            requestBody = bodyElement.Clone();
-                        }
-                    }
-                }
-                catch (JsonException ex)
-                {
-                    _logger.LogDebug(ex, "Could not parse JSON payload as structured request, using raw payload");
-                    // If parsing fails, use raw payload for POST/PUT body
-                    if (httpMethod is "POST" or "PUT" or "PATCH")
-                    {
-                        requestBody = jsonPayload;
-                    }
-                }
-            }
 
             // Make the actual Dapr service invocation via direct HTTP
             // This preserves the full path including /v1.0/invoke/{appId}/method/ prefix
@@ -689,7 +743,8 @@ public class ConnectService : IConnectService
             try
             {
                 // Build full Dapr URL like DaprServiceClientBase does
-                var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "http://localhost:3500";
+                var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT")
+                    ?? throw new InvalidOperationException("DAPR_HTTP_ENDPOINT environment variable is not set. Dapr sidecar must be configured.");
                 var daprUrl = $"{daprHttpEndpoint}/v1.0/invoke/{appId}/method/{path.TrimStart('/')}";
 
                 // Create HTTP request with proper headers
@@ -702,13 +757,11 @@ public class ConnectService : IConnectService
                 _logger.LogInformation("Created Dapr HTTP request: Method={Method}, URI={Uri}, AppId={AppId}",
                     request.Method, daprUrl, appId);
 
-                // Add request body for methods that support it
-                if (requestBody != null && httpMethod is "POST" or "PUT" or "PATCH")
+                // Pass JSON payload directly to service - zero-copy forwarding
+                // All WebSocket binary protocol endpoints should be POST with JSON body
+                if (!string.IsNullOrWhiteSpace(jsonPayload) && httpMethod == "POST")
                 {
-                    request.Content = new StringContent(
-                        requestBody is string str ? str : JsonSerializer.Serialize(requestBody),
-                        Encoding.UTF8,
-                        "application/json");
+                    request.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
                 }
 
                 // Invoke the service via direct HTTP (preserves full path)
@@ -889,15 +942,12 @@ public class ConnectService : IConnectService
 
     /// <summary>
     /// Service startup method - registers RabbitMQ event handler endpoints.
+    /// Note: Capability updates are handled via ConnectEventsController which subscribes
+    /// to permissions.capabilities-updated topic via subscriptions.yaml.
     /// </summary>
     public Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
-
-        // Register session capability update handler
-        webApp.MapPost("/events/session-capabilities", ProcessSessionCapabilityUpdateAsync)
-            .WithTopic("bannou-pubsub", "bannou-session-capabilities")
-            .WithMetadata("Connect service capability update handler");
 
         // Register auth event handler
         webApp.MapPost("/events/auth-events", ProcessAuthEventAsync)
@@ -927,67 +977,8 @@ public class ConnectService : IConnectService
 
     #region RabbitMQ Event Processing Methods
 
-    /// <summary>
-    /// Processes session capability updates from Permission service.
-    /// Triggers real-time capability updates for connected WebSocket clients.
-    /// </summary>
-    internal async Task<object> ProcessSessionCapabilityUpdateAsync(SessionCapabilityUpdateEvent eventData)
-    {
-        try
-        {
-            _logger.LogInformation("Processing capability update for session {SessionId}: Added={Added}, Removed={Removed}",
-                eventData.SessionId, eventData.AddedCapabilities?.Count ?? 0, eventData.RemovedCapabilities?.Count ?? 0);
-
-            // Check if the session has an active WebSocket connection
-            if (HasConnection(eventData.SessionId))
-            {
-                // Send capability update directly without API discovery
-                // The client can request fresh capabilities from the Permissions service if needed
-                var updatePayload = new
-                {
-                    type = "capability_update",
-                    sessionId = eventData.SessionId,
-                    version = eventData.Version,
-                    addedCapabilities = eventData.AddedCapabilities,
-                    removedCapabilities = eventData.RemovedCapabilities,
-                    updatedAt = DateTimeOffset.UtcNow,
-                    message = "Capabilities updated. Use Permissions service to get fresh capability list."
-                };
-
-                // Send real-time update via WebSocket
-                var messageId = MessageRouter.GenerateMessageId();
-                var updateMessage = BinaryMessage.FromJson(
-                    channel: 4, // Permissions channel
-                    sequenceNumber: 0, // Event message (no sequence)
-                    serviceGuid: Guid.Empty, // System message
-                    messageId: messageId,
-                    JsonSerializer.Serialize(updatePayload)
-                );
-
-                var sent = await SendMessageAsync(eventData.SessionId, updateMessage, CancellationToken.None);
-
-                if (sent)
-                {
-                    _logger.LogInformation("Sent capability update to session {SessionId}", eventData.SessionId);
-                }
-                else
-                {
-                    _logger.LogWarning("Failed to send capability update to session {SessionId} - connection not found", eventData.SessionId);
-                }
-            }
-            else
-            {
-                _logger.LogDebug("Session {SessionId} not connected to this instance, skipping capability update", eventData.SessionId);
-            }
-
-            return new { status = "processed", sessionId = eventData.SessionId };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to process capability update for session {SessionId}", eventData.SessionId);
-            throw;
-        }
-    }
+    // Note: Capability updates are handled by ConnectEventsController.HandleCapabilitiesUpdatedAsync()
+    // which subscribes to permissions.capabilities-updated topic via subscriptions.yaml.
 
     /// <summary>
     /// Processes authentication events (login/logout) from Auth service.
@@ -1224,21 +1215,35 @@ public class ConnectService : IConnectService
 
     /// <summary>
     /// Disconnects a session's WebSocket connection with a reason.
+    /// This is a forced disconnect that does NOT allow reconnection.
     /// </summary>
     internal async Task DisconnectAsync(string sessionId, string reason)
     {
         try
         {
             var connection = _connectionManager.GetConnection(sessionId);
-            if (connection?.WebSocket != null && connection.WebSocket.State == System.Net.WebSockets.WebSocketState.Open)
+            if (connection != null)
             {
-                await connection.WebSocket.CloseAsync(
-                    System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
-                    reason,
-                    CancellationToken.None);
+                // Mark as forced disconnect - no reconnection allowed
+                connection.Metadata["forced_disconnect"] = true;
+
+                if (connection.WebSocket.State == System.Net.WebSockets.WebSocketState.Open)
+                {
+                    await connection.WebSocket.CloseAsync(
+                        System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
+                        reason,
+                        CancellationToken.None);
+                }
             }
             _connectionManager.RemoveConnection(sessionId);
-            _logger.LogInformation("Disconnected session {SessionId}: {Reason}", sessionId, reason);
+
+            // Clean up Redis session data (forced disconnect = no reconnection)
+            if (_sessionManager != null)
+            {
+                await _sessionManager.RemoveSessionAsync(sessionId);
+            }
+
+            _logger.LogInformation("Force disconnected session {SessionId}: {Reason}", sessionId, reason);
         }
         catch (Exception ex)
         {
@@ -1414,6 +1419,23 @@ public class ConnectService : IConnectService
                 var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
                 var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
 
+                // CRITICAL: Skip endpoints with path templates (e.g., /accounts/{accountId})
+                // WebSocket binary protocol requires POST endpoints with JSON body parameters
+                // Template paths would require Connect to parse the payload, breaking zero-copy routing
+                if (path.Contains('{'))
+                {
+                    _logger.LogDebug("Skipping template endpoint from capability manifest: {EndpointKey}", endpointKey);
+                    continue;
+                }
+
+                // Only expose POST endpoints to WebSocket clients
+                // Other HTTP methods with path parameters should use the POST alternative
+                if (method != "POST" && method != "GET")
+                {
+                    _logger.LogDebug("Skipping non-POST/GET endpoint from capability manifest: {EndpointKey}", endpointKey);
+                    continue;
+                }
+
                 availableApis.Add(new
                 {
                     serviceGuid = guid.ToString(),
@@ -1491,9 +1513,9 @@ public class ConnectService : IConnectService
                 return;
             }
 
-            // Regenerate client-salted GUIDs and update connection state
+            // Regenerate client-salted GUIDs and update connection state atomically
             var connectionState = connection.ConnectionState;
-            connectionState.ClearServiceMappings();
+            var newMappings = new Dictionary<string, Guid>();
 
             // Generate client-salted GUIDs for each service:method combination
             foreach (var servicePermissions in capabilitiesResult.Permissions)
@@ -1505,13 +1527,16 @@ public class ConnectService : IConnectService
                 {
                     var endpointKey = $"{serviceName}:{method}";
                     var guid = GuidGenerator.GenerateServiceGuid(endpointKey, sessionId, _serverSalt);
-                    connectionState.AddServiceMapping(endpointKey, guid);
+                    newMappings[endpointKey] = guid;
                 }
             }
 
-            // Build and send updated capability manifest
+            // Atomic update to prevent race conditions
+            connectionState.UpdateAllServiceMappings(newMappings);
+
+            // Build and send updated capability manifest using the new mappings
             var availableApis = new List<object>();
-            foreach (var mapping in connectionState.ServiceMappings)
+            foreach (var mapping in newMappings)
             {
                 var endpointKey = mapping.Key;
                 var guid = mapping.Value;
@@ -1524,6 +1549,19 @@ public class ConnectService : IConnectService
                 var methodPathColon = methodAndPath.IndexOf(':');
                 var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
                 var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
+
+                // CRITICAL: Skip endpoints with path templates (e.g., /accounts/{accountId})
+                // WebSocket binary protocol requires POST endpoints with JSON body parameters
+                if (path.Contains('{'))
+                {
+                    continue;
+                }
+
+                // Only expose POST/GET endpoints to WebSocket clients
+                if (method != "POST" && method != "GET")
+                {
+                    continue;
+                }
 
                 availableApis.Add(new
                 {
@@ -1580,6 +1618,63 @@ public class ConnectService : IConnectService
 
         var tasks = sessionIds.Select(sessionId => PushCapabilityUpdateAsync(sessionId, cancellationToken));
         await Task.WhenAll(tasks);
+    }
+
+    /// <summary>
+    /// Disconnects a WebSocket session due to session invalidation (logout, account deletion, etc.).
+    /// Sends a close message with the reason and removes the connection.
+    /// This is a forced disconnect that does NOT allow reconnection.
+    /// </summary>
+    public async Task DisconnectSessionAsync(string sessionId, string reason, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var connection = _connectionManager.GetConnection(sessionId);
+            if (connection == null)
+            {
+                _logger.LogDebug("Session {SessionId} not found for disconnection (may already be disconnected)", sessionId);
+                // Still clean up Redis in case session exists there
+                if (_sessionManager != null)
+                {
+                    await _sessionManager.RemoveSessionAsync(sessionId);
+                }
+                return;
+            }
+
+            // Mark as forced disconnect - no reconnection allowed
+            connection.Metadata["forced_disconnect"] = true;
+
+            if (connection.WebSocket.State == System.Net.WebSockets.WebSocketState.Open)
+            {
+                // Send close message with reason
+                await connection.WebSocket.CloseAsync(
+                    System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
+                    $"Session invalidated: {reason}",
+                    cancellationToken);
+
+                _logger.LogInformation("Force disconnected session {SessionId} due to: {Reason}", sessionId, reason);
+            }
+            else
+            {
+                _logger.LogDebug("Session {SessionId} WebSocket not in Open state ({State}), skipping close",
+                    sessionId, connection.WebSocket.State);
+            }
+
+            // Remove from connection manager
+            _connectionManager.RemoveConnection(sessionId);
+
+            // Clean up Redis session data (forced disconnect = no reconnection)
+            if (_sessionManager != null)
+            {
+                await _sessionManager.RemoveSessionAsync(sessionId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error disconnecting session {SessionId}: {Reason}", sessionId, reason);
+            // Still try to remove from connection manager even if close fails
+            _connectionManager.RemoveConnection(sessionId);
+        }
     }
 
     #endregion

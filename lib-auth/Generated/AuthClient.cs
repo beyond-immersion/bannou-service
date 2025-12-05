@@ -52,30 +52,42 @@ public partial interface IAuthClient
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Initialize OAuth2 flow
+    /// Initialize OAuth2 flow (browser redirect)
     /// </summary>
+    /// <remarks>
+    /// Browser-facing endpoint for initiating OAuth flows. The user's browser navigates
+    /// <br/>to this URL directly, which then redirects to the OAuth provider.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses GET with path parameters because it's a browser
+    /// <br/>redirect flow, not a WebSocket-routed API call.
+    /// </remarks>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task InitOAuthAsync(Provider provider, System.Uri redirectUri, string? state = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Complete OAuth2 flow
+    /// Complete OAuth2 flow (browser redirect callback)
     /// </summary>
+    /// <remarks>
+    /// Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects
+    /// <br/>the user's browser back to this URL after authentication.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses path parameters because the callback URL is registered
+    /// <br/>with OAuth providers and cannot be changed without updating provider configurations.
+    /// </remarks>
     /// <returns>OAuth authentication successful</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AuthResponse> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Initialize Steam authentication
+    /// Verify Steam Session Ticket
     /// </summary>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task InitSteamAuthAsync(System.Uri returnUrl, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Verify Steam authentication response
-    /// </summary>
+    /// <remarks>
+    /// Validates a Steam Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().
+    /// <br/>The server validates the ticket with Steam's Web API and retrieves the SteamID from Steam's response.
+    /// <br/>NEVER trust client-provided SteamID - it must come from Steam's authenticated response.
+    /// </remarks>
     /// <returns>Steam authentication successful</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AuthResponse> VerifySteamAuthAsync(SteamVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
@@ -118,7 +130,7 @@ public partial interface IAuthClient
     /// </summary>
     /// <returns>Session terminated</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task TerminateSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task TerminateSessionAsync(TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -366,8 +378,15 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Initialize OAuth2 flow
+    /// Initialize OAuth2 flow (browser redirect)
     /// </summary>
+    /// <remarks>
+    /// Browser-facing endpoint for initiating OAuth flows. The user's browser navigates
+    /// <br/>to this URL directly, which then redirects to the OAuth provider.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses GET with path parameters because it's a browser
+    /// <br/>redirect flow, not a WebSocket-routed API call.
+    /// </remarks>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task InitOAuthAsync(Provider provider, System.Uri redirectUri, string? state = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -457,8 +476,15 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Complete OAuth2 flow
+    /// Complete OAuth2 flow (browser redirect callback)
     /// </summary>
+    /// <remarks>
+    /// Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects
+    /// <br/>the user's browser back to this URL after authentication.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses path parameters because the callback URL is registered
+    /// <br/>with OAuth providers and cannot be changed without updating provider configurations.
+    /// </remarks>
     /// <returns>OAuth authentication successful</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AuthResponse> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
@@ -544,90 +570,13 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Initialize Steam authentication
+    /// Verify Steam Session Ticket
     /// </summary>
-    /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task InitSteamAuthAsync(System.Uri returnUrl, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        if (returnUrl == null)
-            throw new System.ArgumentNullException("returnUrl");
-
-        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
-        var disposeClient_ = true;
-        try
-        {
-            using (var request_ = new System.Net.Http.HttpRequestMessage())
-            {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
-
-                var urlBuilder_ = new System.Text.StringBuilder();
-                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
-
-                // Operation Path: "auth/steam/init"
-                urlBuilder_.Append("auth/steam/init");
-                urlBuilder_.Append('?');
-                urlBuilder_.Append(System.Uri.EscapeDataString("returnUrl")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(returnUrl, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                urlBuilder_.Length--;
-
-                PrepareRequest(client_, request_, urlBuilder_);
-
-                var url_ = urlBuilder_.ToString();
-                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
-
-                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    ProcessResponse(client_, response_);
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 302)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Redirect to Steam login", status_, responseText_, headers_, null);
-                    }
-                    else
-
-                    if (status_ == 200 || status_ == 204)
-                    {
-
-                        return;
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-        }
-        finally
-        {
-            if (disposeClient_)
-                client_.Dispose();
-        }
-    }
-
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Verify Steam authentication response
-    /// </summary>
+    /// <remarks>
+    /// Validates a Steam Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().
+    /// <br/>The server validates the ticket with Steam's Web API and retrieves the SteamID from Steam's response.
+    /// <br/>NEVER trust client-provided SteamID - it must come from Steam's authenticated response.
+    /// </remarks>
     /// <returns>Steam authentication successful</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task<AuthResponse> VerifySteamAuthAsync(SteamVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
@@ -685,6 +634,18 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 401)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Invalid or expired Steam ticket", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 503)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Steam API unavailable", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -963,14 +924,15 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                request_.Content = new System.Net.Http.StringContent(string.Empty, System.Text.Encoding.UTF8, "application/json");
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "auth/sessions"
-                urlBuilder_.Append("auth/sessions");
+                // Operation Path: "auth/sessions/list"
+                urlBuilder_.Append("auth/sessions/list");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -1030,10 +992,10 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
     /// </summary>
     /// <returns>Session terminated</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task TerminateSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task TerminateSessionAsync(TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (sessionId == null)
-            throw new System.ArgumentNullException("sessionId");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -1041,14 +1003,17 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("DELETE");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "auth/sessions/{sessionId}"
-                urlBuilder_.Append("auth/sessions/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(sessionId, System.Globalization.CultureInfo.InvariantCulture)));
+                // Operation Path: "auth/sessions/terminate"
+                urlBuilder_.Append("auth/sessions/terminate");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -1076,6 +1041,12 @@ public partial class AuthClient : BeyondImmersion.BannouService.ServiceClients.D
                     if (status_ == 204)
                     {
                         return;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Session not found", status_, responseText_, headers_, null);
                     }
                     else
                     {

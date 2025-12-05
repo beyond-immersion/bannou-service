@@ -77,7 +77,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
         {
             var orchestratorClient = new OrchestratorClient();
 
-            var response = await orchestratorClient.GetInfrastructureHealthAsync();
+            var response = await orchestratorClient.GetInfrastructureHealthAsync(new InfrastructureHealthRequest());
 
             if (response.Components == null || response.Components.Count == 0)
                 return TestResult.Failed("Infrastructure health returned no components");
@@ -117,7 +117,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
         {
             var orchestratorClient = new OrchestratorClient();
 
-            var response = await orchestratorClient.GetServicesHealthAsync();
+            var response = await orchestratorClient.GetServicesHealthAsync(new ServiceHealthRequest());
 
             return TestResult.Successful(
                 $"Services health report: {response.TotalServices} services, " +
@@ -145,7 +145,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
         {
             var orchestratorClient = new OrchestratorClient();
 
-            var response = await orchestratorClient.GetBackendsAsync();
+            var response = await orchestratorClient.GetBackendsAsync(new ListBackendsRequest());
 
             if (response.Backends == null || response.Backends.Count == 0)
                 return TestResult.Failed("No backends detected");
@@ -179,7 +179,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
         {
             var orchestratorClient = new OrchestratorClient();
 
-            var response = await orchestratorClient.GetStatusAsync();
+            var response = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
 
             var serviceCount = response.Services?.Count ?? 0;
             var backendType = response.Backend;
@@ -209,7 +209,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
         {
             var orchestratorClient = new OrchestratorClient();
 
-            var response = await orchestratorClient.GetPresetsAsync();
+            var response = await orchestratorClient.GetPresetsAsync(new ListPresetsRequest());
 
             var presetCount = response.Presets?.Count ?? 0;
             var presetNames = response.Presets?.Select(p => p.Name) ?? Enumerable.Empty<string>();
@@ -236,7 +236,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
         try
         {
             var orchestratorClient = new OrchestratorClient();
-            var response = await orchestratorClient.GetInfrastructureHealthAsync();
+            var response = await orchestratorClient.GetInfrastructureHealthAsync(new InfrastructureHealthRequest());
 
             if (response.Components == null || response.Components.Count == 0)
                 return TestResult.Failed("No components returned");
@@ -284,7 +284,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
         try
         {
             var orchestratorClient = new OrchestratorClient();
-            var response = await orchestratorClient.GetBackendsAsync();
+            var response = await orchestratorClient.GetBackendsAsync(new ListBackendsRequest());
 
             // At least one backend should be available (Docker Compose at minimum)
             var availableBackends = response.Backends?.Where(b => b.Available).ToList();
@@ -328,7 +328,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
         try
         {
             var orchestratorClient = new OrchestratorClient();
-            var response = await orchestratorClient.GetStatusAsync();
+            var response = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
 
             // Should have a timestamp
             if (response.Timestamp == default)
@@ -365,7 +365,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
         try
         {
             var orchestratorClient = new OrchestratorClient();
-            var response = await orchestratorClient.GetPresetsAsync();
+            var response = await orchestratorClient.GetPresetsAsync(new ListPresetsRequest());
 
             if (response.Presets == null || response.Presets.Count == 0)
             {
@@ -498,7 +498,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
             var orchestratorClient = new OrchestratorClient();
 
             // Get status for the main "bannou" container
-            var response = await orchestratorClient.GetContainerStatusAsync("bannou");
+            var response = await orchestratorClient.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = "bannou" });
 
             // Verify required fields
             if (string.IsNullOrEmpty(response.AppName))
@@ -538,7 +538,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
 
             try
             {
-                var response = await orchestratorClient.GetContainerStatusAsync(unknownContainer);
+                var response = await orchestratorClient.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = unknownContainer });
 
                 // If we get here, check if status indicates not found
                 if (response.Status == ContainerStatusStatus.Stopped)
@@ -571,7 +571,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
         try
         {
             var orchestratorClient = new OrchestratorClient();
-            var response = await orchestratorClient.GetConfigVersionAsync();
+            var response = await orchestratorClient.GetConfigVersionAsync(new GetConfigVersionRequest());
 
             // Verify required fields
             if (response.Timestamp == default)
@@ -602,7 +602,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
             var orchestratorClient = new OrchestratorClient();
 
             // First check if there's previous config
-            var versionInfo = await orchestratorClient.GetConfigVersionAsync();
+            var versionInfo = await orchestratorClient.GetConfigVersionAsync(new GetConfigVersionRequest());
 
             if (versionInfo.HasPreviousConfig)
             {
@@ -647,13 +647,12 @@ public class OrchestratorTestHandler : IServiceTestHandler
             var orchestratorClient = new OrchestratorClient();
 
             // Request logs for main service container
-            var response = await orchestratorClient.GetLogsAsync(
-                service: "bannou",
-                container: null,
-                since: null,
-                until: null,
-                tail: 10,
-                follow: false);
+            var response = await orchestratorClient.GetLogsAsync(new GetLogsRequest
+            {
+                Service = "bannou",
+                Tail = 10,
+                Follow = false
+            });
 
             if (response.Logs == null)
                 return TestResult.Failed("Logs response missing logs array");
@@ -687,13 +686,12 @@ public class OrchestratorTestHandler : IServiceTestHandler
             var orchestratorClient = new OrchestratorClient();
 
             // Request exactly 5 log lines
-            var response = await orchestratorClient.GetLogsAsync(
-                service: "bannou",
-                container: null,
-                since: null,
-                until: null,
-                tail: 5,
-                follow: false);
+            var response = await orchestratorClient.GetLogsAsync(new GetLogsRequest
+            {
+                Service = "bannou",
+                Tail = 5,
+                Follow = false
+            });
 
             if (response.Logs == null)
                 return TestResult.Failed("Logs response missing logs array");
@@ -734,7 +732,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
             var orchestratorClient = new OrchestratorClient();
 
             // First check what backends are available
-            var backends = await orchestratorClient.GetBackendsAsync();
+            var backends = await orchestratorClient.GetBackendsAsync(new ListBackendsRequest());
 
             // Find a backend that's NOT available
             var unavailableBackend = backends.Backends?
@@ -828,11 +826,15 @@ public class OrchestratorTestHandler : IServiceTestHandler
                 $"reclaimedMB={response.ReclaimedSpaceMb}, " +
                 $"removedImages={response.RemovedImages}");
         }
-        catch (ApiException ex) when (ex.StatusCode == 400 || ex.StatusCode == 501)
+        catch (ApiException ex) when (ex.StatusCode == 400)
         {
             // 400 with success=false is valid when there's nothing to clean
-            // 501 is valid if clean operation isn't implemented for current backend
-            return TestResult.Successful($"Clean operation returned {ex.StatusCode} (nothing to clean or not supported)");
+            return TestResult.Successful($"Clean operation returned 400 (nothing to clean)");
+        }
+        catch (ApiException ex) when (ex.StatusCode == 501)
+        {
+            // 501 Not Implemented means the endpoint needs to be implemented
+            return TestResult.Failed($"Clean operation not implemented: {ex.Message}");
         }
         catch (ApiException ex)
         {
@@ -856,7 +858,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
             var orchestratorClient = new OrchestratorClient();
 
             // Step 1: Get initial status
-            var initialStatus = await orchestratorClient.GetStatusAsync();
+            var initialStatus = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
             var initialServiceCount = initialStatus.Services?.Count ?? 0;
 
             // Step 2: Create a deploy request for a test container
@@ -890,7 +892,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
             }
 
             // Step 4: Verify deployment by checking status
-            var postDeployStatus = await orchestratorClient.GetStatusAsync();
+            var postDeployStatus = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
 
             // Step 5: Teardown
             var teardownRequest = new TeardownRequest

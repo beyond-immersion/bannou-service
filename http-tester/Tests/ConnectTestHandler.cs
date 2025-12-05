@@ -40,7 +40,7 @@ public class ConnectTestHandler : IServiceTestHandler
         try
         {
             var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync();
+            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
 
             if (response?.Mappings == null)
                 return TestResult.Failed("Service mappings response is null or missing mappings");
@@ -92,10 +92,14 @@ public class ConnectTestHandler : IServiceTestHandler
 
             return TestResult.Successful($"Internal proxy completed - Success: {success}, Status: {statusCode}");
         }
+        catch (ApiException ex) when (ex.StatusCode == 403)
+        {
+            // 403 is expected for proxy calls without proper auth
+            return TestResult.Successful($"Internal proxy correctly returned 403 (permission denied without auth)");
+        }
         catch (ApiException ex)
         {
-            // API exceptions are expected for proxy calls without proper auth
-            return TestResult.Successful($"Internal proxy responded with expected API error: {ex.StatusCode}");
+            return TestResult.Failed($"Internal proxy failed: {ex.StatusCode} - {ex.Message}");
         }
         catch (Exception ex)
         {
@@ -111,7 +115,7 @@ public class ConnectTestHandler : IServiceTestHandler
         try
         {
             var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync();
+            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
 
             if (response?.DefaultMapping == null)
                 return TestResult.Failed("Default mapping is null");
@@ -142,7 +146,7 @@ public class ConnectTestHandler : IServiceTestHandler
         try
         {
             var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync();
+            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
 
             if (response?.Mappings == null)
                 return TestResult.Failed("Mappings are null");
@@ -180,7 +184,7 @@ public class ConnectTestHandler : IServiceTestHandler
         try
         {
             var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync();
+            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
 
             if (response == null)
                 return TestResult.Failed("Response is null");
@@ -214,7 +218,7 @@ public class ConnectTestHandler : IServiceTestHandler
         try
         {
             var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync();
+            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
 
             if (response == null)
                 return TestResult.Failed("Response is null");
@@ -376,10 +380,14 @@ public class ConnectTestHandler : IServiceTestHandler
                     var response = await connectClient.ProxyInternalRequestAsync(proxyRequest);
                     successCount++;
                 }
-                catch (ApiException)
+                catch (ApiException ex) when (ex.StatusCode == 403)
                 {
-                    // Expected - method might be rejected due to permissions
+                    // 403 is expected - permission denied without auth
                     successCount++;
+                }
+                catch (ApiException ex)
+                {
+                    errorDetails.Add($"{method}: {ex.StatusCode} - {ex.Message}");
                 }
                 catch (Exception ex)
                 {
@@ -427,13 +435,17 @@ public class ConnectTestHandler : IServiceTestHandler
             {
                 var response = await connectClient.ProxyInternalRequestAsync(proxyRequest);
 
-                // The request was processed (regardless of success/fail due to permissions)
+                // The request was processed - check for valid response
                 return TestResult.Successful($"Proxy processed request with body - Status: {response?.StatusCode}, Success: {response?.Success}");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 403)
+            {
+                // 403 is expected - permission denied without auth
+                return TestResult.Successful($"Proxy correctly returned 403 (permission denied without auth)");
             }
             catch (ApiException ex)
             {
-                // API exception is acceptable - means the proxy processed the request
-                return TestResult.Successful($"Proxy processed body request with status {ex.StatusCode}");
+                return TestResult.Failed($"Proxy with body failed: {ex.StatusCode} - {ex.Message}");
             }
         }
         catch (Exception ex)
@@ -471,9 +483,14 @@ public class ConnectTestHandler : IServiceTestHandler
                 var response = await connectClient.ProxyInternalRequestAsync(proxyRequest);
                 return TestResult.Successful($"Proxy processed request with custom headers - Status: {response?.StatusCode}");
             }
+            catch (ApiException ex) when (ex.StatusCode == 403)
+            {
+                // 403 is expected - permission denied without auth
+                return TestResult.Successful($"Proxy correctly returned 403 (permission denied without auth)");
+            }
             catch (ApiException ex)
             {
-                return TestResult.Successful($"Proxy processed headers request with status {ex.StatusCode}");
+                return TestResult.Failed($"Proxy with headers failed: {ex.StatusCode} - {ex.Message}");
             }
         }
         catch (Exception ex)
@@ -567,10 +584,14 @@ public class ConnectTestHandler : IServiceTestHandler
 
                 return TestResult.Successful($"Proxy to accounts service completed - Success: {response.Success}, Status: {response.StatusCode}");
             }
+            catch (ApiException ex) when (ex.StatusCode == 403)
+            {
+                // 403 is expected - permission denied without auth
+                return TestResult.Successful($"Proxy correctly returned 403 (permission denied without auth)");
+            }
             catch (ApiException ex)
             {
-                // Expected if permissions not set up
-                return TestResult.Successful($"Proxy to accounts returned {ex.StatusCode} (expected without auth)");
+                return TestResult.Failed($"Proxy to accounts failed: {ex.StatusCode} - {ex.Message}");
             }
         }
         catch (Exception ex)

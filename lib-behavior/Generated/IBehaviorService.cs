@@ -28,12 +28,12 @@ public interface IBehaviorService : IDaprService
     /// <summary>
     /// GetCachedBehavior operation
     /// </summary>
-    Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(string behavior_id, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(GetCachedBehaviorRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// InvalidateCachedBehavior operation
     /// </summary>
-    Task<(StatusCodes, object?)> InvalidateCachedBehaviorAsync(string behavior_id, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, object?)> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// ResolveContextVariables operation

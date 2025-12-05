@@ -37,72 +37,31 @@ public class PermissionsEventsController : ControllerBase
     {
         try
         {
-            // Read the request body directly - Dapr pubsub delivers CloudEvents format
-            string rawBody;
-            using (var reader = new StreamReader(Request.Body, leaveOpen: true))
+            // Read and parse event using shared helper (handles both CloudEvents and raw formats)
+            var actualEventData = await DaprEventHelper.ReadEventJsonAsync(Request);
+
+            if (actualEventData == null || actualEventData.Value.ValueKind != JsonValueKind.Object)
             {
-                rawBody = await reader.ReadToEndAsync();
-            }
-
-            _logger.LogInformation("Received service registration event - raw body length: {Length}, content-type: {ContentType}",
-                rawBody?.Length ?? 0, Request.ContentType);
-            _logger.LogInformation("Raw body (first 500 chars): {RawBody}", rawBody?.Substring(0, Math.Min(500, rawBody?.Length ?? 0)));
-
-            if (string.IsNullOrWhiteSpace(rawBody))
-            {
-                _logger.LogError("Received empty request body");
-                return BadRequest(new { error = "Empty request body" });
-            }
-
-            // Parse the JSON manually
-            JsonElement serviceEventObj;
-            try
-            {
-                using var document = JsonDocument.Parse(rawBody);
-                serviceEventObj = document.RootElement.Clone();
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Failed to parse request body as JSON: {Body}", rawBody);
-                return BadRequest(new { error = $"Invalid JSON: {ex.Message}" });
-            }
-
-            _logger.LogInformation("Parsed JSON element kind: {Kind}", serviceEventObj.ValueKind);
-
-            // If the event is wrapped in CloudEvents format, extract the data property
-            JsonElement actualEventData = serviceEventObj;
-            if (serviceEventObj.ValueKind == JsonValueKind.Object && serviceEventObj.TryGetProperty("data", out var dataElement))
-            {
-                _logger.LogInformation("CloudEvents format detected, extracting data property. Data kind: {DataKind}", dataElement.ValueKind);
-                actualEventData = dataElement;
-            }
-
-            // Log the actual event data we're parsing
-            _logger.LogInformation("Parsing event data with kind: {Kind}", actualEventData.ValueKind);
-
-            // Validate the event data
-            if (actualEventData.ValueKind != JsonValueKind.Object)
-            {
-                _logger.LogError("Event data is not a JSON object. Kind: {Kind}", actualEventData.ValueKind);
-                return BadRequest(new { error = $"Invalid event data - expected object, got {actualEventData.ValueKind}" });
+                _logger.LogError("Received empty or invalid service registration event");
+                return BadRequest(new { error = "Invalid event data" });
             }
 
             // Parse the ServiceRegistrationEvent with explicit validation
-            if (!actualEventData.TryGetProperty("serviceId", out var serviceIdElement))
+            if (!actualEventData.Value.TryGetProperty("serviceId", out var serviceIdElement))
             {
                 _logger.LogError("Missing 'serviceId' property in event data");
                 return BadRequest(new { error = "Missing required property: serviceId" });
             }
             var serviceId = serviceIdElement.GetString();
 
-            if (!actualEventData.TryGetProperty("version", out var versionElement))
+            if (!actualEventData.Value.TryGetProperty("version", out var versionElement))
             {
                 _logger.LogError("Missing 'version' property in event data");
                 return BadRequest(new { error = "Missing required property: version" });
             }
             var version = versionElement.GetString();
 
-            if (!actualEventData.TryGetProperty("endpoints", out var endpoints))
+            if (!actualEventData.Value.TryGetProperty("endpoints", out var endpoints))
             {
                 _logger.LogError("Missing 'endpoints' property in event data");
                 return BadRequest(new { error = "Missing required property: endpoints" });
@@ -165,10 +124,12 @@ public class PermissionsEventsController : ControllerBase
                         }
                     }
 
-                    // If no specific states required, default to "authenticated"
+                    // If no specific states required, use "default" state key
+                    // This matches the generated BuildPermissionMatrix() behavior which uses "default"
+                    // when permission.RequiredStates.Count == 0
                     if (stateKeys.Count == 0)
                     {
-                        stateKeys.Add("authenticated");
+                        stateKeys.Add("default");
                     }
 
                     // Add method to each required state/role combination
@@ -238,76 +199,38 @@ public class PermissionsEventsController : ControllerBase
     {
         try
         {
-            // Read the request body directly - Dapr pubsub delivers CloudEvents format
-            string rawBody;
-            using (var reader = new StreamReader(Request.Body, leaveOpen: true))
-            {
-                rawBody = await reader.ReadToEndAsync();
-            }
+            // Read and parse event using shared helper (handles both CloudEvents and raw formats)
+            var actualEventData = await DaprEventHelper.ReadEventJsonAsync(Request);
 
-            _logger.LogInformation("Received session state change event - raw body length: {Length}, content-type: {ContentType}",
-                rawBody?.Length ?? 0, Request.ContentType);
-            _logger.LogInformation("Raw body (first 500 chars): {RawBody}", rawBody?.Substring(0, Math.Min(500, rawBody?.Length ?? 0)));
-
-            if (string.IsNullOrWhiteSpace(rawBody))
+            if (actualEventData == null || actualEventData.Value.ValueKind != JsonValueKind.Object)
             {
-                _logger.LogError("Received empty request body");
-                return BadRequest(new { error = "Empty request body" });
-            }
-
-            // Parse the JSON manually
-            JsonElement stateEventObj;
-            try
-            {
-                using var document = JsonDocument.Parse(rawBody);
-                stateEventObj = document.RootElement.Clone();
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Failed to parse request body as JSON: {Body}", rawBody);
-                return BadRequest(new { error = $"Invalid JSON: {ex.Message}" });
-            }
-
-            _logger.LogInformation("Parsed JSON element kind: {Kind}", stateEventObj.ValueKind);
-
-            // If the event is wrapped in CloudEvents format, extract the data property
-            JsonElement actualEventData = stateEventObj;
-            if (stateEventObj.ValueKind == JsonValueKind.Object && stateEventObj.TryGetProperty("data", out var dataElement))
-            {
-                _logger.LogInformation("CloudEvents format detected, extracting data property. Data kind: {DataKind}", dataElement.ValueKind);
-                actualEventData = dataElement;
-            }
-
-            // Validate the event data
-            if (actualEventData.ValueKind != JsonValueKind.Object)
-            {
-                _logger.LogError("Event data is not a JSON object. Kind: {Kind}", actualEventData.ValueKind);
-                return BadRequest(new { error = $"Invalid event data - expected object, got {actualEventData.ValueKind}" });
+                _logger.LogError("Received empty or invalid session state change event");
+                return BadRequest(new { error = "Invalid event data" });
             }
 
             // Parse the event data with explicit validation
-            if (!actualEventData.TryGetProperty("sessionId", out var sessionIdElement))
+            if (!actualEventData.Value.TryGetProperty("sessionId", out var sessionIdElement))
             {
                 _logger.LogError("Missing 'sessionId' property in event data");
                 return BadRequest(new { error = "Missing required property: sessionId" });
             }
             var sessionId = sessionIdElement.GetString();
 
-            if (!actualEventData.TryGetProperty("serviceId", out var serviceIdElement))
+            if (!actualEventData.Value.TryGetProperty("serviceId", out var serviceIdElement))
             {
                 _logger.LogError("Missing 'serviceId' property in event data");
                 return BadRequest(new { error = "Missing required property: serviceId" });
             }
             var serviceId = serviceIdElement.GetString();
 
-            if (!actualEventData.TryGetProperty("newState", out var newStateElement))
+            if (!actualEventData.Value.TryGetProperty("newState", out var newStateElement))
             {
                 _logger.LogError("Missing 'newState' property in event data");
                 return BadRequest(new { error = "Missing required property: newState" });
             }
             var newState = newStateElement.GetString();
 
-            var previousState = actualEventData.TryGetProperty("previousState", out var prevProp) ?
+            var previousState = actualEventData.Value.TryGetProperty("previousState", out var prevProp) ?
                 prevProp.GetString() : null;
 
             _logger.LogInformation("Received session state change event for {SessionId}: {ServiceId} → {NewState}",

@@ -40,7 +40,7 @@ public partial interface IAccountsClient
     /// </summary>
     /// <returns>Accounts retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<AccountListResponse> ListAccountsAsync(string? email = null, string? displayName = null, Provider? provider = null, bool? verified = null, int? page = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<AccountListResponse> ListAccountsAsync(ListAccountsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -56,7 +56,7 @@ public partial interface IAccountsClient
     /// </summary>
     /// <returns>Account retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<AccountResponse> GetAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<AccountResponse> GetAccountAsync(GetAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -64,7 +64,7 @@ public partial interface IAccountsClient
     /// </summary>
     /// <returns>Account updated successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<AccountResponse> UpdateAccountAsync(System.Guid accountId, UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<AccountResponse> UpdateAccountAsync(UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -72,7 +72,7 @@ public partial interface IAccountsClient
     /// </summary>
     /// <returns>Account deleted successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task DeleteAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task DeleteAccountAsync(DeleteAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -80,7 +80,7 @@ public partial interface IAccountsClient
     /// </summary>
     /// <returns>Account retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<AccountResponse> GetAccountByEmailAsync(string email, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<AccountResponse> GetAccountByEmailAsync(GetAccountByEmailRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -88,7 +88,7 @@ public partial interface IAccountsClient
     /// </summary>
     /// <returns>Authentication methods retrieved</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<AuthMethodsResponse> GetAuthMethodsAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<AuthMethodsResponse> GetAuthMethodsAsync(GetAuthMethodsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -96,7 +96,7 @@ public partial interface IAccountsClient
     /// </summary>
     /// <returns>Authentication method added successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<AuthMethodResponse> AddAuthMethodAsync(System.Guid accountId, AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<AuthMethodResponse> AddAuthMethodAsync(AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -104,7 +104,7 @@ public partial interface IAccountsClient
     /// </summary>
     /// <returns>Authentication method removed successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task RemoveAuthMethodAsync(System.Guid accountId, System.Guid methodId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task RemoveAuthMethodAsync(RemoveAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -112,7 +112,7 @@ public partial interface IAccountsClient
     /// </summary>
     /// <returns>Account retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<AccountResponse> GetAccountByProviderAsync(Provider2 provider, string externalId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<AccountResponse> GetAccountByProviderAsync(GetAccountByProviderRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -120,7 +120,7 @@ public partial interface IAccountsClient
     /// </summary>
     /// <returns>Profile updated successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<AccountResponse> UpdateProfileAsync(System.Guid accountId, UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<AccountResponse> UpdateProfileAsync(UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -128,7 +128,7 @@ public partial interface IAccountsClient
     /// </summary>
     /// <returns>Password hash updated successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task UpdatePasswordHashAsync(System.Guid accountId, UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task UpdatePasswordHashAsync(UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -136,7 +136,7 @@ public partial interface IAccountsClient
     /// </summary>
     /// <returns>Verification status updated successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task UpdateVerificationStatusAsync(System.Guid accountId, UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task UpdateVerificationStatusAsync(UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -184,48 +184,29 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// </summary>
     /// <returns>Accounts retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<AccountListResponse> ListAccountsAsync(string? email = null, string? displayName = null, Provider? provider = null, bool? verified = null, int? page = null, int? pageSize = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<AccountListResponse> ListAccountsAsync(ListAccountsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
         try
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts"
-                urlBuilder_.Append("accounts");
-                urlBuilder_.Append('?');
-                if (email != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("email")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(email, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                if (displayName != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("displayName")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(displayName, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                if (provider != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("provider")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(provider, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                if (verified != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("verified")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(verified, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                if (page != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("page")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(page, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                if (pageSize != null)
-                {
-                    urlBuilder_.Append(System.Uri.EscapeDataString("pageSize")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(pageSize, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                }
-                urlBuilder_.Length--;
+                // Operation Path: "accounts/list"
+                urlBuilder_.Append("accounts/list");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -306,8 +287,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts"
-                urlBuilder_.Append("accounts");
+                // Operation Path: "accounts/create"
+                urlBuilder_.Append("accounts/create");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -379,10 +360,10 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// </summary>
     /// <returns>Account retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<AccountResponse> GetAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<AccountResponse> GetAccountAsync(GetAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (accountId == null)
-            throw new System.ArgumentNullException("accountId");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -390,15 +371,18 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts/{accountId}"
-                urlBuilder_.Append("accounts/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
+                // Operation Path: "accounts/get"
+                urlBuilder_.Append("accounts/get");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -464,11 +448,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// </summary>
     /// <returns>Account updated successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<AccountResponse> UpdateAccountAsync(System.Guid accountId, UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<AccountResponse> UpdateAccountAsync(UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (accountId == null)
-            throw new System.ArgumentNullException("accountId");
-
         if (body == null)
             throw new System.ArgumentNullException("body");
 
@@ -482,15 +463,14 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
                 var content_ = new System.Net.Http.StringContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("PUT");
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts/{accountId}"
-                urlBuilder_.Append("accounts/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
+                // Operation Path: "accounts/update"
+                urlBuilder_.Append("accounts/update");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -562,10 +542,10 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// </summary>
     /// <returns>Account deleted successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task DeleteAccountAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task DeleteAccountAsync(DeleteAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (accountId == null)
-            throw new System.ArgumentNullException("accountId");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -573,14 +553,17 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("DELETE");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts/{accountId}"
-                urlBuilder_.Append("accounts/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
+                // Operation Path: "accounts/delete"
+                urlBuilder_.Append("accounts/delete");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -647,10 +630,10 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// </summary>
     /// <returns>Account retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<AccountResponse> GetAccountByEmailAsync(string email, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<AccountResponse> GetAccountByEmailAsync(GetAccountByEmailRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (email == null)
-            throw new System.ArgumentNullException("email");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -658,15 +641,18 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts/by-email/{email}"
-                urlBuilder_.Append("accounts/by-email/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(email, System.Globalization.CultureInfo.InvariantCulture)));
+                // Operation Path: "accounts/by-email"
+                urlBuilder_.Append("accounts/by-email");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -732,10 +718,10 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// </summary>
     /// <returns>Authentication methods retrieved</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<AuthMethodsResponse> GetAuthMethodsAsync(System.Guid accountId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<AuthMethodsResponse> GetAuthMethodsAsync(GetAuthMethodsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (accountId == null)
-            throw new System.ArgumentNullException("accountId");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -743,16 +729,18 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts/{accountId}/auth-methods"
-                urlBuilder_.Append("accounts/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/auth-methods");
+                // Operation Path: "accounts/auth-methods/list"
+                urlBuilder_.Append("accounts/auth-methods/list");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -818,11 +806,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// </summary>
     /// <returns>Authentication method added successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<AuthMethodResponse> AddAuthMethodAsync(System.Guid accountId, AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<AuthMethodResponse> AddAuthMethodAsync(AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (accountId == null)
-            throw new System.ArgumentNullException("accountId");
-
         if (body == null)
             throw new System.ArgumentNullException("body");
 
@@ -842,10 +827,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts/{accountId}/auth-methods"
-                urlBuilder_.Append("accounts/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/auth-methods");
+                // Operation Path: "accounts/auth-methods/add"
+                urlBuilder_.Append("accounts/auth-methods/add");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -917,13 +900,10 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// </summary>
     /// <returns>Authentication method removed successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task RemoveAuthMethodAsync(System.Guid accountId, System.Guid methodId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task RemoveAuthMethodAsync(RemoveAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (accountId == null)
-            throw new System.ArgumentNullException("accountId");
-
-        if (methodId == null)
-            throw new System.ArgumentNullException("methodId");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -931,16 +911,17 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("DELETE");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts/{accountId}/auth-methods/{methodId}"
-                urlBuilder_.Append("accounts/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/auth-methods/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(methodId, System.Globalization.CultureInfo.InvariantCulture)));
+                // Operation Path: "accounts/auth-methods/remove"
+                urlBuilder_.Append("accounts/auth-methods/remove");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -1007,13 +988,10 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// </summary>
     /// <returns>Account retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<AccountResponse> GetAccountByProviderAsync(Provider2 provider, string externalId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<AccountResponse> GetAccountByProviderAsync(GetAccountByProviderRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (provider == null)
-            throw new System.ArgumentNullException("provider");
-
-        if (externalId == null)
-            throw new System.ArgumentNullException("externalId");
+        if (body == null)
+            throw new System.ArgumentNullException("body");
 
         var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
         var disposeClient_ = true;
@@ -1021,17 +999,18 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                request_.Method = new System.Net.Http.HttpMethod("GET");
+                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.StringContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts/by-provider/{provider}/{externalId}"
-                urlBuilder_.Append("accounts/by-provider/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(provider, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append('/');
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(externalId, System.Globalization.CultureInfo.InvariantCulture)));
+                // Operation Path: "accounts/by-provider"
+                urlBuilder_.Append("accounts/by-provider");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -1097,11 +1076,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// </summary>
     /// <returns>Profile updated successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<AccountResponse> UpdateProfileAsync(System.Guid accountId, UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<AccountResponse> UpdateProfileAsync(UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (accountId == null)
-            throw new System.ArgumentNullException("accountId");
-
         if (body == null)
             throw new System.ArgumentNullException("body");
 
@@ -1115,16 +1091,14 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
                 var content_ = new System.Net.Http.StringContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("PUT");
+                request_.Method = new System.Net.Http.HttpMethod("POST");
                 request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts/{accountId}/profile"
-                urlBuilder_.Append("accounts/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/profile");
+                // Operation Path: "accounts/profile/update"
+                urlBuilder_.Append("accounts/profile/update");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -1190,11 +1164,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// </summary>
     /// <returns>Password hash updated successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task UpdatePasswordHashAsync(System.Guid accountId, UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task UpdatePasswordHashAsync(UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (accountId == null)
-            throw new System.ArgumentNullException("accountId");
-
         if (body == null)
             throw new System.ArgumentNullException("body");
 
@@ -1208,15 +1179,13 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
                 var content_ = new System.Net.Http.StringContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("PUT");
+                request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts/{accountId}/password"
-                urlBuilder_.Append("accounts/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/password");
+                // Operation Path: "accounts/password/update"
+                urlBuilder_.Append("accounts/password/update");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -1277,11 +1246,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     /// </summary>
     /// <returns>Verification status updated successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task UpdateVerificationStatusAsync(System.Guid accountId, UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task UpdateVerificationStatusAsync(UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
-        if (accountId == null)
-            throw new System.ArgumentNullException("accountId");
-
         if (body == null)
             throw new System.ArgumentNullException("body");
 
@@ -1295,15 +1261,13 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
                 var content_ = new System.Net.Http.StringContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
-                request_.Method = new System.Net.Http.HttpMethod("PUT");
+                request_.Method = new System.Net.Http.HttpMethod("POST");
 
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "accounts/{accountId}/verification"
-                urlBuilder_.Append("accounts/");
-                urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(accountId, System.Globalization.CultureInfo.InvariantCulture)));
-                urlBuilder_.Append("/verification");
+                // Operation Path: "accounts/verification/update"
+                urlBuilder_.Append("accounts/verification/update");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 

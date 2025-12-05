@@ -102,6 +102,24 @@ public interface IPermissionsController : BeyondImmersion.BannouService.Controll
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionInfo>> GetSessionInfoAsync(SessionInfoRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// List all registered services
+    /// </summary>
+
+    /// <remarks>
+    /// Returns list of all services that have registered their permissions.
+    /// <br/>This endpoint is used by testers to wait for service readiness - a service
+    /// <br/>appearing in this list means it has completed startup and registered its
+    /// <br/>API permissions, indicating it's ready to handle requests.
+    /// <br/>
+    /// <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+    /// <br/>For client calls through WebSocket/Connect, only admin users can access it.
+    /// </remarks>
+
+    /// <returns>List of registered services</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisteredServicesResponse>> GetRegisteredServicesAsync(ListServicesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -249,6 +267,28 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     {
 
         var (statusCode, result) = await _implementation.GetSessionInfoAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// List all registered services
+    /// </summary>
+    /// <remarks>
+    /// Returns list of all services that have registered their permissions.
+    /// <br/>This endpoint is used by testers to wait for service readiness - a service
+    /// <br/>appearing in this list means it has completed startup and registered its
+    /// <br/>API permissions, indicating it's ready to handle requests.
+    /// <br/>
+    /// <br/>For service-to-service calls (via Dapr), this endpoint is unrestricted.
+    /// <br/>For client calls through WebSocket/Connect, only admin users can access it.
+    /// </remarks>
+    /// <returns>List of registered services</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("permissions/services/list")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisteredServicesResponse>> GetRegisteredServices([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListServicesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetRegisteredServicesAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

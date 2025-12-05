@@ -13,12 +13,12 @@ public interface IOrchestratorService : IDaprService
     /// <summary>
     /// GetInfrastructureHealth operation
     /// </summary>
-    Task<(StatusCodes, InfrastructureHealthResponse?)> GetInfrastructureHealthAsync(CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, InfrastructureHealthResponse?)> GetInfrastructureHealthAsync(InfrastructureHealthRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// GetServicesHealth operation
     /// </summary>
-    Task<(StatusCodes, ServiceHealthReport?)> GetServicesHealthAsync(CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, ServiceHealthReport?)> GetServicesHealthAsync(ServiceHealthRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// RestartService operation
@@ -33,12 +33,12 @@ public interface IOrchestratorService : IDaprService
     /// <summary>
     /// GetBackends operation
     /// </summary>
-    Task<(StatusCodes, BackendsResponse?)> GetBackendsAsync(CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, BackendsResponse?)> GetBackendsAsync(ListBackendsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// GetPresets operation
     /// </summary>
-    Task<(StatusCodes, PresetsResponse?)> GetPresetsAsync(CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, PresetsResponse?)> GetPresetsAsync(ListPresetsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// Deploy operation
@@ -48,7 +48,7 @@ public interface IOrchestratorService : IDaprService
     /// <summary>
     /// GetStatus operation
     /// </summary>
-    Task<(StatusCodes, EnvironmentStatus?)> GetStatusAsync(CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, EnvironmentStatus?)> GetStatusAsync(GetStatusRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// Teardown operation
@@ -63,7 +63,7 @@ public interface IOrchestratorService : IDaprService
     /// <summary>
     /// GetLogs operation
     /// </summary>
-    Task<(StatusCodes, LogsResponse?)> GetLogsAsync(string? service, string? container, string? since, string? until, int? tail = 100, bool? follow = false, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, LogsResponse?)> GetLogsAsync(GetLogsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// UpdateTopology operation
@@ -73,12 +73,12 @@ public interface IOrchestratorService : IDaprService
     /// <summary>
     /// RequestContainerRestart operation
     /// </summary>
-    Task<(StatusCodes, ContainerRestartResponse?)> RequestContainerRestartAsync(string appName, ContainerRestartRequest body, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, ContainerRestartResponse?)> RequestContainerRestartAsync(ContainerRestartRequestBody body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// GetContainerStatus operation
     /// </summary>
-    Task<(StatusCodes, ContainerStatus?)> GetContainerStatusAsync(string appName, CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, ContainerStatus?)> GetContainerStatusAsync(GetContainerStatusRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
     /// RollbackConfiguration operation
@@ -88,6 +88,6 @@ public interface IOrchestratorService : IDaprService
     /// <summary>
     /// GetConfigVersion operation
     /// </summary>
-    Task<(StatusCodes, ConfigVersionResponse?)> GetConfigVersionAsync(CancellationToken cancellationToken = default(CancellationToken));
+    Task<(StatusCodes, ConfigVersionResponse?)> GetConfigVersionAsync(GetConfigVersionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

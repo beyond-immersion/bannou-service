@@ -34,6 +34,10 @@ public class AuthServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register AuthServiceConfiguration here
 
+        // Register HttpClient for OAuth provider communication (Discord, Google, Twitch, Steam)
+        services.AddHttpClient();
+        Logger?.LogDebug("Registered IHttpClientFactory for OAuth provider HTTP calls");
+
         // Add any service-specific dependencies
         // The generated clients (IAccountsClient) should already be registered by AddAllBannouServiceClients()
 

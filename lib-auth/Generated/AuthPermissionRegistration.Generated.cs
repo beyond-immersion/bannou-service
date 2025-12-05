@@ -118,21 +118,6 @@ public static class AuthPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/auth/steam/init",
-            Method = ServiceEndpointMethod.GET,
-            Description = "initSteamAuth",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "anonymous",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
             Path = "/auth/steam/verify",
             Method = ServiceEndpointMethod.POST,
             Description = "verifySteamAuth",
@@ -198,8 +183,8 @@ public static class AuthPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/auth/sessions",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/auth/sessions/list",
+            Method = ServiceEndpointMethod.POST,
             Description = "getSessions",
             Permissions = new List<PermissionRequirement>
             {
@@ -213,8 +198,8 @@ public static class AuthPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/auth/sessions/{sessionId}",
-            Method = ServiceEndpointMethod.DELETE,
+            Path = "/auth/sessions/terminate",
+            Method = ServiceEndpointMethod.POST,
             Description = "terminateSession",
             Permissions = new List<PermissionRequirement>
             {

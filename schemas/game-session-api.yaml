@@ -1,15 +1,20 @@
 openapi: 3.0.0
 info:
   title: Bannou Game Session Service API
-  description: Minimal game session management for Arcadia and other games
-  version: 1.0.0
+  description: |
+    Minimal game session management for Arcadia and other games.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See API-DESIGN.md for architectural rationale.
+  version: 2.0.0
 servers:
   - url: http://localhost:3500/v1.0/invoke/game-session/method
     description: Dapr sidecar endpoint
 
 paths:
-  /sessions:
-    get:
+  /sessions/list:
+    post:
       summary: List available game sessions
       operationId: listGameSessions
       tags:
@@ -20,17 +25,12 @@ paths:
       x-rate-limit:
         requestsPerMinute: 30
         requestsPerHour: 500
-      parameters:
-        - name: gameType
-          in: query
-          schema:
-            type: string
-            enum: [arcadia, generic]
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [waiting, active, full]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListGameSessionsRequest'
       responses:
         '200':
           description: Game sessions retrieved successfully
@@ -39,6 +39,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GameSessionListResponse'
 
+  /sessions/create:
     post:
       summary: Create new game session
       operationId: createGameSession
@@ -66,8 +67,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/GameSessionResponse'
 
-  /sessions/{sessionId}:
-    get:
+  /sessions/get:
+    post:
       summary: Get game session details
       operationId: getGameSession
       tags:
@@ -75,13 +76,12 @@ paths:
       x-permissions:
         - type: role
           value: user
-      parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetGameSessionRequest'
       responses:
         '200':
           description: Game session retrieved successfully
@@ -89,8 +89,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GameSessionResponse'
+        '404':
+          description: Game session not found
 
-  /sessions/{sessionId}/join:
+  /sessions/join:
     post:
       summary: Join a game session
       operationId: joinGameSession
@@ -104,14 +106,8 @@ paths:
       x-rate-limit:
         requestsPerMinute: 10
         requestsPerHour: 50
-      parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -123,8 +119,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/JoinGameSessionResponse'
+        '404':
+          description: Game session not found
+        '409':
+          description: Session full or already joined
 
-  /sessions/{sessionId}/leave:
+  /sessions/leave:
     post:
       summary: Leave a game session
       operationId: leaveGameSession
@@ -135,18 +135,19 @@ paths:
           contextKey: gameSessionId
           value: "{sessionId}"
           operator: equals
-      parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveGameSessionRequest'
       responses:
         '200':
           description: Successfully left game session
+        '404':
+          description: Game session not found
 
-  /sessions/{sessionId}/kick:
+  /sessions/kick:
     post:
       summary: Kick player from game session (admin only)
       operationId: kickPlayer
@@ -159,13 +160,6 @@ paths:
           contextKey: gameSessionOwner
           value: "{accountId}"
           operator: equals
-      parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
         required: true
         content:
@@ -175,8 +169,12 @@ paths:
       responses:
         '200':
           description: Player kicked successfully
+        '404':
+          description: Game session or player not found
+        '403':
+          description: Not authorized to kick players
 
-  /sessions/{sessionId}/chat:
+  /sessions/chat:
     post:
       summary: Send chat message to game session
       operationId: sendChatMessage
@@ -190,13 +188,6 @@ paths:
       x-rate-limit:
         requestsPerMinute: 60
         burstLimit: 10
-      parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
         required: true
         content:
@@ -206,8 +197,10 @@ paths:
       responses:
         '200':
           description: Chat message sent successfully
+        '404':
+          description: Game session not found
 
-  /sessions/{sessionId}/actions:
+  /sessions/actions:
     post:
       summary: Perform game action (enhanced permissions after joining)
       operationId: performGameAction
@@ -225,13 +218,6 @@ paths:
       x-rate-limit:
         requestsPerMinute: 120
         burstLimit: 20
-      parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
         required: true
         content:
@@ -245,9 +231,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GameActionResponse'
+        '404':
+          description: Game session not found
+        '400':
+          description: Invalid game action
 
 components:
   schemas:
+    # Request Models for POST-only pattern
+    ListGameSessionsRequest:
+      type: object
+      description: Request to list available game sessions
+      properties:
+        gameType:
+          type: string
+          enum: [arcadia, generic]
+          description: Filter by game type
+        status:
+          type: string
+          enum: [waiting, active, full]
+          description: Filter by session status
+
+    GetGameSessionRequest:
+      type: object
+      description: Request to get a specific game session
+      required:
+        - sessionId
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the game session to retrieve
+
+    LeaveGameSessionRequest:
+      type: object
+      description: Request to leave a game session
+      required:
+        - sessionId
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the game session to leave
+
     CreateGameSessionRequest:
       type: object
       required:
@@ -323,7 +349,13 @@ components:
 
     JoinGameSessionRequest:
       type: object
+      required:
+        - sessionId
       properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the game session to join
         password:
           type: string
           description: Password for private sessions
@@ -381,20 +413,32 @@ components:
     KickPlayerRequest:
       type: object
       required:
+        - sessionId
         - targetAccountId
       properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the game session
         targetAccountId:
           type: string
           format: uuid
+          description: Account ID of the player to kick
         reason:
           type: string
           maxLength: 200
+          description: Reason for kicking the player
 
     ChatMessageRequest:
       type: object
       required:
+        - sessionId
         - message
       properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the game session
         message:
           type: string
           maxLength: 500
@@ -410,8 +454,13 @@ components:
     GameActionRequest:
       type: object
       required:
+        - sessionId
         - actionType
       properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the game session
         actionType:
           type: string
           enum: [move, interact, attack, cast_spell, use_item]
@@ -448,7 +497,7 @@ components:
 x-service-registration:
   serviceId: "game-session-service-guid"
   serviceName: "Game Session Service"
-  version: "1.0.0"
+  version: "2.0.0"
   categories:
     - gaming
     - social

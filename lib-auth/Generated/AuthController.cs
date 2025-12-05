@@ -49,16 +49,33 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IDa
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterResponse>> RegisterAsync(RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Initialize OAuth2 flow
+    /// Initialize OAuth2 flow (browser redirect)
     /// </summary>
+
+    /// <remarks>
+    /// Browser-facing endpoint for initiating OAuth flows. The user's browser navigates
+    /// <br/>to this URL directly, which then redirects to the OAuth provider.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses GET with path parameters because it's a browser
+    /// <br/>redirect flow, not a WebSocket-routed API call.
+    /// </remarks>
 
 
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuthAsync(Provider provider, string redirectUri, string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Complete OAuth2 flow
+    /// Complete OAuth2 flow (browser redirect callback)
     /// </summary>
+
+    /// <remarks>
+    /// Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects
+    /// <br/>the user's browser back to this URL after authentication.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses path parameters because the callback URL is registered
+    /// <br/>with OAuth providers and cannot be changed without updating provider configurations.
+    /// </remarks>
+
 
 
     /// <returns>OAuth authentication successful</returns>
@@ -66,16 +83,14 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IDa
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> CompleteOAuthAsync(Provider provider, OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Initialize Steam authentication
+    /// Verify Steam Session Ticket
     /// </summary>
 
-
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitSteamAuthAsync(string returnUrl, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <summary>
-    /// Verify Steam authentication response
-    /// </summary>
-
+    /// <remarks>
+    /// Validates a Steam Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().
+    /// <br/>The server validates the ticket with Steam's Web API and retrieves the SteamID from Steam's response.
+    /// <br/>NEVER trust client-provided SteamID - it must come from Steam's authenticated response.
+    /// </remarks>
 
     /// <returns>Steam authentication successful</returns>
 
@@ -127,10 +142,12 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IDa
     /// Terminate specific session
     /// </summary>
 
+    /// <param name="jwt">JWT access token for session identification</param>
+
 
     /// <returns>Session terminated</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSessionAsync(System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSessionAsync(string jwt, TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Request password reset
@@ -231,8 +248,15 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Initialize OAuth2 flow
+    /// Initialize OAuth2 flow (browser redirect)
     /// </summary>
+    /// <remarks>
+    /// Browser-facing endpoint for initiating OAuth flows. The user's browser navigates
+    /// <br/>to this URL directly, which then redirects to the OAuth provider.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses GET with path parameters because it's a browser
+    /// <br/>redirect flow, not a WebSocket-routed API call.
+    /// </remarks>
     [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/init")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitOAuth([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider provider, [Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string redirectUri, [Microsoft.AspNetCore.Mvc.FromQuery] string? state, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
@@ -243,8 +267,15 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Complete OAuth2 flow
+    /// Complete OAuth2 flow (browser redirect callback)
     /// </summary>
+    /// <remarks>
+    /// Browser-facing callback endpoint for OAuth providers. The OAuth provider redirects
+    /// <br/>the user's browser back to this URL after authentication.
+    /// <br/>
+    /// <br/>**Note**: This endpoint uses path parameters because the callback URL is registered
+    /// <br/>with OAuth providers and cannot be changed without updating provider configurations.
+    /// </remarks>
     /// <returns>OAuth authentication successful</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/oauth/{provider}/callback")]
 
@@ -256,20 +287,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Initialize Steam authentication
+    /// Verify Steam Session Ticket
     /// </summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/steam/init")]
-
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> InitSteamAuth([Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string returnUrl, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-
-        var (statusCode, result) = await _implementation.InitSteamAuthAsync(returnUrl, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
-    }
-
-    /// <summary>
-    /// Verify Steam authentication response
-    /// </summary>
+    /// <remarks>
+    /// Validates a Steam Session Ticket obtained from the game client via ISteamUser::GetAuthTicketForWebApi().
+    /// <br/>The server validates the ticket with Steam's Web API and retrieves the SteamID from Steam's response.
+    /// <br/>NEVER trust client-provided SteamID - it must come from Steam's authenticated response.
+    /// </remarks>
     /// <returns>Steam authentication successful</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/steam/verify")]
 
@@ -339,7 +363,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <param name="jwt">JWT access token for session identification</param>
     /// <returns>Active sessions retrieved</returns>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("auth/sessions")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/sessions/list")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionsResponse>> GetSessions(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -355,13 +379,18 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <summary>
     /// Terminate specific session
     /// </summary>
+    /// <param name="jwt">JWT access token for session identification</param>
     /// <returns>Session terminated</returns>
-    [Microsoft.AspNetCore.Mvc.HttpDelete, Microsoft.AspNetCore.Mvc.Route("auth/sessions/{sessionId}")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/sessions/terminate")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSession([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid sessionId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSession([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.TerminateSessionAsync(sessionId, cancellationToken);
+        var jwt = HttpContext.ExtractBearerToken();
+        if (string.IsNullOrEmpty(jwt))
+            return Unauthorized("Missing or invalid Authorization header");
+
+        var (statusCode, result) = await _implementation.TerminateSessionAsync(jwt, body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
@@ -398,8 +427,8 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Subscribe to account deletion events to invalidate sessions
     /// </remarks>
     [Dapr.Topic("bannou-pubsub", "account.deleted")]
-    [Microsoft.AspNetCore.Mvc.HttpPost("/dapr/events/account-deleted")]
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleAccountdeletedEvent([Microsoft.AspNetCore.Mvc.FromBody] object eventData)
+    [Microsoft.AspNetCore.Mvc.HttpPost("handle-account-deleted")]
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleAccountDeletedEvent([Microsoft.AspNetCore.Mvc.FromBody] object eventData)
     {
         try
         {

@@ -53,8 +53,8 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/accounts/list",
+            Method = ServiceEndpointMethod.POST,
             Description = "listAccounts",
             Permissions = new List<PermissionRequirement>
             {
@@ -73,7 +73,7 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts",
+            Path = "/accounts/create",
             Method = ServiceEndpointMethod.POST,
             Description = "createAccount",
             Permissions = new List<PermissionRequirement>
@@ -93,8 +93,8 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts/{accountId}",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/accounts/get",
+            Method = ServiceEndpointMethod.POST,
             Description = "getAccount",
             Permissions = new List<PermissionRequirement>
             {
@@ -113,8 +113,8 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts/{accountId}",
-            Method = ServiceEndpointMethod.PUT,
+            Path = "/accounts/update",
+            Method = ServiceEndpointMethod.POST,
             Description = "updateAccount",
             Permissions = new List<PermissionRequirement>
             {
@@ -133,8 +133,8 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts/{accountId}",
-            Method = ServiceEndpointMethod.DELETE,
+            Path = "/accounts/delete",
+            Method = ServiceEndpointMethod.POST,
             Description = "deleteAccount",
             Permissions = new List<PermissionRequirement>
             {
@@ -148,8 +148,8 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts/by-email/{email}",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/accounts/by-email",
+            Method = ServiceEndpointMethod.POST,
             Description = "getAccountByEmail",
             Permissions = new List<PermissionRequirement>
             {
@@ -163,8 +163,8 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts/{accountId}/auth-methods",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/accounts/auth-methods/list",
+            Method = ServiceEndpointMethod.POST,
             Description = "getAuthMethods",
             Permissions = new List<PermissionRequirement>
             {
@@ -183,7 +183,7 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts/{accountId}/auth-methods",
+            Path = "/accounts/auth-methods/add",
             Method = ServiceEndpointMethod.POST,
             Description = "addAuthMethod",
             Permissions = new List<PermissionRequirement>
@@ -203,8 +203,8 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts/{accountId}/auth-methods/{methodId}",
-            Method = ServiceEndpointMethod.DELETE,
+            Path = "/accounts/auth-methods/remove",
+            Method = ServiceEndpointMethod.POST,
             Description = "removeAuthMethod",
             Permissions = new List<PermissionRequirement>
             {
@@ -223,8 +223,8 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts/by-provider/{provider}/{externalId}",
-            Method = ServiceEndpointMethod.GET,
+            Path = "/accounts/by-provider",
+            Method = ServiceEndpointMethod.POST,
             Description = "getAccountByProvider",
             Permissions = new List<PermissionRequirement>
             {
@@ -238,8 +238,8 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts/{accountId}/profile",
-            Method = ServiceEndpointMethod.PUT,
+            Path = "/accounts/profile/update",
+            Method = ServiceEndpointMethod.POST,
             Description = "updateProfile",
             Permissions = new List<PermissionRequirement>
             {
@@ -263,8 +263,8 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts/{accountId}/password",
-            Method = ServiceEndpointMethod.PUT,
+            Path = "/accounts/password/update",
+            Method = ServiceEndpointMethod.POST,
             Description = "updatePasswordHash",
             Permissions = new List<PermissionRequirement>
             {
@@ -278,8 +278,8 @@ public static class AccountsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/accounts/{accountId}/verification",
-            Method = ServiceEndpointMethod.PUT,
+            Path = "/accounts/verification/update",
+            Method = ServiceEndpointMethod.POST,
             Description = "updateVerificationStatus",
             Permissions = new List<PermissionRequirement>
             {
