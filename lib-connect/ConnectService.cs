@@ -681,9 +681,11 @@ public class ConnectService : IConnectService
 
                 await _connectionManager.SendMessageAsync(sessionId, errorResponse, cancellationToken);
             }
-            catch
+            catch (Exception parseEx)
             {
-                // If we can't even parse the message, just ignore it
+                // If we can't even parse the message or send error response, log and continue
+                // This is a last resort - the outer exception handler already logged the original error
+                _logger.LogError(parseEx, "Failed to send error response to session {SessionId} - message may be corrupted", sessionId);
             }
         }
     }
@@ -741,7 +743,8 @@ public class ConnectService : IConnectService
             try
             {
                 // Build full Dapr URL like DaprServiceClientBase does
-                var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "http://localhost:3500";
+                var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT")
+                    ?? throw new InvalidOperationException("DAPR_HTTP_ENDPOINT environment variable is not set. Dapr sidecar must be configured.");
                 var daprUrl = $"{daprHttpEndpoint}/v1.0/invoke/{appId}/method/{path.TrimStart('/')}";
 
                 // Create HTTP request with proper headers

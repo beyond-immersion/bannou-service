@@ -780,7 +780,11 @@ public class AuthService : IAuthService
     {
         // Mock email implementation - logs to console
         // In production, this would integrate with SendGrid, AWS SES, or similar
-        var resetUrl = $"{_configuration.PasswordResetBaseUrl ?? "https://example.com/reset-password"}?token={resetToken}";
+        if (string.IsNullOrWhiteSpace(_configuration.PasswordResetBaseUrl))
+        {
+            throw new InvalidOperationException("PasswordResetBaseUrl configuration is not set. Cannot generate password reset link.");
+        }
+        var resetUrl = $"{_configuration.PasswordResetBaseUrl}?token={resetToken}";
 
         _logger.LogInformation(
             "=== PASSWORD RESET EMAIL (MOCK) ===\n" +
@@ -1189,8 +1193,9 @@ public class AuthService : IAuthService
             var accountId = await _daprClient.GetStateAsync<string>(REDIS_STATE_STORE, redisKey, cancellationToken: cancellationToken);
             return accountId;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to validate refresh token from Redis state store");
             return null;
         }
     }
@@ -2004,9 +2009,9 @@ public class AuthService : IAuthService
                         _logger.LogInformation("Found existing account by email {Email} for {Provider} user",
                             userInfo.Email, providerName);
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        _logger.LogError("Email conflict but couldn't find account: {Email}", userInfo.Email);
+                        _logger.LogError(ex, "Email conflict but couldn't find account: {Email}", userInfo.Email);
                         return null;
                     }
                 }
