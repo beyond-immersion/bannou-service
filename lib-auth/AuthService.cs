@@ -1118,6 +1118,28 @@ public class AuthService : IAuthService
                     ClaimValueTypes.Integer64) // Issued at time
             };
 
+            // IMPORTANT: Roles are NOT stored in JWT claims!
+            //
+            // WHY: Roles are server-managed authorization decisions, not client-negotiable identity attributes.
+            // Roles are assigned by administrators (via dashboard) or auto-assigned based on server-side
+            // configuration (e.g., AdminEmailDomain). Clients have no choice in their authorization level.
+            //
+            // HOW ROLES WORK:
+            // 1. Roles stored in AccountModel (MySQL via Dapr) - assigned by Accounts service
+            // 2. Roles copied to SessionDataModel (Redis) during session creation - stored with session data
+            // 3. JWT contains only opaque "session_key" claim - points to Redis session data
+            // 4. ValidateTokenAsync reads roles from Redis session data (NOT from JWT claims)
+            // 5. Connect service receives roles from ValidateTokenAsync response
+            // 6. Permissions service compiles capabilities based on role from session
+            //
+            // This architecture:
+            // - Prevents clients from seeing/manipulating authorization levels in JWT
+            // - Allows server to revoke/change roles without reissuing JWTs
+            // - Maintains clean separation: JWT = authentication, Redis session = authorization
+            // - Follows principle: roles are server-side policy, not client identity
+            //
+            // DO NOT add role claims to JWT! Use ValidateTokenAsync to retrieve roles from Redis.
+
             var symmetricKey = new SymmetricSecurityKey(key);
             var signingCredentials = new SigningCredentials(symmetricKey, SecurityAlgorithms.HmacSha256Signature);
 
