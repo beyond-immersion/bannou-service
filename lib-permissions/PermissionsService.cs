@@ -28,6 +28,7 @@ public class PermissionsService : IPermissionsService
     private readonly ILogger<PermissionsService> _logger;
     private readonly PermissionsServiceConfiguration _configuration;
     private readonly DaprClient _daprClient;
+    private readonly IDistributedLockProvider _lockProvider;
 
     // Dapr state store name
     private const string STATE_STORE = "permissions-store";
@@ -49,11 +50,13 @@ public class PermissionsService : IPermissionsService
     public PermissionsService(
         ILogger<PermissionsService> logger,
         PermissionsServiceConfiguration configuration,
-        DaprClient daprClient)
+        DaprClient daprClient,
+        IDistributedLockProvider lockProvider)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
         _sessionCapabilityCache = new ConcurrentDictionary<string, CapabilityResponse>();
 
         _logger.LogInformation("Permissions service initialized with Dapr state store");
@@ -342,105 +345,121 @@ public class PermissionsService : IPermissionsService
             _logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}", body.ServiceId, serviceRegisteredKey);
 
             // Update the centralized registered_services list (enables "list all registered services" queries)
-            // Uses Dapr distributed lock to prevent race conditions when multiple services register concurrently
+            // Uses Redis-based distributed lock to prevent race conditions when multiple services register concurrently
             // NO FALLBACK - if lock fails, registration fails. We don't mask failures.
-            const string LOCK_STORE = "lockstore";
+            const string LOCK_STORE = "permissions-store"; // Use Redis state store instead of lockstore component
             const string LOCK_RESOURCE = "registered_services_lock";
             var lockOwnerId = $"{body.ServiceId}-{Guid.NewGuid():N}";
 
             // Acquire distributed lock to serialize updates to the shared registered_services list
-            // Note: Dapr distributed lock API is alpha, suppress the warning
-#pragma warning disable DAPR_DISTRIBUTEDLOCK
-            await using var serviceLock = await _daprClient.Lock(
-                LOCK_STORE,
-                LOCK_RESOURCE,
-                lockOwnerId,
-                expiryInSeconds: 30,  // Lock expires after 30 seconds if not released
-                cancellationToken: cancellationToken);
-#pragma warning restore DAPR_DISTRIBUTEDLOCK
-
-            if (!serviceLock.Success)
+            ILockResponse serviceLock;
+            try
             {
-                _logger.LogError("Failed to acquire distributed lock for {ServiceId} - cannot safely update registered services. " +
-                    "This indicates a problem with the lockstore component configuration.", body.ServiceId);
+                serviceLock = await _lockProvider.LockAsync(
+                    LOCK_STORE,
+                    LOCK_RESOURCE,
+                    lockOwnerId,
+                    expiryInSeconds: 30,  // Lock expires after 30 seconds if not released
+                    cancellationToken: cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception while acquiring distributed lock for {ServiceId}. " +
+                    "Lock store: {LockStore}, Resource: {LockResource}, Owner: {LockOwner}",
+                    body.ServiceId, LOCK_STORE, LOCK_RESOURCE, lockOwnerId);
                 return (StatusCodes.InternalServerError, new RegistrationResponse
                 {
                     ServiceId = body.ServiceId,
                     Success = false,
-                    Message = "Failed to acquire distributed lock - check lockstore component configuration"
+                    Message = $"Exception while acquiring lock: {ex.Message}"
                 });
             }
 
-            _logger.LogInformation("Acquired lock for {ServiceId} to update registered services", body.ServiceId);
-
-            // Now we have exclusive access - safe to read-modify-write
-            var lockedServices = await _daprClient.GetStateAsync<HashSet<string>>(
-                STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
-
-            _logger.LogInformation("Current registered services (locked): {Services}",
-                string.Join(", ", lockedServices));
-
-            if (!lockedServices.Contains(body.ServiceId))
+            await using (serviceLock)
             {
-                lockedServices.Add(body.ServiceId);
-                await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, lockedServices, cancellationToken: cancellationToken);
-                _logger.LogInformation("Successfully added {ServiceId} to registered services list. Now: {Services}",
-                    body.ServiceId, string.Join(", ", lockedServices));
-            }
-            else
-            {
-                _logger.LogInformation("Service {ServiceId} already in registered services list", body.ServiceId);
-            }
-
-            // Get all active sessions and recompile
-            var activeSessions = await _daprClient.GetStateAsync<HashSet<string>>(
-                STATE_STORE, ACTIVE_SESSIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
-
-            // Recompile permissions for all active sessions
-            var recompiledCount = 0;
-            foreach (var sessionId in activeSessions)
-            {
-                await RecompileSessionPermissionsAsync(sessionId, "service_registered");
-                recompiledCount++;
-            }
-
-            _logger.LogInformation("Service {ServiceId} registered successfully, recompiled {Count} sessions",
-                body.ServiceId, recompiledCount);
-
-            // Publish capability update event so Connect service can push updates to connected clients
-            try
-            {
-                await _daprClient.PublishEventAsync(
-                    "bannou-pubsub",
-                    "permissions.capabilities-updated",
-                    new
+                if (!serviceLock.Success)
+                {
+                    _logger.LogError("Failed to acquire distributed lock for {ServiceId} - cannot safely update registered services. " +
+                        "This indicates a problem with the lockstore component configuration.", body.ServiceId);
+                    return (StatusCodes.InternalServerError, new RegistrationResponse
                     {
-                        eventId = Guid.NewGuid().ToString(),
-                        timestamp = DateTimeOffset.UtcNow,
-                        serviceId = body.ServiceId,
-                        affectedSessions = activeSessions.ToList(),
-                        reason = "service_registered"
-                    },
-                    cancellationToken);
-                _logger.LogDebug("Published capabilities-updated event for service {ServiceId}", body.ServiceId);
-            }
-            catch (Exception pubEx)
-            {
-                // Don't fail registration if event publishing fails - Connect will get updates on next client request
-                _logger.LogWarning(pubEx, "Failed to publish capabilities-updated event for {ServiceId}", body.ServiceId);
-            }
+                        ServiceId = body.ServiceId,
+                        Success = false,
+                        Message = "Failed to acquire distributed lock - check lockstore component configuration"
+                    });
+                }
 
-            // Store the new hash for idempotent registration detection
-            await _daprClient.SaveStateAsync(STATE_STORE, hashKey, newHash, cancellationToken: cancellationToken);
-            _logger.LogDebug("Stored permission hash for {ServiceId}: {Hash}",
-                body.ServiceId, newHash[..8] + "...");
+                _logger.LogInformation("Acquired lock for {ServiceId} to update registered services", body.ServiceId);
 
-            return (StatusCodes.OK, new RegistrationResponse
-            {
-                ServiceId = body.ServiceId,
-                Success = true,
-                Message = $"Registered {body.Permissions?.Count ?? 0} permission rules, recompiled {recompiledCount} sessions"
-            });
+                // Now we have exclusive access - safe to read-modify-write
+                var lockedServices = await _daprClient.GetStateAsync<HashSet<string>>(
+                    STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+
+                _logger.LogInformation("Current registered services (locked): {Services}",
+                    string.Join(", ", lockedServices));
+
+                if (!lockedServices.Contains(body.ServiceId))
+                {
+                    lockedServices.Add(body.ServiceId);
+                    await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, lockedServices, cancellationToken: cancellationToken);
+                    _logger.LogInformation("Successfully added {ServiceId} to registered services list. Now: {Services}",
+                        body.ServiceId, string.Join(", ", lockedServices));
+                }
+                else
+                {
+                    _logger.LogInformation("Service {ServiceId} already in registered services list", body.ServiceId);
+                }
+
+                // Get all active sessions and recompile
+                var activeSessions = await _daprClient.GetStateAsync<HashSet<string>>(
+                    STATE_STORE, ACTIVE_SESSIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+
+                // Recompile permissions for all active sessions
+                var recompiledCount = 0;
+                foreach (var sessionId in activeSessions)
+                {
+                    await RecompileSessionPermissionsAsync(sessionId, "service_registered");
+                    recompiledCount++;
+                }
+
+                _logger.LogInformation("Service {ServiceId} registered successfully, recompiled {Count} sessions",
+                    body.ServiceId, recompiledCount);
+
+                // Publish capability update event so Connect service can push updates to connected clients
+                try
+                {
+                    await _daprClient.PublishEventAsync(
+                        "bannou-pubsub",
+                        "permissions.capabilities-updated",
+                        new
+                        {
+                            eventId = Guid.NewGuid().ToString(),
+                            timestamp = DateTimeOffset.UtcNow,
+                            serviceId = body.ServiceId,
+                            affectedSessions = activeSessions.ToList(),
+                            reason = "service_registered"
+                        },
+                        cancellationToken);
+                    _logger.LogDebug("Published capabilities-updated event for service {ServiceId}", body.ServiceId);
+                }
+                catch (Exception pubEx)
+                {
+                    // Don't fail registration if event publishing fails - Connect will get updates on next client request
+                    _logger.LogWarning(pubEx, "Failed to publish capabilities-updated event for {ServiceId}", body.ServiceId);
+                }
+
+                // Store the new hash for idempotent registration detection
+                await _daprClient.SaveStateAsync(STATE_STORE, hashKey, newHash, cancellationToken: cancellationToken);
+                _logger.LogDebug("Stored permission hash for {ServiceId}: {Hash}",
+                    body.ServiceId, newHash[..8] + "...");
+
+                return (StatusCodes.OK, new RegistrationResponse
+                {
+                    ServiceId = body.ServiceId,
+                    Success = true,
+                    Message = $"Registered {body.Permissions?.Count ?? 0} permission rules, recompiled {recompiledCount} sessions"
+                });
+            } // End of await using (serviceLock)
         }
         catch (Exception ex)
         {

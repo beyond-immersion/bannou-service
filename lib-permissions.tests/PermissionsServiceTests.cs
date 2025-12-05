@@ -9,6 +9,20 @@ using Xunit;
 namespace BeyondImmersion.BannouService.Permissions.Tests;
 
 /// <summary>
+/// Test implementation of ILockResponse for unit testing.
+/// </summary>
+internal class TestLockResponse : ILockResponse
+{
+    public bool Success { get; init; }
+
+    public ValueTask DisposeAsync()
+    {
+        // No actual disposal needed for test
+        return ValueTask.CompletedTask;
+    }
+}
+
+/// <summary>
 /// Unit tests for PermissionsService.
 /// Tests verify permission registration, session management, capability compilation, and role-based access.
 /// </summary>
@@ -17,6 +31,7 @@ public class PermissionsServiceTests
     private readonly Mock<ILogger<PermissionsService>> _mockLogger;
     private readonly Mock<PermissionsServiceConfiguration> _mockConfiguration;
     private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
 
     // State store constants (must match PermissionsService)
     private const string STATE_STORE = "permissions-store";
@@ -31,6 +46,7 @@ public class PermissionsServiceTests
         _mockLogger = new Mock<ILogger<PermissionsService>>();
         _mockConfiguration = new Mock<PermissionsServiceConfiguration>();
         _mockDaprClient = new Mock<DaprClient>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
     }
 
     private PermissionsService CreateService()
@@ -38,7 +54,8 @@ public class PermissionsServiceTests
         return new PermissionsService(
             _mockLogger.Object,
             _mockConfiguration.Object,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockLockProvider.Object);
     }
 
     [Fact]
@@ -50,9 +67,94 @@ public class PermissionsServiceTests
     }
 
     [Fact]
+    public async Task RegisterServicePermissionsAsync_LockAcquisitionFails_ReturnsInternalServerError()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Set up lock to fail
+        var failedLockResponse = new TestLockResponse { Success = false };
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                "permissions-store", // Changed from "lockstore" to match new Redis-based implementation
+                "registered_services_lock",
+                It.IsAny<string>(),
+                30,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLockResponse);
+
+        // Set up empty state for the idempotent check
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<string>(
+                STATE_STORE,
+                It.IsAny<string>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(default(string));
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.IsAny<string>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(default(HashSet<string>)!);
+
+        // Set up state transaction execution (will never be called, but good practice)
+        _mockDaprClient
+            .Setup(d => d.ExecuteStateTransactionAsync(
+                STATE_STORE,
+                It.IsAny<IReadOnlyList<StateTransactionRequest>>(),
+                null,
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var permissions = new ServicePermissionMatrix
+        {
+            ServiceId = "test-service",
+            Version = "1.0.0",
+            Permissions = new Dictionary<string, StatePermissions>
+            {
+                ["default"] = new StatePermissions
+                {
+                    ["user"] = new System.Collections.ObjectModel.Collection<string>
+                    {
+                        "GET:/test/endpoint"
+                    }
+                }
+            }
+        };
+
+        // Act
+        var (statusCode, response) = await service.RegisterServicePermissionsAsync(permissions);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, statusCode);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.Contains("lock", response.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task RegisterServicePermissionsAsync_StoresPermissionMatrix()
     {
         // Arrange
+        // Capture error logs to see what exception is being thrown
+        Exception? capturedException = null;
+        _mockLogger
+            .Setup(l => l.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.IsAny<It.IsAnyType>(),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()))
+            .Callback(new InvocationAction(invocation =>
+            {
+                capturedException = invocation.Arguments[3] as Exception;
+            }));
+
         var service = CreateService();
 
         // Set up empty existing state (using default! to satisfy Moq's nullability requirements)
@@ -65,19 +167,76 @@ public class PermissionsServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(default(HashSet<string>)!);
 
-        // Set up distributed lock to succeed
-        // TryLockResponse is sealed so we create a real instance with Success = true
-#pragma warning disable DAPR_DISTRIBUTEDLOCK
-        var lockResponse = new TryLockResponse { Success = true };
+        // Set up empty existing hash
         _mockDaprClient
-            .Setup(d => d.Lock(
-                "lockstore",
+            .Setup(d => d.GetStateAsync<string>(
+                STATE_STORE,
+                It.IsAny<string>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(default(string));
+
+        // Set up state transaction execution
+        _mockDaprClient
+            .Setup(d => d.ExecuteStateTransactionAsync(
+                STATE_STORE,
+                It.IsAny<IReadOnlyList<StateTransactionRequest>>(),
+                null,
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Set up save state operations for different types
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.IsAny<string>(),
+                It.IsAny<HashSet<string>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync<string>(
+                STATE_STORE,
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync<object>(
+                STATE_STORE,
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Set up event publishing
+        _mockDaprClient
+            .Setup(d => d.PublishEventAsync(
+                "bannou-pubsub",
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Set up distributed lock to succeed
+        // Create a test lock response that properly handles disposal without needing DaprClient
+        var lockResponse = new TestLockResponse { Success = true };
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                "permissions-store", // Changed from "lockstore" to match new Redis-based implementation
                 "registered_services_lock",
                 It.IsAny<string>(),
                 30,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(lockResponse);
-#pragma warning restore DAPR_DISTRIBUTEDLOCK
 
         // Create permission matrix for orchestrator-like service
         var permissions = new ServicePermissionMatrix
@@ -101,7 +260,7 @@ public class PermissionsServiceTests
         var (statusCode, response) = await service.RegisterServicePermissionsAsync(permissions);
 
         // Assert
-        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.True(statusCode == StatusCodes.OK, $"Expected OK but got {statusCode}. Exception: {capturedException?.GetType().Name}: {capturedException?.Message}\nStack: {capturedException?.StackTrace}");
         Assert.NotNull(response);
         Assert.True(response.Success);
         Assert.Equal("orchestrator", response.ServiceId);

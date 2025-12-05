@@ -1239,6 +1239,55 @@
             Add property headers.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.ILockResponse">
+            <summary>
+            Result of a distributed lock acquisition attempt.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ILockResponse.Success">
+            <summary>
+            Gets a value indicating whether the lock was successfully acquired.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.IDistributedLockProvider">
+            <summary>
+            Provides distributed locking functionality for services.
+            Abstraction over Dapr distributed lock API to enable unit testing.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.IDistributedLockProvider.LockAsync(System.String,System.String,System.String,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Attempts to acquire a distributed lock.
+            </summary>
+            <param name="storeName">The name of the lock store component</param>
+            <param name="resourceId">The identifier of the resource to lock</param>
+            <param name="lockOwner">The identifier of the lock owner</param>
+            <param name="expiryInSeconds">Lock expiration time in seconds</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Lock response indicating success and providing disposal</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.DaprLockResponse">
+            <summary>
+            Wrapper around Dapr's TryLockResponse implementing ILockResponse.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RedisDistributedLockProvider">
+            <summary>
+            Redis-based implementation using Dapr state store SET NX pattern.
+            More reliable than experimental Dapr lock API.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RedisDistributedLockProvider.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.RedisDistributedLockProvider})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.RedisDistributedLockProvider.LockAsync(System.String,System.String,System.String,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.RedisLockResponse">
+            <summary>
+            Redis-based lock response that releases lock on disposal.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Logging.ServiceLogging">
             <summary>
             A collection of helpers for generating service logs.
