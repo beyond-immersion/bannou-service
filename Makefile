@@ -288,7 +288,7 @@ test-http:
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.http.yml" \
-		logs -f bannou-http-tester & ); \
+		logs -f bannou & ); \
 	SERVICE_DOMAIN=test-http PLUGIN=$(PLUGIN) docker compose -p bannou-test-http \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
@@ -336,7 +336,7 @@ test-edge:
 		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
-		logs -f bannou-edge-tester & ); \
+		logs -f bannou & ); \
 	docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \

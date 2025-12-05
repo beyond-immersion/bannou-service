@@ -134,7 +134,19 @@ public class ConnectEventsController : ControllerBase
             {
                 foreach (var sessionElement in sessionsElement.EnumerateArray())
                 {
-                    var sessionId = sessionElement.GetString();
+                    // Handle both string and number types (defensive parsing for CloudEvents compatibility)
+                    string? sessionId = null;
+
+                    if (sessionElement.ValueKind == JsonValueKind.String)
+                    {
+                        sessionId = sessionElement.GetString();
+                    }
+                    else if (sessionElement.ValueKind == JsonValueKind.Number)
+                    {
+                        // Convert number to string (handles edge cases where GUIDs might be serialized as numbers)
+                        sessionId = sessionElement.GetRawText();
+                    }
+
                     if (!string.IsNullOrEmpty(sessionId))
                     {
                         sessionIds.Add(sessionId);
