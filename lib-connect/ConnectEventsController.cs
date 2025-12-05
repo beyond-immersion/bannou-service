@@ -170,7 +170,17 @@ public class ConnectEventsController : ControllerBase
 
             if (actualEventData.Value.TryGetProperty("reason", out var reasonElement))
             {
-                reason = reasonElement.GetString();
+                // Handle both string and number types (System.Text.Json serializes enums as numbers by default)
+                if (reasonElement.ValueKind == JsonValueKind.String)
+                {
+                    reason = reasonElement.GetString();
+                }
+                else if (reasonElement.ValueKind == JsonValueKind.Number)
+                {
+                    // Enum serialized as number - convert to string representation
+                    var reasonValue = reasonElement.GetInt32();
+                    reason = ((SessionInvalidatedEventReason)reasonValue).ToString();
+                }
             }
 
             if (actualEventData.Value.TryGetProperty("disconnectClients", out var disconnectElement))
