@@ -59,6 +59,38 @@ runs:
         export CONNECT_ENDPOINT=localhost:9080/connect
         DAEMON_MODE=true dotnet run --project edge-tester --configuration Release --no-build
 
+    - name: Dump Service Logs on Failure
+      if: failure()
+      shell: bash
+      run: |
+        echo "📋 Dumping all service logs for debugging..."
+        echo "=== BANNOU SERVICE LOGS (ALL) ==="
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          logs bannou || echo "Failed to get bannou logs"
+        echo ""
+        echo "=== OPENRESTY LOGS (last 500) ==="
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          logs --tail=500 openresty || echo "Failed to get openresty logs"
+        echo ""
+        echo "=== RABBITMQ LOGS (last 500) ==="
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          logs --tail=500 rabbitmq || echo "Failed to get rabbitmq logs"
+
     - name: Skip Notice
       if: steps.check-sdk.outputs.sdk_available != 'true'
       shell: bash

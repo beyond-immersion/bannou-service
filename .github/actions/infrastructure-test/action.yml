@@ -31,6 +31,25 @@ runs:
           -f "./provisioning/docker-compose.test.infrastructure.yml" \
           up --exit-code-from=bannou-infra-tester
 
+    - name: Dump Service Logs on Failure
+      if: failure()
+      shell: bash
+      run: |
+        echo "📋 Dumping all service logs for debugging..."
+        echo "=== BANNOU SERVICE LOGS (ALL) ==="
+        docker compose -p bannou-ci-infra \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.infrastructure.yml" \
+          logs bannou || echo "Failed to get bannou logs"
+        echo ""
+        echo "=== DAPR SIDECAR LOGS (ALL) ==="
+        docker compose -p bannou-ci-infra \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.infrastructure.yml" \
+          logs bannou-dapr || echo "Failed to get dapr sidecar logs"
+
     - name: Cleanup Infrastructure Tests
       if: always()
       shell: bash

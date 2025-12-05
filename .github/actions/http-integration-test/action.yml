@@ -51,21 +51,29 @@ runs:
       shell: bash
       run: |
         echo "📋 Dumping all service logs for debugging..."
-        echo "=== BANNOU SERVICE LOGS ==="
+        echo "=== BANNOU SERVICE LOGS (ALL) ==="
         docker compose -p bannou-ci-http \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.http.yml" \
-          logs --tail=500 bannou || echo "Failed to get bannou logs"
+          logs bannou || echo "Failed to get bannou logs"
         echo ""
-        echo "=== RABBITMQ LOGS ==="
+        echo "=== DAPR SIDECAR LOGS (ALL) ==="
         docker compose -p bannou-ci-http \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.http.yml" \
-          logs --tail=200 rabbitmq || echo "Failed to get rabbitmq logs"
+          logs bannou-dapr || echo "Failed to get dapr sidecar logs"
+        echo ""
+        echo "=== RABBITMQ LOGS (last 500) ==="
+        docker compose -p bannou-ci-http \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.http.yml" \
+          logs --tail=500 rabbitmq || echo "Failed to get rabbitmq logs"
 
     - name: Cleanup HTTP Integration Services
       if: always()
