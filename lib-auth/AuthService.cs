@@ -2009,9 +2009,9 @@ public class AuthService : IAuthService
                         _logger.LogInformation("Found existing account by email {Email} for {Provider} user",
                             userInfo.Email, providerName);
                     }
-                    catch (Exception ex)
+                    catch (Exception innerEx)
                     {
-                        _logger.LogError(ex, "Email conflict but couldn't find account: {Email}", userInfo.Email);
+                        _logger.LogError(innerEx, "Email conflict but couldn't find account: {Email}", userInfo.Email);
                         return null;
                     }
                 }
