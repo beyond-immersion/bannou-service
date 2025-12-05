@@ -2168,6 +2168,15 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
+    /// Public wrapper for invalidating all sessions for a specific account.
+    /// Called by AuthEventsController when account.deleted event is received.
+    /// </summary>
+    public async Task InvalidateAccountSessionsAsync(Guid accountId)
+    {
+        await InvalidateAllSessionsForAccountAsync(accountId, SessionInvalidatedEventReason.Account_deleted);
+    }
+
+    /// <summary>
     /// Invalidate all sessions for a specific account.
     /// Used when account is deleted to ensure security.
     /// Publishes SessionInvalidatedEvent to notify Connect service to disconnect clients.
