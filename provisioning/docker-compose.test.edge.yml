@@ -40,5 +40,6 @@ services:
     networks:
       - external  # Only on external network - reaches OpenResty, not bannou directly
     env_file: ../.env.test.edge
+    environment:
+      - DAEMON_MODE=true  # Run tests and exit (don't wait for stdin)
     stdin_open: false
-    command: ["dotnet", "run", "--project", "edge-tester", "--configuration", "Release", "--no-build"]

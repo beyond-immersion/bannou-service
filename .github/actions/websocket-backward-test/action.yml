@@ -4,24 +4,6 @@ description: 'Run WebSocket tests with published NuGet SDK for backward compatib
 runs:
   using: 'composite'
   steps:
-    - name: Start WebSocket Services
-      shell: bash
-      run: |
-        echo "📋 Using .env.test.edge configuration for backward-compatibility WebSocket testing..."
-        # Override BANNOU_CONNECTURL so Auth service returns external URL accessible from CI host
-        # (Auth returns ConnectUrl in login responses, edge-tester runs on host, not in Docker)
-        BANNOU_CONNECTURL=ws://localhost:9080/connect \
-        docker compose -p bannou-ci-edge \
-          -f "./provisioning/docker-compose.yml" \
-          -f "./provisioning/docker-compose.services.yml" \
-          -f "./provisioning/docker-compose.ingress.yml" \
-          -f "./provisioning/docker-compose.test.yml" \
-          -f "./provisioning/docker-compose.test.edge.yml" \
-          up -d
-
-        echo "⏳ Waiting for WebSocket services to be ready..."
-        sleep 30
-
     - name: Check Published SDK Availability
       id: check-sdk
       shell: bash
@@ -36,31 +18,51 @@ runs:
           echo "This is expected for the first release. Tests will run after initial SDK publication."
         fi
 
-    - name: Build Edge Tester with Published SDK
+    - name: Build Edge Tester Container with Published SDK
       if: steps.check-sdk.outputs.sdk_available == 'true'
       shell: bash
       run: |
-        echo "🔧 Building edge-tester with published NuGet dependency..."
-        dotnet build edge-tester --configuration Release -p:UsePublishedSDK=true --no-dependencies
+        echo "📋 Using .env.test.edge configuration for backward-compatibility WebSocket testing..."
+        echo "🔧 Building edge-tester container with published SDK (UsePublishedSDK=true)..."
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          build bannou-edge-tester --build-arg UsePublishedSDK=true
 
     - name: Execute WebSocket Backward Compatibility Tests
       if: steps.check-sdk.outputs.sdk_available == 'true'
       shell: bash
       run: |
         echo "📡 Running WebSocket tests with published NuGet SDK (backwards compatibility)..."
-        # Source .env.test.edge to get client configuration (endpoints, credentials)
-        # Using set -a / set +a pattern to automatically export sourced variables
-        set -a && source .env.test.edge && set +a
-        # Override Docker hostnames with localhost for CI host access
-        # (edge-tester runs on CI host, not in Docker, so it needs localhost)
-        # OpenResty maps internal port 80 to host port 9080 (see docker-compose.ingress.yml)
-        export OPENRESTY_HOST=localhost
-        export OPENRESTY_PORT=9080
-        export REGISTER_ENDPOINT=localhost:9080/auth/register
-        export LOGIN_CREDENTIALS_ENDPOINT=localhost:9080/auth/login
-        export LOGIN_TOKEN_ENDPOINT=localhost:9080/auth/refresh
-        export CONNECT_ENDPOINT=localhost:9080/connect
-        DAEMON_MODE=true dotnet run --project edge-tester --configuration Release --no-build
+        # Start all services in detached mode
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          up -d
+
+        # Stream test logs in background for visibility
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          logs -f bannou-edge-tester &
+
+        # Wait for the edge-tester container to complete and capture its exit code
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          wait bannou-edge-tester
 
     - name: Dump Service Logs on Failure
       if: failure()
