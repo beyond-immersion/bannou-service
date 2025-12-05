@@ -124,6 +124,9 @@ public class ConnectEventsController : ControllerBase
                 return Ok(); // Don't fail - just ignore empty/invalid events
             }
 
+            // DEBUG: Log the actual JSON payload to diagnose type mismatch issue
+            _logger.LogWarning("[DEBUG] Session invalidation event raw JSON: {EventJson}", actualEventData.Value.GetRawText());
+
             // Extract session IDs and reason
             var sessionIds = new List<string>();
             string? reason = null;
@@ -132,8 +135,14 @@ public class ConnectEventsController : ControllerBase
             if (actualEventData.Value.TryGetProperty("sessionIds", out var sessionsElement) &&
                 sessionsElement.ValueKind == JsonValueKind.Array)
             {
+                _logger.LogWarning("[DEBUG] sessionIds array has {Count} elements", sessionsElement.GetArrayLength());
+
                 foreach (var sessionElement in sessionsElement.EnumerateArray())
                 {
+                    // DEBUG: Log the actual type and raw value
+                    _logger.LogWarning("[DEBUG] sessionId element: ValueKind={ValueKind}, RawText={RawText}",
+                        sessionElement.ValueKind, sessionElement.GetRawText());
+
                     // Handle both string and number types (defensive parsing for CloudEvents compatibility)
                     string? sessionId = null;
 
@@ -144,6 +153,11 @@ public class ConnectEventsController : ControllerBase
                     else if (sessionElement.ValueKind == JsonValueKind.Number)
                     {
                         // Convert number to string (handles edge cases where GUIDs might be serialized as numbers)
+                        sessionId = sessionElement.GetRawText();
+                    }
+                    else
+                    {
+                        _logger.LogError("[DEBUG] UNEXPECTED ValueKind: {ValueKind} - using GetRawText()", sessionElement.ValueKind);
                         sessionId = sessionElement.GetRawText();
                     }
 
