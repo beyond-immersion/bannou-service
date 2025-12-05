@@ -1252,7 +1252,7 @@
         <member name="T:BeyondImmersion.BannouService.IDistributedLockProvider">
             <summary>
             Provides distributed locking functionality for services.
-            Abstraction over Dapr distributed lock API to enable unit testing.
+            Uses Redis state store with ETag-based optimistic concurrency for reliable distributed locks.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.IDistributedLockProvider.LockAsync(System.String,System.String,System.String,System.Int32,System.Threading.CancellationToken)">
@@ -1265,11 +1265,6 @@
             <param name="expiryInSeconds">Lock expiration time in seconds</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns>Lock response indicating success and providing disposal</returns>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.DaprLockResponse">
-            <summary>
-            Wrapper around Dapr's TryLockResponse implementing ILockResponse.
-            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.RedisDistributedLockProvider">
             <summary>

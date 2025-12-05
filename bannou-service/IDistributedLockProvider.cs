@@ -15,7 +15,7 @@ public interface ILockResponse : IAsyncDisposable
 
 /// <summary>
 /// Provides distributed locking functionality for services.
-/// Abstraction over Dapr distributed lock API to enable unit testing.
+/// Uses Redis state store with ETag-based optimistic concurrency for reliable distributed locks.
 /// </summary>
 public interface IDistributedLockProvider
 {
@@ -35,28 +35,6 @@ public interface IDistributedLockProvider
         int expiryInSeconds,
         CancellationToken cancellationToken = default);
 }
-
-/// <summary>
-/// Wrapper around Dapr's TryLockResponse implementing ILockResponse.
-/// </summary>
-#pragma warning disable DAPR_DISTRIBUTEDLOCK
-internal class DaprLockResponse : ILockResponse
-{
-    private readonly TryLockResponse _daprResponse;
-
-    public DaprLockResponse(TryLockResponse daprResponse)
-    {
-        _daprResponse = daprResponse ?? throw new ArgumentNullException(nameof(daprResponse));
-    }
-
-    public bool Success => _daprResponse.Success;
-
-    public async ValueTask DisposeAsync()
-    {
-        await _daprResponse.DisposeAsync();
-    }
-}
-#pragma warning restore DAPR_DISTRIBUTEDLOCK
 
 /// <summary>
 /// Redis-based implementation using Dapr state store SET NX pattern.

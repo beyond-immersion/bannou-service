@@ -29,7 +29,7 @@ services:
 
   # Dapr sidecar - shares network stack with bannou container
   bannou-dapr:
-    image: "daprio/daprd:edge"
+    image: "daprio/daprd:1.16.3"
     command: [
       "./daprd",
       "--app-id", "bannou",
@@ -52,7 +52,7 @@ services:
 
   # Dapr placement service - uses default bridge network
   placement:
-    image: "daprio/placement"
+    image: "daprio/placement:1.16.3"
     command: [
       "./placement", "--port", "50006"
     ]
