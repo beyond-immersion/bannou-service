@@ -341,88 +341,55 @@ public class PermissionsService : IPermissionsService
             await _daprClient.SaveStateAsync(STATE_STORE, serviceRegisteredKey, registrationInfo, cancellationToken: cancellationToken);
             _logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}", body.ServiceId, serviceRegisteredKey);
 
-            // Also update the centralized registered_services list (enables "list all registered services" queries)
+            // Update the centralized registered_services list (enables "list all registered services" queries)
             // Uses Dapr distributed lock to prevent race conditions when multiple services register concurrently
+            // NO FALLBACK - if lock fails, registration fails. We don't mask failures.
             const string LOCK_STORE = "lockstore";
             const string LOCK_RESOURCE = "registered_services_lock";
             var lockOwnerId = $"{body.ServiceId}-{Guid.NewGuid():N}";
 
-            try
-            {
-                // Acquire distributed lock to serialize updates to the shared registered_services list
-                // Note: Dapr distributed lock API is alpha, suppress the warning
+            // Acquire distributed lock to serialize updates to the shared registered_services list
+            // Note: Dapr distributed lock API is alpha, suppress the warning
 #pragma warning disable DAPR_DISTRIBUTEDLOCK
-                await using var serviceLock = await _daprClient.Lock(
-                    LOCK_STORE,
-                    LOCK_RESOURCE,
-                    lockOwnerId,
-                    expiryInSeconds: 30,  // Lock expires after 30 seconds if not released
-                    cancellationToken: cancellationToken);
+            await using var serviceLock = await _daprClient.Lock(
+                LOCK_STORE,
+                LOCK_RESOURCE,
+                lockOwnerId,
+                expiryInSeconds: 30,  // Lock expires after 30 seconds if not released
+                cancellationToken: cancellationToken);
 #pragma warning restore DAPR_DISTRIBUTEDLOCK
 
-                if (serviceLock.Success)
-                {
-                    _logger.LogInformation("Acquired lock for {ServiceId} to update registered services", body.ServiceId);
-
-                    // Now we have exclusive access - safe to read-modify-write
-                    var lockedServices = await _daprClient.GetStateAsync<HashSet<string>>(
-                        STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
-
-                    _logger.LogInformation("Current registered services (locked): {Services}",
-                        string.Join(", ", lockedServices));
-
-                    if (!lockedServices.Contains(body.ServiceId))
-                    {
-                        lockedServices.Add(body.ServiceId);
-                        await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, lockedServices, cancellationToken: cancellationToken);
-                        _logger.LogInformation("Successfully added {ServiceId} to registered services list. Now: {Services}",
-                            body.ServiceId, string.Join(", ", lockedServices));
-                    }
-                    else
-                    {
-                        _logger.LogInformation("Service {ServiceId} already in registered services list", body.ServiceId);
-                    }
-                }
-                else
-                {
-                    // Failed to acquire lock - fall back to optimistic update
-                    _logger.LogWarning("Failed to acquire lock for {ServiceId}, falling back to optimistic update", body.ServiceId);
-
-                    var fallbackServices = await _daprClient.GetStateAsync<HashSet<string>>(
-                        STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
-
-                    if (!fallbackServices.Contains(body.ServiceId))
-                    {
-                        fallbackServices.Add(body.ServiceId);
-                        await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, fallbackServices, cancellationToken: cancellationToken);
-                        _logger.LogInformation("Added {ServiceId} to registered services via fallback (lock failed). Now: {Services}",
-                            body.ServiceId, string.Join(", ", fallbackServices));
-                    }
-                }
-            }
-            catch (Exception lockEx)
+            if (!serviceLock.Success)
             {
-                // Lock acquisition or state update failed - fall back to non-locked update
-                _logger.LogWarning(lockEx, "Lock-based update failed for {ServiceId}, falling back to optimistic update", body.ServiceId);
-
-                try
+                _logger.LogError("Failed to acquire distributed lock for {ServiceId} - cannot safely update registered services. " +
+                    "This indicates a problem with the lockstore component configuration.", body.ServiceId);
+                return (StatusCodes.InternalServerError, new RegistrationResponse
                 {
-                    // Optimistic update without lock - HashSet deduplication handles race conditions
-                    var exceptionFallbackServices = await _daprClient.GetStateAsync<HashSet<string>>(
-                        STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+                    ServiceId = body.ServiceId,
+                    Success = false,
+                    Message = "Failed to acquire distributed lock - check lockstore component configuration"
+                });
+            }
 
-                    if (!exceptionFallbackServices.Contains(body.ServiceId))
-                    {
-                        exceptionFallbackServices.Add(body.ServiceId);
-                        await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, exceptionFallbackServices, cancellationToken: cancellationToken);
-                        _logger.LogInformation("Added {ServiceId} to registered services via fallback (optimistic update). Now: {Services}",
-                            body.ServiceId, string.Join(", ", exceptionFallbackServices));
-                    }
-                }
-                catch (Exception fallbackEx)
-                {
-                    _logger.LogWarning(fallbackEx, "Fallback update also failed for {ServiceId}", body.ServiceId);
-                }
+            _logger.LogInformation("Acquired lock for {ServiceId} to update registered services", body.ServiceId);
+
+            // Now we have exclusive access - safe to read-modify-write
+            var lockedServices = await _daprClient.GetStateAsync<HashSet<string>>(
+                STATE_STORE, REGISTERED_SERVICES_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+
+            _logger.LogInformation("Current registered services (locked): {Services}",
+                string.Join(", ", lockedServices));
+
+            if (!lockedServices.Contains(body.ServiceId))
+            {
+                lockedServices.Add(body.ServiceId);
+                await _daprClient.SaveStateAsync(STATE_STORE, REGISTERED_SERVICES_KEY, lockedServices, cancellationToken: cancellationToken);
+                _logger.LogInformation("Successfully added {ServiceId} to registered services list. Now: {Services}",
+                    body.ServiceId, string.Join(", ", lockedServices));
+            }
+            else
+            {
+                _logger.LogInformation("Service {ServiceId} already in registered services list", body.ServiceId);
             }
 
             // Get all active sessions and recompile
