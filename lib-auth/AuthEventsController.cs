@@ -37,39 +37,12 @@ public class AuthEventsController : ControllerBase
     {
         try
         {
-            // Read the request body - Dapr pubsub delivers CloudEvents format
-            string rawBody;
-            using (var reader = new StreamReader(Request.Body, leaveOpen: true))
-            {
-                rawBody = await reader.ReadToEndAsync();
-            }
-
-            _logger.LogInformation("[AUTH-EVENT] Received account.deleted event - raw body length: {Length}",
-                rawBody?.Length ?? 0);
-
-            if (string.IsNullOrWhiteSpace(rawBody))
-            {
-                _logger.LogWarning("[AUTH-EVENT] Received empty body for account.deleted event");
-                return BadRequest("Empty event body");
-            }
-
-            // Parse CloudEvents wrapper to extract the actual event data
-            var cloudEvent = JsonSerializer.Deserialize<JsonElement>(rawBody);
-
-            if (!cloudEvent.TryGetProperty("data", out var dataElement))
-            {
-                _logger.LogWarning("[AUTH-EVENT] CloudEvent missing 'data' property for account.deleted");
-                return BadRequest("Missing event data");
-            }
-
-            // Deserialize the actual AccountDeletedEvent from the data property
-            var accountDeletedEvent = JsonSerializer.Deserialize<AccountDeletedEvent>(
-                dataElement.GetRawText(),
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            // Read and parse event using shared helper (handles both CloudEvents and raw formats)
+            var accountDeletedEvent = await DaprEventHelper.ReadEventAsync<AccountDeletedEvent>(Request);
 
             if (accountDeletedEvent == null)
             {
-                _logger.LogWarning("[AUTH-EVENT] Failed to deserialize AccountDeletedEvent");
+                _logger.LogWarning("[AUTH-EVENT] Failed to parse AccountDeletedEvent from request body");
                 return BadRequest("Invalid event data");
             }
 

@@ -37,52 +37,25 @@ public class ConnectEventsController : ControllerBase
     {
         try
         {
-            // Read the request body - Dapr pubsub delivers CloudEvents format
-            string rawBody;
-            using (var reader = new StreamReader(Request.Body, leaveOpen: true))
-            {
-                rawBody = await reader.ReadToEndAsync();
-            }
+            // Read and parse event using shared helper (handles both CloudEvents and raw formats)
+            var actualEventData = await DaprEventHelper.ReadEventJsonAsync(Request);
 
-            _logger.LogInformation("Received capabilities-updated event - raw body length: {Length}",
-                rawBody?.Length ?? 0);
-
-            if (string.IsNullOrWhiteSpace(rawBody))
+            if (actualEventData == null)
             {
-                _logger.LogWarning("Received empty capabilities-updated event body");
-                return Ok(); // Don't fail - just ignore empty events
-            }
-
-            // Parse the JSON
-            JsonElement eventObj;
-            try
-            {
-                using var document = JsonDocument.Parse(rawBody);
-                eventObj = document.RootElement.Clone();
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Failed to parse capabilities-updated event as JSON");
-                return Ok(); // Don't fail - malformed events shouldn't break the system
-            }
-
-            // Extract data from CloudEvents format if present
-            JsonElement actualEventData = eventObj;
-            if (eventObj.ValueKind == JsonValueKind.Object && eventObj.TryGetProperty("data", out var dataElement))
-            {
-                actualEventData = dataElement;
+                _logger.LogWarning("Received empty or invalid capabilities-updated event");
+                return Ok(); // Don't fail - just ignore empty/invalid events
             }
 
             // Extract affected sessions and service ID
             string? serviceId = null;
             var affectedSessions = new List<string>();
 
-            if (actualEventData.TryGetProperty("serviceId", out var serviceIdElement))
+            if (actualEventData.Value.TryGetProperty("serviceId", out var serviceIdElement))
             {
                 serviceId = serviceIdElement.GetString();
             }
 
-            if (actualEventData.TryGetProperty("affectedSessions", out var sessionsElement) &&
+            if (actualEventData.Value.TryGetProperty("affectedSessions", out var sessionsElement) &&
                 sessionsElement.ValueKind == JsonValueKind.Array)
             {
                 foreach (var sessionElement in sessionsElement.EnumerateArray())
@@ -142,40 +115,13 @@ public class ConnectEventsController : ControllerBase
     {
         try
         {
-            // Read the request body - Dapr pubsub delivers CloudEvents format
-            string rawBody;
-            using (var reader = new StreamReader(Request.Body, leaveOpen: true))
-            {
-                rawBody = await reader.ReadToEndAsync();
-            }
+            // Read and parse event using shared helper (handles both CloudEvents and raw formats)
+            var actualEventData = await DaprEventHelper.ReadEventJsonAsync(Request);
 
-            _logger.LogInformation("Received session-invalidated event - raw body length: {Length}",
-                rawBody?.Length ?? 0);
-
-            if (string.IsNullOrWhiteSpace(rawBody))
+            if (actualEventData == null)
             {
-                _logger.LogWarning("Received empty session-invalidated event body");
-                return Ok(); // Don't fail - just ignore empty events
-            }
-
-            // Parse the JSON
-            JsonElement eventObj;
-            try
-            {
-                using var document = JsonDocument.Parse(rawBody);
-                eventObj = document.RootElement.Clone();
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Failed to parse session-invalidated event as JSON");
-                return Ok(); // Don't fail - malformed events shouldn't break the system
-            }
-
-            // Extract data from CloudEvents format if present
-            JsonElement actualEventData = eventObj;
-            if (eventObj.ValueKind == JsonValueKind.Object && eventObj.TryGetProperty("data", out var dataElement))
-            {
-                actualEventData = dataElement;
+                _logger.LogWarning("Received empty or invalid session-invalidated event");
+                return Ok(); // Don't fail - just ignore empty/invalid events
             }
 
             // Extract session IDs and reason
@@ -183,7 +129,7 @@ public class ConnectEventsController : ControllerBase
             string? reason = null;
             bool disconnectClients = true;
 
-            if (actualEventData.TryGetProperty("sessionIds", out var sessionsElement) &&
+            if (actualEventData.Value.TryGetProperty("sessionIds", out var sessionsElement) &&
                 sessionsElement.ValueKind == JsonValueKind.Array)
             {
                 foreach (var sessionElement in sessionsElement.EnumerateArray())
@@ -196,12 +142,12 @@ public class ConnectEventsController : ControllerBase
                 }
             }
 
-            if (actualEventData.TryGetProperty("reason", out var reasonElement))
+            if (actualEventData.Value.TryGetProperty("reason", out var reasonElement))
             {
                 reason = reasonElement.GetString();
             }
 
-            if (actualEventData.TryGetProperty("disconnectClients", out var disconnectElement))
+            if (actualEventData.Value.TryGetProperty("disconnectClients", out var disconnectElement))
             {
                 disconnectClients = disconnectElement.GetBoolean();
             }

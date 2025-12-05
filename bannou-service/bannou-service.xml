@@ -703,6 +703,32 @@
             Optional message associated with the response.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.DaprEventHelper">
+            <summary>
+            Helper class for parsing Dapr pub/sub events with CloudEvents format handling.
+            Handles both CloudEvents-wrapped events and raw payloads since Dapr's RabbitMQ
+            component can deliver events in either format depending on timing and configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.DaprEventHelper.ReadEventJsonAsync(Microsoft.AspNetCore.Http.HttpRequest)">
+            <summary>
+            Reads and parses a Dapr pub/sub event from the HTTP request body, returning the unwrapped JSON element.
+            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
+            Use this method when you need to manually extract properties from the event.
+            </summary>
+            <param name="request">The HTTP request containing the event</param>
+            <returns>The unwrapped event JSON element, or null if parsing fails</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.DaprEventHelper.ReadEventAsync``1(Microsoft.AspNetCore.Http.HttpRequest,System.Text.Json.JsonSerializerOptions)">
+            <summary>
+            Reads and parses a Dapr pub/sub event from the HTTP request body.
+            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
+            </summary>
+            <typeparam name="T">The event model type to deserialize</typeparam>
+            <param name="request">The HTTP request containing the event</param>
+            <param name="options">Optional JSON serializer options (defaults to PropertyNameCaseInsensitive)</param>
+            <returns>The deserialized event model, or null if parsing fails</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.AppRunningStates">
             <summary>
             Application running states for service lifecycle management.
