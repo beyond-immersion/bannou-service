@@ -977,7 +977,9 @@ public class AuthService : IAuthService
                     return (StatusCodes.Unauthorized, null);
                 }
 
-                _logger.LogInformation("🔍 SessionDataModel AFTER GetStateAsync - SessionId: '{SessionId}' (type: {Type})", sessionData.SessionId, sessionData.SessionId?.GetType().Name ?? "null");
+                // Log ALL properties to identify which ones deserialize correctly
+                _logger.LogInformation("🔍 SESSION DATA DUMP - AccountId: {AccountId}, Email: '{Email}', DisplayName: '{DisplayName}', SessionId: '{SessionId}', CreatedAtUnix: {CreatedAtUnix}, ExpiresAtUnix: {ExpiresAtUnix}, RolesCount: {RolesCount}",
+                    sessionData.AccountId, sessionData.Email, sessionData.DisplayName, sessionData.SessionId, sessionData.CreatedAtUnix, sessionData.ExpiresAtUnix, sessionData.Roles?.Count ?? 0);
                 _logger.LogInformation("🔍 EXPIRATION CHECK - ExpiresAtUnix: {ExpiresAtUnix}, ExpiresAt: '{ExpiresAt}', UtcNow: '{UtcNow}', Expired: {IsExpired}",
                     sessionData.ExpiresAtUnix, sessionData.ExpiresAt, DateTimeOffset.UtcNow, sessionData.ExpiresAt < DateTimeOffset.UtcNow);
 
@@ -1117,7 +1119,9 @@ public class AuthService : IAuthService
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes)
         };
 
-        _logger.LogInformation("🔍 SessionDataModel BEFORE SaveStateAsync - SessionId: '{SessionId}' (type: {Type})", sessionData.SessionId, sessionData.SessionId.GetType().Name);
+        // Log ALL properties being saved for debugging
+        _logger.LogInformation("🔍 SAVING SESSION DUMP - sessionKey: '{SessionKey}', AccountId: {AccountId}, Email: '{Email}', SessionId: '{SessionId}', CreatedAtUnix: {CreatedAtUnix}, ExpiresAtUnix: {ExpiresAtUnix}, RolesCount: {RolesCount}",
+            sessionKey, sessionData.AccountId, sessionData.Email, sessionData.SessionId, sessionData.CreatedAtUnix, sessionData.ExpiresAtUnix, sessionData.Roles?.Count ?? 0);
         _logger.LogInformation("🔍 SAVING SESSION - ExpiresAtUnix: {ExpiresAtUnix}, ExpiresAt: '{ExpiresAt}', TTL: {TtlSeconds} seconds",
             sessionData.ExpiresAtUnix, sessionData.ExpiresAt, _configuration.JwtExpirationMinutes * 60);
 
@@ -1129,6 +1133,14 @@ public class AuthService : IAuthService
             cancellationToken: cancellationToken);
 
         _logger.LogInformation("🔍 AFTER SaveStateAsync - stored session:{SessionKey}", sessionKey);
+
+        // CRITICAL DEBUG: Verify round-trip immediately after save
+        var verifyData = await _daprClient.GetStateAsync<SessionDataModel>(
+            REDIS_STATE_STORE,
+            $"session:{sessionKey}",
+            cancellationToken: cancellationToken);
+        _logger.LogInformation("🔍 VERIFY ROUND-TRIP - IsNull: {IsNull}, ExpiresAtUnix: {ExpiresAtUnix}, CreatedAtUnix: {CreatedAtUnix}",
+            verifyData == null, verifyData?.ExpiresAtUnix ?? -1, verifyData?.CreatedAtUnix ?? -1);
 
         // Maintain account-to-sessions index for efficient GetSessions implementation
         await AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
