@@ -212,7 +212,11 @@ public static class Program
             webAppBuilder.Services
                 .AddWebSockets((websocketOptions) => { });
 
-            webAppBuilder.Services.AddDaprClient();
+            webAppBuilder.Services.AddDaprClient(builder =>
+            {
+                // Use same serializer options as Program.DaprClient to ensure consistency
+                builder.UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig);
+            });
 
             // Add core service infrastructure (but not clients - PluginLoader handles those)
             webAppBuilder.Services.AddBannouServiceClients();
