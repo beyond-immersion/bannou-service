@@ -1,37 +1,44 @@
-using BeyondImmersion.BannouService.Connect.Protocol;
+using Dapr.Client;
 using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Connect;
 
 /// <summary>
-/// Redis-based session management for distributed WebSocket connection state.
-/// Replaces in-memory session mappings with persistent, scalable Redis storage.
+/// Dapr-based session management for distributed WebSocket connection state.
+/// Uses Dapr state store and pub/sub components for infrastructure access.
 /// </summary>
-public class RedisSessionManager
+public class DaprSessionManager : ISessionManager
 {
-    private readonly IDatabase _database;
-    private readonly ILogger<RedisSessionManager> _logger;
+    private readonly DaprClient _daprClient;
+    private readonly ILogger<DaprSessionManager> _logger;
 
-    // Redis key patterns
-    private const string SESSION_KEY_PREFIX = "bannou:connect:session:";
-    private const string SESSION_MAPPINGS_KEY_PREFIX = "bannou:connect:mappings:";
-    private const string SESSION_HEARTBEAT_KEY_PREFIX = "bannou:connect:heartbeat:";
+    // Dapr component names (must match component YAML configurations)
+    private const string STATE_STORE = "connect-statestore";
+    private const string PUBSUB_NAME = "bannou-pubsub";
+    private const string SESSION_EVENTS_TOPIC = "connect.session-events";
+
+    // Key prefixes (shorter than Redis version since component is Connect-specific)
+    private const string SESSION_KEY_PREFIX = "session:";
+    private const string SESSION_MAPPINGS_KEY_PREFIX = "mappings:";
+    private const string SESSION_HEARTBEAT_KEY_PREFIX = "heartbeat:";
+    private const string RECONNECTION_TOKEN_KEY_PREFIX = "reconnect:";
 
     // Default TTL values
-    private static readonly TimeSpan SESSION_TTL = TimeSpan.FromHours(24);
-    private static readonly TimeSpan HEARTBEAT_TTL = TimeSpan.FromMinutes(5);
+    private static readonly int SESSION_TTL_SECONDS = (int)TimeSpan.FromHours(24).TotalSeconds;
+    private static readonly int HEARTBEAT_TTL_SECONDS = (int)TimeSpan.FromMinutes(5).TotalSeconds;
 
-    public RedisSessionManager(IConnectionMultiplexer redis, ILogger<RedisSessionManager> logger)
+    /// <summary>
+    /// Creates a new DaprSessionManager with the specified Dapr client.
+    /// </summary>
+    public DaprSessionManager(DaprClient daprClient, ILogger<DaprSessionManager> logger)
     {
-        _database = redis.GetDatabase();
+        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <summary>
-    /// Stores session service mappings in Redis with TTL.
-    /// </summary>
+    #region Service Mappings
+
+    /// <inheritdoc />
     public async Task SetSessionServiceMappingsAsync(
         string sessionId,
         Dictionary<string, Guid> serviceMappings,
@@ -40,11 +47,15 @@ public class RedisSessionManager
         try
         {
             var key = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
-            var serializedMappings = JsonSerializer.Serialize(serviceMappings);
+            var ttlSeconds = (int)(ttl?.TotalSeconds ?? SESSION_TTL_SECONDS);
 
-            await _database.StringSetAsync(key, serializedMappings, ttl ?? SESSION_TTL);
+            await _daprClient.SaveStateAsync(
+                STATE_STORE,
+                key,
+                serviceMappings,
+                metadata: new Dictionary<string, string> { { "ttlInSeconds", ttlSeconds.ToString() } });
 
-            _logger.LogDebug("Stored service mappings for session {SessionId} in Redis", sessionId);
+            _logger.LogDebug("Stored service mappings for session {SessionId} via Dapr", sessionId);
         }
         catch (Exception ex)
         {
@@ -53,26 +64,20 @@ public class RedisSessionManager
         }
     }
 
-    /// <summary>
-    /// Retrieves session service mappings from Redis.
-    /// </summary>
+    /// <inheritdoc />
     public async Task<Dictionary<string, Guid>?> GetSessionServiceMappingsAsync(string sessionId)
     {
         try
         {
             var key = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
-            var serializedMappings = await _database.StringGetAsync(key);
+            var mappings = await _daprClient.GetStateAsync<Dictionary<string, Guid>>(STATE_STORE, key);
 
-            if (!serializedMappings.HasValue)
+            if (mappings == null)
             {
                 return null;
             }
 
-            // Convert RedisValue to string - safe after HasValue check
-            string mappingsValue = serializedMappings.ToString();
-            var mappings = JsonSerializer.Deserialize<Dictionary<string, Guid>>(mappingsValue);
-
-            _logger.LogDebug("Retrieved service mappings for session {SessionId} from Redis", sessionId);
+            _logger.LogDebug("Retrieved service mappings for session {SessionId} via Dapr", sessionId);
             return mappings;
         }
         catch (Exception ex)
@@ -82,9 +87,11 @@ public class RedisSessionManager
         }
     }
 
-    /// <summary>
-    /// Stores connection state in Redis.
-    /// </summary>
+    #endregion
+
+    #region Connection State
+
+    /// <inheritdoc />
     public async Task SetConnectionStateAsync(
         string sessionId,
         ConnectionStateData stateData,
@@ -93,11 +100,15 @@ public class RedisSessionManager
         try
         {
             var key = SESSION_KEY_PREFIX + sessionId;
-            var serializedState = JsonSerializer.Serialize(stateData);
+            var ttlSeconds = (int)(ttl?.TotalSeconds ?? SESSION_TTL_SECONDS);
 
-            await _database.StringSetAsync(key, serializedState, ttl ?? SESSION_TTL);
+            await _daprClient.SaveStateAsync(
+                STATE_STORE,
+                key,
+                stateData,
+                metadata: new Dictionary<string, string> { { "ttlInSeconds", ttlSeconds.ToString() } });
 
-            _logger.LogDebug("Stored connection state for session {SessionId} in Redis", sessionId);
+            _logger.LogDebug("Stored connection state for session {SessionId} via Dapr", sessionId);
         }
         catch (Exception ex)
         {
@@ -106,26 +117,20 @@ public class RedisSessionManager
         }
     }
 
-    /// <summary>
-    /// Retrieves connection state from Redis.
-    /// </summary>
+    /// <inheritdoc />
     public async Task<ConnectionStateData?> GetConnectionStateAsync(string sessionId)
     {
         try
         {
             var key = SESSION_KEY_PREFIX + sessionId;
-            var serializedState = await _database.StringGetAsync(key);
+            var stateData = await _daprClient.GetStateAsync<ConnectionStateData>(STATE_STORE, key);
 
-            if (!serializedState.HasValue)
+            if (stateData == null)
             {
                 return null;
             }
 
-            // Convert RedisValue to string - safe after HasValue check
-            string stateValue = serializedState.ToString();
-            var stateData = JsonSerializer.Deserialize<ConnectionStateData>(stateValue);
-
-            _logger.LogDebug("Retrieved connection state for session {SessionId} from Redis", sessionId);
+            _logger.LogDebug("Retrieved connection state for session {SessionId} via Dapr", sessionId);
             return stateData;
         }
         catch (Exception ex)
@@ -135,10 +140,11 @@ public class RedisSessionManager
         }
     }
 
-    /// <summary>
-    /// Updates session heartbeat timestamp in Redis.
-    /// Used for connection liveness tracking across distributed instances.
-    /// </summary>
+    #endregion
+
+    #region Heartbeat
+
+    /// <inheritdoc />
     public async Task UpdateSessionHeartbeatAsync(string sessionId, string instanceId)
     {
         try
@@ -149,11 +155,14 @@ public class RedisSessionManager
                 SessionId = sessionId,
                 InstanceId = instanceId,
                 LastSeen = DateTimeOffset.UtcNow,
-                ConnectionCount = 1 // TODO: Support multiple connections per session
+                ConnectionCount = 1
             };
 
-            var serializedHeartbeat = JsonSerializer.Serialize(heartbeatData);
-            await _database.StringSetAsync(key, serializedHeartbeat, HEARTBEAT_TTL);
+            await _daprClient.SaveStateAsync(
+                STATE_STORE,
+                key,
+                heartbeatData,
+                metadata: new Dictionary<string, string> { { "ttlInSeconds", HEARTBEAT_TTL_SECONDS.ToString() } });
 
             _logger.LogDebug("Updated heartbeat for session {SessionId} on instance {InstanceId}",
                 sessionId, instanceId);
@@ -165,52 +174,11 @@ public class RedisSessionManager
         }
     }
 
-    /// <summary>
-    /// Gets all active session heartbeats for monitoring.
-    /// </summary>
-    public async Task<List<SessionHeartbeat>> GetActiveSessionsAsync()
-    {
-        try
-        {
-            var pattern = SESSION_HEARTBEAT_KEY_PREFIX + "*";
-            var server = _database.Multiplexer.GetServer(_database.Multiplexer.GetEndPoints().First());
-            var keys = server.Keys(pattern: pattern);
-
-            var heartbeats = new List<SessionHeartbeat>();
-
-            foreach (var key in keys)
-            {
-                var serializedHeartbeat = await _database.StringGetAsync(key);
-                if (serializedHeartbeat.HasValue)
-                {
-                    // Convert RedisValue to string - serializedHeartbeat comes from Redis string array
-                    string heartbeatValue = serializedHeartbeat.ToString();
-                    var heartbeat = JsonSerializer.Deserialize<SessionHeartbeat>(heartbeatValue);
-                    if (heartbeat != null)
-                    {
-                        heartbeats.Add(heartbeat);
-                    }
-                }
-            }
-
-            return heartbeats;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve active sessions");
-            return new List<SessionHeartbeat>();
-        }
-    }
+    #endregion
 
     #region Reconnection Support
 
-    // Redis key patterns for reconnection
-    private const string RECONNECTION_TOKEN_KEY_PREFIX = "bannou:connect:reconnect:";
-
-    /// <summary>
-    /// Stores a reconnection token mapping to session ID.
-    /// Token is stored for the duration of the reconnection window.
-    /// </summary>
+    /// <inheritdoc />
     public async Task SetReconnectionTokenAsync(
         string reconnectionToken,
         string sessionId,
@@ -219,7 +187,13 @@ public class RedisSessionManager
         try
         {
             var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
-            await _database.StringSetAsync(key, sessionId, reconnectionWindow);
+            var ttlSeconds = (int)reconnectionWindow.TotalSeconds;
+
+            await _daprClient.SaveStateAsync(
+                STATE_STORE,
+                key,
+                sessionId,
+                metadata: new Dictionary<string, string> { { "ttlInSeconds", ttlSeconds.ToString() } });
 
             _logger.LogDebug("Stored reconnection token for session {SessionId} (window: {Window})",
                 sessionId, reconnectionWindow);
@@ -231,24 +205,21 @@ public class RedisSessionManager
         }
     }
 
-    /// <summary>
-    /// Validates a reconnection token and returns the associated session ID.
-    /// Returns null if token is invalid or expired.
-    /// </summary>
+    /// <inheritdoc />
     public async Task<string?> ValidateReconnectionTokenAsync(string reconnectionToken)
     {
         try
         {
             var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
-            var sessionId = await _database.StringGetAsync(key);
+            var sessionId = await _daprClient.GetStateAsync<string>(STATE_STORE, key);
 
-            if (!sessionId.HasValue)
+            if (string.IsNullOrEmpty(sessionId))
             {
                 _logger.LogDebug("Reconnection token not found or expired");
                 return null;
             }
 
-            return sessionId.ToString();
+            return sessionId;
         }
         catch (Exception ex)
         {
@@ -257,15 +228,13 @@ public class RedisSessionManager
         }
     }
 
-    /// <summary>
-    /// Removes a reconnection token after successful reconnection or expiration.
-    /// </summary>
+    /// <inheritdoc />
     public async Task RemoveReconnectionTokenAsync(string reconnectionToken)
     {
         try
         {
             var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
-            await _database.KeyDeleteAsync(key);
+            await _daprClient.DeleteStateAsync(STATE_STORE, key);
 
             _logger.LogDebug("Removed reconnection token");
         }
@@ -276,10 +245,7 @@ public class RedisSessionManager
         }
     }
 
-    /// <summary>
-    /// Initiates reconnection window for a session.
-    /// Preserves session data and service mappings for the reconnection window duration.
-    /// </summary>
+    /// <inheritdoc />
     public async Task InitiateReconnectionWindowAsync(
         string sessionId,
         string reconnectionToken,
@@ -319,11 +285,10 @@ public class RedisSessionManager
         }
     }
 
-    /// <summary>
-    /// Restores a session from reconnection state.
-    /// Clears reconnection fields and restores active session state.
-    /// </summary>
-    public async Task<ConnectionStateData?> RestoreSessionFromReconnectionAsync(string sessionId, string reconnectionToken)
+    /// <inheritdoc />
+    public async Task<ConnectionStateData?> RestoreSessionFromReconnectionAsync(
+        string sessionId,
+        string reconnectionToken)
     {
         try
         {
@@ -354,7 +319,7 @@ public class RedisSessionManager
             state.LastActivity = DateTimeOffset.UtcNow;
 
             // Store updated state with normal TTL
-            await SetConnectionStateAsync(sessionId, state, SESSION_TTL);
+            await SetConnectionStateAsync(sessionId, state, TimeSpan.FromHours(24));
 
             // Remove reconnection token
             await RemoveReconnectionTokenAsync(reconnectionToken);
@@ -371,41 +336,41 @@ public class RedisSessionManager
 
     #endregion
 
-    /// <summary>
-    /// Removes session data from Redis (cleanup on disconnect).
-    /// </summary>
-    public Task RemoveSessionAsync(string sessionId)
+    #region Session Cleanup
+
+    /// <inheritdoc />
+    public async Task RemoveSessionAsync(string sessionId)
     {
         try
         {
-            var batch = _database.CreateBatch();
-
-            // Remove all session-related keys
+            // Remove all session-related keys in parallel
             var sessionKey = SESSION_KEY_PREFIX + sessionId;
             var mappingsKey = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
             var heartbeatKey = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
 
-            _ = batch.KeyDeleteAsync(sessionKey);
-            _ = batch.KeyDeleteAsync(mappingsKey);
-            _ = batch.KeyDeleteAsync(heartbeatKey);
+            var deleteTasks = new[]
+            {
+                _daprClient.DeleteStateAsync(STATE_STORE, sessionKey),
+                _daprClient.DeleteStateAsync(STATE_STORE, mappingsKey),
+                _daprClient.DeleteStateAsync(STATE_STORE, heartbeatKey)
+            };
 
-            batch.Execute();
+            await Task.WhenAll(deleteTasks);
 
-            _logger.LogDebug("Removed session data for {SessionId} from Redis", sessionId);
+            _logger.LogDebug("Removed session data for {SessionId} via Dapr", sessionId);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to remove session data for {SessionId}", sessionId);
             // Don't throw - cleanup failures shouldn't break main functionality
         }
-
-        return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Publishes a session event to Redis pub/sub for cross-instance communication.
-    /// Used for disconnect notifications and other session lifecycle events.
-    /// </summary>
+    #endregion
+
+    #region Session Events
+
+    /// <inheritdoc />
     public async Task PublishSessionEventAsync(string eventType, string sessionId, object? eventData = null)
     {
         try
@@ -418,10 +383,7 @@ public class RedisSessionManager
                 Data = eventData
             };
 
-            var channel = "bannou:connect:session-events";
-            var message = JsonSerializer.Serialize(sessionEvent);
-
-            await _database.Multiplexer.GetSubscriber().PublishAsync(RedisChannel.Literal(channel), message);
+            await _daprClient.PublishEventAsync(PUBSUB_NAME, SESSION_EVENTS_TOPIC, sessionEvent);
 
             _logger.LogDebug("Published session event {EventType} for session {SessionId}",
                 eventType, sessionId);
@@ -433,53 +395,6 @@ public class RedisSessionManager
             // Don't throw - event publishing failures shouldn't break main functionality
         }
     }
-}
 
-/// <summary>
-/// Serializable connection state data for Redis storage.
-/// </summary>
-public class ConnectionStateData
-{
-    public string SessionId { get; set; } = string.Empty;
-    public DateTimeOffset ConnectedAt { get; set; }
-    public DateTimeOffset LastActivity { get; set; }
-    public Dictionary<string, Guid> ServiceMappings { get; set; } = new();
-    public Dictionary<ushort, uint> ChannelSequences { get; set; } = new();
-    public ConnectionFlags Flags { get; set; }
-
-    // Reconnection support fields
-    public string? ReconnectionToken { get; set; }
-    public DateTimeOffset? ReconnectionExpiresAt { get; set; }
-    public DateTimeOffset? DisconnectedAt { get; set; }
-    public List<string>? UserRoles { get; set; }
-
-    /// <summary>
-    /// Whether this session is in reconnection window (disconnected but not expired)
-    /// </summary>
-    public bool IsInReconnectionWindow =>
-        DisconnectedAt.HasValue &&
-        ReconnectionExpiresAt.HasValue &&
-        DateTimeOffset.UtcNow < ReconnectionExpiresAt.Value;
-}
-
-/// <summary>
-/// Session heartbeat data for distributed connection tracking.
-/// </summary>
-public class SessionHeartbeat
-{
-    public string SessionId { get; set; } = string.Empty;
-    public string InstanceId { get; set; } = string.Empty;
-    public DateTimeOffset LastSeen { get; set; }
-    public int ConnectionCount { get; set; }
-}
-
-/// <summary>
-/// Session event for cross-instance communication.
-/// </summary>
-public class SessionEvent
-{
-    public string EventType { get; set; } = string.Empty;
-    public string SessionId { get; set; } = string.Empty;
-    public DateTimeOffset Timestamp { get; set; }
-    public object? Data { get; set; }
+    #endregion
 }

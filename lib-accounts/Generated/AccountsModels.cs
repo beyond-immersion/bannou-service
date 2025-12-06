@@ -36,30 +36,30 @@ using System = global::System;
 public partial class ListAccountsRequest
 {
 
-    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("email")]
     public string? Email { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonPropertyName("provider")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ListAccountsRequestProvider? Provider { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("verified", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("verified")]
     public bool? Verified { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("page", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("page")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
-    [Newtonsoft.Json.JsonProperty("pageSize", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -78,13 +78,13 @@ public partial class GetAccountRequest
     /// <summary>
     /// ID of the account to retrieve
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -103,13 +103,13 @@ public partial class DeleteAccountRequest
     /// <summary>
     /// ID of the account to delete
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -128,13 +128,13 @@ public partial class GetAccountByEmailRequest
     /// <summary>
     /// Email address to look up
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Email { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -153,13 +153,13 @@ public partial class GetAuthMethodsRequest
     /// <summary>
     /// ID of the account
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -178,20 +178,20 @@ public partial class RemoveAuthMethodRequest
     /// <summary>
     /// ID of the account
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// ID of the authentication method to remove
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("methodId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid MethodId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -210,21 +210,21 @@ public partial class GetAccountByProviderRequest
     /// <summary>
     /// OAuth provider type
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public GetAccountByProviderRequestProvider Provider { get; set; } = default!;
 
     /// <summary>
     /// External ID from the provider
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("externalId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string ExternalId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -237,32 +237,32 @@ public partial class GetAccountByProviderRequest
 public partial class CreateAccountRequest
 {
 
-    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Email { get; set; } = default!;
 
     /// <summary>
     /// Pre-hashed password from Auth service
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("passwordHash")]
     public string? PasswordHash { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? DisplayName { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
     public bool EmailVerified { get; set; } = false;
 
-    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -278,23 +278,23 @@ public partial class UpdateAccountRequest
     /// <summary>
     /// ID of the account to update
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? DisplayName { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -310,20 +310,20 @@ public partial class UpdateProfileRequest
     /// <summary>
     /// ID of the account to update
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? DisplayName { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -339,20 +339,20 @@ public partial class UpdatePasswordRequest
     /// <summary>
     /// ID of the account to update
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// New pre-hashed password from Auth service
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("passwordHash")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string PasswordHash { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -368,16 +368,16 @@ public partial class UpdateVerificationRequest
     /// <summary>
     /// ID of the account to update
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
     public bool EmailVerified { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -393,24 +393,24 @@ public partial class AddAuthMethodRequest
     /// <summary>
     /// ID of the account to add auth method to
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AddAuthMethodRequestProvider Provider { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("externalId")]
     public string ExternalId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -423,46 +423,46 @@ public partial class AddAuthMethodRequest
 public partial class AccountResponse
 {
 
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Email { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// BCrypt hashed password for authentication
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("passwordHash", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("passwordHash")]
     public string? PasswordHash { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("updatedAt", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("emailVerified", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
     public bool EmailVerified { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("roles")]
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
-    [Newtonsoft.Json.JsonProperty("authMethods", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("authMethods")]
     public System.Collections.Generic.ICollection<AuthMethodInfo> AuthMethods { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -475,27 +475,27 @@ public partial class AccountResponse
 public partial class AuthMethodInfo
 {
 
-    [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("methodId")]
     public System.Guid MethodId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AuthMethodInfoProvider Provider { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("externalId")]
     public string? ExternalId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("linkedAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("linkedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset LinkedAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -508,28 +508,28 @@ public partial class AuthMethodInfo
 public partial class AuthMethodResponse
 {
 
-    [Newtonsoft.Json.JsonProperty("methodId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("methodId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid MethodId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AuthMethodResponseProvider Provider { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("externalId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("externalId")]
     public string ExternalId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("linkedAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("linkedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset LinkedAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -542,13 +542,13 @@ public partial class AuthMethodResponse
 public partial class AuthMethodsResponse
 {
 
-    [Newtonsoft.Json.JsonProperty("authMethods", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("authMethods")]
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.ICollection<AuthMethodInfo> AuthMethods { get; set; } = new System.Collections.ObjectModel.Collection<AuthMethodInfo>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -561,28 +561,28 @@ public partial class AuthMethodsResponse
 public partial class AccountListResponse
 {
 
-    [Newtonsoft.Json.JsonProperty("accounts", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accounts")]
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.ICollection<AccountResponse> Accounts { get; set; } = new System.Collections.ObjectModel.Collection<AccountResponse>();
 
-    [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("page", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("page")]
     public int Page { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("pageSize", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
     public int PageSize { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("hasNextPage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("hasNextPage")]
     public bool HasNextPage { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("hasPreviousPage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("hasPreviousPage")]
     public bool HasPreviousPage { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -601,46 +601,46 @@ public partial class AccountCreatedEvent
     /// <summary>
     /// Unique identifier for this event
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("eventId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// When the event occurred
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// ID of the created account
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// Email address of the created account
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Email { get; set; } = default!;
 
     /// <summary>
     /// Display name of the created account
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Roles assigned to the account
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("roles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -656,42 +656,42 @@ public partial class AccountCreatedEvent
 public partial class AccountUpdatedEvent
 {
 
-    [Newtonsoft.Json.JsonProperty("eventId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid EventId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// ID of the updated account
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// List of fields that were changed
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("changedFields", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = default!;
 
     /// <summary>
     /// Previous values of changed fields
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("previousValues", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("previousValues")]
     public object PreviousValues { get; set; } = default!;
 
     /// <summary>
     /// New values of changed fields
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("newValues", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("newValues")]
     public object NewValues { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -707,36 +707,36 @@ public partial class AccountUpdatedEvent
 public partial class AccountDeletedEvent
 {
 
-    [Newtonsoft.Json.JsonProperty("eventId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid EventId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// ID of the deleted account
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
     /// Email of the deleted account
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("email", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("email")]
     public string Email { get; set; } = default!;
 
     /// <summary>
     /// Reason for account deletion
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("deletionReason", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("deletionReason")]
     public string DeletionReason { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }

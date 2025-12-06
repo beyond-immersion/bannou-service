@@ -1,6 +1,5 @@
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System.Net.Http;
 using System.Text;
 
@@ -226,11 +225,11 @@ public abstract class DaprServiceClientBase : IDaprClient
     /// <summary>
     /// Sets a custom header for the next service request.
     /// Headers are applied once and then cleared.
-    /// Used internally by extension methods for type-safe fluent API.
+    /// Used by generated clients for type-safe fluent API.
     /// </summary>
     /// <param name="name">Header name (e.g., "X-Custom-Header")</param>
     /// <param name="value">Header value</param>
-    internal void SetHeader(string name, string value)
+    public void SetHeader(string name, string value)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Header name cannot be null or empty", nameof(name));
@@ -240,9 +239,9 @@ public abstract class DaprServiceClientBase : IDaprClient
 
     /// <summary>
     /// Clears the Authorization header.
-    /// Used internally by extension methods for type-safe fluent API.
+    /// Used by generated clients for type-safe fluent API.
     /// </summary>
-    internal void ClearAuthorization()
+    public void ClearAuthorization()
     {
         _authorizationHeader = null;
     }

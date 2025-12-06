@@ -961,11 +961,15 @@ public class AuthService : IAuthService
 
                 var sessionKey = sessionKeyClaim.Value;
 
+                _logger.LogInformation("🔍 BEFORE GetStateAsync - sessionKey from JWT: '{SessionKey}' (type: {Type})", sessionKey, sessionKey.GetType().Name);
+
                 // Lookup session data from Redis using session_key
                 var sessionData = await _daprClient.GetStateAsync<SessionDataModel>(
                     REDIS_STATE_STORE,
                     $"session:{sessionKey}",
                     cancellationToken: cancellationToken);
+
+                _logger.LogInformation("🔍 AFTER GetStateAsync - sessionData IsNull: {IsNull}", sessionData == null);
 
                 if (sessionData == null)
                 {
@@ -973,14 +977,20 @@ public class AuthService : IAuthService
                     return (StatusCodes.Unauthorized, null);
                 }
 
+                _logger.LogInformation("🔍 SessionDataModel AFTER GetStateAsync - SessionId: '{SessionId}' (type: {Type})", sessionData.SessionId, sessionData.SessionId?.GetType().Name ?? "null");
+                _logger.LogInformation("🔍 EXPIRATION CHECK - ExpiresAt: '{ExpiresAt}', UtcNow: '{UtcNow}', Expired: {IsExpired}",
+                    sessionData.ExpiresAt, DateTimeOffset.UtcNow, sessionData.ExpiresAt < DateTimeOffset.UtcNow);
+
                 // Check if session has expired
-                if (sessionData.ExpiresAt < DateTime.UtcNow)
+                if (sessionData.ExpiresAt < DateTimeOffset.UtcNow)
                 {
                     _logger.LogWarning("Session has expired for session_key: {SessionKey}", sessionKey);
                     return (StatusCodes.Unauthorized, null);
                 }
 
                 _logger.LogInformation("JWT token validated successfully for account: {AccountId}", sessionData.AccountId);
+
+                _logger.LogInformation("🔍 BEFORE creating ValidateTokenResponse - Using sessionKey: '{SessionKey}' (NOT sessionData.SessionId: '{SessionDataId}')", sessionKey, sessionData.SessionId);
 
                 // Return session information
                 // IMPORTANT: Return sessionKey (not sessionData.SessionId) so Connect service
@@ -992,7 +1002,7 @@ public class AuthService : IAuthService
                     AccountId = sessionData.AccountId,
                     SessionId = sessionKey,
                     Roles = sessionData.Roles ?? new List<string>(),
-                    RemainingTime = (int)(sessionData.ExpiresAt - DateTime.UtcNow).TotalSeconds
+                    RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds
                 });
             }
             catch (SecurityTokenValidationException ex)
@@ -1035,8 +1045,25 @@ public class AuthService : IAuthService
         public string DisplayName { get; set; } = string.Empty;
         public List<string> Roles { get; set; } = new List<string>();
         public string SessionId { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-        public DateTime ExpiresAt { get; set; }
+
+        // Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
+        public long CreatedAtUnix { get; set; }
+        public long ExpiresAtUnix { get; set; }
+
+        // Expose as DateTimeOffset for code convenience (not serialized)
+        [System.Text.Json.Serialization.JsonIgnore]
+        public DateTimeOffset CreatedAt
+        {
+            get => DateTimeOffset.FromUnixTimeSeconds(CreatedAtUnix);
+            set => CreatedAtUnix = value.ToUnixTimeSeconds();
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public DateTimeOffset ExpiresAt
+        {
+            get => DateTimeOffset.FromUnixTimeSeconds(ExpiresAtUnix);
+            set => ExpiresAtUnix = value.ToUnixTimeSeconds();
+        }
     }
 
     private string HashPassword(string password)
@@ -1076,6 +1103,8 @@ public class AuthService : IAuthService
         var sessionKey = Guid.NewGuid().ToString("N");
         var sessionId = Guid.NewGuid().ToString();
 
+        _logger.LogInformation("🔍 BEFORE SAVE - sessionKey: '{SessionKey}', sessionId: '{SessionId}'", sessionKey, sessionId);
+
         // Store session data in Redis with opaque key
         var sessionData = new SessionDataModel
         {
@@ -1084,9 +1113,13 @@ public class AuthService : IAuthService
             DisplayName = account.DisplayName ?? string.Empty,
             Roles = account.Roles?.ToList() ?? new List<string>(),
             SessionId = sessionId,
-            CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes)
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes)
         };
+
+        _logger.LogInformation("🔍 SessionDataModel BEFORE SaveStateAsync - SessionId: '{SessionId}' (type: {Type})", sessionData.SessionId, sessionData.SessionId.GetType().Name);
+        _logger.LogInformation("🔍 SAVING SESSION - CreatedAt: '{CreatedAt}', ExpiresAt: '{ExpiresAt}', TTL: {TtlSeconds} seconds",
+            sessionData.CreatedAt, sessionData.ExpiresAt, _configuration.JwtExpirationMinutes * 60);
 
         await _daprClient.SaveStateAsync(
             REDIS_STATE_STORE,
@@ -1094,6 +1127,8 @@ public class AuthService : IAuthService
             sessionData,
             metadata: new Dictionary<string, string> { { "ttl", (_configuration.JwtExpirationMinutes * 60).ToString() } },
             cancellationToken: cancellationToken);
+
+        _logger.LogInformation("🔍 AFTER SaveStateAsync - stored session:{SessionKey}", sessionKey);
 
         // Maintain account-to-sessions index for efficient GetSessions implementation
         await AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
@@ -1444,7 +1479,7 @@ public class AuthService : IAuthService
                 if (result.SessionData != null)
                 {
                     // Check if session is still valid
-                    if (result.SessionData.ExpiresAt > DateTime.UtcNow)
+                    if (result.SessionData.ExpiresAt > DateTimeOffset.UtcNow)
                     {
                         sessions.Add(new SessionInfo
                         {

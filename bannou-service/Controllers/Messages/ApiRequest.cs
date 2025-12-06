@@ -6,7 +6,6 @@ namespace BeyondImmersion.BannouService.Controllers.Messages;
 /// <summary>
 /// The basic API controller request payload model.
 /// </summary>
-[JsonObject]
 public class ApiRequest : ApiMessage
 {
     private static HttpClient _httpClient;
@@ -155,7 +154,7 @@ public class ApiRequest : ApiMessage
             StringContent? requestContent = null;
             if (httpMethod == HttpMethodTypes.POST)
             {
-                var requestData = JsonConvert.SerializeObject(this);
+                var requestData = JsonSerializer.Serialize(this, GetType());
                 requestContent = new StringContent(requestData, Encoding.UTF8, MediaTypeNames.Application.Json);
             }
 
@@ -183,7 +182,7 @@ public class ApiRequest : ApiMessage
                 }
 
                 var responseContent = await responseMsg.Content.ReadAsStringAsync();
-                var responseData = JsonConvert.DeserializeObject<T>(responseContent) ?? throw new NullReferenceException();
+                var responseData = JsonSerializer.Deserialize<T>(responseContent) ?? throw new NullReferenceException();
 
                 responseData.SetHeadersToProperties(responseMsg.Headers);
 

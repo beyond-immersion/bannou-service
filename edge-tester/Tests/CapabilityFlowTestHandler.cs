@@ -1,9 +1,9 @@
 using BeyondImmersion.BannouService.Connect.Protocol;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Net.Http.Json;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -174,13 +174,13 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     Console.WriteLine($"   Payload preview: {responseText[..Math.Min(500, responseText.Length)]}");
 
                     // Check if this is a capability manifest
-                    var responseObj = JObject.Parse(responseText);
+                    var responseObj = JsonNode.Parse(responseText)?.AsObject();
 
                     // Capability manifest should have type="capability_manifest" and availableAPIs
-                    var messageType = (string?)responseObj["type"];
+                    var messageType = responseObj?["type"]?.GetValue<string>();
                     if (messageType == "capability_manifest")
                     {
-                        var availableApis = responseObj["availableAPIs"] as JArray;
+                        var availableApis = responseObj?["availableAPIs"]?.AsArray();
                         var apiCount = availableApis?.Count ?? 0;
                         Console.WriteLine($"✅ Received capability manifest with {apiCount} available APIs");
 
@@ -342,12 +342,12 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                     Console.WriteLine($"   Payload preview: {responseText[..Math.Min(300, responseText.Length)]}");
 
-                    var responseObj = JObject.Parse(responseText);
-                    var messageType = (string?)responseObj["type"];
+                    var responseObj = JsonNode.Parse(responseText)?.AsObject();
+                    var messageType = responseObj?["type"]?.GetValue<string>();
 
                     if (messageType == "capability_manifest")
                     {
-                        var availableApis = responseObj["availableAPIs"] as JArray;
+                        var availableApis = responseObj?["availableAPIs"]?.AsArray();
                         var apiCount = availableApis?.Count ?? 0;
                         Console.WriteLine($"✅ Authenticated user received capability manifest with {apiCount} APIs");
 
@@ -360,7 +360,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
                         // Check for presence of authenticated-only services
                         var serviceNames = availableApis?
-                            .Select(api => (string?)api["serviceName"])
+                            .Select(api => api?["serviceName"]?.GetValue<string>())
                             .Where(s => s != null)
                             .Distinct()
                             .ToList() ?? new List<string?>();
@@ -448,7 +448,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 headers = new Dictionary<string, string>(),
                 body = (string?)null
             };
-            var requestPayload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(apiRequest));
+            var requestPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(apiRequest));
 
             var binaryMessage = new BinaryMessage(
                 flags: MessageFlags.None,
@@ -586,17 +586,17 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
             var receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
             var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
-            var initialManifest = JObject.Parse(responseText);
+            var initialManifest = JsonNode.Parse(responseText)?.AsObject();
 
-            var messageType = (string?)initialManifest["type"];
+            var messageType = initialManifest?["type"]?.GetValue<string>();
             if (messageType != "capability_manifest")
             {
                 Console.WriteLine($"❌ Expected capability_manifest but received '{messageType}'");
                 return false;
             }
 
-            var sessionId = (string?)initialManifest["sessionId"];
-            var initialApis = initialManifest["availableAPIs"] as JArray;
+            var sessionId = initialManifest?["sessionId"]?.GetValue<string>();
+            var initialApis = initialManifest?["availableAPIs"]?.AsArray();
             var initialApiCount = initialApis?.Count ?? 0;
             Console.WriteLine($"✅ Initial capability manifest: {initialApiCount} APIs, sessionId: {sessionId}");
 
@@ -639,12 +639,12 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
                 receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
                 responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
-                var updatedManifest = JObject.Parse(responseText);
+                var updatedManifest = JsonNode.Parse(responseText)?.AsObject();
 
-                var updatedType = (string?)updatedManifest["type"];
+                var updatedType = updatedManifest?["type"]?.GetValue<string>();
                 if (updatedType == "capability_manifest")
                 {
-                    var updatedApis = updatedManifest["availableAPIs"] as JArray;
+                    var updatedApis = updatedManifest?["availableAPIs"]?.AsArray();
                     var updatedApiCount = updatedApis?.Count ?? 0;
 
                     Console.WriteLine($"✅ Updated capability manifest: {updatedApiCount} APIs");

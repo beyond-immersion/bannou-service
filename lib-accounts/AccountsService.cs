@@ -1260,7 +1260,31 @@ public class AccountModel
     public string? PasswordHash { get; set; } // BCrypt hashed password for authentication
     public bool IsVerified { get; set; }
     public List<string> Roles { get; set; } = new List<string>(); // User roles (admin, user, etc.)
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
-    public DateTimeOffset? DeletedAt { get; set; }
+
+    // Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
+    public long CreatedAtUnix { get; set; }
+    public long UpdatedAtUnix { get; set; }
+    public long? DeletedAtUnix { get; set; }
+
+    // Expose as DateTimeOffset for code convenience (not serialized)
+    [System.Text.Json.Serialization.JsonIgnore]
+    public DateTimeOffset CreatedAt
+    {
+        get => DateTimeOffset.FromUnixTimeSeconds(CreatedAtUnix);
+        set => CreatedAtUnix = value.ToUnixTimeSeconds();
+    }
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public DateTimeOffset UpdatedAt
+    {
+        get => DateTimeOffset.FromUnixTimeSeconds(UpdatedAtUnix);
+        set => UpdatedAtUnix = value.ToUnixTimeSeconds();
+    }
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public DateTimeOffset? DeletedAt
+    {
+        get => DeletedAtUnix.HasValue ? DateTimeOffset.FromUnixTimeSeconds(DeletedAtUnix.Value) : null;
+        set => DeletedAtUnix = value?.ToUnixTimeSeconds();
+    }
 }

@@ -39,20 +39,20 @@ public partial class ListGameSessionsRequest
     /// <summary>
     /// Filter by game type
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("gameType", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonPropertyName("gameType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ListGameSessionsRequestGameType GameType { get; set; } = default!;
 
     /// <summary>
     /// Filter by session status
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ListGameSessionsRequestStatus Status { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -71,13 +71,13 @@ public partial class GetGameSessionRequest
     /// <summary>
     /// ID of the game session to retrieve
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid SessionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -96,13 +96,13 @@ public partial class LeaveGameSessionRequest
     /// <summary>
     /// ID of the game session to leave
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid SessionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -115,28 +115,28 @@ public partial class LeaveGameSessionRequest
 public partial class CreateGameSessionRequest
 {
 
-    [Newtonsoft.Json.JsonProperty("gameType", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CreateGameSessionRequestGameType GameType { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("maxPlayers", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int MaxPlayers { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("sessionName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string SessionName { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("isPrivate", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
     public bool IsPrivate { get; set; } = false;
 
-    [Newtonsoft.Json.JsonProperty("gameSettings", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
     public object GameSettings { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -149,48 +149,48 @@ public partial class CreateGameSessionRequest
 public partial class GameSessionResponse
 {
 
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("gameType", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("gameType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public GameSessionResponseGameType GameType { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("sessionName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
     public string SessionName { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public GameSessionResponseStatus Status { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("maxPlayers", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
     public int MaxPlayers { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("currentPlayers", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("currentPlayers")]
     public int CurrentPlayers { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("isPrivate", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
     public bool IsPrivate { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("owner", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
     public System.Guid Owner { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("players", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("players")]
     public System.Collections.Generic.ICollection<GamePlayer> Players { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("gameSettings", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
     public object GameSettings { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -203,16 +203,16 @@ public partial class GameSessionResponse
 public partial class GameSessionListResponse
 {
 
-    [Newtonsoft.Json.JsonProperty("sessions", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessions")]
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.ICollection<GameSessionResponse> Sessions { get; set; } = new System.Collections.ObjectModel.Collection<GameSessionResponse>();
 
-    [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -228,25 +228,25 @@ public partial class JoinGameSessionRequest
     /// <summary>
     /// ID of the game session to join
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Password for private sessions
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("password", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("password")]
     public string Password { get; set; } = default!;
 
     /// <summary>
     /// Game-specific character data
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("characterData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("characterData")]
     public object CharacterData { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -259,33 +259,33 @@ public partial class JoinGameSessionRequest
 public partial class JoinGameSessionResponse
 {
 
-    [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("playerRole", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("playerRole")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public JoinGameSessionResponsePlayerRole PlayerRole { get; set; } = default!;
 
     /// <summary>
     /// Initial game state data
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("gameData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("gameData")]
     public object GameData { get; set; } = default!;
 
     /// <summary>
     /// Additional permissions granted by joining
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("newPermissions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("newPermissions")]
     public System.Collections.Generic.ICollection<string> NewPermissions { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -298,28 +298,28 @@ public partial class JoinGameSessionResponse
 public partial class GamePlayer
 {
 
-    [Newtonsoft.Json.JsonProperty("accountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("displayName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string DisplayName { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("role", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("role")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public GamePlayerRole Role { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("joinedAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("joinedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset JoinedAt { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("characterData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("characterData")]
     public object CharacterData { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -335,27 +335,27 @@ public partial class KickPlayerRequest
     /// <summary>
     /// ID of the game session
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
     /// Account ID of the player to kick
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("targetAccountId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("targetAccountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid TargetAccountId { get; set; } = default!;
 
     /// <summary>
     /// Reason for kicking the player
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("reason", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string Reason { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -371,28 +371,28 @@ public partial class ChatMessageRequest
     /// <summary>
     /// ID of the game session
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid SessionId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string Message { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("messageType", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonPropertyName("messageType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ChatMessageRequestMessageType MessageType { get; set; } = BeyondImmersion.BannouService.GameSession.ChatMessageRequestMessageType.Public;
 
     /// <summary>
     /// For whisper messages
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("targetPlayerId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("targetPlayerId")]
     public System.Guid TargetPlayerId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -408,30 +408,30 @@ public partial class GameActionRequest
     /// <summary>
     /// ID of the game session
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid SessionId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("actionType", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("actionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public GameActionRequestActionType ActionType { get; set; } = default!;
 
     /// <summary>
     /// Action-specific data
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("actionData", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("actionData")]
     public object ActionData { get; set; } = default!;
 
     /// <summary>
     /// Target of the action (if applicable)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("targetId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("targetId")]
     public System.Guid TargetId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -444,28 +444,28 @@ public partial class GameActionRequest
 public partial class GameActionResponse
 {
 
-    [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("actionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("actionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid ActionId { get; set; } = default!;
 
     /// <summary>
     /// Action result data
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("result", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("result")]
     public object Result { get; set; } = default!;
 
     /// <summary>
     /// Updated game state (if applicable)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("newGameState", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("newGameState")]
     public object NewGameState { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }

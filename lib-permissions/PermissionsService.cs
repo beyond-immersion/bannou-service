@@ -339,7 +339,7 @@ public class PermissionsService : IPermissionsService
             {
                 ServiceId = body.ServiceId,
                 Version = body.Version,
-                RegisteredAt = DateTimeOffset.UtcNow
+                RegisteredAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds() // Store as Unix timestamp to avoid Dapr serialization bugs
             };
             await _daprClient.SaveStateAsync(STATE_STORE, serviceRegisteredKey, registrationInfo, cancellationToken: cancellationToken);
             _logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}", body.ServiceId, serviceRegisteredKey);
@@ -347,7 +347,7 @@ public class PermissionsService : IPermissionsService
             // Update the centralized registered_services list (enables "list all registered services" queries)
             // Uses Redis-based distributed lock to prevent race conditions when multiple services register concurrently
             // NO FALLBACK - if lock fails, registration fails. We don't mask failures.
-            const string LOCK_STORE = "permissions-store"; // Use Redis state store instead of lockstore component
+            const string LOCK_STORE = "permissions-store"; // Use Redis state store for distributed locking
             const string LOCK_RESOURCE = "registered_services_lock";
             var lockOwnerId = $"{body.ServiceId}-{Guid.NewGuid():N}";
 
@@ -380,12 +380,12 @@ public class PermissionsService : IPermissionsService
                 if (!serviceLock.Success)
                 {
                     _logger.LogError("Failed to acquire distributed lock for {ServiceId} - cannot safely update registered services. " +
-                        "This indicates a problem with the lockstore component configuration.", body.ServiceId);
+                        "This indicates a problem with the Redis lock configuration.", body.ServiceId);
                     return (StatusCodes.InternalServerError, new RegistrationResponse
                     {
                         ServiceId = body.ServiceId,
                         Success = false,
-                        Message = "Failed to acquire distributed lock - check lockstore component configuration"
+                        Message = "Failed to acquire distributed lock - check Redis lock configuration"
                     });
                 }
 
@@ -912,7 +912,25 @@ public class PermissionsService : IPermissionsService
                     {
                         version = versionObj.ToString() ?? "";
                     }
-                    if (registrationData.TryGetValue("RegisteredAt", out var registeredAtObj) && registeredAtObj != null)
+                    // Read Unix timestamp (new format)
+                    if (registrationData.TryGetValue("RegisteredAtUnix", out var registeredAtUnixObj) && registeredAtUnixObj != null)
+                    {
+                        long registeredAtUnix = 0;
+                        if (registeredAtUnixObj is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Number)
+                        {
+                            registeredAtUnix = jsonElement.GetInt64();
+                        }
+                        else if (long.TryParse(registeredAtUnixObj.ToString(), out var parsedLong))
+                        {
+                            registeredAtUnix = parsedLong;
+                        }
+                        if (registeredAtUnix > 0)
+                        {
+                            registeredAt = DateTimeOffset.FromUnixTimeSeconds(registeredAtUnix);
+                        }
+                    }
+                    // Fallback to old DateTimeOffset format for backward compatibility
+                    else if (registrationData.TryGetValue("RegisteredAt", out var registeredAtObj) && registeredAtObj != null)
                     {
                         if (registeredAtObj is JsonElement jsonElement)
                         {

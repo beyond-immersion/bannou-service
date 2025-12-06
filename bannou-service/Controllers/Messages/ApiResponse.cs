@@ -5,7 +5,6 @@ namespace BeyondImmersion.BannouService.Controllers.Messages;
 /// <summary>
 /// The base API controller response model.
 /// </summary>
-[JsonObject]
 public class ApiResponse : ApiMessage
 {
     /// <summary>

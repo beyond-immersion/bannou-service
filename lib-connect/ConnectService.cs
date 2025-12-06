@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Net.WebSockets;
@@ -39,9 +38,9 @@ public class ConnectService : IConnectService
     private readonly IServiceAppMappingResolver _appMappingResolver;
     private readonly ILogger<ConnectService> _logger;
     private readonly WebSocketConnectionManager _connectionManager;
-    private readonly RedisSessionManager? _sessionManager;
+    private readonly ISessionManager? _sessionManager;
 
-    // Session to service GUID mappings (in-memory for low-latency lookups, persisted via RedisSessionManager)
+    // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
     private readonly ConcurrentDictionary<string, Dictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
     private readonly string _instanceId;
@@ -53,7 +52,7 @@ public class ConnectService : IConnectService
         IServiceAppMappingResolver appMappingResolver,
         ConnectServiceConfiguration configuration,
         ILogger<ConnectService> logger,
-        RedisSessionManager? sessionManager = null)
+        ISessionManager? sessionManager = null)
     {
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
         _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
@@ -61,7 +60,7 @@ public class ConnectService : IConnectService
         _httpClient = new HttpClient(); // Reusable HttpClient for Dapr service invocation
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _sessionManager = sessionManager; // Optional Redis session management
+        _sessionManager = sessionManager; // Optional Dapr-based session management
 
         _sessionServiceMappings = new ConcurrentDictionary<string, Dictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
@@ -72,7 +71,7 @@ public class ConnectService : IConnectService
         // Generate unique instance ID for distributed deployment
         _instanceId = Environment.MachineName + "-" + Guid.NewGuid().ToString("N")[..8];
 
-        _logger.LogInformation("Connect service initialized with instance ID: {InstanceId}, Redis: {RedisEnabled}",
+        _logger.LogInformation("Connect service initialized with instance ID: {InstanceId}, SessionManager: {SessionManagerEnabled}",
             _instanceId, sessionManager != null ? "Enabled" : "Disabled");
     }
 
@@ -318,8 +317,12 @@ public class ConnectService : IConnectService
     {
         try
         {
+            _logger.LogInformation("🔍 ValidateJWTAndExtractSessionAsync called - Authorization length: {Length}, StartsWith Bearer: {IsBearer}",
+                authorization?.Length ?? 0, authorization?.StartsWith("Bearer ") ?? false);
+
             if (string.IsNullOrEmpty(authorization))
             {
+                _logger.LogWarning("❌ Authorization header is null or empty");
                 return (null, null);
             }
 
@@ -328,15 +331,42 @@ public class ConnectService : IConnectService
             {
                 var token = authorization.Substring(7);
 
+                _logger.LogInformation("🔍 Validating JWT token (length: {TokenLength})", token.Length);
+                _logger.LogDebug("🔍 Token first 20 chars: {TokenPrefix}...", token.Substring(0, Math.Min(20, token.Length)));
+
                 // Use auth service to validate token with header-based authorization
-                var validationResponse = await ((AuthClient)_authClient)
+                var validationResponse = await _authClient
                     .WithAuthorization(token)
                     .ValidateTokenAsync(cancellationToken);
 
-                if (validationResponse.Valid && !string.IsNullOrEmpty(validationResponse.SessionId))
+                _logger.LogInformation("🔍 ValidateToken response received - IsNull: {IsNull}", validationResponse == null);
+
+                if (validationResponse != null)
                 {
+                    // DEBUG: Log the deserialized response to diagnose serialization issues
+                    _logger.LogInformation("ValidateToken response - Valid: {Valid}, SessionId: '{SessionId}', AccountId: {AccountId}, RolesCount: {RolesCount}, RemainingTime: {RemainingTime}",
+                        validationResponse.Valid,
+                        validationResponse.SessionId ?? "(null)",
+                        validationResponse.AccountId,
+                        validationResponse.Roles?.Count ?? -1,
+                        validationResponse.RemainingTime);
+                }
+                else
+                {
+                    _logger.LogError("🔴 ValidateToken response is NULL!");
+                }
+
+                if (validationResponse != null && validationResponse.Valid && !string.IsNullOrEmpty(validationResponse.SessionId))
+                {
+                    _logger.LogInformation("✅ SUCCESS PATH - Returning sessionId: '{SessionId}', RolesCount: {RolesCount}",
+                        validationResponse.SessionId, validationResponse.Roles?.Count ?? 0);
                     // Return both session ID and roles for capability initialization
                     return (validationResponse.SessionId, validationResponse.Roles);
+                }
+                else if (validationResponse != null)
+                {
+                    _logger.LogWarning("❌ VALIDATION FAILED PATH - Valid={Valid}, SessionId='{SessionId}'",
+                        validationResponse.Valid, validationResponse.SessionId ?? "(null)");
                 }
             }
             // Handle "Reconnect <token>" format for session reconnection
@@ -378,11 +408,12 @@ public class ConnectService : IConnectService
                 return (null, null);
             }
 
+            _logger.LogWarning("❌ FALL-THROUGH PATH - No valid authorization format recognized");
             return (null, null);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "JWT validation failed");
+            _logger.LogError(ex, "❌ EXCEPTION PATH - JWT validation threw exception");
             return (null, null);
         }
     }
@@ -486,8 +517,8 @@ public class ConnectService : IConnectService
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
                     _logger.LogInformation("WebSocket close requested for session {SessionId}", sessionId);
-                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure,
-                        "Connection closed by client", cancellationToken);
+                    // Don't close here - let the finally block handle sending disconnect_notification first
+                    // The WebSocket is still in CloseReceived state and can send messages
                     break;
                 }
 
@@ -571,7 +602,8 @@ public class ConnectService : IConnectService
                 }
             }
 
-            if (webSocket.State == WebSocketState.Open)
+            // Can send messages when Open (server-initiated close) or CloseReceived (client-initiated close)
+            if (webSocket.State == WebSocketState.Open || webSocket.State == WebSocketState.CloseReceived)
             {
                 try
                 {
@@ -599,8 +631,18 @@ public class ConnectService : IConnectService
                         _logger.LogDebug("Sent disconnect notification with reconnection token to session {SessionId}", sessionId);
                     }
 
-                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure,
-                        "Session ended", CancellationToken.None);
+                    // Use CloseOutputAsync when client already sent close (CloseReceived state)
+                    // Use CloseAsync when server initiates (Open state)
+                    if (webSocket.State == WebSocketState.CloseReceived)
+                    {
+                        await webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure,
+                            "Session ended", CancellationToken.None);
+                    }
+                    else
+                    {
+                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure,
+                            "Session ended", CancellationToken.None);
+                    }
                 }
                 catch (Exception ex)
                 {

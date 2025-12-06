@@ -744,7 +744,7 @@ public class AccountTestHandler : IServiceTestHandler
             Console.WriteLine($"[DIAG-TEST] Login successful, got access token (length={accessToken.Length})");
 
             // Step 3: Verify session exists by calling GetSessions
-            var sessionsResponse = await ((AuthClient)authClient)
+            var sessionsResponse = await authClient
                 .WithAuthorization(accessToken)
                 .GetSessionsAsync();
             if (sessionsResponse.Sessions == null || !sessionsResponse.Sessions.Any())
@@ -775,7 +775,7 @@ public class AccountTestHandler : IServiceTestHandler
 
                 try
                 {
-                    var sessionsAfterDeletion = await ((AuthClient)authClient)
+                    var sessionsAfterDeletion = await authClient
                         .WithAuthorization(accessToken)
                         .GetSessionsAsync();
 

@@ -39,12 +39,12 @@ public partial class GetServiceMappingsRequest
     /// <summary>
     /// Optional filter by service name prefix
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceFilter", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceFilter")]
     public string? ServiceFilter { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -60,59 +60,59 @@ public partial class InternalProxyRequest
     /// <summary>
     /// WebSocket session ID making the request
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Target service name (e.g., "accounts", "auth", "behavior")
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("targetService", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("targetService")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string TargetService { get; set; } = default!;
 
     /// <summary>
     /// Target API endpoint path (e.g., "/accounts/{id}")
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("targetEndpoint", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("targetEndpoint")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string TargetEndpoint { get; set; } = default!;
 
     /// <summary>
     /// HTTP method for the target endpoint
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("method", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("method")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public InternalProxyRequestMethod Method { get; set; } = default!;
 
     /// <summary>
     /// Additional headers to forward to the service
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("headers", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("headers")]
     public System.Collections.Generic.IDictionary<string, string> Headers { get; set; } = default!;
 
     /// <summary>
     /// Request body to forward to target service
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("body", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("body")]
     public object Body { get; set; } = default!;
 
     /// <summary>
     /// Path parameters for the endpoint
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("pathParameters", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("pathParameters")]
     public System.Collections.Generic.IDictionary<string, string> PathParameters { get; set; } = default!;
 
     /// <summary>
     /// Query string parameters for the endpoint
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("queryParameters", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("queryParameters")]
     public System.Collections.Generic.IDictionary<string, string> QueryParameters { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -128,42 +128,42 @@ public partial class InternalProxyResponse
     /// <summary>
     /// Whether the proxy request was successful
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
     /// <summary>
     /// HTTP status code from the target service
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("statusCode", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("statusCode")]
     public int StatusCode { get; set; } = default!;
 
     /// <summary>
     /// JSON response from the target service (as string)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("response", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("response")]
     public string Response { get; set; } = default!;
 
     /// <summary>
     /// Response headers from the target service
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("headers", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("headers")]
     public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Headers { get; set; } = default!;
 
     /// <summary>
     /// Error message if the request failed
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("error")]
     public string Error { get; set; } = default!;
 
     /// <summary>
     /// Request execution time in milliseconds
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("executionTime", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("executionTime")]
     public int ExecutionTime { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -201,22 +201,22 @@ public partial class ConnectErrorResponse
     /// <summary>
     /// Error type identifier
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("error")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ConnectErrorResponseError Error { get; set; } = default!;
 
     /// <summary>
     /// Human-readable error description
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("message")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Message { get; set; } = default!;
 
     /// <summary>
     /// HTTP status code
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("status_code", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("status_code")]
     public ConnectErrorResponseStatus_code Status_code { get; set; } = default!;
 
 }
@@ -228,28 +228,28 @@ public partial class ServiceMappingsResponse
     /// <summary>
     /// Map of service names to app-id routing destinations
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("mappings", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("mappings")]
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.IDictionary<string, string> Mappings { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
 
     /// <summary>
     /// Default app-id used when no specific mapping exists
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("defaultMapping", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("defaultMapping")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string DefaultMapping { get; set; } = "bannou";
 
     /// <summary>
     /// When this mapping information was generated
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("generatedAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("generatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset GeneratedAt { get; set; } = default!;
 
     /// <summary>
     /// Total number of services with routing mappings
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("totalServices", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("totalServices")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int TotalServices { get; set; } = default!;
 
@@ -309,45 +309,45 @@ public enum ResponseCodes
 public partial class ServiceRequestMessage
 {
 
-    [Newtonsoft.Json.JsonProperty("flags", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("flags")]
     [System.ComponentModel.DataAnnotations.Range(0D, 255D)]
     public byte Flags { get; set; } = default!;
 
     /// <summary>
     /// Channel for sequential message processing (0-65535, 0 = default)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("channel", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("channel")]
     public int Channel { get; set; } = default!;
 
     /// <summary>
     /// Per-channel sequence number for message ordering
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("sequenceNumber", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sequenceNumber")]
     public int SequenceNumber { get; set; } = default!;
 
     /// <summary>
     /// Client-salted service GUID for routing
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceGuid", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceGuid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid ServiceGuid { get; set; } = default!;
 
     /// <summary>
     /// Unique message ID for request/response correlation
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("messageId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("messageId")]
     public long MessageId { get; set; } = default!;
 
     /// <summary>
     /// Message payload (JSON or binary data based on flags)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("payload", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("payload")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public byte[] Payload { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -371,47 +371,47 @@ public partial class ServiceResponseMessage
     /// <summary>
     /// Must have Response flag (0x40) set
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("flags", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("flags")]
     [System.ComponentModel.DataAnnotations.Range(0D, 255D)]
     public byte Flags { get; set; } = default!;
 
     /// <summary>
     /// Matches the request channel
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("channel", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("channel")]
     public int Channel { get; set; } = default!;
 
     /// <summary>
     /// Matches the request sequence number
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("sequenceNumber", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sequenceNumber")]
     public int SequenceNumber { get; set; } = default!;
 
     /// <summary>
     /// Matches the request service GUID
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceGuid", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceGuid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid ServiceGuid { get; set; } = default!;
 
     /// <summary>
     /// Matches the request message ID
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("messageId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("messageId")]
     public long MessageId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("responseCode", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("responseCode")]
     public ResponseCodes ResponseCode { get; set; } = default!;
 
     /// <summary>
     /// Optional response payload
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("payload", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("payload")]
     public byte[]? Payload { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -432,42 +432,42 @@ public partial class ConnectionConfiguration
     /// <summary>
     /// Return Unauthorized instead of NotFound for better security
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("obfuscate_not_found_response", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("obfuscate_not_found_response")]
     public bool Obfuscate_not_found_response { get; set; } = true;
 
     /// <summary>
     /// Maximum size for client requests in bytes
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("client_request_max_size", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("client_request_max_size")]
     public int Client_request_max_size { get; set; } = 16384;
 
     /// <summary>
     /// Maximum size for client responses in bytes
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("client_response_max_size", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("client_response_max_size")]
     public int Client_response_max_size { get; set; } = 16384;
 
     /// <summary>
     /// Time in seconds to allow client reconnection
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("client_reconnection_time", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("client_reconnection_time")]
     public int Client_reconnection_time { get; set; } = 30;
 
     /// <summary>
     /// Redis connection string for session management
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("redis_connection_string", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("redis_connection_string")]
     public string Redis_connection_string { get; set; } = default!;
 
     /// <summary>
     /// Base64-encoded RSA public key for JWT validation
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("token_public_key", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("token_public_key")]
     public string Token_public_key { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -488,43 +488,43 @@ public partial class SessionCapabilityUpdateEvent
     /// <summary>
     /// Session ID that had capability changes
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// New capabilities added to the session
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("addedCapabilities", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("addedCapabilities")]
     public System.Collections.Generic.ICollection<string> AddedCapabilities { get; set; } = default!;
 
     /// <summary>
     /// Capabilities removed from the session
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("removedCapabilities", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("removedCapabilities")]
     public System.Collections.Generic.ICollection<string> RemovedCapabilities { get; set; } = default!;
 
     /// <summary>
     /// Services that had permission changes
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("updatedServices", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("updatedServices")]
     public System.Collections.Generic.ICollection<string> UpdatedServices { get; set; } = default!;
 
     /// <summary>
     /// New capability version number
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
     public int Version { get; set; } = default!;
 
     /// <summary>
     /// When these capabilities expire and need refresh
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("expiresAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
     public System.DateTimeOffset ExpiresAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -545,37 +545,37 @@ public partial class AuthEvent
     /// <summary>
     /// Session ID affected by the auth event
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("eventType", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("eventType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public AuthEventType EventType { get; set; } = default!;
 
     /// <summary>
     /// When the auth event occurred
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// User ID associated with the session (optional for some events)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("userId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("userId")]
     public string UserId { get; set; } = default!;
 
     /// <summary>
     /// Additional event metadata (device info, location, etc.)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -617,55 +617,55 @@ public partial class ClientMessageEvent
     /// <summary>
     /// Target client session ID
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("clientId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("clientId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string ClientId { get; set; } = default!;
 
     /// <summary>
     /// Name of the service sending the message
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     public string ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Service GUID for routing
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceGuid", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceGuid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid ServiceGuid { get; set; } = default!;
 
     /// <summary>
     /// Unique message ID for correlation
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("messageId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("messageId")]
     public long MessageId { get; set; } = default!;
 
     /// <summary>
     /// Message payload (binary data)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("payload", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("payload")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public byte[] Payload { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("flags", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("flags")]
     [System.ComponentModel.DataAnnotations.Range(0D, 255D)]
     public byte Flags { get; set; } = default!;
 
     /// <summary>
     /// Channel for message routing
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("channel", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("channel")]
     public int Channel { get; set; } = 0;
 
     /// <summary>
     /// When the message was sent
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -686,68 +686,68 @@ public partial class ClientRPCEvent
     /// <summary>
     /// Target client session ID
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("clientId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("clientId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string ClientId { get; set; } = default!;
 
     /// <summary>
     /// Name of the service making the RPC call
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     public string ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Service GUID for routing
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceGuid", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceGuid")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid ServiceGuid { get; set; } = default!;
 
     /// <summary>
     /// Unique message ID for correlation
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("messageId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("messageId")]
     public long MessageId { get; set; } = default!;
 
     /// <summary>
     /// RPC request payload (binary data)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("payload", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("payload")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public byte[] Payload { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("flags", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("flags")]
     [System.ComponentModel.DataAnnotations.Range(0D, 255D)]
     public byte Flags { get; set; } = default!;
 
     /// <summary>
     /// Channel for message routing
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("channel", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("channel")]
     public int Channel { get; set; } = 0;
 
     /// <summary>
     /// RabbitMQ channel for sending response back to service
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("responseChannel", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("responseChannel")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string ResponseChannel { get; set; } = default!;
 
     /// <summary>
     /// RPC timeout in seconds
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("timeoutSeconds", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("timeoutSeconds")]
     public int TimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// When the RPC was initiated
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -768,40 +768,40 @@ public partial class PermissionRecompileEvent
     /// <summary>
     /// Unique identifier for this recompilation event
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("eventId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string EventId { get; set; } = default!;
 
     /// <summary>
     /// When the recompilation was triggered
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Reason for triggering permission recompilation
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("reason", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public PermissionRecompileEventReason Reason { get; set; } = default!;
 
     /// <summary>
     /// Service ID that triggered the recompilation (if applicable)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Additional context for the recompilation
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }

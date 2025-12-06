@@ -2,9 +2,9 @@ using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
-using Newtonsoft.Json.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Nodes;
 using Xunit.Abstractions;
 
 namespace BeyondImmersion.BannouService.UnitTests;
@@ -168,9 +168,10 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
         var decodedJwt = jwtBuilder.Decode(encodedJwt);
 
         Assert.NotNull(decodedJwt);
-        var jwtObj = JObject.Parse(decodedJwt);
-        Assert.Equal("UNIT_TEST_FRAMEWORK", (string?)jwtObj["iss"]);
-        Assert.Equal("user", (string?)jwtObj["role"]);
+        var jwtObj = JsonNode.Parse(decodedJwt);
+        Assert.NotNull(jwtObj);
+        Assert.Equal("UNIT_TEST_FRAMEWORK", jwtObj["iss"]?.GetValue<string>());
+        Assert.Equal("user", jwtObj["role"]?.GetValue<string>());
     }
 
     private JwtBuilder CreateJWTBuilder()
@@ -188,7 +189,7 @@ uvsqL8/z+oNYV4Ps53zGRQzLLJbZ7L1yi+sjA/4tY0xS
         privateRSA.ImportFromPem(privateKey);
         var jwtAlgorithm = new RS512Algorithm(publicRSA, privateRSA);
 
-        var jwtSerializer = new JsonNetSerializer();
+        var jwtSerializer = new SystemTextSerializer();
         var jwtDateTimeProvider = new UtcDateTimeProvider();
         var jwtUrlEncoder = new JwtBase64UrlEncoder();
         var jwtValidator = new JwtValidator(jwtSerializer, jwtDateTimeProvider);

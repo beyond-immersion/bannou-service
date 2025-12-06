@@ -662,7 +662,8 @@ public class AccountsServiceTests
             _configuration,
             _mockDaprClient.Object);
 
-        var beforeCreation = DateTimeOffset.UtcNow;
+        // Truncate to second precision to match Unix timestamp storage
+        var beforeCreation = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 
         var request = new CreateAccountRequest
         {
@@ -674,15 +675,16 @@ public class AccountsServiceTests
         // Act
         var (statusCode, response) = await service.CreateAccountAsync(request);
 
-        var afterCreation = DateTimeOffset.UtcNow;
+        // Truncate to second precision to match Unix timestamp storage
+        var afterCreation = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 
         // Assert
         Assert.Equal(StatusCodes.Created, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.CreatedAt >= beforeCreation);
-        Assert.True(response.CreatedAt <= afterCreation);
-        Assert.True(response.UpdatedAt >= beforeCreation);
-        Assert.True(response.UpdatedAt <= afterCreation);
+        Assert.True(response.CreatedAt >= beforeCreation, $"CreatedAt ({response.CreatedAt}) should be >= beforeCreation ({beforeCreation})");
+        Assert.True(response.CreatedAt <= afterCreation, $"CreatedAt ({response.CreatedAt}) should be <= afterCreation ({afterCreation})");
+        Assert.True(response.UpdatedAt >= beforeCreation, $"UpdatedAt ({response.UpdatedAt}) should be >= beforeCreation ({beforeCreation})");
+        Assert.True(response.UpdatedAt <= afterCreation, $"UpdatedAt ({response.UpdatedAt}) should be <= afterCreation ({afterCreation})");
     }
 
     [Fact]

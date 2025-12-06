@@ -85,13 +85,13 @@ public class PermissionsServiceTests
 
         // Set up empty state for the idempotent check
         _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
+            .Setup(d => d.GetStateAsync<string?>(
                 STATE_STORE,
                 It.IsAny<string>(),
                 null,
                 null,
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(default(string));
+            .ReturnsAsync((string?)null);
 
         _mockDaprClient
             .Setup(d => d.GetStateAsync<HashSet<string>>(
@@ -169,13 +169,13 @@ public class PermissionsServiceTests
 
         // Set up empty existing hash
         _mockDaprClient
-            .Setup(d => d.GetStateAsync<string>(
+            .Setup(d => d.GetStateAsync<string?>(
                 STATE_STORE,
                 It.IsAny<string>(),
                 null,
                 null,
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(default(string));
+            .ReturnsAsync((string?)null);
 
         // Set up state transaction execution
         _mockDaprClient

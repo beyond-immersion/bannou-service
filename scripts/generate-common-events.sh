@@ -92,7 +92,7 @@ echo -e "${YELLOW}📄 Generating CommonEvents models...${NC}"
     "/generateClientInterfaces:false" \
     "/generateDtoTypes:true" \
     "/excludedTypeNames:ApiException,ApiException\<TResult\>" \
-    "/jsonLibrary:NewtonsoftJson" \
+    "/jsonLibrary:SystemTextJson" \
     "/generateNullableReferenceTypes:true" \
     "/newLineBehavior:LF" \
     "/templateDirectory:../templates/nswag"

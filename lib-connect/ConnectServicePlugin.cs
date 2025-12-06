@@ -23,7 +23,6 @@ public class ConnectServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-
         Logger?.LogDebug("Configuring service dependencies");
 
         // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
@@ -32,7 +31,11 @@ public class ConnectServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register ConnectServiceConfiguration here
 
-        // Add any service-specific dependencies
+        // Register DaprSessionManager for distributed session state management
+        // Uses Dapr state store (connect-statestore) instead of direct Redis
+        services.AddSingleton<ISessionManager, DaprSessionManager>();
+        Logger?.LogDebug("Registered DaprSessionManager for session state management");
+
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
         Logger?.LogDebug("Service dependencies configured");

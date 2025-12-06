@@ -31,7 +31,7 @@ namespace BeyondImmersion.BannouService.Accounts;
 using System = global::System;
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial interface IAccountsClient
+public partial interface IAccountsClient : BeyondImmersion.BannouService.ServiceClients.IServiceClient<AccountsClient>
 {
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -137,30 +137,35 @@ public partial interface IAccountsClient
     /// <returns>Verification status updated successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task UpdateVerificationStatusAsync(UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IAccountsClient
+public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase, IAccountsClient, BeyondImmersion.BannouService.ServiceClients.IServiceClient<AccountsClient>
 {
-    private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
-    private Newtonsoft.Json.JsonSerializerSettings? _instanceSettings;
+    private static System.Lazy<System.Text.Json.JsonSerializerOptions> _settings = new System.Lazy<System.Text.Json.JsonSerializerOptions>(CreateSerializerSettings, true);
+    private System.Text.Json.JsonSerializerOptions? _instanceSettings;
 
     public AccountsClient()
     {
         Initialize();
     }
 
-    private static Newtonsoft.Json.JsonSerializerSettings CreateSerializerSettings()
+    private static System.Text.Json.JsonSerializerOptions CreateSerializerSettings()
     {
-        var settings = new Newtonsoft.Json.JsonSerializerSettings();
-        UpdateJsonSerializerSettings(settings);
+        var settings = new System.Text.Json.JsonSerializerOptions();
+        // Configure System.Text.Json to match ASP.NET Core configuration
+        settings.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+        settings.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        settings.PropertyNameCaseInsensitive = true; // CRITICAL: Case-insensitive deserialization
+        settings.WriteIndented = false;
+        settings.AllowTrailingCommas = true;
+        settings.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
+        settings.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString;
+        settings.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
         return settings;
     }
 
-    protected Newtonsoft.Json.JsonSerializerSettings JsonSerializerSettings { get { return _instanceSettings ?? _settings.Value; } }
-
-    static partial void UpdateJsonSerializerSettings(Newtonsoft.Json.JsonSerializerSettings settings);
+    protected System.Text.Json.JsonSerializerOptions JsonSerializerSettings { get { return _instanceSettings ?? _settings.Value; } }
 
     partial void Initialize();
 
@@ -177,6 +182,27 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
     }
 
     partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
+
+    /// <summary>
+    /// Sets the Authorization header for the next request.
+    /// Automatically prefixes with "Bearer " if not already present.
+    /// Returns this instance for method chaining.
+    /// </summary>
+    /// <param name="token">JWT token or authorization value</param>
+    /// <returns>This client instance for method chaining</returns>
+    public AccountsClient WithAuthorization(string? token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return this;
+        }
+
+        var authValue = token.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
+            ? token : $"Bearer {token}";
+
+        SetHeader("Authorization", authValue);
+        return this;
+    }
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -195,8 +221,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -212,8 +238,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -277,8 +301,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -294,8 +318,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -371,8 +393,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -388,8 +410,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -459,8 +479,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -476,8 +496,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -553,8 +571,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -569,8 +587,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -641,8 +657,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -658,8 +674,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -729,8 +743,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -746,8 +760,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -817,8 +829,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -834,8 +846,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -911,8 +921,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -927,8 +937,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -999,8 +1007,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -1016,8 +1024,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -1087,8 +1093,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -1104,8 +1110,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -1175,8 +1179,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -1191,8 +1195,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -1257,8 +1259,8 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
         {
             using (var request_ = new System.Net.Http.HttpRequestMessage())
             {
-                var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
-                var content_ = new System.Net.Http.StringContent(json_);
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
                 content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
                 request_.Content = content_;
                 request_.Method = new System.Net.Http.HttpMethod("POST");
@@ -1273,8 +1275,6 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
 
                 var url_ = urlBuilder_.ToString();
                 request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                PrepareRequest(client_, request_, url_);
 
                 var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
                 var disposeResponse_ = true;
@@ -1369,10 +1369,10 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
             var responseText = await ReadAsStringAsync(response.Content, cancellationToken).ConfigureAwait(false);
             try
             {
-                var typedBody = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseText, JsonSerializerSettings);
+                var typedBody = System.Text.Json.JsonSerializer.Deserialize<T>(responseText, JsonSerializerSettings);
                 return new ObjectResponseResult<T>(typedBody!, responseText);
             }
-            catch (Newtonsoft.Json.JsonException exception)
+            catch (System.Text.Json.JsonException exception)
             {
                 var message = "Could not deserialize the response body string as " + typeof(T).FullName + ".";
                 throw new ApiException(message, (int)response.StatusCode, responseText, headers, exception);
@@ -1383,15 +1383,12 @@ public partial class AccountsClient : BeyondImmersion.BannouService.ServiceClien
             try
             {
                 using (var responseStream = await ReadAsStreamAsync(response.Content, cancellationToken).ConfigureAwait(false))
-                using (var streamReader = new System.IO.StreamReader(responseStream))
-                using (var jsonTextReader = new Newtonsoft.Json.JsonTextReader(streamReader))
                 {
-                    var serializer = Newtonsoft.Json.JsonSerializer.Create(JsonSerializerSettings);
-                    var typedBody = serializer.Deserialize<T>(jsonTextReader);
+                    var typedBody = await System.Text.Json.JsonSerializer.DeserializeAsync<T>(responseStream, JsonSerializerSettings, cancellationToken).ConfigureAwait(false);
                     return new ObjectResponseResult<T>(typedBody!, string.Empty);
                 }
             }
-            catch (Newtonsoft.Json.JsonException exception)
+            catch (System.Text.Json.JsonException exception)
             {
                 var message = "Could not deserialize the response body stream as " + typeof(T).FullName + ".";
                 throw new ApiException(message, (int)response.StatusCode, string.Empty, headers, exception);

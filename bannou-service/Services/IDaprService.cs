@@ -238,7 +238,7 @@ public interface IDaprService
                             var configStr = File.ReadAllText(configFilePath);
                             if (configStr != null)
                             {
-                                var configPresets = JsonConvert.DeserializeObject<Dictionary<string, string>>(configStr);
+                                var configPresets = JsonSerializer.Deserialize<Dictionary<string, string>>(configStr);
                                 if (configPresets != null)
                                 {
                                     _networkModePresets = new Dictionary<string, string>(configPresets, StringComparer.InvariantCultureIgnoreCase);

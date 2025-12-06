@@ -138,7 +138,7 @@ public class AuthTestHandler : IServiceTestHandler
             // ValidateTokenAsync now uses header-based token authentication
             try
             {
-                var validationResponse = await ((AuthClient)authClient)
+                var validationResponse = await authClient
                     .WithAuthorization("invalid_token")
                     .ValidateTokenAsync();
                 return TestResult.Successful($"Token validation endpoint responded: Valid={validationResponse.Valid}");
@@ -173,7 +173,7 @@ public class AuthTestHandler : IServiceTestHandler
 
             try
             {
-                var refreshResponse = await ((AuthClient)authClient)
+                var refreshResponse = await authClient
                     .WithAuthorization("dummy-jwt-token")
                     .RefreshTokenAsync(refreshRequest);
                 return TestResult.Successful($"Token refresh endpoint responded correctly with AccountId: {refreshResponse.AccountId}");
@@ -272,7 +272,7 @@ public class AuthTestHandler : IServiceTestHandler
 
             try
             {
-                var sessionsResponse = await ((AuthClient)authClient)
+                var sessionsResponse = await authClient
                     .WithAuthorization("dummy-jwt-token")
                     .GetSessionsAsync();
                 return TestResult.Successful($"Get sessions endpoint responded with {sessionsResponse.Sessions.Count} sessions");
@@ -322,7 +322,7 @@ public class AuthTestHandler : IServiceTestHandler
             var accessToken = loginResponse.AccessToken;
 
             // Step 3: Test token validation with the actual access token
-            var validationResponse = await ((AuthClient)authClient)
+            var validationResponse = await authClient
                 .WithAuthorization(accessToken)
                 .ValidateTokenAsync();
             if (!validationResponse.Valid)
@@ -440,7 +440,7 @@ public class AuthTestHandler : IServiceTestHandler
 
             // Logout current session
             var logoutRequest = new LogoutRequest { AllSessions = false };
-            await ((AuthClient)authClient)
+            await authClient
                 .WithAuthorization(accessToken)
                 .LogoutAsync(logoutRequest);
             return TestResult.Successful("Logout completed successfully");
@@ -477,7 +477,7 @@ public class AuthTestHandler : IServiceTestHandler
 
             // Logout all sessions
             var logoutRequest = new LogoutRequest { AllSessions = true };
-            await ((AuthClient)authClient)
+            await authClient
                 .WithAuthorization(accessToken)
                 .LogoutAsync(logoutRequest);
             return TestResult.Successful("Logout all sessions completed successfully");
@@ -516,7 +516,7 @@ public class AuthTestHandler : IServiceTestHandler
             var testSessionId = Guid.NewGuid();
             try
             {
-                await ((AuthClient)authClient)
+                await authClient
                     .WithAuthorization(accessToken)
                     .TerminateSessionAsync(new TerminateSessionRequest { SessionId = testSessionId });
                 return TestResult.Successful("Session termination endpoint responded successfully");

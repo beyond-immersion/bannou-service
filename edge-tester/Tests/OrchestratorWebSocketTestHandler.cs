@@ -1,8 +1,8 @@
 using BeyondImmersion.BannouService.Connect.Protocol;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -43,10 +43,10 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
                 new { }, // Empty request body for POST-only pattern
                 response =>
                 {
-                    if (response["healthy"] != null)
+                    if (response?["healthy"] != null)
                     {
-                        var healthy = (bool?)response["healthy"];
-                        var components = response["components"] as JArray;
+                        var healthy = response?["healthy"]?.GetValue<bool>();
+                        var components = response?["components"]?.AsArray();
                         var componentCount = components?.Count ?? 0;
                         Console.WriteLine($"   Health status: {(healthy == true ? "Healthy" : "Unhealthy")}");
                         Console.WriteLine($"   Components: {componentCount}");
@@ -87,10 +87,10 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
                 new { }, // Empty request body for POST-only pattern
                 response =>
                 {
-                    if (response["totalServices"] != null)
+                    if (response?["totalServices"] != null)
                     {
-                        var totalServices = (int?)response["totalServices"] ?? 0;
-                        var healthPercentage = (double?)response["healthPercentage"] ?? 0;
+                        var totalServices = response?["totalServices"]?.GetValue<int>() ?? 0;
+                        var healthPercentage = response?["healthPercentage"]?.GetValue<double>() ?? 0;
                         Console.WriteLine($"   Total services: {totalServices}");
                         Console.WriteLine($"   Health percentage: {healthPercentage:F1}%");
                         return true; // Test passes if we got valid response structure
@@ -130,10 +130,10 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
                 new { }, // Empty request body for POST-only pattern
                 response =>
                 {
-                    if (response["backends"] != null)
+                    if (response?["backends"] != null)
                     {
-                        var backends = response["backends"] as JArray;
-                        var recommended = (string?)response["recommended"];
+                        var backends = response?["backends"]?.AsArray();
+                        var recommended = response?["recommended"]?.GetValue<string>();
                         Console.WriteLine($"   Backends: {backends?.Count ?? 0}");
                         Console.WriteLine($"   Recommended: {recommended}");
                         return true; // Test passes if we got valid response structure
@@ -173,11 +173,11 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
                 new { }, // Empty request body for POST-only pattern
                 response =>
                 {
-                    if (response["deployed"] != null)
+                    if (response?["deployed"] != null)
                     {
-                        var deployed = (bool?)response["deployed"];
-                        var backend = (string?)response["backend"];
-                        var services = response["services"] as JArray;
+                        var deployed = response?["deployed"]?.GetValue<bool>();
+                        var backend = response?["backend"]?.GetValue<string>();
+                        var services = response?["services"]?.AsArray();
                         Console.WriteLine($"   Deployed: {deployed}");
                         Console.WriteLine($"   Backend: {backend}");
                         Console.WriteLine($"   Services: {services?.Count ?? 0}");
@@ -212,7 +212,7 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
         string method,
         string path,
         object? body,
-        Func<JObject, bool> validateResponse)
+        Func<JsonObject?, bool> validateResponse)
     {
         if (Program.Configuration == null)
         {
@@ -277,9 +277,9 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
                 method = method,
                 path = path,
                 headers = new Dictionary<string, string>(),
-                body = body != null ? JsonConvert.SerializeObject(body) : null
+                body = body != null ? JsonSerializer.Serialize(body) : null
             };
-            var requestPayload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(apiRequest));
+            var requestPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(apiRequest));
 
             var binaryMessage = new BinaryMessage(
                 flags: MessageFlags.None,
@@ -320,13 +320,13 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine($"   Response payload: {responsePayload.Substring(0, Math.Min(500, responsePayload.Length))}...");
 
                     // Parse as JSON and validate
-                    var responseObj = JObject.Parse(responsePayload);
+                    var responseObj = JsonNode.Parse(responsePayload)?.AsObject();
 
                     // Check for error response
-                    if (responseObj["error"] != null)
+                    if (responseObj?["error"] != null)
                     {
-                        var errorMessage = (string?)responseObj["error"];
-                        var statusCode = (int?)responseObj["statusCode"];
+                        var errorMessage = responseObj?["error"]?.GetValue<string>();
+                        var statusCode = responseObj?["statusCode"]?.GetValue<int>();
                         Console.WriteLine($"❌ API returned error: {statusCode} - {errorMessage}");
 
                         // 403 Forbidden is expected if user doesn't have admin role
@@ -427,10 +427,10 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
 
                 var payloadJson = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
 
-                JObject manifest;
+                JsonObject? manifest;
                 try
                 {
-                    manifest = JObject.Parse(payloadJson);
+                    manifest = JsonNode.Parse(payloadJson)?.AsObject();
                 }
                 catch
                 {
@@ -439,18 +439,18 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
                 }
 
                 // Verify this is a capability manifest
-                var type = (string?)manifest["type"];
+                var type = manifest?["type"]?.GetValue<string>();
                 if (type != "capability_manifest")
                 {
                     Console.WriteLine($"⚠️ Received event type '{type}', waiting for capability_manifest...");
                     continue;
                 }
 
-                var reason = (string?)manifest["reason"];
+                var reason = manifest?["reason"]?.GetValue<string>();
                 Console.WriteLine($"📥 Received capability manifest: {result.Count} bytes (reason: {reason ?? "initial"})");
                 Console.WriteLine($"   Manifest preview: {payloadJson.Substring(0, Math.Min(300, payloadJson.Length))}...");
 
-                var availableApis = manifest["availableAPIs"] as JArray;
+                var availableApis = manifest?["availableAPIs"]?.AsArray();
                 if (availableApis == null)
                 {
                     Console.WriteLine("⚠️ No availableAPIs in manifest, waiting for update...");
@@ -471,7 +471,7 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
                 Console.WriteLine("   Currently available endpoints:");
                 foreach (var api in availableApis)
                 {
-                    Console.WriteLine($"     - {api["method"]}:{api["path"]} ({api["serviceName"]})");
+                    Console.WriteLine($"     - {api?["method"]}:{api?["path"]} ({api?["serviceName"]})");
                 }
             }
             catch (OperationCanceledException)
@@ -492,14 +492,14 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
     /// <summary>
     /// Finds the GUID for a specific endpoint in the capability manifest.
     /// </summary>
-    private Guid FindGuidInManifest(JArray availableApis, string method, string path)
+    private Guid FindGuidInManifest(JsonArray availableApis, string method, string path)
     {
         // Try exact match first
         foreach (var api in availableApis)
         {
-            var apiMethod = (string?)api["method"];
-            var apiPath = (string?)api["path"];
-            var apiGuid = (string?)api["serviceGuid"];
+            var apiMethod = api?["method"]?.GetValue<string>();
+            var apiPath = api?["path"]?.GetValue<string>();
+            var apiGuid = api?["serviceGuid"]?.GetValue<string>();
 
             if (apiMethod == method && apiPath == path && !string.IsNullOrEmpty(apiGuid))
             {
@@ -514,8 +514,8 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
         // Try by endpoint key format
         foreach (var api in availableApis)
         {
-            var endpointKey = (string?)api["endpointKey"];
-            var apiGuid = (string?)api["serviceGuid"];
+            var endpointKey = api?["endpointKey"]?.GetValue<string>();
+            var apiGuid = api?["serviceGuid"]?.GetValue<string>();
 
             // The endpoint key format is "serviceName:METHOD:/path"
             if (!string.IsNullOrEmpty(endpointKey) && endpointKey.Contains($":{method}:{path}"))
@@ -582,8 +582,8 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
                     try
                     {
                         var payloadJson = Encoding.UTF8.GetString(message.Payload.Span);
-                        var eventObj = JObject.Parse(payloadJson);
-                        var eventType = (string?)eventObj["type"];
+                        var eventObj = JsonNode.Parse(payloadJson)?.AsObject();
+                        var eventType = eventObj?["type"]?.GetValue<string>();
                         Console.WriteLine($"   ⏭️ Skipping Event message (type: {eventType ?? "unknown"})");
                     }
                     catch

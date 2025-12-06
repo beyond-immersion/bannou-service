@@ -5,7 +5,6 @@ namespace BeyondImmersion.BannouService.Controllers.Messages;
 /// <summary>
 /// The basic API controller request payload model.
 /// </summary>
-[JsonObject]
 public class ApiRequest<T> : ApiRequest
     where T : ApiResponse, new()
 {

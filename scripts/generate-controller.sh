@@ -165,7 +165,7 @@ echo -e "${YELLOW}🔄 Running NSwag controller generation...${NC}"
     "/GenerateModelValidationAttributes:true" \
     "/GenerateDataAnnotations:true" \
     "/GenerateDtoTypes:false" \
-    "/JsonLibrary:NewtonsoftJson" \
+    "/JsonLibrary:SystemTextJson" \
     "/GenerateNullableReferenceTypes:true" \
     "/NewLineBehavior:LF" \
     "/GenerateOptionalParameters:false" \

@@ -5,7 +5,6 @@ namespace BeyondImmersion.BannouService.Controllers.Messages;
 /// <summary>
 /// The basic API controller message payload model.
 /// </summary>
-[JsonObject]
 public abstract class ApiMessage
 {
     private static class SupportedBindings

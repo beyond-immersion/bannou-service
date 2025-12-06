@@ -39,12 +39,12 @@ public partial class ListServicesRequest
     /// <summary>
     /// Optional filter by service ID prefix
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceIdFilter", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceIdFilter")]
     public string? ServiceIdFilter { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -60,19 +60,19 @@ public partial class CapabilityRequest
     /// <summary>
     /// Session ID for lookup in Redis
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Optional filter for specific services
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceIds", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceIds")]
     public System.Collections.Generic.ICollection<string> ServiceIds { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -85,26 +85,26 @@ public partial class CapabilityRequest
 public partial class CapabilityResponse
 {
 
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Map of ServiceID -&gt; List of available methods
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("permissions", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("permissions")]
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
 
     /// <summary>
     /// When these permissions were compiled
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("generatedAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("generatedAt")]
     public System.DateTimeOffset GeneratedAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -117,27 +117,27 @@ public partial class CapabilityResponse
 public partial class ValidationRequest
 {
 
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Target service ID
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Method name being accessed
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("method", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("method")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Method { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -153,22 +153,22 @@ public partial class ValidationResponse
     /// <summary>
     /// Whether access is permitted
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("allowed", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("allowed")]
     public bool Allowed { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Reason for denial (if applicable)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("reason", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
     public string Reason { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -184,32 +184,32 @@ public partial class ServicePermissionMatrix
     /// <summary>
     /// Unique service identifier
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Human-readable service name
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     public string ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Map of State -&gt; Role -&gt; Methods structure
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("permissions", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("permissions")]
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.IDictionary<string, StatePermissions> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, StatePermissions>();
 
     /// <summary>
     /// Service API version for change tracking
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
     public string Version { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -231,40 +231,40 @@ public partial class StatePermissions : System.Collections.Generic.Dictionary<st
 public partial class RegistrationResponse
 {
 
-    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Whether registration was successful
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
     /// <summary>
     /// Success or error message
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("message")]
     public string Message { get; set; } = default!;
 
     /// <summary>
     /// Whether registration was successful
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("registered", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("registered")]
     public bool Registered { get; set; } = default!;
 
     /// <summary>
     /// Number of sessions that had permissions recompiled
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("affectedSessions", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("affectedSessions")]
     public int AffectedSessions { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("recompiledAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("recompiledAt")]
     public System.DateTimeOffset RecompiledAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -277,39 +277,39 @@ public partial class RegistrationResponse
 public partial class SessionStateUpdate
 {
 
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Service whose state is changing for this session
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// New state value (lobby, in_game, etc.)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("newState", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("newState")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string NewState { get; set; } = default!;
 
     /// <summary>
     /// Previous state value (null for initial state)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("previousState", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("previousState")]
     public string? PreviousState { get; set; } = default!;
 
     /// <summary>
     /// Optional context data
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -322,26 +322,26 @@ public partial class SessionStateUpdate
 public partial class SessionRoleUpdate
 {
 
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// New role (user, admin, etc.)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("newRole", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("newRole")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string NewRole { get; set; } = default!;
 
     /// <summary>
     /// Previous role (null for initial role)
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("previousRole", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("previousRole")]
     public string? PreviousRole { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -354,40 +354,40 @@ public partial class SessionRoleUpdate
 public partial class SessionUpdateResponse
 {
 
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Whether update was successful
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("success", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
     public bool Success { get; set; } = default!;
 
     /// <summary>
     /// Success or error message
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("message")]
     public string Message { get; set; } = default!;
 
     /// <summary>
     /// Whether compiled permissions actually changed
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("permissionsChanged", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("permissionsChanged")]
     public bool PermissionsChanged { get; set; } = default!;
 
     /// <summary>
     /// Updated ServiceID -&gt; Methods if permissions changed
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("newPermissions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("newPermissions")]
     public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> NewPermissions { get; set; } = default!;
 
-    [Newtonsoft.Json.JsonProperty("updatedAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -400,13 +400,13 @@ public partial class SessionUpdateResponse
 public partial class SessionInfoRequest
 {
 
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -419,52 +419,52 @@ public partial class SessionInfoRequest
 public partial class SessionInfo
 {
 
-    [Newtonsoft.Json.JsonProperty("sessionId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string SessionId { get; set; } = default!;
 
     /// <summary>
     /// Current session role
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("role", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("role")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Role { get; set; } = default!;
 
     /// <summary>
     /// Map of ServiceID -&gt; Current State
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("states", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("states")]
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.IDictionary<string, string> States { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
 
     /// <summary>
     /// Map of ServiceID -&gt; List of available methods
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("permissions", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("permissions")]
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
 
     /// <summary>
     /// Map of ServiceID -&gt; List of available methods
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("compiledPermissions", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("compiledPermissions")]
     public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> CompiledPermissions { get; set; } = default!;
 
     /// <summary>
     /// Permission version number
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
     public int Version { get; set; } = default!;
 
     /// <summary>
     /// When permissions were last recompiled
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("lastUpdated", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("lastUpdated")]
     public System.DateTimeOffset LastUpdated { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -480,20 +480,20 @@ public partial class RegisteredServicesResponse
     /// <summary>
     /// List of all registered services
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("services", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("services")]
     [System.ComponentModel.DataAnnotations.Required]
     public System.Collections.Generic.ICollection<RegisteredServiceInfo> Services { get; set; } = new System.Collections.ObjectModel.Collection<RegisteredServiceInfo>();
 
     /// <summary>
     /// When this response was generated
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("timestamp", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
@@ -509,38 +509,38 @@ public partial class RegisteredServiceInfo
     /// <summary>
     /// Unique service identifier
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceId", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Human-readable service name
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("serviceName", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     public string ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Service API version
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
     public string Version { get; set; } = default!;
 
     /// <summary>
     /// When the service registered its permissions
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("registeredAt", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("registeredAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset RegisteredAt { get; set; } = default!;
 
     /// <summary>
     /// Number of API endpoints registered by this service
     /// </summary>
-    [Newtonsoft.Json.JsonProperty("endpointCount", Required = Newtonsoft.Json.Required.Always)]
+    [System.Text.Json.Serialization.JsonPropertyName("endpointCount")]
     public int EndpointCount { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
-    [Newtonsoft.Json.JsonExtensionData]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
