@@ -17,9 +17,10 @@ public class DaprSessionManager : ISessionManager
     private const string PUBSUB_NAME = "bannou-pubsub";
     private const string SESSION_EVENTS_TOPIC = "connect.session-events";
 
-    // Key prefixes (shorter than Redis version since component is Connect-specific)
-    private const string SESSION_KEY_PREFIX = "session:";
-    private const string SESSION_MAPPINGS_KEY_PREFIX = "mappings:";
+    // Key prefixes - MUST be unique across all services to avoid key collisions
+    // (Dapr prefixes keys with app-id, not component name, so all components share key namespace)
+    private const string SESSION_KEY_PREFIX = "ws-session:";
+    private const string SESSION_MAPPINGS_KEY_PREFIX = "ws-mappings:";
     private const string SESSION_HEARTBEAT_KEY_PREFIX = "heartbeat:";
     private const string RECONNECTION_TOKEN_KEY_PREFIX = "reconnect:";
 
