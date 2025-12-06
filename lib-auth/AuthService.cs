@@ -963,6 +963,23 @@ public class AuthService : IAuthService
 
                 _logger.LogInformation("🔍 BEFORE GetStateAsync - sessionKey from JWT: '{SessionKey}' (type: {Type})", sessionKey, sessionKey.GetType().Name);
 
+                // CRITICAL DEBUG: Fetch raw string first to see actual JSON in Redis
+                var rawStateKey = $"session:{sessionKey}";
+                var rawData = await _daprClient.GetStateAsync<string>(
+                    REDIS_STATE_STORE,
+                    rawStateKey,
+                    cancellationToken: cancellationToken);
+                _logger.LogInformation("🔍 RAW STATE (as string) - key: '{Key}', rawData: '{RawData}'", rawStateKey, rawData ?? "NULL");
+
+                // Also try fetching as JsonElement to see the raw structure
+                var jsonElementData = await _daprClient.GetStateAsync<System.Text.Json.JsonElement?>(
+                    REDIS_STATE_STORE,
+                    rawStateKey,
+                    cancellationToken: cancellationToken);
+                _logger.LogInformation("🔍 RAW STATE (as JsonElement) - kind: {Kind}, raw: '{Raw}'",
+                    jsonElementData?.ValueKind.ToString() ?? "NULL",
+                    jsonElementData?.GetRawText() ?? "NULL");
+
                 // Lookup session data from Redis using session_key
                 var sessionData = await _daprClient.GetStateAsync<SessionDataModel>(
                     REDIS_STATE_STORE,
