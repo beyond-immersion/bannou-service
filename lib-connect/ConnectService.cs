@@ -317,12 +317,12 @@ public class ConnectService : IConnectService
     {
         try
         {
-            _logger.LogInformation("🔍 ValidateJWTAndExtractSessionAsync called - Authorization length: {Length}, StartsWith Bearer: {IsBearer}",
+            _logger.LogDebug("JWT validation starting, AuthorizationLength: {Length}, HasBearerPrefix: {IsBearer}",
                 authorization?.Length ?? 0, authorization?.StartsWith("Bearer ") ?? false);
 
             if (string.IsNullOrEmpty(authorization))
             {
-                _logger.LogWarning("❌ Authorization header is null or empty");
+                _logger.LogWarning("Authorization header missing or empty");
                 return (null, null);
             }
 
@@ -331,41 +331,34 @@ public class ConnectService : IConnectService
             {
                 var token = authorization.Substring(7);
 
-                _logger.LogInformation("🔍 Validating JWT token (length: {TokenLength})", token.Length);
-                _logger.LogDebug("🔍 Token first 20 chars: {TokenPrefix}...", token.Substring(0, Math.Min(20, token.Length)));
+                _logger.LogDebug("Validating JWT token, TokenLength: {TokenLength}", token.Length);
 
                 // Use auth service to validate token with header-based authorization
                 var validationResponse = await _authClient
                     .WithAuthorization(token)
                     .ValidateTokenAsync(cancellationToken);
 
-                _logger.LogInformation("🔍 ValidateToken response received - IsNull: {IsNull}", validationResponse == null);
-
-                if (validationResponse != null)
+                if (validationResponse == null)
                 {
-                    // DEBUG: Log the deserialized response to diagnose serialization issues
-                    _logger.LogInformation("ValidateToken response - Valid: {Valid}, SessionId: '{SessionId}', AccountId: {AccountId}, RolesCount: {RolesCount}, RemainingTime: {RemainingTime}",
-                        validationResponse.Valid,
-                        validationResponse.SessionId ?? "(null)",
-                        validationResponse.AccountId,
-                        validationResponse.Roles?.Count ?? -1,
-                        validationResponse.RemainingTime);
-                }
-                else
-                {
-                    _logger.LogError("🔴 ValidateToken response is NULL!");
+                    _logger.LogError("Auth service returned null validation response");
+                    return (null, null);
                 }
 
-                if (validationResponse != null && validationResponse.Valid && !string.IsNullOrEmpty(validationResponse.SessionId))
+                _logger.LogDebug("Token validation result - Valid: {Valid}, SessionId: {SessionId}, AccountId: {AccountId}, RolesCount: {RolesCount}",
+                    validationResponse.Valid,
+                    validationResponse.SessionId ?? "(null)",
+                    validationResponse.AccountId,
+                    validationResponse.Roles?.Count ?? 0);
+
+                if (validationResponse.Valid && !string.IsNullOrEmpty(validationResponse.SessionId))
                 {
-                    _logger.LogInformation("✅ SUCCESS PATH - Returning sessionId: '{SessionId}', RolesCount: {RolesCount}",
-                        validationResponse.SessionId, validationResponse.Roles?.Count ?? 0);
+                    _logger.LogDebug("JWT validated successfully, SessionId: {SessionId}", validationResponse.SessionId);
                     // Return both session ID and roles for capability initialization
                     return (validationResponse.SessionId, validationResponse.Roles);
                 }
-                else if (validationResponse != null)
+                else
                 {
-                    _logger.LogWarning("❌ VALIDATION FAILED PATH - Valid={Valid}, SessionId='{SessionId}'",
+                    _logger.LogWarning("JWT validation failed, Valid: {Valid}, SessionId: {SessionId}",
                         validationResponse.Valid, validationResponse.SessionId ?? "(null)");
                 }
             }
@@ -408,12 +401,12 @@ public class ConnectService : IConnectService
                 return (null, null);
             }
 
-            _logger.LogWarning("❌ FALL-THROUGH PATH - No valid authorization format recognized");
+            _logger.LogWarning("Authorization format not recognized (expected 'Bearer' or 'Reconnect' prefix)");
             return (null, null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ EXCEPTION PATH - JWT validation threw exception");
+            _logger.LogError(ex, "JWT validation failed with exception");
             return (null, null);
         }
     }
@@ -504,6 +497,17 @@ public class ConnectService : IConnectService
             if (_sessionManager != null)
             {
                 await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, _instanceId);
+
+                // Create initial connection state in Redis for reconnection support
+                var connectionStateData = new ConnectionStateData
+                {
+                    SessionId = sessionId,
+                    ConnectedAt = DateTimeOffset.UtcNow,
+                    LastActivity = DateTimeOffset.UtcNow,
+                    UserRoles = userRoles?.ToList()
+                };
+                await _sessionManager.SetConnectionStateAsync(sessionId, connectionStateData);
+                _logger.LogDebug("Created connection state in Redis for session {SessionId}", sessionId);
             }
 
             // Push initial capability manifest to client

@@ -961,9 +961,9 @@ public class AuthService : IAuthService
 
                 var sessionKey = sessionKeyClaim.Value;
 
-                _logger.LogInformation("🔍 BEFORE GetStateAsync - sessionKey from JWT: '{SessionKey}' (type: {Type})", sessionKey, sessionKey.GetType().Name);
+                _logger.LogDebug("Validating session from JWT, SessionKey: {SessionKey}", sessionKey);
 
-                // CRITICAL DEBUG: Fetch as JsonElement to see raw structure without type conversion errors
+                // Fetch raw state for debugging (helps diagnose serialization issues)
                 var rawStateKey = $"session:{sessionKey}";
                 try
                 {
@@ -971,45 +971,37 @@ public class AuthService : IAuthService
                         REDIS_STATE_STORE,
                         rawStateKey,
                         cancellationToken: cancellationToken);
-                    _logger.LogInformation("🔍 RAW STATE (as JsonElement) - kind: {Kind}, raw: '{Raw}'",
-                        jsonElementData.ValueKind.ToString(),
-                        jsonElementData.GetRawText());
+                    _logger.LogDebug("Raw session state for SessionKey {SessionKey}: Kind={Kind}, Data={Raw}",
+                        sessionKey, jsonElementData.ValueKind, jsonElementData.GetRawText());
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning("🔍 RAW STATE fetch failed: {Error}", ex.Message);
+                    _logger.LogWarning(ex, "Failed to fetch raw session state for debugging, SessionKey: {SessionKey}", sessionKey);
                 }
 
-                // Lookup session data from Redis using session_key
+                // Lookup session data from Redis
                 var sessionData = await _daprClient.GetStateAsync<SessionDataModel>(
                     REDIS_STATE_STORE,
                     $"session:{sessionKey}",
                     cancellationToken: cancellationToken);
 
-                _logger.LogInformation("🔍 AFTER GetStateAsync - sessionData IsNull: {IsNull}", sessionData == null);
-
                 if (sessionData == null)
                 {
-                    _logger.LogWarning("Session not found in Redis for session_key: {SessionKey}", sessionKey);
+                    _logger.LogWarning("Session not found, SessionKey: {SessionKey}", sessionKey);
                     return (StatusCodes.Unauthorized, null);
                 }
 
-                // Log ALL properties to identify which ones deserialize correctly
-                _logger.LogInformation("🔍 SESSION DATA DUMP - AccountId: {AccountId}, Email: '{Email}', DisplayName: '{DisplayName}', SessionId: '{SessionId}', CreatedAtUnix: {CreatedAtUnix}, ExpiresAtUnix: {ExpiresAtUnix}, RolesCount: {RolesCount}",
-                    sessionData.AccountId, sessionData.Email, sessionData.DisplayName, sessionData.SessionId, sessionData.CreatedAtUnix, sessionData.ExpiresAtUnix, sessionData.Roles?.Count ?? 0);
-                _logger.LogInformation("🔍 EXPIRATION CHECK - ExpiresAtUnix: {ExpiresAtUnix}, ExpiresAt: '{ExpiresAt}', UtcNow: '{UtcNow}', Expired: {IsExpired}",
-                    sessionData.ExpiresAtUnix, sessionData.ExpiresAt, DateTimeOffset.UtcNow, sessionData.ExpiresAt < DateTimeOffset.UtcNow);
+                _logger.LogDebug("Session loaded for AccountId {AccountId}, SessionKey: {SessionKey}, ExpiresAt: {ExpiresAt}",
+                    sessionData.AccountId, sessionKey, sessionData.ExpiresAt);
 
                 // Check if session has expired
                 if (sessionData.ExpiresAt < DateTimeOffset.UtcNow)
                 {
-                    _logger.LogWarning("Session has expired for session_key: {SessionKey}", sessionKey);
+                    _logger.LogWarning("Session expired, SessionKey: {SessionKey}, ExpiredAt: {ExpiresAt}", sessionKey, sessionData.ExpiresAt);
                     return (StatusCodes.Unauthorized, null);
                 }
 
-                _logger.LogInformation("JWT token validated successfully for account: {AccountId}", sessionData.AccountId);
-
-                _logger.LogInformation("🔍 BEFORE creating ValidateTokenResponse - Using sessionKey: '{SessionKey}' (NOT sessionData.SessionId: '{SessionDataId}')", sessionKey, sessionData.SessionId);
+                _logger.LogDebug("Token validated successfully, AccountId: {AccountId}, SessionKey: {SessionKey}", sessionData.AccountId, sessionKey);
 
                 // Return session information
                 // IMPORTANT: Return sessionKey (not sessionData.SessionId) so Connect service
@@ -1122,8 +1114,6 @@ public class AuthService : IAuthService
         var sessionKey = Guid.NewGuid().ToString("N");
         var sessionId = Guid.NewGuid().ToString();
 
-        _logger.LogInformation("🔍 BEFORE SAVE - sessionKey: '{SessionKey}', sessionId: '{SessionId}'", sessionKey, sessionId);
-
         // Store session data in Redis with opaque key
         var sessionData = new SessionDataModel
         {
@@ -1136,11 +1126,8 @@ public class AuthService : IAuthService
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes)
         };
 
-        // Log ALL properties being saved for debugging
-        _logger.LogInformation("🔍 SAVING SESSION DUMP - sessionKey: '{SessionKey}', AccountId: {AccountId}, Email: '{Email}', SessionId: '{SessionId}', CreatedAtUnix: {CreatedAtUnix}, ExpiresAtUnix: {ExpiresAtUnix}, RolesCount: {RolesCount}",
-            sessionKey, sessionData.AccountId, sessionData.Email, sessionData.SessionId, sessionData.CreatedAtUnix, sessionData.ExpiresAtUnix, sessionData.Roles?.Count ?? 0);
-        _logger.LogInformation("🔍 SAVING SESSION - ExpiresAtUnix: {ExpiresAtUnix}, ExpiresAt: '{ExpiresAt}', TTL: {TtlSeconds} seconds",
-            sessionData.ExpiresAtUnix, sessionData.ExpiresAt, _configuration.JwtExpirationMinutes * 60);
+        _logger.LogDebug("Saving session for AccountId {AccountId}, SessionKey: {SessionKey}, ExpiresAt: {ExpiresAt}",
+            account.AccountId, sessionKey, sessionData.ExpiresAt);
 
         await _daprClient.SaveStateAsync(
             REDIS_STATE_STORE,
@@ -1149,15 +1136,13 @@ public class AuthService : IAuthService
             metadata: new Dictionary<string, string> { { "ttl", (_configuration.JwtExpirationMinutes * 60).ToString() } },
             cancellationToken: cancellationToken);
 
-        _logger.LogInformation("🔍 AFTER SaveStateAsync - stored session:{SessionKey}", sessionKey);
-
-        // CRITICAL DEBUG: Verify round-trip immediately after save
+        // Verify round-trip for debugging serialization issues
         var verifyData = await _daprClient.GetStateAsync<SessionDataModel>(
             REDIS_STATE_STORE,
             $"session:{sessionKey}",
             cancellationToken: cancellationToken);
-        _logger.LogInformation("🔍 VERIFY ROUND-TRIP - IsNull: {IsNull}, ExpiresAtUnix: {ExpiresAtUnix}, CreatedAtUnix: {CreatedAtUnix}",
-            verifyData == null, verifyData?.ExpiresAtUnix ?? -1, verifyData?.CreatedAtUnix ?? -1);
+        _logger.LogDebug("Session round-trip verification for SessionKey {SessionKey}: Success={Success}, ExpiresAtUnix={ExpiresAtUnix}",
+            sessionKey, verifyData != null, verifyData?.ExpiresAtUnix ?? -1);
 
         // Maintain account-to-sessions index for efficient GetSessions implementation
         await AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
@@ -1378,8 +1363,6 @@ public class AuthService : IAuthService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
-            _logger.LogInformation("[DIAG] AddSessionToAccountIndexAsync called with accountId={AccountId}, sessionKey={SessionKey}, indexKey={IndexKey}",
-                accountId, sessionKey, indexKey);
 
             // Get existing session list
             var existingSessions = await _daprClient.GetStateAsync<List<string>>(
@@ -1401,13 +1384,13 @@ public class AuthService : IAuthService
                     metadata: new Dictionary<string, string> { { "ttl", accountIndexTtl.ToString() } },
                     cancellationToken: cancellationToken);
 
-                _logger.LogInformation("[DIAG] SAVED session index: indexKey={IndexKey}, sessions={SessionsJson}",
-                    indexKey, System.Text.Json.JsonSerializer.Serialize(existingSessions));
+                _logger.LogDebug("Added session to account index, AccountId: {AccountId}, SessionKey: {SessionKey}, TotalSessions: {Count}",
+                    accountId, sessionKey, existingSessions.Count);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[DIAG] FAILED to add session {SessionKey} to account index for account {AccountId}", sessionKey, accountId);
+            _logger.LogError(ex, "Failed to add session to account index, AccountId: {AccountId}, SessionKey: {SessionKey}", accountId, sessionKey);
             // Don't throw - session creation should succeed even if index update fails
         }
     }
@@ -2198,35 +2181,22 @@ public class AuthService : IAuthService
     /// </summary>
     public async Task OnEventReceivedAsync<T>(string topic, T eventData) where T : class
     {
-        _logger.LogInformation("[DIAG] AuthService received event {Topic} with data type {DataType}", topic, typeof(T).Name);
-
-        // Diagnostic: log raw event data for debugging CI issues
-        try
-        {
-            var eventJson = System.Text.Json.JsonSerializer.Serialize(eventData);
-            _logger.LogInformation("[DIAG] Raw event data JSON: {EventJson}", eventJson);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "[DIAG] Failed to serialize event data for logging");
-        }
+        _logger.LogDebug("Received event on topic {Topic}, DataType: {DataType}", topic, typeof(T).Name);
 
         switch (topic)
         {
             case "account.deleted":
                 if (eventData is AccountDeletedEvent deletedEvent)
                 {
-                    _logger.LogInformation("[DIAG] Cast to AccountDeletedEvent successful. EventId={EventId}, AccountId={AccountId}, AccountIdString={AccountIdString}",
-                        deletedEvent.EventId, deletedEvent.AccountId, deletedEvent.AccountId.ToString());
                     await HandleAccountDeletedEventAsync(deletedEvent);
                 }
                 else
                 {
-                    _logger.LogWarning("[DIAG] Cast to AccountDeletedEvent FAILED. Actual type: {ActualType}", eventData?.GetType().FullName ?? "null");
+                    _logger.LogError("Failed to cast event data to AccountDeletedEvent, ActualType: {ActualType}", eventData?.GetType().FullName ?? "null");
                 }
                 break;
             default:
-                _logger.LogWarning("AuthService received unknown event topic: {Topic}", topic);
+                _logger.LogWarning("Received unknown event topic: {Topic}", topic);
                 break;
         }
     }
@@ -2278,22 +2248,19 @@ public class AuthService : IAuthService
         {
             // Get session keys directly from the account index
             var indexKey = $"account-sessions:{accountId}";
-            _logger.LogInformation("[DIAG] InvalidateAllSessionsForAccountAsync called with accountId={AccountId}, indexKey={IndexKey}",
-                accountId, indexKey);
 
             var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
                 REDIS_STATE_STORE,
                 indexKey,
                 cancellationToken: CancellationToken.None);
 
-            _logger.LogInformation("[DIAG] GetStateAsync for indexKey={IndexKey} returned: {SessionKeysJson}",
-                indexKey, sessionKeys == null ? "null" : System.Text.Json.JsonSerializer.Serialize(sessionKeys));
-
             if (sessionKeys == null || !sessionKeys.Any())
             {
-                _logger.LogInformation("[DIAG] No sessions found for account {AccountId} with indexKey={IndexKey} - EARLY RETURN", accountId, indexKey);
+                _logger.LogDebug("No sessions found for account {AccountId}", accountId);
                 return;
             }
+
+            _logger.LogDebug("Invalidating {SessionCount} sessions for account {AccountId}", sessionKeys.Count, accountId);
 
             // Remove each session from Redis
             foreach (var sessionKey in sessionKeys)

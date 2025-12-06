@@ -870,7 +870,6 @@ public class AccountsService : IAccountsService
         try
         {
             var accountId = body.AccountId;
-            _logger.LogWarning("[CI-DEBUG] DeleteAccountAsync CALLED for accountId: {AccountId}", accountId);
             _logger.LogInformation("Deleting account: {AccountId}", accountId);
 
             // Get existing account for event publishing
@@ -907,9 +906,7 @@ public class AccountsService : IAccountsService
             _logger.LogInformation("Account deleted: {AccountId}", accountId);
 
             // Publish account deleted event
-            _logger.LogWarning("[CI-DEBUG] About to call PublishAccountDeletedEventAsync for accountId: {AccountId}", accountId);
             await PublishAccountDeletedEventAsync(accountId, account, "User requested deletion");
-            _logger.LogWarning("[CI-DEBUG] Completed PublishAccountDeletedEventAsync for accountId: {AccountId}", accountId);
 
             return (StatusCodes.NoContent, null);
         }
@@ -1144,17 +1141,15 @@ public class AccountsService : IAccountsService
                 DeletionReason = deletionReason
             };
 
-            // Diagnostic logging for CI debugging
-            var eventJson = System.Text.Json.JsonSerializer.Serialize(eventModel);
-            _logger.LogWarning("[CI-DEBUG] Publishing AccountDeletedEvent: accountId={AccountId}, accountIdString={AccountIdString}, pubsub={PubSub}, topic={Topic}, eventJson={EventJson}",
-                accountId, accountId.ToString(), PUBSUB_NAME, ACCOUNT_DELETED_TOPIC, eventJson);
+            _logger.LogDebug("Publishing AccountDeletedEvent for account {AccountId} to topic {Topic}",
+                accountId, ACCOUNT_DELETED_TOPIC);
 
             await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_DELETED_TOPIC, eventModel);
-            _logger.LogWarning("[CI-DEBUG] Successfully published AccountDeletedEvent for account: {AccountId}", accountId);
+            _logger.LogDebug("Published AccountDeletedEvent for account {AccountId}", accountId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[DIAG] FAILED to publish AccountDeletedEvent for account: {AccountId}", accountId);
+            _logger.LogError(ex, "Failed to publish AccountDeletedEvent for account {AccountId}", accountId);
             // Don't throw - event publishing failure shouldn't break account deletion
         }
     }
