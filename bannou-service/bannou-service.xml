@@ -1776,7 +1776,7 @@
             <summary>
             Sets a custom header for the next service request.
             Headers are applied once and then cleared.
-            Used internally by extension methods for type-safe fluent API.
+            Used by generated clients for type-safe fluent API.
             </summary>
             <param name="name">Header name (e.g., "X-Custom-Header")</param>
             <param name="value">Header value</param>
@@ -1784,7 +1784,7 @@
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ClearAuthorization">
             <summary>
             Clears the Authorization header.
-            Used internally by extension methods for type-safe fluent API.
+            Used by generated clients for type-safe fluent API.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.ClearHeaders">
@@ -1810,6 +1810,22 @@
             The name of the service this client communicates with.
             Should match the service name in the corresponding DaprServiceAttribute.
             </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1">
+            <summary>
+            Base interface for all Bannou service clients.
+            Provides fluent API methods for request configuration.
+            </summary>
+            <typeparam name="TSelf">The concrete client type for fluent method chaining</typeparam>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ServiceClients.IServiceClient`1.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientExtensions">
             <summary>
@@ -1846,54 +1862,6 @@
             Follows naming convention: {Service}Client implements I{Service}Client.
             Service name is derived by removing "Client" suffix and converting to lowercase.
             </summary>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientFluentExtensions">
-            <summary>
-            Fluent API extensions for service client header management.
-            Provides type-safe method chaining without casting requirements.
-            </summary>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientFluentExtensions.WithHeader``1(``0,System.String,System.String)">
-            <summary>
-            Sets a custom header on the service client.
-            Uses extension method pattern to return the correct concrete type for method chaining.
-            </summary>
-            <typeparam name="T">The concrete service client type</typeparam>
-            <param name="client">The service client instance</param>
-            <param name="name">Header name</param>
-            <param name="value">Header value</param>
-            <returns>The same client instance for method chaining</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientFluentExtensions.WithAuthorization``1(``0,System.String)">
-            <summary>
-            Sets the Authorization header on the service client.
-            Automatically prefixes with "Bearer " if not already present.
-            Uses extension method pattern to return the correct concrete type for method chaining.
-            </summary>
-            <typeparam name="T">The concrete service client type</typeparam>
-            <param name="client">The service client instance</param>
-            <param name="token">JWT token or other authorization value</param>
-            <returns>The same client instance for method chaining</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientFluentExtensions.WithAuthorization``1(``0,Newtonsoft.Json.Linq.JObject)">
-            <summary>
-            Sets the Authorization header using a JObject containing auth data.
-            Serializes the JObject to JSON and uses it as the authorization value.
-            Uses extension method pattern to return the correct concrete type for method chaining.
-            </summary>
-            <typeparam name="T">The concrete service client type</typeparam>
-            <param name="client">The service client instance</param>
-            <param name="authData">JObject containing authentication data</param>
-            <returns>The same client instance for method chaining</returns>
-        </member>
-        <member name="M:BeyondImmersion.BannouService.ServiceClients.ServiceClientFluentExtensions.ClearAuthorization``1(``0)">
-            <summary>
-            Clears the Authorization header on the service client.
-            Uses extension method pattern to return the correct concrete type for method chaining.
-            </summary>
-            <typeparam name="T">The concrete service client type</typeparam>
-            <param name="client">The service client instance</param>
-            <returns>The same client instance for method chaining</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.ServiceClientsDependencyInjection">
             <summary>

@@ -1,6 +1,6 @@
 using BeyondImmersion.BannouService.Controllers.Messages;
-using Newtonsoft.Json;
 using System.Reflection;
+using System.Text.Json.Serialization;
 using Xunit.Abstractions;
 
 namespace BeyondImmersion.BannouService.UnitTests;
@@ -12,11 +12,10 @@ public class Messages : IClassFixture<CollectionFixture>
 
     public class Request_HeaderProperties_Derived : ApiRequest { }
     public class Request_HeaderProperties_Generic : ApiRequest<Response_HeaderProperties> { }
-    [JsonObject]
     public class Request_JSON_RequiredProperty : ApiRequest<Response_JSON_RequiredProperty>
     {
         [JsonRequired]
-        [JsonProperty("request_id", Required = Required.Always)]
+        [JsonPropertyName("request_id")]
         public string? RequestID { get; set; }
         public Request_JSON_RequiredProperty() { }
     }
@@ -34,11 +33,10 @@ public class Messages : IClassFixture<CollectionFixture>
         [HeaderArray(Name = "TEST_HEADERS")]
         public Dictionary<string, string>? MoreRequestIDs { get; set; }
     }
-    [JsonObject]
     public class Response_JSON_RequiredProperty : ApiResponse
     {
         [JsonRequired]
-        [JsonProperty("request_id", Required = Required.Always)]
+        [JsonPropertyName("request_id")]
         public string? RequestID { get; set; }
         public Response_JSON_RequiredProperty() { }
     }

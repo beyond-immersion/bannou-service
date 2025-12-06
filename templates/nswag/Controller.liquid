@@ -222,8 +222,8 @@ Generate event handler methods from x-event-subscriptions in OpenAPI spec
             var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{ Class }}Controller>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(logger, "Processing Dapr event: {Topic}", "{{ subscription.topic }}");
 
-            // Use Newtonsoft.Json for consistent serialization since the generated models use Newtonsoft attributes
-            var serializedData = Newtonsoft.Json.JsonConvert.SerializeObject(eventData);
+            // Use System.Text.Json for consistent serialization with generated models
+            var serializedData = System.Text.Json.JsonSerializer.Serialize(eventData);
 
 {%-         comment -%}
             Extract event type information from schema $ref
@@ -239,8 +239,8 @@ Generate event handler methods from x-event-subscriptions in OpenAPI spec
 {%-         assign serviceName = sourceFile | split: "-" | first | capitalize -%}
 {%-         assign fullTypeName = "BeyondImmersion.BannouService." | append: serviceName | append: "." | append: eventTypeName -%}
 
-            // Deserialize using Newtonsoft.Json to match the generated models
-            var typedEventData = Newtonsoft.Json.JsonConvert.DeserializeObject<{{ fullTypeName }}>(serializedData);
+            // Deserialize using System.Text.Json with case-insensitive property matching
+            var typedEventData = System.Text.Json.JsonSerializer.Deserialize<{{ fullTypeName }}>(serializedData, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             if (typedEventData != null)
             {

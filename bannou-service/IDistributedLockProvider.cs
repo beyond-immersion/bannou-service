@@ -108,8 +108,24 @@ public class RedisDistributedLockProvider : IDistributedLockProvider
     private class LockData
     {
         public string Owner { get; set; } = "";
-        public DateTimeOffset AcquiredAt { get; set; }
-        public DateTimeOffset ExpiresAt { get; set; }
+
+        // Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
+        public long AcquiredAtUnix { get; set; }
+        public long ExpiresAtUnix { get; set; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public DateTimeOffset AcquiredAt
+        {
+            get => DateTimeOffset.FromUnixTimeSeconds(AcquiredAtUnix);
+            set => AcquiredAtUnix = value.ToUnixTimeSeconds();
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public DateTimeOffset ExpiresAt
+        {
+            get => DateTimeOffset.FromUnixTimeSeconds(ExpiresAtUnix);
+            set => ExpiresAtUnix = value.ToUnixTimeSeconds();
+        }
     }
 }
 

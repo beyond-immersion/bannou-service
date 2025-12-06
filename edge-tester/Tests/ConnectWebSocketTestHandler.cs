@@ -1,8 +1,8 @@
 using BeyondImmersion.BannouService.Connect.Protocol;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -203,7 +203,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             Console.WriteLine("✅ WebSocket connected for binary protocol test");
 
             // Create a test message using binary protocol
-            var testPayload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { test = "Binary protocol validation", timestamp = DateTime.UtcNow }));
+            var testPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new { test = "Binary protocol validation", timestamp = DateTime.UtcNow }));
 
             var binaryMessage = new BinaryMessage(
                 flags: MessageFlags.None,
@@ -332,12 +332,12 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 Console.WriteLine($"   Payload preview: {responsePayload[..Math.Min(500, responsePayload.Length)]}");
 
                 // Parse and validate the capability manifest
-                var responseObj = Newtonsoft.Json.Linq.JObject.Parse(responsePayload);
-                var messageType = (string?)responseObj["type"];
+                var responseObj = JsonNode.Parse(responsePayload)?.AsObject();
+                var messageType = responseObj?["type"]?.GetValue<string>();
 
                 if (messageType == "capability_manifest")
                 {
-                    var availableApis = responseObj["availableAPIs"] as Newtonsoft.Json.Linq.JArray;
+                    var availableApis = responseObj?["availableAPIs"]?.AsArray();
                     var apiCount = availableApis?.Count ?? 0;
                     Console.WriteLine($"✅ Received capability manifest with {apiCount} available APIs");
 
@@ -428,7 +428,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 headers = new Dictionary<string, string>(),
                 body = (string?)null
             };
-            var requestPayload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(apiRequest));
+            var requestPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(apiRequest));
 
             var binaryMessage = new BinaryMessage(
                 flags: MessageFlags.None,
@@ -469,7 +469,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine($"✅ API proxy response: {responsePayload.Substring(0, Math.Min(500, responsePayload.Length))}");
 
                     // Try to parse as JSON to verify structure
-                    var apiResponse = JsonConvert.DeserializeObject(responsePayload);
+                    var apiResponse = JsonNode.Parse(responsePayload);
                     if (apiResponse != null)
                     {
                         Console.WriteLine("✅ API proxy response is valid JSON");
@@ -553,7 +553,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         var testPassword = "WebSocketDeleteTest123!";
 
         var registerUrl = $"http://{Program.Configuration.OpenResty_Host}:{Program.Configuration.OpenResty_Port}/auth/register";
-        var registerContent = new JObject
+        var registerContent = new JsonObject
         {
             ["username"] = testUsername,
             ["email"] = testEmail,
@@ -566,7 +566,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         try
         {
             using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
-            registerRequest.Content = new StringContent(JsonConvert.SerializeObject(registerContent), Encoding.UTF8, "application/json");
+            registerRequest.Content = new StringContent(JsonSerializer.Serialize(registerContent), Encoding.UTF8, "application/json");
 
             using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
             if (registerResponse.StatusCode != System.Net.HttpStatusCode.OK)
@@ -577,8 +577,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             }
 
             var registerBody = await registerResponse.Content.ReadAsStringAsync();
-            var registerObj = JObject.Parse(registerBody);
-            userAccessToken = (string?)registerObj["accessToken"] ?? "";
+            var registerObj = JsonNode.Parse(registerBody)?.AsObject();
+            userAccessToken = registerObj?["accessToken"]?.GetValue<string>() ?? "";
 
             if (string.IsNullOrEmpty(userAccessToken))
             {
@@ -595,8 +595,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             }
 
             var payloadJson = Encoding.UTF8.GetString(Convert.FromBase64String(PadBase64(jwtParts[1])));
-            var jwtPayload = JObject.Parse(payloadJson);
-            var accountIdString = (string?)jwtPayload["nameid"] ?? (string?)jwtPayload["sub"];
+            var jwtPayload = JsonNode.Parse(payloadJson)?.AsObject();
+            var accountIdString = jwtPayload?["nameid"]?.GetValue<string>() ?? jwtPayload?["sub"]?.GetValue<string>();
 
             if (string.IsNullOrEmpty(accountIdString) || !Guid.TryParse(accountIdString, out accountId))
             {
@@ -689,9 +689,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 method = "POST",
                 path = "/accounts/delete",
                 headers = new Dictionary<string, string>(),
-                body = JsonConvert.SerializeObject(deleteRequestBody)
+                body = JsonSerializer.Serialize(deleteRequestBody)
             };
-            var requestPayload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(deleteRequest));
+            var requestPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(deleteRequest));
 
             var binaryMessage = new BinaryMessage(
                 flags: MessageFlags.None,
@@ -965,9 +965,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                             if (text.Contains("disconnect_notification"))
                             {
                                 disconnectNotificationReceived = true;
-                                var notification = JObject.Parse(text);
-                                reconnectionToken = (string?)notification["reconnectionToken"];
-                                var expiresAt = (string?)notification["expiresAt"];
+                                var notification = JsonNode.Parse(text)?.AsObject();
+                                reconnectionToken = notification?["reconnectionToken"]?.GetValue<string>();
+                                var expiresAt = notification?["expiresAt"]?.GetValue<string>();
                                 Console.WriteLine($"✅ Received disconnect_notification!");
                                 Console.WriteLine($"   Reconnection token: {reconnectionToken?[..Math.Min(20, reconnectionToken?.Length ?? 0)]}...");
                                 Console.WriteLine($"   Expires at: {expiresAt}");
@@ -982,8 +982,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 if (!disconnectNotificationReceived)
                 {
-                    Console.WriteLine("⚠️ Did not receive disconnect_notification (may be expected if Redis not available)");
-                    // Continue anyway to test the reconnection path failure case
+                    Console.WriteLine("⚠️ Did not receive disconnect_notification before WebSocket closed");
+                    Console.WriteLine("   Check that DaprSessionManager is properly registered and state store is available");
                 }
             }
         }
@@ -993,23 +993,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
         if (string.IsNullOrEmpty(reconnectionToken))
         {
-            Console.WriteLine("⚠️ No reconnection token received - testing reconnection failure path");
-
-            // Test that reconnection with invalid token fails gracefully
-            using var webSocket = new ClientWebSocket();
-            webSocket.Options.SetRequestHeader("Authorization", "Reconnect invalid_token_12345");
-
-            try
-            {
-                await webSocket.ConnectAsync(serverUri, CancellationToken.None);
-                Console.WriteLine("❌ Connection with invalid token should have failed");
-                return false;
-            }
-            catch (WebSocketException)
-            {
-                Console.WriteLine("✅ Connection with invalid token correctly rejected");
-                return true; // Test passes - invalid token rejection works
-            }
+            Console.WriteLine("❌ FAIL: No reconnection token received - disconnect_notification was not sent");
+            Console.WriteLine("   This indicates session management is not working (check DaprSessionManager registration)");
+            return false;
         }
 
         // Test reconnection with valid token
@@ -1106,8 +1092,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     // Check if this is a capability manifest
                     if (payloadText.Contains("capability_manifest"))
                     {
-                        var manifest = JObject.Parse(payloadText);
-                        var availableAPIs = manifest["availableAPIs"] as JArray;
+                        var manifest = JsonNode.Parse(payloadText)?.AsObject();
+                        var availableAPIs = manifest?["availableAPIs"]?.AsArray();
 
                         if (availableAPIs != null)
                         {
@@ -1116,9 +1102,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                             // Look for POST:/accounts/delete
                             foreach (var api in availableAPIs)
                             {
-                                var method = (string?)api["method"];
-                                var path = (string?)api["path"];
-                                var serviceGuidStr = (string?)api["serviceGuid"];
+                                var method = api?["method"]?.GetValue<string>();
+                                var path = api?["path"]?.GetValue<string>();
+                                var serviceGuidStr = api?["serviceGuid"]?.GetValue<string>();
 
                                 // Match POST /accounts/delete
                                 if (method == "POST" && path == "/accounts/delete")
@@ -1193,14 +1179,14 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 var payloadJson = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
 
-                JObject manifest;
-                try { manifest = JObject.Parse(payloadJson); }
+                JsonObject? manifest;
+                try { manifest = JsonNode.Parse(payloadJson)?.AsObject(); }
                 catch { continue; }
 
-                var type = (string?)manifest["type"];
+                var type = manifest?["type"]?.GetValue<string>();
                 if (type != "capability_manifest") continue;
 
-                var availableApis = manifest["availableAPIs"] as JArray;
+                var availableApis = manifest?["availableAPIs"]?.AsArray();
                 if (availableApis == null || availableApis.Count == 0)
                 {
                     Console.WriteLine("⚠️ Manifest has no available APIs");
@@ -1212,18 +1198,18 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 // Log available APIs
                 foreach (var api in availableApis)
                 {
-                    var debugMethod = (string?)api["method"];
-                    var debugPath = (string?)api["path"];
-                    var debugService = (string?)api["serviceName"];
+                    var debugMethod = api?["method"]?.GetValue<string>();
+                    var debugPath = api?["path"]?.GetValue<string>();
+                    var debugService = api?["serviceName"]?.GetValue<string>();
                     Console.WriteLine($"      - {debugMethod}:{debugPath} ({debugService})");
                 }
 
                 // Prefer GET endpoints for testing (they don't require request body)
                 foreach (var api in availableApis)
                 {
-                    var apiMethod = (string?)api["method"];
-                    var apiPath = (string?)api["path"];
-                    var apiGuid = (string?)api["serviceGuid"];
+                    var apiMethod = api?["method"]?.GetValue<string>();
+                    var apiPath = api?["path"]?.GetValue<string>();
+                    var apiGuid = api?["serviceGuid"]?.GetValue<string>();
 
                     if (apiMethod == "GET" && !string.IsNullOrEmpty(apiPath) && !string.IsNullOrEmpty(apiGuid))
                     {
@@ -1237,9 +1223,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 // Fallback: return any endpoint
                 foreach (var api in availableApis)
                 {
-                    var apiMethod = (string?)api["method"];
-                    var apiPath = (string?)api["path"];
-                    var apiGuid = (string?)api["serviceGuid"];
+                    var apiMethod = api?["method"]?.GetValue<string>();
+                    var apiPath = api?["path"]?.GetValue<string>();
+                    var apiGuid = api?["serviceGuid"]?.GetValue<string>();
 
                     if (!string.IsNullOrEmpty(apiMethod) && !string.IsNullOrEmpty(apiPath) && !string.IsNullOrEmpty(apiGuid))
                     {
@@ -1308,10 +1294,10 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 var payloadJson = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
 
-                JObject manifest;
+                JsonObject? manifest;
                 try
                 {
-                    manifest = JObject.Parse(payloadJson);
+                    manifest = JsonNode.Parse(payloadJson)?.AsObject();
                 }
                 catch
                 {
@@ -1320,17 +1306,17 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
 
                 // Verify this is a capability manifest
-                var type = (string?)manifest["type"];
+                var type = manifest?["type"]?.GetValue<string>();
                 if (type != "capability_manifest")
                 {
                     Console.WriteLine($"⚠️ Received event type '{type}', waiting for capability_manifest...");
                     continue;
                 }
 
-                var reason = (string?)manifest["reason"];
+                var reason = manifest?["reason"]?.GetValue<string>();
                 Console.WriteLine($"📥 Received capability manifest: {result.Count} bytes (reason: {reason ?? "initial"})");
 
-                var availableApis = manifest["availableAPIs"] as JArray;
+                var availableApis = manifest?["availableAPIs"]?.AsArray();
                 if (availableApis == null)
                 {
                     Console.WriteLine("⚠️ No availableAPIs in manifest, waiting for update...");
@@ -1343,18 +1329,18 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 Console.WriteLine($"   Currently available endpoints:");
                 foreach (var api in availableApis)
                 {
-                    var debugMethod = (string?)api["method"];
-                    var debugPath = (string?)api["path"];
-                    var debugService = (string?)api["serviceName"];
+                    var debugMethod = api?["method"]?.GetValue<string>();
+                    var debugPath = api?["path"]?.GetValue<string>();
+                    var debugService = api?["serviceName"]?.GetValue<string>();
                     Console.WriteLine($"      - {debugMethod}:{debugPath} ({debugService})");
                 }
 
                 // Try to find the GUID for our endpoint
                 foreach (var api in availableApis)
                 {
-                    var apiMethod = (string?)api["method"];
-                    var apiPath = (string?)api["path"];
-                    var apiGuid = (string?)api["serviceGuid"];
+                    var apiMethod = api?["method"]?.GetValue<string>();
+                    var apiPath = api?["path"]?.GetValue<string>();
+                    var apiGuid = api?["serviceGuid"]?.GetValue<string>();
 
                     if (apiMethod == method && apiPath == path && !string.IsNullOrEmpty(apiGuid))
                     {
@@ -1369,8 +1355,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 // Try by endpoint key format
                 foreach (var api in availableApis)
                 {
-                    var endpointKey = (string?)api["endpointKey"];
-                    var apiGuid = (string?)api["serviceGuid"];
+                    var endpointKey = api?["endpointKey"]?.GetValue<string>();
+                    var apiGuid = api?["serviceGuid"]?.GetValue<string>();
 
                     // The endpoint key format is "serviceName:METHOD:/path"
                     if (!string.IsNullOrEmpty(endpointKey) && endpointKey.Contains($":{method}:{path}"))
@@ -1452,8 +1438,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     try
                     {
                         var payloadJson = Encoding.UTF8.GetString(message.Payload.Span);
-                        var eventObj = JObject.Parse(payloadJson);
-                        var eventType = (string?)eventObj["type"];
+                        var eventObj = JsonNode.Parse(payloadJson)?.AsObject();
+                        var eventType = eventObj?["type"]?.GetValue<string>();
                         Console.WriteLine($"   ⏭️ Skipping Event message (type: {eventType ?? "unknown"})");
                     }
                     catch

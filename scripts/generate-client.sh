@@ -155,7 +155,7 @@ echo -e "${YELLOW}🔄 Running NSwag client generation...${NC}"
     "/excludedTypeNames:ApiException,ApiException\<TResult\>" \
     "/injectHttpClient:false" \
     "/disposeHttpClient:true" \
-    "/jsonLibrary:NewtonsoftJson" \
+    "/jsonLibrary:SystemTextJson" \
     "/generateNullableReferenceTypes:true" \
     "/newLineBehavior:LF" \
     "/generateOptionalParameters:true" \

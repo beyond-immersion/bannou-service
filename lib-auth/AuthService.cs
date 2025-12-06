@@ -961,7 +961,25 @@ public class AuthService : IAuthService
 
                 var sessionKey = sessionKeyClaim.Value;
 
-                // Lookup session data from Redis using session_key
+                _logger.LogDebug("Validating session from JWT, SessionKey: {SessionKey}", sessionKey);
+
+                // Fetch raw state for debugging (helps diagnose serialization issues)
+                var rawStateKey = $"session:{sessionKey}";
+                try
+                {
+                    var jsonElementData = await _daprClient.GetStateAsync<System.Text.Json.JsonElement>(
+                        REDIS_STATE_STORE,
+                        rawStateKey,
+                        cancellationToken: cancellationToken);
+                    _logger.LogDebug("Raw session state for SessionKey {SessionKey}: Kind={Kind}, Data={Raw}",
+                        sessionKey, jsonElementData.ValueKind, jsonElementData.GetRawText());
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to fetch raw session state for debugging, SessionKey: {SessionKey}", sessionKey);
+                }
+
+                // Lookup session data from Redis
                 var sessionData = await _daprClient.GetStateAsync<SessionDataModel>(
                     REDIS_STATE_STORE,
                     $"session:{sessionKey}",
@@ -969,18 +987,21 @@ public class AuthService : IAuthService
 
                 if (sessionData == null)
                 {
-                    _logger.LogWarning("Session not found in Redis for session_key: {SessionKey}", sessionKey);
+                    _logger.LogWarning("Session not found, SessionKey: {SessionKey}", sessionKey);
                     return (StatusCodes.Unauthorized, null);
                 }
+
+                _logger.LogDebug("Session loaded for AccountId {AccountId}, SessionKey: {SessionKey}, ExpiresAt: {ExpiresAt}",
+                    sessionData.AccountId, sessionKey, sessionData.ExpiresAt);
 
                 // Check if session has expired
-                if (sessionData.ExpiresAt < DateTime.UtcNow)
+                if (sessionData.ExpiresAt < DateTimeOffset.UtcNow)
                 {
-                    _logger.LogWarning("Session has expired for session_key: {SessionKey}", sessionKey);
+                    _logger.LogWarning("Session expired, SessionKey: {SessionKey}, ExpiredAt: {ExpiresAt}", sessionKey, sessionData.ExpiresAt);
                     return (StatusCodes.Unauthorized, null);
                 }
 
-                _logger.LogInformation("JWT token validated successfully for account: {AccountId}", sessionData.AccountId);
+                _logger.LogDebug("Token validated successfully, AccountId: {AccountId}, SessionKey: {SessionKey}", sessionData.AccountId, sessionKey);
 
                 // Return session information
                 // IMPORTANT: Return sessionKey (not sessionData.SessionId) so Connect service
@@ -992,7 +1013,7 @@ public class AuthService : IAuthService
                     AccountId = sessionData.AccountId,
                     SessionId = sessionKey,
                     Roles = sessionData.Roles ?? new List<string>(),
-                    RemainingTime = (int)(sessionData.ExpiresAt - DateTime.UtcNow).TotalSeconds
+                    RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds
                 });
             }
             catch (SecurityTokenValidationException ex)
@@ -1035,8 +1056,25 @@ public class AuthService : IAuthService
         public string DisplayName { get; set; } = string.Empty;
         public List<string> Roles { get; set; } = new List<string>();
         public string SessionId { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-        public DateTime ExpiresAt { get; set; }
+
+        // Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
+        public long CreatedAtUnix { get; set; }
+        public long ExpiresAtUnix { get; set; }
+
+        // Expose as DateTimeOffset for code convenience (not serialized)
+        [System.Text.Json.Serialization.JsonIgnore]
+        public DateTimeOffset CreatedAt
+        {
+            get => DateTimeOffset.FromUnixTimeSeconds(CreatedAtUnix);
+            set => CreatedAtUnix = value.ToUnixTimeSeconds();
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public DateTimeOffset ExpiresAt
+        {
+            get => DateTimeOffset.FromUnixTimeSeconds(ExpiresAtUnix);
+            set => ExpiresAtUnix = value.ToUnixTimeSeconds();
+        }
     }
 
     private string HashPassword(string password)
@@ -1084,9 +1122,12 @@ public class AuthService : IAuthService
             DisplayName = account.DisplayName ?? string.Empty,
             Roles = account.Roles?.ToList() ?? new List<string>(),
             SessionId = sessionId,
-            CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes)
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes)
         };
+
+        _logger.LogDebug("Saving session for AccountId {AccountId}, SessionKey: {SessionKey}, ExpiresAt: {ExpiresAt}",
+            account.AccountId, sessionKey, sessionData.ExpiresAt);
 
         await _daprClient.SaveStateAsync(
             REDIS_STATE_STORE,
@@ -1094,6 +1135,14 @@ public class AuthService : IAuthService
             sessionData,
             metadata: new Dictionary<string, string> { { "ttl", (_configuration.JwtExpirationMinutes * 60).ToString() } },
             cancellationToken: cancellationToken);
+
+        // Verify round-trip for debugging serialization issues
+        var verifyData = await _daprClient.GetStateAsync<SessionDataModel>(
+            REDIS_STATE_STORE,
+            $"session:{sessionKey}",
+            cancellationToken: cancellationToken);
+        _logger.LogDebug("Session round-trip verification for SessionKey {SessionKey}: Success={Success}, ExpiresAtUnix={ExpiresAtUnix}",
+            sessionKey, verifyData != null, verifyData?.ExpiresAtUnix ?? -1);
 
         // Maintain account-to-sessions index for efficient GetSessions implementation
         await AddSessionToAccountIndexAsync(account.AccountId.ToString(), sessionKey, cancellationToken);
@@ -1314,8 +1363,6 @@ public class AuthService : IAuthService
         try
         {
             var indexKey = $"account-sessions:{accountId}";
-            _logger.LogInformation("[DIAG] AddSessionToAccountIndexAsync called with accountId={AccountId}, sessionKey={SessionKey}, indexKey={IndexKey}",
-                accountId, sessionKey, indexKey);
 
             // Get existing session list
             var existingSessions = await _daprClient.GetStateAsync<List<string>>(
@@ -1337,13 +1384,13 @@ public class AuthService : IAuthService
                     metadata: new Dictionary<string, string> { { "ttl", accountIndexTtl.ToString() } },
                     cancellationToken: cancellationToken);
 
-                _logger.LogInformation("[DIAG] SAVED session index: indexKey={IndexKey}, sessions={SessionsJson}",
-                    indexKey, System.Text.Json.JsonSerializer.Serialize(existingSessions));
+                _logger.LogDebug("Added session to account index, AccountId: {AccountId}, SessionKey: {SessionKey}, TotalSessions: {Count}",
+                    accountId, sessionKey, existingSessions.Count);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[DIAG] FAILED to add session {SessionKey} to account index for account {AccountId}", sessionKey, accountId);
+            _logger.LogError(ex, "Failed to add session to account index, AccountId: {AccountId}, SessionKey: {SessionKey}", accountId, sessionKey);
             // Don't throw - session creation should succeed even if index update fails
         }
     }
@@ -1444,7 +1491,7 @@ public class AuthService : IAuthService
                 if (result.SessionData != null)
                 {
                     // Check if session is still valid
-                    if (result.SessionData.ExpiresAt > DateTime.UtcNow)
+                    if (result.SessionData.ExpiresAt > DateTimeOffset.UtcNow)
                     {
                         sessions.Add(new SessionInfo
                         {
@@ -2134,35 +2181,22 @@ public class AuthService : IAuthService
     /// </summary>
     public async Task OnEventReceivedAsync<T>(string topic, T eventData) where T : class
     {
-        _logger.LogInformation("[DIAG] AuthService received event {Topic} with data type {DataType}", topic, typeof(T).Name);
-
-        // Diagnostic: log raw event data for debugging CI issues
-        try
-        {
-            var eventJson = System.Text.Json.JsonSerializer.Serialize(eventData);
-            _logger.LogInformation("[DIAG] Raw event data JSON: {EventJson}", eventJson);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "[DIAG] Failed to serialize event data for logging");
-        }
+        _logger.LogDebug("Received event on topic {Topic}, DataType: {DataType}", topic, typeof(T).Name);
 
         switch (topic)
         {
             case "account.deleted":
                 if (eventData is AccountDeletedEvent deletedEvent)
                 {
-                    _logger.LogInformation("[DIAG] Cast to AccountDeletedEvent successful. EventId={EventId}, AccountId={AccountId}, AccountIdString={AccountIdString}",
-                        deletedEvent.EventId, deletedEvent.AccountId, deletedEvent.AccountId.ToString());
                     await HandleAccountDeletedEventAsync(deletedEvent);
                 }
                 else
                 {
-                    _logger.LogWarning("[DIAG] Cast to AccountDeletedEvent FAILED. Actual type: {ActualType}", eventData?.GetType().FullName ?? "null");
+                    _logger.LogError("Failed to cast event data to AccountDeletedEvent, ActualType: {ActualType}", eventData?.GetType().FullName ?? "null");
                 }
                 break;
             default:
-                _logger.LogWarning("AuthService received unknown event topic: {Topic}", topic);
+                _logger.LogWarning("Received unknown event topic: {Topic}", topic);
                 break;
         }
     }
@@ -2214,22 +2248,19 @@ public class AuthService : IAuthService
         {
             // Get session keys directly from the account index
             var indexKey = $"account-sessions:{accountId}";
-            _logger.LogInformation("[DIAG] InvalidateAllSessionsForAccountAsync called with accountId={AccountId}, indexKey={IndexKey}",
-                accountId, indexKey);
 
             var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
                 REDIS_STATE_STORE,
                 indexKey,
                 cancellationToken: CancellationToken.None);
 
-            _logger.LogInformation("[DIAG] GetStateAsync for indexKey={IndexKey} returned: {SessionKeysJson}",
-                indexKey, sessionKeys == null ? "null" : System.Text.Json.JsonSerializer.Serialize(sessionKeys));
-
             if (sessionKeys == null || !sessionKeys.Any())
             {
-                _logger.LogInformation("[DIAG] No sessions found for account {AccountId} with indexKey={IndexKey} - EARLY RETURN", accountId, indexKey);
+                _logger.LogDebug("No sessions found for account {AccountId}", accountId);
                 return;
             }
+
+            _logger.LogDebug("Invalidating {SessionCount} sessions for account {AccountId}", sessionKeys.Count, accountId);
 
             // Remove each session from Redis
             foreach (var sessionKey in sessionKeys)

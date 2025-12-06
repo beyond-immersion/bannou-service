@@ -23,10 +23,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\bannou-service\bannou-service.csproj" />
     <ProjectReference Include="..\lib-accounts\lib-accounts.csproj" />
     <ProjectReference Include="..\lib-auth\lib-auth.csproj" />

@@ -435,11 +435,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
             var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(logger, "Processing Dapr event: {Topic}", "account.deleted");
 
-            // Use Newtonsoft.Json for consistent serialization since the generated models use Newtonsoft attributes
-            var serializedData = Newtonsoft.Json.JsonConvert.SerializeObject(eventData);
+            // Use System.Text.Json for consistent serialization with generated models
+            var serializedData = System.Text.Json.JsonSerializer.Serialize(eventData);
 
-            // Deserialize using Newtonsoft.Json to match the generated models
-            var typedEventData = Newtonsoft.Json.JsonConvert.DeserializeObject<BeyondImmersion.BannouService.Accounts.AccountDeletedEvent>(serializedData);
+            // Deserialize using System.Text.Json with case-insensitive property matching
+            var typedEventData = System.Text.Json.JsonSerializer.Deserialize<BeyondImmersion.BannouService.Accounts.AccountDeletedEvent>(serializedData, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             if (typedEventData != null)
             {

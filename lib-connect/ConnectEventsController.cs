@@ -124,8 +124,7 @@ public class ConnectEventsController : ControllerBase
                 return Ok(); // Don't fail - just ignore empty/invalid events
             }
 
-            // DEBUG: Log the actual JSON payload to diagnose type mismatch issue
-            _logger.LogWarning("[DEBUG] Session invalidation event raw JSON: {EventJson}", actualEventData.Value.GetRawText());
+            _logger.LogDebug("Session invalidation event raw JSON: {EventJson}", actualEventData.Value.GetRawText());
 
             // Extract session IDs and reason
             var sessionIds = new List<string>();
@@ -135,12 +134,11 @@ public class ConnectEventsController : ControllerBase
             if (actualEventData.Value.TryGetProperty("sessionIds", out var sessionsElement) &&
                 sessionsElement.ValueKind == JsonValueKind.Array)
             {
-                _logger.LogWarning("[DEBUG] sessionIds array has {Count} elements", sessionsElement.GetArrayLength());
+                _logger.LogDebug("Session invalidation has {Count} session IDs", sessionsElement.GetArrayLength());
 
                 foreach (var sessionElement in sessionsElement.EnumerateArray())
                 {
-                    // DEBUG: Log the actual type and raw value
-                    _logger.LogWarning("[DEBUG] sessionId element: ValueKind={ValueKind}, RawText={RawText}",
+                    _logger.LogDebug("Session element - ValueKind: {ValueKind}, Value: {RawText}",
                         sessionElement.ValueKind, sessionElement.GetRawText());
 
                     // Handle both string and number types (defensive parsing for CloudEvents compatibility)
@@ -157,7 +155,7 @@ public class ConnectEventsController : ControllerBase
                     }
                     else
                     {
-                        _logger.LogError("[DEBUG] UNEXPECTED ValueKind: {ValueKind} - using GetRawText()", sessionElement.ValueKind);
+                        _logger.LogWarning("Unexpected session element ValueKind: {ValueKind}, using raw text", sessionElement.ValueKind);
                         sessionId = sessionElement.GetRawText();
                     }
 

@@ -195,30 +195,31 @@ public static class Program
                         }
                     }
                 })
-                .AddDapr() // Add Dapr pub/sub support
-                .AddNewtonsoftJson(jsonSettings =>
+                .AddDapr(daprClientBuilder =>
                 {
-                    jsonSettings.SerializerSettings.ConstructorHandling = ConstructorHandling.Default;
-                    jsonSettings.SerializerSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
-                    jsonSettings.SerializerSettings.DateParseHandling = DateParseHandling.DateTimeOffset;
-                    jsonSettings.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
-                    jsonSettings.SerializerSettings.DefaultValueHandling = DefaultValueHandling.Include;
-                    jsonSettings.SerializerSettings.FloatFormatHandling = FloatFormatHandling.String;
-                    jsonSettings.SerializerSettings.FloatParseHandling = FloatParseHandling.Double;
-                    jsonSettings.SerializerSettings.MetadataPropertyHandling = MetadataPropertyHandling.Default;
-                    jsonSettings.SerializerSettings.MissingMemberHandling = MissingMemberHandling.Ignore;
-                    jsonSettings.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
-                    jsonSettings.SerializerSettings.PreserveReferencesHandling = PreserveReferencesHandling.None;
-                    jsonSettings.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Error;
-                    jsonSettings.SerializerSettings.StringEscapeHandling = StringEscapeHandling.Default;
-                    jsonSettings.SerializerSettings.TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple;
-                    jsonSettings.SerializerSettings.TypeNameHandling = TypeNameHandling.None;
+                    // CRITICAL: Configure DaprClient serializer here, NOT in separate AddDaprClient call
+                    // AddDapr() registers DaprClient first, and subsequent AddDaprClient() calls are ignored
+                    // (TryAddSingleton pattern - first registration wins)
+                    daprClientBuilder.UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig);
+                })
+                .AddJsonOptions(jsonOptions =>
+                {
+                    // Configure System.Text.Json serialization options
+                    jsonOptions.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+                    jsonOptions.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+                    jsonOptions.JsonSerializerOptions.PropertyNameCaseInsensitive = true; // CRITICAL: Allow case-insensitive deserialization
+                    jsonOptions.JsonSerializerOptions.WriteIndented = false;
+                    jsonOptions.JsonSerializerOptions.AllowTrailingCommas = true;
+                    jsonOptions.JsonSerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
+                    jsonOptions.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString;
+                    jsonOptions.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
                 });
 
             webAppBuilder.Services
                 .AddWebSockets((websocketOptions) => { });
 
-            webAppBuilder.Services.AddDaprClient();
+            // NOTE: DaprClient is already registered by AddDapr() above with proper serializer config
+            // Do NOT call AddDaprClient() here - it would be ignored due to TryAddSingleton pattern
 
             // Add core service infrastructure (but not clients - PluginLoader handles those)
             webAppBuilder.Services.AddBannouServiceClients();

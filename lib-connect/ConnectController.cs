@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,10 +12,12 @@ namespace BeyondImmersion.BannouService.Connect;
 public class ConnectController : ConnectControllerBase
 {
     private readonly IConnectService _connectService;
+    private readonly ILogger<ConnectController> _logger;
 
-    public ConnectController(IConnectService connectService) : base(connectService)
+    public ConnectController(IConnectService connectService, ILogger<ConnectController> logger) : base(connectService)
     {
         _connectService = connectService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -75,8 +78,9 @@ public class ConnectController : ConnectControllerBase
         {
             return NoContent();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "WebSocket connection failed");
             return StatusCode(500, "WebSocket connection failed");
         }
     }

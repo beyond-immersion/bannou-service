@@ -1,6 +1,6 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -154,7 +154,7 @@ public class LoginTestHandler : IServiceTestHandler
         var registerUrl = $"http://{Program.Configuration.Register_Endpoint}";
         Console.WriteLine($"📡 Testing registration at: {registerUrl}");
 
-        var content = new JObject
+        var content = new JsonObject
         {
             ["username"] = testUsername,
             ["email"] = testEmail, // Explicitly provide email for login consistency
@@ -162,7 +162,7 @@ public class LoginTestHandler : IServiceTestHandler
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, registerUrl);
-        request.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+        request.Content = new StringContent(JsonSerializer.Serialize(content), Encoding.UTF8, "application/json");
 
         using var response = await Program.HttpClient.SendAsync(request);
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -177,9 +177,9 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Verify response contains tokens
-        var responseObj = JObject.Parse(responseBody);
-        var accessToken = (string?)responseObj["accessToken"];
-        var refreshToken = (string?)responseObj["refreshToken"];
+        var responseObj = JsonNode.Parse(responseBody)?.AsObject();
+        var accessToken = responseObj?["accessToken"]?.GetValue<string>();
+        var refreshToken = responseObj?["refreshToken"]?.GetValue<string>();
 
         if (string.IsNullOrEmpty(accessToken))
         {
@@ -209,14 +209,14 @@ public class LoginTestHandler : IServiceTestHandler
         var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
         Console.WriteLine($"📡 Testing login at: {loginUrl}");
 
-        var content = new JObject
+        var content = new JsonObject
         {
             ["email"] = Program.Configuration.Client_Username,
             ["password"] = Program.Configuration.Client_Password
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, loginUrl);
-        request.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+        request.Content = new StringContent(JsonSerializer.Serialize(content), Encoding.UTF8, "application/json");
 
         using var response = await Program.HttpClient.SendAsync(request);
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -231,9 +231,9 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Verify response structure
-        var responseObj = JObject.Parse(responseBody);
-        var accessToken = (string?)responseObj["accessToken"];
-        var refreshToken = (string?)responseObj["refreshToken"];
+        var responseObj = JsonNode.Parse(responseBody)?.AsObject();
+        var accessToken = responseObj?["accessToken"]?.GetValue<string>();
+        var refreshToken = responseObj?["refreshToken"]?.GetValue<string>();
 
         if (string.IsNullOrEmpty(accessToken))
         {
@@ -270,14 +270,14 @@ public class LoginTestHandler : IServiceTestHandler
         // First login to get a refresh token
         var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
 
-        var loginContent = new JObject
+        var loginContent = new JsonObject
         {
             ["email"] = Program.Configuration.Client_Username,
             ["password"] = Program.Configuration.Client_Password
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
-        loginRequest.Content = new StringContent(JsonConvert.SerializeObject(loginContent), Encoding.UTF8, "application/json");
+        loginRequest.Content = new StringContent(JsonSerializer.Serialize(loginContent), Encoding.UTF8, "application/json");
 
         using var loginResponse = await Program.HttpClient.SendAsync(loginRequest);
         if (loginResponse.StatusCode != System.Net.HttpStatusCode.OK)
@@ -287,8 +287,8 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        var loginObj = JObject.Parse(loginBody);
-        var refreshToken = (string?)loginObj["refreshToken"];
+        var loginObj = JsonNode.Parse(loginBody)?.AsObject();
+        var refreshToken = loginObj?["refreshToken"]?.GetValue<string>();
 
         if (string.IsNullOrEmpty(refreshToken))
         {
@@ -301,7 +301,7 @@ public class LoginTestHandler : IServiceTestHandler
         Console.WriteLine($"📡 Testing token refresh at: {refreshUrl}");
 
         // Get access token for Authorization header
-        var accessToken = (string?)loginObj["accessToken"];
+        var accessToken = loginObj?["accessToken"]?.GetValue<string>();
         if (string.IsNullOrEmpty(accessToken))
         {
             Console.WriteLine("❌ No access token from login for refresh test");
@@ -309,14 +309,14 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Refresh endpoint expects: Authorization header with JWT + body with refreshToken
-        var refreshContent = new JObject
+        var refreshContent = new JsonObject
         {
             ["refreshToken"] = refreshToken
         };
 
         using var refreshRequest = new HttpRequestMessage(HttpMethod.Post, refreshUrl);
         refreshRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-        refreshRequest.Content = new StringContent(JsonConvert.SerializeObject(refreshContent), Encoding.UTF8, "application/json");
+        refreshRequest.Content = new StringContent(JsonSerializer.Serialize(refreshContent), Encoding.UTF8, "application/json");
         refreshRequest.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
         using var refreshResponse = await Program.HttpClient.SendAsync(refreshRequest);
@@ -332,8 +332,8 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         // Verify new tokens returned
-        var refreshObj = JObject.Parse(refreshBody);
-        var newAccessToken = (string?)refreshObj["accessToken"];
+        var refreshObj = JsonNode.Parse(refreshBody)?.AsObject();
+        var newAccessToken = refreshObj?["accessToken"]?.GetValue<string>();
 
         if (string.IsNullOrEmpty(newAccessToken))
         {
@@ -356,14 +356,14 @@ public class LoginTestHandler : IServiceTestHandler
         var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
         Console.WriteLine($"📡 Testing invalid login at: {loginUrl}");
 
-        var content = new JObject
+        var content = new JsonObject
         {
             ["email"] = "nonexistent-user-12345@invalid.test",
             ["password"] = "WrongPassword123!"
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, loginUrl);
-        request.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+        request.Content = new StringContent(JsonSerializer.Serialize(content), Encoding.UTF8, "application/json");
 
         using var response = await Program.HttpClient.SendAsync(request);
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -423,14 +423,14 @@ public class LoginTestHandler : IServiceTestHandler
 
         // First login to get a valid token
         var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
-        var loginContent = new JObject
+        var loginContent = new JsonObject
         {
             ["email"] = Program.Configuration.Client_Username,
             ["password"] = Program.Configuration.Client_Password
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
-        loginRequest.Content = new StringContent(JsonConvert.SerializeObject(loginContent), Encoding.UTF8, "application/json");
+        loginRequest.Content = new StringContent(JsonSerializer.Serialize(loginContent), Encoding.UTF8, "application/json");
 
         using var loginResponse = await Program.HttpClient.SendAsync(loginRequest);
         if (loginResponse.StatusCode != System.Net.HttpStatusCode.OK)
@@ -440,8 +440,8 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        var loginObj = JObject.Parse(loginBody);
-        var accessToken = (string?)loginObj["accessToken"];
+        var loginObj = JsonNode.Parse(loginBody)?.AsObject();
+        var accessToken = loginObj?["accessToken"]?.GetValue<string>();
 
         if (string.IsNullOrEmpty(accessToken))
         {
@@ -465,8 +465,8 @@ public class LoginTestHandler : IServiceTestHandler
 
         if (validateResponse.StatusCode == System.Net.HttpStatusCode.OK)
         {
-            var validateObj = JObject.Parse(validateBody);
-            var valid = (bool?)validateObj["valid"];
+            var validateObj = JsonNode.Parse(validateBody)?.AsObject();
+            var valid = validateObj?["valid"]?.GetValue<bool>();
             if (valid != true)
             {
                 Console.WriteLine($"❌ Token validation returned valid={valid} (expected true)");
@@ -514,14 +514,14 @@ public class LoginTestHandler : IServiceTestHandler
 
         // First login to get a valid token
         var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
-        var loginContent = new JObject
+        var loginContent = new JsonObject
         {
             ["email"] = Program.Configuration.Client_Username,
             ["password"] = Program.Configuration.Client_Password
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
-        loginRequest.Content = new StringContent(JsonConvert.SerializeObject(loginContent), Encoding.UTF8, "application/json");
+        loginRequest.Content = new StringContent(JsonSerializer.Serialize(loginContent), Encoding.UTF8, "application/json");
 
         using var loginResponse = await Program.HttpClient.SendAsync(loginRequest);
         if (loginResponse.StatusCode != System.Net.HttpStatusCode.OK)
@@ -531,8 +531,8 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        var loginObj = JObject.Parse(loginBody);
-        var accessToken = (string?)loginObj["accessToken"];
+        var loginObj = JsonNode.Parse(loginBody)?.AsObject();
+        var accessToken = loginObj?["accessToken"]?.GetValue<string>();
 
         if (string.IsNullOrEmpty(accessToken))
         {
@@ -557,8 +557,8 @@ public class LoginTestHandler : IServiceTestHandler
 
         if (sessionsResponse.StatusCode == System.Net.HttpStatusCode.OK)
         {
-            var sessionsObj = JObject.Parse(sessionsBody);
-            var sessions = sessionsObj["sessions"] as JArray;
+            var sessionsObj = JsonNode.Parse(sessionsBody)?.AsObject();
+            var sessions = sessionsObj?["sessions"]?.AsArray();
             if (sessions == null)
             {
                 Console.WriteLine("❌ Get sessions response missing sessions array");
@@ -612,14 +612,14 @@ public class LoginTestHandler : IServiceTestHandler
 
         // First login to get a valid token
         var loginUrl = $"http://{Program.Configuration.Login_Credentials_Endpoint}";
-        var loginContent = new JObject
+        var loginContent = new JsonObject
         {
             ["email"] = Program.Configuration.Client_Username,
             ["password"] = Program.Configuration.Client_Password
         };
 
         using var loginRequest = new HttpRequestMessage(HttpMethod.Post, loginUrl);
-        loginRequest.Content = new StringContent(JsonConvert.SerializeObject(loginContent), Encoding.UTF8, "application/json");
+        loginRequest.Content = new StringContent(JsonSerializer.Serialize(loginContent), Encoding.UTF8, "application/json");
 
         using var loginResponse = await Program.HttpClient.SendAsync(loginRequest);
         if (loginResponse.StatusCode != System.Net.HttpStatusCode.OK)
@@ -629,8 +629,8 @@ public class LoginTestHandler : IServiceTestHandler
         }
 
         var loginBody = await loginResponse.Content.ReadAsStringAsync();
-        var loginObj = JObject.Parse(loginBody);
-        var accessToken = (string?)loginObj["accessToken"];
+        var loginObj = JsonNode.Parse(loginBody)?.AsObject();
+        var accessToken = loginObj?["accessToken"]?.GetValue<string>();
 
         if (string.IsNullOrEmpty(accessToken))
         {
@@ -644,11 +644,11 @@ public class LoginTestHandler : IServiceTestHandler
         var logoutUrl = $"http://{logoutLoginEndpoint.Replace("/auth/login", "/auth/logout")}";
         Console.WriteLine($"📡 Testing logout at: {logoutUrl}");
 
-        var logoutContent = new JObject { ["allSessions"] = false };
+        var logoutContent = new JsonObject { ["allSessions"] = false };
 
         using var logoutRequest = new HttpRequestMessage(HttpMethod.Post, logoutUrl);
         logoutRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-        logoutRequest.Content = new StringContent(JsonConvert.SerializeObject(logoutContent), Encoding.UTF8, "application/json");
+        logoutRequest.Content = new StringContent(JsonSerializer.Serialize(logoutContent), Encoding.UTF8, "application/json");
 
         using var logoutResponse = await Program.HttpClient.SendAsync(logoutRequest);
 
@@ -809,13 +809,13 @@ public class LoginTestHandler : IServiceTestHandler
         Console.WriteLine($"📡 Testing Steam verify at: {steamUrl}");
 
         // Send a mock Steam Session Ticket - this should fail validation but test the endpoint
-        var steamContent = new JObject
+        var steamContent = new JsonObject
         {
             ["ticket"] = "140000006A7B3C8E0123456789ABCDEF0123456789ABCDEF"
         };
 
         using var steamRequest = new HttpRequestMessage(HttpMethod.Post, steamUrl);
-        steamRequest.Content = new StringContent(JsonConvert.SerializeObject(steamContent), Encoding.UTF8, "application/json");
+        steamRequest.Content = new StringContent(JsonSerializer.Serialize(steamContent), Encoding.UTF8, "application/json");
 
         using var steamResponse = await Program.HttpClient.SendAsync(steamRequest);
         var steamBody = await steamResponse.Content.ReadAsStringAsync();
@@ -828,8 +828,8 @@ public class LoginTestHandler : IServiceTestHandler
         if (steamResponse.StatusCode == System.Net.HttpStatusCode.OK)
         {
             // Verify we got tokens back
-            var responseObj = JObject.Parse(steamBody);
-            var accessToken = (string?)responseObj["accessToken"];
+            var responseObj = JsonNode.Parse(steamBody)?.AsObject();
+            var accessToken = responseObj?["accessToken"]?.GetValue<string>();
             if (string.IsNullOrEmpty(accessToken))
             {
                 Console.WriteLine("❌ Steam verify returned OK but no access token");
