@@ -1,0 +1,470 @@
+using BeyondImmersion.BannouService.Configuration;
+using System.Text.Json;
+using Xunit.Abstractions;
+
+namespace BeyondImmersion.BannouService.UnitTests;
+
+/// <summary>
+/// Unit tests for System.Text.Json serialization patterns used throughout Bannou.
+/// These tests verify that DaprSerializerConfig correctly handles our data models,
+/// especially the critical Unix timestamp properties that have caused 401 failures.
+/// </summary>
+[Collection("unit tests")]
+public class Serialization : IClassFixture<CollectionFixture>
+{
+    private CollectionFixture TestCollectionContext { get; }
+
+    public Serialization(CollectionFixture collectionContext, ITestOutputHelper output)
+    {
+        TestCollectionContext = collectionContext;
+        Program.Logger = output.BuildLoggerFor<Serialization>();
+    }
+
+    #region Test Models (mirroring AuthService.SessionDataModel)
+
+    /// <summary>
+    /// Test model mimicking SessionDataModel structure from AuthService.
+    /// This allows us to test serialization without requiring access to the private class.
+    /// </summary>
+    private class SessionDataModel
+    {
+        public Guid AccountId { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public List<string> Roles { get; set; } = new List<string>();
+        public string SessionId { get; set; } = string.Empty;
+
+        // Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
+        public long CreatedAtUnix { get; set; }
+        public long ExpiresAtUnix { get; set; }
+
+        // Expose as DateTimeOffset for code convenience (not serialized)
+        [System.Text.Json.Serialization.JsonIgnore]
+        public DateTimeOffset CreatedAt
+        {
+            get => DateTimeOffset.FromUnixTimeSeconds(CreatedAtUnix);
+            set => CreatedAtUnix = value.ToUnixTimeSeconds();
+        }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public DateTimeOffset ExpiresAt
+        {
+            get => DateTimeOffset.FromUnixTimeSeconds(ExpiresAtUnix);
+            set => ExpiresAtUnix = value.ToUnixTimeSeconds();
+        }
+    }
+
+    /// <summary>
+    /// Model with various numeric types to test serialization behavior.
+    /// </summary>
+    private class NumericTypesModel
+    {
+        public int IntValue { get; set; }
+        public long LongValue { get; set; }
+        public double DoubleValue { get; set; }
+        public decimal DecimalValue { get; set; }
+        public float FloatValue { get; set; }
+    }
+
+    /// <summary>
+    /// Model to test case-sensitivity behavior.
+    /// </summary>
+    private class CaseSensitiveModel
+    {
+        public string PascalCase { get; set; } = string.Empty;
+        public string ALLCAPS { get; set; } = string.Empty;
+        public string lowercase { get; set; } = string.Empty;
+    }
+
+    #endregion
+
+    #region DaprSerializerConfig Tests
+
+    [Fact]
+    public void DaprSerializerConfig_Exists()
+    {
+        // Verify the shared serializer config exists
+        Assert.NotNull(IServiceConfiguration.DaprSerializerConfig);
+    }
+
+    [Fact]
+    public void DaprSerializerConfig_NumberHandling_IsStrict()
+    {
+        // Verify NumberHandling is Strict (numbers must be actual numbers, not strings)
+        var config = IServiceConfiguration.DaprSerializerConfig;
+        Assert.Equal(System.Text.Json.Serialization.JsonNumberHandling.Strict, config.NumberHandling);
+    }
+
+    [Fact]
+    public void DaprSerializerConfig_PropertyNameCaseInsensitive_IsFalse()
+    {
+        // Verify PropertyNameCaseInsensitive is false (case-sensitive matching)
+        var config = IServiceConfiguration.DaprSerializerConfig;
+        Assert.False(config.PropertyNameCaseInsensitive);
+    }
+
+    [Fact]
+    public void DaprSerializerConfig_PropertyNamingPolicy_IsNull()
+    {
+        // Verify no naming policy (PascalCase preserved)
+        var config = IServiceConfiguration.DaprSerializerConfig;
+        Assert.Null(config.PropertyNamingPolicy);
+    }
+
+    #endregion
+
+    #region SessionDataModel Serialization Tests
+
+    [Fact]
+    public void SessionDataModel_RoundTrip_PreservesAllProperties()
+    {
+        var original = new SessionDataModel
+        {
+            AccountId = Guid.NewGuid(),
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            Roles = new List<string> { "user", "admin" },
+            SessionId = Guid.NewGuid().ToString("N"),
+            CreatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            ExpiresAtUnix = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds()
+        };
+
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(original.AccountId, deserialized.AccountId);
+        Assert.Equal(original.Email, deserialized.Email);
+        Assert.Equal(original.DisplayName, deserialized.DisplayName);
+        Assert.Equal(original.Roles, deserialized.Roles);
+        Assert.Equal(original.SessionId, deserialized.SessionId);
+        Assert.Equal(original.CreatedAtUnix, deserialized.CreatedAtUnix);
+        Assert.Equal(original.ExpiresAtUnix, deserialized.ExpiresAtUnix);
+    }
+
+    [Fact]
+    public void SessionDataModel_ExpiresAtUnix_RoundTrip_PreservesValue()
+    {
+        // Specifically test the problematic ExpiresAtUnix property
+        var expectedExpiresAt = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds();
+        var original = new SessionDataModel { ExpiresAtUnix = expectedExpiresAt };
+
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(expectedExpiresAt, deserialized.ExpiresAtUnix);
+        Assert.NotEqual(0, deserialized.ExpiresAtUnix);
+    }
+
+    [Fact]
+    public void SessionDataModel_LongProperties_NotDefaultAfterDeserialization()
+    {
+        // Test that long properties don't default to 0 after deserialization
+        var original = new SessionDataModel
+        {
+            CreatedAtUnix = 1733500000, // Specific non-zero value
+            ExpiresAtUnix = 1733503600  // Specific non-zero value
+        };
+
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(1733500000, deserialized.CreatedAtUnix);
+        Assert.Equal(1733503600, deserialized.ExpiresAtUnix);
+    }
+
+    [Fact]
+    public void SessionDataModel_Serializes_WithPascalCase()
+    {
+        var model = new SessionDataModel
+        {
+            ExpiresAtUnix = 1733500000,
+            SessionId = "test-session"
+        };
+
+        var json = JsonSerializer.Serialize(model, IServiceConfiguration.DaprSerializerConfig);
+
+        // Verify property names are PascalCase (not camelCase)
+        Assert.Contains("\"ExpiresAtUnix\":", json);
+        Assert.Contains("\"SessionId\":", json);
+        Assert.DoesNotContain("\"expiresAtUnix\":", json);
+        Assert.DoesNotContain("\"sessionId\":", json);
+    }
+
+    #endregion
+
+    #region Case Sensitivity Tests - THE CRITICAL ISSUE
+
+    [Fact]
+    public void CaseSensitive_PascalCase_Deserializes_Correctly()
+    {
+        // This should work - property names match exactly
+        var json = """{"PascalCase":"value1","ALLCAPS":"value2","lowercase":"value3"}""";
+        var deserialized = JsonSerializer.Deserialize<CaseSensitiveModel>(json, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal("value1", deserialized.PascalCase);
+        Assert.Equal("value2", deserialized.ALLCAPS);
+        Assert.Equal("value3", deserialized.lowercase);
+    }
+
+    [Fact]
+    public void CaseSensitive_CamelCase_DoesNot_Match_PascalCase()
+    {
+        // THIS IS THE BUG: camelCase JSON should NOT match PascalCase properties
+        // with PropertyNameCaseInsensitive = false
+        var camelCaseJson = """{"pascalCase":"value1","allcaps":"value2","lowercase":"value3"}""";
+        var deserialized = JsonSerializer.Deserialize<CaseSensitiveModel>(camelCaseJson, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        // With case-sensitive matching, camelCase should NOT match PascalCase
+        Assert.Equal(string.Empty, deserialized.PascalCase); // Default value - NOT "value1"
+        Assert.Equal(string.Empty, deserialized.ALLCAPS);    // Default value - NOT "value2"
+        Assert.Equal("value3", deserialized.lowercase);       // This should match (exact case)
+    }
+
+    [Fact]
+    public void SessionDataModel_CamelCase_DoesNot_Deserialize_ExpiresAtUnix()
+    {
+        // THIS TEST DEMONSTRATES THE ROOT CAUSE OF THE 401 BUG
+        // If data was saved with camelCase (by Dapr defaults) but read with our config,
+        // the ExpiresAtUnix property will be 0 (default) instead of the actual value
+        var camelCaseJson = """
+        {
+            "accountId":"00000000-0000-0000-0000-000000000001",
+            "email":"test@example.com",
+            "sessionId":"test-session-123",
+            "createdAtUnix":1733500000,
+            "expiresAtUnix":1733503600
+        }
+        """;
+
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(camelCaseJson, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        // With case-sensitive matching, camelCase properties should NOT match PascalCase
+        Assert.Equal(Guid.Empty, deserialized.AccountId);   // Default - NOT the value
+        Assert.Equal(string.Empty, deserialized.Email);     // Default - NOT "test@example.com"
+        Assert.Equal(string.Empty, deserialized.SessionId); // Default - NOT "test-session-123"
+        Assert.Equal(0, deserialized.CreatedAtUnix);        // Default - NOT 1733500000
+        Assert.Equal(0, deserialized.ExpiresAtUnix);        // Default - NOT 1733503600  <-- THIS CAUSES 401!
+    }
+
+    [Fact]
+    public void SessionDataModel_PascalCase_Does_Deserialize_ExpiresAtUnix()
+    {
+        // When data is saved AND read with our config, it should work
+        var pascalCaseJson = """
+        {
+            "AccountId":"00000000-0000-0000-0000-000000000001",
+            "Email":"test@example.com",
+            "SessionId":"test-session-123",
+            "CreatedAtUnix":1733500000,
+            "ExpiresAtUnix":1733503600
+        }
+        """;
+
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(pascalCaseJson, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(new Guid("00000000-0000-0000-0000-000000000001"), deserialized.AccountId);
+        Assert.Equal("test@example.com", deserialized.Email);
+        Assert.Equal("test-session-123", deserialized.SessionId);
+        Assert.Equal(1733500000, deserialized.CreatedAtUnix);
+        Assert.Equal(1733503600, deserialized.ExpiresAtUnix);  // Should be correct!
+    }
+
+    #endregion
+
+    #region Numeric Type Tests
+
+    [Fact]
+    public void LongValue_RoundTrip_PreservesValue()
+    {
+        var original = new NumericTypesModel { LongValue = 1765031079 };
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<NumericTypesModel>(json, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(1765031079, deserialized.LongValue);
+    }
+
+    [Fact]
+    public void NumericString_FailsWithStrictHandling()
+    {
+        // With NumberHandling.Strict, numbers as strings should fail
+        var jsonWithStringNumber = """{"LongValue":"1765031079"}""";
+
+        // This should throw because Strict handling doesn't allow string numbers
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<NumericTypesModel>(jsonWithStringNumber, IServiceConfiguration.DaprSerializerConfig));
+    }
+
+    [Fact]
+    public void LongValue_DefaultsToZero_WhenMissing()
+    {
+        var jsonWithoutLongValue = """{"IntValue":42}""";
+        var deserialized = JsonSerializer.Deserialize<NumericTypesModel>(jsonWithoutLongValue, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(42, deserialized.IntValue);
+        Assert.Equal(0, deserialized.LongValue); // Default when property is missing
+    }
+
+    #endregion
+
+    #region Dapr Default Serializer Comparison
+
+    [Fact]
+    public void DaprDefaults_Use_CamelCase_Naming()
+    {
+        // This demonstrates what Dapr SDK defaults do
+        var defaultOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
+        var model = new SessionDataModel
+        {
+            ExpiresAtUnix = 1733500000,
+            SessionId = "test"
+        };
+
+        var json = JsonSerializer.Serialize(model, defaultOptions);
+
+        // Dapr defaults serialize with camelCase
+        Assert.Contains("\"expiresAtUnix\":", json);
+        Assert.Contains("\"sessionId\":", json);
+        Assert.DoesNotContain("\"ExpiresAtUnix\":", json);
+        Assert.DoesNotContain("\"SessionId\":", json);
+    }
+
+    [Fact]
+    public void OurConfig_Uses_PascalCase_Naming()
+    {
+        var model = new SessionDataModel
+        {
+            ExpiresAtUnix = 1733500000,
+            SessionId = "test"
+        };
+
+        var json = JsonSerializer.Serialize(model, IServiceConfiguration.DaprSerializerConfig);
+
+        // Our config serializes with PascalCase
+        Assert.Contains("\"ExpiresAtUnix\":", json);
+        Assert.Contains("\"SessionId\":", json);
+        Assert.DoesNotContain("\"expiresAtUnix\":", json);
+        Assert.DoesNotContain("\"sessionId\":", json);
+    }
+
+    [Fact]
+    public void CrossSerializer_DaprDefaultsWrite_OurConfigRead_Fails()
+    {
+        // THIS TEST DEMONSTRATES THE EXACT BUG SCENARIO
+        // Data written with Dapr defaults (camelCase) cannot be read with our config (case-sensitive PascalCase)
+
+        var defaultOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
+        var original = new SessionDataModel
+        {
+            ExpiresAtUnix = 1733503600,
+            SessionId = "important-session-id"
+        };
+
+        // Simulate data saved by DaprClient with default settings
+        var jsonFromDaprDefaults = JsonSerializer.Serialize(original, defaultOptions);
+
+        // Try to read with our config (what the service does)
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(jsonFromDaprDefaults, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        // THE BUG: ExpiresAtUnix is 0 because camelCase doesn't match PascalCase
+        Assert.Equal(0, deserialized.ExpiresAtUnix);           // WRONG - should be 1733503600
+        Assert.Equal(string.Empty, deserialized.SessionId);    // WRONG - should be "important-session-id"
+    }
+
+    [Fact]
+    public void CrossSerializer_OurConfigWrite_OurConfigRead_Succeeds()
+    {
+        // When both write and read use our config, everything works
+        var original = new SessionDataModel
+        {
+            ExpiresAtUnix = 1733503600,
+            SessionId = "important-session-id"
+        };
+
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(1733503600, deserialized.ExpiresAtUnix);
+        Assert.Equal("important-session-id", deserialized.SessionId);
+    }
+
+    #endregion
+
+    #region Edge Case Tests
+
+    [Fact]
+    public void SessionDataModel_WithMaxLongValue_RoundTrips()
+    {
+        var original = new SessionDataModel { ExpiresAtUnix = long.MaxValue };
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(long.MaxValue, deserialized.ExpiresAtUnix);
+    }
+
+    [Fact]
+    public void SessionDataModel_WithZeroUnixTime_RoundTrips()
+    {
+        // Zero is a valid Unix timestamp (Jan 1, 1970) - verify it serializes/deserializes
+        var original = new SessionDataModel { ExpiresAtUnix = 0 };
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(0, deserialized.ExpiresAtUnix);
+    }
+
+    [Fact]
+    public void SessionDataModel_WithNegativeUnixTime_RoundTrips()
+    {
+        // Negative Unix time (before Jan 1, 1970) should also work
+        var original = new SessionDataModel { ExpiresAtUnix = -1000000 };
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(-1000000, deserialized.ExpiresAtUnix);
+    }
+
+    [Fact]
+    public void SessionDataModel_WithEmptyRoles_RoundTrips()
+    {
+        var original = new SessionDataModel { Roles = new List<string>() };
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+
+        Assert.NotNull(deserialized);
+        Assert.NotNull(deserialized.Roles);
+        Assert.Empty(deserialized.Roles);
+    }
+
+    [Fact]
+    public void SessionDataModel_WithNullRoles_HandledCorrectly()
+    {
+        var original = new SessionDataModel { Roles = null! };
+        var json = JsonSerializer.Serialize(original, IServiceConfiguration.DaprSerializerConfig);
+
+        // DefaultIgnoreCondition.WhenWritingNull should exclude null Roles
+        Assert.DoesNotContain("\"Roles\":null", json);
+
+        var deserialized = JsonSerializer.Deserialize<SessionDataModel>(json, IServiceConfiguration.DaprSerializerConfig);
+        Assert.NotNull(deserialized);
+        // Roles should be default (new List<string>()) since it wasn't in JSON
+        Assert.NotNull(deserialized.Roles);
+    }
+
+    #endregion
+}

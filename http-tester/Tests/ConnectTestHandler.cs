@@ -1,6 +1,9 @@
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Permissions;
+using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
 
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
@@ -32,7 +35,24 @@ public class ConnectTestHandler : IServiceTestHandler
             new ServiceTest(TestInternalProxyWithHeaders, "ProxyWithHeaders", "Connect", "Test proxy correctly forwards custom headers"),
             new ServiceTest(TestInternalProxyEmptyEndpoint, "ProxyEmptyEndpoint", "Connect", "Test proxy handles empty endpoint"),
             new ServiceTest(TestInternalProxyToAccountsService, "ProxyAccounts", "Connect", "Test proxy to accounts service"),
+
+            // Session validation tests (dependencies for WebSocket upgrade)
+            new ServiceTest(TestTokenValidationForWebSocket, "WSTokenValidation", "Connect", "Test token validation used in WebSocket upgrade"),
+            new ServiceTest(TestTokenValidationReturnsSessionData, "WSSessionData", "Connect", "Test token validation returns session data for Connect"),
+            new ServiceTest(TestSequentialTokenValidations, "WSSeqValidation", "Connect", "Test sequential token validations (simulating WS pre-checks)"),
+            new ServiceTest(TestTokenValidationAfterOtherOperations, "WSPostOps", "Connect", "Test token validation after other API operations"),
         };
+    }
+
+    /// <summary>
+    /// Gets a service client from the dependency injection container.
+    /// </summary>
+    private static T GetServiceClient<T>() where T : class
+    {
+        if (Program.ServiceProvider == null)
+            throw new InvalidOperationException("Service provider not initialized");
+
+        return Program.ServiceProvider.GetRequiredService<T>();
     }
 
     private static async Task<TestResult> TestServiceMappings(ITestClient client, string[] args)
@@ -599,4 +619,260 @@ public class ConnectTestHandler : IServiceTestHandler
             return TestResult.Failed($"Unexpected error: {ex.Message}");
         }
     }
+
+    #region Session Validation Tests (WebSocket Dependencies)
+
+    /// <summary>
+    /// Test token validation endpoint that Connect service uses before WebSocket upgrade.
+    /// This simulates the exact flow that happens in WebSocket connection establishment.
+    /// </summary>
+    private static async Task<TestResult> TestTokenValidationForWebSocket(ITestClient client, string[] args)
+    {
+        try
+        {
+            var authClient = GetServiceClient<IAuthClient>();
+            var testUsername = $"ws_token_{DateTime.Now.Ticks}";
+
+            // Register and login (simulating client flow before WebSocket)
+            await authClient.RegisterAsync(new RegisterRequest
+            {
+                Username = testUsername,
+                Password = "TestPassword123!",
+                Email = $"{testUsername}@example.com"
+            });
+
+            var loginResponse = await authClient.LoginAsync(new LoginRequest
+            {
+                Email = $"{testUsername}@example.com",
+                Password = "TestPassword123!"
+            });
+
+            var token = loginResponse.AccessToken;
+            if (string.IsNullOrEmpty(token))
+                return TestResult.Failed("Login failed to return access token");
+
+            // This is what Connect service calls internally when validating WebSocket upgrade
+            var validation = await authClient.WithAuthorization(token).ValidateTokenAsync();
+
+            if (!validation.Valid)
+                return TestResult.Failed($"Token validation failed for WebSocket upgrade simulation. Valid={validation.Valid}, SessionId={validation.SessionId}, RemainingTime={validation.RemainingTime}");
+
+            // Verify we have the data Connect needs
+            if (string.IsNullOrEmpty(validation.SessionId))
+                return TestResult.Failed("SessionId is empty - Connect needs this for session tracking");
+
+            if (validation.RemainingTime <= 0)
+                return TestResult.Failed($"RemainingTime is {validation.RemainingTime} - session appears expired (ExpiresAtUnix deserialization issue?)");
+
+            return TestResult.Successful($"Token validation for WebSocket ready. SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}s, Roles: {validation.Roles?.Count ?? 0}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test that token validation returns all session data needed by Connect service.
+    /// </summary>
+    private static async Task<TestResult> TestTokenValidationReturnsSessionData(ITestClient client, string[] args)
+    {
+        try
+        {
+            var authClient = GetServiceClient<IAuthClient>();
+            var testUsername = $"ws_data_{DateTime.Now.Ticks}";
+
+            await authClient.RegisterAsync(new RegisterRequest
+            {
+                Username = testUsername,
+                Password = "TestPassword123!",
+                Email = $"{testUsername}@example.com"
+            });
+
+            var loginResponse = await authClient.LoginAsync(new LoginRequest
+            {
+                Email = $"{testUsername}@example.com",
+                Password = "TestPassword123!"
+            });
+
+            var validation = await authClient.WithAuthorization(loginResponse.AccessToken).ValidateTokenAsync();
+
+            // Check all required fields for Connect service
+            var issues = new List<string>();
+
+            if (!validation.Valid)
+                issues.Add("Valid=false");
+
+            if (validation.AccountId == Guid.Empty)
+                issues.Add("AccountId is empty GUID");
+
+            if (string.IsNullOrEmpty(validation.SessionId))
+                issues.Add("SessionId is empty");
+
+            if (validation.RemainingTime <= 0)
+                issues.Add($"RemainingTime={validation.RemainingTime} (should be positive - ExpiresAtUnix issue?)");
+
+            if (validation.Roles == null)
+                issues.Add("Roles is null");
+
+            if (issues.Count > 0)
+            {
+                return TestResult.Failed($"Session data incomplete: {string.Join(", ", issues)}");
+            }
+
+            return TestResult.Successful($"Session data complete - AccountId: {validation.AccountId}, SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}s, Roles: [{string.Join(", ", validation.Roles ?? Array.Empty<string>())}]");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test sequential token validations to detect any state corruption over multiple calls.
+    /// This simulates what happens when Connect service validates tokens repeatedly.
+    /// </summary>
+    private static async Task<TestResult> TestSequentialTokenValidations(ITestClient client, string[] args)
+    {
+        try
+        {
+            var authClient = GetServiceClient<IAuthClient>();
+            var testUsername = $"ws_seq_{DateTime.Now.Ticks}";
+
+            await authClient.RegisterAsync(new RegisterRequest
+            {
+                Username = testUsername,
+                Password = "TestPassword123!",
+                Email = $"{testUsername}@example.com"
+            });
+
+            var loginResponse = await authClient.LoginAsync(new LoginRequest
+            {
+                Email = $"{testUsername}@example.com",
+                Password = "TestPassword123!"
+            });
+
+            var token = loginResponse.AccessToken;
+
+            // Perform 10 sequential validations
+            var results = new List<(bool Valid, int RemainingTime)>();
+            for (int i = 0; i < 10; i++)
+            {
+                var validation = await authClient.WithAuthorization(token).ValidateTokenAsync();
+                results.Add((validation.Valid, validation.RemainingTime));
+
+                // Small delay between validations
+                if (i < 9) await Task.Delay(100);
+            }
+
+            // Check all validations succeeded
+            var failures = results.Where(r => !r.Valid).ToList();
+            if (failures.Count > 0)
+            {
+                var failedIndices = results.Select((r, i) => (r, i)).Where(x => !x.r.Valid).Select(x => x.i);
+                return TestResult.Failed($"Validations failed at indices: {string.Join(", ", failedIndices)}");
+            }
+
+            // Check RemainingTime is consistent (should all be similar, decreasing slightly)
+            var zeroTimes = results.Where(r => r.RemainingTime <= 0).ToList();
+            if (zeroTimes.Count > 0)
+            {
+                return TestResult.Failed($"{zeroTimes.Count}/10 validations had RemainingTime <= 0 (ExpiresAtUnix deserialization issue)");
+            }
+
+            var firstTime = results.First().RemainingTime;
+            var lastTime = results.Last().RemainingTime;
+
+            return TestResult.Successful($"All 10 sequential validations succeeded. RemainingTime: {firstTime}s -> {lastTime}s");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test token validation after performing other API operations.
+    /// This simulates the scenario where auth tests run and then WebSocket tests run.
+    /// </summary>
+    private static async Task<TestResult> TestTokenValidationAfterOtherOperations(ITestClient client, string[] args)
+    {
+        try
+        {
+            var authClient = GetServiceClient<IAuthClient>();
+            var testUsername = $"ws_postops_{DateTime.Now.Ticks}";
+            var email = $"{testUsername}@example.com";
+            var password = "TestPassword123!";
+
+            // Create initial session
+            await authClient.RegisterAsync(new RegisterRequest
+            {
+                Username = testUsername,
+                Password = password,
+                Email = email
+            });
+
+            var loginResponse1 = await authClient.LoginAsync(new LoginRequest { Email = email, Password = password });
+            var token1 = loginResponse1.AccessToken;
+
+            // Validate initial session
+            var validation1 = await authClient.WithAuthorization(token1).ValidateTokenAsync();
+            if (!validation1.Valid || validation1.RemainingTime <= 0)
+                return TestResult.Failed($"Initial validation failed: Valid={validation1.Valid}, RT={validation1.RemainingTime}");
+
+            // Perform "other operations" - like the auth tests do
+            // 1. Create another session (login again)
+            var loginResponse2 = await authClient.LoginAsync(new LoginRequest { Email = email, Password = password });
+
+            // 2. Create third session
+            var loginResponse3 = await authClient.LoginAsync(new LoginRequest { Email = email, Password = password });
+
+            // 3. Logout third session (simulating Logout test)
+            await authClient.WithAuthorization(loginResponse3.AccessToken).LogoutAsync(new LogoutRequest { AllSessions = false });
+
+            // Now validate the ORIGINAL session - this is what WebSocket tests do
+            var validation2 = await authClient.WithAuthorization(token1).ValidateTokenAsync();
+
+            if (!validation2.Valid)
+            {
+                return TestResult.Failed($"Original session became invalid after other operations! Valid={validation2.Valid}, RT={validation2.RemainingTime}");
+            }
+
+            if (validation2.RemainingTime <= 0)
+            {
+                return TestResult.Failed($"Original session RemainingTime is {validation2.RemainingTime} after other operations (ExpiresAtUnix=0 bug?)");
+            }
+
+            // Also validate second session is still valid
+            var validation3 = await authClient.WithAuthorization(loginResponse2.AccessToken).ValidateTokenAsync();
+            if (!validation3.Valid || validation3.RemainingTime <= 0)
+            {
+                return TestResult.Failed($"Second session invalid after logout of third: Valid={validation3.Valid}, RT={validation3.RemainingTime}");
+            }
+
+            return TestResult.Successful($"Original session remains valid after other operations. Session1 RT: {validation2.RemainingTime}s, Session2 RT: {validation3.RemainingTime}s");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    #endregion
 }
