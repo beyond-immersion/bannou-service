@@ -978,8 +978,8 @@ public class AuthService : IAuthService
                 }
 
                 _logger.LogInformation("🔍 SessionDataModel AFTER GetStateAsync - SessionId: '{SessionId}' (type: {Type})", sessionData.SessionId, sessionData.SessionId?.GetType().Name ?? "null");
-                _logger.LogInformation("🔍 EXPIRATION CHECK - ExpiresAt: '{ExpiresAt}', UtcNow: '{UtcNow}', Expired: {IsExpired}",
-                    sessionData.ExpiresAt, DateTimeOffset.UtcNow, sessionData.ExpiresAt < DateTimeOffset.UtcNow);
+                _logger.LogInformation("🔍 EXPIRATION CHECK - ExpiresAtUnix: {ExpiresAtUnix}, ExpiresAt: '{ExpiresAt}', UtcNow: '{UtcNow}', Expired: {IsExpired}",
+                    sessionData.ExpiresAtUnix, sessionData.ExpiresAt, DateTimeOffset.UtcNow, sessionData.ExpiresAt < DateTimeOffset.UtcNow);
 
                 // Check if session has expired
                 if (sessionData.ExpiresAt < DateTimeOffset.UtcNow)
@@ -1118,8 +1118,8 @@ public class AuthService : IAuthService
         };
 
         _logger.LogInformation("🔍 SessionDataModel BEFORE SaveStateAsync - SessionId: '{SessionId}' (type: {Type})", sessionData.SessionId, sessionData.SessionId.GetType().Name);
-        _logger.LogInformation("🔍 SAVING SESSION - CreatedAt: '{CreatedAt}', ExpiresAt: '{ExpiresAt}', TTL: {TtlSeconds} seconds",
-            sessionData.CreatedAt, sessionData.ExpiresAt, _configuration.JwtExpirationMinutes * 60);
+        _logger.LogInformation("🔍 SAVING SESSION - ExpiresAtUnix: {ExpiresAtUnix}, ExpiresAt: '{ExpiresAt}', TTL: {TtlSeconds} seconds",
+            sessionData.ExpiresAtUnix, sessionData.ExpiresAt, _configuration.JwtExpirationMinutes * 60);
 
         await _daprClient.SaveStateAsync(
             REDIS_STATE_STORE,

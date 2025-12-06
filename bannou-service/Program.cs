@@ -195,7 +195,13 @@ public static class Program
                         }
                     }
                 })
-                .AddDapr() // Add Dapr pub/sub support
+                .AddDapr(daprClientBuilder =>
+                {
+                    // CRITICAL: Configure DaprClient serializer here, NOT in separate AddDaprClient call
+                    // AddDapr() registers DaprClient first, and subsequent AddDaprClient() calls are ignored
+                    // (TryAddSingleton pattern - first registration wins)
+                    daprClientBuilder.UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig);
+                })
                 .AddJsonOptions(jsonOptions =>
                 {
                     // Configure System.Text.Json serialization options
@@ -212,11 +218,8 @@ public static class Program
             webAppBuilder.Services
                 .AddWebSockets((websocketOptions) => { });
 
-            webAppBuilder.Services.AddDaprClient(builder =>
-            {
-                // Use same serializer options as Program.DaprClient to ensure consistency
-                builder.UseJsonSerializationOptions(IServiceConfiguration.DaprSerializerConfig);
-            });
+            // NOTE: DaprClient is already registered by AddDapr() above with proper serializer config
+            // Do NOT call AddDaprClient() here - it would be ignored due to TryAddSingleton pattern
 
             // Add core service infrastructure (but not clients - PluginLoader handles those)
             webAppBuilder.Services.AddBannouServiceClients();
