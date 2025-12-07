@@ -330,15 +330,46 @@ public class OrchestratorService : IOrchestratorService
 
         try
         {
-            // Get appropriate orchestrator - use specified backend or auto-detect best available
+            // Detect available backends first
+            var backends = await _backendDetector.DetectBackendsAsync(cancellationToken);
+
+            // Check if the requested backend is available
+            // We always check since default(BackendType) = Kubernetes = 0, making it impossible
+            // to distinguish "not specified" from "explicitly Kubernetes" via the enum value alone
+            var requestedBackend = backends.Backends?.FirstOrDefault(b => b.Type == body.Backend);
+
             IContainerOrchestrator orchestrator;
-            if (body.Backend != default)
+            if (requestedBackend != null && !requestedBackend.Available)
+            {
+                // Backend exists in detection but is not available - fail the deployment
+                var errorMsg = requestedBackend.Error ?? "Backend not available";
+                _logger.LogWarning(
+                    "Requested backend {Backend} is not available: {Error}",
+                    body.Backend, errorMsg);
+
+                return (StatusCodes.BadRequest, new DeployResponse
+                {
+                    Success = false,
+                    DeploymentId = deploymentId,
+                    Backend = body.Backend,
+                    Duration = "0s",
+                    Message = $"Requested backend '{body.Backend}' is not available: {errorMsg}. " +
+                              $"Available backends: {string.Join(", ", backends.Backends?.Where(b => b.Available).Select(b => b.Type) ?? Enumerable.Empty<BackendType>())}"
+                });
+            }
+
+            // Use the requested backend if available, otherwise use recommended
+            if (requestedBackend != null && requestedBackend.Available)
             {
                 orchestrator = _backendDetector.CreateOrchestrator(body.Backend);
             }
             else
             {
-                orchestrator = await _backendDetector.CreateBestOrchestratorAsync(cancellationToken);
+                // Fall back to recommended backend
+                orchestrator = _backendDetector.CreateOrchestrator(backends.Recommended);
+                _logger.LogInformation(
+                    "Using recommended backend {Recommended} instead of {Requested}",
+                    backends.Recommended, body.Backend);
             }
 
             // Get topology nodes to deploy - from preset or direct topology
@@ -529,11 +560,28 @@ public class OrchestratorService : IOrchestratorService
             var orchestrator = await GetOrchestratorAsync(cancellationToken);
             var containers = await orchestrator.ListContainersAsync(cancellationToken);
 
+            // Build topology from running containers
+            var topology = new ServiceTopology
+            {
+                Nodes = containers
+                    .GroupBy(c => c.AppName ?? "unknown")
+                    .Select(g => new TopologyNode
+                    {
+                        Name = g.Key,
+                        Services = new List<string> { g.Key },
+                        Replicas = g.Count(),
+                        DaprEnabled = true,
+                        DaprAppId = g.Key
+                    })
+                    .ToList()
+            };
+
             var response = new EnvironmentStatus
             {
                 Deployed = containers.Count > 0,
                 Timestamp = DateTimeOffset.UtcNow,
                 Backend = orchestrator.BackendType,
+                Topology = containers.Count > 0 ? topology : null,
                 Services = containers.Select(c => new DeployedService
                 {
                     Name = c.AppName ?? "unknown",
