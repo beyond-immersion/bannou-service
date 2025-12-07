@@ -128,26 +128,35 @@ jobs:
       # NuGet Pre-Release Publishing (only on master branch success)
       # Publishes preview packages for staging/testing
       # Stable releases are handled by ci.sdk-release.yml workflow
-      - name: Build and Pack Client SDK Preview
+      - name: Build and Pack SDK Previews
         if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
         id: pack
         run: |
           # Read base version from SDK_VERSION file (in repo root)
           BASE_VERSION=$(cat SDK_VERSION | tr -d '[:space:]')
           PREVIEW_VERSION="${BASE_VERSION}-preview.${{ github.run_number }}"
-          echo "📦 Building and packing Client SDK v${PREVIEW_VERSION} (pre-release)..."
+          echo "📦 Building and packing SDKs v${PREVIEW_VERSION} (pre-release)..."
           echo "preview_version=${PREVIEW_VERSION}" >> $GITHUB_OUTPUT
           echo "base_version=${BASE_VERSION}" >> $GITHUB_OUTPUT
 
+          # Build and pack Server SDK (Bannou.SDK)
+          echo "📦 Building Server SDK (Bannou.SDK)..."
+          dotnet build Bannou.SDK --configuration Release --no-dependencies
+          dotnet pack Bannou.SDK --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
+
+          # Build and pack Client SDK (Bannou.Client.SDK)
+          echo "📦 Building Client SDK (Bannou.Client.SDK)..."
           dotnet build Bannou.Client.SDK --configuration Release --no-dependencies
           dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=${PREVIEW_VERSION} --output ./nuget-packages --no-build
 
-      - name: Publish Preview to NuGet
+      - name: Publish Previews to NuGet
         if: success() && github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
           echo "🚀 Publishing preview v${{ steps.pack.outputs.preview_version }} to NuGet.org..."
           dotnet nuget push ./nuget-packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
-          echo "✅ Preview package published (listed for backward compatibility testing)"
+          echo "✅ Preview packages published:"
+          echo "   • BeyondImmersion.Bannou.SDK (Server SDK - with ServiceClients + Dapr)"
+          echo "   • BeyondImmersion.Bannou.Client.SDK (Client SDK - WebSocket only)"
           echo "   Pre-release packages are not installed by default - users must explicitly opt-in"
 
       - name: Notify Pipeline Complete

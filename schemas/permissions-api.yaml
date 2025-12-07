@@ -118,6 +118,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionUpdateResponse'
 
+  /permissions/clear-session-state:
+    post:
+      summary: Clear session state for specific service
+      description: |
+        Removes state for a specific service from the session and recompiles permissions.
+        If states list is provided, only clears if current state matches one of the values.
+        If states list is empty or not provided, clears the state unconditionally.
+      operationId: clearSessionState
+      tags:
+        - Session Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClearSessionStateRequest'
+      responses:
+        '200':
+          description: Session state cleared and permissions recompiled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionUpdateResponse'
+
   /permissions/get-session-info:
     post:
       summary: Get complete session information
@@ -345,6 +369,28 @@ components:
         previousRole:
           type: string
           description: Previous role (null for initial role)
+          nullable: true
+
+    ClearSessionStateRequest:
+      type: object
+      required:
+        - sessionId
+        - serviceId
+      properties:
+        sessionId:
+          type: string
+          description: Session ID to clear state from
+        serviceId:
+          type: string
+          description: Service whose state should be cleared
+        states:
+          type: array
+          items:
+            type: string
+          description: |
+            Optional list of state values to match. If provided, only clears if
+            current state matches one of these values. If empty or not provided,
+            clears the state unconditionally.
           nullable: true
 
     SessionUpdateResponse:

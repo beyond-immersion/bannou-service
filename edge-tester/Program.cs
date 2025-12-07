@@ -738,6 +738,11 @@ public class Program
         var orchestratorTestHandler = new OrchestratorWebSocketTestHandler();
         foreach (ServiceTest serviceTest in orchestratorTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load game session websocket tests
+        var gameSessionTestHandler = new GameSessionWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in gameSessionTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
     }
 
     private static void RunEntireTestSuite(string[] args)

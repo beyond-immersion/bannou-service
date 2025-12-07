@@ -36,6 +36,11 @@ public interface IPermissionsService : IDaprService
     Task<(StatusCodes, SessionUpdateResponse?)> UpdateSessionRoleAsync(SessionRoleUpdate body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
+    /// ClearSessionState operation
+    /// </summary>
+    Task<(StatusCodes, SessionUpdateResponse?)> ClearSessionStateAsync(ClearSessionStateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
     /// GetSessionInfo operation
     /// </summary>
     Task<(StatusCodes, SessionInfo?)> GetSessionInfoAsync(SessionInfoRequest body, CancellationToken cancellationToken = default(CancellationToken));

@@ -2,24 +2,29 @@
 
 set -e
 
-echo "🔧 Generating Bannou Client SDK project..."
+echo "🔧 Generating Bannou SDK packages (Server + Client)..."
 
-# Define paths
-SDK_DIR="Bannou.Client.SDK"
-SDK_PROJECT="$SDK_DIR/Bannou.Client.SDK.csproj"
+# =============================================================================
+# DISCOVERY: Find all generated files
+# =============================================================================
 
-# Create SDK directory if it doesn't exist
-mkdir -p "$SDK_DIR"
-
-# Find all generated client files, models files, and events
 CLIENT_FILES=($(find . -path "./lib-*/Generated/*Client.cs" 2>/dev/null || true))
 MODEL_FILES=($(find . -path "./lib-*/Generated/*Models.cs" 2>/dev/null || true))
 EVENT_FILES=($(find . -path "./lib-*/Generated/*Events*.cs" 2>/dev/null || true))
 
 echo "Found ${#CLIENT_FILES[@]} client files, ${#MODEL_FILES[@]} model files, ${#EVENT_FILES[@]} event files"
 
-# Generate the project file
-cat > "$SDK_PROJECT" << 'EOF'
+# =============================================================================
+# SERVER SDK: Bannou.SDK (Full SDK with ServiceClients)
+# For game servers and internal services that need Dapr service-to-service calls
+# =============================================================================
+
+SERVER_SDK_DIR="Bannou.SDK"
+SERVER_SDK_PROJECT="$SERVER_SDK_DIR/Bannou.SDK.csproj"
+
+mkdir -p "$SERVER_SDK_DIR"
+
+cat > "$SERVER_SDK_PROJECT" << 'EOF'
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -27,13 +32,13 @@ cat > "$SDK_PROJECT" << 'EOF'
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>BeyondImmersion.Bannou.Client.SDK</RootNamespace>
+    <RootNamespace>BeyondImmersion.Bannou.SDK</RootNamespace>
 
     <!-- NuGet Package Metadata -->
-    <PackageId>BeyondImmersion.Bannou.Client.SDK</PackageId>
+    <PackageId>BeyondImmersion.Bannou.SDK</PackageId>
     <Authors>BeyondImmersion</Authors>
-    <Description>Client SDK for Bannou service platform with generated service clients, models, and WebSocket protocol support</Description>
-    <PackageTags>bannou;microservices;websocket;dapr;client;sdk</PackageTags>
+    <Description>Server SDK for Bannou service platform with Dapr service clients, models, events, and WebSocket protocol support. Use this for game servers and internal services.</Description>
+    <PackageTags>bannou;microservices;websocket;dapr;server;sdk;service-client</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
     <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
@@ -50,45 +55,40 @@ cat > "$SDK_PROJECT" << 'EOF'
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
     <PackageReference Include="Dapr.Client" Version="1.15.1" />
   </ItemGroup>
 
 EOF
 
-# Add generated files using MSBuild targets (VS-safe approach)
-echo '  <!-- Generated Files via MSBuild Target (VS-Compatible) -->' >> "$SDK_PROJECT"
-echo '  <Target Name="IncludeGeneratedFiles" BeforeTargets="BeforeBuild">' >> "$SDK_PROJECT"
-echo '    <ItemGroup>' >> "$SDK_PROJECT"
+# Add generated files using MSBuild targets
+echo '  <!-- Generated Files via MSBuild Target (VS-Compatible) -->' >> "$SERVER_SDK_PROJECT"
+echo '  <Target Name="IncludeGeneratedFiles" BeforeTargets="BeforeBuild">' >> "$SERVER_SDK_PROJECT"
+echo '    <ItemGroup>' >> "$SERVER_SDK_PROJECT"
 
-# Add client files
+# Add ALL client files (ServiceClients) - SERVER SDK INCLUDES THESE
 for file in "${CLIENT_FILES[@]}"; do
-    # Convert to relative path from SDK directory
     rel_path="../${file#./}"
-    echo "      <Compile Include=\"$rel_path\" />" >> "$SDK_PROJECT"
+    echo "      <Compile Include=\"$rel_path\" />" >> "$SERVER_SDK_PROJECT"
 done
 
 # Add model files
 for file in "${MODEL_FILES[@]}"; do
     rel_path="../${file#./}"
-    echo "      <Compile Include=\"$rel_path\" />" >> "$SDK_PROJECT"
+    echo "      <Compile Include=\"$rel_path\" />" >> "$SERVER_SDK_PROJECT"
 done
 
 # Add event files
 for file in "${EVENT_FILES[@]}"; do
     rel_path="../${file#./}"
-    echo "      <Compile Include=\"$rel_path\" />" >> "$SDK_PROJECT"
+    echo "      <Compile Include=\"$rel_path\" />" >> "$SERVER_SDK_PROJECT"
 done
 
-# Close the target and project
-cat >> "$SDK_PROJECT" << 'EOF'
+cat >> "$SERVER_SDK_PROJECT" << 'EOF'
     </ItemGroup>
   </Target>
 
-  <!-- Include only client-safe files from ServiceClients and Services -->
-  <!-- Note: ServiceAppMappingResolver.cs is NOT included as it depends on server-side AppConstants -->
-  <!-- Client SDK uses the fallback "bannou" app-id in DaprServiceClientBase -->
+  <!-- Service Client Infrastructure (for Dapr service-to-service calls) -->
   <ItemGroup>
     <Compile Include="../bannou-service/ServiceClients/IDaprClient.cs" Condition="Exists('../bannou-service/ServiceClients/IDaprClient.cs')" />
     <Compile Include="../bannou-service/ServiceClients/IServiceClient.cs" Condition="Exists('../bannou-service/ServiceClients/IServiceClient.cs')" />
@@ -97,8 +97,7 @@ cat >> "$SDK_PROJECT" << 'EOF'
     <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
   </ItemGroup>
 
-  <!-- WebSocket Binary Protocol (Client Mode Support) -->
-  <!-- These are dependency-free classes for client-side WebSocket communication -->
+  <!-- WebSocket Binary Protocol -->
   <ItemGroup>
     <Compile Include="../lib-connect/Protocol/BinaryMessage.cs" Condition="Exists('../lib-connect/Protocol/BinaryMessage.cs')" />
     <Compile Include="../lib-connect/Protocol/MessageFlags.cs" Condition="Exists('../lib-connect/Protocol/MessageFlags.cs')" />
@@ -107,7 +106,7 @@ cat >> "$SDK_PROJECT" << 'EOF'
     <Compile Include="../lib-connect/Protocol/ConnectionState.cs" Condition="Exists('../lib-connect/Protocol/ConnectionState.cs')" />
   </ItemGroup>
 
-  <!-- SDK Source Files (stable, version-controlled sources for SDK-specific classes) -->
+  <!-- SDK Source Files (WebSocket client, etc.) -->
   <ItemGroup>
     <Compile Include="../sdk-sources/**/*.cs" />
   </ItemGroup>
@@ -115,38 +114,220 @@ cat >> "$SDK_PROJECT" << 'EOF'
 </Project>
 EOF
 
-echo "✅ Generated $SDK_PROJECT with ${#CLIENT_FILES[@]} clients, ${#MODEL_FILES[@]} models, ${#EVENT_FILES[@]} events"
+# Create Server SDK README
+cat > "$SERVER_SDK_DIR/README.md" << 'EOF'
+# Bannou Server SDK
 
-# Create a basic README for the SDK
-cat > "$SDK_DIR/README.md" << 'EOF'
-# Bannou Client SDK
+Server SDK for the Bannou service platform. Use this for **game servers** and **internal services** that need:
+- Dapr service-to-service calls via generated ServiceClients
+- WebSocket connections for event reception
+- Full access to all Bannou APIs
 
-Auto-generated client SDK for the Bannou service platform.
+## When to Use This SDK
+
+- **Game Servers** (e.g., Stride3D game server) that need to call Bannou services directly
+- **Internal Microservices** that communicate via Dapr service invocation
+- **External Servers** that connect via WebSocket for event reception
 
 ## Features
 
-- Type-safe service clients generated from OpenAPI schemas
-- WebSocket protocol support for real-time communication
-- Event models for pub/sub messaging
-- Multi-target framework support (.NET 6, 8, 9)
+- ✅ Type-safe service clients (`AccountsClient`, `AuthClient`, etc.)
+- ✅ Request/Response models for all APIs
+- ✅ Event models for pub/sub messaging
+- ✅ WebSocket binary protocol (31-byte header)
+- ✅ `BannouClient` for WebSocket connections
+- ✅ Dapr service routing with dynamic app-id resolution
+
+## Usage
+
+### Using Service Clients (Dapr)
+
+```csharp
+using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Auth;
+
+// Service clients use Dapr for routing
+var accountsClient = new AccountsClient();
+var authClient = new AuthClient();
+
+var response = await accountsClient.CreateAccountAsync(new CreateAccountRequest
+{
+    Username = "user",
+    Password = "password"
+});
+```
+
+### Using WebSocket Connection
+
+```csharp
+using BeyondImmersion.Bannou.Client.SDK;
+
+var client = new BannouClient("wss://connect.bannou.example.com/ws");
+await client.ConnectAsync();
+
+// Receive events via WebSocket
+client.OnEvent += (sender, e) => Console.WriteLine($"Event: {e.EventType}");
+```
+
+## Installation
+
+```bash
+dotnet add package BeyondImmersion.Bannou.SDK
+```
+
+## See Also
+
+- **Bannou.Client.SDK** - For game clients that only use WebSocket (no Dapr dependency)
+EOF
+
+echo "✅ Server SDK: $SERVER_SDK_PROJECT"
+
+# =============================================================================
+# CLIENT SDK: Bannou.Client.SDK (No ServiceClients - WebSocket only)
+# For game clients that only communicate via WebSocket
+# =============================================================================
+
+CLIENT_SDK_DIR="Bannou.Client.SDK"
+CLIENT_SDK_PROJECT="$CLIENT_SDK_DIR/Bannou.Client.SDK.csproj"
+
+mkdir -p "$CLIENT_SDK_DIR"
+
+cat > "$CLIENT_SDK_PROJECT" << 'EOF'
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BeyondImmersion.Bannou.Client.SDK</RootNamespace>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>BeyondImmersion.Bannou.Client.SDK</PackageId>
+    <Authors>BeyondImmersion</Authors>
+    <Description>Client SDK for Bannou service platform with models, events, and WebSocket protocol support. For game clients - no Dapr dependency.</Description>
+    <PackageTags>bannou;microservices;websocket;client;sdk;game-client</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <!-- NO Dapr.Client dependency - this is for game clients only -->
+  <ItemGroup>
+    <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
+  </ItemGroup>
+
+EOF
+
+# Add generated files using MSBuild targets
+echo '  <!-- Generated Files via MSBuild Target (VS-Compatible) -->' >> "$CLIENT_SDK_PROJECT"
+echo '  <Target Name="IncludeGeneratedFiles" BeforeTargets="BeforeBuild">' >> "$CLIENT_SDK_PROJECT"
+echo '    <ItemGroup>' >> "$CLIENT_SDK_PROJECT"
+
+# NOTE: NO CLIENT FILES - Client SDK excludes ServiceClients
+# Only models and events are included
+
+# Add model files
+for file in "${MODEL_FILES[@]}"; do
+    rel_path="../${file#./}"
+    echo "      <Compile Include=\"$rel_path\" />" >> "$CLIENT_SDK_PROJECT"
+done
+
+# Add event files
+for file in "${EVENT_FILES[@]}"; do
+    rel_path="../${file#./}"
+    echo "      <Compile Include=\"$rel_path\" />" >> "$CLIENT_SDK_PROJECT"
+done
+
+cat >> "$CLIENT_SDK_PROJECT" << 'EOF'
+    </ItemGroup>
+  </Target>
+
+  <!-- Shared Exception Types (no Dapr dependency) -->
+  <ItemGroup>
+    <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
+  </ItemGroup>
+
+  <!-- WebSocket Binary Protocol -->
+  <ItemGroup>
+    <Compile Include="../lib-connect/Protocol/BinaryMessage.cs" Condition="Exists('../lib-connect/Protocol/BinaryMessage.cs')" />
+    <Compile Include="../lib-connect/Protocol/MessageFlags.cs" Condition="Exists('../lib-connect/Protocol/MessageFlags.cs')" />
+    <Compile Include="../lib-connect/Protocol/NetworkByteOrder.cs" Condition="Exists('../lib-connect/Protocol/NetworkByteOrder.cs')" />
+    <Compile Include="../lib-connect/Protocol/GuidGenerator.cs" Condition="Exists('../lib-connect/Protocol/GuidGenerator.cs')" />
+    <Compile Include="../lib-connect/Protocol/ConnectionState.cs" Condition="Exists('../lib-connect/Protocol/ConnectionState.cs')" />
+  </ItemGroup>
+
+  <!-- SDK Source Files (WebSocket client, etc.) -->
+  <ItemGroup>
+    <Compile Include="../sdk-sources/**/*.cs" />
+  </ItemGroup>
+
+</Project>
+EOF
+
+# Create Client SDK README
+cat > "$CLIENT_SDK_DIR/README.md" << 'EOF'
+# Bannou Client SDK
+
+Lightweight client SDK for the Bannou service platform. Use this for **game clients** that:
+- Connect via WebSocket only
+- Don't need Dapr service-to-service calls
+- Want minimal dependencies
+
+## When to Use This SDK
+
+- **Game Clients** (e.g., Stride3D client, Unity client) that connect via WebSocket
+- **Web Clients** that use WebSocket for real-time communication
+- Any client that communicates through the Connect service gateway
+
+## What's NOT Included
+
+This SDK **does not include**:
+- ❌ ServiceClients (`AccountsClient`, `AuthClient`, etc.) - use `Bannou.SDK` if you need these
+- ❌ `Dapr.Client` dependency
+- ❌ Dapr service infrastructure
+
+## Features
+
+- ✅ Request/Response models for all APIs
+- ✅ Event models for pub/sub messaging
+- ✅ WebSocket binary protocol (31-byte header)
+- ✅ `BannouClient` for WebSocket connections
+- ✅ Zero Dapr dependencies (smaller package)
 
 ## Usage
 
 ```csharp
 using BeyondImmersion.Bannou.Client.SDK;
+using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.Accounts;
 
-// Use generated service clients
-var accountsClient = new AccountsClient();
-var authClient = new AuthClient();
+// Connect via WebSocket
+var client = new BannouClient("wss://connect.bannou.example.com/ws");
+await client.ConnectAsync();
 
-// Create requests with generated models
-var request = new CreateAccountRequest
+// Use models for requests/responses
+var loginRequest = new LoginRequest
 {
     Username = "user",
     Password = "password"
 };
 
-var response = await accountsClient.CreateAccountAsync(request);
+// Send via WebSocket binary protocol
+var response = await client.SendRequestAsync<LoginRequest, LoginResponse>(
+    serviceName: "auth",
+    request: loginRequest
+);
 ```
 
 ## Installation
@@ -155,7 +336,22 @@ var response = await accountsClient.CreateAccountAsync(request);
 dotnet add package BeyondImmersion.Bannou.Client.SDK
 ```
 
-This package is automatically updated when the Bannou service definitions change.
+## See Also
+
+- **Bannou.SDK** - For game servers that need Dapr service clients
 EOF
 
-echo "✅ Client SDK generation completed successfully!"
+echo "✅ Client SDK: $CLIENT_SDK_PROJECT"
+
+# =============================================================================
+# SUMMARY
+# =============================================================================
+
+echo ""
+echo "✅ SDK generation completed successfully!"
+echo ""
+echo "   Server SDK (Bannou.SDK):       ${#CLIENT_FILES[@]} clients, ${#MODEL_FILES[@]} models, ${#EVENT_FILES[@]} events"
+echo "   Client SDK (Bannou.Client.SDK): 0 clients, ${#MODEL_FILES[@]} models, ${#EVENT_FILES[@]} events"
+echo ""
+echo "   Server SDK includes: ServiceClients + Models + Events + Protocol + BannouClient + Dapr"
+echo "   Client SDK includes: Models + Events + Protocol + BannouClient (NO ServiceClients, NO Dapr)"

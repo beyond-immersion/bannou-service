@@ -351,6 +351,44 @@ public partial class SessionRoleUpdate
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ClearSessionStateRequest
+{
+
+    /// <summary>
+    /// Session ID to clear state from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Service whose state should be cleared
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Optional list of state values to match. If provided, only clears if
+    /// <br/>current state matches one of these values. If empty or not provided,
+    /// <br/>clears the state unconditionally.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("states")]
+    public System.Collections.Generic.ICollection<string>? States { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SessionUpdateResponse
 {
 

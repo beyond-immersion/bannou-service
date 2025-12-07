@@ -1,19 +1,46 @@
-# NuGet Package Setup for Bannou Client SDK
+# NuGet Package Setup for Bannou SDKs
+
+## Dual SDK Architecture
+
+Bannou publishes **two SDK packages** to NuGet for different use cases:
+
+### **Server SDK** (`BeyondImmersion.Bannou.SDK`)
+For **game servers** that need Dapr service-to-service calls AND WebSocket support.
+
+**Includes:**
+- Service Clients (`AccountsClient`, `AuthClient`, etc.) for Dapr invocation
+- Request/Response Models from all services
+- Event Models for pub/sub messaging
+- WebSocket Binary Protocol (31-byte header)
+- `BannouClient.cs` for WebSocket connections
+- Dapr infrastructure (`DaprServiceClientBase`, etc.)
+
+**Dependencies:** `Dapr.Client`, `System.Net.WebSockets.Client`
+
+### **Client SDK** (`BeyondImmersion.Bannou.Client.SDK`)
+For **game clients** that ONLY communicate via WebSocket (no Dapr).
+
+**Includes:**
+- Request/Response Models from all services
+- Event Models for pub/sub messaging
+- WebSocket Binary Protocol (31-byte header)
+- `BannouClient.cs` for WebSocket connections
+
+**Dependencies:** `System.Net.WebSockets.Client` (NO Dapr dependency)
+
+**What's NOT Included:**
+- Service Clients (use `Bannou.SDK` if you need these)
+- Dapr infrastructure
 
 ## Package Configuration
 
-### **Recommended Package ID**
-```
-BeyondImmersion.Bannou.Client.SDK
-```
-
-### **API Key Scope Pattern** 
+### **API Key Scope Pattern**
 When creating your NuGet API key, use this glob pattern for security:
 ```
 BeyondImmersion.Bannou.*
 ```
 
-This allows publishing any package under the `BeyondImmersion.Bannou` namespace while preventing accidental publishing to other namespaces.
+This allows publishing both SDK packages while preventing accidental publishing to other namespaces.
 
 ## GitHub Environment Secrets Setup
 
@@ -23,112 +50,132 @@ This allows publishing any package under the `BeyondImmersion.Bannou` namespace 
 1. Go to your GitHub repository → **Settings** → **Environments**
 2. Create environment named: `production`
 3. Configure deployment restrictions:
-   - ✅ **Required reviewers** (optional): Add team members for manual approval
-   - ✅ **Deployment branches**: Restrict to `master` branch only
-   - ✅ **Environment protection rules**: Enable to prevent accidental publishing
+   - **Required reviewers** (optional): Add team members for manual approval
+   - **Deployment branches**: Restrict to `master` branch only
+   - **Environment protection rules**: Enable to prevent accidental publishing
 
 ### Environment Secrets
 Add the following secret to your **production environment**:
 
-**Secret Name**: `NUGET_API_KEY`  
-**Secret Value**: `[Your NuGet API Key from nuget.org]`  
+**Secret Name**: `NUGET_API_KEY`
+**Secret Value**: `[Your NuGet API Key from nuget.org]`
 **Scope**: Production environment only
 
 ### Steps to get API Key:
 1. Go to https://www.nuget.org/account/apikeys
-2. Click "Create" 
-3. **Key Name**: `Bannou-Client-SDK-CI`
-4. **Glob Pattern**: `BeyondImmersion.Bannou.*`  
-5. **Select Scopes**: ✅ Push new packages and package versions
+2. Click "Create"
+3. **Key Name**: `Bannou-SDK-CI`
+4. **Glob Pattern**: `BeyondImmersion.Bannou.*`
+5. **Select Scopes**: Push new packages and package versions
 6. Copy the generated key to GitHub Secrets
 
 ## Package Metadata
 
-The generated SDK will use these NuGet package properties:
+### Server SDK
+```xml
+<PackageId>BeyondImmersion.Bannou.SDK</PackageId>
+<Authors>BeyondImmersion</Authors>
+<Description>Server SDK for Bannou service platform with Dapr service clients, models, events, and WebSocket protocol support. Use this for game servers and internal services.</Description>
+<PackageTags>bannou;microservices;websocket;dapr;server;sdk;service-client</PackageTags>
+```
 
+### Client SDK
 ```xml
 <PackageId>BeyondImmersion.Bannou.Client.SDK</PackageId>
 <Authors>BeyondImmersion</Authors>
-<Description>Client SDK for Bannou service platform with generated service clients, models, and WebSocket protocol support</Description>
-<PackageTags>bannou;microservices;websocket;dapr;client;sdk</PackageTags>
-<PackageLicenseExpression>MIT</PackageLicenseExpression>
-<PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
-<RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+<Description>Client SDK for Bannou service platform with models, events, and WebSocket protocol support. For game clients - no Dapr dependency.</Description>
+<PackageTags>bannou;microservices;websocket;client;sdk;game-client</PackageTags>
 ```
 
 ## Version Management
 
 - **Automatic Versioning**: Uses semantic versioning via git tags
-- **Pre-release Versions**: Development builds get `-preview` suffix
-- **Stable Versions**: Only master branch creates stable releases
-- **Version Format**: `1.0.0`, `1.0.1-preview.1`, etc.
+- **Pre-release Versions**: CI builds get `-preview.N` suffix (e.g., `0.1.0-preview.123`)
+- **Stable Versions**: Manual release workflow creates stable versions
+- **Version Format**: `1.0.0`, `0.1.0-preview.123`, etc.
+- **Both SDKs share the same version number** for consistency
 
-## Enhanced Publishing Workflow
+### Backwards Compatibility Testing
+- Testing uses `Version="*"` to match **stable versions only**
+- Preview versions are NOT used for backwards compatibility testing
+- Backwards compat testing activates after first stable release (e.g., `1.0.0`)
+
+## Publishing Workflow
 
 ```mermaid
 graph TD
-    A[Commit to master] --> B[1️⃣ Generate Services]
-    B --> C[2️⃣ Generate SDK]
-    C --> D[3️⃣ Build All Projects]
-    D --> E[4️⃣ Generate Services Again]
-    E --> F[5️⃣ Generate SDK Again]
-    F --> G[6️⃣ Unit Tests]
-    G --> H[7️⃣ Infrastructure Tests]
-    H --> I[8️⃣ HTTP Integration Tests]
-    I --> J[9️⃣ WebSocket Tests - Published SDK]
-    J --> K[🔟 WebSocket Tests - Current SDK]
-    K --> L{Production Environment}
-    L -->|Authorized| M[Calculate Version]
-    M --> N[Pack NuGet]
-    N --> O[Publish to NuGet.org]
-    O --> P[Available for consumption]
-    L -->|Unauthorized| Q[Skip Publishing]
+    A[Commit to master] --> B[1 Generate Services]
+    B --> C[2 Generate SDK]
+    C --> D[3 Build All Projects]
+    D --> E[4 Generate Services Again]
+    E --> F[5 Generate SDK Again]
+    F --> G[6 Unit Tests]
+    G --> H[7 Infrastructure Tests]
+    H --> I[8 HTTP Integration Tests]
+    I --> J[9 WebSocket Tests - Backwards Compat]
+    J --> K[10 WebSocket Tests - Forward Compat]
+    K --> L[Build and Pack BOTH SDKs]
+    L --> M[Publish Preview to NuGet.org]
 ```
 
 ## Installation for Consumers
 
-Once published, developers can install with:
+### For Game Servers (with Dapr)
+```bash
+dotnet add package BeyondImmersion.Bannou.SDK
+```
 
+### For Game Clients (WebSocket only)
 ```bash
 dotnet add package BeyondImmersion.Bannou.Client.SDK
 ```
 
-Or in PackageReference:
+### PackageReference Format
 ```xml
+<!-- Server SDK -->
+<PackageReference Include="BeyondImmersion.Bannou.SDK" Version="*" />
+
+<!-- Client SDK -->
 <PackageReference Include="BeyondImmersion.Bannou.Client.SDK" Version="*" />
 ```
 
 ## Security Considerations
 
-- ✅ **Environment Restrictions**: Publishing only allowed from `production` environment
-- ✅ **Branch Protection**: Only `master` branch can trigger publishing
-- ✅ **Scoped API Key**: Limited to `BeyondImmersion.Bannou.*` namespace
-- ✅ **Environment Secrets**: API key scoped to production environment only
-- ✅ **MIT License**: Compatible with open source distribution  
-- ✅ **Automated Only**: No manual publishing reduces human error
-- ✅ **Backwards Compatibility**: Automated testing with published SDK versions
+- **Environment Restrictions**: Publishing only allowed from `production` environment
+- **Branch Protection**: Only `master` branch can trigger publishing
+- **Scoped API Key**: Limited to `BeyondImmersion.Bannou.*` namespace
+- **Environment Secrets**: API key scoped to production environment only
+- **MIT License**: Compatible with open source distribution
+- **Automated Only**: No manual publishing reduces human error
+- **Backwards Compatibility**: Automated testing with published SDK versions (stable only)
 
 ## Testing the Setup
 
 To test your NuGet configuration locally:
 
 ```bash
-# Generate SDK
+# Generate both SDKs
 scripts/generate-client-sdk.sh
 
-# Build and pack
+# Build and pack Server SDK
+dotnet pack Bannou.SDK --configuration Release -p:PackageVersion=1.0.0-test --output ./test-packages
+
+# Build and pack Client SDK
 dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=1.0.0-test --output ./test-packages
 
 # Test publish (dry run)
 dotnet nuget push ./test-packages/*.nupkg --api-key YOUR_API_KEY --source https://api.nuget.org/v3/index.json --dry-run
 ```
 
-## Package Content
+## Package Content Comparison
 
-The NuGet package will include:
-- ✅ **Generated Service Clients** (`AccountsClient`, `AuthClient`, etc.)
-- ✅ **Request/Response Models** (all POCO types from schemas)
-- ✅ **WebSocket Protocol Support** (binary message handling)
-- ✅ **Multi-target Support** (.NET 6, 8, 9)
-- ✅ **XML Documentation** (IntelliSense support)
-- ✅ **Source Link** (debugging support)
+| Content | Server SDK | Client SDK |
+|---------|------------|------------|
+| Service Clients (`*Client.cs`) | Yes | **No** |
+| Request/Response Models | Yes | Yes |
+| Event Models | Yes | Yes |
+| WebSocket Binary Protocol | Yes | Yes |
+| `BannouClient.cs` | Yes | Yes |
+| Dapr Infrastructure | Yes | **No** |
+| Multi-target (.NET 6, 8, 9) | Yes | Yes |
+| XML Documentation | Yes | Yes |

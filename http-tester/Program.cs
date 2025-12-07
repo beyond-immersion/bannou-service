@@ -634,6 +634,7 @@ public class Program
             new AccountTestHandler(),
             new AuthTestHandler(),
             new ConnectTestHandler(),
+            new GameSessionTestHandler(),
             new OrchestratorTestHandler(),
             new PermissionsTestHandler()
             // Add more test handlers as needed

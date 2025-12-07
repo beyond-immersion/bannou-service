@@ -189,17 +189,25 @@ jobs:
           echo "${{ steps.new_version.outputs.new_version }}" > SDK_VERSION
           echo "✅ Updated SDK_VERSION to ${{ steps.new_version.outputs.new_version }}"
 
-      - name: Build and Pack Stable SDK
+      - name: Build and Pack Stable SDKs
         if: steps.new_version.outputs.new_version != ''
         run: |
           VERSION="${{ steps.new_version.outputs.new_version }}"
-          echo "📦 Building Client SDK v${VERSION}..."
+          echo "📦 Building SDKs v${VERSION}..."
 
+          # Build and pack Server SDK (Bannou.SDK)
+          echo "📦 Building Server SDK (Bannou.SDK)..."
+          dotnet restore Bannou.SDK
+          dotnet build Bannou.SDK --configuration Release --no-restore
+          dotnet pack Bannou.SDK --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
+
+          # Build and pack Client SDK (Bannou.Client.SDK)
+          echo "📦 Building Client SDK (Bannou.Client.SDK)..."
           dotnet restore Bannou.Client.SDK
           dotnet build Bannou.Client.SDK --configuration Release --no-restore
           dotnet pack Bannou.Client.SDK --configuration Release -p:PackageVersion=${VERSION} --output ./nuget-packages --no-build
 
-          echo "✅ Package built: ./nuget-packages/"
+          echo "✅ Packages built: ./nuget-packages/"
           ls -la ./nuget-packages/
 
       - name: Publish to NuGet (Stable)
@@ -252,13 +260,19 @@ jobs:
           PR_COUNT="${{ steps.analyze.outputs.pr_count }}"
 
           # Create release notes
-          NOTES="## Bannou Client SDK v${VERSION}
+          NOTES="## Bannou SDKs v${VERSION}
 
           **Release Type:** ${BUMP_TYPE^} update
           **PRs Included:** ${PR_COUNT}
 
           ### Installation
 
+          **For Game Servers** (with Dapr service-to-service calls):
+          \`\`\`bash
+          dotnet add package BeyondImmersion.Bannou.SDK --version ${VERSION}
+          \`\`\`
+
+          **For Game Clients** (WebSocket only, no Dapr):
           \`\`\`bash
           dotnet add package BeyondImmersion.Bannou.Client.SDK --version ${VERSION}
           \`\`\`

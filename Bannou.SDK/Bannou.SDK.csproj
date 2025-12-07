@@ -1,0 +1,80 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BeyondImmersion.Bannou.SDK</RootNamespace>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>BeyondImmersion.Bannou.SDK</PackageId>
+    <Authors>BeyondImmersion</Authors>
+    <Description>Server SDK for Bannou service platform with Dapr service clients, models, events, and WebSocket protocol support. Use this for game servers and internal services.</Description>
+    <PackageTags>bannou;microservices;websocket;dapr;server;sdk;service-client</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/BeyondImmersion/bannou</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/BeyondImmersion/bannou</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
+    <PackageReference Include="Dapr.Client" Version="1.15.1" />
+  </ItemGroup>
+
+  <!-- Generated Files via MSBuild Target (VS-Compatible) -->
+  <Target Name="IncludeGeneratedFiles" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <Compile Include="../lib-behavior/Generated/BehaviorClient.cs" />
+      <Compile Include="../lib-permissions/Generated/PermissionsClient.cs" />
+      <Compile Include="../lib-accounts/Generated/AccountsClient.cs" />
+      <Compile Include="../lib-orchestrator/Generated/OrchestratorClient.cs" />
+      <Compile Include="../lib-connect/Generated/ConnectClient.cs" />
+      <Compile Include="../lib-auth/Generated/AuthClient.cs" />
+      <Compile Include="../lib-game-session/Generated/GameSessionClient.cs" />
+      <Compile Include="../lib-website/Generated/WebsiteClient.cs" />
+      <Compile Include="../lib-behavior/Generated/BehaviorModels.cs" />
+      <Compile Include="../lib-permissions/Generated/PermissionsModels.cs" />
+      <Compile Include="../lib-accounts/Generated/AccountsModels.cs" />
+      <Compile Include="../lib-orchestrator/Generated/OrchestratorModels.cs" />
+      <Compile Include="../lib-connect/Generated/ConnectModels.cs" />
+      <Compile Include="../lib-auth/Generated/AuthModels.cs" />
+      <Compile Include="../lib-game-session/Generated/GameSessionModels.cs" />
+      <Compile Include="../lib-website/Generated/WebsiteModels.cs" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Service Client Infrastructure (for Dapr service-to-service calls) -->
+  <ItemGroup>
+    <Compile Include="../bannou-service/ServiceClients/IDaprClient.cs" Condition="Exists('../bannou-service/ServiceClients/IDaprClient.cs')" />
+    <Compile Include="../bannou-service/ServiceClients/IServiceClient.cs" Condition="Exists('../bannou-service/ServiceClients/IServiceClient.cs')" />
+    <Compile Include="../bannou-service/ServiceClients/DaprServiceClientBase.cs" Condition="Exists('../bannou-service/ServiceClients/DaprServiceClientBase.cs')" />
+    <Compile Include="../bannou-service/Services/IServiceAppMappingResolver.cs" Condition="Exists('../bannou-service/Services/IServiceAppMappingResolver.cs')" />
+    <Compile Include="../bannou-service/ApiException.cs" Condition="Exists('../bannou-service/ApiException.cs')" />
+  </ItemGroup>
+
+  <!-- WebSocket Binary Protocol -->
+  <ItemGroup>
+    <Compile Include="../lib-connect/Protocol/BinaryMessage.cs" Condition="Exists('../lib-connect/Protocol/BinaryMessage.cs')" />
+    <Compile Include="../lib-connect/Protocol/MessageFlags.cs" Condition="Exists('../lib-connect/Protocol/MessageFlags.cs')" />
+    <Compile Include="../lib-connect/Protocol/NetworkByteOrder.cs" Condition="Exists('../lib-connect/Protocol/NetworkByteOrder.cs')" />
+    <Compile Include="../lib-connect/Protocol/GuidGenerator.cs" Condition="Exists('../lib-connect/Protocol/GuidGenerator.cs')" />
+    <Compile Include="../lib-connect/Protocol/ConnectionState.cs" Condition="Exists('../lib-connect/Protocol/ConnectionState.cs')" />
+  </ItemGroup>
+
+  <!-- SDK Source Files (WebSocket client, etc.) -->
+  <ItemGroup>
+    <Compile Include="../sdk-sources/**/*.cs" />
+  </ItemGroup>
+
+</Project>

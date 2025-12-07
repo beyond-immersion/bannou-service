@@ -91,6 +91,20 @@ public interface IPermissionsController : BeyondImmersion.BannouService.Controll
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> UpdateSessionRoleAsync(SessionRoleUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Clear session state for specific service
+    /// </summary>
+
+    /// <remarks>
+    /// Removes state for a specific service from the session and recompiles permissions.
+    /// <br/>If states list is provided, only clears if current state matches one of the values.
+    /// <br/>If states list is empty or not provided, clears the state unconditionally.
+    /// </remarks>
+
+    /// <returns>Session state cleared and permissions recompiled</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> ClearSessionStateAsync(ClearSessionStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Get complete session information
     /// </summary>
 
@@ -251,6 +265,24 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     {
 
         var (statusCode, result) = await _implementation.UpdateSessionRoleAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Clear session state for specific service
+    /// </summary>
+    /// <remarks>
+    /// Removes state for a specific service from the session and recompiles permissions.
+    /// <br/>If states list is provided, only clears if current state matches one of the values.
+    /// <br/>If states list is empty or not provided, clears the state unconditionally.
+    /// </remarks>
+    /// <returns>Session state cleared and permissions recompiled</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("permissions/clear-session-state")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> ClearSessionState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ClearSessionStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ClearSessionStateAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

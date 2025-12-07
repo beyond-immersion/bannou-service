@@ -38,6 +38,12 @@ public class PermissionsTestHandler : IServiceTestHandler
             new ServiceTest(TestUpdateSessionRole, "UpdateSessionRole", "Permissions", "Test updating session role"),
             new ServiceTest(TestUpdateSessionRoleAffectsAllServices, "UpdateRoleAffectsAll", "Permissions", "Test role update affects all service permissions"),
 
+            // Clear Session State Tests
+            new ServiceTest(TestClearSessionStateUnconditional, "ClearSessionStateUnconditional", "Permissions", "Test clearing session state unconditionally"),
+            new ServiceTest(TestClearSessionStateWithMatchingFilter, "ClearSessionStateMatchingFilter", "Permissions", "Test clearing session state when filter matches"),
+            new ServiceTest(TestClearSessionStateWithNonMatchingFilter, "ClearSessionStateNonMatchingFilter", "Permissions", "Test clearing session state when filter doesn't match"),
+            new ServiceTest(TestClearSessionStateNonExistent, "ClearSessionStateNonExistent", "Permissions", "Test clearing state for service with no state set"),
+
             // Session Info Tests
             new ServiceTest(TestGetSessionInfo, "GetSessionInfo", "Permissions", "Test getting complete session information"),
             new ServiceTest(TestGetSessionInfoNonExistent, "GetSessionInfoNonExistent", "Permissions", "Test getting session info for non-existent session"),
@@ -894,6 +900,281 @@ public class PermissionsTestHandler : IServiceTestHandler
         catch (ApiException ex)
         {
             return TestResult.Failed($"Role affects all test failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test clearing session state unconditionally (no states filter).
+    /// </summary>
+    private static async Task<TestResult> TestClearSessionStateUnconditional(ITestClient client, string[] args)
+    {
+        try
+        {
+            var permissionsClient = new PermissionsClient();
+            var testPrefix = $"clear-state-{Guid.NewGuid():N}";
+            var testSessionId = $"{testPrefix}-session";
+            var testServiceId = $"{testPrefix}-svc";
+
+            // Register service with state-dependent permissions
+            await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
+            {
+                ServiceId = testServiceId,
+                Version = "1.0.0",
+                Permissions = new Dictionary<string, StatePermissions>
+                {
+                    ["default"] = new StatePermissions
+                    {
+                        ["user"] = new Collection<string> { "GET:/public" }
+                    },
+                    ["active"] = new StatePermissions
+                    {
+                        ["user"] = new Collection<string> { "GET:/public", "POST:/active/action" }
+                    }
+                }
+            });
+
+            // Create session with state
+            await permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+            {
+                SessionId = testSessionId,
+                ServiceId = testServiceId,
+                NewState = "active"
+            });
+            await permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
+            {
+                SessionId = testSessionId,
+                NewRole = "user"
+            });
+
+            // Verify state was set
+            var sessionInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
+            {
+                SessionId = testSessionId
+            });
+
+            if (sessionInfo.States == null || !sessionInfo.States.ContainsKey(testServiceId))
+            {
+                return TestResult.Failed("State was not set initially");
+            }
+
+            // Clear the state unconditionally (no states filter)
+            var clearResponse = await permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
+            {
+                SessionId = testSessionId,
+                ServiceId = testServiceId
+                // States is null/empty - clears unconditionally
+            });
+
+            if (!clearResponse.Success)
+            {
+                return TestResult.Failed($"Clear state failed: {clearResponse.Message}");
+            }
+
+            // Verify state was cleared
+            var updatedInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
+            {
+                SessionId = testSessionId
+            });
+
+            if (updatedInfo.States != null && updatedInfo.States.ContainsKey(testServiceId))
+            {
+                return TestResult.Failed("State was not cleared");
+            }
+
+            return TestResult.Successful($"State cleared unconditionally: {clearResponse.Message}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Clear state API failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test clearing session state when the filter matches the current state.
+    /// </summary>
+    private static async Task<TestResult> TestClearSessionStateWithMatchingFilter(ITestClient client, string[] args)
+    {
+        try
+        {
+            var permissionsClient = new PermissionsClient();
+            var testPrefix = $"clear-match-{Guid.NewGuid():N}";
+            var testSessionId = $"{testPrefix}-session";
+            var testServiceId = $"{testPrefix}-svc";
+
+            // Create session with state
+            await permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+            {
+                SessionId = testSessionId,
+                ServiceId = testServiceId,
+                NewState = "in_lobby"
+            });
+            await permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
+            {
+                SessionId = testSessionId,
+                NewRole = "user"
+            });
+
+            // Clear only if current state matches one of provided values
+            var clearResponse = await permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
+            {
+                SessionId = testSessionId,
+                ServiceId = testServiceId,
+                States = new List<string> { "in_lobby", "in_game" } // "in_lobby" matches
+            });
+
+            if (!clearResponse.Success)
+            {
+                return TestResult.Failed($"Clear state failed: {clearResponse.Message}");
+            }
+
+            if (!clearResponse.PermissionsChanged)
+            {
+                return TestResult.Failed("Permissions should have changed when state was cleared");
+            }
+
+            // Verify state was cleared
+            var updatedInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
+            {
+                SessionId = testSessionId
+            });
+
+            if (updatedInfo.States != null && updatedInfo.States.ContainsKey(testServiceId))
+            {
+                return TestResult.Failed("State was not cleared despite matching filter");
+            }
+
+            return TestResult.Successful($"State cleared with matching filter: {clearResponse.Message}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Clear state API failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test clearing session state when the filter does not match the current state.
+    /// </summary>
+    private static async Task<TestResult> TestClearSessionStateWithNonMatchingFilter(ITestClient client, string[] args)
+    {
+        try
+        {
+            var permissionsClient = new PermissionsClient();
+            var testPrefix = $"clear-nomatch-{Guid.NewGuid():N}";
+            var testSessionId = $"{testPrefix}-session";
+            var testServiceId = $"{testPrefix}-svc";
+
+            // Create session with state
+            await permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+            {
+                SessionId = testSessionId,
+                ServiceId = testServiceId,
+                NewState = "active"
+            });
+            await permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
+            {
+                SessionId = testSessionId,
+                NewRole = "user"
+            });
+
+            // Try to clear only if current state matches - but it won't
+            var clearResponse = await permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
+            {
+                SessionId = testSessionId,
+                ServiceId = testServiceId,
+                States = new List<string> { "in_lobby", "in_game" } // "active" doesn't match
+            });
+
+            if (!clearResponse.Success)
+            {
+                return TestResult.Failed($"Clear state call failed: {clearResponse.Message}");
+            }
+
+            if (clearResponse.PermissionsChanged)
+            {
+                return TestResult.Failed("Permissions should NOT have changed when filter didn't match");
+            }
+
+            // Verify state was NOT cleared
+            var updatedInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
+            {
+                SessionId = testSessionId
+            });
+
+            if (updatedInfo.States == null || !updatedInfo.States.ContainsKey(testServiceId))
+            {
+                return TestResult.Failed("State was incorrectly cleared despite non-matching filter");
+            }
+
+            if (updatedInfo.States[testServiceId] != "active")
+            {
+                return TestResult.Failed($"State changed unexpectedly to: {updatedInfo.States[testServiceId]}");
+            }
+
+            return TestResult.Successful($"State preserved when filter didn't match: {clearResponse.Message}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Clear state API failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test clearing state for a service that has no state set.
+    /// </summary>
+    private static async Task<TestResult> TestClearSessionStateNonExistent(ITestClient client, string[] args)
+    {
+        try
+        {
+            var permissionsClient = new PermissionsClient();
+            var testPrefix = $"clear-nostate-{Guid.NewGuid():N}";
+            var testSessionId = $"{testPrefix}-session";
+            var testServiceId = $"{testPrefix}-svc";
+
+            // Create session with just a role (no state for this service)
+            await permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
+            {
+                SessionId = testSessionId,
+                NewRole = "user"
+            });
+
+            // Try to clear non-existent state
+            var clearResponse = await permissionsClient.ClearSessionStateAsync(new ClearSessionStateRequest
+            {
+                SessionId = testSessionId,
+                ServiceId = testServiceId
+            });
+
+            if (!clearResponse.Success)
+            {
+                return TestResult.Failed($"Clear state call should succeed even with no state: {clearResponse.Message}");
+            }
+
+            if (clearResponse.PermissionsChanged)
+            {
+                return TestResult.Failed("Permissions should NOT have changed when no state existed");
+            }
+
+            return TestResult.Successful($"Clearing non-existent state handled gracefully: {clearResponse.Message}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Clear state API failed: {ex.StatusCode} - {ex.Message}");
         }
         catch (Exception ex)
         {
