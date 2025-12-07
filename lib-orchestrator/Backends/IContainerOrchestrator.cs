@@ -98,6 +98,14 @@ public interface IContainerOrchestrator : IDisposable
         string appName,
         int replicas,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists infrastructure services (Redis, RabbitMQ, MySQL, etc.) that support the application.
+    /// This is determined by scanning compose files or finding containers in the same namespace/project.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>List of infrastructure service names/identifiers</returns>
+    Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -381,7 +381,7 @@ test-http-dev: test-logs-dir ## HTTP tests: keep containers running, save logs t
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.http.yml" \
-		up --build --no-cache -d
+		up --build -d
 	@echo "⏳ Waiting for test to complete (check logs with 'make test-http-logs')..."
 	@echo "💡 Use 'make test-http-down' when done to clean up containers"
 	@echo "💡 Use 'make test-http-logs' to view latest output"
@@ -472,7 +472,7 @@ test-infra-dev: test-logs-dir ## Infrastructure tests: keep containers running, 
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.infrastructure.yml" \
-		up --build --no-cache -d
+		up --build -d
 	@sleep 5
 	@$(MAKE) test-infra-logs
 	@echo "✅ Dev test containers running. Use 'make test-infra-down' to clean up."

@@ -28,6 +28,8 @@ public class OrchestratorService : IOrchestratorService
     private readonly IServiceHealthMonitor _healthMonitor;
     private readonly ISmartRestartManager _restartManager;
     private readonly IBackendDetector _backendDetector;
+    private readonly PresetLoader _presetLoader;
+    private readonly ILoggerFactory _loggerFactory;
 
     /// <summary>
     /// Cached orchestrator instance for container operations.
@@ -37,9 +39,16 @@ public class OrchestratorService : IOrchestratorService
     private const string STATE_STORE = "orchestrator-store";
     private const string CONFIG_VERSION_KEY = "orchestrator:config:version";
 
+    /// <summary>
+    /// Default preset name - all services on one "bannou" node.
+    /// This matches the default Docker Compose behavior where everything runs in one container.
+    /// </summary>
+    private const string DEFAULT_PRESET = "bannou";
+
     public OrchestratorService(
         DaprClient daprClient,
         ILogger<OrchestratorService> logger,
+        ILoggerFactory loggerFactory,
         OrchestratorServiceConfiguration configuration,
         IOrchestratorRedisManager redisManager,
         IOrchestratorEventManager eventManager,
@@ -49,12 +58,16 @@ public class OrchestratorService : IOrchestratorService
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _redisManager = redisManager ?? throw new ArgumentNullException(nameof(redisManager));
         _eventManager = eventManager ?? throw new ArgumentNullException(nameof(eventManager));
         _healthMonitor = healthMonitor ?? throw new ArgumentNullException(nameof(healthMonitor));
         _restartManager = restartManager ?? throw new ArgumentNullException(nameof(restartManager));
         _backendDetector = backendDetector ?? throw new ArgumentNullException(nameof(backendDetector));
+
+        // Create preset loader
+        _presetLoader = new PresetLoader(_loggerFactory.CreateLogger<PresetLoader>());
     }
 
     /// <summary>
@@ -251,25 +264,27 @@ public class OrchestratorService : IOrchestratorService
     /// Implementation of GetPresets operation.
     /// Returns available deployment preset configurations.
     /// </summary>
-    public Task<(StatusCodes, PresetsResponse?)> GetPresetsAsync(ListPresetsRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, PresetsResponse?)> GetPresetsAsync(ListPresetsRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetPresets operation");
 
         try
         {
-            var presetsDir = _configuration.PresetsDirectory;
+            var presetMetadata = await _presetLoader.ListPresetsAsync(cancellationToken);
             var presets = new List<DeploymentPreset>();
 
-            if (Directory.Exists(presetsDir))
+            foreach (var meta in presetMetadata)
             {
-                foreach (var file in Directory.GetFiles(presetsDir, "*.yaml"))
+                // Load full preset to get topology
+                var preset = await _presetLoader.LoadPresetAsync(meta.Name, cancellationToken);
+                if (preset != null)
                 {
-                    var name = Path.GetFileNameWithoutExtension(file);
+                    var topology = _presetLoader.ConvertToTopology(preset);
                     presets.Add(new DeploymentPreset
                     {
-                        Name = name,
-                        Description = $"Preset from {file}",
-                        Topology = new ServiceTopology() // Would parse YAML for actual topology
+                        Name = meta.Name,
+                        Description = meta.Description ?? $"Preset: {meta.Name}",
+                        Topology = topology
                     });
                 }
             }
@@ -277,15 +292,15 @@ public class OrchestratorService : IOrchestratorService
             var response = new PresetsResponse
             {
                 Presets = presets,
-                ActivePreset = presets.FirstOrDefault()?.Name ?? "default"
+                ActivePreset = DEFAULT_PRESET // Default is "bannou" - all services on one node
             };
 
-            return Task.FromResult<(StatusCodes, PresetsResponse?)>((StatusCodes.OK, response));
+            return (StatusCodes.OK, response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetPresets operation");
-            return Task.FromResult<(StatusCodes, PresetsResponse?)>((StatusCodes.InternalServerError, null));
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -326,10 +341,39 @@ public class OrchestratorService : IOrchestratorService
                 orchestrator = await _backendDetector.CreateBestOrchestratorAsync(cancellationToken);
             }
 
-            // Get topology nodes to deploy from the request
-            var nodesToDeploy = body.Topology?.Nodes ?? new List<TopologyNode>();
+            // Get topology nodes to deploy - from preset or direct topology
+            ICollection<TopologyNode> nodesToDeploy;
+            IDictionary<string, string>? presetEnvironment = null;
 
-            if (nodesToDeploy.Count == 0)
+            if (!string.IsNullOrEmpty(body.Preset))
+            {
+                // Load preset by name
+                var preset = await _presetLoader.LoadPresetAsync(body.Preset, cancellationToken);
+                if (preset == null)
+                {
+                    return (StatusCodes.NotFound, new DeployResponse
+                    {
+                        Success = false,
+                        DeploymentId = deploymentId,
+                        Backend = orchestrator.BackendType,
+                        Duration = "0s",
+                        Message = $"Preset '{body.Preset}' not found"
+                    });
+                }
+
+                var topology = _presetLoader.ConvertToTopology(preset);
+                nodesToDeploy = topology.Nodes;
+                presetEnvironment = preset.Environment;
+
+                _logger.LogInformation(
+                    "Loaded preset '{Preset}' with {NodeCount} nodes",
+                    body.Preset, nodesToDeploy.Count);
+            }
+            else if (body.Topology?.Nodes != null && body.Topology.Nodes.Count > 0)
+            {
+                nodesToDeploy = body.Topology.Nodes;
+            }
+            else
             {
                 return (StatusCodes.BadRequest, new DeployResponse
                 {
@@ -337,7 +381,7 @@ public class OrchestratorService : IOrchestratorService
                     DeploymentId = deploymentId,
                     Backend = orchestrator.BackendType,
                     Duration = "0s",
-                    Message = "No topology nodes specified for deployment"
+                    Message = "No topology nodes specified for deployment. Provide a preset name or topology."
                 });
             }
 
@@ -348,21 +392,31 @@ public class OrchestratorService : IOrchestratorService
             {
                 var appId = node.DaprAppId ?? node.Name;
 
-                // Convert IDictionary to Dictionary for the orchestrator method
-                var environment = node.Environment != null
-                    ? new Dictionary<string, string>(node.Environment)
-                    : null;
+                // Start with preset environment (lowest priority)
+                var environment = new Dictionary<string, string>();
+                if (presetEnvironment != null)
+                {
+                    foreach (var kvp in presetEnvironment)
+                    {
+                        environment[kvp.Key] = kvp.Value;
+                    }
+                }
 
-                // Merge global environment with node-specific environment
+                // Add node-specific environment (higher priority, overrides preset)
+                if (node.Environment != null)
+                {
+                    foreach (var kvp in node.Environment)
+                    {
+                        environment[kvp.Key] = kvp.Value;
+                    }
+                }
+
+                // Add request environment (highest priority, overrides node and preset)
                 if (body.Environment != null)
                 {
-                    environment ??= new Dictionary<string, string>();
                     foreach (var kvp in body.Environment)
                     {
-                        if (!environment.ContainsKey(kvp.Key))
-                        {
-                            environment[kvp.Key] = kvp.Value;
-                        }
+                        environment[kvp.Key] = kvp.Value;
                     }
                 }
 
@@ -370,7 +424,6 @@ public class OrchestratorService : IOrchestratorService
                 foreach (var serviceName in node.Services)
                 {
                     var serviceEnvKey = $"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED";
-                    environment ??= new Dictionary<string, string>();
                     environment[serviceEnvKey] = "true";
                 }
 
@@ -505,21 +558,34 @@ public class OrchestratorService : IOrchestratorService
     public async Task<(StatusCodes, TeardownResponse?)> TeardownAsync(TeardownRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation(
-            "Executing Teardown operation: mode={Mode}, removeVolumes={RemoveVolumes}",
+            "Executing Teardown operation: dryRun={DryRun}, mode={Mode}, removeVolumes={RemoveVolumes}, includeInfrastructure={IncludeInfrastructure}",
+            body.DryRun,
             body.Mode,
-            body.RemoveVolumes);
+            body.RemoveVolumes,
+            body.IncludeInfrastructure);
+
+        if (body.IncludeInfrastructure && !body.DryRun)
+        {
+            _logger.LogWarning(
+                "⚠️ DESTRUCTIVE OPERATION: includeInfrastructure=true will remove Redis, RabbitMQ, MySQL, etc. " +
+                "All data will be lost and a full re-deployment will be required.");
+        }
 
         var startTime = DateTime.UtcNow;
         var teardownId = Guid.NewGuid().ToString();
 
-        // Publish teardown started event (topology-changed action indicates infrastructure modification)
-        await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
+        // Don't publish events during dry run
+        if (!body.DryRun)
         {
-            EventId = Guid.NewGuid().ToString(),
-            Timestamp = DateTimeOffset.UtcNow,
-            Action = DeploymentEventAction.TopologyChanged,
-            DeploymentId = teardownId
-        });
+            // Publish teardown started event (topology-changed action indicates infrastructure modification)
+            await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
+            {
+                EventId = Guid.NewGuid().ToString(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Action = DeploymentEventAction.TopologyChanged,
+                DeploymentId = teardownId
+            });
+        }
 
         try
         {
@@ -528,12 +594,27 @@ public class OrchestratorService : IOrchestratorService
             var removedVolumes = new List<string>();
             var failedTeardowns = new List<string>();
 
-            // Get all running containers to tear down
+            // Get all running containers
             var containers = await orchestrator.ListContainersAsync(cancellationToken);
-            var servicesToTeardown = containers
+            var allContainers = containers
                 .Select(c => c.AppName ?? "")
                 .Where(n => !string.IsNullOrEmpty(n))
                 .ToList();
+
+            // Get infrastructure services to filter them out (unless includeInfrastructure is true)
+            var infrastructureServices = await orchestrator.ListInfrastructureServicesAsync(cancellationToken);
+            var infraSet = new HashSet<string>(infrastructureServices, StringComparer.OrdinalIgnoreCase);
+
+            // Filter out infrastructure from main teardown list
+            var servicesToTeardown = allContainers
+                .Where(n => !infraSet.Contains(n))
+                .ToList();
+
+            _logger.LogInformation(
+                "Found {Count} app containers to tear down: {Services} (filtered {InfraCount} infrastructure services)",
+                servicesToTeardown.Count,
+                string.Join(", ", servicesToTeardown),
+                infraSet.Count);
 
             if (servicesToTeardown.Count == 0)
             {
@@ -546,12 +627,116 @@ public class OrchestratorService : IOrchestratorService
                 });
             }
 
-            foreach (var appName in servicesToTeardown)
+            // Collect infrastructure services that would be torn down
+            var infraToRemove = new List<string>();
+            if (body.IncludeInfrastructure)
+            {
+                infraToRemove.AddRange(infrastructureServices);
+            }
+
+            // Build the preview response (what will be torn down)
+            var previewDuration = DateTime.UtcNow - startTime;
+            var previewResponse = new TeardownResponse
+            {
+                Success = true,
+                Duration = $"{previewDuration.TotalSeconds:F1}s",
+                StoppedContainers = servicesToTeardown,
+                RemovedVolumes = new List<string>(),
+                RemovedInfrastructure = infraToRemove
+            };
+
+            // If dry run, just return the preview
+            if (body.DryRun)
+            {
+                _logger.LogInformation("Dry run mode - not actually tearing down containers");
+                return (StatusCodes.OK, previewResponse);
+            }
+
+            // For actual teardown: return preview first, then execute teardown in background
+            // This ensures client gets a response before the service potentially kills itself
+            _logger.LogInformation(
+                "Returning teardown preview to client, then executing actual teardown in background. " +
+                "Services to teardown: {Services}, Infrastructure: {Infra}",
+                string.Join(", ", servicesToTeardown),
+                string.Join(", ", infraToRemove));
+
+            // Capture values for background task
+            var capturedServices = servicesToTeardown.ToList();
+            var capturedInfra = infraToRemove.ToList();
+            var capturedRemoveVolumes = body.RemoveVolumes;
+            var capturedIncludeInfra = body.IncludeInfrastructure;
+
+            // Fire-and-forget background teardown
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // Small delay to ensure response is sent first
+                    await Task.Delay(100);
+
+                    await ExecuteActualTeardownAsync(
+                        orchestrator,
+                        capturedServices,
+                        capturedInfra,
+                        capturedRemoveVolumes,
+                        capturedIncludeInfra,
+                        teardownId,
+                        CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Background teardown failed");
+                }
+            });
+
+            // Return preview immediately - actual teardown happens in background
+            previewResponse.Message = "Teardown initiated - preview shown, actual teardown executing in background";
+            return (StatusCodes.OK, previewResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing Teardown operation");
+
+            // Publish teardown failed event on exception
+            await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
+            {
+                EventId = Guid.NewGuid().ToString(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Action = DeploymentEventAction.Failed,
+                DeploymentId = teardownId,
+                Error = ex.Message
+            });
+
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Executes the actual teardown in the background after response is sent to client.
+    /// </summary>
+    private async Task ExecuteActualTeardownAsync(
+        IContainerOrchestrator orchestrator,
+        List<string> servicesToTeardown,
+        List<string> infrastructureServices,
+        bool removeVolumes,
+        bool includeInfrastructure,
+        string teardownId,
+        CancellationToken cancellationToken)
+    {
+        var stoppedContainers = new List<string>();
+        var removedVolumes = new List<string>();
+        var failedTeardowns = new List<string>();
+
+        _logger.LogInformation("Background teardown starting for {Count} services", servicesToTeardown.Count);
+
+        foreach (var appName in servicesToTeardown)
+        {
+            try
             {
                 // Tear down via container orchestrator
                 var teardownResult = await orchestrator.TeardownServiceAsync(
                     appName,
-                    body.RemoveVolumes,
+                    removeVolumes,
                     cancellationToken);
 
                 if (teardownResult.Success)
@@ -585,47 +770,68 @@ public class OrchestratorService : IOrchestratorService
                         appName, teardownResult.Message);
                 }
             }
-
-            var duration = DateTime.UtcNow - startTime;
-            var success = failedTeardowns.Count == 0;
-
-            var response = new TeardownResponse
+            catch (Exception ex)
             {
-                Success = success,
-                Duration = $"{duration.TotalSeconds:F1}s",
-                StoppedContainers = stoppedContainers,
-                RemovedVolumes = removedVolumes
-            };
-
-            // Publish teardown completed/failed event
-            await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
-            {
-                EventId = Guid.NewGuid().ToString(),
-                Timestamp = DateTimeOffset.UtcNow,
-                Action = success ? DeploymentEventAction.Completed : DeploymentEventAction.Failed,
-                DeploymentId = teardownId,
-                Changes = stoppedContainers,
-                Error = success ? null : string.Join("; ", failedTeardowns)
-            });
-
-            return (success ? StatusCodes.OK : StatusCodes.InternalServerError, response);
+                failedTeardowns.Add($"{appName}: {ex.Message}");
+                _logger.LogWarning(ex, "Error tearing down service {AppName}", appName);
+            }
         }
-        catch (Exception ex)
+
+        // Handle infrastructure teardown if requested
+        var removedInfrastructure = new List<string>();
+        if (includeInfrastructure)
         {
-            _logger.LogError(ex, "Error executing Teardown operation");
+            _logger.LogInformation("Proceeding with infrastructure teardown...");
 
-            // Publish teardown failed event on exception
-            await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
+            foreach (var infraName in infrastructureServices)
             {
-                EventId = Guid.NewGuid().ToString(),
-                Timestamp = DateTimeOffset.UtcNow,
-                Action = DeploymentEventAction.Failed,
-                DeploymentId = teardownId,
-                Error = ex.Message
-            });
+                try
+                {
+                    var infraResult = await orchestrator.TeardownServiceAsync(
+                        infraName,
+                        removeVolumes,
+                        cancellationToken);
 
-            return (StatusCodes.InternalServerError, null);
+                    if (infraResult.Success)
+                    {
+                        removedInfrastructure.Add(infraName);
+                        stoppedContainers.AddRange(infraResult.StoppedContainers);
+                        removedVolumes.AddRange(infraResult.RemovedVolumes);
+                        _logger.LogInformation("Infrastructure service {InfraName} torn down", infraName);
+                    }
+                    else
+                    {
+                        failedTeardowns.Add($"[infra] {infraName}: {infraResult.Message}");
+                        _logger.LogWarning(
+                            "Failed to tear down infrastructure service {InfraName}: {Message}",
+                            infraName, infraResult.Message);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    failedTeardowns.Add($"[infra] {infraName}: {ex.Message}");
+                    _logger.LogWarning(ex, "Error tearing down infrastructure service {InfraName}", infraName);
+                }
+            }
         }
+
+        var success = failedTeardowns.Count == 0;
+
+        // Publish teardown completed/failed event
+        await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
+        {
+            EventId = Guid.NewGuid().ToString(),
+            Timestamp = DateTimeOffset.UtcNow,
+            Action = success ? DeploymentEventAction.Completed : DeploymentEventAction.Failed,
+            DeploymentId = teardownId,
+            Changes = stoppedContainers,
+            Error = success ? null : string.Join("; ", failedTeardowns)
+        });
+
+        _logger.LogInformation(
+            "Background teardown completed: {StoppedCount} containers stopped, {FailedCount} failures",
+            stoppedContainers.Count,
+            failedTeardowns.Count);
     }
 
     /// <summary>

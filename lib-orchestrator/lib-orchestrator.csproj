@@ -19,6 +19,7 @@
     <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
     <PackageReference Include="StackExchange.Redis" Version="2.9.25" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 
   <Import Project="../ServiceLib.targets" />

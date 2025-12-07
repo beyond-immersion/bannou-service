@@ -15,6 +15,7 @@ public class OrchestratorServiceTests
 {
     private readonly Mock<DaprClient> _mockDaprClient;
     private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly Mock<IOrchestratorRedisManager> _mockRedisManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
@@ -26,6 +27,10 @@ public class OrchestratorServiceTests
     {
         _mockDaprClient = new Mock<DaprClient>();
         _mockLogger = new Mock<ILogger<OrchestratorService>>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockLoggerFactory
+            .Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(new Mock<ILogger>().Object);
         _configuration = new OrchestratorServiceConfiguration
         {
             RedisConnectionString = "redis:6379",
@@ -45,6 +50,7 @@ public class OrchestratorServiceTests
         return new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -70,6 +76,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             null!,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -87,6 +94,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             null!,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -98,12 +106,31 @@ public class OrchestratorServiceTests
     }
 
     [Fact]
+    public void Constructor_WithNullLoggerFactory_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            null!,
+            _configuration,
+            _mockRedisManager.Object,
+            _mockEventManager.Object,
+            _mockHealthMonitor.Object,
+            _mockRestartManager.Object,
+            _mockBackendDetector.Object));
+
+        Assert.Equal("loggerFactory", exception.ParamName);
+    }
+
+    [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             null!,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -121,6 +148,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             null!,
             _mockEventManager.Object,
@@ -138,6 +166,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             null!,
@@ -155,6 +184,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -172,6 +202,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -189,6 +220,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             _mockEventManager.Object,

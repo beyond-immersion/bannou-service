@@ -1393,6 +1393,12 @@ components:
     TeardownRequest:
       type: object
       properties:
+        dryRun:
+          type: boolean
+          default: false
+          description: |
+            When true, simulates teardown without actually stopping or removing containers.
+            Returns what would be torn down. ALWAYS use dryRun=true first to preview the impact.
         mode:
           $ref: '#/components/schemas/TeardownMode'
           default: graceful
@@ -1408,6 +1414,14 @@ components:
           type: boolean
           default: false
           description: Also remove associated networks
+        includeInfrastructure:
+          type: boolean
+          default: false
+          description: |
+            When true, also removes support infrastructure (Redis, RabbitMQ, MySQL, etc.).
+            This is determined by scanning compose files or finding containers in the same
+            Docker swarm/Kubernetes namespace as bannou services. USE WITH EXTREME CAUTION -
+            this will destroy all data and require a full re-deployment.
 
     TeardownResponse:
       type: object
@@ -1434,6 +1448,11 @@ components:
           items:
             type: string
           description: Networks that were removed
+        removedInfrastructure:
+          type: array
+          items:
+            type: string
+          description: Infrastructure services that were removed (Redis, RabbitMQ, MySQL, etc.)
         errors:
           type: array
           items:

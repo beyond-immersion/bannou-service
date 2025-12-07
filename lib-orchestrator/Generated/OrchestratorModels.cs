@@ -1581,6 +1581,14 @@ public enum TeardownMode
 public partial class TeardownRequest
 {
 
+    /// <summary>
+    /// When true, simulates teardown without actually stopping or removing containers.
+    /// <br/>Returns what would be torn down. ALWAYS use dryRun=true first to preview the impact.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = false;
+
     [System.Text.Json.Serialization.JsonPropertyName("mode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public TeardownMode Mode { get; set; } = BeyondImmersion.BannouService.Orchestrator.TeardownMode.Graceful;
@@ -1602,6 +1610,16 @@ public partial class TeardownRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removeNetworks")]
     public bool RemoveNetworks { get; set; } = false;
+
+    /// <summary>
+    /// When true, also removes support infrastructure (Redis, RabbitMQ, MySQL, etc.).
+    /// <br/>This is determined by scanning compose files or finding containers in the same
+    /// <br/>Docker swarm/Kubernetes namespace as bannou services. USE WITH EXTREME CAUTION -
+    /// <br/>this will destroy all data and require a full re-deployment.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeInfrastructure")]
+    public bool IncludeInfrastructure { get; set; } = false;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1642,6 +1660,12 @@ public partial class TeardownResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedNetworks")]
     public System.Collections.Generic.ICollection<string> RemovedNetworks { get; set; } = default!;
+
+    /// <summary>
+    /// Infrastructure services that were removed (Redis, RabbitMQ, MySQL, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("removedInfrastructure")]
+    public System.Collections.Generic.ICollection<string> RemovedInfrastructure { get; set; } = default!;
 
     /// <summary>
     /// Non-fatal errors during teardown

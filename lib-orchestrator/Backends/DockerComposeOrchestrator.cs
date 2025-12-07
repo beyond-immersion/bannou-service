@@ -34,6 +34,16 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// </summary>
     private const string DAPR_APP_ID_LABEL_ALT = "io.dapr.app-id";
 
+    /// <summary>
+    /// Docker Compose label for service name (fallback when Dapr labels not present).
+    /// </summary>
+    private const string COMPOSE_SERVICE_LABEL = "com.docker.compose.service";
+
+    /// <summary>
+    /// Docker Compose label for project name.
+    /// </summary>
+    private const string COMPOSE_PROJECT_LABEL = "com.docker.compose.project";
+
     public DockerComposeOrchestrator(ILogger<DockerComposeOrchestrator> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -169,6 +179,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         try
         {
             // ListContainersAsync - see ORCHESTRATOR-SDK-REFERENCE.md
+            // First try containers with Dapr labels
             var containers = await _client.Containers.ListContainersAsync(
                 new ContainersListParameters
                 {
@@ -184,7 +195,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 },
                 cancellationToken);
 
-            // Also check alternative label format
+            // Also check alternative Dapr label format
             var containersAlt = await _client.Containers.ListContainersAsync(
                 new ContainersListParameters
                 {
@@ -199,11 +210,33 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 },
                 cancellationToken);
 
+            // Also check Docker Compose labels (fallback for containers without Dapr labels)
+            var containersCompose = await _client.Containers.ListContainersAsync(
+                new ContainersListParameters
+                {
+                    All = true,
+                    Filters = new Dictionary<string, IDictionary<string, bool>>
+                    {
+                        ["label"] = new Dictionary<string, bool>
+                        {
+                            [COMPOSE_SERVICE_LABEL] = true
+                        }
+                    }
+                },
+                cancellationToken);
+
             // Merge results, avoiding duplicates
             var allContainers = containers
                 .Concat(containersAlt)
+                .Concat(containersCompose)
                 .DistinctBy(c => c.ID)
                 .ToList();
+
+            _logger.LogDebug(
+                "Found {Total} containers: {DaprCount} with Dapr labels, {ComposeCount} with Compose labels",
+                allContainers.Count,
+                containers.Count + containersAlt.Count,
+                containersCompose.Count);
 
             return allContainers
                 .Select(c => MapContainerToStatus(c, GetAppNameFromContainer(c)))
@@ -264,7 +297,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         string appName,
         CancellationToken cancellationToken)
     {
-        // Try primary label format
+        // Try primary Dapr label format
         var containers = await _client.Containers.ListContainersAsync(
             new ContainersListParameters
             {
@@ -284,7 +317,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             return containers[0];
         }
 
-        // Try alternative label format
+        // Try alternative Dapr label format
         containers = await _client.Containers.ListContainersAsync(
             new ContainersListParameters
             {
@@ -299,6 +332,26 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             },
             cancellationToken);
 
+        if (containers.Count > 0)
+        {
+            return containers[0];
+        }
+
+        // Try Docker Compose service label (fallback for Compose-deployed containers)
+        containers = await _client.Containers.ListContainersAsync(
+            new ContainersListParameters
+            {
+                All = true,
+                Filters = new Dictionary<string, IDictionary<string, bool>>
+                {
+                    ["label"] = new Dictionary<string, bool>
+                    {
+                        [$"{COMPOSE_SERVICE_LABEL}={appName}"] = true
+                    }
+                }
+            },
+            cancellationToken);
+
         return containers.FirstOrDefault();
     }
 
@@ -307,6 +360,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// </summary>
     private static string GetAppNameFromContainer(ContainerListResponse container)
     {
+        // First try Dapr labels
         if (container.Labels.TryGetValue(DAPR_APP_ID_LABEL, out var appId))
         {
             return appId;
@@ -317,7 +371,13 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             return appId;
         }
 
-        // Fallback to container name
+        // Try Docker Compose service name (fallback for Compose-deployed containers)
+        if (container.Labels.TryGetValue(COMPOSE_SERVICE_LABEL, out var serviceName))
+        {
+            return serviceName;
+        }
+
+        // Final fallback to container name
         return container.Names.FirstOrDefault()?.TrimStart('/') ?? container.ID[..12];
     }
 
@@ -560,6 +620,51 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             CurrentReplicas = 1,
             Message = "Scaling not supported in Docker Compose mode. Use Docker Swarm or Kubernetes for scaling capabilities."
         });
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Listing infrastructure services (Docker Compose mode)");
+
+        try
+        {
+            // In Docker Compose mode, we identify infrastructure services by:
+            // 1. Container names that match known infrastructure patterns
+            // 2. Containers in the same Docker Compose project
+            var infrastructurePatterns = new[] { "redis", "rabbitmq", "mysql", "mariadb", "postgres", "mongodb", "placement", "dapr" };
+
+            var allContainers = await _client.Containers.ListContainersAsync(
+                new ContainersListParameters { All = true },
+                cancellationToken);
+
+            var infrastructureServices = allContainers
+                .Where(c =>
+                {
+                    var name = c.Names.FirstOrDefault()?.TrimStart('/') ?? "";
+                    var image = c.Image?.ToLowerInvariant() ?? "";
+
+                    // Check if container name or image matches infrastructure patterns
+                    return infrastructurePatterns.Any(pattern =>
+                        name.Contains(pattern, StringComparison.OrdinalIgnoreCase) ||
+                        image.Contains(pattern, StringComparison.OrdinalIgnoreCase));
+                })
+                // Use GetAppNameFromContainer for consistent naming with ListContainersAsync
+                .Select(c => GetAppNameFromContainer(c))
+                .ToList();
+
+            _logger.LogInformation(
+                "Found {Count} infrastructure services: {Services}",
+                infrastructureServices.Count,
+                string.Join(", ", infrastructureServices));
+
+            return infrastructureServices;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing infrastructure services");
+            return Array.Empty<string>();
+        }
     }
 
     public void Dispose()

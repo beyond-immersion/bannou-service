@@ -17,6 +17,7 @@ services:
     volumes:
       - "./certificates:/certificates"
       - "logs-data:/app/logs/"
+      - "./orchestrator/presets:/app/provisioning/orchestrator/presets:ro"
     ports:
       - "8080:80"
       - "8443:443"

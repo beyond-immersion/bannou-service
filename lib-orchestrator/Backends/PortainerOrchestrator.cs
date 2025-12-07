@@ -537,6 +537,43 @@ public class PortainerOrchestrator : IContainerOrchestrator
         });
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Listing infrastructure services (Portainer mode)");
+
+        try
+        {
+            // In Portainer mode, identify infrastructure by container name patterns
+            var infrastructurePatterns = new[] { "redis", "rabbitmq", "mysql", "mariadb", "postgres", "mongodb", "placement", "dapr" };
+
+            var containers = await ListContainersAsync(cancellationToken);
+
+            var infrastructureServices = containers
+                .Where(c =>
+                {
+                    var name = c.AppName ?? "";
+                    return infrastructurePatterns.Any(pattern =>
+                        name.Contains(pattern, StringComparison.OrdinalIgnoreCase));
+                })
+                .Select(c => c.AppName ?? "")
+                .Where(n => !string.IsNullOrEmpty(n))
+                .ToList();
+
+            _logger.LogInformation(
+                "Found {Count} infrastructure services: {Services}",
+                infrastructureServices.Count,
+                string.Join(", ", infrastructureServices));
+
+            return infrastructureServices;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing infrastructure services");
+            return Array.Empty<string>();
+        }
+    }
+
     public void Dispose()
     {
         // HttpClient is managed by factory, don't dispose
