@@ -207,6 +207,9 @@ fix:
 	@$(MAKE) fix-config
 	@echo "✅ All formatting tasks complete"
 
+# Alias for fix (common convention)
+format: fix
+
 # Pre-push validation (recommended workflow)
 validate:
 	@echo "🔧 Running comprehensive pre-push validation..."
