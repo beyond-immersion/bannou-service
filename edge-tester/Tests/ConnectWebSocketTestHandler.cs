@@ -656,70 +656,37 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             Console.WriteLine("⚠️ Timeout waiting for capability manifest (continuing anyway)");
         }
 
-        // Step 3: Connect admin WebSocket and delete account via binary protocol
-        // (accounts endpoints are only accessible via WebSocket, not HTTP)
-        Console.WriteLine("📋 Step 3: Connecting admin WebSocket for account deletion...");
-        using var adminWebSocket = new ClientWebSocket();
-        adminWebSocket.Options.SetRequestHeader("Authorization", "Bearer " + Program.AdminAccessToken);
+        // Step 3: Delete account via shared admin WebSocket
+        // IMPORTANT: We must use Program.AdminClient (the shared admin WebSocket) instead of
+        // creating a new WebSocket, because creating a new WebSocket with the same JWT would
+        // "subsume" (disconnect) the shared admin client that other tests depend on.
+        Console.WriteLine("📋 Step 3: Deleting account via shared admin WebSocket...");
+
+        var adminClient = Program.AdminClient;
+        if (adminClient == null || !adminClient.IsConnected)
+        {
+            Console.WriteLine("❌ Admin client not connected - cannot delete account");
+            await CloseWebSocketSafely(userWebSocket);
+            return false;
+        }
 
         try
         {
-            await adminWebSocket.ConnectAsync(serverUri, CancellationToken.None);
-            Console.WriteLine("✅ Admin WebSocket connected");
+            Console.WriteLine($"📋 Step 4: Deleting account {accountId} via shared admin WebSocket...");
+            var deleteRequest = new { accountId = accountId.ToString() };
+            var response = await adminClient.InvokeAsync<object, JsonElement>(
+                "POST",
+                "/accounts/delete",
+                deleteRequest,
+                timeout: TimeSpan.FromSeconds(10));
 
-            // Wait for admin capability manifest and find POST:/accounts/delete GUID
-            Console.WriteLine("📋 Step 3b: Waiting for admin capability manifest...");
-            var adminServiceGuid = await ReceiveCapabilityManifestAndFindAccountDeleteGuid(adminWebSocket);
-
-            if (adminServiceGuid == Guid.Empty)
-            {
-                Console.WriteLine("❌ Could not find POST:/accounts/delete in admin capabilities");
-                Console.WriteLine("   Admin may not have permission to delete accounts");
-                await CloseWebSocketSafely(userWebSocket);
-                await CloseWebSocketSafely(adminWebSocket);
-                return false;
-            }
-
-            Console.WriteLine($"✅ Found POST:/accounts/delete service GUID: {adminServiceGuid}");
-
-            // Step 4: Delete the account via WebSocket binary protocol
-            Console.WriteLine($"📋 Step 4: Deleting account {accountId} via WebSocket...");
-
-            var deleteRequestBody = new { accountId = accountId.ToString() };
-            var deleteRequest = new
-            {
-                method = "POST",
-                path = "/accounts/delete",
-                headers = new Dictionary<string, string>(),
-                body = JsonSerializer.Serialize(deleteRequestBody)
-            };
-            var requestPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(deleteRequest));
-
-            var binaryMessage = new BinaryMessage(
-                flags: MessageFlags.None,
-                channel: 2, // API proxy channel
-                sequenceNumber: 1,
-                serviceGuid: adminServiceGuid,
-                messageId: GuidGenerator.GenerateMessageId(),
-                payload: requestPayload
-            );
-
-            var messageBytes = binaryMessage.ToByteArray();
-            await adminWebSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Binary, true, CancellationToken.None);
-            Console.WriteLine("✅ Account deletion request sent via WebSocket");
-
-            // Wait briefly for deletion to process (we don't need to parse the response)
-            await Task.Delay(500);
+            Console.WriteLine($"✅ Account deletion response received: {response.GetRawText().Substring(0, Math.Min(100, response.GetRawText().Length))}...");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Failed to delete account via WebSocket: {ex.Message}");
             await CloseWebSocketSafely(userWebSocket);
             return false;
-        }
-        finally
-        {
-            await CloseWebSocketSafely(adminWebSocket);
         }
 
         // Step 5: Wait for user's WebSocket to be closed by the server
