@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Subscriptions;
 using Dapr;
 using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +30,7 @@ namespace BeyondImmersion.BannouService.Auth;
 public class AuthService : IAuthService
 {
     private readonly IAccountsClient _accountsClient;
+    private readonly ISubscriptionsClient _subscriptionsClient;
     private readonly DaprClient _daprClient;
     private readonly ILogger<AuthService> _logger;
     private readonly AuthServiceConfiguration _configuration;
@@ -36,6 +38,7 @@ public class AuthService : IAuthService
     private const string REDIS_STATE_STORE = "statestore";
     private const string PUBSUB_NAME = "bannou-pubsub";
     private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
+    private const string SESSION_UPDATED_TOPIC = "session.updated";
 
     // OAuth provider URLs
     private const string DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
@@ -48,12 +51,14 @@ public class AuthService : IAuthService
 
     public AuthService(
         IAccountsClient accountsClient,
+        ISubscriptionsClient subscriptionsClient,
         DaprClient daprClient,
         AuthServiceConfiguration configuration,
         ILogger<AuthService> logger,
         IHttpClientFactory httpClientFactory)
     {
         _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
+        _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -1013,6 +1018,7 @@ public class AuthService : IAuthService
                     AccountId = sessionData.AccountId,
                     SessionId = sessionKey,
                     Roles = sessionData.Roles ?? new List<string>(),
+                    Authorizations = sessionData.Authorizations ?? new List<string>(),
                     RemainingTime = (int)(sessionData.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds
                 });
             }
@@ -1055,6 +1061,7 @@ public class AuthService : IAuthService
         public string Email { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
         public List<string> Roles { get; set; } = new List<string>();
+        public List<string> Authorizations { get; set; } = new List<string>();
         public string SessionId { get; set; } = string.Empty;
 
         // Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
@@ -1114,6 +1121,32 @@ public class AuthService : IAuthService
         var sessionKey = Guid.NewGuid().ToString("N");
         var sessionId = Guid.NewGuid().ToString();
 
+        // Fetch current subscriptions/authorizations for the account
+        var authorizations = new List<string>();
+        try
+        {
+            var subscriptionsResponse = await _subscriptionsClient.GetCurrentSubscriptionsAsync(
+                new GetCurrentSubscriptionsRequest { AccountId = account.AccountId },
+                cancellationToken);
+
+            if (subscriptionsResponse?.Authorizations != null)
+            {
+                authorizations = subscriptionsResponse.Authorizations.ToList();
+                _logger.LogDebug("Fetched {Count} authorizations for account {AccountId}: {Authorizations}",
+                    authorizations.Count, account.AccountId, string.Join(", ", authorizations));
+            }
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            // No subscriptions - this is fine, just leave authorizations empty
+            _logger.LogDebug("No subscriptions found for account {AccountId}", account.AccountId);
+        }
+        catch (Exception ex)
+        {
+            // Log but don't fail session creation - authorizations are optional
+            _logger.LogWarning(ex, "Failed to fetch subscriptions for account {AccountId}, continuing with empty authorizations", account.AccountId);
+        }
+
         // Store session data in Redis with opaque key
         var sessionData = new SessionDataModel
         {
@@ -1121,6 +1154,7 @@ public class AuthService : IAuthService
             Email = account.Email,
             DisplayName = account.DisplayName ?? string.Empty,
             Roles = account.Roles?.ToList() ?? new List<string>(),
+            Authorizations = authorizations,
             SessionId = sessionId,
             CreatedAt = DateTimeOffset.UtcNow,
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(_configuration.JwtExpirationMinutes)
@@ -2319,6 +2353,200 @@ public class AuthService : IAuthService
         {
             _logger.LogError(ex, "Failed to publish SessionInvalidatedEvent for account {AccountId}", accountId);
             // Don't throw - session invalidation succeeded, event publishing failure shouldn't fail the operation
+        }
+    }
+
+    /// <summary>
+    /// Propagate role changes to all active sessions for an account.
+    /// Called when account.updated event is received with role changes.
+    /// </summary>
+    public async Task PropagateRoleChangesAsync(Guid accountId, List<string> newRoles, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("Propagating role changes for account {AccountId}: {Roles}",
+                accountId, string.Join(", ", newRoles));
+
+            var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
+                REDIS_STATE_STORE,
+                $"account-sessions:{accountId}",
+                cancellationToken: cancellationToken);
+
+            if (sessionKeys == null || !sessionKeys.Any())
+            {
+                _logger.LogDebug("No sessions found for account {AccountId} to propagate role changes", accountId);
+                return;
+            }
+
+            foreach (var sessionKey in sessionKeys)
+            {
+                try
+                {
+                    var session = await _daprClient.GetStateAsync<SessionDataModel>(
+                        REDIS_STATE_STORE,
+                        $"session:{sessionKey}",
+                        cancellationToken: cancellationToken);
+
+                    if (session != null)
+                    {
+                        session.Roles = newRoles;
+
+                        await _daprClient.SaveStateAsync(
+                            REDIS_STATE_STORE,
+                            $"session:{sessionKey}",
+                            session,
+                            cancellationToken: cancellationToken);
+
+                        // Publish session.updated event for Permissions service
+                        await PublishSessionUpdatedEventAsync(
+                            accountId,
+                            session.SessionId,
+                            newRoles,
+                            session.Authorizations,
+                            SessionUpdatedEventReason.Role_changed,
+                            cancellationToken);
+
+                        _logger.LogDebug("Updated roles for session {SessionKey}", sessionKey);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to update roles for session {SessionKey}", sessionKey);
+                }
+            }
+
+            _logger.LogInformation("Propagated role changes to {Count} sessions for account {AccountId}",
+                sessionKeys.Count, accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to propagate role changes for account {AccountId}", accountId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Propagate subscription/authorization changes to all active sessions for an account.
+    /// Called when subscription.updated event is received.
+    /// </summary>
+    public async Task PropagateSubscriptionChangesAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("Propagating subscription changes for account {AccountId}", accountId);
+
+            // Fetch fresh authorizations from Subscriptions service
+            var authorizations = new List<string>();
+            try
+            {
+                var subscriptionsResponse = await _subscriptionsClient.GetCurrentSubscriptionsAsync(
+                    new GetCurrentSubscriptionsRequest { AccountId = accountId },
+                    cancellationToken);
+
+                if (subscriptionsResponse?.Authorizations != null)
+                {
+                    authorizations = subscriptionsResponse.Authorizations.ToList();
+                }
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogDebug("No subscriptions found for account {AccountId}", accountId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to fetch subscriptions for account {AccountId}, using empty authorizations", accountId);
+            }
+
+            var sessionKeys = await _daprClient.GetStateAsync<List<string>>(
+                REDIS_STATE_STORE,
+                $"account-sessions:{accountId}",
+                cancellationToken: cancellationToken);
+
+            if (sessionKeys == null || !sessionKeys.Any())
+            {
+                _logger.LogDebug("No sessions found for account {AccountId} to propagate subscription changes", accountId);
+                return;
+            }
+
+            foreach (var sessionKey in sessionKeys)
+            {
+                try
+                {
+                    var session = await _daprClient.GetStateAsync<SessionDataModel>(
+                        REDIS_STATE_STORE,
+                        $"session:{sessionKey}",
+                        cancellationToken: cancellationToken);
+
+                    if (session != null)
+                    {
+                        session.Authorizations = authorizations;
+
+                        await _daprClient.SaveStateAsync(
+                            REDIS_STATE_STORE,
+                            $"session:{sessionKey}",
+                            session,
+                            cancellationToken: cancellationToken);
+
+                        // Publish session.updated event for Permissions service
+                        await PublishSessionUpdatedEventAsync(
+                            accountId,
+                            session.SessionId,
+                            session.Roles,
+                            authorizations,
+                            SessionUpdatedEventReason.Authorization_changed,
+                            cancellationToken);
+
+                        _logger.LogDebug("Updated authorizations for session {SessionKey}", sessionKey);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to update authorizations for session {SessionKey}", sessionKey);
+                }
+            }
+
+            _logger.LogInformation("Propagated subscription changes to {Count} sessions for account {AccountId}: {Authorizations}",
+                sessionKeys.Count, accountId, string.Join(", ", authorizations));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to propagate subscription changes for account {AccountId}", accountId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Publish SessionUpdatedEvent to notify Permissions service about role/authorization changes.
+    /// </summary>
+    private async Task PublishSessionUpdatedEventAsync(
+        Guid accountId,
+        string sessionId,
+        List<string> roles,
+        List<string> authorizations,
+        SessionUpdatedEventReason reason,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var eventModel = new SessionUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AccountId = accountId,
+                SessionId = sessionId,
+                Roles = roles,
+                Authorizations = authorizations,
+                Reason = reason
+            };
+
+            await _daprClient.PublishEventAsync(PUBSUB_NAME, SESSION_UPDATED_TOPIC, eventModel, cancellationToken);
+            _logger.LogDebug("Published SessionUpdatedEvent for session {SessionId}, reason: {Reason}",
+                sessionId, reason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish SessionUpdatedEvent for session {SessionId}", sessionId);
+            // Don't throw - session update succeeded, event publishing failure shouldn't fail the operation
         }
     }
 

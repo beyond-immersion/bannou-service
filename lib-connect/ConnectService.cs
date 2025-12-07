@@ -311,7 +311,7 @@ public class ConnectService : IConnectService
     /// Validates JWT token and extracts session ID and user roles.
     /// Returns a tuple with session ID and roles for capability initialization.
     /// </summary>
-    public async Task<(string? SessionId, ICollection<string>? Roles)> ValidateJWTAndExtractSessionAsync(
+    public async Task<(string? SessionId, ICollection<string>? Roles, ICollection<string>? Authorizations)> ValidateJWTAndExtractSessionAsync(
         string authorization,
         CancellationToken cancellationToken)
     {
@@ -323,7 +323,7 @@ public class ConnectService : IConnectService
             if (string.IsNullOrEmpty(authorization))
             {
                 _logger.LogWarning("Authorization header missing or empty");
-                return (null, null);
+                return (null, null, null);
             }
 
             // Handle "Bearer <token>" format
@@ -341,20 +341,21 @@ public class ConnectService : IConnectService
                 if (validationResponse == null)
                 {
                     _logger.LogError("Auth service returned null validation response");
-                    return (null, null);
+                    return (null, null, null);
                 }
 
-                _logger.LogDebug("Token validation result - Valid: {Valid}, SessionId: {SessionId}, AccountId: {AccountId}, RolesCount: {RolesCount}",
+                _logger.LogDebug("Token validation result - Valid: {Valid}, SessionId: {SessionId}, AccountId: {AccountId}, RolesCount: {RolesCount}, AuthorizationsCount: {AuthorizationsCount}",
                     validationResponse.Valid,
                     validationResponse.SessionId ?? "(null)",
                     validationResponse.AccountId,
-                    validationResponse.Roles?.Count ?? 0);
+                    validationResponse.Roles?.Count ?? 0,
+                    validationResponse.Authorizations?.Count ?? 0);
 
                 if (validationResponse.Valid && !string.IsNullOrEmpty(validationResponse.SessionId))
                 {
                     _logger.LogDebug("JWT validated successfully, SessionId: {SessionId}", validationResponse.SessionId);
-                    // Return both session ID and roles for capability initialization
-                    return (validationResponse.SessionId, validationResponse.Roles);
+                    // Return session ID, roles, and authorizations for capability initialization
+                    return (validationResponse.SessionId, validationResponse.Roles, validationResponse.Authorizations);
                 }
                 else
                 {
@@ -370,7 +371,7 @@ public class ConnectService : IConnectService
                 if (string.IsNullOrEmpty(reconnectionToken))
                 {
                     _logger.LogWarning("Empty reconnection token provided");
-                    return (null, null);
+                    return (null, null, null);
                 }
 
                 // Use Redis session manager to validate reconnection token
@@ -386,8 +387,8 @@ public class ConnectService : IConnectService
                         if (restoredState != null)
                         {
                             _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
-                            // Return stored roles from reconnection state
-                            return (sessionId, restoredState.UserRoles);
+                            // Return stored roles and authorizations from reconnection state
+                            return (sessionId, restoredState.UserRoles, restoredState.Authorizations);
                         }
                     }
 
@@ -398,16 +399,16 @@ public class ConnectService : IConnectService
                     _logger.LogWarning("Reconnection requires Redis session manager - not configured");
                 }
 
-                return (null, null);
+                return (null, null, null);
             }
 
             _logger.LogWarning("Authorization format not recognized (expected 'Bearer' or 'Reconnect' prefix)");
-            return (null, null);
+            return (null, null, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "JWT validation failed with exception");
-            return (null, null);
+            return (null, null, null);
         }
     }
 
@@ -446,6 +447,7 @@ public class ConnectService : IConnectService
         WebSocket webSocket,
         string sessionId,
         ICollection<string>? userRoles,
+        ICollection<string>? authorizations,
         CancellationToken cancellationToken)
     {
         // Create connection state with service mappings from discovery
@@ -472,8 +474,9 @@ public class ConnectService : IConnectService
             // Determine the highest-priority role for capability initialization
             // Priority: admin > user > anonymous
             var role = DetermineHighestPriorityRole(userRoles);
-            _logger.LogInformation("No existing mappings for session {SessionId}, initializing capabilities for role {Role}", sessionId, role);
-            sessionMappings = await InitializeSessionCapabilitiesAsync(sessionId, role, cancellationToken);
+            _logger.LogInformation("No existing mappings for session {SessionId}, initializing capabilities for role {Role} with {AuthCount} authorizations",
+                sessionId, role, authorizations?.Count ?? 0);
+            sessionMappings = await InitializeSessionCapabilitiesAsync(sessionId, role, authorizations, cancellationToken);
         }
 
         if (sessionMappings != null)
@@ -504,7 +507,8 @@ public class ConnectService : IConnectService
                     SessionId = sessionId,
                     ConnectedAt = DateTimeOffset.UtcNow,
                     LastActivity = DateTimeOffset.UtcNow,
-                    UserRoles = userRoles?.ToList()
+                    UserRoles = userRoles?.ToList(),
+                    Authorizations = authorizations?.ToList()
                 };
                 await _sessionManager.SetConnectionStateAsync(sessionId, connectionStateData);
                 _logger.LogDebug("Created connection state in Redis for session {SessionId}", sessionId);
@@ -1358,13 +1362,15 @@ public class ConnectService : IConnectService
     internal async Task<Dictionary<string, Guid>> InitializeSessionCapabilitiesAsync(
         string sessionId,
         string? role = "anonymous",
+        ICollection<string>? authorizations = null,
         CancellationToken cancellationToken = default)
     {
         var serviceMappings = new Dictionary<string, Guid>();
 
         try
         {
-            _logger.LogInformation("Initializing capabilities for session {SessionId} with role {Role}", sessionId, role);
+            _logger.LogInformation("Initializing capabilities for session {SessionId} with role {Role} and {AuthCount} authorizations",
+                sessionId, role, authorizations?.Count ?? 0);
 
             // Initialize session in Permissions service with role
             if (role != null && role != "anonymous")
@@ -1374,6 +1380,35 @@ public class ConnectService : IConnectService
                     SessionId = sessionId,
                     NewRole = role
                 }, cancellationToken);
+            }
+
+            // Set authorization states for subscription-based access
+            // Authorization strings are in format "{stubName}:{state}" (e.g., "arcadia:authorized")
+            if (authorizations != null)
+            {
+                foreach (var auth in authorizations)
+                {
+                    var parts = auth.Split(':');
+                    if (parts.Length == 2)
+                    {
+                        var serviceId = parts[0];  // stubName serves as serviceId for authorization
+                        var state = parts[1];
+
+                        await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+                        {
+                            SessionId = sessionId,
+                            ServiceId = serviceId,
+                            NewState = state
+                        }, cancellationToken);
+
+                        _logger.LogDebug("Set authorization state '{State}' for service '{ServiceId}' on session {SessionId}",
+                            state, serviceId, sessionId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Invalid authorization format: '{Authorization}', expected 'stubName:state'", auth);
+                    }
+                }
             }
 
             // Get available capabilities from Permissions service

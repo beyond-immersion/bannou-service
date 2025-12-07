@@ -68,6 +68,12 @@ public class ConnectionStateData
     public List<string>? UserRoles { get; set; }
 
     /// <summary>
+    /// Authorization strings at time of disconnect (preserved for reconnection).
+    /// Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+    /// </summary>
+    public List<string>? Authorizations { get; set; }
+
+    /// <summary>
     /// Whether this session is in reconnection window (disconnected but not expired).
     /// </summary>
     public bool IsInReconnectionWindow =>

@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Auth;
 using Dapr;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -260,5 +261,133 @@ public class PermissionsEventsController : ControllerBase
                 ex.Message);
             return StatusCode(500, new { error = ex.Message, stackTrace = ex.StackTrace });
         }
+    }
+
+    /// <summary>
+    /// Handle session updated events from the Auth service.
+    /// Called by Dapr when a session's roles or authorizations change.
+    /// Updates role and authorization states to trigger permission recompilation.
+    /// </summary>
+    [Topic("bannou-pubsub", "session.updated")]
+    [HttpPost("handle-session-updated")]
+    public async Task<IActionResult> HandleSessionUpdatedAsync()
+    {
+        try
+        {
+            // Read and parse event using shared helper (handles both CloudEvents and raw formats)
+            var sessionUpdatedEvent = await DaprEventHelper.ReadEventAsync<SessionUpdatedEvent>(Request);
+
+            if (sessionUpdatedEvent == null)
+            {
+                _logger.LogWarning("[PERM-EVENT] Failed to parse SessionUpdatedEvent from request body");
+                return BadRequest("Invalid event data");
+            }
+
+            _logger.LogInformation("[PERM-EVENT] Processing session.updated event for SessionId: {SessionId}, Reason: {Reason}, Roles: [{Roles}], Authorizations: [{Authorizations}]",
+                sessionUpdatedEvent.SessionId,
+                sessionUpdatedEvent.Reason,
+                string.Join(", ", sessionUpdatedEvent.Roles ?? new List<string>()),
+                string.Join(", ", sessionUpdatedEvent.Authorizations ?? new List<string>()));
+
+            // Determine the highest role from the roles array
+            // Priority: admin > developer > user
+            var role = DetermineHighestRole(sessionUpdatedEvent.Roles);
+
+            // Update session role
+            var roleUpdate = new SessionRoleUpdate
+            {
+                SessionId = sessionUpdatedEvent.SessionId,
+                NewRole = role
+            };
+
+            var roleResult = await _permissionsService.UpdateSessionRoleAsync(roleUpdate);
+            if (roleResult.Item1 != StatusCodes.OK)
+            {
+                _logger.LogWarning("[PERM-EVENT] Failed to update session role for {SessionId}: {StatusCode}",
+                    sessionUpdatedEvent.SessionId, roleResult.Item1);
+            }
+            else
+            {
+                _logger.LogDebug("[PERM-EVENT] Updated session role to '{Role}' for {SessionId}",
+                    role, sessionUpdatedEvent.SessionId);
+            }
+
+            // Update authorization states
+            // Authorization strings are in format "{stubName}:{state}" (e.g., "arcadia:authorized")
+            foreach (var auth in sessionUpdatedEvent.Authorizations ?? new List<string>())
+            {
+                var parts = auth.Split(':');
+                if (parts.Length == 2)
+                {
+                    var serviceId = parts[0];  // stubName serves as serviceId for authorization
+                    var state = parts[1];
+
+                    var stateUpdate = new SessionStateUpdate
+                    {
+                        SessionId = sessionUpdatedEvent.SessionId,
+                        ServiceId = serviceId,
+                        NewState = state
+                    };
+
+                    var stateResult = await _permissionsService.UpdateSessionStateAsync(stateUpdate);
+                    if (stateResult.Item1 != StatusCodes.OK)
+                    {
+                        _logger.LogWarning("[PERM-EVENT] Failed to update session state for {SessionId}, service {ServiceId}: {StatusCode}",
+                            sessionUpdatedEvent.SessionId, serviceId, stateResult.Item1);
+                    }
+                    else
+                    {
+                        _logger.LogDebug("[PERM-EVENT] Updated session state to '{State}' for service '{ServiceId}' on session {SessionId}",
+                            state, serviceId, sessionUpdatedEvent.SessionId);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("[PERM-EVENT] Invalid authorization format: '{Authorization}', expected 'stubName:state'",
+                        auth);
+                }
+            }
+
+            _logger.LogInformation("[PERM-EVENT] Successfully processed session.updated for SessionId: {SessionId}",
+                sessionUpdatedEvent.SessionId);
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[PERM-EVENT] Failed to process session.updated event");
+            return StatusCode(500, "Internal server error processing event");
+        }
+    }
+
+    /// <summary>
+    /// Determines the highest priority role from a list of roles.
+    /// Priority: admin > developer > user > anonymous
+    /// </summary>
+    private static string DetermineHighestRole(IEnumerable<string>? roles)
+    {
+        if (roles == null || !roles.Any())
+        {
+            return "user"; // Default role
+        }
+
+        // Check for highest priority roles first
+        if (roles.Contains("admin", StringComparer.OrdinalIgnoreCase))
+        {
+            return "admin";
+        }
+
+        if (roles.Contains("developer", StringComparer.OrdinalIgnoreCase))
+        {
+            return "developer";
+        }
+
+        if (roles.Contains("user", StringComparer.OrdinalIgnoreCase))
+        {
+            return "user";
+        }
+
+        // If no recognized role, return the first one or default to user
+        return roles.FirstOrDefault() ?? "user";
     }
 }

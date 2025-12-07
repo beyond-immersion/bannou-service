@@ -37,16 +37,20 @@
     <ItemGroup>
       <Compile Include="../lib-behavior/Generated/BehaviorClient.cs" />
       <Compile Include="../lib-permissions/Generated/PermissionsClient.cs" />
+      <Compile Include="../lib-subscriptions/Generated/SubscriptionsClient.cs" />
       <Compile Include="../lib-accounts/Generated/AccountsClient.cs" />
       <Compile Include="../lib-orchestrator/Generated/OrchestratorClient.cs" />
+      <Compile Include="../lib-servicedata/Generated/ServicedataClient.cs" />
       <Compile Include="../lib-connect/Generated/ConnectClient.cs" />
       <Compile Include="../lib-auth/Generated/AuthClient.cs" />
       <Compile Include="../lib-game-session/Generated/GameSessionClient.cs" />
       <Compile Include="../lib-website/Generated/WebsiteClient.cs" />
       <Compile Include="../lib-behavior/Generated/BehaviorModels.cs" />
       <Compile Include="../lib-permissions/Generated/PermissionsModels.cs" />
+      <Compile Include="../lib-subscriptions/Generated/SubscriptionsModels.cs" />
       <Compile Include="../lib-accounts/Generated/AccountsModels.cs" />
       <Compile Include="../lib-orchestrator/Generated/OrchestratorModels.cs" />
+      <Compile Include="../lib-servicedata/Generated/ServicedataModels.cs" />
       <Compile Include="../lib-connect/Generated/ConnectModels.cs" />
       <Compile Include="../lib-auth/Generated/AuthModels.cs" />
       <Compile Include="../lib-game-session/Generated/GameSessionModels.cs" />

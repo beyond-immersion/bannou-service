@@ -1,0 +1,303 @@
+openapi: 3.0.0
+info:
+  title: Bannou ServiceData Service API
+  description: |
+    Registry service for game services that users can subscribe to.
+    Provides a minimal registry of available services (games/applications) like Arcadia, Fantasia, etc.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See API-DESIGN.md for architectural rationale.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
+    description: Dapr sidecar endpoint (internal only)
+
+paths:
+  /servicedata/services/list:
+    post:
+      summary: List all registered game services
+      description: Returns all game services, optionally filtered by active status.
+      operationId: listServices
+      tags:
+        - Service Registry
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListServicesRequest'
+      responses:
+        '200':
+          description: Services retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListServicesResponse'
+
+  /servicedata/services/get:
+    post:
+      summary: Get service by ID or stub name
+      description: Retrieves a single service by either serviceId (GUID) or stubName.
+      operationId: getService
+      tags:
+        - Service Registry
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetServiceRequest'
+      responses:
+        '200':
+          description: Service retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInfo'
+        '404':
+          description: Service not found
+
+  /servicedata/services/create:
+    post:
+      summary: Create a new game service entry
+      description: Admin-only endpoint to register a new game service in the registry.
+      operationId: createService
+      tags:
+        - Service Registry
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateServiceRequest'
+      responses:
+        '201':
+          description: Service created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInfo'
+        '400':
+          description: Invalid service data
+        '409':
+          description: Service with stub_name already exists
+
+  /servicedata/services/update:
+    post:
+      summary: Update a game service entry
+      description: Admin-only endpoint to update an existing game service.
+      operationId: updateService
+      tags:
+        - Service Registry
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateServiceRequest'
+      responses:
+        '200':
+          description: Service updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInfo'
+        '404':
+          description: Service not found
+        '400':
+          description: Invalid update data
+
+  /servicedata/services/delete:
+    post:
+      summary: Delete a game service entry
+      description: Admin-only endpoint to remove a game service from the registry.
+      operationId: deleteService
+      tags:
+        - Service Registry
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteServiceRequest'
+      responses:
+        '204':
+          description: Service deleted successfully
+        '404':
+          description: Service not found
+        '409':
+          description: Service cannot be deleted (active subscriptions exist)
+
+components:
+  schemas:
+    # Request Models
+    ListServicesRequest:
+      type: object
+      description: Request to list all game services
+      properties:
+        activeOnly:
+          type: boolean
+          default: false
+          description: If true, only return active services
+
+    GetServiceRequest:
+      type: object
+      description: Request to get a service by ID or stub name
+      properties:
+        serviceId:
+          type: string
+          format: uuid
+          description: ID of the service to retrieve
+        stubName:
+          type: string
+          description: Stub name of the service to retrieve (e.g., "arcadia")
+
+    CreateServiceRequest:
+      type: object
+      description: Request to create a new game service
+      required:
+        - stubName
+        - displayName
+      properties:
+        stubName:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          minLength: 2
+          maxLength: 50
+          description: URL-safe identifier for the service (e.g., "arcadia", "fantasia")
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Human-readable name for the service (e.g., "Arcadia Online")
+        description:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Optional description of the service
+        isActive:
+          type: boolean
+          default: true
+          description: Whether the service is currently active
+
+    UpdateServiceRequest:
+      type: object
+      description: Request to update an existing game service
+      required:
+        - serviceId
+      properties:
+        serviceId:
+          type: string
+          format: uuid
+          description: ID of the service to update
+        displayName:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: New display name
+        description:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: New description
+        isActive:
+          type: boolean
+          nullable: true
+          description: New active status
+
+    DeleteServiceRequest:
+      type: object
+      description: Request to delete a game service
+      required:
+        - serviceId
+      properties:
+        serviceId:
+          type: string
+          format: uuid
+          description: ID of the service to delete
+
+    # Response Models
+    ServiceInfo:
+      type: object
+      description: Information about a game service
+      required:
+        - serviceId
+        - stubName
+        - displayName
+        - isActive
+        - createdAt
+      properties:
+        serviceId:
+          type: string
+          format: uuid
+          description: Unique identifier for the service
+        stubName:
+          type: string
+          description: URL-safe identifier (e.g., "arcadia")
+        displayName:
+          type: string
+          description: Human-readable name (e.g., "Arcadia Online")
+        description:
+          type: string
+          nullable: true
+          description: Optional description
+        isActive:
+          type: boolean
+          description: Whether the service is currently active
+        createdAt:
+          type: string
+          format: date-time
+          description: When the service was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the service was last updated
+
+    ListServicesResponse:
+      type: object
+      description: Response containing list of game services
+      required:
+        - services
+        - totalCount
+      properties:
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceInfo'
+        totalCount:
+          type: integer
+          description: Total number of services matching the filter
+
+x-service-configuration:
+  properties:
+    StateStoreName:
+      type: string
+      description: Name of the Dapr state store for service data
+      default: "servicedata-statestore"

@@ -511,3 +511,12 @@ components:
         endpointCount:
           type: integer
           description: Number of API endpoints registered by this service
+
+# Event subscriptions - topics this service listens to
+x-event-subscriptions:
+  - topic: session.updated
+    pubsub: bannou-pubsub
+    path: handle-session-updated
+    description: Handle session updates from Auth service to update role and authorization states.
+    schema:
+      $ref: 'auth-api.yaml#/components/schemas/SessionUpdatedEvent'

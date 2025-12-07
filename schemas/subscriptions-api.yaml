@@ -1,0 +1,459 @@
+openapi: 3.0.0
+info:
+  title: Bannou Subscriptions Service API
+  description: |
+    Manages user subscriptions to game services.
+    Tracks which accounts have access to which services (games/applications) with time-limited subscriptions.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See API-DESIGN.md for architectural rationale.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
+    description: Dapr sidecar endpoint (internal only)
+
+paths:
+  /subscriptions/account/list:
+    post:
+      summary: Get subscriptions for an account
+      description: Returns all subscriptions for a given account, with optional filtering.
+      operationId: getAccountSubscriptions
+      tags:
+        - Subscription Management
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetAccountSubscriptionsRequest'
+      responses:
+        '200':
+          description: Subscriptions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionListResponse'
+
+  /subscriptions/account/current:
+    post:
+      summary: Get current (active, non-expired) subscriptions
+      description: |
+        Returns only active, non-expired subscriptions as authorization strings.
+        Used by Auth service during session creation to populate session authorizations.
+      operationId: getCurrentSubscriptions
+      tags:
+        - Subscription Management
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCurrentSubscriptionsRequest'
+      responses:
+        '200':
+          description: Current subscriptions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentSubscriptionsResponse'
+
+  /subscriptions/get:
+    post:
+      summary: Get a specific subscription by ID
+      operationId: getSubscription
+      tags:
+        - Subscription Management
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSubscriptionRequest'
+      responses:
+        '200':
+          description: Subscription retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionInfo'
+        '404':
+          description: Subscription not found
+
+  /subscriptions/create:
+    post:
+      summary: Create a new subscription
+      description: Admin-only endpoint to create a new subscription for an account.
+      operationId: createSubscription
+      tags:
+        - Subscription Management
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubscriptionRequest'
+      responses:
+        '201':
+          description: Subscription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionInfo'
+        '400':
+          description: Invalid subscription data
+        '404':
+          description: Account or service not found
+        '409':
+          description: Subscription already exists for this account and service
+
+  /subscriptions/update:
+    post:
+      summary: Update a subscription
+      description: Admin-only endpoint to update an existing subscription.
+      operationId: updateSubscription
+      tags:
+        - Subscription Management
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubscriptionRequest'
+      responses:
+        '200':
+          description: Subscription updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionInfo'
+        '404':
+          description: Subscription not found
+
+  /subscriptions/cancel:
+    post:
+      summary: Cancel a subscription
+      description: |
+        Cancels a subscription. Users can cancel their own subscriptions,
+        admins can cancel any subscription.
+      operationId: cancelSubscription
+      tags:
+        - Subscription Management
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelSubscriptionRequest'
+      responses:
+        '200':
+          description: Subscription cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionInfo'
+        '404':
+          description: Subscription not found
+        '403':
+          description: Not authorized to cancel this subscription
+
+  /subscriptions/renew:
+    post:
+      summary: Renew or extend a subscription
+      description: Admin-only endpoint to renew or extend an existing subscription.
+      operationId: renewSubscription
+      tags:
+        - Subscription Management
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenewSubscriptionRequest'
+      responses:
+        '200':
+          description: Subscription renewed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionInfo'
+        '404':
+          description: Subscription not found
+
+components:
+  schemas:
+    # Request Models
+    GetAccountSubscriptionsRequest:
+      type: object
+      description: Request to get subscriptions for an account
+      required:
+        - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to get subscriptions for
+        includeInactive:
+          type: boolean
+          default: false
+          description: If true, include cancelled subscriptions
+        includeExpired:
+          type: boolean
+          default: false
+          description: If true, include expired subscriptions
+
+    GetCurrentSubscriptionsRequest:
+      type: object
+      description: Request to get current active subscriptions
+      required:
+        - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to get current subscriptions for
+
+    GetSubscriptionRequest:
+      type: object
+      description: Request to get a specific subscription
+      required:
+        - subscriptionId
+      properties:
+        subscriptionId:
+          type: string
+          format: uuid
+          description: ID of the subscription to retrieve
+
+    CreateSubscriptionRequest:
+      type: object
+      description: Request to create a new subscription
+      required:
+        - accountId
+        - serviceId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account to create subscription for
+        serviceId:
+          type: string
+          format: uuid
+          description: ID of the service (game) to subscribe to
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the subscription starts (defaults to now)
+        expirationDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the subscription expires (null for unlimited)
+        durationDays:
+          type: integer
+          nullable: true
+          description: Alternative to expirationDate - number of days from startDate
+
+    UpdateSubscriptionRequest:
+      type: object
+      description: Request to update an existing subscription
+      required:
+        - subscriptionId
+      properties:
+        subscriptionId:
+          type: string
+          format: uuid
+          description: ID of the subscription to update
+        expirationDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: New expiration date
+        isActive:
+          type: boolean
+          nullable: true
+          description: New active status
+
+    CancelSubscriptionRequest:
+      type: object
+      description: Request to cancel a subscription
+      required:
+        - subscriptionId
+      properties:
+        subscriptionId:
+          type: string
+          format: uuid
+          description: ID of the subscription to cancel
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Optional reason for cancellation
+
+    RenewSubscriptionRequest:
+      type: object
+      description: Request to renew or extend a subscription
+      required:
+        - subscriptionId
+      properties:
+        subscriptionId:
+          type: string
+          format: uuid
+          description: ID of the subscription to renew
+        extensionDays:
+          type: integer
+          description: Number of days to extend the subscription
+        newExpirationDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Alternative to extensionDays - set specific new expiration
+
+    # Response Models
+    SubscriptionInfo:
+      type: object
+      description: Information about a subscription
+      required:
+        - subscriptionId
+        - accountId
+        - serviceId
+        - stubName
+        - startDate
+        - isActive
+        - createdAt
+      properties:
+        subscriptionId:
+          type: string
+          format: uuid
+          description: Unique identifier for the subscription
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account this subscription belongs to
+        serviceId:
+          type: string
+          format: uuid
+          description: ID of the subscribed service (game)
+        stubName:
+          type: string
+          description: Stub name of the service (denormalized for efficiency)
+        displayName:
+          type: string
+          description: Display name of the service (denormalized for efficiency)
+        startDate:
+          type: string
+          format: date-time
+          description: When the subscription started
+        expirationDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the subscription expires (null for unlimited)
+        isActive:
+          type: boolean
+          description: Whether the subscription is currently active
+        cancelledAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the subscription was cancelled (if applicable)
+        cancellationReason:
+          type: string
+          nullable: true
+          description: Reason for cancellation (if applicable)
+        createdAt:
+          type: string
+          format: date-time
+          description: When the subscription was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the subscription was last updated
+
+    CurrentSubscriptionsResponse:
+      type: object
+      description: Response containing current active subscriptions and authorization strings
+      required:
+        - accountId
+        - authorizations
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account
+        authorizations:
+          type: array
+          items:
+            type: string
+          description: List of authorization strings (e.g., ["arcadia:authorized", "fantasia:authorized"])
+        subscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionInfo'
+          description: Full subscription details (optional, for debugging)
+
+    SubscriptionListResponse:
+      type: object
+      description: Response containing list of subscriptions
+      required:
+        - subscriptions
+        - totalCount
+      properties:
+        subscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionInfo'
+        totalCount:
+          type: integer
+          description: Total number of subscriptions matching the filter
+
+x-service-configuration:
+  properties:
+    StateStoreName:
+      type: string
+      description: Name of the Dapr state store for subscription data
+      default: "subscriptions-statestore"
+    AuthorizationSuffix:
+      type: string
+      description: Suffix appended to stub name for authorization strings
+      default: "authorized"
