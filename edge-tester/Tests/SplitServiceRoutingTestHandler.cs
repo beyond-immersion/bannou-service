@@ -480,36 +480,39 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Send a request via WebSocket binary protocol and wait for response.
+    /// Send an orchestrator API request via the shared admin WebSocket.
+    /// Orchestrator APIs are NOT exposed via NGINX, so we must use the admin WebSocket.
     /// </summary>
     private async Task<string?> SendOrchestratorRequestAsync(BannouClient client, Guid serviceGuid, string requestJson)
     {
-        // This is a simplified version - in production, BannouClient would have
-        // a method to send requests and await responses via the binary protocol.
-        // For now, we'll use HTTP as a fallback.
-
-        var config = Program.Configuration;
-        var host = config.OpenResty_Host ?? "openresty";
-        var port = config.OpenResty_Port ?? 80;
-
-        // Try to determine the endpoint from the GUID
-        // For orchestrator deploy, the endpoint is /orchestrator/deploy
-        var url = $"http://{host}:{port}/orchestrator/deploy";
-
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", client.AccessToken);
-            request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+            // Parse the request JSON to get the actual request object
+            var requestObj = JsonNode.Parse(requestJson);
+            if (requestObj == null)
+            {
+                Console.WriteLine("   Failed to parse request JSON");
+                return null;
+            }
 
-            var response = await Program.HttpClient.SendAsync(request);
-            var content = await response.Content.ReadAsStringAsync();
+            // Use the shared admin WebSocket to invoke the orchestrator API
+            var response = await client.InvokeAsync<object, JsonElement>(
+                "POST",
+                "/orchestrator/deploy",
+                requestObj,
+                timeout: TimeSpan.FromSeconds(60));
 
-            return content;
+            return response.GetRawText();
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
+        {
+            Console.WriteLine($"   Deploy endpoint not available in capability manifest");
+            Console.WriteLine($"   Available APIs: {string.Join(", ", client.AvailableApis.Keys.Where(k => k.Contains("orchestrator")).Take(5))}...");
+            return null;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   HTTP request failed: {ex.Message}");
+            Console.WriteLine($"   WebSocket request failed: {ex.Message}");
             return null;
         }
     }
@@ -587,14 +590,10 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Deploy the default edge-tests topology to restore single-node operation.
+    /// Uses the shared admin WebSocket since orchestrator APIs are not exposed via NGINX.
     /// </summary>
     private async Task<bool> RestoreDefaultTopologyAsync(BannouClient adminClient)
     {
-        var config = Program.Configuration;
-        var host = config.OpenResty_Host ?? "openresty";
-        var port = config.OpenResty_Port ?? 80;
-        var url = $"http://{host}:{port}/orchestrator/deploy";
-
         // Deploy edge-tests preset which has all services on single 'bannou' node
         var deployRequest = new
         {
@@ -603,39 +602,40 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             dryRun = false
         };
 
-        var requestJson = JsonSerializer.Serialize(deployRequest);
-        Console.WriteLine($"   Deploying preset: edge-tests");
-        Console.WriteLine($"   Request: {requestJson}");
+        Console.WriteLine($"   Deploying preset: edge-tests via WebSocket");
+        Console.WriteLine($"   Request: {JsonSerializer.Serialize(deployRequest)}");
 
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", adminClient.AccessToken);
-            request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+            var response = await adminClient.InvokeAsync<object, JsonElement>(
+                "POST",
+                "/orchestrator/deploy",
+                deployRequest,
+                timeout: TimeSpan.FromSeconds(60));
 
-            var response = await Program.HttpClient.SendAsync(request);
-            var content = await response.Content.ReadAsStringAsync();
+            var content = response.GetRawText();
+            Console.WriteLine($"   Response: {content}");
 
-            Console.WriteLine($"   Response ({response.StatusCode}): {content}");
+            var responseObj = JsonNode.Parse(content);
+            var success = responseObj?["success"]?.GetValue<bool>() ?? false;
+            var message = responseObj?["message"]?.GetValue<string>();
 
-            if (response.IsSuccessStatusCode)
+            Console.WriteLine($"   Success: {success}");
+            Console.WriteLine($"   Message: {message}");
+
+            if (success)
             {
-                var responseObj = JsonNode.Parse(content);
-                var success = responseObj?["success"]?.GetValue<bool>() ?? false;
-                var message = responseObj?["message"]?.GetValue<string>();
-
-                Console.WriteLine($"   Success: {success}");
-                Console.WriteLine($"   Message: {message}");
-
-                if (success)
-                {
-                    // Wait for deployment to stabilize
-                    Console.WriteLine("   Waiting for topology to stabilize...");
-                    await Task.Delay(3000);
-                    return true;
-                }
+                // Wait for deployment to stabilize
+                Console.WriteLine("   Waiting for topology to stabilize...");
+                await Task.Delay(3000);
+                return true;
             }
 
+            return false;
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
+        {
+            Console.WriteLine($"   Deploy endpoint not available in capability manifest");
             return false;
         }
         catch (Exception ex)
@@ -647,13 +647,17 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Fallback cleanup via Clean API to at least reset service mappings.
+    /// Uses the shared admin WebSocket since orchestrator APIs are not exposed via NGINX.
     /// </summary>
     private async Task<bool> CleanupViaCleanApiAsync()
     {
-        var config = Program.Configuration;
-        var host = config.OpenResty_Host ?? "openresty";
-        var port = config.OpenResty_Port ?? 80;
-        var url = $"http://{host}:{port}/orchestrator/clean";
+        var adminClient = Program.AdminClient;
+        if (adminClient == null || !adminClient.IsConnected)
+        {
+            Console.WriteLine("   Cannot call Clean API - admin client not connected");
+            Console.WriteLine("   Orchestrator APIs require admin WebSocket (not exposed via NGINX)");
+            return false;
+        }
 
         var cleanRequest = new
         {
@@ -661,27 +665,26 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             force = true
         };
 
-        var requestJson = JsonSerializer.Serialize(cleanRequest);
-        Console.WriteLine($"   Clean API request: {requestJson}");
+        Console.WriteLine($"   Clean API request via WebSocket: {JsonSerializer.Serialize(cleanRequest)}");
 
         try
         {
-            // Note: No auth header for fallback - Clean API might work without admin
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
-            request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+            var response = await adminClient.InvokeAsync<object, JsonElement>(
+                "POST",
+                "/orchestrator/clean",
+                cleanRequest,
+                timeout: TimeSpan.FromSeconds(30));
 
-            var response = await Program.HttpClient.SendAsync(request);
-            var content = await response.Content.ReadAsStringAsync();
+            var content = response.GetRawText();
+            Console.WriteLine($"   Clean response: {content}");
 
-            Console.WriteLine($"   Clean response ({response.StatusCode}): {content}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                // Wait for mapping events to propagate
-                await Task.Delay(2000);
-                return true;
-            }
-
+            // Wait for mapping events to propagate
+            await Task.Delay(2000);
+            return true;
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
+        {
+            Console.WriteLine($"   Clean endpoint not available in capability manifest");
             return false;
         }
         catch (Exception ex)
