@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
+using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -14,13 +15,16 @@ public class TestingService : ITestingService
 {
     private readonly ILogger<TestingService> _logger;
     private readonly TestingServiceConfiguration _configuration;
+    private readonly DaprClient _daprClient;
 
     public TestingService(
         ILogger<TestingService> logger,
-        TestingServiceConfiguration configuration)
+        TestingServiceConfiguration configuration,
+        DaprClient daprClient)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
     }
 
     /// <summary>
@@ -138,8 +142,20 @@ public class TestingService : ITestingService
         }
     }
 
-    // IDaprService lifecycle methods are provided by default interface implementations
-    // No need to override unless custom logic is required beyond the default logging
+    #region Permission Registration
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Unlike other services which use generated permission registration, Testing service
+    /// uses a manually maintained registration since there's no testing-api.yaml schema.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Testing service permissions...");
+        await TestingPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+    }
+
+    #endregion
 }
 
 /// <summary>

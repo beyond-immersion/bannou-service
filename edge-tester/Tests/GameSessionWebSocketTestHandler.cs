@@ -1,15 +1,17 @@
-using BeyondImmersion.BannouService.Connect.Protocol;
+using BeyondImmersion.Bannou.Client.SDK;
 using BeyondImmersion.BannouService.GameSession;
-using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
 /// <summary>
 /// WebSocket-based test handler for game session service API endpoints.
 /// Tests the game session service APIs through the Connect service WebSocket binary protocol.
+///
+/// IMPORTANT: These tests create dedicated test accounts with their own BannouClient instances.
+/// This avoids interfering with Program.Client or Program.AdminClient, and properly tests
+/// the user experience from account creation through API usage.
 /// </summary>
 public class GameSessionWebSocketTestHandler : IServiceTestHandler
 {
@@ -17,8 +19,6 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
     {
         return new ServiceTest[]
         {
-            new ServiceTest(TestManifestCachingBehavior, "GameSession - Manifest Caching", "WebSocket",
-                "Validate that all API GUIDs are cached from a single capability manifest"),
             new ServiceTest(TestCreateGameSessionViaWebSocket, "GameSession - Create (WebSocket)", "WebSocket",
                 "Test game session creation via WebSocket binary protocol"),
             new ServiceTest(TestListGameSessionsViaWebSocket, "GameSession - List (WebSocket)", "WebSocket",
@@ -28,134 +28,159 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
         };
     }
 
-    /// <summary>
-    /// Tests that the manifest caching behavior works correctly.
-    /// This validates that all API GUIDs are cached from a single capability manifest,
-    /// preventing the bug where the second API call would timeout waiting for a new manifest.
-    /// </summary>
-    private void TestManifestCachingBehavior(string[] args)
-    {
-        Console.WriteLine("=== Manifest Caching Behavior Test ===");
-        Console.WriteLine("Validating that all API GUIDs are cached from capability manifest...");
+    #region Helper Methods for Test Account Creation
 
-        // Clear the cache to ensure fresh state
-        _serviceGuidCache.Clear();
+    /// <summary>
+    /// Creates a dedicated test account and returns the access token.
+    /// Each test should create its own account to ensure isolation.
+    /// </summary>
+    private async Task<string?> CreateTestAccountAsync(string testPrefix)
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("   Configuration not available");
+            return null;
+        }
+
+        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var uniqueId = Guid.NewGuid().ToString("N")[..12];
+        var testEmail = $"{testPrefix}_{uniqueId}@test.local";
+        var testPassword = $"{testPrefix}Test123!";
+
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = $"{testPrefix}_{uniqueId}", email = testEmail, password = testPassword };
+
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"   Failed to create test account: {registerResponse.StatusCode} - {errorBody}");
+                return null;
+            }
+
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+            var responseObj = JsonDocument.Parse(responseBody);
+            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Console.WriteLine("   No accessToken in registration response");
+                return null;
+            }
+
+            Console.WriteLine($"   Created test account: {testEmail}");
+            return accessToken;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Failed to create test account: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Creates a BannouClient connected with the given access token.
+    /// Returns null if connection fails.
+    /// </summary>
+    private async Task<BannouClient?> CreateConnectedClientAsync(string accessToken)
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("   Configuration not available");
+            return null;
+        }
+
+        var serverUrl = $"ws://{Program.Configuration.Connect_Endpoint}";
+        var client = new BannouClient();
+
+        try
+        {
+            var connected = await client.ConnectWithTokenAsync(serverUrl, accessToken);
+            if (!connected || !client.IsConnected)
+            {
+                Console.WriteLine("   BannouClient failed to connect");
+                await client.DisposeAsync();
+                return null;
+            }
+
+            Console.WriteLine($"   BannouClient connected, session: {client.SessionId}");
+            return client;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   BannouClient connection failed: {ex.Message}");
+            await client.DisposeAsync();
+            return null;
+        }
+    }
+
+    #endregion
+
+    private void TestCreateGameSessionViaWebSocket(string[] args)
+    {
+        Console.WriteLine("=== GameSession Create Test (WebSocket) ===");
+        Console.WriteLine("Testing /sessions/create via dedicated BannouClient...");
 
         try
         {
             var result = Task.Run(async () =>
             {
-                if (Program.Configuration == null)
-                {
-                    Console.WriteLine("   Configuration not available");
-                    return false;
-                }
-
-                var accessToken = Program.Client?.AccessToken;
+                // Create dedicated test account and client
+                var accessToken = await CreateTestAccountAsync("gs_create");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    Console.WriteLine("   Access token not available");
                     return false;
                 }
 
-                var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
-                using var webSocket = new ClientWebSocket();
-                webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
-
-                await webSocket.ConnectAsync(serverUri, CancellationToken.None);
-                Console.WriteLine("   WebSocket connected");
-
-                // Request one API - this should trigger manifest caching of ALL APIs
-                var firstGuid = await ReceiveCapabilityManifestAndGetGuid(webSocket, "POST", "/sessions/list");
-
-                if (firstGuid == Guid.Empty)
+                await using var client = await CreateConnectedClientAsync(accessToken);
+                if (client == null)
                 {
-                    Console.WriteLine("   Failed to get GUID for /sessions/list");
                     return false;
                 }
-                Console.WriteLine($"   Got GUID for /sessions/list: {firstGuid}");
 
-                // Now verify that OTHER APIs are also in the cache (without waiting for manifest)
-                var cachedApis = new[]
+                // Use generated request type to ensure proper JSON serialization
+                var createRequest = new CreateGameSessionRequest
                 {
-                    ("POST", "/sessions/create"),
-                    ("POST", "/sessions/join"),
-                    ("POST", "/sessions/leave"),
-                    ("POST", "/sessions/get")
+                    SessionName = $"WebSocketTest_{DateTime.Now.Ticks}",
+                    GameType = CreateGameSessionRequestGameType.Arcadia,
+                    MaxPlayers = 4,
+                    IsPrivate = false
                 };
 
-                var allCached = true;
-                foreach (var (method, path) in cachedApis)
+                try
                 {
-                    var cacheKey = $"{method}:{path}";
-                    if (_serviceGuidCache.TryGetValue(cacheKey, out var cachedGuid))
-                    {
-                        Console.WriteLine($"   ✅ {cacheKey} cached: {cachedGuid}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"   ❌ {cacheKey} NOT in cache - this would cause timeout!");
-                        allCached = false;
-                    }
+                    Console.WriteLine("   Invoking /sessions/create...");
+                    var response = await client.InvokeAsync<CreateGameSessionRequest, JsonElement>(
+                        "POST",
+                        "/sessions/create",
+                        createRequest,
+                        timeout: TimeSpan.FromSeconds(15));
+
+                    var sessionId = response.TryGetProperty("sessionId", out var idProp) ? idProp.GetString() : null;
+                    var sessionName = response.TryGetProperty("sessionName", out var nameProp) ? nameProp.GetString() : null;
+                    var maxPlayers = response.TryGetProperty("maxPlayers", out var maxProp) ? maxProp.GetInt32() : 0;
+
+                    Console.WriteLine($"   Session ID: {sessionId}");
+                    Console.WriteLine($"   Session Name: {sessionName}");
+                    Console.WriteLine($"   Max Players: {maxPlayers}");
+
+                    return !string.IsNullOrEmpty(sessionId);
                 }
-
-                Console.WriteLine($"   Total APIs in cache: {_serviceGuidCache.Count}");
-
-                if (webSocket.State == WebSocketState.Open)
+                catch (Exception ex)
                 {
-                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Test complete", CancellationToken.None);
-                }
-
-                return allCached;
-            }).Result;
-
-            if (result)
-            {
-                Console.WriteLine("PASSED Manifest caching behavior test");
-            }
-            else
-            {
-                Console.WriteLine("FAILED Manifest caching behavior test");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"FAILED Manifest caching test with exception: {ex.Message}");
-        }
-    }
-
-    private void TestCreateGameSessionViaWebSocket(string[] args)
-    {
-        Console.WriteLine("=== GameSession Create Test (WebSocket) ===");
-        Console.WriteLine("Testing /sessions/create via WebSocket binary protocol...");
-
-        try
-        {
-            // Use generated request type to ensure proper JSON serialization
-            var createRequest = new CreateGameSessionRequest
-            {
-                SessionName = $"WebSocketTest_{DateTime.Now.Ticks}",
-                GameType = CreateGameSessionRequestGameType.Arcadia,
-                MaxPlayers = 4,
-                IsPrivate = false
-            };
-
-            var result = Task.Run(async () => await PerformGameSessionApiTest(
-                "POST",
-                "/sessions/create",
-                createRequest,
-                response =>
-                {
-                    if (response?["sessionId"] != null)
-                    {
-                        var sessionId = response?["sessionId"]?.GetValue<string>();
-                        var sessionName = response?["sessionName"]?.GetValue<string>();
-                        Console.WriteLine($"   Session ID: {sessionId}");
-                        Console.WriteLine($"   Session Name: {sessionName}");
-                        return !string.IsNullOrEmpty(sessionId);
-                    }
+                    Console.WriteLine($"   Invoke failed: {ex.Message}");
                     return false;
-                })).Result;
+                }
+            }).Result;
 
             if (result)
             {
@@ -179,30 +204,52 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
     private void TestListGameSessionsViaWebSocket(string[] args)
     {
         Console.WriteLine("=== GameSession List Test (WebSocket) ===");
-        Console.WriteLine("Testing /sessions/list via WebSocket binary protocol...");
+        Console.WriteLine("Testing /sessions/list via dedicated BannouClient...");
 
         try
         {
-            // Use generated request type to ensure proper JSON serialization
-            // ListGameSessionsRequest has optional filters (gameType, status) but no pagination
-            var listRequest = new ListGameSessionsRequest();
-
-            var result = Task.Run(async () => await PerformGameSessionApiTest(
-                "POST",
-                "/sessions/list",
-                listRequest,
-                response =>
+            var result = Task.Run(async () =>
+            {
+                // Create dedicated test account and client
+                var accessToken = await CreateTestAccountAsync("gs_list");
+                if (string.IsNullOrEmpty(accessToken))
                 {
-                    if (response?["sessions"] != null)
-                    {
-                        var sessions = response?["sessions"]?.AsArray();
-                        var totalCount = response?["totalCount"]?.GetValue<int>() ?? 0;
-                        Console.WriteLine($"   Sessions: {sessions?.Count ?? 0}");
-                        Console.WriteLine($"   Total Count: {totalCount}");
-                        return true; // Test passes if we got valid response structure
-                    }
                     return false;
-                })).Result;
+                }
+
+                await using var client = await CreateConnectedClientAsync(accessToken);
+                if (client == null)
+                {
+                    return false;
+                }
+
+                // Use generated request type
+                var listRequest = new ListGameSessionsRequest();
+
+                try
+                {
+                    Console.WriteLine("   Invoking /sessions/list...");
+                    var response = await client.InvokeAsync<ListGameSessionsRequest, JsonElement>(
+                        "POST",
+                        "/sessions/list",
+                        listRequest,
+                        timeout: TimeSpan.FromSeconds(15));
+
+                    var hasSessionsArray = response.TryGetProperty("sessions", out var sessionsProp) &&
+                                            sessionsProp.ValueKind == JsonValueKind.Array;
+                    var totalCount = response.TryGetProperty("totalCount", out var countProp) ? countProp.GetInt32() : 0;
+
+                    Console.WriteLine($"   Sessions array present: {hasSessionsArray}");
+                    Console.WriteLine($"   Total Count: {totalCount}");
+
+                    return hasSessionsArray;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"   Invoke failed: {ex.Message}");
+                    return false;
+                }
+            }).Result;
 
             if (result)
             {
@@ -226,94 +273,171 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
     private void TestCompleteSessionLifecycleViaWebSocket(string[] args)
     {
         Console.WriteLine("=== GameSession Complete Lifecycle Test (WebSocket) ===");
-        Console.WriteLine("Testing complete session lifecycle via WebSocket binary protocol...");
+        Console.WriteLine("Testing complete session lifecycle via dedicated BannouClient...");
 
         try
         {
             var result = Task.Run(async () =>
             {
-                if (Program.Configuration == null)
-                {
-                    Console.WriteLine("   Configuration not available");
-                    return false;
-                }
-
-                var accessToken = Program.Client?.AccessToken;
+                // Create dedicated test account and client
+                var accessToken = await CreateTestAccountAsync("gs_lifecycle");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    Console.WriteLine("   Access token not available - ensure login completed successfully");
                     return false;
                 }
 
-                var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
-                using var webSocket = new ClientWebSocket();
-                webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
+                await using var client = await CreateConnectedClientAsync(accessToken);
+                if (client == null)
+                {
+                    return false;
+                }
 
                 try
                 {
-                    await webSocket.ConnectAsync(serverUri, CancellationToken.None);
-                    Console.WriteLine("   WebSocket connected for lifecycle test");
-
                     // Step 1: Create session
-                    var ownerId = Guid.NewGuid();
-                    var sessionId = await CreateSession(webSocket, ownerId);
-                    if (string.IsNullOrEmpty(sessionId))
+                    Console.WriteLine("   Step 1: Creating session...");
+                    var createRequest = new CreateGameSessionRequest
                     {
-                        Console.WriteLine("   Failed to create session");
+                        SessionName = $"LifecycleTest_{DateTime.Now.Ticks}",
+                        GameType = CreateGameSessionRequestGameType.Arcadia,
+                        MaxPlayers = 4,
+                        IsPrivate = false
+                    };
+
+                    var createResponse = await client.InvokeAsync<CreateGameSessionRequest, JsonElement>(
+                        "POST",
+                        "/sessions/create",
+                        createRequest,
+                        timeout: TimeSpan.FromSeconds(15));
+
+                    var sessionIdStr = createResponse.TryGetProperty("sessionId", out var idProp) ? idProp.GetString() : null;
+                    if (string.IsNullOrEmpty(sessionIdStr))
+                    {
+                        Console.WriteLine("   Failed to create session - no sessionId in response");
                         return false;
                     }
-                    Console.WriteLine($"   Step 1: Created session {sessionId}");
+                    var sessionId = Guid.Parse(sessionIdStr);
+                    Console.WriteLine($"   Created session {sessionId}");
 
                     // Step 2: Join session as a player
-                    var playerId = Guid.NewGuid();
-                    if (!await JoinSession(webSocket, sessionId, playerId))
+                    Console.WriteLine("   Step 2: Joining session...");
+                    var joinRequest = new JoinGameSessionRequest
                     {
-                        Console.WriteLine("   Failed to join session");
+                        SessionId = sessionId
+                    };
+
+                    var joinResponse = await client.InvokeAsync<JoinGameSessionRequest, JsonElement>(
+                        "POST",
+                        "/sessions/join",
+                        joinRequest,
+                        timeout: TimeSpan.FromSeconds(15));
+
+                    var joinSuccess = joinResponse.TryGetProperty("success", out var successProp) && successProp.GetBoolean();
+                    if (!joinSuccess)
+                    {
+                        // Check for error message
+                        var error = joinResponse.TryGetProperty("error", out var errProp) ? errProp.GetString() : "unknown";
+                        Console.WriteLine($"   Failed to join session: {error}");
                         return false;
                     }
-                    Console.WriteLine($"   Step 2: Player {playerId} joined");
+                    Console.WriteLine($"   Joined session successfully");
 
                     // Step 3: Perform game action
-                    var actionResult = await PerformAction(webSocket, sessionId, playerId);
-                    if (string.IsNullOrEmpty(actionResult))
+                    Console.WriteLine("   Step 3: Performing game action...");
+                    var actionRequest = new GameActionRequest
                     {
-                        Console.WriteLine("   Failed to perform game action");
+                        SessionId = sessionId,
+                        ActionType = GameActionRequestActionType.Move,
+                        ActionData = new { testData = "lifecycle_test" }
+                    };
+
+                    var actionResponse = await client.InvokeAsync<GameActionRequest, JsonElement>(
+                        "POST",
+                        "/sessions/actions",
+                        actionRequest,
+                        timeout: TimeSpan.FromSeconds(15));
+
+                    var actionId = actionResponse.TryGetProperty("actionId", out var actionIdProp) ? actionIdProp.GetString() : null;
+                    if (string.IsNullOrEmpty(actionId))
+                    {
+                        Console.WriteLine("   Failed to perform game action - no actionId in response");
                         return false;
                     }
-                    Console.WriteLine($"   Step 3: Performed action {actionResult}");
+                    Console.WriteLine($"   Performed action {actionId}");
 
                     // Step 4: Send chat message
-                    if (!await SendChat(webSocket, sessionId, playerId))
+                    Console.WriteLine("   Step 4: Sending chat message...");
+                    var chatRequest = new ChatMessageRequest
                     {
-                        Console.WriteLine("   Failed to send chat message");
-                        return false;
+                        SessionId = sessionId,
+                        Message = "WebSocket lifecycle test message",
+                        MessageType = ChatMessageRequestMessageType.Public
+                    };
+
+                    try
+                    {
+                        await client.InvokeAsync<ChatMessageRequest, JsonElement>(
+                            "POST",
+                            "/sessions/chat",
+                            chatRequest,
+                            timeout: TimeSpan.FromSeconds(15));
+                        Console.WriteLine($"   Sent chat message");
                     }
-                    Console.WriteLine($"   Step 4: Sent chat message");
+                    catch (InvalidOperationException ex) when (ex.Message.Contains("Failed to deserialize"))
+                    {
+                        // Chat may return empty response - that's OK
+                        Console.WriteLine($"   Sent chat message (empty response OK)");
+                    }
 
                     // Step 5: Leave session
-                    if (!await LeaveSession(webSocket, sessionId, playerId))
+                    Console.WriteLine("   Step 5: Leaving session...");
+                    var leaveRequest = new LeaveGameSessionRequest
                     {
-                        Console.WriteLine("   Failed to leave session");
-                        return false;
+                        SessionId = sessionId
+                    };
+
+                    try
+                    {
+                        await client.InvokeAsync<LeaveGameSessionRequest, JsonElement>(
+                            "POST",
+                            "/sessions/leave",
+                            leaveRequest,
+                            timeout: TimeSpan.FromSeconds(15));
+                        Console.WriteLine($"   Left session");
                     }
-                    Console.WriteLine($"   Step 5: Player left session");
+                    catch (InvalidOperationException ex) when (ex.Message.Contains("Failed to deserialize"))
+                    {
+                        // Leave may return empty response - that's OK
+                        Console.WriteLine($"   Left session (empty response OK)");
+                    }
 
                     // Step 6: Verify session still exists
-                    if (!await GetSession(webSocket, sessionId))
+                    Console.WriteLine("   Step 6: Verifying session exists...");
+                    var getRequest = new GetGameSessionRequest
                     {
-                        Console.WriteLine("   Failed to verify session exists");
+                        SessionId = sessionId
+                    };
+
+                    var getResponse = await client.InvokeAsync<GetGameSessionRequest, JsonElement>(
+                        "POST",
+                        "/sessions/get",
+                        getRequest,
+                        timeout: TimeSpan.FromSeconds(15));
+
+                    var returnedSessionId = getResponse.TryGetProperty("sessionId", out var returnedIdProp) ? returnedIdProp.GetString() : null;
+                    if (returnedSessionId != sessionIdStr)
+                    {
+                        Console.WriteLine($"   Failed to verify session - expected {sessionIdStr}, got {returnedSessionId}");
                         return false;
                     }
-                    Console.WriteLine($"   Step 6: Session verified");
+                    Console.WriteLine($"   Session verified");
 
                     return true;
                 }
-                finally
+                catch (Exception ex)
                 {
-                    if (webSocket.State == WebSocketState.Open)
-                    {
-                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Test complete", CancellationToken.None);
-                    }
+                    Console.WriteLine($"   Lifecycle test failed: {ex.Message}");
+                    return false;
                 }
             }).Result;
 
@@ -336,567 +460,4 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
         }
     }
 
-    private async Task<string?> CreateSession(ClientWebSocket webSocket, Guid ownerId)
-    {
-        // Note: ownerId is not used in request - the service gets the owner from auth context
-        // The ownerId parameter is kept for API consistency in test orchestration
-        // Use generated request type to ensure proper JSON serialization
-        var requestBody = new CreateGameSessionRequest
-        {
-            SessionName = $"LifecycleTest_{DateTime.Now.Ticks}",
-            GameType = CreateGameSessionRequestGameType.Arcadia,
-            MaxPlayers = 4,
-            IsPrivate = false
-        };
-
-        var response = await SendApiRequest(webSocket, "POST", "/sessions/create", requestBody);
-        return response?["sessionId"]?.GetValue<string>();
-    }
-
-    private async Task<bool> JoinSession(ClientWebSocket webSocket, string sessionId, Guid playerId)
-    {
-        // Note: playerId is not used in request - the service gets the account from auth context
-        // The playerId parameter is kept for API consistency in test orchestration
-        // Use generated request type to ensure proper JSON serialization
-        var requestBody = new JoinGameSessionRequest
-        {
-            SessionId = Guid.Parse(sessionId)
-            // Password and CharacterData are optional
-        };
-
-        var response = await SendApiRequest(webSocket, "POST", "/sessions/join", requestBody);
-        return response?["success"]?.GetValue<bool>() ?? false;
-    }
-
-    private async Task<string?> PerformAction(ClientWebSocket webSocket, string sessionId, Guid playerId)
-    {
-        // Note: playerId is not used in request - the service gets the account from auth context
-        // The playerId parameter is kept for API consistency in test orchestration
-        // Use generated request type to ensure proper JSON serialization
-        var requestBody = new GameActionRequest
-        {
-            SessionId = Guid.Parse(sessionId),
-            ActionType = GameActionRequestActionType.Move,
-            ActionData = new { testData = "lifecycle_test" }
-        };
-
-        var response = await SendApiRequest(webSocket, "POST", "/sessions/actions", requestBody);
-        return response?["actionId"]?.GetValue<string>();
-    }
-
-    private async Task<bool> SendChat(ClientWebSocket webSocket, string sessionId, Guid senderId)
-    {
-        // Note: senderId is not used in request - the service gets the account from auth context
-        // The senderId parameter is kept for API consistency in test orchestration
-        // Use generated request type to ensure proper JSON serialization
-        var requestBody = new ChatMessageRequest
-        {
-            SessionId = Guid.Parse(sessionId),
-            Message = "WebSocket lifecycle test message",
-            MessageType = ChatMessageRequestMessageType.Public
-        };
-
-        var response = await SendApiRequest(webSocket, "POST", "/sessions/chat", requestBody);
-        // Chat returns empty response on success (200 with no content)
-        return response != null || true; // Success if no error thrown
-    }
-
-    private async Task<bool> LeaveSession(ClientWebSocket webSocket, string sessionId, Guid playerId)
-    {
-        // Note: playerId is not used in request - the service gets the account from auth context
-        // The playerId parameter is kept for API consistency in test orchestration
-        // Use generated request type to ensure proper JSON serialization
-        var requestBody = new LeaveGameSessionRequest
-        {
-            SessionId = Guid.Parse(sessionId)
-        };
-
-        // Leave returns empty response on success (200 with no content)
-        try
-        {
-            await SendApiRequest(webSocket, "POST", "/sessions/leave", requestBody);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private async Task<bool> GetSession(ClientWebSocket webSocket, string sessionId)
-    {
-        // Use generated request type to ensure proper JSON serialization
-        var requestBody = new GetGameSessionRequest
-        {
-            SessionId = Guid.Parse(sessionId)
-        };
-
-        var response = await SendApiRequest(webSocket, "POST", "/sessions/get", requestBody);
-        return response?["sessionId"]?.GetValue<string>() == sessionId;
-    }
-
-    private async Task<JsonObject?> SendApiRequest(ClientWebSocket webSocket, string method, string path, object body)
-    {
-        // Get the service GUID from capability manifest
-        var serviceGuid = await GetServiceGuidForEndpoint(webSocket, method, path);
-        if (serviceGuid == Guid.Empty)
-        {
-            Console.WriteLine($"      Could not find GUID for {method}:{path}");
-            return null;
-        }
-
-        // Create an API proxy request using binary protocol
-        var apiRequest = new
-        {
-            method = method,
-            path = path,
-            headers = new Dictionary<string, string>(),
-            body = JsonSerializer.Serialize(body)
-        };
-        var requestPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(apiRequest));
-
-        var binaryMessage = new BinaryMessage(
-            flags: MessageFlags.None,
-            channel: 2, // API proxy channel
-            sequenceNumber: 1,
-            serviceGuid: serviceGuid,
-            messageId: GuidGenerator.GenerateMessageId(),
-            payload: requestPayload
-        );
-
-        // Send the API proxy request
-        var messageBytes = binaryMessage.ToByteArray();
-        var buffer = new ArraySegment<byte>(messageBytes);
-        await webSocket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
-
-        // Receive response
-        var responseResult = await WaitForResponseMessage(webSocket, TimeSpan.FromSeconds(15));
-        if (responseResult == null)
-        {
-            Console.WriteLine($"      Timeout waiting for response to {method}:{path}");
-            return null;
-        }
-
-        var response = responseResult.Value;
-        if (response.Payload.Length > 0)
-        {
-            var responsePayload = Encoding.UTF8.GetString(response.Payload.Span);
-            try
-            {
-                var responseObj = JsonNode.Parse(responsePayload)?.AsObject();
-
-                // Check for error response
-                if (responseObj?["error"] != null)
-                {
-                    var errorMessage = responseObj?["error"]?.GetValue<string>();
-                    var statusCode = responseObj?["statusCode"]?.GetValue<int>();
-                    Console.WriteLine($"      API returned error: {statusCode} - {errorMessage}");
-                    return null;
-                }
-
-                return responseObj;
-            }
-            catch (JsonException)
-            {
-                return null;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Cache for service GUIDs to avoid repeatedly parsing capability manifests
-    /// </summary>
-    private readonly Dictionary<string, Guid> _serviceGuidCache = new();
-
-    private async Task<Guid> GetServiceGuidForEndpoint(ClientWebSocket webSocket, string method, string path)
-    {
-        var cacheKey = $"{method}:{path}";
-        if (_serviceGuidCache.TryGetValue(cacheKey, out var cachedGuid))
-        {
-            return cachedGuid;
-        }
-
-        // Need to receive capability manifest to get GUIDs
-        var guid = await ReceiveCapabilityManifestAndGetGuid(webSocket, method, path);
-        if (guid != Guid.Empty)
-        {
-            _serviceGuidCache[cacheKey] = guid;
-        }
-        return guid;
-    }
-
-    /// <summary>
-    /// Performs a game session API call through the WebSocket binary protocol.
-    /// </summary>
-    private async Task<bool> PerformGameSessionApiTest(
-        string method,
-        string path,
-        object? body,
-        Func<JsonObject?, bool> validateResponse)
-    {
-        if (Program.Configuration == null)
-        {
-            Console.WriteLine("   Configuration not available");
-            return false;
-        }
-
-        var accessToken = Program.Client?.AccessToken;
-
-        if (string.IsNullOrEmpty(accessToken))
-        {
-            Console.WriteLine("   Access token not available - ensure login completed successfully");
-            return false;
-        }
-
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
-        using var webSocket = new ClientWebSocket();
-        webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
-
-        try
-        {
-            await webSocket.ConnectAsync(serverUri, CancellationToken.None);
-            Console.WriteLine("   WebSocket connected for game session API test");
-
-            // First, receive the capability manifest pushed by the server
-            Console.WriteLine("   Waiting for capability manifest...");
-            var serviceGuid = await ReceiveCapabilityManifestAndGetGuid(webSocket, method, path);
-
-            if (serviceGuid == Guid.Empty)
-            {
-                Console.WriteLine("   Failed to receive capability manifest or find GUID for endpoint");
-                return false;
-            }
-
-            Console.WriteLine($"   Found service GUID for {method}:{path}: {serviceGuid}");
-
-            // Create an API proxy request using binary protocol
-            var apiRequest = new
-            {
-                method = method,
-                path = path,
-                headers = new Dictionary<string, string>(),
-                body = body != null ? JsonSerializer.Serialize(body) : null
-            };
-            var requestPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(apiRequest));
-
-            var binaryMessage = new BinaryMessage(
-                flags: MessageFlags.None,
-                channel: 2, // API proxy channel
-                sequenceNumber: 1,
-                serviceGuid: serviceGuid,
-                messageId: GuidGenerator.GenerateMessageId(),
-                payload: requestPayload
-            );
-
-            Console.WriteLine($"   Sending game session API request:");
-            Console.WriteLine($"   Method: {method}");
-            Console.WriteLine($"   Path: {path}");
-            Console.WriteLine($"   ServiceGuid: {serviceGuid}");
-
-            // Send the API proxy request
-            var messageBytes = binaryMessage.ToByteArray();
-            var buffer = new ArraySegment<byte>(messageBytes);
-            await webSocket.SendAsync(buffer, WebSocketMessageType.Binary, true, CancellationToken.None);
-
-            // Receive response with timeout
-            var responseResult = await WaitForResponseMessage(webSocket, TimeSpan.FromSeconds(15));
-
-            if (responseResult == null)
-            {
-                Console.WriteLine("   Timeout waiting for API response message");
-                return false;
-            }
-
-            var response = responseResult.Value;
-            Console.WriteLine($"   Received API response: {response.Payload.Length} bytes payload");
-
-            try
-            {
-                if (response.Payload.Length > 0)
-                {
-                    var responsePayload = Encoding.UTF8.GetString(response.Payload.Span);
-                    Console.WriteLine($"   Response payload: {responsePayload.Substring(0, Math.Min(500, responsePayload.Length))}...");
-
-                    // Parse as JSON and validate
-                    var responseObj = JsonNode.Parse(responsePayload)?.AsObject();
-
-                    // Check for error response
-                    if (responseObj?["error"] != null)
-                    {
-                        var errorMessage = responseObj?["error"]?.GetValue<string>();
-                        var statusCode = responseObj?["statusCode"]?.GetValue<int>();
-                        Console.WriteLine($"   API returned error: {statusCode} - {errorMessage}");
-                        return false;
-                    }
-
-                    // Validate the response
-                    return validateResponse(responseObj);
-                }
-
-                Console.WriteLine("   API response has no payload - assuming success");
-                return true; // Some endpoints return 200 with no content
-            }
-            catch (JsonException)
-            {
-                var responseText = Encoding.UTF8.GetString(response.Payload.Span);
-                Console.WriteLine($"   Non-JSON response: {responseText}");
-                return false;
-            }
-            catch (Exception parseEx)
-            {
-                Console.WriteLine($"   Failed to parse API response: {parseEx.Message}");
-                return false;
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            Console.WriteLine("   Request timed out waiting for response");
-            return false;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"   Game session API test failed: {ex.Message}");
-            return false;
-        }
-        finally
-        {
-            if (webSocket.State == WebSocketState.Open)
-            {
-                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Test complete", CancellationToken.None);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Receives the capability manifest from the server and extracts the service GUID for the requested endpoint.
-    /// </summary>
-    private async Task<Guid> ReceiveCapabilityManifestAndGetGuid(
-        ClientWebSocket webSocket,
-        string method,
-        string path)
-    {
-        var overallTimeout = TimeSpan.FromSeconds(30);
-        var startTime = DateTime.UtcNow;
-        var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
-
-        while (DateTime.UtcNow - startTime < overallTimeout)
-        {
-            try
-            {
-                var remainingTime = overallTimeout - (DateTime.UtcNow - startTime);
-                if (remainingTime <= TimeSpan.Zero) break;
-
-                using var cts = new CancellationTokenSource(remainingTime);
-                var result = await webSocket.ReceiveAsync(receiveBuffer, cts.Token);
-
-                if (receiveBuffer.Array == null || result.Count == 0)
-                {
-                    continue;
-                }
-
-                // Parse the binary message
-                var receivedMessage = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
-
-                // Check if this is an event message (capability manifest)
-                if (!receivedMessage.Flags.HasFlag(MessageFlags.Event))
-                {
-                    continue;
-                }
-
-                if (receivedMessage.Payload.Length == 0)
-                {
-                    continue;
-                }
-
-                var payloadJson = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
-
-                JsonObject? manifest;
-                try
-                {
-                    manifest = JsonNode.Parse(payloadJson)?.AsObject();
-                }
-                catch
-                {
-                    continue;
-                }
-
-                // Verify this is a capability manifest
-                var type = manifest?["type"]?.GetValue<string>();
-                if (type != "capability_manifest")
-                {
-                    continue;
-                }
-
-                var availableApis = manifest?["availableAPIs"]?.AsArray();
-                if (availableApis == null)
-                {
-                    continue;
-                }
-
-                // Cache ALL GUIDs from the manifest to avoid waiting for another manifest
-                // that will never arrive (server only pushes manifest once at connection time)
-                CacheAllGuidsFromManifest(availableApis);
-
-                // Now check the cache for our endpoint
-                var cacheKey = $"{method}:{path}";
-                if (_serviceGuidCache.TryGetValue(cacheKey, out var guid))
-                {
-                    return guid;
-                }
-
-                // API not found in this manifest - wait for capability updates
-                Console.WriteLine($"   API {method}:{path} not found in manifest ({_serviceGuidCache.Count} APIs cached), waiting for updates...");
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"   Error receiving message: {ex.Message}, retrying...");
-            }
-        }
-
-        Console.WriteLine($"   Timeout waiting for API {method}:{path} to become available");
-        return Guid.Empty;
-    }
-
-    /// <summary>
-    /// Finds the GUID for a specific endpoint in the capability manifest.
-    /// </summary>
-    private Guid FindGuidInManifest(JsonArray availableApis, string method, string path)
-    {
-        // Try exact match first
-        foreach (var api in availableApis)
-        {
-            var apiMethod = api?["method"]?.GetValue<string>();
-            var apiPath = api?["path"]?.GetValue<string>();
-            var apiGuid = api?["serviceGuid"]?.GetValue<string>();
-
-            if (apiMethod == method && apiPath == path && !string.IsNullOrEmpty(apiGuid))
-            {
-                if (Guid.TryParse(apiGuid, out var guid))
-                {
-                    return guid;
-                }
-            }
-        }
-
-        // Try by endpoint key format
-        foreach (var api in availableApis)
-        {
-            var endpointKey = api?["endpointKey"]?.GetValue<string>();
-            var apiGuid = api?["serviceGuid"]?.GetValue<string>();
-
-            if (!string.IsNullOrEmpty(endpointKey) && endpointKey.Contains($":{method}:{path}"))
-            {
-                if (Guid.TryParse(apiGuid, out var guid))
-                {
-                    return guid;
-                }
-            }
-        }
-
-        return Guid.Empty;
-    }
-
-    /// <summary>
-    /// Caches ALL service GUIDs from a capability manifest.
-    /// This is critical because the server only pushes the manifest once at connection time.
-    /// Without caching all GUIDs upfront, subsequent API calls would wait forever for a
-    /// new manifest that never arrives.
-    /// </summary>
-    private void CacheAllGuidsFromManifest(JsonArray availableApis)
-    {
-        var cachedCount = 0;
-        foreach (var api in availableApis)
-        {
-            var apiMethod = api?["method"]?.GetValue<string>();
-            var apiPath = api?["path"]?.GetValue<string>();
-            var apiGuid = api?["serviceGuid"]?.GetValue<string>();
-
-            if (!string.IsNullOrEmpty(apiMethod) && !string.IsNullOrEmpty(apiPath) && !string.IsNullOrEmpty(apiGuid))
-            {
-                if (Guid.TryParse(apiGuid, out var guid))
-                {
-                    var cacheKey = $"{apiMethod}:{apiPath}";
-                    if (!_serviceGuidCache.ContainsKey(cacheKey))
-                    {
-                        _serviceGuidCache[cacheKey] = guid;
-                        cachedCount++;
-                    }
-                }
-            }
-        }
-
-        if (cachedCount > 0)
-        {
-            Console.WriteLine($"   Cached {cachedCount} API GUIDs from capability manifest (total: {_serviceGuidCache.Count})");
-        }
-    }
-
-    /// <summary>
-    /// Waits for a Response message from the WebSocket, skipping any Event messages.
-    /// </summary>
-    private async Task<BinaryMessage?> WaitForResponseMessage(ClientWebSocket webSocket, TimeSpan timeout)
-    {
-        var startTime = DateTime.UtcNow;
-        var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
-
-        while (DateTime.UtcNow - startTime < timeout)
-        {
-            try
-            {
-                var remainingTime = timeout - (DateTime.UtcNow - startTime);
-                if (remainingTime <= TimeSpan.Zero) break;
-
-                using var cts = new CancellationTokenSource(remainingTime);
-                var result = await webSocket.ReceiveAsync(receiveBuffer, cts.Token);
-
-                if (result.MessageType == WebSocketMessageType.Close)
-                {
-                    Console.WriteLine("   WebSocket closed while waiting for response");
-                    return null;
-                }
-
-                if (receiveBuffer.Array == null || result.Count == 0)
-                {
-                    continue;
-                }
-
-                // Parse the binary message
-                var message = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
-
-                // Check if this is a Response message (not an Event)
-                if (message.Flags.HasFlag(MessageFlags.Response))
-                {
-                    return message;
-                }
-
-                // If it's an Event message, skip it and continue waiting
-                if (message.Flags.HasFlag(MessageFlags.Event))
-                {
-                    continue;
-                }
-
-                // Message is neither Response nor Event - could be an error
-                if (message.Payload.Length > 0)
-                {
-                    return message;
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"   Error receiving message: {ex.Message}, retrying...");
-            }
-        }
-
-        return null;
-    }
 }
