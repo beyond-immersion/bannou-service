@@ -27,7 +27,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     {
         return new ServiceTest[]
         {
-            // These tests run in sequence - deployment first, then validation
+            // These tests run in sequence - deployment first, then validation, then cleanup
             new ServiceTest(TestDeploySplitTopology, "SplitRouting - Deploy Split Topology", "Orchestrator",
                 "Deploy split-auth-routing-test preset via orchestrator (requires admin)"),
             new ServiceTest(TestConnectionSurvivedDeployment, "SplitRouting - Connection Survived", "WebSocket",
@@ -40,6 +40,9 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 "Verify accounts API calls route to bannou-auth node"),
             new ServiceTest(TestConnectStillOnMainNode, "SplitRouting - Connect on Main", "Routing",
                 "Verify connect service still on bannou-main node"),
+            // CRITICAL: Cleanup MUST run last to reset service mappings for subsequent test runs
+            new ServiceTest(TestCleanupServiceMappings, "SplitRouting - Cleanup", "Orchestrator",
+                "Reset service mappings to default state via Clean API"),
         };
     }
 
@@ -508,6 +511,183 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         {
             Console.WriteLine($"   HTTP request failed: {ex.Message}");
             return null;
+        }
+    }
+
+    /// <summary>
+    /// CRITICAL CLEANUP TEST: Restore default topology and service mappings.
+    /// This MUST run after all split routing tests to ensure subsequent test runs
+    /// (like forward compatibility tests) start with a clean state.
+    ///
+    /// Strategy: Deploy 'edge-tests' preset which puts all services back on single 'bannou' node.
+    /// This will automatically publish the correct service mapping events.
+    /// </summary>
+    private void TestCleanupServiceMappings(string[] args)
+    {
+        Console.WriteLine("=== Restore Default Topology Test ===");
+        Console.WriteLine("CRITICAL: Restoring single-node topology with all services on 'bannou'");
+
+        var adminClient = Program.AdminClient;
+        if (adminClient == null || !adminClient.IsConnected)
+        {
+            Console.WriteLine("❌ Admin client not connected - cannot restore default topology");
+            Console.WriteLine("   ⚠️ WARNING: Subsequent test runs may fail due to stale mappings!");
+            Console.WriteLine("   Attempting fallback cleanup via Clean API...");
+
+            // Fallback: at least try to reset mappings via Clean API
+            try
+            {
+                var fallbackResult = Task.Run(async () => await CleanupViaCleanApiAsync()).Result;
+                if (fallbackResult)
+                {
+                    Console.WriteLine("✅ Fallback cleanup via Clean API succeeded");
+                }
+            }
+            catch (Exception fallbackEx)
+            {
+                Console.WriteLine($"   Fallback cleanup also failed: {fallbackEx.Message}");
+            }
+            return;
+        }
+
+        try
+        {
+            var result = Task.Run(async () => await RestoreDefaultTopologyAsync(adminClient)).Result;
+
+            if (result)
+            {
+                Console.WriteLine("✅ Default topology restore PASSED - system restored to single-node state");
+            }
+            else
+            {
+                Console.WriteLine("❌ Default topology restore FAILED via deploy, trying Clean API fallback...");
+
+                // Fallback: at least reset the mappings via Clean API
+                var fallbackResult = Task.Run(async () => await CleanupViaCleanApiAsync()).Result;
+                if (fallbackResult)
+                {
+                    Console.WriteLine("✅ Fallback cleanup via Clean API succeeded");
+                }
+                else
+                {
+                    Console.WriteLine("   ⚠️ WARNING: Subsequent test runs may fail due to stale mappings!");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Default topology restore FAILED with exception: {ex.Message}");
+            Console.WriteLine("   ⚠️ WARNING: Subsequent test runs may fail due to stale mappings!");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Deploy the default edge-tests topology to restore single-node operation.
+    /// </summary>
+    private async Task<bool> RestoreDefaultTopologyAsync(BannouClient adminClient)
+    {
+        var config = Program.Configuration;
+        var host = config.OpenResty_Host ?? "openresty";
+        var port = config.OpenResty_Port ?? 80;
+        var url = $"http://{host}:{port}/orchestrator/deploy";
+
+        // Deploy edge-tests preset which has all services on single 'bannou' node
+        var deployRequest = new
+        {
+            preset = "edge-tests",
+            backend = "docker-compose",
+            dryRun = false
+        };
+
+        var requestJson = JsonSerializer.Serialize(deployRequest);
+        Console.WriteLine($"   Deploying preset: edge-tests");
+        Console.WriteLine($"   Request: {requestJson}");
+
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", adminClient.AccessToken);
+            request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+            var response = await Program.HttpClient.SendAsync(request);
+            var content = await response.Content.ReadAsStringAsync();
+
+            Console.WriteLine($"   Response ({response.StatusCode}): {content}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseObj = JsonNode.Parse(content);
+                var success = responseObj?["success"]?.GetValue<bool>() ?? false;
+                var message = responseObj?["message"]?.GetValue<string>();
+
+                Console.WriteLine($"   Success: {success}");
+                Console.WriteLine($"   Message: {message}");
+
+                if (success)
+                {
+                    // Wait for deployment to stabilize
+                    Console.WriteLine("   Waiting for topology to stabilize...");
+                    await Task.Delay(3000);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Deploy request failed: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Fallback cleanup via Clean API to at least reset service mappings.
+    /// </summary>
+    private async Task<bool> CleanupViaCleanApiAsync()
+    {
+        var config = Program.Configuration;
+        var host = config.OpenResty_Host ?? "openresty";
+        var port = config.OpenResty_Port ?? 80;
+        var url = $"http://{host}:{port}/orchestrator/clean";
+
+        var cleanRequest = new
+        {
+            targets = new[] { "containers" },
+            force = true
+        };
+
+        var requestJson = JsonSerializer.Serialize(cleanRequest);
+        Console.WriteLine($"   Clean API request: {requestJson}");
+
+        try
+        {
+            // Note: No auth header for fallback - Clean API might work without admin
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+            var response = await Program.HttpClient.SendAsync(request);
+            var content = await response.Content.ReadAsStringAsync();
+
+            Console.WriteLine($"   Clean response ({response.StatusCode}): {content}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Wait for mapping events to propagate
+                await Task.Delay(2000);
+                return true;
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Clean API request failed: {ex.Message}");
+            return false;
         }
     }
 }

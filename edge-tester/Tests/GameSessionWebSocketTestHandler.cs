@@ -16,6 +16,8 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
     {
         return new ServiceTest[]
         {
+            new ServiceTest(TestManifestCachingBehavior, "GameSession - Manifest Caching", "WebSocket",
+                "Validate that all API GUIDs are cached from a single capability manifest"),
             new ServiceTest(TestCreateGameSessionViaWebSocket, "GameSession - Create (WebSocket)", "WebSocket",
                 "Test game session creation via WebSocket binary protocol"),
             new ServiceTest(TestListGameSessionsViaWebSocket, "GameSession - List (WebSocket)", "WebSocket",
@@ -23,6 +25,102 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
             new ServiceTest(TestCompleteSessionLifecycleViaWebSocket, "GameSession - Full Lifecycle (WebSocket)", "WebSocket",
                 "Test complete session lifecycle via WebSocket: create -> join -> action -> leave"),
         };
+    }
+
+    /// <summary>
+    /// Tests that the manifest caching behavior works correctly.
+    /// This validates that all API GUIDs are cached from a single capability manifest,
+    /// preventing the bug where the second API call would timeout waiting for a new manifest.
+    /// </summary>
+    private void TestManifestCachingBehavior(string[] args)
+    {
+        Console.WriteLine("=== Manifest Caching Behavior Test ===");
+        Console.WriteLine("Validating that all API GUIDs are cached from capability manifest...");
+
+        // Clear the cache to ensure fresh state
+        _serviceGuidCache.Clear();
+
+        try
+        {
+            var result = Task.Run(async () =>
+            {
+                if (Program.Configuration == null)
+                {
+                    Console.WriteLine("   Configuration not available");
+                    return false;
+                }
+
+                var accessToken = Program.Client?.AccessToken;
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    Console.WriteLine("   Access token not available");
+                    return false;
+                }
+
+                var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+                using var webSocket = new ClientWebSocket();
+                webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
+
+                await webSocket.ConnectAsync(serverUri, CancellationToken.None);
+                Console.WriteLine("   WebSocket connected");
+
+                // Request one API - this should trigger manifest caching of ALL APIs
+                var firstGuid = await ReceiveCapabilityManifestAndGetGuid(webSocket, "POST", "/sessions/list");
+
+                if (firstGuid == Guid.Empty)
+                {
+                    Console.WriteLine("   Failed to get GUID for /sessions/list");
+                    return false;
+                }
+                Console.WriteLine($"   Got GUID for /sessions/list: {firstGuid}");
+
+                // Now verify that OTHER APIs are also in the cache (without waiting for manifest)
+                var cachedApis = new[]
+                {
+                    ("POST", "/sessions/create"),
+                    ("POST", "/sessions/join"),
+                    ("POST", "/sessions/leave"),
+                    ("POST", "/sessions/get")
+                };
+
+                var allCached = true;
+                foreach (var (method, path) in cachedApis)
+                {
+                    var cacheKey = $"{method}:{path}";
+                    if (_serviceGuidCache.TryGetValue(cacheKey, out var cachedGuid))
+                    {
+                        Console.WriteLine($"   ✅ {cacheKey} cached: {cachedGuid}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"   ❌ {cacheKey} NOT in cache - this would cause timeout!");
+                        allCached = false;
+                    }
+                }
+
+                Console.WriteLine($"   Total APIs in cache: {_serviceGuidCache.Count}");
+
+                if (webSocket.State == WebSocketState.Open)
+                {
+                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Test complete", CancellationToken.None);
+                }
+
+                return allCached;
+            }).Result;
+
+            if (result)
+            {
+                Console.WriteLine("PASSED Manifest caching behavior test");
+            }
+            else
+            {
+                Console.WriteLine("FAILED Manifest caching behavior test");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FAILED Manifest caching test with exception: {ex.Message}");
+        }
     }
 
     private void TestCreateGameSessionViaWebSocket(string[] args)
@@ -622,15 +720,19 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                     continue;
                 }
 
-                // Try to find the GUID for our endpoint
-                var guid = FindGuidInManifest(availableApis, method, path);
-                if (guid != Guid.Empty)
+                // Cache ALL GUIDs from the manifest to avoid waiting for another manifest
+                // that will never arrive (server only pushes manifest once at connection time)
+                CacheAllGuidsFromManifest(availableApis);
+
+                // Now check the cache for our endpoint
+                var cacheKey = $"{method}:{path}";
+                if (_serviceGuidCache.TryGetValue(cacheKey, out var guid))
                 {
                     return guid;
                 }
 
-                // API not found yet - wait for capability updates
-                Console.WriteLine($"   API {method}:{path} not found in manifest, waiting for updates...");
+                // API not found in this manifest - wait for capability updates
+                Console.WriteLine($"   API {method}:{path} not found in manifest ({_serviceGuidCache.Count} APIs cached), waiting for updates...");
             }
             catch (OperationCanceledException)
             {
@@ -683,6 +785,41 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
         }
 
         return Guid.Empty;
+    }
+
+    /// <summary>
+    /// Caches ALL service GUIDs from a capability manifest.
+    /// This is critical because the server only pushes the manifest once at connection time.
+    /// Without caching all GUIDs upfront, subsequent API calls would wait forever for a
+    /// new manifest that never arrives.
+    /// </summary>
+    private void CacheAllGuidsFromManifest(JsonArray availableApis)
+    {
+        var cachedCount = 0;
+        foreach (var api in availableApis)
+        {
+            var apiMethod = api?["method"]?.GetValue<string>();
+            var apiPath = api?["path"]?.GetValue<string>();
+            var apiGuid = api?["serviceGuid"]?.GetValue<string>();
+
+            if (!string.IsNullOrEmpty(apiMethod) && !string.IsNullOrEmpty(apiPath) && !string.IsNullOrEmpty(apiGuid))
+            {
+                if (Guid.TryParse(apiGuid, out var guid))
+                {
+                    var cacheKey = $"{apiMethod}:{apiPath}";
+                    if (!_serviceGuidCache.ContainsKey(cacheKey))
+                    {
+                        _serviceGuidCache[cacheKey] = guid;
+                        cachedCount++;
+                    }
+                }
+            }
+        }
+
+        if (cachedCount > 0)
+        {
+            Console.WriteLine($"   Cached {cachedCount} API GUIDs from capability manifest (total: {_serviceGuidCache.Count})");
+        }
     }
 
     /// <summary>
