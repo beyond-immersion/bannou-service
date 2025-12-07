@@ -258,8 +258,18 @@ public class GameSessionTestHandler : IServiceTestHandler
             var createResponse = await gameSessionClient.CreateGameSessionAsync(createRequest);
             var sessionIdGuid = Guid.Parse(createResponse.SessionId);
 
-            // Join with a test player to kick (simulated via account ID)
-            var playerToKick = Guid.NewGuid();
+            // Join the session first - this adds a player that we can kick
+            var joinRequest = new JoinGameSessionRequest { SessionId = sessionIdGuid };
+            await gameSessionClient.JoinGameSessionAsync(joinRequest);
+
+            // Get the session to find the player's account ID
+            var getRequest = new GetGameSessionRequest { SessionId = sessionIdGuid };
+            var session = await gameSessionClient.GetGameSessionAsync(getRequest);
+
+            if (session.Players == null || session.Players.Count == 0)
+                return TestResult.Failed("No players in session after join");
+
+            var playerToKick = session.Players[0].AccountId;
 
             // Now test kicking the player
             var kickRequest = new KickPlayerRequest

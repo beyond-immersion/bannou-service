@@ -1,0 +1,78 @@
+# Split Service Routing Test Preset
+# Tests dynamic service-to-app-id routing with auth/accounts on separate node
+# This validates the core multi-node routing architecture
+#
+# Topology:
+# - bannou-main: connect, permissions, game-session, behavior, orchestrator, testing
+# - bannou-auth: accounts, auth
+#
+# When deployed, ServiceMappingEvents are published:
+# - accounts -> bannou-auth
+# - auth -> bannou-auth
+# - connect -> bannou-main
+# - permissions -> bannou-main
+# - etc.
+#
+# The ServiceAppMappingResolver receives these events and routes accordingly.
+
+name: split-auth-routing-test
+description: Split service deployment for routing validation - auth/accounts on separate node
+category: testing
+
+topology:
+  nodes:
+    # Main node - handles most services
+    - name: bannou-main
+      services:
+        - connect
+        - permissions
+        - game-session
+        - behavior
+        - orchestrator
+        - website
+        - testing
+      replicas: 1
+      environment:
+        ASPNETCORE_ENVIRONMENT: Development
+        TESTING_SERVICE_ENABLED: "true"
+        # This node is the "main" entry point
+        BANNOU_IS_MAIN_NODE: "true"
+
+    # Auth node - handles authentication services only
+    - name: bannou-auth
+      services:
+        - accounts
+        - auth
+      replicas: 1
+      environment:
+        ASPNETCORE_ENVIRONMENT: Development
+        # This node only handles auth
+        BANNOU_IS_AUTH_NODE: "true"
+
+  infrastructure:
+    mysql:
+      enabled: true
+      version: "8.0"
+    redis:
+      enabled: true
+      version: "7"
+    rabbitmq:
+      enabled: true
+      version: "3.12-management"
+
+environment:
+  # Moderate logging for test visibility
+  APP_LOGGING_LEVEL: Debug
+  WEB_HOST_LOGGING_LEVEL: Warning
+  BANNOU_APP_LOGGING_LEVEL: Debug
+  BANNOU_WEB_HOST_LOGGING_LEVEL: Warning
+
+  # Admin configuration
+  BANNOU_AdminEmailDomain: "@admin.test.local"
+
+  # Test credentials
+  Admin_Username: admin@admin.test.local
+  Admin_Password: admin-test-password-2025
+
+requiredBackends:
+  - docker-compose

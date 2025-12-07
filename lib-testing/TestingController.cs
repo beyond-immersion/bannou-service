@@ -188,6 +188,144 @@ public class TestingController : ControllerBase
         return Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow });
     }
 
+    /// <summary>
+    /// Debug endpoint to log and return the actual HTTP request path received by the controller.
+    /// This helps diagnose routing issues, particularly for verifying Dapr path handling.
+    /// </summary>
+    /// <remarks>
+    /// When Dapr forwards requests, it may strip the /v1.0/invoke/{app-id}/method/ prefix.
+    /// This endpoint allows us to verify exactly what path the controller receives.
+    /// </remarks>
+    [HttpGet("debug/path")]
+    [HttpPost("debug/path")]
+    public IActionResult DebugPath()
+    {
+        var requestInfo = new RoutingDebugInfo
+        {
+            RawUrl = Request.HttpContext.Request.Path.Value ?? "(none)",
+            PathBase = Request.PathBase.Value ?? "(none)",
+            Path = Request.Path.Value ?? "(none)",
+            QueryString = Request.QueryString.Value ?? "(none)",
+            Method = Request.Method,
+            Host = Request.Host.ToString(),
+            Scheme = Request.Scheme,
+            Headers = GetSafeHeaders(),
+            ControllerRoute = GetControllerRoute(),
+            ActionRoute = GetActionRoute(),
+            Timestamp = DateTime.UtcNow
+        };
+
+        _logger.LogInformation(
+            "DEBUG PATH - RawUrl: {RawUrl}, PathBase: {PathBase}, Path: {Path}, ControllerRoute: {ControllerRoute}",
+            requestInfo.RawUrl,
+            requestInfo.PathBase,
+            requestInfo.Path,
+            requestInfo.ControllerRoute);
+
+        return Ok(requestInfo);
+    }
+
+    /// <summary>
+    /// Debug endpoint that echoes back the full path including any prefix.
+    /// Call this at different path depths to see what the controller receives.
+    /// </summary>
+    [HttpGet("debug/path/{*catchAll}")]
+    [HttpPost("debug/path/{*catchAll}")]
+    public IActionResult DebugPathWithCatchAll(string catchAll)
+    {
+        var requestInfo = new RoutingDebugInfo
+        {
+            RawUrl = Request.HttpContext.Request.Path.Value ?? "(none)",
+            PathBase = Request.PathBase.Value ?? "(none)",
+            Path = Request.Path.Value ?? "(none)",
+            QueryString = Request.QueryString.Value ?? "(none)",
+            Method = Request.Method,
+            Host = Request.Host.ToString(),
+            Scheme = Request.Scheme,
+            Headers = GetSafeHeaders(),
+            ControllerRoute = GetControllerRoute(),
+            ActionRoute = GetActionRoute(),
+            CatchAllSegment = catchAll ?? "(none)",
+            Timestamp = DateTime.UtcNow
+        };
+
+        _logger.LogInformation(
+            "DEBUG PATH (catch-all) - RawUrl: {RawUrl}, CatchAll: {CatchAll}, ControllerRoute: {ControllerRoute}",
+            requestInfo.RawUrl,
+            catchAll,
+            requestInfo.ControllerRoute);
+
+        return Ok(requestInfo);
+    }
+
+    /// <summary>
+    /// Gets the controller route attribute value.
+    /// </summary>
+    private string GetControllerRoute()
+    {
+        var routeAttribute = GetType().GetCustomAttributes(typeof(RouteAttribute), true)
+            .OfType<RouteAttribute>()
+            .FirstOrDefault();
+        return routeAttribute?.Template ?? "(no route attribute)";
+    }
+
+    /// <summary>
+    /// Gets the action route attribute value.
+    /// </summary>
+    private string GetActionRoute()
+    {
+        var methodInfo = GetType().GetMethod(nameof(DebugPath));
+        if (methodInfo == null) return "(method not found)";
+
+        var httpGetAttr = methodInfo.GetCustomAttributes(typeof(HttpGetAttribute), true)
+            .OfType<HttpGetAttribute>()
+            .FirstOrDefault();
+        return httpGetAttr?.Template ?? "(no action route)";
+    }
+
+    /// <summary>
+    /// Gets a safe subset of headers for debugging (excludes sensitive ones).
+    /// </summary>
+    private Dictionary<string, string> GetSafeHeaders()
+    {
+        var safeHeaders = new Dictionary<string, string>();
+        var allowedHeaders = new[]
+        {
+            "Host", "Content-Type", "Accept", "User-Agent",
+            "dapr-app-id", "dapr-caller-app-id", "traceparent", "tracestate",
+            "X-Forwarded-For", "X-Forwarded-Proto", "X-Forwarded-Host"
+        };
+
+        foreach (var header in Request.Headers)
+        {
+            if (allowedHeaders.Contains(header.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                safeHeaders[header.Key] = header.Value.ToString();
+            }
+        }
+
+        return safeHeaders;
+    }
+
+    /// <summary>
+    /// Routing debug information response model.
+    /// </summary>
+    public class RoutingDebugInfo
+    {
+        public string RawUrl { get; set; } = string.Empty;
+        public string PathBase { get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
+        public string QueryString { get; set; } = string.Empty;
+        public string Method { get; set; } = string.Empty;
+        public string Host { get; set; } = string.Empty;
+        public string Scheme { get; set; } = string.Empty;
+        public Dictionary<string, string> Headers { get; set; } = new();
+        public string ControllerRoute { get; set; } = string.Empty;
+        public string ActionRoute { get; set; } = string.Empty;
+        public string CatchAllSegment { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
+    }
+
     private int GetEnabledServiceCount()
     {
         try

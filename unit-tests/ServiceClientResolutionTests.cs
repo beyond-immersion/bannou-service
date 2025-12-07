@@ -57,6 +57,184 @@ public class ServiceClientResolutionTests
     }
 
     /// <summary>
+    /// Tests that UpdateServiceMapping correctly overrides the default app-id.
+    /// This is the foundation for distributed multi-node deployments.
+    /// </summary>
+    [Fact]
+    public void ServiceAppMappingResolver_UpdateServiceMapping_OverridesDefault()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddServiceAppMappingResolver();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
+
+        // Verify default first
+        Assert.Equal("bannou", resolver.GetAppIdForService("accounts"));
+
+        // Act - Update the mapping to point to a different app-id
+        resolver.UpdateServiceMapping("accounts", "bannou-accounts-node");
+
+        // Assert - Now it should return the new mapping
+        Assert.Equal("bannou-accounts-node", resolver.GetAppIdForService("accounts"));
+
+        // Other services should still use default
+        Assert.Equal("bannou", resolver.GetAppIdForService("auth"));
+        Assert.Equal("bannou", resolver.GetAppIdForService("behavior"));
+    }
+
+    /// <summary>
+    /// Tests that multiple services can be mapped to different app-ids.
+    /// This validates the split-service deployment scenario.
+    /// </summary>
+    [Fact]
+    public void ServiceAppMappingResolver_UpdateServiceMapping_SupportsSplitDeployment()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddServiceAppMappingResolver();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
+
+        // Act - Map different services to different nodes
+        resolver.UpdateServiceMapping("accounts", "bannou-auth-accounts-node");
+        resolver.UpdateServiceMapping("auth", "bannou-auth-accounts-node");
+        resolver.UpdateServiceMapping("behavior", "bannou-behavior-node");
+
+        // Assert - Each service routes to its designated node
+        Assert.Equal("bannou-auth-accounts-node", resolver.GetAppIdForService("accounts"));
+        Assert.Equal("bannou-auth-accounts-node", resolver.GetAppIdForService("auth"));
+        Assert.Equal("bannou-behavior-node", resolver.GetAppIdForService("behavior"));
+
+        // Unmapped services still default to bannou
+        Assert.Equal("bannou", resolver.GetAppIdForService("game-session"));
+    }
+
+    /// <summary>
+    /// Tests that RemoveServiceMapping reverts to the default app-id.
+    /// This validates dynamic service unregistration.
+    /// </summary>
+    [Fact]
+    public void ServiceAppMappingResolver_RemoveServiceMapping_RevertsToDefault()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddServiceAppMappingResolver();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
+
+        // Set up a mapping first
+        resolver.UpdateServiceMapping("accounts", "bannou-accounts-node");
+        Assert.Equal("bannou-accounts-node", resolver.GetAppIdForService("accounts"));
+
+        // Act - Remove the mapping
+        resolver.RemoveServiceMapping("accounts");
+
+        // Assert - Should revert to default
+        Assert.Equal("bannou", resolver.GetAppIdForService("accounts"));
+    }
+
+    /// <summary>
+    /// Tests that GetAllMappings returns the current state of all mappings.
+    /// This is useful for debugging and monitoring.
+    /// </summary>
+    [Fact]
+    public void ServiceAppMappingResolver_GetAllMappings_ReturnsCurrentState()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddServiceAppMappingResolver();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
+
+        // Initially should have no mappings
+        var initialMappings = resolver.GetAllMappings();
+        Assert.Empty(initialMappings);
+
+        // Act - Add some mappings
+        resolver.UpdateServiceMapping("accounts", "node-1");
+        resolver.UpdateServiceMapping("auth", "node-2");
+
+        var currentMappings = resolver.GetAllMappings();
+
+        // Assert
+        Assert.Equal(2, currentMappings.Count);
+        Assert.Equal("node-1", currentMappings["accounts"]);
+        Assert.Equal("node-2", currentMappings["auth"]);
+
+        // Verify removal updates the mapping state
+        resolver.RemoveServiceMapping("accounts");
+        var afterRemoval = resolver.GetAllMappings();
+        Assert.Single(afterRemoval);
+        Assert.False(afterRemoval.ContainsKey("accounts"));
+        Assert.True(afterRemoval.ContainsKey("auth"));
+    }
+
+    /// <summary>
+    /// Tests that UpdateServiceMapping handles edge cases properly.
+    /// </summary>
+    [Fact]
+    public void ServiceAppMappingResolver_UpdateServiceMapping_HandlesEdgeCases()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddServiceAppMappingResolver();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
+
+        // Act & Assert - Empty or null service names should not throw, but should not create mapping
+        resolver.UpdateServiceMapping("", "some-app");
+        resolver.UpdateServiceMapping("   ", "some-app");
+
+        // These should not create mappings
+        var mappings = resolver.GetAllMappings();
+        Assert.Empty(mappings);
+
+        // Empty app-id should not create mapping
+        resolver.UpdateServiceMapping("valid-service", "");
+        resolver.UpdateServiceMapping("valid-service", "   ");
+
+        mappings = resolver.GetAllMappings();
+        Assert.Empty(mappings);
+
+        // Valid mapping should work
+        resolver.UpdateServiceMapping("valid-service", "valid-app");
+        mappings = resolver.GetAllMappings();
+        Assert.Single(mappings);
+        Assert.Equal("valid-app", mappings["valid-service"]);
+    }
+
+    /// <summary>
+    /// Tests null service name handling in GetAppIdForService.
+    /// </summary>
+    [Fact]
+    public void ServiceAppMappingResolver_GetAppIdForService_HandlesNullServiceName()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddServiceAppMappingResolver();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
+
+        // Act & Assert - null should return default
+        Assert.Equal("bannou", resolver.GetAppIdForService(null));
+        Assert.Equal("bannou", resolver.GetAppIdForService(""));
+        Assert.Equal("bannou", resolver.GetAppIdForService("   "));
+    }
+
+    /// <summary>
     /// Demonstrates the CORRECT pattern for service-to-service calls.
     /// Services should use HttpClient + ServiceAppMappingResolver, NOT direct interface injection.
     /// </summary>

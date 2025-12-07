@@ -135,6 +135,12 @@ Reference the Makefile in the repository root for all available commands and est
 - **Enum Consolidation**: Use shared enum definitions in `components/schemas` section with `$ref` references to avoid duplication (e.g., Provider enum)
 - **$ref Resolution**: Interface generation properly handles `$ref` enum parameters - never fallback to string types
 - **Duplicate Prevention**: Fix schema duplications at source rather than using exclusions in generation scripts
+- **⚠️ CRITICAL - `servers` URL**: ALL schemas MUST use `bannou` as the app-id:
+  ```yaml
+  servers:
+    - url: http://localhost:3500/v1.0/invoke/bannou/method  # ✅ CORRECT - always use "bannou"
+  ```
+  NSwag generates controller route prefixes from this URL. Dapr preserves the full path (does NOT strip the prefix), so if a schema uses a different app-id (e.g., `game-session`), the generated controller route won't match what clients send → 404 errors. See API-DESIGN.md for full explanation.
 
 **Required Workflow**:
 1. **Schema First**: Edit OpenAPI YAML in `/schemas/` directory

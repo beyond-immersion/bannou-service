@@ -743,6 +743,12 @@ public class Program
         var gameSessionTestHandler = new GameSessionWebSocketTestHandler();
         foreach (ServiceTest serviceTest in gameSessionTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load split-service routing tests (MUST BE LAST - modifies deployment topology)
+        // These tests deploy a multi-node configuration and validate dynamic routing
+        var splitRoutingTestHandler = new SplitServiceRoutingTestHandler();
+        foreach (ServiceTest serviceTest in splitRoutingTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
     }
 
     private static void RunEntireTestSuite(string[] args)
