@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.Subscriptions;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -16,6 +17,7 @@ public class AuthServiceTests
     private readonly Mock<ILogger<AuthService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly Mock<IAccountsClient> _mockAccountsClient;
+    private readonly Mock<ISubscriptionsClient> _mockSubscriptionsClient;
     private readonly Mock<DaprClient> _mockDaprClient;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
 
@@ -44,6 +46,7 @@ public class AuthServiceTests
             SteamAppId = "123456"
         };
         _mockAccountsClient = new Mock<IAccountsClient>();
+        _mockSubscriptionsClient = new Mock<ISubscriptionsClient>();
         _mockDaprClient = new Mock<DaprClient>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
 
@@ -58,6 +61,7 @@ public class AuthServiceTests
         // Arrange & Act & Assert
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -228,6 +232,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -253,6 +258,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -278,6 +284,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -303,6 +310,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -328,6 +336,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -353,6 +362,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -378,6 +388,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -402,6 +413,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -426,6 +438,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -450,6 +463,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -469,6 +483,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -488,6 +503,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -507,6 +523,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -526,6 +543,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -549,6 +567,20 @@ public class AuthServiceTests
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             null!,
+            _mockSubscriptionsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullSubscriptionsClient_ShouldThrow()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new AuthService(
+            _mockAccountsClient.Object,
+            null!,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -561,6 +593,7 @@ public class AuthServiceTests
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             null!,
             _configuration,
             _mockLogger.Object,
@@ -573,6 +606,7 @@ public class AuthServiceTests
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             null!,
             _mockLogger.Object,
@@ -585,6 +619,7 @@ public class AuthServiceTests
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             null!,
@@ -597,6 +632,7 @@ public class AuthServiceTests
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -624,6 +660,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -646,6 +683,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -665,6 +703,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -707,6 +746,7 @@ public class AuthServiceTests
 
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -732,6 +772,7 @@ public class AuthServiceTests
         // Arrange - No mock setup means GetStateAsync returns null (invalid token)
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -774,6 +815,7 @@ public class AuthServiceTests
 
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -820,6 +862,7 @@ public class AuthServiceTests
 
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -851,6 +894,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -875,6 +919,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -898,6 +943,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -921,6 +967,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -949,6 +996,7 @@ public class AuthServiceTests
 
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -972,6 +1020,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
@@ -996,6 +1045,7 @@ public class AuthServiceTests
         // Arrange
         var service = new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
