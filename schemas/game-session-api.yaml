@@ -9,8 +9,8 @@ info:
     See API-DESIGN.md for architectural rationale.
   version: 2.0.0
 servers:
-  - url: http://localhost:3500/v1.0/invoke/game-session/method
-    description: Dapr sidecar endpoint
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
+    description: Dapr sidecar endpoint (internal only)
 
 paths:
   /sessions/list:

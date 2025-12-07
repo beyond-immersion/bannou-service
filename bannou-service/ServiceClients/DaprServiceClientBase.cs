@@ -68,6 +68,25 @@ public abstract class DaprServiceClientBase : IDaprClient
     /// For parameterless constructor, falls back to "bannou" app-id.
     /// Uses environment variable DAPR_HTTP_ENDPOINT if available for containerized environments.
     /// </summary>
+    /// <remarks>
+    /// CRITICAL ARCHITECTURAL CONSTRAINT:
+    /// The app-id used here ("bannou" by default) becomes part of the URL path that Dapr
+    /// forwards to the target service. Dapr does NOT strip the /v1.0/invoke/{app-id}/method/
+    /// prefix - it preserves the full path.
+    ///
+    /// This means all OpenAPI schemas MUST use the same app-id in their `servers` URL:
+    ///   servers:
+    ///     - url: http://localhost:3500/v1.0/invoke/bannou/method
+    ///
+    /// NSwag generates controller route prefixes from this URL. If the schema uses a different
+    /// app-id (e.g., "game-session"), the generated controller route won't match the path
+    /// that clients send, resulting in 404 errors.
+    ///
+    /// The ServiceAppMappingResolver can dynamically route to different Dapr sidecars, but
+    /// the path structure (including app-id) must match what controllers expect.
+    ///
+    /// See API-DESIGN.md "servers URL Constraint" section for full documentation.
+    /// </remarks>
     protected string BaseUrl
     {
         get
