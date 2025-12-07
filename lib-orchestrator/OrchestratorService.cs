@@ -354,7 +354,7 @@ public class OrchestratorService : IOrchestratorService
                     Backend = body.Backend,
                     Duration = "0s",
                     Message = $"Requested backend '{body.Backend}' is not available: {errorMsg}. " +
-                              $"Available backends: {string.Join(", ", backends.Backends?.Where(b => b.Available).Select(b => b.Type) ?? Enumerable.Empty<BackendType>())}"
+                            $"Available backends: {string.Join(", ", backends.Backends?.Where(b => b.Available).Select(b => b.Type) ?? Enumerable.Empty<BackendType>())}"
                 });
             }
 
@@ -581,7 +581,7 @@ public class OrchestratorService : IOrchestratorService
                 Deployed = containers.Count > 0,
                 Timestamp = DateTimeOffset.UtcNow,
                 Backend = orchestrator.BackendType,
-                Topology = containers.Count > 0 ? topology : null,
+                Topology = containers.Count > 0 ? topology : new ServiceTopology(),
                 Services = containers.Select(c => new DeployedService
                 {
                     Name = c.AppName ?? "unknown",
