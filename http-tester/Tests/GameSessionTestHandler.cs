@@ -269,7 +269,7 @@ public class GameSessionTestHandler : IServiceTestHandler
             if (session.Players == null || session.Players.Count == 0)
                 return TestResult.Failed("No players in session after join");
 
-            var playerToKick = session.Players[0].AccountId;
+            var playerToKick = session.Players.First().AccountId;
 
             // Now test kicking the player
             var kickRequest = new KickPlayerRequest
