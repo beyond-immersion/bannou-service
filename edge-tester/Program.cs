@@ -370,7 +370,6 @@ public class Program
                 connected = await _client.RegisterAndConnectAsync(serverUrl, username, email, password);
                 if (!connected)
                 {
-                    Console.WriteLine($"Registration failed: {_client.LastError}");
                     throw new InvalidOperationException($"Failed to register and connect using BannouClient: {_client.LastError}");
                 }
 
@@ -388,7 +387,7 @@ public class Program
             // The capability manifest is the source of truth for what APIs are available
             if (!await WaitForCapabilityManifest(_client, 60))
             {
-                Console.WriteLine("⚠️ Capability manifest check failed - some tests may fail due to missing service permissions.");
+                throw new Exception("Capability manifest check failed.");
             }
 
             // Also authenticate with admin credentials for orchestrator API tests
@@ -396,7 +395,7 @@ public class Program
             bool adminAuthenticated = await EnsureAdminAuthenticated();
             if (!adminAuthenticated)
             {
-                Console.WriteLine("⚠️ Admin authentication failed - orchestrator tests may fail.");
+                throw new Exception("Admin authentication failed.");
             }
             Console.WriteLine();
 
@@ -409,11 +408,6 @@ public class Program
 
             if (!connectivityPassed)
             {
-                if (IsDaemonMode(args))
-                {
-                    Console.WriteLine("❌ Basic WebSocket connectivity test FAILED");
-                    Environment.Exit(1); // CI failure exit code
-                }
                 throw new Exception("WebSocket protocol test failed.");
             }
 
@@ -545,7 +539,7 @@ public class Program
 
         if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
         {
-            Console.WriteLine("⚠️ Admin credentials not configured - orchestrator tests will be skipped.");
+            Console.WriteLine("⚠️ Admin credentials not configured.");
             return false;
         }
 
@@ -558,7 +552,7 @@ public class Program
             connected = await _adminClient.RegisterAndConnectAsync(serverUrl, adminUsername, adminEmail, adminPassword);
             if (!connected)
             {
-                Console.WriteLine("⚠️ Failed to create admin account - orchestrator tests will be skipped.");
+                Console.WriteLine("❌ Failed to create admin account.");
                 _adminClient = null;
                 return false;
             }

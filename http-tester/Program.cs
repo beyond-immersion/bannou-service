@@ -116,7 +116,7 @@ public class Program
             Console.WriteLine($"Stack trace: {exc.StackTrace}");
 
             WaitForUserInput("Press any key to exit...", args);
-            return 1;  // Return failure exit code
+            return 1;
         }
     }
 
@@ -214,16 +214,16 @@ public class Program
             // This ensures event-driven tests will work properly
             if (!await WaitForPubSubReadiness(daprClient))
             {
-                Console.WriteLine("⚠️ Pubsub readiness check failed, continuing anyway...");
-                // Don't fail here - individual tests that need pubsub will report meaningful errors
+                Console.WriteLine("❌ Pubsub readiness check failed.");
+                return false;
             }
 
             // Wait for statestore component to be ready (Redis connectivity)
             // This ensures Accounts service tests will work properly
             if (!await WaitForStateStoreReadiness(daprClient))
             {
-                Console.WriteLine("⚠️ Statestore readiness check failed, continuing anyway...");
-                // Don't fail here - individual tests that need statestore will report meaningful errors
+                Console.WriteLine("❌ Statestore readiness check failed.");
+                return false;
             }
 
             Console.WriteLine("✅ Service provider setup completed successfully");
@@ -234,8 +234,8 @@ public class Program
             var permissionsClient = ServiceProvider.GetRequiredService<BeyondImmersion.BannouService.Permissions.IPermissionsClient>();
             if (!await WaitForServiceReadiness(permissionsClient))
             {
-                Console.WriteLine("⚠️ Service readiness check timed out, continuing anyway...");
-                // Don't fail here - tests will report meaningful errors for individual services
+                Console.WriteLine("❌ Service readiness check timed out.");
+                return false;
             }
 
             return true;
@@ -325,10 +325,8 @@ public class Program
             await Task.Delay(checkInterval);
         }
 
-        Console.WriteLine($"⚠️ Pubsub readiness check timed out after {timeout.TotalSeconds}s. Event-driven tests may fail.");
-        // Return true anyway - we don't want to block all tests just because pubsub isn't ready
-        // Individual tests that need pubsub will fail with meaningful errors
-        return true;
+        Console.WriteLine($"❌ Pubsub readiness check timed out after {timeout.TotalSeconds}s.");
+        return false;
     }
 
     /// <summary>
@@ -375,10 +373,8 @@ public class Program
             await Task.Delay(checkInterval);
         }
 
-        Console.WriteLine($"⚠️ Statestore readiness check timed out after {timeout.TotalSeconds}s. Accounts tests may fail.");
-        // Return true anyway - we don't want to block all tests just because statestore isn't ready
-        // Individual tests that need statestore will fail with meaningful errors
-        return true;
+        Console.WriteLine($"❌ Statestore readiness check timed out after {timeout.TotalSeconds}s.");
+        return false;
     }
 
     /// <summary>
@@ -457,8 +453,7 @@ public class Program
             await Task.Delay(checkInterval);
         }
 
-        Console.WriteLine($"⚠️ Service readiness check timed out after {timeout.TotalSeconds}s.");
-        Console.WriteLine("   Some services may not have registered yet. Tests may fail.");
+        Console.WriteLine($"❌ Service readiness check timed out after {timeout.TotalSeconds}s.");
         return false;
     }
 
