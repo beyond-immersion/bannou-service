@@ -23,7 +23,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             new ServiceTest(TestAccountDeletionDisconnectsWebSocket, "WebSocket - Account Deletion Disconnect", "WebSocket",
                 "Test that deleting an account disconnects the WebSocket connection via event chain"),
             new ServiceTest(TestReconnectionTokenFlow, "WebSocket - Reconnection Token", "WebSocket",
-                "Test that graceful disconnect provides reconnection token and reconnection works")
+                "Test that graceful disconnect provides reconnection token and reconnection works"),
+            new ServiceTest(TestSessionSubsumeBehavior, "WebSocket - Session Subsume", "WebSocket",
+                "Test that second WebSocket with same JWT subsumes (takes over) the first connection")
         };
     }
 
@@ -1031,6 +1033,253 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
         Console.WriteLine("✅ Full reconnection flow completed successfully!");
         return true;
+    }
+
+    private void TestSessionSubsumeBehavior(string[] args)
+    {
+        Console.WriteLine("=== Session Subsume Behavior Test ===");
+        Console.WriteLine("Testing that second WebSocket with same JWT subsumes the first connection...");
+
+        try
+        {
+            var result = Task.Run(async () => await PerformSessionSubsumeTest()).Result;
+            if (result)
+            {
+                Console.WriteLine("✅ Session subsume behavior test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Session subsume behavior test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Session subsume behavior test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   Stack trace: {ex.StackTrace}");
+        }
+    }
+
+    /// <summary>
+    /// Tests the WebSocket session subsume behavior:
+    /// The server only allows one WebSocket per session. When a second WebSocket connects
+    /// with the same JWT (same session_key), the server closes the first connection with
+    /// the message "New connection established" and the second connection takes over.
+    ///
+    /// This is the expected behavior for session management and is critical for:
+    /// - Reconnection scenarios where a client reconnects with the same JWT
+    /// - Preventing stale connections from consuming server resources
+    /// - Ensuring single-WebSocket-per-session invariant
+    ///
+    /// IMPORTANT: This test creates its own account to avoid interfering with other tests.
+    /// </summary>
+    private async Task<bool> PerformSessionSubsumeTest()
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("❌ Configuration not available");
+            return false;
+        }
+
+        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+
+        // Step 1: Create a dedicated test account to avoid interfering with other tests
+        Console.WriteLine("📋 Step 1: Creating dedicated test account for subsume test...");
+        var uniqueId = Guid.NewGuid().ToString("N")[..12];
+        var testEmail = $"subsume_{uniqueId}@test.local";
+        var testPassword = "SubsumeTest123!";
+
+        string accessToken;
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = $"subsume_{uniqueId}", email = testEmail, password = testPassword };
+
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Failed to create test account: {registerResponse.StatusCode} - {errorBody}");
+                return false;
+            }
+
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+            var responseObj = System.Text.Json.JsonDocument.Parse(responseBody);
+            accessToken = responseObj.RootElement.GetProperty("accessToken").GetString()
+                ?? throw new InvalidOperationException("No accessToken in response");
+            Console.WriteLine($"✅ Test account created: {testEmail}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to create test account: {ex.Message}");
+            return false;
+        }
+
+        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+
+        // Step 2: Establish first WebSocket connection
+        Console.WriteLine("📋 Step 2: Establishing first WebSocket connection...");
+        using var webSocket1 = new ClientWebSocket();
+        webSocket1.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
+
+        try
+        {
+            await webSocket1.ConnectAsync(serverUri, CancellationToken.None);
+            if (webSocket1.State != WebSocketState.Open)
+            {
+                Console.WriteLine($"❌ First WebSocket failed to connect: {webSocket1.State}");
+                return false;
+            }
+            Console.WriteLine("✅ First WebSocket connected");
+        }
+        catch (WebSocketException wse)
+        {
+            Console.WriteLine($"❌ First WebSocket connection failed: {wse.Message}");
+            return false;
+        }
+
+        // Wait for capability manifest on first connection
+        Console.WriteLine("📋 Step 2b: Waiting for capability manifest on first connection...");
+        var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
+        using var capabilityCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+        try
+        {
+            var capResult = await webSocket1.ReceiveAsync(receiveBuffer, capabilityCts.Token);
+            if (capResult.Count > 0)
+            {
+                Console.WriteLine($"✅ First connection received capability manifest ({capResult.Count} bytes)");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("⚠️ Timeout waiting for capability manifest on first connection");
+        }
+
+        // Step 3: Establish second WebSocket connection with the SAME JWT
+        Console.WriteLine("📋 Step 3: Establishing second WebSocket with SAME JWT (should subsume first)...");
+        using var webSocket2 = new ClientWebSocket();
+        webSocket2.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
+
+        try
+        {
+            await webSocket2.ConnectAsync(serverUri, CancellationToken.None);
+            if (webSocket2.State != WebSocketState.Open)
+            {
+                Console.WriteLine($"❌ Second WebSocket failed to connect: {webSocket2.State}");
+                return false;
+            }
+            Console.WriteLine("✅ Second WebSocket connected");
+        }
+        catch (WebSocketException wse)
+        {
+            Console.WriteLine($"❌ Second WebSocket connection failed: {wse.Message}");
+            return false;
+        }
+
+        // Step 4: Verify the first WebSocket gets closed by the server
+        Console.WriteLine("📋 Step 4: Verifying first WebSocket is closed by server (subsume behavior)...");
+
+        // The server closes the first connection asynchronously when the second connects
+        // We need to wait for the close message or detect the connection is no longer open
+        using var closeCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+        try
+        {
+            // Try to receive on the first WebSocket - should get a close message
+            var closeResult = await webSocket1.ReceiveAsync(receiveBuffer, closeCts.Token);
+
+            if (closeResult.MessageType == WebSocketMessageType.Close)
+            {
+                Console.WriteLine($"✅ First WebSocket received close from server:");
+                Console.WriteLine($"   Close Status: {closeResult.CloseStatus}");
+                Console.WriteLine($"   Close Description: \"{closeResult.CloseStatusDescription}\"");
+
+                // Verify the close description indicates subsume
+                if (closeResult.CloseStatusDescription?.Contains("New connection") == true)
+                {
+                    Console.WriteLine("✅ Server correctly indicated 'New connection established' as close reason");
+                }
+
+                // Complete the close handshake
+                if (webSocket1.State == WebSocketState.CloseReceived)
+                {
+                    await webSocket1.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Acknowledged", CancellationToken.None);
+                }
+            }
+            else
+            {
+                Console.WriteLine($"📥 First WebSocket received data instead of close ({closeResult.Count} bytes)");
+                Console.WriteLine("   Checking WebSocket state...");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Timeout - check the WebSocket state directly
+            Console.WriteLine($"⏳ Timeout waiting for close, checking WebSocket1 state: {webSocket1.State}");
+        }
+        catch (WebSocketException wse)
+        {
+            // Connection error is expected if the server already closed
+            Console.WriteLine($"✅ First WebSocket connection terminated: {wse.Message}");
+        }
+
+        // Verify final states
+        var ws1Closed = webSocket1.State == WebSocketState.Closed ||
+                        webSocket1.State == WebSocketState.Aborted ||
+                        webSocket1.State == WebSocketState.CloseReceived;
+        var ws2Open = webSocket2.State == WebSocketState.Open;
+
+        Console.WriteLine($"📋 Final states: WebSocket1={webSocket1.State}, WebSocket2={webSocket2.State}");
+
+        // Step 5: Verify second WebSocket is still functional
+        Console.WriteLine("📋 Step 5: Verifying second WebSocket is still functional...");
+
+        try
+        {
+            // Receive capability manifest on second connection
+            using var ws2CapCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var ws2Result = await webSocket2.ReceiveAsync(receiveBuffer, ws2CapCts.Token);
+
+            if (ws2Result.Count > 0)
+            {
+                Console.WriteLine($"✅ Second WebSocket received data ({ws2Result.Count} bytes) - still functional");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("⚠️ Timeout on second WebSocket - may not have received capability manifest yet");
+            // This isn't necessarily a failure - the second connection is still open
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error on second WebSocket: {ex.Message}");
+            ws2Open = false;
+        }
+
+        // Clean up
+        await CloseWebSocketSafely(webSocket1);
+        await CloseWebSocketSafely(webSocket2);
+
+        // Test passes if:
+        // 1. First WebSocket was closed (subsumed)
+        // 2. Second WebSocket remained open (took over the session)
+        if (ws1Closed && ws2Open)
+        {
+            Console.WriteLine("✅ Subsume behavior verified: Second WebSocket took over session, first was closed");
+            return true;
+        }
+        else
+        {
+            Console.WriteLine($"❌ Unexpected behavior: ws1Closed={ws1Closed}, ws2Open={ws2Open}");
+            return false;
+        }
     }
 
     /// <summary>

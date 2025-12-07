@@ -572,15 +572,61 @@ public class Program
 
     private static async Task<bool> EstablishWebsocketAndSendMessage()
     {
+        // IMPORTANT: This test creates its own account and JWT to avoid interfering with
+        // the main _client connection. The server only allows one WebSocket per session,
+        // so using the same JWT would disconnect _client (the "subsume" behavior).
+
+        Console.WriteLine("📋 Creating dedicated test account for binary protocol validation...");
+
+        var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Configuration.OpenResty_Port ?? 80;
+        var uniqueId = Guid.NewGuid().ToString("N")[..12];
+        var testEmail = $"binproto_{uniqueId}@test.local";
+        var testPassword = "BinaryProtocolTest123!";
+
+        // Register a new account to get a unique JWT
+        var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+        var registerContent = new { username = $"binproto_{uniqueId}", email = testEmail, password = testPassword };
+
+        string testAccessToken;
+        try
+        {
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await HttpClient.SendAsync(registerRequest);
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Failed to create test account: {registerResponse.StatusCode} - {errorBody}");
+                return false;
+            }
+
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+            var responseObj = System.Text.Json.JsonDocument.Parse(responseBody);
+            testAccessToken = responseObj.RootElement.GetProperty("accessToken").GetString()
+                ?? throw new InvalidOperationException("No accessToken in response");
+
+            Console.WriteLine($"✅ Test account created: {testEmail}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to create test account: {ex.Message}");
+            return false;
+        }
+
         var serverUri = new Uri($"ws://{Configuration.Connect_Endpoint}");
 
         using var webSocket = new ClientWebSocket();
-        webSocket.Options.SetRequestHeader("Authorization", "Bearer " + sAccessToken);
+        webSocket.Options.SetRequestHeader("Authorization", "Bearer " + testAccessToken);
 
         try
         {
             await webSocket.ConnectAsync(serverUri, CancellationToken.None);
-            Console.WriteLine("✅ Connected to the server");
+            Console.WriteLine("✅ Connected to the server with dedicated test JWT");
 
             // Create a test message using our enhanced binary protocol
             var testPayload = Encoding.UTF8.GetBytes("{ \"test\": \"Enhanced WebSocket protocol validation\" }");
