@@ -335,13 +335,14 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
 
     private async Task<string?> CreateSession(ClientWebSocket webSocket, Guid ownerId)
     {
+        // Note: ownerId is not used in request - the service gets the owner from auth context
+        // The ownerId parameter is kept for API consistency in test orchestration
         var requestBody = new
         {
             sessionName = $"LifecycleTest_{DateTime.Now.Ticks}",
-            gameType = "arcadia",
+            gameType = "arcadia",  // Valid enum values: arcadia, generic
             maxPlayers = 4,
-            isPrivate = false,
-            owner = ownerId
+            isPrivate = false
         };
 
         var response = await SendApiRequest(webSocket, "POST", "/sessions/create", requestBody);
@@ -350,11 +351,13 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
 
     private async Task<bool> JoinSession(ClientWebSocket webSocket, string sessionId, Guid playerId)
     {
+        // Note: playerId is not used in request - the service gets the account from auth context
+        // The playerId parameter is kept for API consistency in test orchestration
         var requestBody = new
         {
-            sessionId = sessionId,
-            playerId = playerId,
-            role = "player"
+            sessionId = Guid.Parse(sessionId),  // Schema expects Guid, not string
+            password = (string?)null,
+            characterData = (string?)null
         };
 
         var response = await SendApiRequest(webSocket, "POST", "/sessions/join", requestBody);
@@ -363,11 +366,12 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
 
     private async Task<string?> PerformAction(ClientWebSocket webSocket, string sessionId, Guid playerId)
     {
+        // Note: playerId is not used in request - the service gets the account from auth context
+        // The playerId parameter is kept for API consistency in test orchestration
         var requestBody = new
         {
-            sessionId = sessionId,
-            playerId = playerId,
-            actionType = "test_action",
+            sessionId = Guid.Parse(sessionId),  // Schema expects Guid
+            actionType = "move",  // Must be valid enum: move, interact, attack, cast_spell, use_item, custom
             actionData = new { testData = "lifecycle_test" }
         };
 
@@ -377,11 +381,13 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
 
     private async Task<bool> SendChat(ClientWebSocket webSocket, string sessionId, Guid senderId)
     {
+        // Note: senderId is not used in request - the service gets the account from auth context
+        // The senderId parameter is kept for API consistency in test orchestration
         var requestBody = new
         {
-            sessionId = sessionId,
-            senderId = senderId,
-            message = "WebSocket lifecycle test message"
+            sessionId = Guid.Parse(sessionId),  // Schema expects Guid
+            message = "WebSocket lifecycle test message",
+            messageType = "public"  // Optional, defaults to public
         };
 
         var response = await SendApiRequest(webSocket, "POST", "/sessions/chat", requestBody);
@@ -391,10 +397,11 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
 
     private async Task<bool> LeaveSession(ClientWebSocket webSocket, string sessionId, Guid playerId)
     {
+        // Note: playerId is not used in request - the service gets the account from auth context
+        // The playerId parameter is kept for API consistency in test orchestration
         var requestBody = new
         {
-            sessionId = sessionId,
-            playerId = playerId
+            sessionId = Guid.Parse(sessionId)  // Schema only expects sessionId (Guid)
         };
 
         // Leave returns empty response on success (200 with no content)
@@ -413,7 +420,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
     {
         var requestBody = new
         {
-            sessionId = sessionId
+            sessionId = Guid.Parse(sessionId)  // Schema expects Guid
         };
 
         var response = await SendApiRequest(webSocket, "POST", "/sessions/get", requestBody);
