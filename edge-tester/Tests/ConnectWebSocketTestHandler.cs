@@ -199,12 +199,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        // Get access token from BannouClient
-        var accessToken = Program.Client?.AccessToken;
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for WebSocket upgrade test...");
+        var accessToken = await CreateTestAccountAsync("ws_upgrade");
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -253,11 +254,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = Program.Client?.AccessToken;
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for binary protocol test...");
+        var accessToken = await CreateTestAccountAsync("ws_binary");
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -360,11 +363,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = Program.Client?.AccessToken;
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for capability manifest test...");
+        var accessToken = await CreateTestAccountAsync("ws_manifest");
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -458,11 +463,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = Program.Client?.AccessToken;
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for internal API proxy test...");
+        var accessToken = await CreateTestAccountAsync("ws_apiproxy");
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -875,11 +882,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = Program.Client?.AccessToken;
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for reconnection token test...");
+        var accessToken = await CreateTestAccountAsync("ws_reconnect");
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 

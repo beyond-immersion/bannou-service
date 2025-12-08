@@ -13,6 +13,67 @@ namespace BeyondImmersion.EdgeTester.Tests;
 /// </summary>
 public class CapabilityFlowTestHandler : IServiceTestHandler
 {
+    #region Helper Methods for Test Account Creation
+
+    /// <summary>
+    /// Creates a dedicated test account and returns the access token.
+    /// Each test should create its own account to avoid JWT reuse which causes subsume behavior.
+    /// </summary>
+    private async Task<string?> CreateTestAccountAsync(string testPrefix)
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("   Configuration not available");
+            return null;
+        }
+
+        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var uniqueId = Guid.NewGuid().ToString("N")[..12];
+        var testEmail = $"{testPrefix}_{uniqueId}@test.local";
+        var testPassword = $"{testPrefix}Test123!";
+
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = $"{testPrefix}_{uniqueId}", email = testEmail, password = testPassword };
+
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"   Failed to create test account: {registerResponse.StatusCode} - {errorBody}");
+                return null;
+            }
+
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+            var responseObj = JsonDocument.Parse(responseBody);
+            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Console.WriteLine("   No accessToken in registration response");
+                return null;
+            }
+
+            Console.WriteLine($"   Created test account: {testEmail}");
+            return accessToken;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Failed to create test account: {ex.Message}");
+            return null;
+        }
+    }
+
+    #endregion
+
     public ServiceTest[] GetServiceTests()
     {
         return new ServiceTest[]
@@ -138,10 +199,12 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = GetAccessToken();
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for capability initialization test...");
+        var accessToken = await CreateTestAccountAsync("cap_init");
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -381,10 +444,12 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = GetAccessToken();
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for authenticated capabilities test...");
+        var accessToken = await CreateTestAccountAsync("cap_auth");
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure login completed");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -496,10 +561,12 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = GetAccessToken();
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for service GUID routing test...");
+        var accessToken = await CreateTestAccountAsync("cap_routing");
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -629,10 +696,12 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = GetAccessToken();
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for state-based capability update test...");
+        var accessToken = await CreateTestAccountAsync("cap_state");
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -759,13 +828,5 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Test complete", CancellationToken.None);
             }
         }
-    }
-
-    /// <summary>
-    /// Helper to get access token from BannouClient.
-    /// </summary>
-    private static string? GetAccessToken()
-    {
-        return Program.Client?.AccessToken;
     }
 }
