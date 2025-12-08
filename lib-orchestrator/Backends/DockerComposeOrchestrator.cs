@@ -472,10 +472,48 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             }
 
             // CreateContainerAsync - see ORCHESTRATOR-SDK-REFERENCE.md
+            var containerName = $"bannou-{serviceName}-{appId}";
+
+            // Check if a container with this name already exists and remove it
+            var existingContainers = await _client.Containers.ListContainersAsync(
+                new Docker.DotNet.Models.ContainersListParameters
+                {
+                    All = true,
+                    Filters = new Dictionary<string, IDictionary<string, bool>>
+                    {
+                        ["name"] = new Dictionary<string, bool> { [$"^/{containerName}$"] = true }
+                    }
+                },
+                cancellationToken);
+
+            if (existingContainers.Count > 0)
+            {
+                _logger.LogInformation(
+                    "Removing existing container {ContainerName} before deployment",
+                    containerName);
+
+                foreach (var existing in existingContainers)
+                {
+                    // Stop if running
+                    if (existing.State == "running")
+                    {
+                        await _client.Containers.StopContainerAsync(
+                            existing.ID,
+                            new Docker.DotNet.Models.ContainerStopParameters { WaitBeforeKillSeconds = 10 },
+                            cancellationToken);
+                    }
+                    // Remove container
+                    await _client.Containers.RemoveContainerAsync(
+                        existing.ID,
+                        new Docker.DotNet.Models.ContainerRemoveParameters { Force = true },
+                        cancellationToken);
+                }
+            }
+
             var createParams = new Docker.DotNet.Models.CreateContainerParameters
             {
                 Image = imageName,
-                Name = $"bannou-{serviceName}-{appId}",
+                Name = containerName,
                 Env = envList,
                 Labels = new Dictionary<string, string>
                 {

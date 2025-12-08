@@ -72,6 +72,11 @@ paths:
       operationId: getServiceMappings
       tags:
         - Service Discovery
+      x-permissions:
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
       description: |
         Returns current service-to-app-id routing mappings for monitoring and debugging.
         Shows how services are mapped in the current deployment topology.

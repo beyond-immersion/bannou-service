@@ -121,7 +121,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         var deployRequest = new
         {
             preset = SPLIT_PRESET,
-            backend = "docker-compose",
+            backend = "compose",
             dryRun = false
         };
 
@@ -260,15 +260,29 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
     private async Task<bool> CheckServiceMappingsAsync(BannouClient adminClient)
     {
-        // Find the get-service-mappings API
+        // Find the get-service-mappings API via WebSocket capability manifest
+        // API key format is "connect:POST:/service-mappings"
+        Console.WriteLine("   Looking for service-mappings API in capability manifest...");
+
+        var connectApis = adminClient.AvailableApis.Keys
+            .Where(k => k.Contains("connect", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        Console.WriteLine($"   Connect APIs available ({connectApis.Count}):");
+        foreach (var api in connectApis)
+        {
+            Console.WriteLine($"      {api}");
+        }
+
         var mappingsApiKey = adminClient.AvailableApis.Keys
-            .FirstOrDefault(k => k.Contains("/connect/service-mappings", StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefault(k => k.Contains("connect:", StringComparison.OrdinalIgnoreCase) &&
+                                k.Contains("/service-mappings", StringComparison.OrdinalIgnoreCase));
 
         if (string.IsNullOrEmpty(mappingsApiKey))
         {
-            // Try via HTTP instead
-            Console.WriteLine("   Checking service mappings via HTTP...");
-            return await CheckServiceMappingsViaHttpAsync();
+            Console.WriteLine("❌ service-mappings API not found in capability manifest");
+            Console.WriteLine("   Admin user must have access to connect:POST:/service-mappings");
+            return false;
         }
 
         if (!adminClient.AvailableApis.TryGetValue(mappingsApiKey, out var mappingsGuid))
@@ -277,6 +291,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             return false;
         }
 
+        Console.WriteLine($"   Found API: {mappingsApiKey} -> {mappingsGuid}");
         var response = await SendOrchestratorRequestAsync(adminClient, mappingsGuid, "{}");
 
         if (response == null)
@@ -291,76 +306,42 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         {
             var responseObj = JsonNode.Parse(response);
             var mappings = responseObj?["mappings"]?.AsObject();
+            var defaultMapping = responseObj?["defaultMapping"]?.GetValue<string>();
 
-            if (mappings == null)
+            Console.WriteLine($"   Default mapping: {defaultMapping ?? "(none)"}");
+
+            if (mappings == null || mappings.Count == 0)
             {
-                Console.WriteLine("   No mappings in response (may be expected in monolith mode)");
-                return true; // Not a failure, just no split deployed yet
+                Console.WriteLine("❌ No service mappings in response after split deployment");
+                return false;
             }
 
             // Check for expected split mappings
             var authMapping = mappings["auth"]?.GetValue<string>();
             var accountsMapping = mappings["accounts"]?.GetValue<string>();
 
-            Console.WriteLine($"   auth -> {authMapping ?? "(default)"}");
-            Console.WriteLine($"   accounts -> {accountsMapping ?? "(default)"}");
+            Console.WriteLine($"   auth -> {authMapping ?? "(not set)"}");
+            Console.WriteLine($"   accounts -> {accountsMapping ?? "(not set)"}");
 
-            // In split mode, these should map to bannou-auth
-            if (authMapping == "bannou-auth" && accountsMapping == "bannou-auth")
+            // In split mode, these MUST map to bannou-auth
+            if (authMapping != "bannou-auth")
             {
-                Console.WriteLine("✅ Mappings correctly reflect split topology");
-                return true;
+                Console.WriteLine($"❌ auth should map to 'bannou-auth', got '{authMapping ?? "(null)"}'");
+                return false;
             }
 
-            Console.WriteLine("⚠️ Mappings don't reflect split topology (may not be deployed yet)");
-            return true; // Not a hard failure
+            if (accountsMapping != "bannou-auth")
+            {
+                Console.WriteLine($"❌ accounts should map to 'bannou-auth', got '{accountsMapping ?? "(null)"}'");
+                return false;
+            }
+
+            Console.WriteLine("✅ Mappings correctly reflect split topology");
+            return true;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Failed to parse mappings response: {ex.Message}");
-            return false;
-        }
-    }
-
-    private async Task<bool> CheckServiceMappingsViaHttpAsync()
-    {
-        var config = Program.Configuration;
-        var host = config.OpenResty_Host ?? "openresty";
-        var port = config.OpenResty_Port ?? 80;
-        var url = $"http://{host}:{port}/connect/service-mappings";
-
-        try
-        {
-            var requestContent = new StringContent("{}", Encoding.UTF8, "application/json");
-            var response = await Program.HttpClient.PostAsync(url, requestContent);
-            var content = await response.Content.ReadAsStringAsync();
-
-            Console.WriteLine($"   HTTP response ({response.StatusCode}): {content}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseObj = JsonNode.Parse(content);
-                var mappings = responseObj?["mappings"]?.AsObject();
-                var defaultMapping = responseObj?["defaultMapping"]?.GetValue<string>();
-
-                Console.WriteLine($"   Default mapping: {defaultMapping}");
-
-                if (mappings != null)
-                {
-                    foreach (var kvp in mappings)
-                    {
-                        Console.WriteLine($"   {kvp.Key} -> {kvp.Value}");
-                    }
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"   HTTP check failed: {ex.Message}");
             return false;
         }
     }
@@ -598,7 +579,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         var deployRequest = new
         {
             preset = "edge-tests",
-            backend = "docker-compose",
+            backend = "compose",
             dryRun = false
         };
 
