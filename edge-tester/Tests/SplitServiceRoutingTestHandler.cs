@@ -292,7 +292,23 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         }
 
         Console.WriteLine($"   Found API: {mappingsApiKey} -> {mappingsGuid}");
-        var response = await SendOrchestratorRequestAsync(adminClient, mappingsGuid, "{}");
+
+        // Call the connect service-mappings API directly (NOT via SendOrchestratorRequestAsync which is hardcoded to /orchestrator/deploy)
+        string? response;
+        try
+        {
+            var result = await adminClient.InvokeAsync<object, JsonElement>(
+                "POST",
+                "/service-mappings",
+                new { },
+                timeout: TimeSpan.FromSeconds(30));
+            response = result.GetRawText();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   service-mappings API call failed: {ex.Message}");
+            return false;
+        }
 
         if (response == null)
         {
