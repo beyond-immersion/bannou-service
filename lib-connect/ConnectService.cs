@@ -1760,4 +1760,27 @@ public class ConnectService : IConnectService
 
     #endregion
 
+    #region Permission Registration
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Connect service permissions... (starting)");
+        try
+        {
+            await ConnectPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+            _logger.LogInformation("Connect service permissions registered via event (complete)");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to register Connect service permissions");
+            throw;
+        }
+    }
+
+    #endregion
+
 }
