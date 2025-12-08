@@ -6,6 +6,8 @@ services:
 
   bannou:
     env_file: ../.env.test.edge
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"  # Docker socket for orchestrator deployment
 
   # Override Dapr sidecar - uses custom image that waits for infrastructure services
   bannou-dapr:
