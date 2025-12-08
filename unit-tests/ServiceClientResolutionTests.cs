@@ -235,6 +235,135 @@ public class ServiceClientResolutionTests
     }
 
     /// <summary>
+    /// Tests that ServiceMappingEvent with Register action updates the resolver.
+    /// This validates the event-driven mapping update pattern used by the orchestrator.
+    /// </summary>
+    [Fact]
+    public void ServiceAppMappingResolver_ServiceMappingEvent_Register_UpdatesMapping()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddServiceAppMappingResolver();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
+
+        // Verify default first
+        Assert.Equal("bannou", resolver.GetAppIdForService("auth"));
+        Assert.Equal("bannou", resolver.GetAppIdForService("accounts"));
+
+        // Simulate receiving ServiceMappingEvent with Register action
+        // (This is what the ServiceMappingEventsController should do)
+        var mappingEvent = new ServiceMappingEventTestData
+        {
+            ServiceName = "auth",
+            AppId = "bannou-auth",
+            Action = "Register"
+        };
+
+        // Act - Apply the mapping event (simulating controller behavior)
+        resolver.UpdateServiceMapping(mappingEvent.ServiceName, mappingEvent.AppId);
+
+        // Assert - Mapping should be updated
+        Assert.Equal("bannou-auth", resolver.GetAppIdForService("auth"));
+        // Other services should still use default
+        Assert.Equal("bannou", resolver.GetAppIdForService("accounts"));
+    }
+
+    /// <summary>
+    /// Tests that ServiceMappingEvent with Unregister action removes the mapping.
+    /// This validates reverting to default when a split node goes offline.
+    /// </summary>
+    [Fact]
+    public void ServiceAppMappingResolver_ServiceMappingEvent_Unregister_RemovesMapping()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddServiceAppMappingResolver();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
+
+        // Set up initial mapping (simulating previous Register event)
+        resolver.UpdateServiceMapping("auth", "bannou-auth");
+        Assert.Equal("bannou-auth", resolver.GetAppIdForService("auth"));
+
+        // Simulate receiving ServiceMappingEvent with Unregister action
+        var mappingEvent = new ServiceMappingEventTestData
+        {
+            ServiceName = "auth",
+            AppId = "bannou-auth",
+            Action = "Unregister"
+        };
+
+        // Act - Apply the unregister event
+        resolver.RemoveServiceMapping(mappingEvent.ServiceName);
+
+        // Assert - Should revert to default
+        Assert.Equal("bannou", resolver.GetAppIdForService("auth"));
+    }
+
+    /// <summary>
+    /// Tests that multiple ServiceMappingEvents correctly update a split deployment.
+    /// This validates the full deployment scenario where orchestrator sends multiple events.
+    /// </summary>
+    [Fact]
+    public void ServiceAppMappingResolver_MultipleServiceMappingEvents_SplitDeployment()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddServiceAppMappingResolver();
+        var serviceProvider = services.BuildServiceProvider();
+
+        var resolver = serviceProvider.GetRequiredService<IServiceAppMappingResolver>();
+
+        // Verify all default initially
+        Assert.Equal("bannou", resolver.GetAppIdForService("auth"));
+        Assert.Equal("bannou", resolver.GetAppIdForService("accounts"));
+        Assert.Equal("bannou", resolver.GetAppIdForService("game-session"));
+
+        // Simulate orchestrator deploying split-auth-routing-test preset
+        // This sends mapping events for auth and accounts to bannou-auth node
+        var mappingEvents = new[]
+        {
+            new ServiceMappingEventTestData { ServiceName = "auth", AppId = "bannou-auth", Action = "Register" },
+            new ServiceMappingEventTestData { ServiceName = "accounts", AppId = "bannou-auth", Action = "Register" },
+        };
+
+        // Act - Apply all mapping events
+        foreach (var evt in mappingEvents)
+        {
+            resolver.UpdateServiceMapping(evt.ServiceName, evt.AppId);
+        }
+
+        // Assert - auth and accounts should route to bannou-auth
+        Assert.Equal("bannou-auth", resolver.GetAppIdForService("auth"));
+        Assert.Equal("bannou-auth", resolver.GetAppIdForService("accounts"));
+        // game-session should still route to default bannou
+        Assert.Equal("bannou", resolver.GetAppIdForService("game-session"));
+
+        // Verify GetAllMappings returns correct state
+        var mappings = resolver.GetAllMappings();
+        Assert.Equal(2, mappings.Count);
+        Assert.Equal("bannou-auth", mappings["auth"]);
+        Assert.Equal("bannou-auth", mappings["accounts"]);
+    }
+
+    /// <summary>
+    /// Test data class simulating ServiceMappingEvent from lib-orchestrator.
+    /// Used in unit tests to avoid dependency on orchestrator library.
+    /// </summary>
+    public class ServiceMappingEventTestData
+    {
+        public string ServiceName { get; set; } = string.Empty;
+        public string AppId { get; set; } = string.Empty;
+        public string Action { get; set; } = string.Empty;
+    }
+
+    /// <summary>
     /// Demonstrates the CORRECT pattern for service-to-service calls.
     /// Services should use HttpClient + ServiceAppMappingResolver, NOT direct interface injection.
     /// </summary>

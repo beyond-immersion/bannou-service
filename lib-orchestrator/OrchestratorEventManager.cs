@@ -81,10 +81,13 @@ public class OrchestratorEventManager : IOrchestratorEventManager
                 // Fanout exchanges ignore routing keys - use empty string
                 await _channel.QueueBindAsync(HEARTBEAT_QUEUE, HEARTBEAT_EXCHANGE, string.Empty, cancellationToken: cancellationToken);
 
-                // These exchanges are used by Orchestrator only (not Dapr pub/sub), so can keep durable
+                // RESTART and DEPLOYMENT exchanges are orchestrator-only (not Dapr pub/sub), can use autoDelete: false
                 await _channel.ExchangeDeclareAsync(RESTART_EXCHANGE, ExchangeType.Topic, durable: true, cancellationToken: cancellationToken);
-                await _channel.ExchangeDeclareAsync(MAPPINGS_EXCHANGE, ExchangeType.Fanout, durable: true, cancellationToken: cancellationToken);
                 await _channel.ExchangeDeclareAsync(DEPLOYMENT_EXCHANGE, ExchangeType.Fanout, durable: true, cancellationToken: cancellationToken);
+
+                // MAPPINGS exchange is shared with Dapr pub/sub (bannou-service subscribes via Dapr)
+                // MUST use autoDelete: true to match Dapr's default exchange settings
+                await _channel.ExchangeDeclareAsync(MAPPINGS_EXCHANGE, ExchangeType.Fanout, durable: true, autoDelete: true, cancellationToken: cancellationToken);
 
                 // Set up mappings queue for this orchestrator instance
                 await _channel.QueueDeclareAsync(MAPPINGS_QUEUE, durable: false, exclusive: false, autoDelete: true, cancellationToken: cancellationToken);
@@ -161,6 +164,7 @@ public class OrchestratorEventManager : IOrchestratorEventManager
 
     /// <summary>
     /// Handle incoming service mapping messages from RabbitMQ.
+    /// Supports both CloudEvents format (published by this orchestrator) and raw format.
     /// </summary>
     private Task OnMappingMessageReceived(object sender, BasicDeliverEventArgs args)
     {
@@ -169,7 +173,31 @@ public class OrchestratorEventManager : IOrchestratorEventManager
             var body = args.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
 
-            var mappingEvent = JsonSerializer.Deserialize<ServiceMappingEvent>(message);
+            ServiceMappingEvent? mappingEvent = null;
+
+            // Try to parse as CloudEvents format first (has "data" wrapper)
+            try
+            {
+                using var doc = JsonDocument.Parse(message);
+                if (doc.RootElement.TryGetProperty("data", out var dataElement))
+                {
+                    // CloudEvents format - extract the data payload
+                    mappingEvent = dataElement.Deserialize<ServiceMappingEvent>();
+                    _logger.LogDebug("Parsed CloudEvents format mapping message");
+                }
+                else
+                {
+                    // Raw format - deserialize directly
+                    mappingEvent = JsonSerializer.Deserialize<ServiceMappingEvent>(message);
+                    _logger.LogDebug("Parsed raw format mapping message");
+                }
+            }
+            catch
+            {
+                // Fallback to raw format
+                mappingEvent = JsonSerializer.Deserialize<ServiceMappingEvent>(message);
+            }
+
             if (mappingEvent != null)
             {
                 _logger.LogInformation(
@@ -229,6 +257,7 @@ public class OrchestratorEventManager : IOrchestratorEventManager
     /// Publish service mapping event to RabbitMQ.
     /// Used when topology changes to notify all bannou instances of new service-to-app-id mappings.
     /// Uses fanout exchange so ALL bannou instances receive the mapping update.
+    /// IMPORTANT: Wraps payload in CloudEvents format so Dapr pubsub can receive it.
     /// </summary>
     public async Task PublishServiceMappingEventAsync(ServiceMappingEvent mappingEvent)
     {
@@ -240,7 +269,20 @@ public class OrchestratorEventManager : IOrchestratorEventManager
 
         try
         {
-            var message = JsonSerializer.Serialize(mappingEvent);
+            // Wrap in CloudEvents format for Dapr compatibility
+            // Dapr expects CloudEvents when receiving pub/sub messages
+            var cloudEvent = new
+            {
+                specversion = "1.0",
+                type = "com.bannou.servicemapping",
+                source = "orchestrator",
+                id = mappingEvent.EventId,
+                time = DateTime.UtcNow.ToString("o"),
+                datacontenttype = "application/json",
+                data = mappingEvent
+            };
+
+            var message = JsonSerializer.Serialize(cloudEvent);
             var body = Encoding.UTF8.GetBytes(message);
 
             // Fanout exchange - all consumers receive the message
@@ -250,7 +292,7 @@ public class OrchestratorEventManager : IOrchestratorEventManager
                 body: body);
 
             _logger.LogInformation(
-                "Published service mapping event: {ServiceName} -> {AppId} ({Action})",
+                "Published service mapping event (CloudEvents): {ServiceName} -> {AppId} ({Action})",
                 mappingEvent.ServiceName, mappingEvent.AppId, mappingEvent.Action);
         }
         catch (Exception ex)

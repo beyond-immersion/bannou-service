@@ -703,6 +703,70 @@
             Optional message associated with the response.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.ServiceMappingAction">
+            <summary>
+            Action types for service mapping events.
+            Defined locally to avoid circular dependency with lib-orchestrator.
+            Must match LibOrchestrator.ServiceMappingAction enum values.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Controllers.ServiceMappingAction.Register">
+            <inheritdoc/>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Controllers.ServiceMappingAction.Update">
+            <inheritdoc/>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Controllers.ServiceMappingAction.Unregister">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel">
+            <summary>
+            Event model for service mapping updates.
+            Defined locally to avoid circular dependency with lib-orchestrator.
+            Must match LibOrchestrator.ServiceMappingEvent structure.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel.EventId">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel.Timestamp">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel.ServiceName">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel.AppId">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel.Action">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController">
+            <summary>
+            Handles service mapping events from orchestrator.
+            Updates the ServiceAppMappingResolver to enable dynamic service routing.
+            This controller subscribes to the bannou-service-mappings topic via Dapr pub/sub.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.#ctor(BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.HandleServiceMappingEvent(BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel)">
+            <summary>
+            Handles service mapping events from the orchestrator.
+            Updates the local ServiceAppMappingResolver to route service calls to the correct app-id.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.GetCurrentMappings">
+            <summary>
+            Debug endpoint to view current service mappings and event statistics.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.Health">
+            <summary>
+            Simple health check endpoint to verify the controller is reachable.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.DaprEventHelper">
             <summary>
             Helper class for parsing Dapr pub/sub events with CloudEvents format handling.
