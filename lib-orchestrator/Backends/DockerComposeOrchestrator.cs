@@ -44,6 +44,17 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// </summary>
     private const string COMPOSE_PROJECT_LABEL = "com.docker.compose.project";
 
+    /// <summary>
+    /// Label to link sidecar containers to their app containers.
+    /// </summary>
+    private const string BANNOU_SIDECAR_FOR_LABEL = "bannou.sidecar-for";
+
+    // Configuration from environment variables
+    private readonly string _dockerNetwork;
+    private readonly string _daprComponentsHostPath;
+    private readonly string _daprImage;
+    private readonly string _placementHost;
+
     public DockerComposeOrchestrator(ILogger<DockerComposeOrchestrator> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -52,6 +63,21 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         // Linux: unix:///var/run/docker.sock
         // Windows: npipe://./pipe/docker_engine
         _client = new DockerClientConfiguration().CreateClient();
+
+        // Read configuration from environment variables
+        // These are required for deploying containers with Dapr sidecars
+        _dockerNetwork = Environment.GetEnvironmentVariable("BANNOU_DockerNetwork")
+            ?? "bannou_default";
+        _daprComponentsHostPath = Environment.GetEnvironmentVariable("BANNOU_DaprComponentsHostPath")
+            ?? "/provisioning/dapr/components";
+        _daprImage = Environment.GetEnvironmentVariable("BANNOU_DaprImage")
+            ?? "daprio/daprd:1.16.3";
+        _placementHost = Environment.GetEnvironmentVariable("BANNOU_PlacementHost")
+            ?? "placement:50006";
+
+        _logger.LogInformation(
+            "DockerComposeOrchestrator configured: Network={Network}, DaprComponents={Components}, DaprImage={Image}, Placement={Placement}",
+            _dockerNetwork, _daprComponentsHostPath, _daprImage, _placementHost);
     }
 
     /// <inheritdoc />
@@ -452,17 +478,21 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         try
         {
             // For Docker Compose, deployment involves:
-            // 1. Creating a container with the appropriate image and labels
-            // 2. Setting environment variables
-            // 3. Starting the container
+            // 1. Creating the application container with appropriate image and labels
+            // 2. Creating a Dapr sidecar container that shares the app's network namespace
+            // 3. Connecting both to the correct Docker network
+            // 4. Starting both containers
 
-            // Get the bannou image (assumes it's already built)
             var imageName = "bannou:latest";
+            var containerName = $"bannou-{appId}";
+            var sidecarName = $"{appId}-dapr";
 
-            // Prepare container configuration
+            // Prepare application container environment
             var envList = new List<string>
             {
-                $"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED=true",
+                // Dapr endpoints - sidecar shares network namespace, so use 127.0.0.1
+                "DAPR_HTTP_ENDPOINT=http://127.0.0.1:3500",
+                "DAPR_GRPC_ENDPOINT=http://127.0.0.1:50001",
                 $"DAPR_APP_ID={appId}"
             };
 
@@ -471,46 +501,14 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 envList.AddRange(environment.Select(kv => $"{kv.Key}={kv.Value}"));
             }
 
-            // CreateContainerAsync - see ORCHESTRATOR-SDK-REFERENCE.md
-            var containerName = $"bannou-{serviceName}-{appId}";
+            // Clean up any existing containers with these names
+            await CleanupExistingContainerAsync(containerName, cancellationToken);
+            await CleanupExistingContainerAsync(sidecarName, cancellationToken);
 
-            // Check if a container with this name already exists and remove it
-            var existingContainers = await _client.Containers.ListContainersAsync(
-                new Docker.DotNet.Models.ContainersListParameters
-                {
-                    All = true,
-                    Filters = new Dictionary<string, IDictionary<string, bool>>
-                    {
-                        ["name"] = new Dictionary<string, bool> { [$"^/{containerName}$"] = true }
-                    }
-                },
-                cancellationToken);
+            // Step 1: Create the application container
+            _logger.LogInformation("Creating application container: {ContainerName}", containerName);
 
-            if (existingContainers.Count > 0)
-            {
-                _logger.LogInformation(
-                    "Removing existing container {ContainerName} before deployment",
-                    containerName);
-
-                foreach (var existing in existingContainers)
-                {
-                    // Stop if running
-                    if (existing.State == "running")
-                    {
-                        await _client.Containers.StopContainerAsync(
-                            existing.ID,
-                            new Docker.DotNet.Models.ContainerStopParameters { WaitBeforeKillSeconds = 10 },
-                            cancellationToken);
-                    }
-                    // Remove container
-                    await _client.Containers.RemoveContainerAsync(
-                        existing.ID,
-                        new Docker.DotNet.Models.ContainerRemoveParameters { Force = true },
-                        cancellationToken);
-                }
-            }
-
-            var createParams = new Docker.DotNet.Models.CreateContainerParameters
+            var appCreateParams = new Docker.DotNet.Models.CreateContainerParameters
             {
                 Image = imageName,
                 Name = containerName,
@@ -518,7 +516,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 Labels = new Dictionary<string, string>
                 {
                     [DAPR_APP_ID_LABEL] = appId,
-                    ["bannou.service"] = serviceName
+                    ["bannou.service"] = serviceName,
+                    ["bannou.managed"] = "true"
                 },
                 HostConfig = new Docker.DotNet.Models.HostConfig
                 {
@@ -526,24 +525,81 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                     {
                         Name = Docker.DotNet.Models.RestartPolicyKind.UnlessStopped
                     }
+                },
+                NetworkingConfig = new Docker.DotNet.Models.NetworkingConfig
+                {
+                    EndpointsConfig = new Dictionary<string, Docker.DotNet.Models.EndpointSettings>
+                    {
+                        [_dockerNetwork] = new Docker.DotNet.Models.EndpointSettings()
+                    }
                 }
             };
 
-            var container = await _client.Containers.CreateContainerAsync(createParams, cancellationToken);
+            var appContainer = await _client.Containers.CreateContainerAsync(appCreateParams, cancellationToken);
+            _logger.LogInformation("Application container created: {ContainerId}", appContainer.ID[..12]);
 
-            // Start the container
-            await _client.Containers.StartContainerAsync(container.ID, new Docker.DotNet.Models.ContainerStartParameters(), cancellationToken);
+            // Step 2: Start the application container (must be running for sidecar network_mode to work)
+            await _client.Containers.StartContainerAsync(appContainer.ID, new Docker.DotNet.Models.ContainerStartParameters(), cancellationToken);
+            _logger.LogInformation("Application container started: {ContainerId}", appContainer.ID[..12]);
+
+            // Step 3: Create the Dapr sidecar container
+            _logger.LogInformation("Creating Dapr sidecar container: {SidecarName}", sidecarName);
+
+            var sidecarCreateParams = new Docker.DotNet.Models.CreateContainerParameters
+            {
+                Image = _daprImage,
+                Name = sidecarName,
+                Cmd = new List<string>
+                {
+                    "./daprd",
+                    "--app-id", appId,
+                    "--app-port", "80",
+                    "--app-protocol", "http",
+                    "--dapr-http-port", "3500",
+                    "--dapr-grpc-port", "50001",
+                    "--placement-host-address", _placementHost,
+                    "--resources-path", "/components",
+                    "--log-level", "info",
+                    "--enable-api-logging"
+                },
+                Labels = new Dictionary<string, string>
+                {
+                    [DAPR_APP_ID_LABEL] = appId,
+                    [BANNOU_SIDECAR_FOR_LABEL] = containerName,
+                    ["bannou.managed"] = "true"
+                },
+                HostConfig = new Docker.DotNet.Models.HostConfig
+                {
+                    // Share network namespace with the application container
+                    NetworkMode = $"container:{appContainer.ID}",
+                    RestartPolicy = new Docker.DotNet.Models.RestartPolicy
+                    {
+                        Name = Docker.DotNet.Models.RestartPolicyKind.UnlessStopped
+                    },
+                    Binds = new List<string>
+                    {
+                        $"{_daprComponentsHostPath}:/components:ro"
+                    }
+                }
+            };
+
+            var sidecarContainer = await _client.Containers.CreateContainerAsync(sidecarCreateParams, cancellationToken);
+            _logger.LogInformation("Dapr sidecar container created: {ContainerId}", sidecarContainer.ID[..12]);
+
+            // Step 4: Start the sidecar container
+            await _client.Containers.StartContainerAsync(sidecarContainer.ID, new Docker.DotNet.Models.ContainerStartParameters(), cancellationToken);
+            _logger.LogInformation("Dapr sidecar container started: {ContainerId}", sidecarContainer.ID[..12]);
 
             _logger.LogInformation(
-                "Service {ServiceName} deployed successfully with container: {ContainerId}",
-                serviceName, container.ID[..12]);
+                "Service {ServiceName} deployed successfully: app={AppId}, container={ContainerId}, sidecar={SidecarId}",
+                serviceName, appId, appContainer.ID[..12], sidecarContainer.ID[..12]);
 
             return new DeployServiceResult
             {
                 Success = true,
                 AppId = appId,
-                ContainerId = container.ID,
-                Message = $"Service {serviceName} deployed as container {container.ID[..12]}"
+                ContainerId = appContainer.ID,
+                Message = $"Service {serviceName} deployed with app container {appContainer.ID[..12]} and sidecar {sidecarContainer.ID[..12]}"
             };
         }
         catch (DockerApiException ex)
@@ -568,6 +624,41 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         }
     }
 
+    /// <summary>
+    /// Helper to clean up an existing container by name.
+    /// </summary>
+    private async Task CleanupExistingContainerAsync(string containerName, CancellationToken cancellationToken)
+    {
+        var existingContainers = await _client.Containers.ListContainersAsync(
+            new Docker.DotNet.Models.ContainersListParameters
+            {
+                All = true,
+                Filters = new Dictionary<string, IDictionary<string, bool>>
+                {
+                    ["name"] = new Dictionary<string, bool> { [$"^/{containerName}$"] = true }
+                }
+            },
+            cancellationToken);
+
+        foreach (var existing in existingContainers)
+        {
+            _logger.LogInformation("Removing existing container: {ContainerName} ({ContainerId})", containerName, existing.ID[..12]);
+
+            if (existing.State == "running")
+            {
+                await _client.Containers.StopContainerAsync(
+                    existing.ID,
+                    new Docker.DotNet.Models.ContainerStopParameters { WaitBeforeKillSeconds = 10 },
+                    cancellationToken);
+            }
+
+            await _client.Containers.RemoveContainerAsync(
+                existing.ID,
+                new Docker.DotNet.Models.ContainerRemoveParameters { Force = true },
+                cancellationToken);
+        }
+    }
+
     /// <inheritdoc />
     public async Task<TeardownServiceResult> TeardownServiceAsync(
         string appName,
@@ -578,8 +669,11 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             "Tearing down service: {AppName}, removeVolumes: {RemoveVolumes}",
             appName, removeVolumes);
 
+        var stoppedContainers = new List<string>();
+
         try
         {
+            // Find and remove the application container
             var container = await FindContainerByAppNameAsync(appName, cancellationToken);
             if (container == null)
             {
@@ -591,29 +685,69 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 };
             }
 
-            // Stop the container
-            await _client.Containers.StopContainerAsync(
-                container.ID,
-                new Docker.DotNet.Models.ContainerStopParameters { WaitBeforeKillSeconds = 10 },
+            // Find the associated sidecar container (named {appName}-dapr)
+            var sidecarName = $"{appName}-dapr";
+            var sidecarContainers = await _client.Containers.ListContainersAsync(
+                new Docker.DotNet.Models.ContainersListParameters
+                {
+                    All = true,
+                    Filters = new Dictionary<string, IDictionary<string, bool>>
+                    {
+                        ["name"] = new Dictionary<string, bool> { [$"^/{sidecarName}$"] = true }
+                    }
+                },
                 cancellationToken);
 
-            // Remove the container
+            // Stop and remove sidecar first (depends on app container's network)
+            foreach (var sidecar in sidecarContainers)
+            {
+                _logger.LogInformation("Stopping sidecar container: {SidecarId}", sidecar.ID[..12]);
+
+                if (sidecar.State == "running")
+                {
+                    await _client.Containers.StopContainerAsync(
+                        sidecar.ID,
+                        new Docker.DotNet.Models.ContainerStopParameters { WaitBeforeKillSeconds = 5 },
+                        cancellationToken);
+                }
+
+                await _client.Containers.RemoveContainerAsync(
+                    sidecar.ID,
+                    new Docker.DotNet.Models.ContainerRemoveParameters { Force = true },
+                    cancellationToken);
+
+                stoppedContainers.Add(sidecar.ID[..12]);
+            }
+
+            // Stop and remove the application container
+            _logger.LogInformation("Stopping application container: {ContainerId}", container.ID[..12]);
+
+            if (container.State == "running")
+            {
+                await _client.Containers.StopContainerAsync(
+                    container.ID,
+                    new Docker.DotNet.Models.ContainerStopParameters { WaitBeforeKillSeconds = 10 },
+                    cancellationToken);
+            }
+
             await _client.Containers.RemoveContainerAsync(
                 container.ID,
                 new Docker.DotNet.Models.ContainerRemoveParameters { RemoveVolumes = removeVolumes },
                 cancellationToken);
 
+            stoppedContainers.Add(container.ID[..12]);
+
             _logger.LogInformation(
-                "Service {AppName} torn down successfully, container removed: {ContainerId}",
-                appName, container.ID[..12]);
+                "Service {AppName} torn down successfully, {Count} container(s) removed",
+                appName, stoppedContainers.Count);
 
             return new TeardownServiceResult
             {
                 Success = true,
                 AppId = appName,
-                StoppedContainers = new List<string> { container.ID[..12] },
-                RemovedVolumes = new List<string>(), // Would track volumes if removeVolumes=true
-                Message = $"Container {container.ID[..12]} stopped and removed"
+                StoppedContainers = stoppedContainers,
+                RemovedVolumes = new List<string>(),
+                Message = $"Removed {stoppedContainers.Count} container(s): {string.Join(", ", stoppedContainers)}"
             };
         }
         catch (DockerApiException ex)

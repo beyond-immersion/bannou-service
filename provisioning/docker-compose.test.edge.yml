@@ -6,6 +6,10 @@ services:
 
   bannou:
     env_file: ../.env.test.edge
+    environment:
+      # Pass the Dapr components host path for orchestrator dynamic deployments
+      # The Makefile sets DAPR_COMPONENTS_HOST_PATH to the absolute path
+      - BANNOU_DaprComponentsHostPath=${DAPR_COMPONENTS_HOST_PATH:-/tmp/dapr-components}
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"  # Docker socket for orchestrator deployment
 

@@ -317,30 +317,33 @@ test-http:
 # Stack: base + services + ingress + test + test.edge
 # Note: Uses 'up -d' + 'wait' instead of '--exit-code-from' for consistency
 #       with HTTP tests and to avoid abort issues with container lifecycle.
+# Dapr components host path for orchestrator dynamic deployments
+DAPR_COMPONENTS_HOST_PATH := $(PWD)/provisioning/dapr/components-http-test
+
 test-edge:
 	@echo "🧪 Running Edge/WebSocket integration tests..."
-	@docker compose -p bannou-test-edge \
+	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		build --no-cache
-	@docker compose -p bannou-test-edge \
+	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		up -d
-	@( docker compose -p bannou-test-edge \
+	@( DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		logs -f bannou-edge-tester & ); \
-	docker compose -p bannou-test-edge \
+	DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
