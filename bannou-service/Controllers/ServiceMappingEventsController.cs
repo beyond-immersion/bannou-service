@@ -93,6 +93,20 @@ public class ServiceMappingEventsController : ControllerBase
             "Processing service mapping event: {ServiceName} -> {AppId} ({Action})",
             eventData.ServiceName, eventData.AppId, eventData.Action);
 
+        // CRITICAL: Never update routing for services that must be handled locally by the gateway.
+        // These services have their APIs exposed via WebSocket and must be handled by this instance:
+        // - connect: The WebSocket gateway itself - can't route to another node
+        // - orchestrator: Deployment/management APIs called via WebSocket from admin clients
+        // - permissions: Capability resolution must be local to the gateway handling the session
+        var localOnlyServices = new[] { "connect", "orchestrator", "permissions" };
+        if (localOnlyServices.Any(s => eventData.ServiceName.Equals(s, StringComparison.OrdinalIgnoreCase)))
+        {
+            _logger.LogInformation(
+                "Ignoring service mapping for '{ServiceName}' - gateway always handles this service locally",
+                eventData.ServiceName);
+            return Ok();
+        }
+
         try
         {
             switch (eventData.Action)

@@ -726,7 +726,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("⚠️ Timeout waiting for capability manifest (continuing anyway)");
+            Console.WriteLine("❌ Timeout waiting for capability manifest");
+            await CloseWebSocketSafely(userWebSocket);
+            return false;
         }
 
         // Step 3: Delete account via shared admin WebSocket
