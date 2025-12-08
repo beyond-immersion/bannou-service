@@ -281,7 +281,7 @@ public class Program
         var expectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "/auth/login",        // Auth service - user role, default state
-            "/sessions",           // GameSession service - user role, default state (e.g., GET:/sessions)
+            "/sessions"           // GameSession service - user role, default state (e.g., GET:/sessions)
         };
 
         Console.WriteLine($"⏳ Waiting for capability manifest to include expected APIs (timeout: {timeout.TotalSeconds}s)...");
