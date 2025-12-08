@@ -9,6 +9,67 @@ namespace BeyondImmersion.EdgeTester.Tests;
 
 public class ConnectWebSocketTestHandler : IServiceTestHandler
 {
+    #region Helper Methods for Test Account Creation
+
+    /// <summary>
+    /// Creates a dedicated test account and returns the access token.
+    /// Each test should create its own account to avoid JWT reuse which causes subsume behavior.
+    /// </summary>
+    private async Task<string?> CreateTestAccountAsync(string testPrefix)
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("   Configuration not available");
+            return null;
+        }
+
+        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var uniqueId = Guid.NewGuid().ToString("N")[..12];
+        var testEmail = $"{testPrefix}_{uniqueId}@test.local";
+        var testPassword = $"{testPrefix}Test123!";
+
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = $"{testPrefix}_{uniqueId}", email = testEmail, password = testPassword };
+
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"   Failed to create test account: {registerResponse.StatusCode} - {errorBody}");
+                return null;
+            }
+
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+            var responseObj = JsonDocument.Parse(responseBody);
+            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Console.WriteLine("   No accessToken in registration response");
+                return null;
+            }
+
+            Console.WriteLine($"   Created test account: {testEmail}");
+            return accessToken;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Failed to create test account: {ex.Message}");
+            return null;
+        }
+    }
+
+    #endregion
+
     public ServiceTest[] GetServiceTests()
     {
         return new ServiceTest[]

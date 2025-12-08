@@ -196,6 +196,8 @@ public class Program
             serviceCollection.AddScoped<BeyondImmersion.BannouService.GameSession.IGameSessionClient, BeyondImmersion.BannouService.GameSession.GameSessionClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Website.IWebsiteClient, BeyondImmersion.BannouService.Website.WebsiteClient>();
             serviceCollection.AddScoped<BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient, BeyondImmersion.BannouService.Orchestrator.OrchestratorClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Servicedata.IServicedataClient, BeyondImmersion.BannouService.Servicedata.ServicedataClient>();
+            serviceCollection.AddScoped<BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient, BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient>();
 
             // Build the service provider
             ServiceProvider = serviceCollection.BuildServiceProvider();
@@ -395,8 +397,9 @@ public class Program
         {
             "auth",
             "accounts",
-            "permissions"
-            // Add more services as needed
+            "permissions",
+            "subscriptions",  // Required for auth service login flow
+            "servicedata"     // Required by subscriptions service
         };
 
         Console.WriteLine($"Waiting for service registration (timeout: {timeout.TotalSeconds}s)...");
@@ -631,7 +634,9 @@ public class Program
             new ConnectTestHandler(),
             new GameSessionTestHandler(),
             new OrchestratorTestHandler(),
-            new PermissionsTestHandler()
+            new PermissionsTestHandler(),
+            new ServicedataTestHandler(),
+            new SubscriptionsTestHandler()
             // Add more test handlers as needed
         };
 

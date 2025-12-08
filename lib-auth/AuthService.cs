@@ -1138,13 +1138,14 @@ public class AuthService : IAuthService
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            // No subscriptions - this is fine, just leave authorizations empty
+            // No subscriptions for this account - this is valid (new account)
             _logger.LogDebug("No subscriptions found for account {AccountId}", account.AccountId);
         }
         catch (Exception ex)
         {
-            // Log but don't fail session creation - authorizations are optional
-            _logger.LogWarning(ex, "Failed to fetch subscriptions for account {AccountId}, continuing with empty authorizations", account.AccountId);
+            // Subscription service unavailable - logins must fail
+            _logger.LogError(ex, "Failed to fetch subscriptions for account {AccountId} - login rejected", account.AccountId);
+            throw;
         }
 
         // Store session data in Redis with opaque key
@@ -2437,24 +2438,13 @@ public class AuthService : IAuthService
 
             // Fetch fresh authorizations from Subscriptions service
             var authorizations = new List<string>();
-            try
-            {
-                var subscriptionsResponse = await _subscriptionsClient.GetCurrentSubscriptionsAsync(
-                    new GetCurrentSubscriptionsRequest { AccountId = accountId },
-                    cancellationToken);
+            var subscriptionsResponse = await _subscriptionsClient.GetCurrentSubscriptionsAsync(
+                new GetCurrentSubscriptionsRequest { AccountId = accountId },
+                cancellationToken);
 
-                if (subscriptionsResponse?.Authorizations != null)
-                {
-                    authorizations = subscriptionsResponse.Authorizations.ToList();
-                }
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
+            if (subscriptionsResponse?.Authorizations != null)
             {
-                _logger.LogDebug("No subscriptions found for account {AccountId}", accountId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to fetch subscriptions for account {AccountId}, using empty authorizations", accountId);
+                authorizations = subscriptionsResponse.Authorizations.ToList();
             }
 
             var sessionKeys = await _daprClient.GetStateAsync<List<string>>(

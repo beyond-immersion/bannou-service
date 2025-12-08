@@ -19,37 +19,17 @@ public class ServicedataServicePlugin : BaseBannouPlugin
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Validate that this plugin should be loaded based on environment configuration.
-    /// </summary>
-    protected override bool OnValidatePlugin()
-    {
-        var enabled = Environment.GetEnvironmentVariable("SERVICEDATA_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("Servicedata service enabled check: {EnabledValue}", enabled);
-        return enabled == "true";
-    }
-
-    /// <summary>
     /// Configure services for dependency injection - mimics existing [DaprService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("Servicedata service disabled, skipping service registration");
-            return;
-        }
-
         Logger?.LogInformation("Configuring Servicedata service dependencies");
 
-        // Register the service implementation (existing pattern from [DaprService] attribute)
-        services.AddScoped<IServicedataService, ServicedataService>();
-        services.AddScoped<ServicedataService>();
+        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // No need to register IGameSessionService and GameSessionService here
 
-        // Register generated configuration class
-        services.AddScoped<ServicedataServiceConfiguration>();
-
-        // Add any service-specific dependencies
-        // The generated clients should already be registered by AddAllBannouServiceClients()
+        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
+        // No need to register GameSessionServiceConfiguration here
 
         Logger?.LogInformation("Servicedata service dependencies configured");
     }
@@ -59,12 +39,6 @@ public class ServicedataServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("Servicedata service disabled, skipping application configuration");
-            return;
-        }
-
         Logger?.LogInformation("Configuring Servicedata service application pipeline");
 
         // The generated ServicedataController should already be discovered via standard ASP.NET Core controller discovery
@@ -81,8 +55,6 @@ public class ServicedataServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        if (!OnValidatePlugin()) return true;
-
         Logger?.LogInformation("Starting Servicedata service");
 
         try
@@ -120,7 +92,7 @@ public class ServicedataServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogDebug("Servicedata service running");
 
@@ -144,7 +116,7 @@ public class ServicedataServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogInformation("Shutting down Servicedata service");
 

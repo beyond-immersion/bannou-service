@@ -19,34 +19,17 @@ public class SubscriptionsServicePlugin : BaseBannouPlugin
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Validate that this plugin should be loaded based on environment configuration.
-    /// </summary>
-    protected override bool OnValidatePlugin()
-    {
-        var enabled = Environment.GetEnvironmentVariable("SUBSCRIPTIONS_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("Subscriptions service enabled check: {EnabledValue}", enabled);
-        return enabled == "true";
-    }
-
-    /// <summary>
     /// Configure services for dependency injection - mimics existing [DaprService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("Subscriptions service disabled, skipping service registration");
-            return;
-        }
-
         Logger?.LogInformation("Configuring Subscriptions service dependencies");
 
-        // Register the service implementation (existing pattern from [DaprService] attribute)
-        services.AddScoped<ISubscriptionsService, SubscriptionsService>();
-        services.AddScoped<SubscriptionsService>();
+        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // No need to register IGameSessionService and GameSessionService here
 
-        // Register generated configuration class
-        services.AddScoped<SubscriptionsServiceConfiguration>();
+        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
+        // No need to register GameSessionServiceConfiguration here
 
         // Register the subscription expiration background service
         services.AddHostedService<SubscriptionExpirationService>();
@@ -62,12 +45,6 @@ public class SubscriptionsServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("Subscriptions service disabled, skipping application configuration");
-            return;
-        }
-
         Logger?.LogInformation("Configuring Subscriptions service application pipeline");
 
         // The generated SubscriptionsController should already be discovered via standard ASP.NET Core controller discovery
@@ -84,8 +61,6 @@ public class SubscriptionsServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        if (!OnValidatePlugin()) return true;
-
         Logger?.LogInformation("Starting Subscriptions service");
 
         try
@@ -123,7 +98,7 @@ public class SubscriptionsServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogDebug("Subscriptions service running");
 
@@ -147,7 +122,7 @@ public class SubscriptionsServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
         Logger?.LogInformation("Shutting down Subscriptions service");
 

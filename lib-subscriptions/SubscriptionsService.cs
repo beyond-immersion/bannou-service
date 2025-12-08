@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.Subscriptions;
 /// Manages user subscriptions to game services with time-limited access control.
 /// Publishes subscription.updated events for real-time session authorization updates.
 /// </summary>
-[DaprService("subscriptions", typeof(ISubscriptionsService), lifetime: ServiceLifetime.Scoped)]
+[DaprService("subscriptions", typeof(ISubscriptionsService), lifetime: ServiceLifetime.Singleton)]
 public class SubscriptionsService : ISubscriptionsService
 {
     private readonly DaprClient _daprClient;
@@ -539,18 +539,6 @@ public class SubscriptionsService : ISubscriptionsService
         }
     }
 
-    /// <summary>
-    /// Get subscriptions that need to be expired. Called by the expiration background job.
-    /// </summary>
-    public Task<List<string>> GetExpiredSubscriptionIdsAsync(CancellationToken cancellationToken)
-    {
-        // Note: In a real implementation, you'd want a more efficient way to query
-        // expired subscriptions, possibly using a secondary index or a time-based key pattern.
-        // For now, this is a placeholder that would need to iterate through all subscriptions.
-        _logger.LogWarning("GetExpiredSubscriptionIdsAsync requires full scan - consider implementing secondary index");
-        return Task.FromResult(new List<string>());
-    }
-
     #endregion
 
     #region Private Helpers
@@ -660,28 +648,39 @@ public class SubscriptionsService : ISubscriptionsService
 
     #endregion
 
-    #region Internal Storage Model
+    #region Service Registration
 
     /// <summary>
-    /// Internal storage model using Unix timestamps to avoid Dapr serialization issues.
+    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Overrides the default IDaprService implementation to use generated permission data.
     /// </summary>
-    private class SubscriptionDataModel
+    public async Task RegisterServicePermissionsAsync()
     {
-        public string SubscriptionId { get; set; } = string.Empty;
-        public string AccountId { get; set; } = string.Empty;
-        public string ServiceId { get; set; } = string.Empty;
-        public string StubName { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
-        public long StartDateUnix { get; set; }
-        public long? ExpirationDateUnix { get; set; }
-        public bool IsActive { get; set; }
-        public long? CancelledAtUnix { get; set; }
-        public string? CancellationReason { get; set; }
-        public long CreatedAtUnix { get; set; }
-        public long? UpdatedAtUnix { get; set; }
+        _logger.LogInformation("Registering Subscriptions service permissions...");
+        await SubscriptionsPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
     }
 
     #endregion
+}
+
+/// <summary>
+/// Internal storage model using Unix timestamps to avoid Dapr serialization issues.
+/// Accessible to test project via InternalsVisibleTo attribute.
+/// </summary>
+internal class SubscriptionDataModel
+{
+    public string SubscriptionId { get; set; } = string.Empty;
+    public string AccountId { get; set; } = string.Empty;
+    public string ServiceId { get; set; } = string.Empty;
+    public string StubName { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public long StartDateUnix { get; set; }
+    public long? ExpirationDateUnix { get; set; }
+    public bool IsActive { get; set; }
+    public long? CancelledAtUnix { get; set; }
+    public string? CancellationReason { get; set; }
+    public long CreatedAtUnix { get; set; }
+    public long? UpdatedAtUnix { get; set; }
 }
 
 /// <summary>

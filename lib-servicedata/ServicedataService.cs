@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Servicedata;
 /// Implementation of the ServiceData service.
 /// Provides a minimal registry of game services (games/applications) that users can subscribe to.
 /// </summary>
-[DaprService("servicedata", typeof(IServicedataService), lifetime: ServiceLifetime.Scoped)]
+[DaprService("servicedata", typeof(IServicedataService), lifetime: ServiceLifetime.Singleton)]
 public class ServicedataService : IServicedataService
 {
     private readonly DaprClient _daprClient;
@@ -406,21 +406,32 @@ public class ServicedataService : IServicedataService
 
     #endregion
 
-    #region Internal Storage Model
+    #region Service Registration
 
     /// <summary>
-    /// Internal storage model using Unix timestamps to avoid Dapr serialization issues.
+    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Overrides the default IDaprService implementation to use generated permission data.
     /// </summary>
-    private class ServiceDataModel
+    public async Task RegisterServicePermissionsAsync()
     {
-        public string ServiceId { get; set; } = string.Empty;
-        public string StubName { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public bool IsActive { get; set; }
-        public long CreatedAtUnix { get; set; }
-        public long? UpdatedAtUnix { get; set; }
+        _logger.LogInformation("Registering ServiceData service permissions...");
+        await ServicedataPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
     }
 
     #endregion
+}
+
+/// <summary>
+/// Internal storage model using Unix timestamps to avoid Dapr serialization issues.
+/// Accessible to test project via InternalsVisibleTo attribute.
+/// </summary>
+internal class ServiceDataModel
+{
+    public string ServiceId { get; set; } = string.Empty;
+    public string StubName { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; }
+    public long CreatedAtUnix { get; set; }
+    public long? UpdatedAtUnix { get; set; }
 }
