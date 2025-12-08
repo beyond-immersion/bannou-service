@@ -1825,6 +1825,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         var testPassword = "BannouClientTest123!";
 
         string accessToken;
+        string connectUrl;
         try
         {
             var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
@@ -1848,7 +1849,10 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             var responseObj = JsonDocument.Parse(responseBody);
             accessToken = responseObj.RootElement.GetProperty("accessToken").GetString()
                 ?? throw new InvalidOperationException("No accessToken in response");
+            connectUrl = responseObj.RootElement.GetProperty("connectUrl").GetString()
+                ?? throw new InvalidOperationException("No connectUrl in response");
             Console.WriteLine($"   Test account created: {testEmail}");
+            Console.WriteLine($"   Connect URL from auth: {connectUrl}");
         }
         catch (Exception ex)
         {
@@ -1860,9 +1864,9 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         Console.WriteLine("   Step 2: Creating BannouClient instance...");
         await using var client = new BannouClient();
 
-        // Step 3: Connect with the JWT
+        // Step 3: Connect with the JWT using the connectUrl from auth response
         Console.WriteLine("   Step 3: Connecting with ConnectWithTokenAsync...");
-        var serverUrl = $"ws://{Program.Configuration.Connect_Endpoint}";
+        var serverUrl = connectUrl;
 
         try
         {

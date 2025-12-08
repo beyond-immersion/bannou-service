@@ -31,10 +31,10 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
     #region Helper Methods for Test Account Creation
 
     /// <summary>
-    /// Creates a dedicated test account and returns the access token.
+    /// Creates a dedicated test account and returns the access token and connect URL.
     /// Each test should create its own account to ensure isolation.
     /// </summary>
-    private async Task<string?> CreateTestAccountAsync(string testPrefix)
+    private async Task<(string accessToken, string connectUrl)?> CreateTestAccountAsync(string testPrefix)
     {
         if (Program.Configuration == null)
         {
@@ -70,6 +70,7 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
             var responseBody = await registerResponse.Content.ReadAsStringAsync();
             var responseObj = JsonDocument.Parse(responseBody);
             var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+            var connectUrl = responseObj.RootElement.GetProperty("connectUrl").GetString();
 
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -77,8 +78,14 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                 return null;
             }
 
+            if (string.IsNullOrEmpty(connectUrl))
+            {
+                Console.WriteLine("   No connectUrl in registration response");
+                return null;
+            }
+
             Console.WriteLine($"   Created test account: {testEmail}");
-            return accessToken;
+            return (accessToken, connectUrl);
         }
         catch (Exception ex)
         {
@@ -88,23 +95,16 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Creates a BannouClient connected with the given access token.
+    /// Creates a BannouClient connected with the given access token and connect URL.
     /// Returns null if connection fails.
     /// </summary>
-    private async Task<BannouClient?> CreateConnectedClientAsync(string accessToken)
+    private async Task<BannouClient?> CreateConnectedClientAsync(string accessToken, string connectUrl)
     {
-        if (Program.Configuration == null)
-        {
-            Console.WriteLine("   Configuration not available");
-            return null;
-        }
-
-        var serverUrl = $"ws://{Program.Configuration.Connect_Endpoint}";
         var client = new BannouClient();
 
         try
         {
-            var connected = await client.ConnectWithTokenAsync(serverUrl, accessToken);
+            var connected = await client.ConnectWithTokenAsync(connectUrl, accessToken);
             if (!connected || !client.IsConnected)
             {
                 Console.WriteLine("   BannouClient failed to connect");
@@ -135,13 +135,13 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
             var result = Task.Run(async () =>
             {
                 // Create dedicated test account and client
-                var accessToken = await CreateTestAccountAsync("gs_create");
-                if (string.IsNullOrEmpty(accessToken))
+                var authResult = await CreateTestAccountAsync("gs_create");
+                if (authResult == null)
                 {
                     return false;
                 }
 
-                await using var client = await CreateConnectedClientAsync(accessToken);
+                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
                 if (client == null)
                 {
                     return false;
@@ -211,13 +211,13 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
             var result = Task.Run(async () =>
             {
                 // Create dedicated test account and client
-                var accessToken = await CreateTestAccountAsync("gs_list");
-                if (string.IsNullOrEmpty(accessToken))
+                var authResult = await CreateTestAccountAsync("gs_list");
+                if (authResult == null)
                 {
                     return false;
                 }
 
-                await using var client = await CreateConnectedClientAsync(accessToken);
+                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
                 if (client == null)
                 {
                     return false;
@@ -280,13 +280,13 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
             var result = Task.Run(async () =>
             {
                 // Create dedicated test account and client
-                var accessToken = await CreateTestAccountAsync("gs_lifecycle");
-                if (string.IsNullOrEmpty(accessToken))
+                var authResult = await CreateTestAccountAsync("gs_lifecycle");
+                if (authResult == null)
                 {
                     return false;
                 }
 
-                await using var client = await CreateConnectedClientAsync(accessToken);
+                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
                 if (client == null)
                 {
                     return false;

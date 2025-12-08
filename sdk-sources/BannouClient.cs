@@ -511,21 +511,23 @@ public class BannouClient : IAsyncDisposable
             return false;
         }
 
+        // Convert to WebSocket protocol - the URL should already include the full path
+        // When using ConnectAsync/RegisterAndConnectAsync, _connectUrl comes from auth response
+        // When using ConnectWithTokenAsync, the caller provides the full URL
         string wsUrl;
         if (!string.IsNullOrEmpty(_connectUrl))
         {
-            // Use the connectUrl from auth response, converting to WebSocket protocol
+            // Use the connectUrl from auth response
             wsUrl = _connectUrl
                 .Replace("https://", "wss://")
                 .Replace("http://", "ws://");
         }
         else
         {
-            // Fall back to default /connect path (not /ws)
+            // Use the provided server URL as-is (caller should include /connect path)
             wsUrl = _serverBaseUrl!
                 .Replace("https://", "wss://")
                 .Replace("http://", "ws://");
-            wsUrl = $"{wsUrl}/connect";
         }
 
         _webSocket = new ClientWebSocket();
