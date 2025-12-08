@@ -223,7 +223,8 @@ public class AuthService : IAuthService
             return (StatusCodes.OK, new RegisterResponse
             {
                 AccessToken = accessToken,
-                RefreshToken = refreshToken
+                RefreshToken = refreshToken,
+                ConnectUrl = new Uri(_configuration.ConnectUrl)
             });
         }
         catch (Exception ex)

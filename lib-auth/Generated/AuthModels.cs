@@ -162,6 +162,13 @@ public partial class RegisterResponse
     [System.Text.Json.Serialization.JsonPropertyName("refreshToken")]
     public string? RefreshToken { get; set; } = default!;
 
+    /// <summary>
+    /// WebSocket endpoint for Connect service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("connectUrl")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Uri ConnectUrl { get; set; } = default!;
+
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]

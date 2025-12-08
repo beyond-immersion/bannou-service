@@ -438,6 +438,7 @@ components:
       description: Response from successful user registration
       required:
         - accessToken
+        - connectUrl
       properties:
         accessToken:
           type: string
@@ -448,6 +449,10 @@ components:
           description: Refresh token for obtaining new access tokens
           nullable: true
           example: "refresh_token_abc123xyz789"
+        connectUrl:
+          type: string
+          format: uri
+          description: WebSocket endpoint for Connect service
 
     LoginResponse:
       type: object
