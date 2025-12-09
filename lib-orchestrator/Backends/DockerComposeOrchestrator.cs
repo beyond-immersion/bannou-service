@@ -691,8 +691,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             if (dockerNetwork == null)
             {
                 var msg = $"Could not discover Docker network. Ensure Docker Compose is running with a network " +
-                          $"matching '{_configuredDockerNetwork}' or containing 'bannou'. " +
-                          "Set BANNOU_DockerNetwork to specify the network explicitly.";
+                        $"matching '{_configuredDockerNetwork}' or containing 'bannou'. " +
+                        "Set BANNOU_DockerNetwork to specify the network explicitly.";
                 _logger.LogError(msg);
                 return new DeployServiceResult
                 {
