@@ -540,6 +540,14 @@ public static class Program
 
         var assemblyName = new AssemblyName(args.Name).Name;
 
+        // CRITICAL: Avoid loading duplicate copies of already-loaded assemblies.
+        // Assembly.LoadFile will always load a new copy; we must reuse the existing one
+        // so static singletons (e.g., ServiceAppMappingResolver) stay process-wide.
+        var alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies()
+            .FirstOrDefault(a => a.GetName().Name == assemblyName);
+        if (alreadyLoaded != null)
+            return alreadyLoaded;
+
         // try in app directory
         var appDirectory = Directory.GetCurrentDirectory();
         {
