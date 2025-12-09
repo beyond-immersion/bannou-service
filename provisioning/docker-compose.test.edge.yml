@@ -12,6 +12,8 @@ services:
       - BANNOU_DaprComponentsHostPath=${DAPR_COMPONENTS_HOST_PATH:-/tmp/dapr-components}
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"  # Docker socket for orchestrator deployment
+      # Mount the same components directory that the edge tests use so orchestrator deployments succeed
+      - "${DAPR_COMPONENTS_HOST_PATH:-./dapr/components-http-test}:/tmp/dapr-components:ro"
 
   # Override Dapr sidecar - uses custom image that waits for infrastructure services
   bannou-dapr:

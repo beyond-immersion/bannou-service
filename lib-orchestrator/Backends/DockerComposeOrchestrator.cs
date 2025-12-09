@@ -112,6 +112,13 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 continue;
             }
 
+            // If caller provided an absolute path, return it without requiring it to exist
+            // The Docker daemon (host) may have the path even if this container does not.
+            if (Path.IsPathRooted(candidate))
+            {
+                return candidate;
+            }
+
             var expanded = Path.GetFullPath(candidate);
             if (Directory.Exists(expanded))
             {
