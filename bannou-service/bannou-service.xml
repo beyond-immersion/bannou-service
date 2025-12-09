@@ -46,6 +46,11 @@
             Default application name for service routing ("bannou" - omnipotent routing).
             </summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.AppConstants.ORCHESTRATOR_SERVICE_NAME">
+            <summary>
+            Logical service name for the orchestrator control plane.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.BaseServiceAttribute">
             <summary>
             Easy base type for custom attributes.

@@ -11,7 +11,8 @@ namespace BeyondImmersion.BannouService.Services;
 /// </summary>
 public class ServiceAppMappingResolver : IServiceAppMappingResolver
 {
-    private readonly ConcurrentDictionary<string, string> _serviceMappings = new();
+    // Static so mappings are shared across any accidentally duplicated DI containers (plugins vs host).
+    private static readonly ConcurrentDictionary<string, string> _serviceMappings = new();
     private readonly ILogger<ServiceAppMappingResolver> _logger;
 
     /// <inheritdoc/>
