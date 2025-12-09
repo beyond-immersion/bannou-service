@@ -2204,6 +2204,11 @@
             Defaults to "bannou" but can be overridden by RabbitMQ service mapping events.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.ClearAllMappingsForTests">
+            <summary>
+            Clears all mappings. Intended for test isolation.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.UpdateServiceMapping(System.String,System.String)">
             <summary>
             Updates service mapping from RabbitMQ service discovery events.

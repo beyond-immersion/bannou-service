@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -7,12 +8,21 @@ using Xunit;
 
 namespace BeyondImmersion.BannouService.UnitTests;
 
+[CollectionDefinition("ServiceAppMappingResolverCollection", DisableParallelization = true)]
+public class ServiceAppMappingResolverCollection { }
+
 /// <summary>
 /// Unit tests for service client registration and resolution patterns.
 /// Tests the critical architecture distinction between local service injection vs distributed client calls.
 /// </summary>
+[Collection("ServiceAppMappingResolverCollection")]
 public class ServiceClientResolutionTests
 {
+    public ServiceClientResolutionTests()
+    {
+        ServiceAppMappingResolver.ClearAllMappingsForTests();
+    }
+
     /// <summary>
     /// Tests that AddAllBannouServiceClients correctly registers service app mapping resolver.
     /// This is the foundation for distributed service routing.

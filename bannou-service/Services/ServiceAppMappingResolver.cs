@@ -54,6 +54,14 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
     }
 
     /// <summary>
+    /// Clears all mappings. Intended for test isolation.
+    /// </summary>
+    internal static void ClearAllMappingsForTests()
+    {
+        _serviceMappings.Clear();
+    }
+
+    /// <summary>
     /// Updates service mapping from RabbitMQ service discovery events.
     /// </summary>
     public void UpdateServiceMapping(string serviceName, string appId)
