@@ -16,13 +16,26 @@ public class DaprServiceMappingTestHandler : IServiceTestHandler
 {
     public ServiceTest[] GetServiceTests()
     {
+        // Each test must start from a clean mapping state because the resolver uses a static dictionary.
         return
         [
-            new ServiceTest(TestServiceMappingResolver, "Service Mapping Resolver", "Infrastructure", "Tests basic service-to-app-id resolution"),
-            new ServiceTest(TestServiceMappingEvents, "Service Mapping Events", "Infrastructure", "Tests RabbitMQ service mapping events"),
-            new ServiceTest(TestDaprServiceClientRouting, "Dapr Service Client Routing", "Infrastructure", "Tests Dapr service client routing"),
-            new ServiceTest(TestServiceMappingHealth, "Service Mapping Health", "Infrastructure", "Tests service mapping health endpoints")
+            new ServiceTest(Isolated(TestServiceMappingResolver), "Service Mapping Resolver", "Infrastructure", "Tests basic service-to-app-id resolution"),
+            new ServiceTest(Isolated(TestServiceMappingEvents), "Service Mapping Events", "Infrastructure", "Tests RabbitMQ service mapping events"),
+            new ServiceTest(Isolated(TestDaprServiceClientRouting), "Dapr Service Client Routing", "Infrastructure", "Tests Dapr service client routing"),
+            new ServiceTest(Isolated(TestServiceMappingHealth), "Service Mapping Health", "Infrastructure", "Tests service mapping health endpoints")
         ];
+    }
+
+    /// <summary>
+    /// Wraps a test so it starts with a clean ServiceAppMappingResolver state.
+    /// </summary>
+    private static Func<ITestClient, string[], Task<TestResult>> Isolated(Func<ITestClient, string[], Task<TestResult>> inner)
+    {
+        return async (client, args) =>
+        {
+            ServiceAppMappingResolver.ClearAllMappingsForTests();
+            return await inner(client, args);
+        };
     }
 
     /// <summary>
