@@ -1,7 +1,10 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
-
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 // Type aliases to shadow Docker.DotNet types with our Orchestrator types
 using BackendType = BeyondImmersion.BannouService.Orchestrator.BackendType;
 using ContainerRestartRequest = BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequest;
@@ -50,10 +53,17 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private const string BANNOU_SIDECAR_FOR_LABEL = "bannou.sidecar-for";
 
     // Configuration from environment variables
-    private readonly string _dockerNetwork;
+    private readonly string _configuredDockerNetwork;
     private readonly string _daprComponentsHostPath;
     private readonly string _daprImage;
     private readonly string _placementHost;
+    private readonly string _certificatesHostPath;
+    private readonly string _presetsHostPath;
+    private readonly string _logsVolumeName;
+
+    // Cached discovered network (lazy initialized)
+    private string? _discoveredNetwork;
+    private bool _networkDiscoveryAttempted;
 
     public DockerComposeOrchestrator(ILogger<DockerComposeOrchestrator> logger)
     {
@@ -66,18 +76,129 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
         // Read configuration from environment variables
         // These are required for deploying containers with Dapr sidecars
-        _dockerNetwork = Environment.GetEnvironmentVariable("BANNOU_DockerNetwork")
+        _configuredDockerNetwork = Environment.GetEnvironmentVariable("BANNOU_DockerNetwork")
             ?? "bannou_default";
         _daprComponentsHostPath = Environment.GetEnvironmentVariable("BANNOU_DaprComponentsHostPath")
-            ?? "/provisioning/dapr/components";
+            ?? "/app/provisioning/dapr/components";
         _daprImage = Environment.GetEnvironmentVariable("BANNOU_DaprImage")
             ?? "daprio/daprd:1.16.3";
         _placementHost = Environment.GetEnvironmentVariable("BANNOU_PlacementHost")
             ?? "placement:50006";
+        _certificatesHostPath = Environment.GetEnvironmentVariable("BANNOU_CertificatesHostPath")
+            ?? "/app/provisioning/certificates";
+        _presetsHostPath = Environment.GetEnvironmentVariable("BANNOU_PresetsHostPath")
+            ?? "/app/provisioning/orchestrator/presets";
+        _logsVolumeName = Environment.GetEnvironmentVariable("BANNOU_LogsVolume")
+            ?? "logs-data";
 
         _logger.LogInformation(
-            "DockerComposeOrchestrator configured: Network={Network}, DaprComponents={Components}, DaprImage={Image}, Placement={Placement}",
-            _dockerNetwork, _daprComponentsHostPath, _daprImage, _placementHost);
+        "DockerComposeOrchestrator configured: Network={Network}, DaprComponents={Components}, DaprImage={Image}, Placement={Placement}",
+        _configuredDockerNetwork, _daprComponentsHostPath, _daprImage, _placementHost);
+    }
+
+    /// <summary>
+    /// Resolve a host path using a primary value plus a set of fallbacks.
+    /// Returns null if no candidate exists.
+    /// </summary>
+    private static string? ResolveHostPath(string primary, params string[] fallbacks)
+    {
+        var candidates = new List<string> { primary };
+        candidates.AddRange(fallbacks);
+
+        foreach (var candidate in candidates)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                continue;
+            }
+
+            var expanded = Path.GetFullPath(candidate);
+            if (Directory.Exists(expanded))
+            {
+                return expanded;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Discovers the Docker network to use for new containers.
+    /// First tries the configured network, then falls back to discovery.
+    /// </summary>
+    private async Task<string> DiscoverDockerNetworkAsync(CancellationToken cancellationToken)
+    {
+        // Return cached result if we've already discovered the network
+        if (_networkDiscoveryAttempted && _discoveredNetwork != null)
+        {
+            return _discoveredNetwork;
+        }
+
+        _networkDiscoveryAttempted = true;
+
+        try
+        {
+            // First, check if the configured network exists
+            var networks = await _client.Networks.ListNetworksAsync(
+                new Docker.DotNet.Models.NetworksListParameters(),
+                cancellationToken);
+
+            var configuredNetworkExists = networks.Any(n =>
+                n.Name.Equals(_configuredDockerNetwork, StringComparison.OrdinalIgnoreCase));
+
+            if (configuredNetworkExists)
+            {
+                _logger.LogInformation("Using configured network: {Network}", _configuredDockerNetwork);
+                _discoveredNetwork = _configuredDockerNetwork;
+                return _discoveredNetwork;
+            }
+
+            _logger.LogWarning(
+                "Configured network '{ConfiguredNetwork}' not found, attempting discovery...",
+                _configuredDockerNetwork);
+
+            // Try to find a network that looks like a Docker Compose default network
+            // These typically end with "_default" and contain the project name
+            var candidateNetworks = networks
+                .Where(n => n.Name.EndsWith("_default", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(n => n.Name.Contains("bannou", StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(n => n.Name.Contains("edge", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (candidateNetworks.Count > 0)
+            {
+                _discoveredNetwork = candidateNetworks[0].Name;
+                _logger.LogInformation(
+                    "Discovered Docker Compose network: {Network} (from {Count} candidates)",
+                    _discoveredNetwork, candidateNetworks.Count);
+                return _discoveredNetwork;
+            }
+
+            // Last resort: try to find any network that contains "bannou"
+            var bannouNetwork = networks
+                .FirstOrDefault(n => n.Name.Contains("bannou", StringComparison.OrdinalIgnoreCase));
+
+            if (bannouNetwork != null)
+            {
+                _discoveredNetwork = bannouNetwork.Name;
+                _logger.LogInformation("Discovered bannou network: {Network}", _discoveredNetwork);
+                return _discoveredNetwork;
+            }
+
+            // Give up and allow Docker to use the default bridge by returning null
+            _logger.LogWarning(
+                "Could not discover Docker network. Available networks: {Networks}. Falling back to Docker default bridge.",
+                string.Join(", ", networks.Select(n => n.Name)));
+
+            _discoveredNetwork = null;
+            return _discoveredNetwork ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error discovering Docker network, falling back to Docker default bridge");
+            _discoveredNetwork = null;
+            return _discoveredNetwork ?? string.Empty;
+        }
     }
 
     /// <inheritdoc />
@@ -487,6 +608,53 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             var containerName = $"bannou-{appId}";
             var sidecarName = $"{appId}-dapr";
 
+            // Validate that the bannou image is present locally
+            try
+            {
+                await _client.Images.InspectImageAsync(imageName, cancellationToken);
+            }
+            catch (DockerApiException)
+            {
+                var msg = $"Docker image '{imageName}' not found locally. Run 'make build-compose' or build/pull the image before deploying.";
+                _logger.LogError(msg);
+                return new DeployServiceResult
+                {
+                    Success = false,
+                    AppId = appId,
+                    Message = msg
+                };
+            }
+
+            // Ensure required host paths exist
+            var componentsPath = ResolveHostPath(
+                _daprComponentsHostPath,
+                "/app/provisioning/dapr/components",
+                "provisioning/dapr/components",
+                "dapr/components");
+
+            if (componentsPath == null)
+            {
+                var msg = $"Dapr components path not found (checked {_daprComponentsHostPath}). " +
+                        "Set BANNOU_DaprComponentsHostPath or ensure provisioning/dapr/components exists.";
+                _logger.LogError(msg);
+                return new DeployServiceResult
+                {
+                    Success = false,
+                    AppId = appId,
+                    Message = msg
+                };
+            }
+
+            var certificatesPath = ResolveHostPath(
+                _certificatesHostPath,
+                "/app/provisioning/certificates",
+                "provisioning/certificates");
+
+            var presetsPath = ResolveHostPath(
+                _presetsHostPath,
+                "/app/provisioning/orchestrator/presets",
+                "provisioning/orchestrator/presets");
+
             // Prepare application container environment
             var envList = new List<string>
             {
@@ -496,6 +664,11 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 $"DAPR_APP_ID={appId}"
             };
 
+            if (certificatesPath != null)
+            {
+                envList.Add("SSL_CERT_DIR=/certificates");
+            }
+
             if (environment != null)
             {
                 envList.AddRange(environment.Select(kv => $"{kv.Key}={kv.Value}"));
@@ -504,6 +677,10 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             // Clean up any existing containers with these names
             await CleanupExistingContainerAsync(containerName, cancellationToken);
             await CleanupExistingContainerAsync(sidecarName, cancellationToken);
+
+            // Discover the Docker network to use
+            var dockerNetwork = await DiscoverDockerNetworkAsync(cancellationToken);
+            _logger.LogInformation("Using Docker network: {Network}", dockerNetwork);
 
             // Step 1: Create the application container
             _logger.LogInformation("Creating application container: {ContainerName}", containerName);
@@ -524,16 +701,39 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                     RestartPolicy = new Docker.DotNet.Models.RestartPolicy
                     {
                         Name = Docker.DotNet.Models.RestartPolicyKind.UnlessStopped
-                    }
-                },
-                NetworkingConfig = new Docker.DotNet.Models.NetworkingConfig
-                {
-                    EndpointsConfig = new Dictionary<string, Docker.DotNet.Models.EndpointSettings>
+                    },
+                    Mounts = new List<Docker.DotNet.Models.Mount>
                     {
-                        [_dockerNetwork] = new Docker.DotNet.Models.EndpointSettings()
+                        // Match compose behaviour: persist logs
+                        new Docker.DotNet.Models.Mount
+                        {
+                            Type = "volume",
+                            Source = _logsVolumeName,
+                            Target = "/app/logs"
+                        }
+                    },
+                    Binds = new List<string>()
+                },
+                NetworkingConfig = string.IsNullOrWhiteSpace(dockerNetwork)
+                    ? null
+                    : new Docker.DotNet.Models.NetworkingConfig
+                    {
+                        EndpointsConfig = new Dictionary<string, Docker.DotNet.Models.EndpointSettings>
+                        {
+                            [dockerNetwork] = new Docker.DotNet.Models.EndpointSettings()
+                        }
                     }
-                }
             };
+
+            if (certificatesPath != null)
+            {
+                appCreateParams.HostConfig.Binds!.Add($"{certificatesPath}:/certificates:ro");
+            }
+
+            if (presetsPath != null)
+            {
+                appCreateParams.HostConfig.Binds!.Add($"{presetsPath}:/app/provisioning/orchestrator/presets:ro");
+            }
 
             var appContainer = await _client.Containers.CreateContainerAsync(appCreateParams, cancellationToken);
             _logger.LogInformation("Application container created: {ContainerId}", appContainer.ID[..12]);
@@ -578,10 +778,16 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                     },
                     Binds = new List<string>
                     {
-                        $"{_daprComponentsHostPath}:/components:ro"
+                        $"{componentsPath}:/components:ro"
                     }
                 }
             };
+
+            if (certificatesPath != null)
+            {
+                sidecarCreateParams.Env = new List<string> { "SSL_CERT_DIR=/certificates" };
+                sidecarCreateParams.HostConfig.Binds!.Add($"{certificatesPath}:/certificates:ro");
+            }
 
             var sidecarContainer = await _client.Containers.CreateContainerAsync(sidecarCreateParams, cancellationToken);
             _logger.LogInformation("Dapr sidecar container created: {ContainerId}", sidecarContainer.ID[..12]);

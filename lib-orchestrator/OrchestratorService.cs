@@ -700,46 +700,32 @@ public class OrchestratorService : IOrchestratorService
                 return (StatusCodes.OK, previewResponse);
             }
 
-            // For actual teardown: return preview first, then execute teardown in background
-            // This ensures client gets a response before the service potentially kills itself
-            _logger.LogInformation(
-                "Returning teardown preview to client, then executing actual teardown in background. " +
-                "Services to teardown: {Services}, Infrastructure: {Infra}",
-                string.Join(", ", servicesToTeardown),
-                string.Join(", ", infraToRemove));
+            // Execute teardown synchronously to avoid returning before completion
+            var result = await ExecuteActualTeardownAsync(
+                orchestrator,
+                servicesToTeardown,
+                infraToRemove,
+                body.RemoveVolumes,
+                body.IncludeInfrastructure,
+                teardownId,
+                cancellationToken);
 
-            // Capture values for background task
-            var capturedServices = servicesToTeardown.ToList();
-            var capturedInfra = infraToRemove.ToList();
-            var capturedRemoveVolumes = body.RemoveVolumes;
-            var capturedIncludeInfra = body.IncludeInfrastructure;
+            var duration = DateTime.UtcNow - startTime;
+            var success = result.Failed.Count == 0;
 
-            // Fire-and-forget background teardown
-            _ = Task.Run(async () =>
+            var response = new TeardownResponse
             {
-                try
-                {
-                    // Small delay to ensure response is sent first
-                    await Task.Delay(100);
+                Success = success,
+                Duration = $"{duration.TotalSeconds:F1}s",
+                StoppedContainers = result.Stopped,
+                RemovedVolumes = result.RemovedVolumes,
+                RemovedInfrastructure = result.RemovedInfrastructure,
+                Message = success
+                    ? "Teardown completed"
+                    : "Teardown completed with failures"
+            };
 
-                    await ExecuteActualTeardownAsync(
-                        orchestrator,
-                        capturedServices,
-                        capturedInfra,
-                        capturedRemoveVolumes,
-                        capturedIncludeInfra,
-                        teardownId,
-                        CancellationToken.None);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Background teardown failed");
-                }
-            });
-
-            // Return preview immediately - actual teardown happens in background
-            previewResponse.Message = "Teardown initiated - preview shown, actual teardown executing in background";
-            return (StatusCodes.OK, previewResponse);
+            return (success ? StatusCodes.OK : StatusCodes.InternalServerError, response);
         }
         catch (Exception ex)
         {
@@ -762,7 +748,7 @@ public class OrchestratorService : IOrchestratorService
     /// <summary>
     /// Executes the actual teardown in the background after response is sent to client.
     /// </summary>
-    private async Task ExecuteActualTeardownAsync(
+    private async Task<(List<string> Stopped, List<string> RemovedVolumes, List<string> RemovedInfrastructure, List<string> Failed)> ExecuteActualTeardownAsync(
         IContainerOrchestrator orchestrator,
         List<string> servicesToTeardown,
         List<string> infrastructureServices,
@@ -774,6 +760,7 @@ public class OrchestratorService : IOrchestratorService
         var stoppedContainers = new List<string>();
         var removedVolumes = new List<string>();
         var failedTeardowns = new List<string>();
+        var removedInfrastructure = new List<string>();
 
         _logger.LogInformation("Background teardown starting for {Count} services", servicesToTeardown.Count);
 
@@ -826,7 +813,6 @@ public class OrchestratorService : IOrchestratorService
         }
 
         // Handle infrastructure teardown if requested
-        var removedInfrastructure = new List<string>();
         if (includeInfrastructure)
         {
             _logger.LogInformation("Proceeding with infrastructure teardown...");
@@ -877,9 +863,11 @@ public class OrchestratorService : IOrchestratorService
         });
 
         _logger.LogInformation(
-            "Background teardown completed: {StoppedCount} containers stopped, {FailedCount} failures",
+            "Teardown completed: {StoppedCount} containers stopped, {FailedCount} failures",
             stoppedContainers.Count,
             failedTeardowns.Count);
+
+        return (stoppedContainers, removedVolumes, removedInfrastructure, failedTeardowns);
     }
 
     /// <summary>
