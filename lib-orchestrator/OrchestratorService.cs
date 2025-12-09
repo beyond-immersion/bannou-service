@@ -438,6 +438,7 @@ public class OrchestratorService : IOrchestratorService
 
             var deployedServices = new List<DeployedService>();
             var failedServices = new List<string>();
+            var expectedAppIds = new HashSet<string>(); // Track app-ids that should send heartbeats
 
             foreach (var node in nodesToDeploy)
             {
@@ -506,6 +507,9 @@ public class OrchestratorService : IOrchestratorService
                         }, cancellationToken);
                     }
 
+                    // Track this app-id for heartbeat waiting
+                    expectedAppIds.Add(appId);
+
                     _logger.LogInformation(
                         "Node {NodeName} deployed with app-id {AppId}, {ServiceCount} service mapping events published",
                         node.Name, appId, node.Services.Count);
@@ -516,6 +520,64 @@ public class OrchestratorService : IOrchestratorService
                     _logger.LogWarning(
                         "Failed to deploy node {NodeName}: {Message}",
                         node.Name, deployResult.Message);
+                }
+            }
+
+            // Wait for heartbeats from deployed containers before declaring success
+            // This ensures new containers are fully operational (Dapr connected, plugins loaded)
+            if (expectedAppIds.Count > 0 && failedServices.Count == 0)
+            {
+                _logger.LogInformation(
+                    "Waiting for heartbeats from {Count} deployed app-ids: [{AppIds}]",
+                    expectedAppIds.Count, string.Join(", ", expectedAppIds));
+
+                var heartbeatTimeout = TimeSpan.FromSeconds(_configuration.HeartbeatTimeoutSeconds);
+                var pollInterval = TimeSpan.FromSeconds(2);
+                var heartbeatWaitStart = DateTime.UtcNow;
+                var receivedHeartbeats = new HashSet<string>();
+
+                while (DateTime.UtcNow - heartbeatWaitStart < heartbeatTimeout)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    // Poll Redis for heartbeats from expected app-ids
+                    var heartbeats = await _redisManager.GetServiceHeartbeatsAsync();
+
+                    // Check which expected app-ids have sent heartbeats
+                    foreach (var heartbeat in heartbeats)
+                    {
+                        if (expectedAppIds.Contains(heartbeat.AppId) &&
+                            !receivedHeartbeats.Contains(heartbeat.AppId))
+                        {
+                            receivedHeartbeats.Add(heartbeat.AppId);
+                            _logger.LogInformation(
+                                "Received heartbeat from deployed app-id {AppId} ({Received}/{Expected})",
+                                heartbeat.AppId, receivedHeartbeats.Count, expectedAppIds.Count);
+                        }
+                    }
+
+                    // All expected app-ids have sent heartbeats - deployment complete
+                    if (receivedHeartbeats.Count >= expectedAppIds.Count)
+                    {
+                        _logger.LogInformation(
+                            "All {Count} deployed containers are operational",
+                            expectedAppIds.Count);
+                        break;
+                    }
+
+                    // Wait before next poll
+                    await Task.Delay(pollInterval, cancellationToken);
+                }
+
+                // Check for timeout - treat as deployment failure
+                var missingHeartbeats = expectedAppIds.Except(receivedHeartbeats).ToList();
+                if (missingHeartbeats.Count > 0)
+                {
+                    var elapsed = DateTime.UtcNow - heartbeatWaitStart;
+                    failedServices.Add($"Heartbeat timeout ({elapsed.TotalSeconds:F0}s) - missing heartbeats from: [{string.Join(", ", missingHeartbeats)}]");
+                    _logger.LogWarning(
+                        "Deployment heartbeat timeout after {Elapsed}s - missing heartbeats from: [{AppIds}]",
+                        elapsed.TotalSeconds, string.Join(", ", missingHeartbeats));
                 }
             }
 
