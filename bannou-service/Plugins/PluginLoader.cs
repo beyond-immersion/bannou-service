@@ -747,8 +747,28 @@ public class PluginLoader
             {
                 _logger.LogInformation("Registering permissions for service: {PluginName} (type: {ServiceType})",
                     pluginName, service.GetType().Name);
-                await service.RegisterServicePermissionsAsync();
-                _logger.LogInformation("Permissions registered successfully for service: {PluginName}", pluginName);
+                const int maxAttempts = 3;
+                var attempt = 0;
+                while (true)
+                {
+                    attempt++;
+                    try
+                    {
+                        await service.RegisterServicePermissionsAsync();
+                        _logger.LogInformation("Permissions registered successfully for service: {PluginName} (attempt {Attempt})", pluginName, attempt);
+                        break;
+                    }
+                    catch (Dapr.DaprException daprEx) when (attempt < maxAttempts)
+                    {
+                        _logger.LogWarning(daprEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
+                        await Task.Delay(TimeSpan.FromMilliseconds(500));
+                    }
+                    catch (Grpc.Core.RpcException rpcEx) when (attempt < maxAttempts)
+                    {
+                        _logger.LogWarning(rpcEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
+                        await Task.Delay(TimeSpan.FromMilliseconds(500));
+                    }
+                }
             }
             catch (Exception ex)
             {
