@@ -28,7 +28,6 @@ topology:
         - permissions
         - game-session
         - behavior
-        - orchestrator
         - website
         - testing
       replicas: 1

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Services;
@@ -29,6 +30,13 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
         if (string.IsNullOrWhiteSpace(serviceName))
         {
             _logger.LogWarning("Empty service name provided, defaulting to {DefaultAppId}", AppConstants.DEFAULT_APP_NAME);
+            return AppConstants.DEFAULT_APP_NAME;
+        }
+
+        // Orchestrator is control-plane only and must always run on the default app-id.
+        if (string.Equals(serviceName, AppConstants.ORCHESTRATOR_SERVICE_NAME, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogTrace("Service {ServiceName} forced to control-plane app-id {DefaultAppId}", serviceName, AppConstants.DEFAULT_APP_NAME);
             return AppConstants.DEFAULT_APP_NAME;
         }
 

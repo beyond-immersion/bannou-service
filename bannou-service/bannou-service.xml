@@ -1369,6 +1369,20 @@
             Create a simple logger for the given service type.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware">
+            <summary>
+            Rewrites Dapr invoke URLs so generated controllers can handle requests regardless of app-id.
+            Dapr preserves the /v1.0/invoke/{appId}/method/ prefix when forwarding, while our generated
+            controllers are hardcoded to "/v1.0/invoke/bannou/method". This middleware normalizes the path
+            to use the default app-id so routing continues to work even when sidecars run with different IDs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware.#ctor(Microsoft.AspNetCore.Http.RequestDelegate,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware.Invoke(Microsoft.AspNetCore.Http.HttpContext)">
+            <inheritdoc/>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin">
             <summary>
             Base implementation of IBannouPlugin that provides default behavior

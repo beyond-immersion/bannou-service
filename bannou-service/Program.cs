@@ -324,6 +324,9 @@ public static class Program
             // Add CloudEvents support for Dapr pub/sub
             webApp.UseCloudEvents();
 
+            // Normalize Dapr invoke paths so controllers work with any sidecar app-id
+            webApp.UseMiddleware<BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware>();
+
             // map controller routes and subscription handlers
             _ = webApp.UseRouting().UseEndpoints(endpointOptions =>
             {

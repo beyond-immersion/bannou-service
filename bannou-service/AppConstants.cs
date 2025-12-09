@@ -9,4 +9,9 @@ public static class AppConstants
     /// Default application name for service routing ("bannou" - omnipotent routing).
     /// </summary>
     public const string DEFAULT_APP_NAME = "bannou";
+
+    /// <summary>
+    /// Logical service name for the orchestrator control plane.
+    /// </summary>
+    public const string ORCHESTRATOR_SERVICE_NAME = "orchestrator";
 }
