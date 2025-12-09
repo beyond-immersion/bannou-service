@@ -111,22 +111,42 @@ public class OrchestratorService : IOrchestratorService
             });
             overallHealthy = overallHealthy && redisHealthy;
 
-            // Check RabbitMQ connectivity
-            var (rabbitHealthy, rabbitMessage) = _eventManager.CheckHealth();
-            components.Add(new ComponentHealth
-            {
-                Name = "rabbitmq",
-                Status = rabbitHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
-                LastSeen = DateTimeOffset.UtcNow,
-                Message = rabbitMessage ?? string.Empty
-            });
-            overallHealthy = overallHealthy && rabbitHealthy;
-
-            // Check Dapr Placement service (via DaprClient)
+            // Check pub/sub path (Dapr) by publishing a tiny health probe
+            bool pubsubHealthy;
+            string pubsubMessage;
             try
             {
-                // Simple health check via Dapr metadata endpoint
-                await _daprClient.CheckHealthAsync(cancellationToken);
+                await _daprClient.PublishEventAsync(
+                    "bannou-pubsub",
+                    "orchestrator-health",
+                    new { ping = "ok" },
+                    cancellationToken);
+                pubsubHealthy = true;
+                pubsubMessage = "Dapr pub/sub path active";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Dapr pub/sub health check failed");
+                pubsubHealthy = false;
+                pubsubMessage = $"Dapr pub/sub check failed: {ex.Message}";
+            }
+            components.Add(new ComponentHealth
+            {
+                Name = "pubsub",
+                Status = pubsubHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
+                LastSeen = DateTimeOffset.UtcNow,
+                Message = pubsubMessage ?? string.Empty
+            });
+            overallHealthy = overallHealthy && pubsubHealthy;
+
+            // Check Dapr Placement service (reuse publish probe)
+            try
+            {
+                await _daprClient.PublishEventAsync(
+                    "bannou-pubsub",
+                    "orchestrator-health",
+                    new { ping = "ok" },
+                    cancellationToken);
                 components.Add(new ComponentHealth
                 {
                     Name = "placement",
@@ -477,13 +497,13 @@ public class OrchestratorService : IOrchestratorService
                     // Publish service mapping events for each service on this node
                     foreach (var serviceName in node.Services)
                     {
-                        await _eventManager.PublishServiceMappingEventAsync(new ServiceMappingEvent
+                        await PublishServiceMappingAsync(new ServiceMappingEvent
                         {
                             EventId = Guid.NewGuid().ToString(),
                             ServiceName = serviceName,
                             AppId = appId,
                             Action = ServiceMappingAction.Register
-                        });
+                        }, cancellationToken);
                     }
 
                     _logger.LogInformation(
@@ -785,13 +805,13 @@ public class OrchestratorService : IOrchestratorService
                         : appName;
 
                     // Publish service mapping event to notify all bannou instances to remove routing
-                    await _eventManager.PublishServiceMappingEventAsync(new ServiceMappingEvent
+                    await PublishServiceMappingAsync(new ServiceMappingEvent
                     {
                         EventId = Guid.NewGuid().ToString(),
                         ServiceName = serviceName,
                         AppId = appName,
                         Action = ServiceMappingAction.Unregister
-                    });
+                    }, cancellationToken);
 
                     _logger.LogInformation(
                         "Service {AppName} torn down, unregister mapping event published",
@@ -868,6 +888,26 @@ public class OrchestratorService : IOrchestratorService
             failedTeardowns.Count);
 
         return (stoppedContainers, removedVolumes, removedInfrastructure, failedTeardowns);
+    }
+
+    /// <summary>
+    /// Publishes a service mapping event via Dapr pubsub (single, CloudEvents format).
+    /// We avoid dual-path (RabbitMQ + Dapr) to keep formats consistent for Connect consumers.
+    /// </summary>
+    private async Task PublishServiceMappingAsync(ServiceMappingEvent mappingEvent, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _daprClient.PublishEventAsync(
+                "bannou-pubsub",
+                "bannou-service-mappings",
+                mappingEvent,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish service mapping to Dapr pubsub for {Service}", mappingEvent.ServiceName);
+        }
     }
 
     /// <summary>
@@ -1025,13 +1065,13 @@ public class OrchestratorService : IOrchestratorService
                                     if (deployResult.Success)
                                     {
                                         // Publish register mapping event for each service on the new node
-                                        await _eventManager.PublishServiceMappingEventAsync(new ServiceMappingEvent
+                                        await PublishServiceMappingAsync(new ServiceMappingEvent
                                         {
                                             EventId = Guid.NewGuid().ToString(),
                                             ServiceName = serviceName,
                                             AppId = appId,
                                             Action = ServiceMappingAction.Register
-                                        });
+                                        }, cancellationToken);
                                     }
                                     else
                                     {
@@ -1061,13 +1101,13 @@ public class OrchestratorService : IOrchestratorService
                                     if (teardownResult.Success)
                                     {
                                         // Publish unregister mapping event
-                                        await _eventManager.PublishServiceMappingEventAsync(new ServiceMappingEvent
+                                        await PublishServiceMappingAsync(new ServiceMappingEvent
                                         {
                                             EventId = Guid.NewGuid().ToString(),
                                             ServiceName = serviceName,
                                             AppId = appId,
                                             Action = ServiceMappingAction.Unregister
-                                        });
+                                        }, cancellationToken);
                                     }
                                     else
                                     {
@@ -1091,13 +1131,13 @@ public class OrchestratorService : IOrchestratorService
                                     var newAppId = $"bannou-{serviceName}-{change.NodeName}";
 
                                     // Publish update mapping event to change routing
-                                    await _eventManager.PublishServiceMappingEventAsync(new ServiceMappingEvent
+                                    await PublishServiceMappingAsync(new ServiceMappingEvent
                                     {
                                         EventId = Guid.NewGuid().ToString(),
                                         ServiceName = serviceName,
                                         AppId = newAppId,
                                         Action = ServiceMappingAction.Update
-                                    });
+                                    }, cancellationToken);
                                 }
                                 appliedChange.Success = true;
                             }

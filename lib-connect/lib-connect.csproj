@@ -21,7 +21,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-    <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
+    <PackageReference Include="StackExchange.Redis" Version="2.9.25" />
   </ItemGroup>
 
   <Import Project="../ServiceLib.targets" />

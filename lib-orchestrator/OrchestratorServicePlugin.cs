@@ -81,8 +81,7 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
         // to avoid DI lifetime conflicts.
 
         // Register orchestrator helper classes as Singletons to maintain persistent connections
-        // These manage Redis and RabbitMQ connections that should persist across requests
-        // Note: These read connection strings directly from environment variables
+        // These manage Redis connections that should persist across requests
         services.AddSingleton<IOrchestratorRedisManager, OrchestratorRedisManager>();
         services.AddSingleton<IOrchestratorEventManager, OrchestratorEventManager>();
         services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
@@ -129,9 +128,8 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Initialize Redis and RabbitMQ connections (Singleton services, no scope needed)
+            // Initialize Redis connection (Singleton services, no scope needed)
             var redisManager = _serviceProvider?.GetService<IOrchestratorRedisManager>();
-            var eventManager = _serviceProvider?.GetService<IOrchestratorEventManager>();
 
             if (redisManager != null)
             {
@@ -140,16 +138,6 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
                 if (!redisInitialized)
                 {
                     Logger?.LogWarning("Redis connection initialization failed - health checks will report unhealthy");
-                }
-            }
-
-            if (eventManager != null)
-            {
-                Logger?.LogInformation("Initializing RabbitMQ connection for orchestrator...");
-                var rabbitInitialized = await eventManager.InitializeAsync();
-                if (!rabbitInitialized)
-                {
-                    Logger?.LogWarning("RabbitMQ connection initialization failed - health checks will report unhealthy");
                 }
             }
 

@@ -243,13 +243,14 @@ public class OrchestratorServiceTests
             .Setup(x => x.CheckHealthAsync())
             .ReturnsAsync((true, "Redis connected", TimeSpan.FromMilliseconds(1.5)));
 
-        _mockEventManager
-            .Setup(x => x.CheckHealth())
-            .Returns((true, "RabbitMQ connected"));
-
+        // Pub/sub healthy
         _mockDaprClient
-            .Setup(x => x.CheckHealthAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(true));
+            .Setup(x => x.PublishEventAsync(
+                "bannou-pubsub",
+                "orchestrator-health",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         var service = CreateService();
 
@@ -271,13 +272,14 @@ public class OrchestratorServiceTests
             .Setup(x => x.CheckHealthAsync())
             .ReturnsAsync((false, "Redis connection failed", (TimeSpan?)null));
 
-        _mockEventManager
-            .Setup(x => x.CheckHealth())
-            .Returns((true, "RabbitMQ connected"));
-
+        // Simulate pub/sub failure via Dapr publish failure
         _mockDaprClient
-            .Setup(x => x.CheckHealthAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(true));
+            .Setup(x => x.PublishEventAsync(
+                "bannou-pubsub",
+                "orchestrator-health",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Dapr sidecar unavailable"));
 
         var service = CreateService();
 
@@ -301,13 +303,14 @@ public class OrchestratorServiceTests
             .Setup(x => x.CheckHealthAsync())
             .ReturnsAsync((true, "Redis connected", TimeSpan.FromMilliseconds(1.5)));
 
-        _mockEventManager
-            .Setup(x => x.CheckHealth())
-            .Returns((false, "RabbitMQ connection failed"));
-
+        // Pub/sub unhealthy via publish failure
         _mockDaprClient
-            .Setup(x => x.CheckHealthAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(true));
+            .Setup(x => x.PublishEventAsync(
+                "bannou-pubsub",
+                "orchestrator-health",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Dapr sidecar unavailable"));
 
         var service = CreateService();
 
@@ -319,8 +322,8 @@ public class OrchestratorServiceTests
         Assert.NotNull(response);
         Assert.False(response.Healthy);
 
-        var rabbitComponent = response.Components.First(c => c.Name == "rabbitmq");
-        Assert.Equal(ComponentHealthStatus.Unavailable, rabbitComponent.Status);
+        var pubsubComponent = response.Components.First(c => c.Name == "pubsub");
+        Assert.Equal(ComponentHealthStatus.Unavailable, pubsubComponent.Status);
     }
 
     #endregion
