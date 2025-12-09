@@ -377,6 +377,14 @@
             The minimum level of logs for kestrel to write to the console.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.MappingSourceAppId">
+            <summary>
+            The app-id to query for initial service mappings during startup.
+            Only set on containers deployed by orchestrator - when set, this container
+            will query the specified app-id for service mappings before publishing heartbeats.
+            This ensures newly deployed containers have correct routing information.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Configuration.BaseServiceConfiguration">
             <summary>
             Base configuration class for Bannou services with common configuration properties.
@@ -1775,6 +1783,30 @@
             Will stop the webhost and initiate a service shutdown.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Program.ImportServiceMappingsFromSourceAsync(System.String,Microsoft.AspNetCore.Builder.WebApplication,System.Threading.CancellationToken)">
+            <summary>
+            Import service mappings from a source app-id during startup.
+            Used by newly deployed containers to get the current routing table
+            from the orchestrator before participating in the network.
+            </summary>
+            <param name="sourceAppId">The app-id to query for mappings</param>
+            <param name="webApp">The web application for service resolution</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if import succeeded, false otherwise</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Program.LoadPersistedMappingsAsync(Microsoft.AspNetCore.Builder.WebApplication,System.Threading.CancellationToken)">
+            <summary>
+            Load persisted service mappings from Dapr state store (Redis).
+            Used by orchestrator containers on restart to recover their routing table.
+            </summary>
+            <param name="webApp">The web application for service resolution</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Program.ServiceMappingsResponse">
+            <summary>
+            Response model for service mappings query.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase">
             <summary>
             Base class for all Dapr-aware service clients.
@@ -2188,6 +2220,13 @@
             </summary>
             <returns>Dictionary of service name to app-id mappings</returns>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.ImportMappings(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Imports multiple service mappings at once, typically from a source container.
+            Used during startup of containers deployed by orchestrator.
+            </summary>
+            <param name="mappings">The mappings to import</param>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver">
             <summary>
             Default implementation of service-to-app-id mapping with dynamic updates via RabbitMQ.
@@ -2223,6 +2262,13 @@
             <summary>
             Gets all current service mappings for debugging/monitoring.
             </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.ImportMappings(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Imports multiple service mappings at once, typically from a source container.
+            Used during startup of containers deployed by orchestrator.
+            </summary>
+            <param name="mappings">The mappings to import</param>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager">
             <summary>

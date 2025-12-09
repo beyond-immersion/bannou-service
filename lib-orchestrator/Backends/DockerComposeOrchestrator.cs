@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
@@ -664,12 +665,19 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 "provisioning/orchestrator/presets");
 
             // Prepare application container environment
+            // Get the orchestrator's own app-id to set as the mapping source
+            var orchestratorAppId = Environment.GetEnvironmentVariable("DAPR_APP_ID")
+                ?? AppConstants.DEFAULT_APP_NAME;
+
             var envList = new List<string>
             {
                 // Dapr endpoints - sidecar shares network namespace, so use 127.0.0.1
                 "DAPR_HTTP_ENDPOINT=http://127.0.0.1:3500",
                 "DAPR_GRPC_ENDPOINT=http://127.0.0.1:50001",
-                $"DAPR_APP_ID={appId}"
+                $"DAPR_APP_ID={appId}",
+                // Tell deployed container to query this orchestrator for initial service mappings
+                // This ensures new containers have correct routing info before participating in network
+                $"BANNOU_MappingSourceAppId={orchestratorAppId}"
             };
 
             if (certificatesPath != null)

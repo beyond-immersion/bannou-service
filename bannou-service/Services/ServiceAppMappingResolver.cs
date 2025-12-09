@@ -120,4 +120,35 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
     {
         return _serviceMappings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
     }
+
+    /// <summary>
+    /// Imports multiple service mappings at once, typically from a source container.
+    /// Used during startup of containers deployed by orchestrator.
+    /// </summary>
+    /// <param name="mappings">The mappings to import</param>
+    public void ImportMappings(IReadOnlyDictionary<string, string> mappings)
+    {
+        if (mappings == null || mappings.Count == 0)
+        {
+            _logger.LogDebug("No mappings to import");
+            return;
+        }
+
+        var importedCount = 0;
+        foreach (var kvp in mappings)
+        {
+            // Skip internal/info keys
+            if (kvp.Key.StartsWith("_"))
+                continue;
+
+            if (!string.IsNullOrWhiteSpace(kvp.Key) && !string.IsNullOrWhiteSpace(kvp.Value))
+            {
+                _serviceMappings[kvp.Key] = kvp.Value;
+                importedCount++;
+                _logger.LogDebug("Imported mapping: {ServiceName} -> {AppId}", kvp.Key, kvp.Value);
+            }
+        }
+
+        _logger.LogInformation("Imported {Count} service mappings from source", importedCount);
+    }
 }

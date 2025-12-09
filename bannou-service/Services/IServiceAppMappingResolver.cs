@@ -33,4 +33,11 @@ public interface IServiceAppMappingResolver
     /// </summary>
     /// <returns>Dictionary of service name to app-id mappings</returns>
     IReadOnlyDictionary<string, string> GetAllMappings();
+
+    /// <summary>
+    /// Imports multiple service mappings at once, typically from a source container.
+    /// Used during startup of containers deployed by orchestrator.
+    /// </summary>
+    /// <param name="mappings">The mappings to import</param>
+    void ImportMappings(IReadOnlyDictionary<string, string> mappings);
 }

@@ -8,7 +8,8 @@
 	</Target>
 
 	<ItemGroup>
-		<ProjectReference Include="..\bannou-service\bannou-service.csproj" />
+		<!-- Prevent plugin outputs from copying bannou-service.dll; use already-loaded assembly in default context -->
+		<ProjectReference Include="..\bannou-service\bannou-service.csproj" Private="false" />
 	</ItemGroup>
 
 	<PropertyGroup>
