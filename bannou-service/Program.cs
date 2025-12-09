@@ -419,17 +419,8 @@ public static class Program
             else
             {
                 Logger.Log(LogLevel.Warning, null, "Heartbeat system disabled via HEARTBEAT_ENABLED=false (infrastructure testing mode).");
-
-                // Even without heartbeat, we still need permissions registered so capability manifests include all endpoints
-                if (PluginLoader != null)
-                {
-                    Logger.Log(LogLevel.Information, null, "Registering service permissions (heartbeat disabled mode)...");
-                    if (!await PluginLoader.RegisterServicePermissionsAsync())
-                    {
-                        Logger.Log(LogLevel.Error, null, "Service permission registration failed - exiting application.");
-                        return 1;
-                    }
-                }
+                // Do NOT register permissions here: infra profile uses empty Dapr components (no pubsub),
+                // and permission registration publishes over pubsub. Calling it would fail startup.
             }
 
             // Invoke plugin running methods
