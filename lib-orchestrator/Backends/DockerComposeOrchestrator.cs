@@ -132,11 +132,12 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// <summary>
     /// Discovers the Docker network to use for new containers.
     /// First tries the configured network, then falls back to discovery.
+    /// Returns null if no suitable network is found.
     /// </summary>
-    private async Task<string> DiscoverDockerNetworkAsync(CancellationToken cancellationToken)
+    private async Task<string?> DiscoverDockerNetworkAsync(CancellationToken cancellationToken)
     {
         // Return cached result if we've already discovered the network
-        if (_networkDiscoveryAttempted && _discoveredNetwork != null)
+        if (_networkDiscoveryAttempted)
         {
             return _discoveredNetwork;
         }
@@ -192,19 +193,19 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 return _discoveredNetwork;
             }
 
-            // Give up and allow Docker to use the default bridge by returning null
-            _logger.LogWarning(
-                "Could not discover Docker network. Available networks: {Networks}. Falling back to Docker default bridge.",
-                string.Join(", ", networks.Select(n => n.Name)));
+            // No suitable network found - return null to signal failure
+            _logger.LogError(
+                "Could not discover Docker network. Configured: '{ConfiguredNetwork}'. Available networks: {Networks}",
+                _configuredDockerNetwork, string.Join(", ", networks.Select(n => n.Name)));
 
             _discoveredNetwork = null;
-            return _discoveredNetwork ?? string.Empty;
+            return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error discovering Docker network, falling back to Docker default bridge");
+            _logger.LogError(ex, "Error discovering Docker network");
             _discoveredNetwork = null;
-            return _discoveredNetwork ?? string.Empty;
+            return null;
         }
     }
 
@@ -685,9 +686,34 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             await CleanupExistingContainerAsync(containerName, cancellationToken);
             await CleanupExistingContainerAsync(sidecarName, cancellationToken);
 
-            // Discover the Docker network to use
+            // Discover the Docker network to use - required for container communication
             var dockerNetwork = await DiscoverDockerNetworkAsync(cancellationToken);
+            if (dockerNetwork == null)
+            {
+                var msg = $"Could not discover Docker network. Ensure Docker Compose is running with a network " +
+                          $"matching '{_configuredDockerNetwork}' or containing 'bannou'. " +
+                          "Set BANNOU_DockerNetwork to specify the network explicitly.";
+                _logger.LogError(msg);
+                return new DeployServiceResult
+                {
+                    Success = false,
+                    AppId = appId,
+                    Message = msg
+                };
+            }
+
             _logger.LogInformation("Using Docker network: {Network}", dockerNetwork);
+
+            // Build bind mounts list
+            var bindMounts = new List<string>();
+            if (certificatesPath != null)
+            {
+                bindMounts.Add($"{certificatesPath}:/certificates:ro");
+            }
+            if (presetsPath != null)
+            {
+                bindMounts.Add($"{presetsPath}:/app/provisioning/orchestrator/presets:ro");
+            }
 
             // Step 1: Create the application container
             _logger.LogInformation("Creating application container: {ContainerName}", containerName);
@@ -719,28 +745,16 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                             Target = "/app/logs"
                         }
                     },
-                    Binds = new List<string>()
+                    Binds = bindMounts
                 },
-                NetworkingConfig = string.IsNullOrWhiteSpace(dockerNetwork)
-                    ? null
-                    : new Docker.DotNet.Models.NetworkingConfig
+                NetworkingConfig = new Docker.DotNet.Models.NetworkingConfig
+                {
+                    EndpointsConfig = new Dictionary<string, Docker.DotNet.Models.EndpointSettings>
                     {
-                        EndpointsConfig = new Dictionary<string, Docker.DotNet.Models.EndpointSettings>
-                        {
-                            [dockerNetwork] = new Docker.DotNet.Models.EndpointSettings()
-                        }
+                        [dockerNetwork] = new Docker.DotNet.Models.EndpointSettings()
                     }
+                }
             };
-
-            if (certificatesPath != null)
-            {
-                appCreateParams.HostConfig.Binds!.Add($"{certificatesPath}:/certificates:ro");
-            }
-
-            if (presetsPath != null)
-            {
-                appCreateParams.HostConfig.Binds!.Add($"{presetsPath}:/app/provisioning/orchestrator/presets:ro");
-            }
 
             var appContainer = await _client.Containers.CreateContainerAsync(appCreateParams, cancellationToken);
             _logger.LogInformation("Application container created: {ContainerId}", appContainer.ID[..12]);
@@ -752,10 +766,20 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             // Step 3: Create the Dapr sidecar container
             _logger.LogInformation("Creating Dapr sidecar container: {SidecarName}", sidecarName);
 
+            // Build sidecar bind mounts and environment
+            var sidecarBindMounts = new List<string> { $"{componentsPath}:/components:ro" };
+            var sidecarEnv = new List<string>();
+            if (certificatesPath != null)
+            {
+                sidecarBindMounts.Add($"{certificatesPath}:/certificates:ro");
+                sidecarEnv.Add("SSL_CERT_DIR=/certificates");
+            }
+
             var sidecarCreateParams = new Docker.DotNet.Models.CreateContainerParameters
             {
                 Image = _daprImage,
                 Name = sidecarName,
+                Env = sidecarEnv.Count > 0 ? sidecarEnv : null,
                 Cmd = new List<string>
                 {
                     "./daprd",
@@ -783,18 +807,9 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                     {
                         Name = Docker.DotNet.Models.RestartPolicyKind.UnlessStopped
                     },
-                    Binds = new List<string>
-                    {
-                        $"{componentsPath}:/components:ro"
-                    }
+                    Binds = sidecarBindMounts
                 }
             };
-
-            if (certificatesPath != null)
-            {
-                sidecarCreateParams.Env = new List<string> { "SSL_CERT_DIR=/certificates" };
-                sidecarCreateParams.HostConfig.Binds!.Add($"{certificatesPath}:/certificates:ro");
-            }
 
             var sidecarContainer = await _client.Containers.CreateContainerAsync(sidecarCreateParams, cancellationToken);
             _logger.LogInformation("Dapr sidecar container created: {ContainerId}", sidecarContainer.ID[..12]);
