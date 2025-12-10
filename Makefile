@@ -320,7 +320,7 @@ test-http:
 # Dapr components host path for orchestrator dynamic deployments
 DAPR_COMPONENTS_HOST_PATH := $(PWD)/provisioning/dapr/components-http-test
 
-test-edge:
+test-edge: test-pre-cleanup
 	@echo "🧪 Running Edge/WebSocket integration tests..."
 	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
@@ -576,6 +576,28 @@ test-orchestrator: ## Test all orchestrator APIs
 	@curl -s http://localhost:8090/orchestrator/containers | jq . || echo "❌ Failed"
 	@echo ""
 	@echo "✅ Orchestrator API tests completed"
+
+# =============================================================================
+# TEST CONTAINER CLEANUP
+# =============================================================================
+# Cleanup commands for removing leftover containers from failed/interrupted tests.
+# Targets both docker-compose managed containers and dynamically deployed
+# containers created by the orchestrator service.
+# =============================================================================
+
+test-cleanup: ## Remove leftover test containers (interactive)
+	@scripts/cleanup-test-containers.sh
+
+test-cleanup-dry: ## Show what test containers would be removed (dry run)
+	@scripts/cleanup-test-containers.sh --dry-run
+
+test-cleanup-force: ## Force remove all test containers without confirmation
+	@scripts/cleanup-test-containers.sh --force
+
+# Pre-test cleanup (runs before test targets to ensure clean state)
+test-pre-cleanup:
+	@echo "🧹 Pre-test cleanup: removing stale test containers..."
+	@scripts/cleanup-test-containers.sh --force 2>/dev/null || true
 
 # =============================================================================
 # GIT TAGGING

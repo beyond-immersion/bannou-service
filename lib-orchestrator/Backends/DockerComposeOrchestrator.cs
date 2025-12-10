@@ -327,7 +327,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 // Find container by compose service label or name pattern
                 var container = containers.FirstOrDefault(c =>
                     (c.Labels.TryGetValue("com.docker.compose.service", out var label) &&
-                     label.Equals(serviceName, StringComparison.OrdinalIgnoreCase)) ||
+                    label.Equals(serviceName, StringComparison.OrdinalIgnoreCase)) ||
                     c.Names.Any(n => n.Contains(serviceName, StringComparison.OrdinalIgnoreCase)));
 
                 if (container?.NetworkSettings?.Networks != null)

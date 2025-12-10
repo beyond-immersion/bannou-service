@@ -57,7 +57,13 @@ public class ConnectService : IConnectService
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
         _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
-        _httpClient = new HttpClient(); // Reusable HttpClient for Dapr service invocation
+        _httpClient = new HttpClient
+        {
+            // Set timeout to 120 seconds to ensure Connect service doesn't hang indefinitely
+            // This should be longer than client timeouts (60s) but shorter than infinite
+            // If Dapr/target service doesn't respond, we'll get TaskCanceledException
+            Timeout = TimeSpan.FromSeconds(120)
+        };
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _sessionManager = sessionManager; // Optional Dapr-based session management
@@ -804,7 +810,8 @@ public class ConnectService : IConnectService
                 request.Headers.Add("dapr-app-id", appId);
                 request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
-                _logger.LogInformation("Created Dapr HTTP request: Method={Method}, URI={Uri}, AppId={AppId}",
+                // Use Warning level to ensure visibility even when app logging is set to Warning
+                _logger.LogWarning("[ROUTING] WebSocket -> Dapr HTTP: {Method} {Uri} AppId={AppId}",
                     request.Method, daprUrl, appId);
 
                 // Pass JSON payload directly to service - zero-copy forwarding
@@ -812,10 +819,20 @@ public class ConnectService : IConnectService
                 if (!string.IsNullOrWhiteSpace(jsonPayload) && httpMethod == "POST")
                 {
                     request.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+                    _logger.LogDebug("Request body: {Body}", jsonPayload.Length > 500 ? jsonPayload[..500] + "..." : jsonPayload);
                 }
+
+                // Track timing for long-running requests
+                var requestStartTime = DateTimeOffset.UtcNow;
+                _logger.LogDebug("Sending HTTP request to Dapr at {StartTime}", requestStartTime);
 
                 // Invoke the service via direct HTTP (preserves full path)
                 httpResponse = await _httpClient.SendAsync(request, cancellationToken);
+
+                var requestDuration = DateTimeOffset.UtcNow - requestStartTime;
+                // Use Warning level for response timing to ensure visibility in CI
+                _logger.LogWarning("[ROUTING] Dapr HTTP response in {DurationMs}ms: {StatusCode}",
+                    requestDuration.TotalMilliseconds, (int)httpResponse.StatusCode);
 
                 // Read response content
                 responseJson = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
@@ -832,6 +849,51 @@ public class ConnectService : IConnectService
                     _logger.LogWarning("Service {Service} returned non-success status {StatusCode}: {ResponsePreview}",
                         serviceName, (int)httpResponse.StatusCode,
                         responseJson?.Substring(0, Math.Min(500, responseJson?.Length ?? 0)) ?? "(empty body)");
+                }
+            }
+            catch (TaskCanceledException tcEx) when (tcEx.InnerException is TimeoutException)
+            {
+                // HTTP client timeout reached (120 seconds)
+                _logger.LogError("Dapr HTTP request timed out (120s) for {Service} {Method} {Path}",
+                    serviceName, httpMethod, path);
+
+                var errorPayload = new
+                {
+                    error = "Service request timeout",
+                    statusCode = 504,
+                    message = $"Request to {serviceName} timed out after 120 seconds"
+                };
+                responseJson = JsonSerializer.Serialize(errorPayload);
+            }
+            catch (TaskCanceledException tcEx)
+            {
+                // Either cancellation was requested or timeout without inner TimeoutException
+                var isTimeout = !cancellationToken.IsCancellationRequested;
+                if (isTimeout)
+                {
+                    _logger.LogError("Dapr HTTP request timed out for {Service} {Method} {Path}",
+                        serviceName, httpMethod, path);
+
+                    var errorPayload = new
+                    {
+                        error = "Service request timeout",
+                        statusCode = 504,
+                        message = $"Request to {serviceName} timed out"
+                    };
+                    responseJson = JsonSerializer.Serialize(errorPayload);
+                }
+                else
+                {
+                    _logger.LogWarning(tcEx, "Dapr HTTP request cancelled for {Service} {Method} {Path}",
+                        serviceName, httpMethod, path);
+
+                    var errorPayload = new
+                    {
+                        error = "Request cancelled",
+                        statusCode = 499,
+                        message = "Request was cancelled"
+                    };
+                    responseJson = JsonSerializer.Serialize(errorPayload);
                 }
             }
             catch (HttpRequestException httpEx)
