@@ -148,16 +148,30 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 return null;
             }
 
-            // Create a generated components directory alongside the source so Docker sees a host path
-            var generatedRoot = Path.Combine(sourceComponentsHostPath, "generated");
-            var tempDir = Path.Combine(generatedRoot, appId);
-            if (Directory.Exists(tempDir))
+            // CRITICAL: We must write files using the container-visible path (ioPath),
+            // but return the equivalent HOST path for Docker bind mounts.
+            // The host path and container path are linked via the volume mount:
+            //   ${HOST_PATH}:/tmp/dapr-components:rw
+            // So writing to /tmp/dapr-components/generated/appId inside the container
+            // creates files at ${HOST_PATH}/generated/appId on the host.
+
+            // Create output directory using container-visible path
+            var containerGeneratedRoot = Path.Combine(ioPath, "generated");
+            var containerTempDir = Path.Combine(containerGeneratedRoot, appId);
+
+            // Clean up any existing generated files for this appId
+            if (Directory.Exists(containerTempDir))
             {
-                Directory.Delete(tempDir, recursive: true);
+                Directory.Delete(containerTempDir, recursive: true);
             }
-            Directory.CreateDirectory(tempDir);
+            Directory.CreateDirectory(containerTempDir);
+
+            _logger.LogDebug(
+                "Created generated components directory at container path: {ContainerPath}",
+                containerTempDir);
 
             // Read and modify each component file
+            int modifiedCount = 0;
             foreach (var file in Directory.GetFiles(ioPath, "*.yaml"))
             {
                 var content = File.ReadAllText(file);
@@ -183,6 +197,11 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                     modified = modified.Replace($"\"{hostname}:", $"\"{ip}:");
                     modified = modified.Replace($"'{hostname}:", $"'{ip}:");
 
+                    // Handle MySQL Go DSN format: tcp(hostname:port) -> tcp(ip:port)
+                    // Used in connection strings like "guest:guest@tcp(account-db:3306)/..."
+                    modified = modified.Replace($"tcp({hostname}:", $"tcp({ip}:");
+                    modified = modified.Replace($"@{hostname}:", $"@{ip}:");
+
                     // Handle placement host and similar (hostname:port without quotes)
                     // Be careful to only replace complete words
                     modified = Regex.Replace(
@@ -191,22 +210,31 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                         ip);
                 }
 
-                var destPath = Path.Combine(tempDir, Path.GetFileName(file));
+                var destPath = Path.Combine(containerTempDir, Path.GetFileName(file));
                 File.WriteAllText(destPath, modified);
 
                 if (content != modified)
                 {
+                    modifiedCount++;
                     _logger.LogDebug(
                         "Modified component file {File} with IP address substitutions",
                         Path.GetFileName(file));
                 }
             }
 
-            _logger.LogInformation(
-                "Generated modified Dapr components for {AppId} at {Path} with IP substitutions: {Hosts}",
-                appId, tempDir, string.Join(", ", infrastructureHosts.Select(h => $"{h.Key}={h.Value}")));
+            // Return the HOST path equivalent for Docker bind mounts
+            // Since the volume mount is: ${HOST_PATH}:/tmp/dapr-components:rw
+            // files written to /tmp/dapr-components/generated/appId appear at ${HOST_PATH}/generated/appId
+            var hostTempDir = Path.Combine(sourceComponentsHostPath, "generated", appId);
 
-            return tempDir;
+            _logger.LogInformation(
+                "Generated modified Dapr components for {AppId}: {ModifiedCount} files modified, " +
+                "container path: {ContainerPath}, host path for bind mount: {HostPath}, " +
+                "IP substitutions: {Hosts}",
+                appId, modifiedCount, containerTempDir, hostTempDir,
+                string.Join(", ", infrastructureHosts.Select(h => $"{h.Key}={h.Value}")));
+
+            return hostTempDir;
         }
         catch (Exception ex)
         {

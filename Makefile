@@ -425,14 +425,14 @@ test-http-down: ## Stop HTTP test containers
 test-edge-dev: test-logs-dir ## Edge tests: keep containers running, save logs to ./test-logs/
 	@echo "🧪 Starting Edge/WebSocket tests (dev mode - containers stay running)..."
 	@echo "📁 Logs will be saved to $(TEST_LOG_DIR)/"
-	docker compose -p bannou-test-edge \
+	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		build --no-cache
-	docker compose -p bannou-test-edge \
+	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \

@@ -1,0 +1,12 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: permissions-store
+spec:
+  type: state.redis
+  version: v1
+  metadata:
+  - name: redisHost
+    value: 172.17.0.2:6379  # Use auth-redis for permissions in CI
+  - name: redisPassword
+    value: ""

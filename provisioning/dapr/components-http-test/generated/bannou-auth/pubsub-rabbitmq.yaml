@@ -9,7 +9,7 @@ spec:
   ignoreErrors: true  # Don't exit Dapr if component fails - allows graceful degradation
   metadata:
   - name: host
-    value: amqp://rabbitmq:5672
+    value: amqp://172.17.0.5:5672
   - name: username
     value: guest
   - name: password

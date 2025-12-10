@@ -1,0 +1,12 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: game-session-statestore
+spec:
+  type: state.redis
+  version: v1
+  metadata:
+  - name: redisHost
+    value: 172.17.0.7:6379
+  - name: redisPassword
+    value: ""
