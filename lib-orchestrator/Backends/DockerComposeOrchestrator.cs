@@ -65,6 +65,9 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     // Cached discovered network (lazy initialized)
     private string? _discoveredNetwork;
     private bool _networkDiscoveryAttempted;
+    // Cached discovered placement host (lazy initialized)
+    private string? _discoveredPlacementHost;
+    private bool _placementDiscoveryAttempted;
 
     public DockerComposeOrchestrator(ILogger<DockerComposeOrchestrator> logger)
     {
@@ -206,6 +209,86 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         {
             _logger.LogError(ex, "Error discovering Docker network");
             _discoveredNetwork = null;
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Discovers the reachable placement host for dynamically created Dapr sidecars.
+    /// Looks for a running container with compose service name "placement" on the target network.
+    /// Falls back to the configured placement host if discovery fails.
+    /// </summary>
+    private async Task<string?> DiscoverPlacementHostAsync(string? targetNetwork, CancellationToken cancellationToken)
+    {
+        if (_placementDiscoveryAttempted)
+        {
+            return _discoveredPlacementHost;
+        }
+
+        _placementDiscoveryAttempted = true;
+
+        try
+        {
+            var containers = await _client.Containers.ListContainersAsync(
+                new Docker.DotNet.Models.ContainersListParameters
+                {
+                    All = true,
+                    Filters = new Dictionary<string, IDictionary<string, bool>>
+                    {
+                        ["label"] = new Dictionary<string, bool>
+                        {
+                            // docker compose applies this label to the placement service
+                            ["com.docker.compose.service=placement"] = true
+                        }
+                    }
+                },
+                cancellationToken);
+
+            // Fallback: allow name contains "placement" if label filter returns none
+            if (containers.Count == 0)
+            {
+                containers = await _client.Containers.ListContainersAsync(
+                    new Docker.DotNet.Models.ContainersListParameters
+                    {
+                        All = true
+                    },
+                    cancellationToken);
+                containers = containers
+                    .Where(c => c.Names.Any(n => n.Contains("placement", StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+            }
+
+            // Choose the container on the target network if provided
+            var candidate = containers
+                .FirstOrDefault(c =>
+                    targetNetwork != null &&
+                    c.NetworkSettings?.Networks != null &&
+                    c.NetworkSettings.Networks.ContainsKey(targetNetwork))
+                ?? containers.FirstOrDefault();
+
+            if (candidate != null)
+            {
+                var rawName = candidate.Names.FirstOrDefault()?.TrimStart('/');
+                if (!string.IsNullOrWhiteSpace(rawName))
+                {
+                    var port = _placementHost.Contains(':')
+                        ? _placementHost.Split(':').Last()
+                        : "50006";
+
+                    _discoveredPlacementHost = $"{rawName}:{port}";
+                    _logger.LogInformation("Discovered placement host: {PlacementHost}", _discoveredPlacementHost);
+                    return _discoveredPlacementHost;
+                }
+            }
+
+            _logger.LogWarning("Could not discover placement host container; falling back to configured value {Placement}", _placementHost);
+            _discoveredPlacementHost = null;
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error discovering placement host; will fall back to configured value");
+            _discoveredPlacementHost = null;
             return null;
         }
     }
@@ -712,6 +795,10 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
             _logger.LogInformation("Using Docker network: {Network}", dockerNetwork);
 
+            // Discover placement host reachable from dynamically created containers
+            var placementHost = await DiscoverPlacementHostAsync(dockerNetwork, cancellationToken)
+                ?? _placementHost;
+
             // Build bind mounts list
             var bindMounts = new List<string>();
             if (certificatesPath != null)
@@ -796,7 +883,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                     "--app-protocol", "http",
                     "--dapr-http-port", "3500",
                     "--dapr-grpc-port", "50001",
-                    "--placement-host-address", _placementHost,
+                    "--placement-host-address", placementHost,
                     "--resources-path", "/components",
                     "--log-level", "info",
                     "--enable-api-logging"

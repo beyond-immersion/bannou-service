@@ -9,11 +9,13 @@ services:
     environment:
       # Pass the Dapr components host path for orchestrator dynamic deployments
       # The Makefile sets DAPR_COMPONENTS_HOST_PATH to the absolute path
-      - BANNOU_DaprComponentsHostPath=${DAPR_COMPONENTS_HOST_PATH:-/tmp/dapr-components}
+      # IMPORTANT: this must be a host path visible to the Docker daemon, not the in-container mount.
+      # Use the same host path we mount below so dynamically deployed sidecars see valid components.
+      - BANNOU_DaprComponentsHostPath=${DAPR_COMPONENTS_HOST_PATH:-./provisioning/dapr/components-http-test}
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"  # Docker socket for orchestrator deployment
       # Mount the same components directory that the edge tests use so orchestrator deployments succeed
-      - "${DAPR_COMPONENTS_HOST_PATH:-./dapr/components-http-test}:/tmp/dapr-components:ro"
+      - "${DAPR_COMPONENTS_HOST_PATH:-./provisioning/dapr/components-http-test}:/tmp/dapr-components:ro"
 
   # Override Dapr sidecar - uses custom image that waits for infrastructure services
   bannou-dapr:
