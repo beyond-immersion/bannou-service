@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 // Type aliases to shadow Docker.DotNet types with our Orchestrator types
 using BackendType = BeyondImmersion.BannouService.Orchestrator.BackendType;
 using ContainerRestartRequest = BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequest;
@@ -101,6 +102,106 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         _logger.LogInformation(
         "DockerComposeOrchestrator configured: Network={Network}, DaprComponents={Components}, DaprImage={Image}, Placement={Placement}",
         _configuredDockerNetwork, _daprComponentsHostPath, _daprImage, _placementHost);
+    }
+
+    /// <summary>
+    /// Generates modified Dapr component files with hostnames replaced by IP addresses.
+    /// This is required because when using network_mode: container:ID, the sidecar
+    /// shares the network namespace but Docker's embedded DNS at 127.0.0.11 doesn't
+    /// reliably resolve service names for dynamically created containers.
+    /// </summary>
+    /// <param name="sourceComponentsPath">Host path to the original component files</param>
+    /// <param name="appId">The app ID for the service (used to create unique directory)</param>
+    /// <param name="infrastructureHosts">Map of service names to IP addresses</param>
+    /// <returns>Host path to the generated components directory, or null if generation failed</returns>
+    private string? GenerateComponentsWithIpAddresses(
+        string sourceComponentsPath,
+        string appId,
+        Dictionary<string, string> infrastructureHosts)
+    {
+        if (infrastructureHosts.Count == 0)
+        {
+            _logger.LogWarning(
+                "No infrastructure hosts discovered - sidecar may fail to connect to services. " +
+                "Using original components path without IP substitution.");
+            return null;
+        }
+
+        try
+        {
+            if (!Directory.Exists(sourceComponentsPath))
+            {
+                _logger.LogWarning(
+                    "Source components path does not exist: {Path}. Using configured path without modification.",
+                    sourceComponentsPath);
+                return null;
+            }
+
+            // Create a generated components directory alongside the source so Docker sees a host path
+            var generatedRoot = Path.Combine(sourceComponentsPath, "generated");
+            var tempDir = Path.Combine(generatedRoot, appId);
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
+            Directory.CreateDirectory(tempDir);
+
+            // Read and modify each component file
+            foreach (var file in Directory.GetFiles(sourceComponentsPath, "*.yaml"))
+            {
+                var content = File.ReadAllText(file);
+                var modified = content;
+
+                // Replace hostnames with IP addresses in common patterns
+                // Pattern 1: host: amqp://hostname:port or host: hostname:port
+                // Pattern 2: redisHost: hostname:port
+                // Pattern 3: value: hostname:port (for generic key-value)
+                foreach (var (hostname, ip) in infrastructureHosts)
+                {
+                    // Replace various hostname patterns with IP addresses
+                    // Match: hostname:port, hostname (no port), amqp://hostname, etc.
+                    modified = modified.Replace($"amqp://{hostname}:", $"amqp://{ip}:");
+                    modified = modified.Replace($"amqp://{hostname}/", $"amqp://{ip}/");
+                    modified = modified.Replace($"redis://{hostname}:", $"redis://{ip}:");
+                    modified = modified.Replace($"redis://{hostname}/", $"redis://{ip}/");
+                    modified = modified.Replace($"mysql://{hostname}:", $"mysql://{ip}:");
+                    modified = modified.Replace($"mysql://{hostname}/", $"mysql://{ip}/");
+
+                    // Handle bare hostname:port patterns (e.g., "rabbitmq:5672" -> "172.18.0.7:5672")
+                    // Only replace if followed by port number to avoid false positives
+                    modified = modified.Replace($"\"{hostname}:", $"\"{ip}:");
+                    modified = modified.Replace($"'{hostname}:", $"'{ip}:");
+
+                    // Handle placement host and similar (hostname:port without quotes)
+                    // Be careful to only replace complete words
+                    modified = Regex.Replace(
+                        modified,
+                        $@"(?<=value:\s*){Regex.Escape(hostname)}(?=:|\s|$)",
+                        ip);
+                }
+
+                var destPath = Path.Combine(tempDir, Path.GetFileName(file));
+                File.WriteAllText(destPath, modified);
+
+                if (content != modified)
+                {
+                    _logger.LogDebug(
+                        "Modified component file {File} with IP address substitutions",
+                        Path.GetFileName(file));
+                }
+            }
+
+            _logger.LogInformation(
+                "Generated modified Dapr components for {AppId} at {Path} with IP substitutions: {Hosts}",
+                appId, tempDir, string.Join(", ", infrastructureHosts.Select(h => $"{h.Key}={h.Value}")));
+
+            return tempDir;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to generate modified component files for {AppId}", appId);
+            return null;
+        }
     }
 
     /// <summary>
@@ -875,6 +976,16 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 .Select(kv => $"{kv.Key}:{kv.Value}")
                 .ToList();
 
+            // Generate modified Dapr component files with IP addresses instead of hostnames
+            // This is the critical fix for the sidecar networking issue - when using
+            // network_mode: container:ID, Docker's DNS doesn't reliably resolve hostnames
+            // for dynamically created containers. By using IPs directly, we bypass DNS entirely.
+            var componentsHostPath = componentsPath ?? _daprComponentsHostPath;
+            var sidecarComponentsPath = GenerateComponentsWithIpAddresses(
+                componentsHostPath,
+                appId,
+                infrastructureHosts) ?? componentsHostPath;
+
             // Build bind mounts list
             var bindMounts = new List<string>();
             if (certificatesPath != null)
@@ -941,7 +1052,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             _logger.LogInformation("Creating Dapr sidecar container: {SidecarName}", sidecarName);
 
             // Build sidecar bind mounts and environment
-            var sidecarBindMounts = new List<string> { $"{componentsPath}:/components:ro" };
+            // Use the generated components path with IP addresses (not the original with hostnames)
+            var sidecarBindMounts = new List<string> { $"{sidecarComponentsPath}:/components:ro" };
             var sidecarEnv = new List<string>();
             if (certificatesPath != null)
             {
