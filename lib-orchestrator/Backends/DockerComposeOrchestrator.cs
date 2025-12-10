@@ -57,6 +57,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     // Configuration from environment variables
     private readonly string _configuredDockerNetwork;
     private readonly string _daprComponentsHostPath;
+    private readonly string _daprComponentsContainerPath;
     private readonly string _daprImage;
     private readonly string _placementHost;
     private readonly string _certificatesHostPath;
@@ -88,6 +89,9 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             ?? "bannou_default";
         _daprComponentsHostPath = Environment.GetEnvironmentVariable("BANNOU_DaprComponentsHostPath")
             ?? "/app/provisioning/dapr/components";
+        // Container-visible path for the mounted components directory (RW mount expected)
+        _daprComponentsContainerPath = Environment.GetEnvironmentVariable("BANNOU_DaprComponentsContainerPath")
+            ?? "/tmp/dapr-components";
         _daprImage = Environment.GetEnvironmentVariable("BANNOU_DaprImage")
             ?? "daprio/daprd:1.16.3";
         _placementHost = Environment.GetEnvironmentVariable("BANNOU_PlacementHost")
@@ -110,12 +114,14 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// shares the network namespace but Docker's embedded DNS at 127.0.0.11 doesn't
     /// reliably resolve service names for dynamically created containers.
     /// </summary>
-    /// <param name="sourceComponentsPath">Host path to the original component files</param>
+    /// <param name="sourceComponentsHostPath">Host path to the original component files</param>
+    /// <param name="sourceComponentsContainerPath">Container path where the host directory is mounted</param>
     /// <param name="appId">The app ID for the service (used to create unique directory)</param>
     /// <param name="infrastructureHosts">Map of service names to IP addresses</param>
     /// <returns>Host path to the generated components directory, or null if generation failed</returns>
     private string? GenerateComponentsWithIpAddresses(
-        string sourceComponentsPath,
+        string sourceComponentsHostPath,
+        string sourceComponentsContainerPath,
         string appId,
         Dictionary<string, string> infrastructureHosts)
     {
@@ -129,16 +135,21 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
 
         try
         {
-            if (!Directory.Exists(sourceComponentsPath))
+            // Use the container-mounted path for IO; it should map to the host path mounted RW
+            var ioPath = Directory.Exists(sourceComponentsContainerPath)
+                ? sourceComponentsContainerPath
+                : sourceComponentsHostPath;
+
+            if (!Directory.Exists(ioPath))
             {
                 _logger.LogWarning(
                     "Source components path does not exist: {Path}. Using configured path without modification.",
-                    sourceComponentsPath);
+                    ioPath);
                 return null;
             }
 
             // Create a generated components directory alongside the source so Docker sees a host path
-            var generatedRoot = Path.Combine(sourceComponentsPath, "generated");
+            var generatedRoot = Path.Combine(sourceComponentsHostPath, "generated");
             var tempDir = Path.Combine(generatedRoot, appId);
             if (Directory.Exists(tempDir))
             {
@@ -147,7 +158,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             Directory.CreateDirectory(tempDir);
 
             // Read and modify each component file
-            foreach (var file in Directory.GetFiles(sourceComponentsPath, "*.yaml"))
+            foreach (var file in Directory.GetFiles(ioPath, "*.yaml"))
             {
                 var content = File.ReadAllText(file);
                 var modified = content;
@@ -983,6 +994,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             var componentsHostPath = componentsPath ?? _daprComponentsHostPath;
             var sidecarComponentsPath = GenerateComponentsWithIpAddresses(
                 componentsHostPath,
+                _daprComponentsContainerPath,
                 appId,
                 infrastructureHosts) ?? componentsHostPath;
 
