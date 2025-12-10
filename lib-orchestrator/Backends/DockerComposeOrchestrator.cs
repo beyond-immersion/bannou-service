@@ -63,6 +63,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private readonly string _certificatesHostPath;
     private readonly string _presetsHostPath;
     private readonly string _logsVolumeName;
+    private readonly string _daprConfigHostPath;
+    private readonly string _daprConfigContainerPath;
 
     // Cached discovered network (lazy initialized)
     private string? _discoveredNetwork;
@@ -102,10 +104,15 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             ?? "/app/provisioning/orchestrator/presets";
         _logsVolumeName = Environment.GetEnvironmentVariable("BANNOU_LogsVolume")
             ?? "logs-data";
+        // Dapr config file path - uses nameformat resolver to bypass mDNS for Docker DNS
+        _daprConfigHostPath = Environment.GetEnvironmentVariable("BANNOU_DaprConfigHostPath")
+            ?? "/app/provisioning/dapr/config-docker-dns.yaml";
+        _daprConfigContainerPath = Environment.GetEnvironmentVariable("BANNOU_DaprConfigContainerPath")
+            ?? "/tmp/dapr-components/config-docker-dns.yaml";
 
         _logger.LogInformation(
-        "DockerComposeOrchestrator configured: Network={Network}, DaprComponents={Components}, DaprImage={Image}, Placement={Placement}",
-        _configuredDockerNetwork, _daprComponentsHostPath, _daprImage, _placementHost);
+        "DockerComposeOrchestrator configured: Network={Network}, DaprComponents={Components}, DaprImage={Image}, Placement={Placement}, DaprConfig={Config}",
+        _configuredDockerNetwork, _daprComponentsHostPath, _daprImage, _placementHost, _daprConfigHostPath);
     }
 
     /// <summary>
@@ -222,6 +229,33 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 }
             }
 
+            // Copy the Dapr configuration file (nameformat resolver for Docker DNS)
+            // This bypasses mDNS which doesn't work in shared network namespaces
+            var configSourcePath = Path.Combine(ioPath, "config-docker-dns.yaml");
+            if (File.Exists(configSourcePath))
+            {
+                var configDestPath = Path.Combine(containerTempDir, "config.yaml");
+                // Read and write (rather than copy) to avoid permission issues
+                // File.Copy preserves source permissions which can be restrictive
+                var configContent = File.ReadAllText(configSourcePath);
+                File.WriteAllText(configDestPath, configContent);
+                _logger.LogDebug("Copied Dapr config file to {ConfigPath}", configDestPath);
+            }
+            else if (File.Exists(_daprConfigContainerPath))
+            {
+                // Fallback to the container-mounted config path
+                var configDestPath = Path.Combine(containerTempDir, "config.yaml");
+                var configContent = File.ReadAllText(_daprConfigContainerPath);
+                File.WriteAllText(configDestPath, configContent);
+                _logger.LogDebug("Copied Dapr config file from fallback path to {ConfigPath}", configDestPath);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Dapr config file not found at {ConfigSourcePath} or {ConfigContainerPath} - sidecar will use default mDNS resolver which may fail",
+                    configSourcePath, _daprConfigContainerPath);
+            }
+
             // Return the HOST path equivalent for Docker bind mounts
             // Since the volume mount is: ${HOST_PATH}:/tmp/dapr-components:rw
             // files written to /tmp/dapr-components/generated/appId appear at ${HOST_PATH}/generated/appId
@@ -239,6 +273,45 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to generate modified component files for {AppId}", appId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Writes a Dapr configuration that forces DNS-based name resolution (resolver 127.0.0.11).
+    /// Returns the container-visible path (under /components) so it can be passed to daprd via --config.
+    /// </summary>
+    private string? EnsureDnsNameResolutionConfig(string? componentsHostPath)
+    {
+        if (string.IsNullOrWhiteSpace(componentsHostPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(componentsHostPath);
+            var fileName = "dns-name-resolution.yaml";
+            var hostConfigPath = Path.Combine(componentsHostPath, fileName);
+
+            var configContent = @"apiVersion: dapr.io/v1alpha1
+kind: Configuration
+metadata:
+  name: dnsresolver
+spec:
+  nameResolution:
+    component: ""dns""
+    configuration:
+    resolver: ""127.0.0.11""
+";
+            File.WriteAllText(hostConfigPath, configContent);
+
+            // Sidecar mounts components to /components
+            return $"/components/{fileName}";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to write DNS name resolution config under {ComponentsPath}", componentsHostPath);
             return null;
         }
     }
@@ -1025,6 +1098,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 _daprComponentsContainerPath,
                 appId,
                 infrastructureHosts) ?? componentsHostPath;
+            var dnsConfigPath = EnsureDnsNameResolutionConfig(sidecarComponentsPath);
 
             // Build bind mounts list
             var bindMounts = new List<string>();
@@ -1101,24 +1175,34 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 sidecarEnv.Add("SSL_CERT_DIR=/certificates");
             }
 
+            var sidecarCmd = new List<string>
+            {
+                "./daprd",
+                "--app-id", appId,
+                "--app-port", "80",
+                "--app-protocol", "http",
+                "--dapr-http-port", "3500",
+                "--dapr-grpc-port", "50001",
+                "--placement-host-address", placementHost,
+                "--resources-path", "/components",
+                "--log-level", "info",
+                "--enable-api-logging"
+            };
+
+            // Prefer DNS-based name resolution config if we wrote one; fallback to existing config.yaml
+            var daprConfigPath = dnsConfigPath ?? "/components/config.yaml";
+            if (!string.IsNullOrWhiteSpace(daprConfigPath))
+            {
+                sidecarCmd.Add("--config");
+                sidecarCmd.Add(daprConfigPath);
+            }
+
             var sidecarCreateParams = new Docker.DotNet.Models.CreateContainerParameters
             {
                 Image = _daprImage,
                 Name = sidecarName,
                 Env = sidecarEnv.Count > 0 ? sidecarEnv : null,
-                Cmd = new List<string>
-                {
-                    "./daprd",
-                    "--app-id", appId,
-                    "--app-port", "80",
-                    "--app-protocol", "http",
-                    "--dapr-http-port", "3500",
-                    "--dapr-grpc-port", "50001",
-                    "--placement-host-address", placementHost,
-                    "--resources-path", "/components",
-                    "--log-level", "info",
-                    "--enable-api-logging"
-                },
+                Cmd = sidecarCmd,
                 Labels = new Dictionary<string, string>
                 {
                     [DAPR_APP_ID_LABEL] = appId,

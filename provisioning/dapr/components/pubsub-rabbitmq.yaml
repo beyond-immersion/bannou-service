@@ -10,6 +10,8 @@ spec:
   metadata:
   - name: host
     value: amqp://rabbitmq:5672
+  - name: heartbeatInterval
+    value: "30s"
   - name: username
     value: guest
   - name: password
