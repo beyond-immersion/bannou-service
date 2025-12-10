@@ -119,10 +119,12 @@ public static class ServiceClientExtensions
         var assemblies = new List<Assembly> { typeof(ServiceClientExtensions).Assembly };
 
         // Add plugin assemblies if PluginLoader is available
+        // Use GetAllPluginAssemblies() to include client types from ALL plugins (enabled and disabled)
+        // Client types from disabled plugins are needed for inter-service communication
         var pluginLoader = Program.PluginLoader;
         if (pluginLoader != null)
         {
-            assemblies.AddRange(pluginLoader.GetControllerAssemblies());
+            assemblies.AddRange(pluginLoader.GetAllPluginAssemblies());
         }
 
         foreach (var assembly in assemblies)

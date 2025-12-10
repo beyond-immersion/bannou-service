@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Plugins;
@@ -90,18 +91,17 @@ public class PluginLoader
                 if (plugin != null)
                 {
                     _allPlugins.Add(plugin);
-                    _logger.LogInformation("📦 Discovered plugin: {PluginName} v{Version}", plugin.DisplayName, plugin.Version);
 
                     // Determine if this plugin's service should be enabled
                     var serviceName = plugin.PluginName;
                     if (IsServiceEnabled(serviceName))
                     {
                         _enabledPlugins.Add(plugin);
-                        _logger.LogInformation("Service {ServiceName} is enabled", serviceName);
+                        _logger.LogDebug("Service {ServiceName} is enabled", serviceName);
                     }
                     else
                     {
-                        _logger.LogInformation("Service {ServiceName} is disabled", serviceName);
+                        _logger.LogDebug("Service {ServiceName} is disabled", serviceName);
                     }
                 }
             }
@@ -115,8 +115,12 @@ public class PluginLoader
         // STAGE 2: Discover types for DI registration from ALL assemblies
         DiscoverTypesForRegistration();
 
-        _logger.LogInformation("Plugin discovery complete. {AllCount} plugins discovered, {EnabledCount} enabled",
-            _allPlugins.Count, _enabledPlugins.Count);
+        var discoveredSummary = string.Join(", ", _allPlugins.Select(p => $"{p.DisplayName} v{p.Version}"));
+        var enabledSummary = string.Join(", ", _enabledPlugins.Select(p => $"{p.DisplayName} v{p.Version}"));
+
+        _logger.LogInformation(
+            "Plugin discovery complete. Discovered {AllCount}: [{Discovered}]; Enabled {EnabledCount}: [{Enabled}]",
+            _allPlugins.Count, discoveredSummary, _enabledPlugins.Count, enabledSummary);
 
         return _enabledPlugins.Count;
     }
@@ -621,10 +625,11 @@ public class PluginLoader
 
 
     /// <summary>
-    /// Get assemblies containing controllers for all loaded plugins.
-    /// Controllers are available for all plugins (enabled and disabled) for client generation.
+    /// Get assemblies for ALL loaded plugins (enabled and disabled).
+    /// Used for client type registration where disabled plugin client types are needed
+    /// for inter-service communication.
     /// </summary>
-    public IEnumerable<Assembly> GetControllerAssemblies()
+    public IEnumerable<Assembly> GetAllPluginAssemblies()
     {
         var assemblies = new List<Assembly>();
         var loadedPluginNames = new HashSet<string>();
@@ -641,19 +646,49 @@ public class PluginLoader
             loadedPluginNames.Add(pluginName.ToLower());
         }
 
-        _logger.LogDebug("Available plugin assemblies: {PluginNames}", string.Join(", ", loadedPluginNames));
+        _logger.LogDebug("Available plugin assemblies (all): {PluginNames}", string.Join(", ", loadedPluginNames));
 
         // Return all loaded plugin assemblies - they contain controllers and clients
         foreach (var (pluginName, assembly) in _loadedAssemblies)
         {
             if (!assemblies.Contains(assembly))
             {
-                _logger.LogDebug("Adding plugin assembly: {AssemblyName}", assembly.GetName().Name);
+                _logger.LogDebug("Adding plugin assembly (all): {AssemblyName}", assembly.GetName().Name);
                 assemblies.Add(assembly);
             }
         }
 
-        _logger.LogInformation("Found {Count} plugin assemblies for controller registration", assemblies.Count);
+        _logger.LogInformation("Found {Count} plugin assemblies (all) for client registration", assemblies.Count);
+
+        return assemblies;
+    }
+
+    /// <summary>
+    /// Get assemblies containing controllers for ENABLED plugins only.
+    /// Controllers from disabled plugins should not be registered to avoid DI failures
+    /// when their service dependencies are not registered.
+    /// </summary>
+    public IEnumerable<Assembly> GetControllerAssemblies()
+    {
+        var assemblies = new List<Assembly>();
+
+        _logger.LogDebug("Enabled plugins for controller registration: {PluginNames}",
+            string.Join(", ", _enabledPlugins.Select(p => p.PluginName)));
+
+        foreach (var plugin in _enabledPlugins)
+        {
+            var assembly = _loadedAssemblies.GetValueOrDefault(plugin.PluginName);
+            if (assembly != null && !assemblies.Contains(assembly))
+            {
+                _logger.LogDebug("Adding ENABLED plugin assembly for controllers: {AssemblyName}",
+                    assembly.GetName().Name);
+                assemblies.Add(assembly);
+            }
+        }
+
+        _logger.LogInformation("Found {Count} ENABLED plugin assemblies for controller registration " +
+            "(excluded {DisabledCount} disabled plugin assemblies)",
+            assemblies.Count, _allPlugins.Count - _enabledPlugins.Count);
 
         return assemblies;
     }

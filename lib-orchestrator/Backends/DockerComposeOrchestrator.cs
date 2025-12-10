@@ -68,6 +68,9 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     // Cached discovered placement host (lazy initialized)
     private string? _discoveredPlacementHost;
     private bool _placementDiscoveryAttempted;
+    // Cached discovered infrastructure hosts (service name -> IP address)
+    private Dictionary<string, string>? _discoveredInfrastructureHosts;
+    private bool _infrastructureDiscoveryAttempted;
 
     public DockerComposeOrchestrator(ILogger<DockerComposeOrchestrator> logger)
     {
@@ -291,6 +294,71 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             _discoveredPlacementHost = null;
             return null;
         }
+    }
+
+    /// <summary>
+    /// Discovers infrastructure containers (rabbitmq, redis, etc.) and returns their IPs.
+    /// These IPs are used as ExtraHosts so dynamically created containers can resolve
+    /// service names like "rabbitmq" that are normally only available via Docker Compose DNS.
+    /// </summary>
+    private async Task<Dictionary<string, string>> DiscoverInfrastructureHostsAsync(
+        string targetNetwork,
+        CancellationToken cancellationToken)
+    {
+        if (_infrastructureDiscoveryAttempted && _discoveredInfrastructureHosts != null)
+        {
+            return _discoveredInfrastructureHosts;
+        }
+
+        _infrastructureDiscoveryAttempted = true;
+        _discoveredInfrastructureHosts = new Dictionary<string, string>();
+
+        // Infrastructure service names that Dapr components reference
+        var serviceNames = new[] { "rabbitmq", "redis", "bannou-redis", "auth-redis", "routing-redis", "account-db", "mysql" };
+
+        try
+        {
+            var containers = await _client.Containers.ListContainersAsync(
+                new Docker.DotNet.Models.ContainersListParameters { All = false },
+                cancellationToken);
+
+            foreach (var serviceName in serviceNames)
+            {
+                // Find container by compose service label or name pattern
+                var container = containers.FirstOrDefault(c =>
+                    (c.Labels.TryGetValue("com.docker.compose.service", out var label) &&
+                     label.Equals(serviceName, StringComparison.OrdinalIgnoreCase)) ||
+                    c.Names.Any(n => n.Contains(serviceName, StringComparison.OrdinalIgnoreCase)));
+
+                if (container?.NetworkSettings?.Networks != null)
+                {
+                    // Get IP from target network, or any network if target not found
+                    var networkSettings = container.NetworkSettings.Networks.TryGetValue(targetNetwork, out var net)
+                        ? net
+                        : container.NetworkSettings.Networks.Values.FirstOrDefault();
+
+                    if (networkSettings?.IPAddress != null && !string.IsNullOrEmpty(networkSettings.IPAddress))
+                    {
+                        _discoveredInfrastructureHosts[serviceName] = networkSettings.IPAddress;
+                        _logger.LogDebug("Discovered infrastructure host: {Service} -> {IP}", serviceName, networkSettings.IPAddress);
+                    }
+                }
+            }
+
+            if (_discoveredInfrastructureHosts.Count > 0)
+            {
+                _logger.LogInformation(
+                    "Discovered {Count} infrastructure hosts for ExtraHosts: {Hosts}",
+                    _discoveredInfrastructureHosts.Count,
+                    string.Join(", ", _discoveredInfrastructureHosts.Select(kv => $"{kv.Key}={kv.Value}")));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error discovering infrastructure hosts; containers may not resolve service names");
+        }
+
+        return _discoveredInfrastructureHosts;
     }
 
     /// <inheritdoc />
@@ -799,6 +867,14 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             var placementHost = await DiscoverPlacementHostAsync(dockerNetwork, cancellationToken)
                 ?? _placementHost;
 
+            // Discover infrastructure container IPs for ExtraHosts
+            // This allows dynamically created containers to resolve service names like "rabbitmq"
+            // that are normally only available via Docker Compose DNS
+            var infrastructureHosts = await DiscoverInfrastructureHostsAsync(dockerNetwork, cancellationToken);
+            var extraHosts = infrastructureHosts
+                .Select(kv => $"{kv.Key}:{kv.Value}")
+                .ToList();
+
             // Build bind mounts list
             var bindMounts = new List<string>();
             if (certificatesPath != null)
@@ -840,7 +916,10 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                             Target = "/app/logs"
                         }
                     },
-                    Binds = bindMounts
+                    Binds = bindMounts,
+                    // Add infrastructure service IPs as extra hosts so Dapr sidecars can resolve
+                    // service names like "rabbitmq" that Docker Compose normally provides via DNS
+                    ExtraHosts = extraHosts.Count > 0 ? extraHosts : null
                 },
                 NetworkingConfig = new Docker.DotNet.Models.NetworkingConfig
                 {

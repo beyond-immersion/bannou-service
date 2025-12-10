@@ -1658,10 +1658,18 @@
             <param name="pluginName">Name of the plugin</param>
             <returns>Resolved service instance or null if not found</returns>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.GetAllPluginAssemblies">
+            <summary>
+            Get assemblies for ALL loaded plugins (enabled and disabled).
+            Used for client type registration where disabled plugin client types are needed
+            for inter-service communication.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.GetControllerAssemblies">
             <summary>
-            Get assemblies containing controllers for all loaded plugins.
-            Controllers are available for all plugins (enabled and disabled) for client generation.
+            Get assemblies containing controllers for ENABLED plugins only.
+            Controllers from disabled plugins should not be registered to avoid DI failures
+            when their service dependencies are not registered.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.ConfigureApplication(Microsoft.AspNetCore.Builder.WebApplication)">

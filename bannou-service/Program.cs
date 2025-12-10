@@ -257,7 +257,6 @@ public static class Program
                 {
                     loggingOptions
                         .AddSerilog()
-                        .AddSimpleConsole()
                         .SetMinimumLevel(Configuration.Web_Host_Logging_Level);
                 });
         }
