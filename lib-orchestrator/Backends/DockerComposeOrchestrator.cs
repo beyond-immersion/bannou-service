@@ -869,8 +869,6 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 sidecarBindMounts.Add($"{certificatesPath}:/certificates:ro");
                 sidecarEnv.Add("SSL_CERT_DIR=/certificates");
             }
-            // Mount Dapr components for the sidecar so pubsub/placement configs are available.
-            sidecarBindMounts.Add($"{componentsPath}:/components:ro");
 
             var sidecarCreateParams = new Docker.DotNet.Models.CreateContainerParameters
             {

@@ -66,22 +66,33 @@ public class ConnectController : ConnectControllerBase
                 return Unauthorized("Invalid or expired JWT token");
             }
 
-            // Accept WebSocket connection
+            // Accept WebSocket connection - this starts the HTTP 101 response
             var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 
             // Handle WebSocket communication with binary protocol, passing user roles and authorizations for capability initialization
             await connectService.HandleWebSocketCommunicationAsync(webSocket, sessionId, roles, authorizations, cancellationToken);
 
-            return Ok();
+            // Return EmptyResult since the response already started with 101 Switching Protocols
+            return new EmptyResult();
         }
         catch (OperationCanceledException)
         {
+            // Connection was cancelled - if WebSocket was already accepted, return empty
+            if (HttpContext.WebSockets.IsWebSocketRequest && HttpContext.Response.HasStarted)
+            {
+                return new EmptyResult();
+            }
             return NoContent();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "WebSocket connection failed");
-            return StatusCode(500, "WebSocket connection failed");
+            // Only return error status if response hasn't started yet
+            if (!HttpContext.Response.HasStarted)
+            {
+                return StatusCode(500, "WebSocket connection failed");
+            }
+            return new EmptyResult();
         }
     }
 }
