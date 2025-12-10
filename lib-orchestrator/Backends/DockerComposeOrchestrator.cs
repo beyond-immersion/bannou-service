@@ -809,6 +809,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             {
                 bindMounts.Add($"{presetsPath}:/app/provisioning/orchestrator/presets:ro");
             }
+            // Components are needed only by the sidecar, but we mount into app too for parity/debugging.
+            bindMounts.Add($"{componentsPath}:/components:ro");
 
             // Step 1: Create the application container
             _logger.LogInformation("Creating application container: {ContainerName}", containerName);
@@ -869,6 +871,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 sidecarBindMounts.Add($"{certificatesPath}:/certificates:ro");
                 sidecarEnv.Add("SSL_CERT_DIR=/certificates");
             }
+            // Mount Dapr components for the sidecar so pubsub/placement configs are available.
+            sidecarBindMounts.Add($"{componentsPath}:/components:ro");
 
             var sidecarCreateParams = new Docker.DotNet.Models.CreateContainerParameters
             {
