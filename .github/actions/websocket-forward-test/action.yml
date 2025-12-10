@@ -52,19 +52,48 @@ runs:
           -f "./provisioning/docker-compose.test.edge.yml" \
           wait bannou-edge-tester
 
-    - name: Dump Service Logs on Failure
+    - name: Dump Service Logs and Network Info
       if: failure()
       shell: bash
       run: |
-        echo "📋 Dumping all service logs for debugging..."
-        echo "=== BANNOU SERVICE LOGS (ALL) ==="
+        echo "📋 Dumping all service logs and network information for debugging..."
+
+        echo ""
+        echo "=== DOCKER PS SNAPSHOT ==="
+        docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Networks}}\t{{.Ports}}'
+
+        echo ""
+        echo "=== DOCKER NETWORKS ==="
+        docker network ls
+
+        echo ""
+        echo "=== BANNOU NETWORK INSPECTION ==="
+        # Find and inspect any network containing 'bannou' or 'edge'
+        for net in $(docker network ls --format '{{.Name}}' | grep -E 'bannou|edge'); do
+          echo "--- Network: $net ---"
+          docker network inspect "$net" --format '{{range .Containers}}{{.Name}}: {{.IPv4Address}}{{"\n"}}{{end}}' || true
+        done
+
+        echo ""
+        echo "=== BANNOU SERVICE LOGS (last 1000 lines) ==="
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
           -f "./provisioning/docker-compose.ingress.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.edge.yml" \
-          logs bannou || echo "Failed to get bannou logs"
+          logs --tail=1000 bannou || echo "Failed to get bannou logs"
+
+        echo ""
+        echo "=== BANNOU DAPR SIDECAR LOGS (last 500 lines) ==="
+        docker compose -p bannou-ci-edge \
+          -f "./provisioning/docker-compose.yml" \
+          -f "./provisioning/docker-compose.services.yml" \
+          -f "./provisioning/docker-compose.ingress.yml" \
+          -f "./provisioning/docker-compose.test.yml" \
+          -f "./provisioning/docker-compose.test.edge.yml" \
+          logs --tail=500 bannou-dapr || echo "Failed to get bannou-dapr logs"
+
         echo ""
         echo "=== OPENRESTY LOGS (last 500) ==="
         docker compose -p bannou-ci-edge \
@@ -74,15 +103,31 @@ runs:
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.edge.yml" \
           logs --tail=500 openresty || echo "Failed to get openresty logs"
+
         echo ""
-        echo "=== RABBITMQ LOGS (last 500) ==="
+        echo "=== RABBITMQ LOGS (last 200) ==="
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
           -f "./provisioning/docker-compose.ingress.yml" \
           -f "./provisioning/docker-compose.test.yml" \
           -f "./provisioning/docker-compose.test.edge.yml" \
-          logs --tail=500 rabbitmq || echo "Failed to get rabbitmq logs"
+          logs --tail=200 rabbitmq || echo "Failed to get rabbitmq logs"
+
+        echo ""
+        echo "=== ORCHESTRATOR DEPLOYED CONTAINERS (app + dapr sidecars) ==="
+        for c in $(docker ps -a --format '{{.Names}}' | grep -E '^bannou-bannou|^bannou-main|^bannou-auth|^bannou-edge'); do
+          echo "--- logs for $c ---"
+          docker logs --tail=300 "$c" 2>&1 || true
+        done
+        for c in $(docker ps -a --format '{{.Names}}' | grep '-dapr$'); do
+          echo "--- logs for $c ---"
+          docker logs --tail=300 "$c" 2>&1 || true
+        done
+
+        echo ""
+        echo "=== CONTAINER HEALTH STATUS ==="
+        docker ps -a --format '{{.Names}}\t{{.Status}}' | grep -E 'bannou|dapr|redis|rabbit' || true
 
     - name: Final Cleanup
       if: always()
