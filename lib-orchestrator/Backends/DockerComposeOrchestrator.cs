@@ -809,8 +809,6 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             {
                 bindMounts.Add($"{presetsPath}:/app/provisioning/orchestrator/presets:ro");
             }
-            // Components are needed only by the sidecar, but we mount into app too for parity/debugging.
-            bindMounts.Add($"{componentsPath}:/components:ro");
 
             // Step 1: Create the application container
             _logger.LogInformation("Creating application container: {ContainerName}", containerName);
