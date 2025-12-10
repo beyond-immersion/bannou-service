@@ -125,8 +125,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// <param name="sourceComponentsContainerPath">Container path where the host directory is mounted</param>
     /// <param name="appId">The app ID for the service (used to create unique directory)</param>
     /// <param name="infrastructureHosts">Map of service names to IP addresses</param>
-    /// <returns>Host path to the generated components directory, or null if generation failed</returns>
-    private string? GenerateComponentsWithIpAddresses(
+    /// <returns>(HostPath, ContainerPath) to the generated components directory, or null if generation failed</returns>
+    private (string HostPath, string ContainerPath)? GenerateComponentsWithIpAddresses(
         string sourceComponentsHostPath,
         string sourceComponentsContainerPath,
         string appId,
@@ -256,9 +256,9 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                     configSourcePath, _daprConfigContainerPath);
             }
 
-            // Return the HOST path equivalent for Docker bind mounts
+            // Return both host and container paths for the generated directory
             // Since the volume mount is: ${HOST_PATH}:/tmp/dapr-components:rw
-            // files written to /tmp/dapr-components/generated/appId appear at ${HOST_PATH}/generated/appId
+            // files written to /tmp/dapr-components/... appear at ${HOST_PATH}/...
             var hostTempDir = Path.Combine(sourceComponentsHostPath, "generated", appId);
 
             _logger.LogInformation(
@@ -268,7 +268,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 appId, modifiedCount, containerTempDir, hostTempDir,
                 string.Join(", ", infrastructureHosts.Select(h => $"{h.Key}={h.Value}")));
 
-            return hostTempDir;
+            return (hostTempDir, containerTempDir);
         }
         catch (Exception ex)
         {
@@ -281,18 +281,19 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// Writes a Dapr configuration that forces DNS-based name resolution (resolver 127.0.0.11).
     /// Returns the container-visible path (under /components) so it can be passed to daprd via --config.
     /// </summary>
-    private string? EnsureDnsNameResolutionConfig(string? componentsHostPath)
+    private string? EnsureDnsNameResolutionConfig(string? componentsHostPath, string? componentsContainerPath)
     {
-        if (string.IsNullOrWhiteSpace(componentsHostPath))
+        if (string.IsNullOrWhiteSpace(componentsHostPath) || string.IsNullOrWhiteSpace(componentsContainerPath))
         {
             return null;
         }
 
         try
         {
-            Directory.CreateDirectory(componentsHostPath);
+            // Write using the container-visible path; the mount maps it to the host path.
+            Directory.CreateDirectory(componentsContainerPath);
             var fileName = "dns-name-resolution.yaml";
-            var hostConfigPath = Path.Combine(componentsHostPath, fileName);
+            var containerConfigPath = Path.Combine(componentsContainerPath, fileName);
 
             var configContent = @"apiVersion: dapr.io/v1alpha1
 kind: Configuration
@@ -304,7 +305,7 @@ spec:
     configuration:
     resolver: ""127.0.0.11""
 ";
-            File.WriteAllText(hostConfigPath, configContent);
+            File.WriteAllText(containerConfigPath, configContent);
 
             // Sidecar mounts components to /components
             return $"/components/{fileName}";
@@ -1093,12 +1094,19 @@ spec:
             // network_mode: container:ID, Docker's DNS doesn't reliably resolve hostnames
             // for dynamically created containers. By using IPs directly, we bypass DNS entirely.
             var componentsHostPath = componentsPath ?? _daprComponentsHostPath;
-            var sidecarComponentsPath = GenerateComponentsWithIpAddresses(
+
+            var generatedComponents = GenerateComponentsWithIpAddresses(
                 componentsHostPath,
                 _daprComponentsContainerPath,
                 appId,
-                infrastructureHosts) ?? componentsHostPath;
-            var dnsConfigPath = EnsureDnsNameResolutionConfig(sidecarComponentsPath);
+                infrastructureHosts);
+
+            var sidecarComponentsHostPath = generatedComponents?.HostPath ?? componentsHostPath;
+            var sidecarComponentsContainerPath = generatedComponents?.ContainerPath ?? _daprComponentsContainerPath;
+
+            var dnsConfigPath = EnsureDnsNameResolutionConfig(
+                sidecarComponentsHostPath,
+                sidecarComponentsContainerPath);
 
             // Build bind mounts list
             var bindMounts = new List<string>();
@@ -1167,7 +1175,7 @@ spec:
 
             // Build sidecar bind mounts and environment
             // Use the generated components path with IP addresses (not the original with hostnames)
-            var sidecarBindMounts = new List<string> { $"{sidecarComponentsPath}:/components:ro" };
+            var sidecarBindMounts = new List<string> { $"{sidecarComponentsHostPath}:/components:ro" };
             var sidecarEnv = new List<string>();
             if (certificatesPath != null)
             {
