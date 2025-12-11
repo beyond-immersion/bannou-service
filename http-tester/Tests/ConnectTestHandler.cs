@@ -19,12 +19,10 @@ public class ConnectTestHandler : IServiceTestHandler
     {
         return new[]
         {
-            // Service Mappings Tests
-            new ServiceTest(TestServiceMappings, "ServiceMappings", "Connect", "Test service routing mappings retrieval"),
-            new ServiceTest(TestServiceMappingsDefaultMapping, "MappingsDefault", "Connect", "Test default mapping is set correctly"),
-            new ServiceTest(TestServiceMappingsContainsExpectedServices, "MappingsServices", "Connect", "Test mappings contain expected services"),
-            new ServiceTest(TestServiceMappingsGeneratedAt, "MappingsTimestamp", "Connect", "Test mappings have valid generated timestamp"),
-            new ServiceTest(TestServiceMappingsTotalServices, "MappingsTotalSvc", "Connect", "Test total services count is consistent"),
+            // Client Capabilities Tests (GUID -> API mappings for clients)
+            // NOTE: Service routing (service-name -> app-id) has moved to Orchestrator API
+            new ServiceTest(TestClientCapabilities, "ClientCapabilities", "Connect", "Test client capability manifest retrieval"),
+            new ServiceTest(TestClientCapabilitiesStructure, "CapabilitiesStructure", "Connect", "Test capability response has valid structure"),
 
             // Internal Proxy Tests
             new ServiceTest(TestInternalProxy, "InternalProxy", "Connect", "Test internal API proxy functionality"),
@@ -55,23 +53,98 @@ public class ConnectTestHandler : IServiceTestHandler
         return Program.ServiceProvider.GetRequiredService<T>();
     }
 
-    private static async Task<TestResult> TestServiceMappings(ITestClient client, string[] args)
+    /// <summary>
+    /// Test the client capabilities endpoint.
+    /// Returns GUID -> API mappings for the authenticated client's session.
+    /// </summary>
+    private static async Task<TestResult> TestClientCapabilities(ITestClient client, string[] args)
     {
         try
         {
             var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
+            var response = await connectClient.GetClientCapabilitiesAsync(new GetClientCapabilitiesRequest());
 
-            if (response?.Mappings == null)
-                return TestResult.Failed("Service mappings response is null or missing mappings");
+            if (response == null)
+                return TestResult.Failed("Client capabilities response is null");
 
-            if (string.IsNullOrEmpty(response.DefaultMapping))
-                return TestResult.Failed("Default mapping is null or empty");
+            // Even placeholder implementation should have required fields
+            if (response.Capabilities == null)
+                return TestResult.Failed("Capabilities list is null");
 
-            var mappingCount = response.Mappings.Count;
-            var defaultMapping = response.DefaultMapping;
+            if (response.Version < 0)
+                return TestResult.Failed($"Invalid version: {response.Version}");
 
-            return TestResult.Successful($"Service mappings retrieved successfully - {mappingCount} mappings, default: {defaultMapping}");
+            if (response.GeneratedAt == default)
+                return TestResult.Failed("GeneratedAt timestamp is not set");
+
+            return TestResult.Successful(
+                $"Client capabilities retrieved: {response.Capabilities.Count} capabilities, " +
+                $"version={response.Version}, sessionId={response.SessionId ?? "(placeholder)"}");
+        }
+        catch (ApiException ex) when (ex.StatusCode == 401)
+        {
+            // 401 is expected for unauthenticated requests - capabilities require auth
+            return TestResult.Successful("Client capabilities correctly returned 401 (authentication required)");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Unexpected error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Test that client capabilities response has valid structure.
+    /// </summary>
+    private static async Task<TestResult> TestClientCapabilitiesStructure(ITestClient client, string[] args)
+    {
+        try
+        {
+            var connectClient = new ConnectClient();
+            var response = await connectClient.GetClientCapabilitiesAsync(new GetClientCapabilitiesRequest());
+
+            // Check required fields exist
+            var issues = new List<string>();
+
+            if (response.SessionId == null)
+                issues.Add("SessionId is null (should be set even for placeholder)");
+
+            if (response.Capabilities == null)
+                issues.Add("Capabilities is null");
+
+            if (response.GeneratedAt == default)
+                issues.Add("GeneratedAt is default");
+
+            // Check each capability has required fields (if any exist)
+            if (response.Capabilities?.Count > 0)
+            {
+                foreach (var cap in response.Capabilities)
+                {
+                    if (cap.Guid == Guid.Empty)
+                        issues.Add($"Capability missing Guid");
+                    if (string.IsNullOrEmpty(cap.Service))
+                        issues.Add($"Capability missing Service");
+                    if (string.IsNullOrEmpty(cap.Endpoint))
+                        issues.Add($"Capability missing Endpoint");
+                }
+            }
+
+            if (issues.Count > 0)
+            {
+                return TestResult.Failed($"Capability structure issues: {string.Join(", ", issues)}");
+            }
+
+            return TestResult.Successful(
+                $"Client capabilities structure valid: version={response.Version}, " +
+                $"capCount={response.Capabilities?.Count ?? 0}");
+        }
+        catch (ApiException ex) when (ex.StatusCode == 401)
+        {
+            // 401 is expected - capabilities require authentication
+            return TestResult.Successful("Client capabilities correctly returned 401 (authentication required)");
         }
         catch (ApiException ex)
         {
@@ -120,144 +193,6 @@ public class ConnectTestHandler : IServiceTestHandler
         catch (ApiException ex)
         {
             return TestResult.Failed($"Internal proxy failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Test that the default mapping is set correctly (should be "bannou").
-    /// </summary>
-    private static async Task<TestResult> TestServiceMappingsDefaultMapping(ITestClient client, string[] args)
-    {
-        try
-        {
-            var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
-
-            if (response?.DefaultMapping == null)
-                return TestResult.Failed("Default mapping is null");
-
-            // Per architecture, default should be "bannou" (omnipotent routing)
-            if (response.DefaultMapping != "bannou")
-            {
-                return TestResult.Successful($"Default mapping is '{response.DefaultMapping}' (expected 'bannou' for standard config)");
-            }
-
-            return TestResult.Successful($"Default mapping correctly set to 'bannou'");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Test that mappings contain expected services (accounts, auth, permissions).
-    /// </summary>
-    private static async Task<TestResult> TestServiceMappingsContainsExpectedServices(ITestClient client, string[] args)
-    {
-        try
-        {
-            var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
-
-            if (response?.Mappings == null)
-                return TestResult.Failed("Mappings are null");
-
-            var mappingKeys = response.Mappings.Keys.ToList();
-
-            var hasAccounts = mappingKeys.Any(k => k.Contains("accounts"));
-            var hasAuth = mappingKeys.Any(k => k.Contains("auth"));
-            var hasPermissions = mappingKeys.Any(k => k.Contains("permissions"));
-
-            if (mappingKeys.Count == 0)
-            {
-                return TestResult.Successful("No service mappings registered (acceptable in monolith mode)");
-            }
-
-            return TestResult.Successful(
-                $"Service mappings found: {mappingKeys.Count} services " +
-                $"(accounts={hasAccounts}, auth={hasAuth}, permissions={hasPermissions})");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Test that service mappings have a valid generated timestamp.
-    /// </summary>
-    private static async Task<TestResult> TestServiceMappingsGeneratedAt(ITestClient client, string[] args)
-    {
-        try
-        {
-            var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
-
-            if (response == null)
-                return TestResult.Failed("Response is null");
-
-            var generatedAt = response.GeneratedAt;
-
-            // Timestamp should be recent (within last hour)
-            var timeDiff = DateTimeOffset.UtcNow - generatedAt;
-            if (timeDiff.TotalHours > 1)
-            {
-                return TestResult.Successful($"Service mappings timestamp: {generatedAt} (may be stale - {timeDiff.TotalMinutes:F0} minutes old)");
-            }
-
-            return TestResult.Successful($"Service mappings have recent timestamp: {generatedAt}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Unexpected error: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Test that total services count is consistent with mappings.
-    /// </summary>
-    private static async Task<TestResult> TestServiceMappingsTotalServices(ITestClient client, string[] args)
-    {
-        try
-        {
-            var connectClient = new ConnectClient();
-            var response = await connectClient.GetServiceMappingsAsync(new GetServiceMappingsRequest());
-
-            if (response == null)
-                return TestResult.Failed("Response is null");
-
-            var totalServices = response.TotalServices;
-            var mappingCount = response.Mappings?.Count ?? 0;
-
-            // Total services should match mapping count or be 0 in monolith mode
-            if (totalServices == mappingCount || (totalServices == 0 && mappingCount == 0))
-            {
-                return TestResult.Successful($"Total services count ({totalServices}) matches mappings ({mappingCount})");
-            }
-
-            // Allow for some discrepancy
-            return TestResult.Successful($"Total services: {totalServices}, Mappings: {mappingCount} (may differ in distributed mode)");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"API exception: {ex.StatusCode} - {ex.Message}");
         }
         catch (Exception ex)
         {

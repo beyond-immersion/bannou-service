@@ -65,36 +65,49 @@ paths:
         '429':
           description: Rate limit exceeded
 
+  # NOTE: Service routing mappings (service-name → app-id) are now in Orchestrator API
+  # at /orchestrator/service-routing. Connect service handles client capabilities only.
 
-  /service-mappings:
+  /client-capabilities:
     post:
-      summary: Get current service routing mappings
-      operationId: getServiceMappings
+      summary: Get client capability manifest (GUID → API mappings)
+      operationId: getClientCapabilities
       tags:
-        - Service Discovery
+        - Client Capabilities
       x-permissions:
-        - role: admin
-          states: {}
-        - role: service
+        - role: user
           states: {}
       description: |
-        Returns current service-to-app-id routing mappings for monitoring and debugging.
-        Shows how services are mapped in the current deployment topology.
+        Returns the capability manifest for the authenticated client's session.
+        Maps client-salted GUIDs to available API endpoints based on the client's
+        current permissions and session state.
+
+        **Security**: Each client receives unique GUIDs for the same API endpoints.
+        This prevents cross-session exploitation and enables per-client rate limiting.
+
+        **Dynamic Updates**: Capabilities may change during a session when:
+        - Role changes occur (admin promotion, etc.)
+        - Subscription status changes
+        - Session state transitions
+
+        Clients should listen for capability update events via WebSocket to stay current.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GetServiceMappingsRequest'
+              $ref: '#/components/schemas/GetClientCapabilitiesRequest'
       responses:
         '200':
-          description: Service mappings retrieved successfully
+          description: Client capabilities retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServiceMappingsResponse'
+                $ref: '#/components/schemas/ClientCapabilitiesResponse'
+        '401':
+          description: Not authenticated - requires valid session
         '500':
-          description: Error retrieving service mappings
+          description: Error retrieving capabilities
 
   /connect:
     get:
@@ -275,14 +288,79 @@ paths:
 components:
   schemas:
     # Request Models for POST-only pattern
-    GetServiceMappingsRequest:
+    GetClientCapabilitiesRequest:
       type: object
-      description: Request to get service mappings (empty body allowed)
+      description: Request to get client capability manifest (empty body allowed)
       properties:
         serviceFilter:
           type: string
           description: Optional filter by service name prefix
           nullable: true
+        includeMetadata:
+          type: boolean
+          description: Include additional metadata about each capability
+          default: false
+
+    ClientCapabilitiesResponse:
+      type: object
+      required:
+        - sessionId
+        - capabilities
+        - version
+        - generatedAt
+      properties:
+        sessionId:
+          type: string
+          description: Session ID this capability manifest belongs to
+        capabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientCapability'
+          description: Available API capabilities for this client
+        version:
+          type: integer
+          description: Capability manifest version (increments on changes)
+        generatedAt:
+          type: string
+          format: date-time
+          description: When this capability manifest was generated
+        expiresAt:
+          type: string
+          format: date-time
+          description: When these capabilities expire and need refresh
+          nullable: true
+
+    ClientCapability:
+      type: object
+      required:
+        - guid
+        - service
+        - endpoint
+        - method
+      properties:
+        guid:
+          type: string
+          format: uuid
+          description: Client-salted GUID for this API endpoint (unique per session)
+        service:
+          type: string
+          description: Service name (e.g., "accounts", "auth")
+        endpoint:
+          type: string
+          description: API endpoint path (e.g., "/accounts/create")
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+          description: HTTP method for this endpoint
+        description:
+          type: string
+          description: Human-readable description of this capability
+          nullable: true
+        channel:
+          type: integer
+          format: uint16
+          description: Preferred WebSocket channel for this capability
+          default: 0
 
     InternalProxyRequest:
       type: object
@@ -394,35 +472,7 @@ components:
           enum: [400, 403, 500]
       additionalProperties: false
 
-    ServiceMappingsResponse:
-      type: object
-      required:
-        - mappings
-        - defaultMapping
-        - generatedAt
-      properties:
-        mappings:
-          type: object
-          additionalProperties:
-            type: string
-          description: Map of service names to app-id routing destinations
-          example:
-            accounts: "bannou"
-            auth: "bannou"
-            behavior: "npc-processing-01"
-        defaultMapping:
-          type: string
-          description: Default app-id used when no specific mapping exists
-          default: "bannou"
-        generatedAt:
-          type: string
-          format: date-time
-          description: When this mapping information was generated
-        totalServices:
-          type: integer
-          description: Total number of services with routing mappings
-          minimum: 0
-      additionalProperties: false
+    # NOTE: ServiceMappingsResponse moved to Orchestrator API as ServiceRoutingResponse
 
     # Binary Protocol Schemas (for documentation purposes)
     MessageFlags:
@@ -593,9 +643,6 @@ components:
           format: uint32
           description: Time in seconds to allow client reconnection
           default: 30
-        redis_connection_string:
-          type: string
-          description: Redis connection string for session management
         token_public_key:
           type: string
           description: Base64-encoded RSA public key for JWT validation
@@ -902,21 +949,9 @@ x-service-configuration:
       type: integer
       description: Rate limit window in minutes
       default: 1
-    RedisConnectionString:
-      type: string
-      description: Redis connection string for session management
-      default: "localhost:6379"
     JwtPublicKey:
       type: string
       description: RSA public key for JWT validation (PEM format)
-    ServiceHeartbeatIntervalSeconds:
-      type: integer
-      description: Interval for service heartbeat updates to Redis
-      default: 30
-    ServiceDiscoveryRefreshSeconds:
-      type: integer
-      description: Interval for refreshing service discovery from Redis
-      default: 60
 
 # Note: Event subscriptions are handled manually in ConnectEventsController.cs
 # because they require specialized CloudEvents parsing and custom service method calls.

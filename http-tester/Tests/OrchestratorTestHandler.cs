@@ -49,6 +49,10 @@ public class OrchestratorTestHandler : IServiceTestHandler
             new ServiceTest(TestGetContainerStatus, "GetContainerStatus", "Orchestrator", "Test container status endpoint"),
             new ServiceTest(TestGetContainerStatusUnknown, "ContainerStatusUnknown", "Orchestrator", "Test container status for unknown container"),
 
+            // Service Routing Tests
+            new ServiceTest(TestGetServiceRouting, "GetServiceRouting", "Orchestrator", "Test service routing mappings endpoint"),
+            new ServiceTest(TestServiceRoutingDefaults, "ServiceRoutingDefaults", "Orchestrator", "Test service routing returns default app-id"),
+
             // Configuration Tests
             new ServiceTest(TestGetConfigVersion, "GetConfigVersion", "Orchestrator", "Test configuration version endpoint"),
             new ServiceTest(TestRollbackConfigurationNoHistory, "RollbackNoHistory", "Orchestrator", "Test rollback when no previous config exists"),
@@ -581,6 +585,93 @@ public class OrchestratorTestHandler : IServiceTestHandler
         catch (ApiException ex)
         {
             return TestResult.Failed($"Unknown container check failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test the service routing endpoint.
+    /// Returns service-to-app-id mappings for Dapr service invocation.
+    /// </summary>
+    private static async Task<TestResult> TestGetServiceRouting(ITestClient client, string[] args)
+    {
+        try
+        {
+            var orchestratorClient = new OrchestratorClient();
+
+            var response = await orchestratorClient.GetServiceRoutingAsync(new GetServiceRoutingRequest());
+
+            // Verify required fields
+            if (response.Mappings == null)
+                return TestResult.Failed("Service routing missing mappings");
+
+            if (string.IsNullOrEmpty(response.DefaultAppId))
+                return TestResult.Failed("Service routing missing defaultAppId");
+
+            if (response.GeneratedAt == default)
+                return TestResult.Failed("Service routing missing generatedAt timestamp");
+
+            return TestResult.Successful(
+                $"Service routing: {response.TotalServices} services mapped, " +
+                $"defaultAppId='{response.DefaultAppId}', " +
+                $"deploymentId={response.DeploymentId ?? "(none)"}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Service routing check failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test that service routing returns default app-id correctly.
+    /// In development mode, all services should route to "bannou".
+    /// </summary>
+    private static async Task<TestResult> TestServiceRoutingDefaults(ITestClient client, string[] args)
+    {
+        try
+        {
+            var orchestratorClient = new OrchestratorClient();
+
+            var response = await orchestratorClient.GetServiceRoutingAsync(new GetServiceRoutingRequest());
+
+            // Default app-id should be "bannou" in development mode
+            if (response.DefaultAppId != "bannou")
+            {
+                return TestResult.Failed($"Expected defaultAppId='bannou', got '{response.DefaultAppId}'");
+            }
+
+            // In monolith mode (single container), mappings may be empty since everything
+            // routes to the default. This is correct behavior.
+            if (response.TotalServices == 0)
+            {
+                return TestResult.Successful(
+                    $"Service routing defaults verified: defaultAppId='bannou', " +
+                    $"no custom mappings (all services use default)");
+            }
+
+            // If there are mappings, verify they all point to valid app-ids
+            foreach (var mapping in response.Mappings ?? new Dictionary<string, string>())
+            {
+                if (string.IsNullOrEmpty(mapping.Value))
+                {
+                    return TestResult.Failed($"Service '{mapping.Key}' has empty app-id mapping");
+                }
+            }
+
+            return TestResult.Successful(
+                $"Service routing defaults verified: defaultAppId='bannou', " +
+                $"{response.TotalServices} custom mappings");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Service routing defaults check failed: {ex.StatusCode} - {ex.Message}");
         }
         catch (Exception ex)
         {

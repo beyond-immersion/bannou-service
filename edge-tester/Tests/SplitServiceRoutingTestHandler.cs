@@ -260,53 +260,54 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
     private async Task<bool> CheckServiceMappingsAsync(BannouClient adminClient)
     {
-        // Find the get-service-mappings API via WebSocket capability manifest
-        // API key format is "connect:POST:/service-mappings"
-        Console.WriteLine("   Looking for service-mappings API in capability manifest...");
+        // Find the service-routing API via WebSocket capability manifest
+        // Service-mappings moved from Connect to Orchestrator (December 2025)
+        // API key format is "orchestrator:POST:/orchestrator/service-routing"
+        Console.WriteLine("   Looking for service-routing API in capability manifest...");
 
-        var connectApis = adminClient.AvailableApis.Keys
-            .Where(k => k.Contains("connect", StringComparison.OrdinalIgnoreCase))
+        var orchestratorApis = adminClient.AvailableApis.Keys
+            .Where(k => k.Contains("orchestrator", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        Console.WriteLine($"   Connect APIs available ({connectApis.Count}):");
-        foreach (var api in connectApis)
+        Console.WriteLine($"   Orchestrator APIs available ({orchestratorApis.Count}):");
+        foreach (var api in orchestratorApis)
         {
             Console.WriteLine($"      {api}");
         }
 
-        var mappingsApiKey = adminClient.AvailableApis.Keys
-            .FirstOrDefault(k => k.Contains("connect:", StringComparison.OrdinalIgnoreCase) &&
-                                k.Contains("/service-mappings", StringComparison.OrdinalIgnoreCase));
+        var routingApiKey = adminClient.AvailableApis.Keys
+            .FirstOrDefault(k => k.Contains("orchestrator:", StringComparison.OrdinalIgnoreCase) &&
+                                k.Contains("/service-routing", StringComparison.OrdinalIgnoreCase));
 
-        if (string.IsNullOrEmpty(mappingsApiKey))
+        if (string.IsNullOrEmpty(routingApiKey))
         {
-            Console.WriteLine("❌ service-mappings API not found in capability manifest");
-            Console.WriteLine("   Admin user must have access to connect:POST:/service-mappings");
+            Console.WriteLine("❌ service-routing API not found in capability manifest");
+            Console.WriteLine("   Admin user must have access to orchestrator:POST:/orchestrator/service-routing");
             return false;
         }
 
-        if (!adminClient.AvailableApis.TryGetValue(mappingsApiKey, out var mappingsGuid))
+        if (!adminClient.AvailableApis.TryGetValue(routingApiKey, out var routingGuid))
         {
-            Console.WriteLine("❌ Could not get GUID for service mappings API");
+            Console.WriteLine("❌ Could not get GUID for service routing API");
             return false;
         }
 
-        Console.WriteLine($"   Found API: {mappingsApiKey} -> {mappingsGuid}");
+        Console.WriteLine($"   Found API: {routingApiKey} -> {routingGuid}");
 
-        // Call the connect service-mappings API directly (NOT via SendOrchestratorRequestAsync which is hardcoded to /orchestrator/deploy)
+        // Call the orchestrator service-routing API
         string? response;
         try
         {
             var result = await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
-                "/service-mappings",
+                "/orchestrator/service-routing",
                 new { },
                 timeout: TimeSpan.FromSeconds(30));
             response = result.GetRawText();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   service-mappings API call failed: {ex.Message}");
+            Console.WriteLine($"   service-routing API call failed: {ex.Message}");
             return false;
         }
 
@@ -316,15 +317,15 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             return false;
         }
 
-        Console.WriteLine($"   Mappings response: {response}");
+        Console.WriteLine($"   Routing response: {response}");
 
         try
         {
             var responseObj = JsonNode.Parse(response);
             var mappings = responseObj?["mappings"]?.AsObject();
-            var defaultMapping = responseObj?["defaultMapping"]?.GetValue<string>();
+            var defaultAppId = responseObj?["defaultAppId"]?.GetValue<string>();
 
-            Console.WriteLine($"   Default mapping: {defaultMapping ?? "(none)"}");
+            Console.WriteLine($"   Default app-id: {defaultAppId ?? "(none)"}");
 
             if (mappings == null || mappings.Count == 0)
             {
