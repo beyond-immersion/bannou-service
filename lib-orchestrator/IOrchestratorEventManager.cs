@@ -1,4 +1,6 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
+using ServiceMappingAction = BeyondImmersion.BannouService.Events.ServiceMappingEventAction;
 
 namespace LibOrchestrator;
 
@@ -24,25 +26,4 @@ public interface IOrchestratorEventManager : IAsyncDisposable, IDisposable
 
     /// <summary>Publish a deployment event via Dapr pub/sub.</summary>
     Task PublishDeploymentEventAsync(DeploymentEvent deploymentEvent);
-}
-
-/// <summary>
-/// Event published when service-to-app-id mappings change.
-/// </summary>
-public class ServiceMappingEvent
-{
-    public required string EventId { get; set; }
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-    public required string ServiceName { get; set; }
-    public required string AppId { get; set; }
-    public required ServiceMappingAction Action { get; set; }
-    public string? Region { get; set; }
-    public int? Priority { get; set; }
-}
-
-public enum ServiceMappingAction
-{
-    Register,
-    Update,
-    Unregister
 }

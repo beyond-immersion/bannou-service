@@ -1,6 +1,8 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using ServiceMappingAction = BeyondImmersion.BannouService.Events.ServiceMappingEventAction;
 
 namespace LibOrchestrator;
 
@@ -97,7 +99,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor
                     AppId = heartbeat.AppId,
                     Host = heartbeat.AppId, // In Docker, container name = app_id
                     Port = 80,
-                    Status = serviceStatus.Status,
+                    Status = serviceStatus.Status.ToString().ToLowerInvariant(),
                     LoadPercent = loadPercent
                 };
 

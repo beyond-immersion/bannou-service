@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.Events;
 using Dapr;
 using LibOrchestrator;
 using Microsoft.AspNetCore.Mvc;

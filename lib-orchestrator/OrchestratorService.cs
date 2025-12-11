@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using Dapr.Client;
 using LibOrchestrator;
@@ -7,6 +8,7 @@ using LibOrchestrator.Backends;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
+using ServiceMappingAction = BeyondImmersion.BannouService.Events.ServiceMappingEventAction;
 
 [assembly: InternalsVisibleTo("lib-orchestrator.tests")]
 

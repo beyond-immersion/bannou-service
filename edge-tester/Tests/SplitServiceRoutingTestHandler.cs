@@ -21,7 +21,7 @@ namespace BeyondImmersion.EdgeTester.Tests;
 public class SplitServiceRoutingTestHandler : IServiceTestHandler
 {
     private const string SPLIT_PRESET = "split-auth-routing-test";
-    private const int DEPLOYMENT_TIMEOUT_SECONDS = 120;
+    private const int DEPLOYMENT_TIMEOUT_SECONDS = 180; // Increased from 120 - CI deployments can take 90+ seconds
 
     public ServiceTest[] GetServiceTests()
     {
@@ -497,7 +497,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 "POST",
                 "/orchestrator/deploy",
                 requestObj,
-                timeout: TimeSpan.FromSeconds(60));
+                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS));
 
             return response.GetRawText();
         }
@@ -608,7 +608,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 "POST",
                 "/orchestrator/deploy",
                 deployRequest,
-                timeout: TimeSpan.FromSeconds(60));
+                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS));
 
             var content = response.GetRawText();
             Console.WriteLine($"   Response: {content}");
