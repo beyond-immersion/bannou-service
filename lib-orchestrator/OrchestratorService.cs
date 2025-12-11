@@ -632,6 +632,68 @@ public class OrchestratorService : IOrchestratorService
     }
 
     /// <summary>
+    /// Gets current service-to-app-id routing mappings.
+    /// This is the authoritative source of truth for how services are routed in the current deployment.
+    /// </summary>
+    public async Task<(StatusCodes, ServiceRoutingResponse?)> GetServiceRoutingAsync(
+        GetServiceRoutingRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Executing GetServiceRouting operation");
+
+        try
+        {
+            var orchestrator = await GetOrchestratorAsync(cancellationToken);
+            var containers = await orchestrator.ListContainersAsync(cancellationToken);
+
+            // Build service-to-app-id mappings from running containers
+            // In distributed deployments, different services may run on different app-ids
+            // In monolith mode, all services route to "bannou"
+            var mappings = new Dictionary<string, string>();
+
+            foreach (var container in containers)
+            {
+                if (!string.IsNullOrEmpty(container.AppName))
+                {
+                    // Use the app-id as both service name and routing target
+                    // In production deployments, services would have explicit service names
+                    var serviceName = container.AppName;
+
+                    // If filter is specified, only include matching services
+                    if (string.IsNullOrEmpty(body.ServiceFilter) ||
+                        serviceName.StartsWith(body.ServiceFilter, StringComparison.OrdinalIgnoreCase))
+                    {
+                        mappings[serviceName] = container.AppName;
+                    }
+                }
+            }
+
+            // In development/monolith mode, all services route to "bannou"
+            if (mappings.Count == 0)
+            {
+                _logger.LogDebug("No custom service mappings - using default 'bannou' for all services");
+            }
+
+            var response = new ServiceRoutingResponse
+            {
+                Mappings = mappings,
+                DefaultAppId = "bannou",
+                GeneratedAt = DateTimeOffset.UtcNow,
+                TotalServices = mappings.Count,
+                DeploymentId = null // TODO: Track deployment ID if needed
+            };
+
+            _logger.LogInformation("Returning {Count} service routing mappings", response.TotalServices);
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving service routing mappings");
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
     /// Implementation of GetStatus operation.
     /// Returns the current environment status including running services.
     /// </summary>

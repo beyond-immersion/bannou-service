@@ -46,6 +46,11 @@ public interface IOrchestratorService : IDaprService
     Task<(StatusCodes, DeployResponse?)> DeployAsync(DeployRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
     /// <summary>
+    /// GetServiceRouting operation
+    /// </summary>
+    Task<(StatusCodes, ServiceRoutingResponse?)> GetServiceRoutingAsync(GetServiceRoutingRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+    /// <summary>
     /// GetStatus operation
     /// </summary>
     Task<(StatusCodes, EnvironmentStatus?)> GetStatusAsync(GetStatusRequest body, CancellationToken cancellationToken = default(CancellationToken));

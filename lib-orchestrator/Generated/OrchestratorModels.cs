@@ -78,6 +78,81 @@ public partial class ServiceHealthRequest
 }
 
 /// <summary>
+/// Request to get service routing mappings (empty body allowed)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetServiceRoutingRequest
+{
+
+    /// <summary>
+    /// Optional filter by service name prefix
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceFilter")]
+    public string? ServiceFilter { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServiceRoutingResponse
+{
+
+    /// <summary>
+    /// Map of service names to Dapr app-id routing destinations.
+    /// <br/>Example: { "accounts": "bannou", "behavior": "npc-processing-01" }
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mappings")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.IDictionary<string, string> Mappings { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
+
+    /// <summary>
+    /// Default app-id used when no specific mapping exists
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("defaultAppId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string DefaultAppId { get; set; } = "bannou";
+
+    /// <summary>
+    /// When this routing information was generated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("generatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset GeneratedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of services with routing mappings
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalServices")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int TotalServices { get; set; } = default!;
+
+    /// <summary>
+    /// Current deployment identifier (if environment is deployed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deploymentId")]
+    public string? DeploymentId { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
 /// Request to list available backends (empty body allowed)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
