@@ -51,6 +51,7 @@ components:
         metadata:
           type: object
           additionalProperties: true
+          nullable: true
           description: Additional service registration metadata
 
     ServiceEndpoint:
@@ -156,6 +157,7 @@ components:
         metadata:
           type: object
           additionalProperties: true
+          nullable: true
           description: Additional instance-level metadata
 
     ServiceStatus:
@@ -183,6 +185,7 @@ components:
         metadata:
           type: object
           additionalProperties: true
+          nullable: true
           description: Service-specific metadata from OnHeartbeat callback
 
     InstanceCapacity:
@@ -242,4 +245,5 @@ components:
         metadata:
           type: object
           additionalProperties: true
+          nullable: true
           description: Additional mapping metadata

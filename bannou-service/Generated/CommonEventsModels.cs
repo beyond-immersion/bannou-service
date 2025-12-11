@@ -81,7 +81,7 @@ public partial class ServiceRegistrationEvent
     /// Additional service registration metadata
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -257,7 +257,7 @@ public partial class ServiceHeartbeatEvent
     /// Additional instance-level metadata
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -309,7 +309,7 @@ public partial class ServiceStatus
     /// Service-specific metadata from OnHeartbeat callback
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -425,7 +425,7 @@ public partial class ServiceMappingEvent
     /// Additional mapping metadata
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

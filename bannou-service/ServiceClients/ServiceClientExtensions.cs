@@ -83,7 +83,9 @@ public static class ServiceClientExtensions
                             throw new InvalidOperationException($"Cannot resolve parameter {parameters[i].Name} of type {paramType.Name}");
             }
 
-            return (TInterface)Activator.CreateInstance(typeof(TClient), args)!;
+            var instance = Activator.CreateInstance(typeof(TClient), args)
+                ?? throw new InvalidOperationException($"Failed to create instance of {typeof(TClient).Name}");
+            return (TInterface)instance;
         });
 
         return services;

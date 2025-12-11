@@ -23,6 +23,15 @@ all: ## Complete development cycle - clean, generate, format, build, test, docke
 	@$(MAKE) test-edge
 	@echo "✅ Complete development cycle finished successfully"
 
+quick: ## Quick development cycle - clean, generate, fix, build, unit tests (no Docker)
+	@echo "🚀 Running quick development cycle (no Docker tests)..."
+	@$(MAKE) clean
+	@$(MAKE) generate
+	@$(MAKE) fix
+	@$(MAKE) build
+	@$(MAKE) test-unit
+	@echo "✅ Quick development cycle finished successfully"
+
 # =============================================================================
 # ENVIRONMENT MANAGEMENT
 # =============================================================================
