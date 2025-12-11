@@ -634,6 +634,116 @@ public class OrchestratorServiceTests
     }
 
     #endregion
+
+    #region GetServiceRoutingAsync Tests
+
+    [Fact]
+    public async Task GetServiceRoutingAsync_WithServiceMappingsInRedis_ShouldReturnMappings()
+    {
+        // Arrange
+        var serviceRoutings = new Dictionary<string, ServiceRouting>
+        {
+            ["auth"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
+            ["accounts"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
+            ["connect"] = new ServiceRouting { AppId = "bannou-main", Host = "bannou-main-container" }
+        };
+
+        _mockRedisManager
+            .Setup(x => x.GetServiceRoutingsAsync())
+            .ReturnsAsync(serviceRoutings);
+
+        var service = CreateService();
+
+        // Act
+        var (statusCode, response) = await service.GetServiceRoutingAsync(
+            new GetServiceRoutingRequest(),
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(3, response.Mappings.Count);
+        Assert.Equal("bannou-auth", response.Mappings["auth"]);
+        Assert.Equal("bannou-auth", response.Mappings["accounts"]);
+        Assert.Equal("bannou-main", response.Mappings["connect"]);
+        Assert.Equal("bannou", response.DefaultAppId);
+    }
+
+    [Fact]
+    public async Task GetServiceRoutingAsync_WithNoMappings_ShouldReturnEmptyWithDefault()
+    {
+        // Arrange
+        _mockRedisManager
+            .Setup(x => x.GetServiceRoutingsAsync())
+            .ReturnsAsync(new Dictionary<string, ServiceRouting>());
+
+        var service = CreateService();
+
+        // Act
+        var (statusCode, response) = await service.GetServiceRoutingAsync(
+            new GetServiceRoutingRequest(),
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Empty(response.Mappings);
+        Assert.Equal("bannou", response.DefaultAppId);
+        Assert.Equal(0, response.TotalServices);
+    }
+
+    [Fact]
+    public async Task GetServiceRoutingAsync_WithServiceFilter_ShouldFilterResults()
+    {
+        // Arrange
+        var serviceRoutings = new Dictionary<string, ServiceRouting>
+        {
+            ["auth"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
+            ["accounts"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
+            ["connect"] = new ServiceRouting { AppId = "bannou-main", Host = "bannou-main-container" }
+        };
+
+        _mockRedisManager
+            .Setup(x => x.GetServiceRoutingsAsync())
+            .ReturnsAsync(serviceRoutings);
+
+        var service = CreateService();
+
+        // Act - filter for services starting with "a"
+        var (statusCode, response) = await service.GetServiceRoutingAsync(
+            new GetServiceRoutingRequest { ServiceFilter = "a" },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Mappings.Count);
+        Assert.True(response.Mappings.ContainsKey("auth"));
+        Assert.True(response.Mappings.ContainsKey("accounts"));
+        Assert.False(response.Mappings.ContainsKey("connect"));
+    }
+
+    [Fact]
+    public async Task GetServiceRoutingAsync_WhenRedisThrows_ShouldReturnInternalServerError()
+    {
+        // Arrange
+        _mockRedisManager
+            .Setup(x => x.GetServiceRoutingsAsync())
+            .ThrowsAsync(new InvalidOperationException("Redis connection failed"));
+
+        var service = CreateService();
+
+        // Act
+        var (statusCode, response) = await service.GetServiceRoutingAsync(
+            new GetServiceRoutingRequest(),
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
 }
 
 /// <summary>
