@@ -22,9 +22,10 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     private readonly List<string> _currentIssues = new();
 
     /// <summary>
-    /// Dapr HTTP port for metadata API queries.
+    /// Dapr HTTP endpoint for metadata API queries.
+    /// Supports standalone container architecture (e.g., "http://bannou-dapr:3500").
     /// </summary>
-    private readonly int _daprHttpPort;
+    private readonly string _daprHttpEndpoint;
 
     /// <summary>
     /// Unique instance identifier for this bannou application instance.
@@ -77,9 +78,22 @@ public class ServiceHeartbeatManager : IAsyncDisposable
             ?? Environment.GetEnvironmentVariable("APP_ID")
             ?? AppConstants.DEFAULT_APP_NAME;
 
-        // Get Dapr HTTP port (default 3500)
-        var daprPortStr = Environment.GetEnvironmentVariable("DAPR_HTTP_PORT");
-        _daprHttpPort = int.TryParse(daprPortStr, out var port) && port > 0 ? port : 3500;
+        // Get Dapr HTTP endpoint for standalone container architecture
+        // DAPR_HTTP_ENDPOINT takes precedence (e.g., "http://bannou-dapr:3500")
+        // Falls back to localhost with DAPR_HTTP_PORT for sidecar mode
+        var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT");
+        if (!string.IsNullOrEmpty(daprHttpEndpoint))
+        {
+            // Use the full endpoint URL
+            _daprHttpEndpoint = daprHttpEndpoint.TrimEnd('/');
+        }
+        else
+        {
+            // Fall back to localhost with port for sidecar mode
+            var daprPortStr = Environment.GetEnvironmentVariable("DAPR_HTTP_PORT");
+            var daprHttpPort = int.TryParse(daprPortStr, out var port) && port > 0 ? port : 3500;
+            _daprHttpEndpoint = $"http://localhost:{daprHttpPort}";
+        }
 
         // Get configurable heartbeat interval (default 30 seconds)
         var intervalStr = Environment.GetEnvironmentVariable("HEARTBEAT_INTERVAL_SECONDS");
@@ -288,8 +302,8 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     {
         try
         {
-            // Query Dapr metadata API
-            var metadataUrl = $"http://localhost:{_daprHttpPort}/v1.0/metadata";
+            // Query Dapr metadata API (using endpoint for standalone container support)
+            var metadataUrl = $"{_daprHttpEndpoint}/v1.0/metadata";
             var response = await _httpClient.GetAsync(metadataUrl, cancellationToken);
 
             if (!response.IsSuccessStatusCode)

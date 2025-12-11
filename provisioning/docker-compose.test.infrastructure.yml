@@ -1,24 +1,42 @@
 # Infrastructure Test Configuration
 # Minimal service setup (TESTING service only) for infrastructure validation
-# Tester shares network stack with bannou using network_mode
+# Standalone containers with mDNS (default) for service discovery
 
 services:
 
   bannou:
     env_file: ../.env.test.infrastructure
 
-  # Dapr sidecar - NO components for infrastructure testing
+  # Dapr sidecar - standalone container, minimal components
+  # Uses mDNS (default) for Dapr-to-Dapr service discovery
   bannou-dapr:
+    command: [
+      "./daprd",
+      "--app-id", "bannou",
+      "--app-port", "80",
+      "--app-protocol", "http",
+      "--app-channel-address", "bannou",
+      "--dapr-http-port", "3500",
+      "--dapr-grpc-port", "50001",
+      "--placement-host-address", "placement:50006",
+      "--resources-path", "./components",
+      "--log-level", "debug",
+      "--enable-api-logging"
+    ]
     volumes:
-      - "./dapr/components-empty/:/components"  # Empty - no components needed for infrastructure tests
+      - "./dapr/components-empty/:/components"
       - "./certificates:/certificates"
+    # NO network_mode - standalone container with own IP
 
-  # Infrastructure tester - shares network stack with bannou
+  # Infrastructure tester - uses Docker DNS to reach bannou and dapr
   bannou-infra-tester:
     image: curlimages/curl:latest
-    network_mode: service:bannou  # Share network with bannou, can access 127.0.0.1:80
+    # NO network_mode - uses Docker DNS for service discovery
     volumes:
       - "../scripts/wait-for-health.sh:/wait-for-health.sh"
       - "../scripts/infrastructure-tests.sh:/infrastructure-tests.sh"
+    environment:
+      - BANNOU_HOST=bannou
+      - DAPR_HOST=bannou-dapr
     stdin_open: false
     command: sh -c "/wait-for-health.sh && /infrastructure-tests.sh"

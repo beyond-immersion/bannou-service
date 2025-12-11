@@ -2284,9 +2284,10 @@
             Publishes aggregated heartbeats via Dapr pub/sub on startup and periodically.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager._daprHttpPort">
+        <member name="F:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager._daprHttpEndpoint">
             <summary>
-            Dapr HTTP port for metadata API queries.
+            Dapr HTTP endpoint for metadata API queries.
+            Supports standalone container architecture (e.g., "http://bannou-dapr:3500").
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.InstanceId">

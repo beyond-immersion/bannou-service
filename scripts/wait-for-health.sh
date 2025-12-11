@@ -1,11 +1,14 @@
 #!/bin/sh
 
 # Wait for bannou and Dapr sidecar health endpoints
-# Uses 127.0.0.1 because this script runs with network_mode: service:bannou
-# Both bannou-dapr and infra-tester share bannou's network stack
+# Uses Docker DNS for service discovery (standalone Dapr containers)
 
-BANNOU_ENDPOINT="http://127.0.0.1:80/health"
-DAPR_ENDPOINT="http://127.0.0.1:3500/v1.0/healthz"
+# Service hosts - use Docker DNS names (passed via environment or defaults)
+BANNOU_HOST="${BANNOU_HOST:-bannou}"
+DAPR_HOST="${DAPR_HOST:-bannou-dapr}"
+
+BANNOU_ENDPOINT="http://${BANNOU_HOST}:80/health"
+DAPR_ENDPOINT="http://${DAPR_HOST}:3500/v1.0/healthz"
 MAX_RETRIES=60
 RETRY_TIME=5
 

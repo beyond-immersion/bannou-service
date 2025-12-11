@@ -63,8 +63,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     private readonly string _certificatesHostPath;
     private readonly string _presetsHostPath;
     private readonly string _logsVolumeName;
-    private readonly string _daprConfigHostPath;
-    private readonly string _daprConfigContainerPath;
+    // Note: No custom Dapr config needed - mDNS (default) works for standalone containers on bridge network
 
     // Cached discovered network (lazy initialized)
     private string? _discoveredNetwork;
@@ -104,218 +103,17 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             ?? "/app/provisioning/orchestrator/presets";
         _logsVolumeName = Environment.GetEnvironmentVariable("BANNOU_LogsVolume")
             ?? "logs-data";
-        // Dapr config file path - uses nameformat resolver to bypass mDNS for Docker DNS
-        _daprConfigHostPath = Environment.GetEnvironmentVariable("BANNOU_DaprConfigHostPath")
-            ?? "/app/provisioning/dapr/config-docker-dns.yaml";
-        _daprConfigContainerPath = Environment.GetEnvironmentVariable("BANNOU_DaprConfigContainerPath")
-            ?? "/tmp/dapr-components/config-docker-dns.yaml";
+        // Note: No custom Dapr config needed - mDNS (default) works for standalone containers on bridge network
 
         _logger.LogInformation(
-        "DockerComposeOrchestrator configured: Network={Network}, DaprComponents={Components}, DaprImage={Image}, Placement={Placement}, DaprConfig={Config}",
-        _configuredDockerNetwork, _daprComponentsHostPath, _daprImage, _placementHost, _daprConfigHostPath);
+        "DockerComposeOrchestrator configured: Network={Network}, DaprComponents={Components}, DaprImage={Image}, Placement={Placement}",
+        _configuredDockerNetwork, _daprComponentsHostPath, _daprImage, _placementHost);
     }
 
-    /// <summary>
-    /// Generates modified Dapr component files with hostnames replaced by IP addresses.
-    /// This is required because when using network_mode: container:ID, the sidecar
-    /// shares the network namespace but Docker's embedded DNS at 127.0.0.11 doesn't
-    /// reliably resolve service names for dynamically created containers.
-    /// </summary>
-    /// <param name="sourceComponentsHostPath">Host path to the original component files</param>
-    /// <param name="sourceComponentsContainerPath">Container path where the host directory is mounted</param>
-    /// <param name="appId">The app ID for the service (used to create unique directory)</param>
-    /// <param name="infrastructureHosts">Map of service names to IP addresses</param>
-    /// <returns>(HostPath, ContainerPath) to the generated components directory, or null if generation failed</returns>
-    private (string HostPath, string ContainerPath)? GenerateComponentsWithIpAddresses(
-        string sourceComponentsHostPath,
-        string sourceComponentsContainerPath,
-        string appId,
-        Dictionary<string, string> infrastructureHosts)
-    {
-        if (infrastructureHosts.Count == 0)
-        {
-            _logger.LogWarning(
-                "No infrastructure hosts discovered - sidecar may fail to connect to services. " +
-                "Using original components path without IP substitution.");
-            return null;
-        }
-
-        try
-        {
-            // Use the container-mounted path for IO; it should map to the host path mounted RW
-            var ioPath = Directory.Exists(sourceComponentsContainerPath)
-                ? sourceComponentsContainerPath
-                : sourceComponentsHostPath;
-
-            if (!Directory.Exists(ioPath))
-            {
-                _logger.LogWarning(
-                    "Source components path does not exist: {Path}. Using configured path without modification.",
-                    ioPath);
-                return null;
-            }
-
-            // CRITICAL: We must write files using the container-visible path (ioPath),
-            // but return the equivalent HOST path for Docker bind mounts.
-            // The host path and container path are linked via the volume mount:
-            //   ${HOST_PATH}:/tmp/dapr-components:rw
-            // So writing to /tmp/dapr-components/generated/appId inside the container
-            // creates files at ${HOST_PATH}/generated/appId on the host.
-
-            // Create output directory using container-visible path
-            var containerGeneratedRoot = Path.Combine(ioPath, "generated");
-            var containerTempDir = Path.Combine(containerGeneratedRoot, appId);
-
-            // Clean up any existing generated files for this appId
-            if (Directory.Exists(containerTempDir))
-            {
-                Directory.Delete(containerTempDir, recursive: true);
-            }
-            Directory.CreateDirectory(containerTempDir);
-
-            _logger.LogDebug(
-                "Created generated components directory at container path: {ContainerPath}",
-                containerTempDir);
-
-            // Read and modify each component file
-            int modifiedCount = 0;
-            foreach (var file in Directory.GetFiles(ioPath, "*.yaml"))
-            {
-                var content = File.ReadAllText(file);
-                var modified = content;
-
-                // Replace hostnames with IP addresses in common patterns
-                // Pattern 1: host: amqp://hostname:port or host: hostname:port
-                // Pattern 2: redisHost: hostname:port
-                // Pattern 3: value: hostname:port (for generic key-value)
-                foreach (var (hostname, ip) in infrastructureHosts)
-                {
-                    // Replace various hostname patterns with IP addresses
-                    // Match: hostname:port, hostname (no port), amqp://hostname, etc.
-                    modified = modified.Replace($"amqp://{hostname}:", $"amqp://{ip}:");
-                    modified = modified.Replace($"amqp://{hostname}/", $"amqp://{ip}/");
-                    modified = modified.Replace($"redis://{hostname}:", $"redis://{ip}:");
-                    modified = modified.Replace($"redis://{hostname}/", $"redis://{ip}/");
-                    modified = modified.Replace($"mysql://{hostname}:", $"mysql://{ip}:");
-                    modified = modified.Replace($"mysql://{hostname}/", $"mysql://{ip}/");
-
-                    // Handle bare hostname:port patterns (e.g., "rabbitmq:5672" -> "172.18.0.7:5672")
-                    // Only replace if followed by port number to avoid false positives
-                    modified = modified.Replace($"\"{hostname}:", $"\"{ip}:");
-                    modified = modified.Replace($"'{hostname}:", $"'{ip}:");
-
-                    // Handle MySQL Go DSN format: tcp(hostname:port) -> tcp(ip:port)
-                    // Used in connection strings like "guest:guest@tcp(account-db:3306)/..."
-                    modified = modified.Replace($"tcp({hostname}:", $"tcp({ip}:");
-                    modified = modified.Replace($"@{hostname}:", $"@{ip}:");
-
-                    // Handle placement host and similar (hostname:port without quotes)
-                    // Be careful to only replace complete words
-                    modified = Regex.Replace(
-                        modified,
-                        $@"(?<=value:\s*){Regex.Escape(hostname)}(?=:|\s|$)",
-                        ip);
-                }
-
-                var destPath = Path.Combine(containerTempDir, Path.GetFileName(file));
-                File.WriteAllText(destPath, modified);
-
-                if (content != modified)
-                {
-                    modifiedCount++;
-                    _logger.LogDebug(
-                        "Modified component file {File} with IP address substitutions",
-                        Path.GetFileName(file));
-                }
-            }
-
-            // Copy the Dapr configuration file (nameformat resolver for Docker DNS)
-            // This bypasses mDNS which doesn't work in shared network namespaces
-            var configSourcePath = Path.Combine(ioPath, "config-docker-dns.yaml");
-            if (File.Exists(configSourcePath))
-            {
-                var configDestPath = Path.Combine(containerTempDir, "config.yaml");
-                // Read and write (rather than copy) to avoid permission issues
-                // File.Copy preserves source permissions which can be restrictive
-                var configContent = File.ReadAllText(configSourcePath);
-                File.WriteAllText(configDestPath, configContent);
-                _logger.LogDebug("Copied Dapr config file to {ConfigPath}", configDestPath);
-            }
-            else if (File.Exists(_daprConfigContainerPath))
-            {
-                // Fallback to the container-mounted config path
-                var configDestPath = Path.Combine(containerTempDir, "config.yaml");
-                var configContent = File.ReadAllText(_daprConfigContainerPath);
-                File.WriteAllText(configDestPath, configContent);
-                _logger.LogDebug("Copied Dapr config file from fallback path to {ConfigPath}", configDestPath);
-            }
-            else
-            {
-                _logger.LogWarning(
-                    "Dapr config file not found at {ConfigSourcePath} or {ConfigContainerPath} - sidecar will use default mDNS resolver which may fail",
-                    configSourcePath, _daprConfigContainerPath);
-            }
-
-            // Return both host and container paths for the generated directory
-            // Since the volume mount is: ${HOST_PATH}:/tmp/dapr-components:rw
-            // files written to /tmp/dapr-components/... appear at ${HOST_PATH}/...
-            var hostTempDir = Path.Combine(sourceComponentsHostPath, "generated", appId);
-
-            _logger.LogInformation(
-                "Generated modified Dapr components for {AppId}: {ModifiedCount} files modified, " +
-                "container path: {ContainerPath}, host path for bind mount: {HostPath}, " +
-                "IP substitutions: {Hosts}",
-                appId, modifiedCount, containerTempDir, hostTempDir,
-                string.Join(", ", infrastructureHosts.Select(h => $"{h.Key}={h.Value}")));
-
-            return (hostTempDir, containerTempDir);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to generate modified component files for {AppId}", appId);
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Writes a Dapr configuration that forces DNS-based name resolution (resolver 127.0.0.11).
-    /// Returns the container-visible path (under /components) so it can be passed to daprd via --config.
-    /// </summary>
-    private string? EnsureDnsNameResolutionConfig(string? componentsHostPath, string? componentsContainerPath)
-    {
-        if (string.IsNullOrWhiteSpace(componentsHostPath) || string.IsNullOrWhiteSpace(componentsContainerPath))
-        {
-            return null;
-        }
-
-        try
-        {
-            // Write using the container-visible path; the mount maps it to the host path.
-            Directory.CreateDirectory(componentsContainerPath);
-            var fileName = "dns-name-resolution.yaml";
-            var containerConfigPath = Path.Combine(componentsContainerPath, fileName);
-
-            var configContent = @"apiVersion: dapr.io/v1alpha1
-kind: Configuration
-metadata:
-  name: dnsresolver
-spec:
-  nameResolution:
-    component: ""dns""
-    configuration:
-    resolver: ""127.0.0.11""
-";
-            File.WriteAllText(containerConfigPath, configContent);
-
-            // Sidecar mounts components to /components
-            return $"/components/{fileName}";
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to write DNS name resolution config under {ComponentsPath}", componentsHostPath);
-            return null;
-        }
-    }
+    // NOTE: GenerateComponentsWithIpAddresses and EnsureDnsNameResolutionConfig methods removed
+    // With standalone Dapr containers (not network_mode: container:ID), Docker DNS works correctly
+    // and we no longer need IP address substitution or custom DNS configuration generation.
+    // mDNS (default Dapr resolver) handles Dapr-to-Dapr service discovery on bridge network.
 
     /// <summary>
     /// Resolve a host path using a primary value plus a set of fallbacks.
@@ -527,8 +325,9 @@ spec:
         _infrastructureDiscoveryAttempted = true;
         _discoveredInfrastructureHosts = new Dictionary<string, string>();
 
-        // Infrastructure service names that Dapr components reference
-        var serviceNames = new[] { "rabbitmq", "redis", "bannou-redis", "auth-redis", "routing-redis", "account-db", "mysql" };
+        // Infrastructure service names that Dapr components reference, plus Docker Compose services that
+        // dynamically created containers need to resolve (placement is especially critical for Dapr sidecars)
+        var serviceNames = new[] { "rabbitmq", "redis", "bannou-redis", "auth-redis", "routing-redis", "account-db", "mysql", "placement" };
 
         try
         {
@@ -573,6 +372,48 @@ spec:
         }
 
         return _discoveredInfrastructureHosts;
+    }
+
+    /// <summary>
+    /// Finds the full container name (with Docker Compose project prefix) for a given service name.
+    /// This is needed because Docker Compose creates containers with names like "bannou-test-edge-placement-1"
+    /// but services reference them by just "placement".
+    /// </summary>
+    private async Task<string?> FindContainerFullNameByServiceAsync(
+        string serviceName,
+        string targetNetwork,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var containers = await _client.Containers.ListContainersAsync(
+                new Docker.DotNet.Models.ContainersListParameters
+                {
+                    All = false,
+                    Filters = new Dictionary<string, IDictionary<string, bool>>
+                    {
+                        ["label"] = new Dictionary<string, bool>
+                        {
+                            [$"com.docker.compose.service={serviceName}"] = true
+                        }
+                    }
+                },
+                cancellationToken);
+
+            // Get container on target network or first available
+            var container = containers
+                .FirstOrDefault(c =>
+                    c.NetworkSettings?.Networks != null &&
+                    c.NetworkSettings.Networks.ContainsKey(targetNetwork))
+                ?? containers.FirstOrDefault();
+
+            return container?.Names.FirstOrDefault()?.TrimStart('/');
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Could not find full container name for service {Service}", serviceName);
+            return null;
+        }
     }
 
     /// <inheritdoc />
@@ -1034,11 +875,12 @@ spec:
             var orchestratorAppId = Environment.GetEnvironmentVariable("DAPR_APP_ID")
                 ?? AppConstants.DEFAULT_APP_NAME;
 
+            // With standalone Dapr containers, the app reaches Dapr via Docker DNS
             var envList = new List<string>
             {
-                // Dapr endpoints - sidecar shares network namespace, so use 127.0.0.1
-                "DAPR_HTTP_ENDPOINT=http://127.0.0.1:3500",
-                "DAPR_GRPC_ENDPOINT=http://127.0.0.1:50001",
+                // Dapr endpoints - use Docker DNS to reach standalone Dapr container
+                $"DAPR_HTTP_ENDPOINT=http://{sidecarName}:3500",
+                $"DAPR_GRPC_ENDPOINT=http://{sidecarName}:50001",
                 $"DAPR_APP_ID={appId}",
                 // Tell deployed container to query this orchestrator for initial service mappings
                 // This ensures new containers have correct routing info before participating in network
@@ -1081,32 +923,34 @@ spec:
             var placementHost = await DiscoverPlacementHostAsync(dockerNetwork, cancellationToken)
                 ?? _placementHost;
 
-            // Discover infrastructure container IPs for ExtraHosts
-            // This allows dynamically created containers to resolve service names like "rabbitmq"
-            // that are normally only available via Docker Compose DNS
+            // IMPORTANT: Docker DNS (127.0.0.11) doesn't work reliably for containers created via Docker API
+            // (as opposed to Docker Compose). We need to inject ExtraHosts with actual IP addresses for
+            // infrastructure services and Docker Compose-managed containers.
+            var componentsHostPath = componentsPath ?? _daprComponentsHostPath;
+
+            // Discover infrastructure IPs for ExtraHosts injection
             var infrastructureHosts = await DiscoverInfrastructureHostsAsync(dockerNetwork, cancellationToken);
+
+            // Build ExtraHosts list from discovered infrastructure
+            // Format is "hostname:ip" for each service
             var extraHosts = infrastructureHosts
                 .Select(kv => $"{kv.Key}:{kv.Value}")
                 .ToList();
 
-            // Generate modified Dapr component files with IP addresses instead of hostnames
-            // This is the critical fix for the sidecar networking issue - when using
-            // network_mode: container:ID, Docker's DNS doesn't reliably resolve hostnames
-            // for dynamically created containers. By using IPs directly, we bypass DNS entirely.
-            var componentsHostPath = componentsPath ?? _daprComponentsHostPath;
+            // Also add full container names with project prefix (e.g., bannou-test-edge-placement-1)
+            // Docker Compose creates container names with project prefix, and some services reference these full names
+            foreach (var kv in infrastructureHosts)
+            {
+                // The compose container name typically follows pattern: {project}-{service}-{number}
+                // We try to find the actual container name that matches this service
+                var fullContainerName = await FindContainerFullNameByServiceAsync(kv.Key, dockerNetwork, cancellationToken);
+                if (fullContainerName != null && fullContainerName != kv.Key)
+                {
+                    extraHosts.Add($"{fullContainerName}:{kv.Value}");
+                }
+            }
 
-            var generatedComponents = GenerateComponentsWithIpAddresses(
-                componentsHostPath,
-                _daprComponentsContainerPath,
-                appId,
-                infrastructureHosts);
-
-            var sidecarComponentsHostPath = generatedComponents?.HostPath ?? componentsHostPath;
-            var sidecarComponentsContainerPath = generatedComponents?.ContainerPath ?? _daprComponentsContainerPath;
-
-            var dnsConfigPath = EnsureDnsNameResolutionConfig(
-                sidecarComponentsHostPath,
-                sidecarComponentsContainerPath);
+            _logger.LogDebug("ExtraHosts for dynamic containers: {ExtraHosts}", string.Join(", ", extraHosts));
 
             // Build bind mounts list
             var bindMounts = new List<string>();
@@ -1119,7 +963,80 @@ spec:
                 bindMounts.Add($"{presetsPath}:/app/provisioning/orchestrator/presets:ro");
             }
 
-            // Step 1: Create the application container
+            // Step 1: Create the Dapr sidecar container FIRST (standalone, with its own network)
+            // NOTE: Order changed - create sidecar before app so app can depend on sidecar being available
+            _logger.LogInformation("Creating Dapr sidecar container: {SidecarName}", sidecarName);
+
+            var sidecarBindMounts = new List<string> { $"{componentsHostPath}:/components:ro" };
+            // Note: No custom Dapr config needed - mDNS (default) works for standalone containers on bridge network
+            var sidecarEnv = new List<string>();
+            if (certificatesPath != null)
+            {
+                sidecarBindMounts.Add($"{certificatesPath}:/certificates:ro");
+                sidecarEnv.Add("SSL_CERT_DIR=/certificates");
+            }
+
+            var sidecarCmd = new List<string>
+            {
+                "./daprd",
+                "--app-id", appId,
+                "--app-port", "80",
+                "--app-protocol", "http",
+                "--app-channel-address", containerName,  // Docker DNS resolves this to the app container
+                "--dapr-http-port", "3500",
+                "--dapr-grpc-port", "50001",
+                "--placement-host-address", placementHost,
+                "--resources-path", "/components",
+                // Note: No --config flag - using mDNS (default) for Dapr-to-Dapr service discovery
+                "--log-level", "info",
+                "--enable-api-logging"
+            };
+
+            var sidecarCreateParams = new Docker.DotNet.Models.CreateContainerParameters
+            {
+                Image = _daprImage,
+                Name = sidecarName,
+                Env = sidecarEnv.Count > 0 ? sidecarEnv : null,
+                Cmd = sidecarCmd,
+                Labels = new Dictionary<string, string>
+                {
+                    [DAPR_APP_ID_LABEL] = appId,
+                    [BANNOU_SIDECAR_FOR_LABEL] = containerName,
+                    ["bannou.managed"] = "true"
+                },
+                HostConfig = new Docker.DotNet.Models.HostConfig
+                {
+                    // NO NetworkMode = container:ID - standalone container with own IP
+                    RestartPolicy = new Docker.DotNet.Models.RestartPolicy
+                    {
+                        Name = Docker.DotNet.Models.RestartPolicyKind.UnlessStopped
+                    },
+                    Binds = sidecarBindMounts,
+                    // ExtraHosts needed because Docker DNS doesn't work for dynamically created containers
+                    ExtraHosts = extraHosts
+                },
+                // Sidecar gets its own network endpoint (standalone container)
+                // Network alias allows app container to reach sidecar by service name
+                NetworkingConfig = new Docker.DotNet.Models.NetworkingConfig
+                {
+                    EndpointsConfig = new Dictionary<string, Docker.DotNet.Models.EndpointSettings>
+                    {
+                        [dockerNetwork] = new Docker.DotNet.Models.EndpointSettings
+                        {
+                            Aliases = new List<string> { sidecarName, $"{appId}-dapr" }
+                        }
+                    }
+                }
+            };
+
+            var sidecarContainer = await _client.Containers.CreateContainerAsync(sidecarCreateParams, cancellationToken);
+            _logger.LogInformation("Dapr sidecar container created: {ContainerId}", sidecarContainer.ID[..12]);
+
+            // Step 2: Start the sidecar container
+            await _client.Containers.StartContainerAsync(sidecarContainer.ID, new Docker.DotNet.Models.ContainerStartParameters(), cancellationToken);
+            _logger.LogInformation("Dapr sidecar container started: {ContainerId}", sidecarContainer.ID[..12]);
+
+            // Step 3: Create the application container
             _logger.LogInformation("Creating application container: {ContainerName}", containerName);
 
             var appCreateParams = new Docker.DotNet.Models.CreateContainerParameters
@@ -1150,15 +1067,18 @@ spec:
                         }
                     },
                     Binds = bindMounts,
-                    // Add infrastructure service IPs as extra hosts so Dapr sidecars can resolve
-                    // service names like "rabbitmq" that Docker Compose normally provides via DNS
-                    ExtraHosts = extraHosts.Count > 0 ? extraHosts : null
+                    // ExtraHosts needed because Docker DNS doesn't work for dynamically created containers
+                    ExtraHosts = extraHosts
                 },
+                // Network alias allows sidecar to reach app by container name (for --app-channel-address)
                 NetworkingConfig = new Docker.DotNet.Models.NetworkingConfig
                 {
                     EndpointsConfig = new Dictionary<string, Docker.DotNet.Models.EndpointSettings>
                     {
-                        [dockerNetwork] = new Docker.DotNet.Models.EndpointSettings()
+                        [dockerNetwork] = new Docker.DotNet.Models.EndpointSettings
+                        {
+                            Aliases = new List<string> { containerName, appId }
+                        }
                     }
                 }
             };
@@ -1166,75 +1086,9 @@ spec:
             var appContainer = await _client.Containers.CreateContainerAsync(appCreateParams, cancellationToken);
             _logger.LogInformation("Application container created: {ContainerId}", appContainer.ID[..12]);
 
-            // Step 2: Start the application container (must be running for sidecar network_mode to work)
+            // Step 4: Start the application container
             await _client.Containers.StartContainerAsync(appContainer.ID, new Docker.DotNet.Models.ContainerStartParameters(), cancellationToken);
             _logger.LogInformation("Application container started: {ContainerId}", appContainer.ID[..12]);
-
-            // Step 3: Create the Dapr sidecar container
-            _logger.LogInformation("Creating Dapr sidecar container: {SidecarName}", sidecarName);
-
-            // Build sidecar bind mounts and environment
-            // Use the generated components path with IP addresses (not the original with hostnames)
-            var sidecarBindMounts = new List<string> { $"{sidecarComponentsHostPath}:/components:ro" };
-            var sidecarEnv = new List<string>();
-            if (certificatesPath != null)
-            {
-                sidecarBindMounts.Add($"{certificatesPath}:/certificates:ro");
-                sidecarEnv.Add("SSL_CERT_DIR=/certificates");
-            }
-
-            var sidecarCmd = new List<string>
-            {
-                "./daprd",
-                "--app-id", appId,
-                "--app-port", "80",
-                "--app-protocol", "http",
-                "--dapr-http-port", "3500",
-                "--dapr-grpc-port", "50001",
-                "--placement-host-address", placementHost,
-                "--resources-path", "/components",
-                "--log-level", "info",
-                "--enable-api-logging"
-            };
-
-            // Prefer DNS-based name resolution config if we wrote one; fallback to existing config.yaml
-            var daprConfigPath = dnsConfigPath ?? "/components/config.yaml";
-            if (!string.IsNullOrWhiteSpace(daprConfigPath))
-            {
-                sidecarCmd.Add("--config");
-                sidecarCmd.Add(daprConfigPath);
-            }
-
-            var sidecarCreateParams = new Docker.DotNet.Models.CreateContainerParameters
-            {
-                Image = _daprImage,
-                Name = sidecarName,
-                Env = sidecarEnv.Count > 0 ? sidecarEnv : null,
-                Cmd = sidecarCmd,
-                Labels = new Dictionary<string, string>
-                {
-                    [DAPR_APP_ID_LABEL] = appId,
-                    [BANNOU_SIDECAR_FOR_LABEL] = containerName,
-                    ["bannou.managed"] = "true"
-                },
-                HostConfig = new Docker.DotNet.Models.HostConfig
-                {
-                    // Share network namespace with the application container
-                    NetworkMode = $"container:{appContainer.ID}",
-                    RestartPolicy = new Docker.DotNet.Models.RestartPolicy
-                    {
-                        Name = Docker.DotNet.Models.RestartPolicyKind.UnlessStopped
-                    },
-                    Binds = sidecarBindMounts
-                }
-            };
-
-            var sidecarContainer = await _client.Containers.CreateContainerAsync(sidecarCreateParams, cancellationToken);
-            _logger.LogInformation("Dapr sidecar container created: {ContainerId}", sidecarContainer.ID[..12]);
-
-            // Step 4: Start the sidecar container
-            await _client.Containers.StartContainerAsync(sidecarContainer.ID, new Docker.DotNet.Models.ContainerStartParameters(), cancellationToken);
-            _logger.LogInformation("Dapr sidecar container started: {ContainerId}", sidecarContainer.ID[..12]);
 
             _logger.LogInformation(
                 "Service {ServiceName} deployed successfully: app={AppId}, container={ContainerId}, sidecar={SidecarId}",

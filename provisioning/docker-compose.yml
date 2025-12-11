@@ -1,6 +1,6 @@
-# Base Bannou Services - WSL2 Compatible Networking
-# Uses Docker's default bridge network for all internal communication
-# No custom networks = no mDNS issues on WSL2/Windows
+# Base Bannou Services - Standalone Dapr Containers
+# Each Dapr sidecar runs as independent container with its own IP
+# Uses mDNS (default) for Dapr-to-Dapr service discovery on bridge network
 
 services:
 
@@ -11,9 +11,9 @@ services:
       context: ../
       dockerfile: provisioning/Dockerfile
     environment:
-      # Dapr endpoints - use 127.0.0.1 since sidecar shares network stack
-      - DAPR_HTTP_ENDPOINT=http://127.0.0.1:3500
-      - DAPR_GRPC_ENDPOINT=http://127.0.0.1:50001
+      # Dapr endpoints - use Docker DNS to reach standalone Dapr container
+      - DAPR_HTTP_ENDPOINT=http://bannou-dapr:3500
+      - DAPR_GRPC_ENDPOINT=http://bannou-dapr:50001
     volumes:
       - "./certificates:/certificates"
       - "logs-data:/app/logs/"
@@ -27,8 +27,11 @@ services:
       timeout: 3s
       retries: 5
       start_period: 60s
+    depends_on:
+      - bannou-dapr
 
-  # Dapr sidecar - shares network stack with bannou container
+  # Dapr sidecar - standalone container with own IP (NOT network_mode: service:bannou)
+  # Uses mDNS (default) for Dapr-to-Dapr service discovery
   bannou-dapr:
     image: "daprio/daprd:1.16.3"
     command: [
@@ -36,6 +39,7 @@ services:
       "--app-id", "bannou",
       "--app-port", "80",
       "--app-protocol", "http",
+      "--app-channel-address", "bannou",
       "--dapr-http-port", "3500",
       "--dapr-grpc-port", "50001",
       "--placement-host-address", "placement:50006",
@@ -48,8 +52,11 @@ services:
       - "./certificates:/certificates"
     environment:
       - "SSL_CERT_DIR=/certificates"
-    network_mode: "service:bannou"  # Share network stack with bannou
+    # NO network_mode - container gets its own IP on the default network
     restart: always
+    depends_on:
+      - placement
+      - rabbitmq
 
   # Dapr placement service - uses default bridge network
   placement:
