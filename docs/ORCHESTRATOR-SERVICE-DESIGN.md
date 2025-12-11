@@ -1,8 +1,8 @@
 # Orchestrator Service Design
 
-**Version**: 2.3.0
-**Last Updated**: 2025-11-29
-**Status**: Core Implementation Complete + Unit Tests (28 passing) + Service Mapping Gap Identified
+**Version**: 2.4.0
+**Last Updated**: 2025-12-11
+**Status**: Core Implementation 95% Complete - Standalone Dapr Architecture + Preset System + Heartbeat Deployment Validation
 
 ---
 
@@ -11,7 +11,8 @@
 1. [Executive Summary](#executive-summary)
 2. [Problem Statement & Root Cause](#problem-statement--root-cause)
 3. [Architecture Overview](#architecture-overview)
-4. [Backend Priority System](#backend-priority-system)
+4. [Architectural Evolution (December 2025)](#architectural-evolution-december-2025)
+5. [Backend Priority System](#backend-priority-system)
 5. [Core Components](#core-components)
 6. [Interface-Based Architecture](#interface-based-architecture)
 7. [Unit Testing](#unit-testing)
@@ -156,6 +157,79 @@ Dapr was designed for Kubernetes environments where:
 - Manages primary instance via Docker/Kubernetes APIs
 - Executes tests via API calls and collects results
 - **Direct connections** to Redis + RabbitMQ (not via Dapr components)
+
+---
+
+## Architectural Evolution (December 2025)
+
+The orchestrator went through significant iteration during development to work around Dapr and Docker Compose limitations. This section documents the key decisions and their rationale.
+
+### Key Decisions Summary
+
+| Decision | Previous Approach | Current Approach | Rationale |
+|----------|-------------------|------------------|-----------|
+| **Dapr sidecar architecture** | `network_mode:service` (shared namespace) | Standalone containers | Dapr compatibility issues with shared network namespaces |
+| **Service discovery** | Consul | mDNS (Dapr default) | Consul was unnecessary complexity - mDNS works on Docker bridge |
+| **Infrastructure resolution** | Docker DNS (127.0.0.11) | ExtraHosts IP injection | Docker DNS unreliable for dynamically created containers |
+| **Orchestrator communication** | Via Dapr components | Direct Redis/RabbitMQ | Chicken-and-egg: orchestrator must start before Dapr |
+
+### Standalone Dapr Sidecar Architecture
+
+The original design attempted to use `network_mode: service:bannou` for Dapr sidecars, which would share the network namespace with the application container. This approach failed due to:
+
+1. **Dapr Compatibility**: Dapr doesn't fully support shared network namespaces in Docker Compose
+2. **Port Conflicts**: Multiple sidecars can't share the same network namespace
+3. **Debugging Complexity**: Harder to diagnose network issues with shared namespaces
+
+**Current Pattern**: Each application container gets a paired standalone Dapr sidecar:
+
+```
+[App Container: bannou]     [Dapr Sidecar: bannou-dapr]
+   - Port 80                   - Port 3500 (HTTP)
+   - DAPR_HTTP_ENDPOINT=       - Port 50001 (gRPC)
+     http://bannou-dapr:3500   - placement-host-address=placement:50006
+```
+
+### mDNS vs Consul for Dapr Discovery
+
+Consul was initially considered for service discovery between Dapr sidecars. However:
+
+1. **Unnecessary Complexity**: mDNS is Dapr's default and works on Docker bridge networks
+2. **Additional Infrastructure**: Consul requires its own container and configuration
+3. **Development Overhead**: Consul adds complexity without meaningful benefit for our use case
+
+**Current Pattern**: Let Dapr use its default mDNS resolver. No additional configuration needed.
+
+### ExtraHosts IP Injection Pattern
+
+Docker's embedded DNS (127.0.0.11) proved unreliable for dynamically created containers. The DockerComposeOrchestrator now:
+
+1. **Discovers Infrastructure IPs**: Scans running containers to find Redis, RabbitMQ, MySQL, placement service
+2. **Injects ExtraHosts**: Adds hostname→IP mappings when creating new containers
+3. **Maintains Fallback Chain**: Multiple discovery strategies with graceful fallback
+
+```csharp
+// DockerComposeOrchestrator.cs - ExtraHosts injection
+var extraHosts = new List<string>
+{
+    $"redis:{redisIp}",
+    $"rabbitmq:{rabbitmqIp}",
+    $"mysql:{mysqlIp}",
+    $"placement:{placementIp}"
+};
+```
+
+### Direct Redis/RabbitMQ Connections
+
+The orchestrator bypasses Dapr for infrastructure connections because:
+
+1. **Startup Order**: Orchestrator must start before Dapr infrastructure exists
+2. **Infrastructure Monitoring**: Need to check Redis/RabbitMQ health even when Dapr is down
+3. **Heartbeat Publishing**: Services write heartbeats directly to Redis for NGINX routing
+
+**Redis Key Patterns**:
+- `service:heartbeat:{appId}` - TTL 90s, health status per service instance
+- `service:routing:{serviceName}` - TTL 5min, current app-id for service
 
 ---
 
@@ -1337,28 +1411,31 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 - [x] **28 unit tests passing** with full Moq coverage
 - [x] **Makefile commands** for standalone orchestrator operation
 
-### Phase 2: Environment Management 🔧 In Progress
+### Phase 2: Environment Management ✅ 95% Complete
 
 - [x] API schema design (orchestrator-api.yaml v2.2.0)
 - [x] Backend detection framework with 4-backend support
-- [x] Docker Compose orchestrator (DockerComposeOrchestrator.cs)
+- [x] Docker Compose orchestrator (DockerComposeOrchestrator.cs ~1,347 lines)
 - [x] Docker Swarm orchestrator (DockerSwarmOrchestrator.cs)
 - [x] Portainer orchestrator (PortainerOrchestrator.cs)
 - [x] Kubernetes orchestrator (KubernetesOrchestrator.cs)
 - [x] BackendDetector with priority-based selection
-- [ ] Deployment preset system
-- [ ] Deploy/teardown/status implementation (see TODOs below)
-- [ ] Topology update without full redeploy (see TODOs below)
-- [ ] Log streaming
+- [x] **Deployment preset system** (7 presets in provisioning/orchestrator/presets/)
+- [x] **Deploy implementation** with heartbeat-based validation
+- [x] **Teardown implementation** with graceful container removal
+- [x] **Status implementation** returning current topology
+- [x] **Standalone Dapr sidecar architecture** (mDNS, not Consul)
+- [x] **ExtraHosts IP injection** for Docker DNS limitations
+- [ ] Log streaming (low priority)
+- [ ] CleanAsync and RollbackConfigurationAsync (low priority)
 
-### Phase 3: Service Mapping Events 🚨 Critical Gap
+### Phase 3: Service Mapping Events ✅ Complete
 
 - [x] ServiceAppMappingResolver can consume events
 - [x] ServiceAppMappingResolver can update mappings dynamically
-- [ ] **Service mapping exchange** (`bannou-service-mappings`)
-- [ ] **PublishServiceMappingEventAsync** in OrchestratorEventManager
-- [ ] **ServiceMappingEvent** model in orchestrator schema
-- [ ] **Publish on topology changes** (deploy, move, teardown)
+- [x] **Service mapping events** via Dapr pub/sub
+- [x] **Redis heartbeat system** for NGINX routing integration
+- [x] **Publish on topology changes** (deploy, move, teardown)
 
 ### Phase 4: Secrets Integration 📋 Planned (Research Complete)
 

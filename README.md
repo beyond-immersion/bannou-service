@@ -13,7 +13,8 @@ Bannou Service is a versatile ASP.NET Core application designed to provide a Web
   - [Features](#features)
   - [WebSocket-First Architecture](#websocket-first-architecture)
   - [Schema-Driven Development](#schema-driven-development)
-  - [Testing Architecture](#testing-architecture)
+  - [Testing & Development Commands](#testing--development-commands)
+  - [Orchestrator Service](#orchestrator-service)
   - [Local Deploy (Compose)](#local-deploy-compose)
     - [Prerequisites](#prerequisites)
     - [Manual](#manual)
@@ -154,6 +155,60 @@ make test-ci                   # Full CI pipeline locally
 ```
 
 See **[TESTING.md](TESTING.md)** for complete testing documentation, CI/CD pipeline details, and advanced testing workflows.
+
+## Orchestrator Service
+
+Bannou includes a **deployment orchestrator** for managing service topology and container lifecycle. The orchestrator provides API-driven control over environments, replacing manual Makefile/docker-compose commands with a unified programmatic interface.
+
+### Key Capabilities
+
+- **Multi-Backend Support**: Docker Compose, Docker Swarm, Kubernetes, Portainer
+- **Preset-Based Deployment**: YAML topology definitions (7 presets included)
+- **Standalone Dapr Sidecars**: Each app gets a paired Dapr container (not shared network namespace)
+- **Health Monitoring**: Redis-based heartbeats for NGINX routing integration
+- **Direct Infrastructure Access**: Bypasses Dapr for Redis/RabbitMQ (avoids chicken-and-egg dependency)
+
+### Architecture Decisions
+
+The orchestrator evolved through significant iteration to work around Dapr and Docker Compose limitations:
+
+| Decision | Reason |
+|----------|--------|
+| **Standalone Dapr sidecars** | `network_mode:service` shared namespaces caused Dapr compatibility issues |
+| **mDNS for Dapr discovery** | Consul was unnecessary - mDNS works natively on Docker bridge networks |
+| **ExtraHosts IP injection** | Docker DNS (127.0.0.11) unreliable for dynamically created containers |
+| **Direct Redis/RabbitMQ** | Orchestrator must start before Dapr infrastructure is available |
+
+### Deployment Presets
+
+Located in `provisioning/orchestrator/presets/`:
+
+| Preset | Description |
+|--------|-------------|
+| `bannou.yaml` | Default monolith - all services on one node |
+| `http-tests.yaml` | HTTP integration testing environment |
+| `edge-tests.yaml` | WebSocket protocol testing environment |
+| `auth-only.yaml` | Minimal auth service for testing |
+| `minimal-services.yaml` | Core services only |
+| `local-development.yaml` | Full development stack |
+| `split-auth-routing-test.yaml` | Multi-node routing validation |
+
+### Usage
+
+```bash
+# Start orchestrator with infrastructure
+make up-orchestrator
+
+# Deploy using a preset
+curl -X POST http://localhost:5012/orchestrator/deploy \
+  -H "Content-Type: application/json" \
+  -d '{"preset": "http-tests"}'
+
+# Check deployment status
+curl http://localhost:5012/orchestrator/status
+```
+
+See [ORCHESTRATOR-SERVICE-DESIGN.md](docs/ORCHESTRATOR-SERVICE-DESIGN.md) for complete documentation.
 
 ## Local Deploy (Compose)
 

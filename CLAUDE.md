@@ -379,6 +379,10 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 **Development Procedures**: See knowledge base implementation guides
 - Required for: Testing failures, debugging, complex service implementation, troubleshooting
 
+**Orchestrator Tasks**: See `docs/ORCHESTRATOR-SERVICE-DESIGN.md`
+- Required for: Deployment topology, preset creation, service discovery patterns, container orchestration
+- Key patterns: Standalone Dapr sidecars, ExtraHosts IP injection, Redis heartbeat system
+
 ### Additional References:
 **CI/CD Pipeline**: `/NUGET-SETUP.md` - 10-step CI pipeline, NuGet publishing, compatibility testing  
 **Project Architecture**: Referenced in core memory (BANNOU_CORE_MEMORY.md)  
