@@ -643,7 +643,7 @@ public static class Program
 
         var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT")
             ?? "http://127.0.0.1:3500";
-        var url = $"{daprHttpEndpoint}/v1.0/invoke/{sourceAppId}/method/connect/service-mappings";
+        var url = $"{daprHttpEndpoint}/v1.0/invoke/{sourceAppId}/method/service-mappings";
 
         using var httpClient = new HttpClient();
         httpClient.Timeout = TimeSpan.FromSeconds(10);
