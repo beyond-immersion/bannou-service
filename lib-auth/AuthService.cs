@@ -2,6 +2,7 @@ using BCrypt.Net;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Subscriptions;
@@ -35,7 +36,13 @@ public class AuthService : IAuthService
     private readonly ILogger<AuthService> _logger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
-    private const string REDIS_STATE_STORE = "statestore";
+
+    // Helper services for better separation of concerns and testability
+    private readonly ITokenService _tokenService;
+    private readonly ISessionService _sessionService;
+    private readonly IOAuthProviderService _oauthService;
+
+    private const string REDIS_STATE_STORE = "auth-statestore";
     private const string PUBSUB_NAME = "bannou-pubsub";
     private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
     private const string SESSION_UPDATED_TOPIC = "session.updated";
@@ -55,7 +62,10 @@ public class AuthService : IAuthService
         DaprClient daprClient,
         AuthServiceConfiguration configuration,
         ILogger<AuthService> logger,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        ITokenService tokenService,
+        ISessionService sessionService,
+        IOAuthProviderService oauthService)
     {
         _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
         _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
@@ -63,6 +73,9 @@ public class AuthService : IAuthService
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+        _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
+        _oauthService = oauthService ?? throw new ArgumentNullException(nameof(oauthService));
 
         _logger.LogInformation("AuthService initialized with JwtSecret length: {Length}, Issuer: {Issuer}, Audience: {Audience}, MockProviders: {MockProviders}",
             _configuration.JwtSecret?.Length ?? 0, _configuration.JwtIssuer, _configuration.JwtAudience, _configuration.MockProviders);

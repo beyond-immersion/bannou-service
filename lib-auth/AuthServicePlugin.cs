@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
@@ -37,6 +38,13 @@ public class AuthServicePlugin : BaseBannouPlugin
         // Register HttpClient for OAuth provider communication (Discord, Google, Twitch, Steam)
         services.AddHttpClient();
         Logger?.LogDebug("Registered IHttpClientFactory for OAuth provider HTTP calls");
+
+        // Register helper services for better testability and separation of concerns
+        // These are .NET DI services, not separate plugins
+        services.AddScoped<ISessionService, SessionService>();
+        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<IOAuthProviderService, OAuthProviderService>();
+        Logger?.LogDebug("Registered Auth helper services (SessionService, TokenService, OAuthProviderService)");
 
         // Add any service-specific dependencies
         // The generated clients (IAccountsClient) should already be registered by AddAllBannouServiceClients()
