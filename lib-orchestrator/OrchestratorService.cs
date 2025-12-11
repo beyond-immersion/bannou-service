@@ -643,35 +643,26 @@ public class OrchestratorService : IOrchestratorService
 
         try
         {
-            var orchestrator = await GetOrchestratorAsync(cancellationToken);
-            var containers = await orchestrator.ListContainersAsync(cancellationToken);
+            // Get service-to-app-id mappings from Redis
+            // These are populated by DeployAsync when deploying presets with split topologies
+            var serviceRoutings = await _redisManager.GetServiceRoutingsAsync();
 
-            // Build service-to-app-id mappings from running containers
-            // In distributed deployments, different services may run on different app-ids
-            // In monolith mode, all services route to "bannou"
+            // Convert to simple string -> string mappings (service -> appId)
             var mappings = new Dictionary<string, string>();
-
-            foreach (var container in containers)
+            foreach (var kvp in serviceRoutings)
             {
-                if (!string.IsNullOrEmpty(container.AppName))
+                // Apply filter if specified
+                if (string.IsNullOrEmpty(body.ServiceFilter) ||
+                    kvp.Key.StartsWith(body.ServiceFilter, StringComparison.OrdinalIgnoreCase))
                 {
-                    // Use the app-id as both service name and routing target
-                    // In production deployments, services would have explicit service names
-                    var serviceName = container.AppName;
-
-                    // If filter is specified, only include matching services
-                    if (string.IsNullOrEmpty(body.ServiceFilter) ||
-                        serviceName.StartsWith(body.ServiceFilter, StringComparison.OrdinalIgnoreCase))
-                    {
-                        mappings[serviceName] = container.AppName;
-                    }
+                    mappings[kvp.Key] = kvp.Value.AppId;
                 }
             }
 
             // In development/monolith mode, all services route to "bannou"
             if (mappings.Count == 0)
             {
-                _logger.LogDebug("No custom service mappings - using default 'bannou' for all services");
+                _logger.LogDebug("No custom service mappings in Redis - using default 'bannou' for all services");
             }
 
             var response = new ServiceRoutingResponse
@@ -683,7 +674,7 @@ public class OrchestratorService : IOrchestratorService
                 DeploymentId = null // TODO: Track deployment ID if needed
             };
 
-            _logger.LogInformation("Returning {Count} service routing mappings", response.TotalServices);
+            _logger.LogInformation("Returning {Count} service routing mappings from Redis", response.TotalServices);
             return (StatusCodes.OK, response);
         }
         catch (Exception ex)
