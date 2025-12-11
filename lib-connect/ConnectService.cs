@@ -233,83 +233,47 @@ public class ConnectService : IConnectService
         }
     }
 
-    /// <summary>
-    /// Publishes a service mapping update event to notify all services of routing changes.
-    /// Used when services come online or change their deployment topology.
-    /// </summary>
-    private async Task PublishServiceMappingUpdateAsync(string serviceName, string appId, string action = "update")
-    {
-        try
-        {
-            var mappingEvent = new
-            {
-                EventId = Guid.NewGuid().ToString(),
-                Timestamp = DateTime.UtcNow,
-                ServiceName = serviceName,
-                AppId = appId,
-                Action = action,
-                Metadata = new Dictionary<string, object>
-                {
-                    { "source", "connect-service" },
-                    { "region", Environment.GetEnvironmentVariable("SERVICE_REGION") ?? "default" }
-                }
-            };
-
-            await _daprClient.PublishEventAsync(
-                "bannou-pubsub",
-                "bannou-service-mappings",
-                mappingEvent);
-
-            _logger.LogInformation("Published service mapping update: {Service} -> {AppId} ({Action})",
-                serviceName, appId, action);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish service mapping update for {Service}", serviceName);
-            // Non-critical - continue operation even if event publishing fails
-        }
-    }
-
-    // REMOVED: DiscoverAPIsAsync - API discovery belongs to Permissions service, not Connect service
+    // REMOVED: PublishServiceMappingUpdateAsync - Service mapping events belong to Orchestrator
+    // REMOVED: GetServiceMappingsAsync - Service routing is now in Orchestrator API
+    // REMOVED: DiscoverAPIsAsync - API discovery belongs to Permissions service
     // Connect service ONLY handles WebSocket connections and message routing
 
-
-    // REMOVED: ParseMethod, GetServiceCategory, GetPreferredChannel methods
-    // These were only used by the removed DiscoverAPIsAsync method
-
     /// <summary>
-    /// Gets current service routing information for monitoring/debugging.
-    /// Shows how services are mapped to app-ids in the current deployment.
+    /// Gets the client capability manifest (GUID to API mappings) for the authenticated session.
+    /// Each client receives unique GUIDs for security isolation.
     /// </summary>
-    public Task<(StatusCodes, ServiceMappingsResponse?)> GetServiceMappingsAsync(
-        GetServiceMappingsRequest body,
+    public Task<(StatusCodes, ClientCapabilitiesResponse?)> GetClientCapabilitiesAsync(
+        GetClientCapabilitiesRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var mappings = _appMappingResolver.GetAllMappings();
+            // For now, return a placeholder response until full capability system is integrated
+            // TODO: Integrate with Permissions service to get actual capabilities for the session
+            _logger.LogDebug("GetClientCapabilitiesAsync called with serviceFilter: {Filter}",
+                body.ServiceFilter ?? "(none)");
 
-            var response = new ServiceMappingsResponse
+            // This would normally:
+            // 1. Get the session ID from context/auth
+            // 2. Query Permissions service for session capabilities
+            // 3. Generate client-salted GUIDs for each capability
+            // 4. Return the manifest
+
+            var response = new ClientCapabilitiesResponse
             {
-                Mappings = new Dictionary<string, string>(mappings),
-                DefaultMapping = "bannou",
-                GeneratedAt = DateTimeOffset.UtcNow,
-                TotalServices = mappings.Count
+                SessionId = "placeholder-session-id",
+                Capabilities = new List<ClientCapability>(),
+                Version = 1,
+                GeneratedAt = DateTimeOffset.UtcNow
             };
 
-            // Add default mapping info if no custom mappings exist
-            if (response.Mappings.Count == 0)
-            {
-                response.Mappings["_info"] = "All services routing to default 'bannou' app-id";
-            }
-
-            _logger.LogDebug("Returning {Count} service mappings", response.TotalServices);
-            return Task.FromResult<(StatusCodes, ServiceMappingsResponse?)>(((StatusCodes, ServiceMappingsResponse?))(StatusCodes.OK, response));
+            _logger.LogInformation("Returning client capabilities (placeholder implementation)");
+            return Task.FromResult<(StatusCodes, ClientCapabilitiesResponse?)>((StatusCodes.OK, response));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving service mappings");
-            return Task.FromResult<(StatusCodes, ServiceMappingsResponse?)>((StatusCodes.InternalServerError, null));
+            _logger.LogError(ex, "Error retrieving client capabilities");
+            return Task.FromResult<(StatusCodes, ClientCapabilitiesResponse?)>((StatusCodes.InternalServerError, null));
         }
     }
 

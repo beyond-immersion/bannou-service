@@ -53,19 +53,14 @@ public static class ConnectPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/service-mappings",
+            Path = "/client-capabilities",
             Method = ServiceEndpointMethod.POST,
-            Description = "getServiceMappings",
+            Description = "getClientCapabilities",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
                 {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-                new PermissionRequirement
-                {
-                    Role = "service",
+                    Role = "user",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

@@ -30,10 +30,10 @@ namespace BeyondImmersion.BannouService.Connect;
 using System = global::System;
 
 /// <summary>
-/// Request to get service mappings (empty body allowed)
+/// Request to get client capability manifest (empty body allowed)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GetServiceMappingsRequest
+public partial class GetClientCapabilitiesRequest
 {
 
     /// <summary>
@@ -41,6 +41,116 @@ public partial class GetServiceMappingsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceFilter")]
     public string? ServiceFilter { get; set; } = default!;
+
+    /// <summary>
+    /// Include additional metadata about each capability
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeMetadata")]
+    public bool IncludeMetadata { get; set; } = false;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ClientCapabilitiesResponse
+{
+
+    /// <summary>
+    /// Session ID this capability manifest belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Available API capabilities for this client
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("capabilities")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<ClientCapability> Capabilities { get; set; } = new System.Collections.ObjectModel.Collection<ClientCapability>();
+
+    /// <summary>
+    /// Capability manifest version (increments on changes)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public int Version { get; set; } = default!;
+
+    /// <summary>
+    /// When this capability manifest was generated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("generatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset GeneratedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When these capabilities expire and need refresh
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ClientCapability
+{
+
+    /// <summary>
+    /// Client-salted GUID for this API endpoint (unique per session)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("guid")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid Guid { get; set; } = default!;
+
+    /// <summary>
+    /// Service name (e.g., "accounts", "auth")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("service")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Service { get; set; } = default!;
+
+    /// <summary>
+    /// API endpoint path (e.g., "/accounts/create")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Endpoint { get; set; } = default!;
+
+    /// <summary>
+    /// HTTP method for this endpoint
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("method")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ClientCapabilityMethod Method { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description of this capability
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Preferred WebSocket channel for this capability
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("channel")]
+    public int Channel { get; set; } = 0;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -218,40 +328,6 @@ public partial class ConnectErrorResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status_code")]
     public ConnectErrorResponseStatus_code Status_code { get; set; } = default!;
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServiceMappingsResponse
-{
-
-    /// <summary>
-    /// Map of service names to app-id routing destinations
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("mappings")]
-    [System.ComponentModel.DataAnnotations.Required]
-    public System.Collections.Generic.IDictionary<string, string> Mappings { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
-
-    /// <summary>
-    /// Default app-id used when no specific mapping exists
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("defaultMapping")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string DefaultMapping { get; set; } = "bannou";
-
-    /// <summary>
-    /// When this mapping information was generated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("generatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public System.DateTimeOffset GeneratedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Total number of services with routing mappings
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("totalServices")]
-    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
-    public int TotalServices { get; set; } = default!;
 
 }
 
@@ -452,12 +528,6 @@ public partial class ConnectionConfiguration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("client_reconnection_time")]
     public int Client_reconnection_time { get; set; } = 30;
-
-    /// <summary>
-    /// Redis connection string for session management
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("redis_connection_string")]
-    public string Redis_connection_string { get; set; } = default!;
 
     /// <summary>
     /// Base64-encoded RSA public key for JWT validation
@@ -843,6 +913,27 @@ public enum Upgrade2
 
     [System.Runtime.Serialization.EnumMember(Value = @"websocket")]
     Websocket = 0,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ClientCapabilityMethod
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"GET")]
+    GET = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"POST")]
+    POST = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PUT")]
+    PUT = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"DELETE")]
+    DELETE = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
+    PATCH = 4,
 
 }
 

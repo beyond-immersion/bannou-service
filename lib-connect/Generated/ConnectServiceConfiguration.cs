@@ -82,27 +82,9 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public int RateLimitWindowMinutes { get; set; } = 1;
 
     /// <summary>
-    /// Redis connection string for session management
-    /// Environment variable: REDISCONNECTIONSTRING or BANNOU_REDISCONNECTIONSTRING
-    /// </summary>
-    public string RedisConnectionString { get; set; } = "localhost:6379";
-
-    /// <summary>
     /// RSA public key for JWT validation (PEM format)
     /// Environment variable: JWTPUBLICKEY or BANNOU_JWTPUBLICKEY
     /// </summary>
     public string JwtPublicKey { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Interval for service heartbeat updates to Redis
-    /// Environment variable: SERVICEHEARTBEATINTERVALSECONDS or BANNOU_SERVICEHEARTBEATINTERVALSECONDS
-    /// </summary>
-    public int ServiceHeartbeatIntervalSeconds { get; set; } = 30;
-
-    /// <summary>
-    /// Interval for refreshing service discovery from Redis
-    /// Environment variable: SERVICEDISCOVERYREFRESHSECONDS or BANNOU_SERVICEDISCOVERYREFRESHSECONDS
-    /// </summary>
-    public int ServiceDiscoveryRefreshSeconds { get; set; } = 60;
 
 }
