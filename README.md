@@ -145,11 +145,11 @@ Bannou implements a **comprehensive 10-step CI/CD pipeline** with dual-transport
 - **Schema-Driven Test Generation**: Automatic test creation from OpenAPI specifications
 - **Dual-Transport Validation**: HTTP and WebSocket testing ensure protocol consistency
 - **Service-Specific Testing**: Use `make test PLUGIN=service` for focused testing
-- **CI/CD Integration**: Complete GitHub Actions pipeline with 189+ automated tests
+- **CI/CD Integration**: Complete GitHub Actions pipeline with 400+ automated tests
 
 **Quick Testing:**
 ```bash
-make test                      # All tests (189 total across all services)
+make test                      # All tests (438 total across all services)
 make test PLUGIN=accounts      # Specific service tests only
 make test-ci                   # Full CI pipeline locally
 ```
