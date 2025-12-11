@@ -261,7 +261,7 @@ public class Program
     /// <param name="client">The connected BannouClient instance.</param>
     /// <param name="timeoutSeconds">Maximum time to wait for APIs.</param>
     /// <returns>True if expected APIs are present, false if timeout.</returns>
-    private static async Task<bool> WaitForCapabilityManifest(BannouClient client, int timeoutSeconds = 60)
+    private static async Task<bool> WaitForCapabilityManifest(BannouClient client, int timeoutSeconds = 60, HashSet<string>? customExpectedPaths = null)
     {
         if (client == null || !client.IsConnected)
         {
@@ -278,7 +278,7 @@ public class Program
         // NOTE: The main client is a regular user, so we expect user-role endpoints with "default" state.
         // Admin-only endpoints (like /accounts, /permissions/services) are tested via AdminClient.
         // Anonymous-only endpoints (like /auth/register) are not available to authenticated users.
-        var expectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        var expectedPaths = customExpectedPaths ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "/auth/login",        // Auth service - user role, default state
             "/sessions"           // GameSession service - user role, default state (e.g., GET:/sessions)
@@ -566,6 +566,21 @@ public class Program
 
         Console.WriteLine($"   Admin Session ID: {_adminClient.SessionId}");
         Console.WriteLine($"   Admin Available APIs: {_adminClient.AvailableApis.Count}");
+
+        // Wait for admin-specific APIs to be available in the capability manifest.
+        // This ensures the accounts service (MySQL) is fully ready before tests run.
+        var adminExpectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "/accounts/delete",   // Accounts service - admin role, needed for account deletion tests
+            "/accounts"           // Accounts service - admin role, list/get operations
+        };
+
+        if (!await WaitForCapabilityManifest(_adminClient, 60, adminExpectedPaths))
+        {
+            Console.WriteLine("⚠️ Admin capability manifest check failed - some admin APIs may not be available.");
+            // Don't fail - some tests may still work, and the APIs might appear later
+        }
+
         Console.WriteLine($"✅ Admin authenticated as: {adminEmail}");
         return true;
     }
