@@ -25,10 +25,6 @@ paths:
         - role: user
           states:
             auth: authenticated
-        - role: admin
-          states: {}
-        - role: service
-          states: {}
       requestBody:
         required: true
         content:
@@ -54,10 +50,6 @@ paths:
         - role: user
           states:
             auth: authenticated
-        - role: admin
-          states: {}
-        - role: service
-          states: {}
       requestBody:
         required: true
         content:

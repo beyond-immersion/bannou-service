@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Permissions;
+using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -32,6 +33,7 @@ public class PermissionsServiceTests
     private readonly Mock<PermissionsServiceConfiguration> _mockConfiguration;
     private readonly Mock<DaprClient> _mockDaprClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IErrorEventEmitter> _mockErrorEmitter;
 
     // State store constants (must match PermissionsService)
     private const string STATE_STORE = "permissions-store";
@@ -47,6 +49,7 @@ public class PermissionsServiceTests
         _mockConfiguration = new Mock<PermissionsServiceConfiguration>();
         _mockDaprClient = new Mock<DaprClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockErrorEmitter = new Mock<IErrorEventEmitter>();
     }
 
     private PermissionsService CreateService()
@@ -55,7 +58,8 @@ public class PermissionsServiceTests
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockDaprClient.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockErrorEmitter.Object);
     }
 
     [Fact]
@@ -355,6 +359,187 @@ public class PermissionsServiceTests
                 requests.Any(r => r.Key == statesKey)),
             null,
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateSessionRoleAsync_IncludesLowerRoleEndpoints()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-hierarchy";
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+
+        // Empty initial state/active sessions/permissions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE, statesKey, null, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE, ACTIVE_SESSIONS_KEY, null, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
+                STATE_STORE, permissionsKey, null, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        // Registered services
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE, REGISTERED_SERVICES_KEY, null, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "svc" });
+
+        // Permission matrix lookups per role (developer should inherit user)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.Is<string>(key => key.Contains("permissions:svc:default:user")),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "GET:/user" });
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.Is<string>(key => key.Contains("permissions:svc:default:developer")),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "GET:/dev" });
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.Is<string>(key => key.Contains("permissions:svc:default:anonymous")),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        Dictionary<string, object>? savedPermissions = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                permissionsKey,
+                It.IsAny<Dictionary<string, object>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, Dictionary<string, object>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, value, opt, meta, ct) => savedPermissions = value)
+            .Returns(Task.CompletedTask);
+
+        _mockDaprClient
+            .Setup(d => d.PublishEventAsync(
+                "bannou-pubsub",
+                "permissions.capabilities-updated",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (status, response) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
+        {
+            SessionId = sessionId,
+            NewRole = "developer",
+            PreviousRole = "user"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.True(response?.Success);
+        Assert.NotNull(savedPermissions);
+        Assert.True(savedPermissions!.TryGetValue("svc", out var endpointsObj));
+        var endpoints = endpointsObj as IEnumerable<string>;
+        Assert.NotNull(endpoints);
+        Assert.Contains("GET:/user", endpoints!);
+        Assert.Contains("GET:/dev", endpoints!);
+    }
+
+    [Fact]
+    public async Task RecompilePermissions_RequiresStateAndRole()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-state-role";
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+
+        // Session has role=user and auth:authenticated state
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user",
+            ["auth"] = "authenticated"
+        };
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE, statesKey, null, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE, REGISTERED_SERVICES_KEY, null, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "svc" });
+
+        // Endpoint gated by auth:authenticated + role user
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.Is<string>(k => k.Contains("permissions:svc:auth:authenticated:user")),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "POST:/secure" });
+
+        // No default endpoints
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                It.Is<string>(k => k.Contains("permissions:svc:default:user")),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        Dictionary<string, object>? saved = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                permissionsKey,
+                It.IsAny<Dictionary<string, object>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, Dictionary<string, object>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, val, opt, meta, ct) => saved = val)
+            .Returns(Task.CompletedTask);
+
+        _mockDaprClient
+            .Setup(d => d.PublishEventAsync(
+                "bannou-pubsub",
+                "permissions.capabilities-updated",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (status, _) = await service.UpdateSessionRoleAsync(new SessionRoleUpdate
+        {
+            SessionId = sessionId,
+            NewRole = "user",
+            PreviousRole = null
+        });
+
+        // Assert state required is respected and endpoint is present
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(saved);
+        Assert.True(saved!.TryGetValue("svc", out var endpointsObj));
+        var endpoints = endpointsObj as IEnumerable<string>;
+        Assert.NotNull(endpoints);
+        Assert.Contains("POST:/secure", endpoints!);
     }
 
     [Fact]

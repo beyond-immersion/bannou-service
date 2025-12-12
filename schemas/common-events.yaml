@@ -201,6 +201,78 @@ components:
         cpuUsage:
           type: number
           format: float
+          description: CPU usage ratio (0.0 - 1.0)
+        memoryUsage:
+          type: number
+          format: float
+          description: Memory usage ratio (0.0 - 1.0)
+
+    ServiceErrorEvent:
+      type: object
+      description: |
+        Structured error event for unexpected service failures (akin to Sentry).
+        Use ONLY for internal faults, not for user/input errors.
+      required:
+        - eventId
+        - timestamp
+        - serviceId
+        - appId
+        - operation
+        - errorType
+        - message
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this error event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred
+        serviceId:
+          type: string
+          description: Logical service name emitting the error (e.g., "accounts")
+        appId:
+          type: string
+          description: Dapr app-id of the instance emitting the error
+        operation:
+          type: string
+          description: Operation/method name where the error occurred
+        errorType:
+          type: string
+          description: High-level classification (e.g., "unexpected_exception", "dependency_failure")
+        message:
+          type: string
+          description: Human-readable error summary
+        correlationId:
+          type: string
+          nullable: true
+          description: Correlation ID / request ID, if available
+        severity:
+          type: string
+          enum: [info, warning, error, critical]
+          default: error
+          description: Severity for triage/routing
+        dependency:
+          type: string
+          nullable: true
+          description: Dependency implicated in the failure (e.g., redis, dapr-pubsub, http:accounts)
+        endpoint:
+          type: string
+          nullable: true
+          description: Service endpoint involved (e.g., POST /accounts/create)
+        details:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Redacted structured context (exclude PII/secrets)
+        stack:
+          type: string
+          nullable: true
+          description: Optional stack trace for debugging (avoid PII)
+        cpuUsage:
+          type: number
+          format: float
           description: CPU usage percentage (0.0 - 1.0)
         memoryUsage:
           type: number

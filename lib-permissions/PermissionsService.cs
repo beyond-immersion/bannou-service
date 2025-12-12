@@ -29,6 +29,8 @@ public class PermissionsService : IPermissionsService
     private readonly PermissionsServiceConfiguration _configuration;
     private readonly DaprClient _daprClient;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly IErrorEventEmitter _errorEventEmitter;
+    private static readonly string[] ROLE_ORDER = new[] { "anonymous", "user", "developer", "admin" };
 
     // Dapr state store name
     private const string STATE_STORE = "permissions-store";
@@ -51,12 +53,14 @@ public class PermissionsService : IPermissionsService
         ILogger<PermissionsService> logger,
         PermissionsServiceConfiguration configuration,
         DaprClient daprClient,
-        IDistributedLockProvider lockProvider)
+        IDistributedLockProvider lockProvider,
+        IErrorEventEmitter errorEventEmitter)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
+        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _sessionCapabilityCache = new ConcurrentDictionary<string, CapabilityResponse>();
 
         _logger.LogInformation("Permissions service initialized with Dapr state store");
@@ -346,46 +350,76 @@ public class PermissionsService : IPermissionsService
 
             // Update the centralized registered_services list (enables "list all registered services" queries)
             // Uses Redis-based distributed lock to prevent race conditions when multiple services register concurrently
-            // NO FALLBACK - if lock fails, registration fails. We don't mask failures.
+            // NO FALLBACK - if lock fails after retries, registration fails. We don't mask failures with alternative paths.
+            // RETRY IS NOT A FALLBACK - retrying lock acquisition is the correct approach for handling lock contention.
             const string LOCK_STORE = "permissions-store"; // Use Redis state store for distributed locking
             const string LOCK_RESOURCE = "registered_services_lock";
             var lockOwnerId = $"{body.ServiceId}-{Guid.NewGuid():N}";
 
-            // Acquire distributed lock to serialize updates to the shared registered_services list
-            ILockResponse serviceLock;
-            try
+            // Acquire distributed lock with retry to handle concurrent registration contention
+            // Lock contention is expected when multiple services register simultaneously (e.g., during tests or startup)
+            const int maxRetries = 10;
+            const int baseDelayMs = 100;
+            ILockResponse serviceLock = null!;
+
+            for (int attempt = 0; attempt < maxRetries; attempt++)
             {
-                serviceLock = await _lockProvider.LockAsync(
-                    LOCK_STORE,
-                    LOCK_RESOURCE,
-                    lockOwnerId,
-                    expiryInSeconds: 30,  // Lock expires after 30 seconds if not released
-                    cancellationToken: cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Exception while acquiring distributed lock for {ServiceId}. " +
-                    "Lock store: {LockStore}, Resource: {LockResource}, Owner: {LockOwner}",
-                    body.ServiceId, LOCK_STORE, LOCK_RESOURCE, lockOwnerId);
-                return (StatusCodes.InternalServerError, new RegistrationResponse
+                try
                 {
-                    ServiceId = body.ServiceId,
-                    Success = false,
-                    Message = $"Exception while acquiring lock: {ex.Message}"
-                });
+                    serviceLock = await _lockProvider.LockAsync(
+                        LOCK_STORE,
+                        LOCK_RESOURCE,
+                        lockOwnerId,
+                        expiryInSeconds: 30,  // Lock expires after 30 seconds if not released
+                        cancellationToken: cancellationToken);
+
+                    if (serviceLock.Success)
+                    {
+                        if (attempt > 0)
+                        {
+                            _logger.LogDebug("Acquired lock for {ServiceId} on attempt {Attempt}", body.ServiceId, attempt + 1);
+                        }
+                        break;
+                    }
+
+                    // Lock is held by another process - wait with exponential backoff and jitter
+                    var delayMs = baseDelayMs * (1 << Math.Min(attempt, 5)) + Random.Shared.Next(0, 50);
+                    _logger.LogDebug("Lock contention for {ServiceId}, attempt {Attempt}/{MaxRetries}, waiting {DelayMs}ms",
+                        body.ServiceId, attempt + 1, maxRetries, delayMs);
+                    await Task.Delay(delayMs, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Exception on lock attempt {Attempt} for {ServiceId}", attempt + 1, body.ServiceId);
+                    if (attempt == maxRetries - 1)
+                    {
+                        _logger.LogError(ex, "Exception while acquiring distributed lock for {ServiceId} after {MaxRetries} attempts. " +
+                            "Lock store: {LockStore}, Resource: {LockResource}, Owner: {LockOwner}",
+                            body.ServiceId, maxRetries, LOCK_STORE, LOCK_RESOURCE, lockOwnerId);
+                        return (StatusCodes.InternalServerError, new RegistrationResponse
+                        {
+                            ServiceId = body.ServiceId,
+                            Success = false,
+                            Message = $"Exception while acquiring lock after {maxRetries} attempts: {ex.Message}"
+                        });
+                    }
+                    // Brief delay before retry on exception
+                    await Task.Delay(baseDelayMs, cancellationToken);
+                }
             }
 
             await using (serviceLock)
             {
                 if (!serviceLock.Success)
                 {
-                    _logger.LogError("Failed to acquire distributed lock for {ServiceId} - cannot safely update registered services. " +
-                        "This indicates a problem with the Redis lock configuration.", body.ServiceId);
+                    _logger.LogError("Failed to acquire distributed lock for {ServiceId} after {MaxRetries} attempts - " +
+                        "cannot safely update registered services. This indicates persistent lock contention or Redis issues.",
+                        body.ServiceId, maxRetries);
                     return (StatusCodes.InternalServerError, new RegistrationResponse
                     {
                         ServiceId = body.ServiceId,
                         Success = false,
-                        Message = "Failed to acquire distributed lock - check Redis lock configuration"
+                        Message = $"Failed to acquire distributed lock after {maxRetries} attempts - persistent lock contention"
                     });
                 }
 
@@ -464,6 +498,12 @@ public class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering service permissions for {ServiceId}", body.ServiceId);
+            await PublishErrorEventAsync(
+                "RegisterServicePermissions",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { body.ServiceId });
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -792,7 +832,7 @@ public class PermissionsService : IPermissionsService
                 sessionId, role, reason);
 
             // Compile permissions for each service
-            var compiledPermissions = new Dictionary<string, List<string>>();
+            var compiledPermissions = new Dictionary<string, HashSet<string>>();
 
             // First, get all registered services and check "default" state permissions for the role
             var registeredServices = await _daprClient.GetStateAsync<HashSet<string>>(
@@ -803,66 +843,55 @@ public class PermissionsService : IPermissionsService
 
             foreach (var serviceId in registeredServices)
             {
-                // Check for "default" state permissions (endpoints with states: {} in x-permissions)
-                // Generated permission registration uses "default" as the state key when RequiredStates is empty
-                var defaultMatrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, "default", role);
-                var defaultEndpoints = await _daprClient.GetStateAsync<HashSet<string>>(STATE_STORE, defaultMatrixKey);
-
-                _logger.LogDebug("Looking up {Key}, found {Count} endpoints",
-                    defaultMatrixKey, defaultEndpoints?.Count ?? 0);
-
-                if (defaultEndpoints != null && defaultEndpoints.Count > 0)
-                {
-                    if (!compiledPermissions.ContainsKey(serviceId))
-                    {
-                        compiledPermissions[serviceId] = new List<string>();
-                    }
-                    compiledPermissions[serviceId].AddRange(defaultEndpoints);
-                    _logger.LogInformation("Added {Count} endpoints for service {ServiceId} to session {SessionId}",
-                        defaultEndpoints.Count, serviceId, sessionId);
-                }
-            }
-
-            // Then, for each registered service, check if any session states unlock additional permissions
-            // This handles cross-service state dependencies (e.g., "auth:authenticated" state unlocking permissions on other services)
-            foreach (var serviceId in registeredServices)
-            {
+                // Relevant state keys for this service
+                var relevantStates = new List<string> { "default" };
                 foreach (var serviceState in sessionStates.Where(s => s.Key != "role"))
                 {
                     var stateServiceId = serviceState.Key;
                     var stateValue = serviceState.Value;
+                    if (stateValue == "default") continue;
+                    relevantStates.Add(stateServiceId == serviceId ? stateValue : $"{stateServiceId}:{stateValue}");
+                }
 
-                    // Skip "default" state as we already checked it above
-                    if (stateValue == "default")
-                        continue;
+                foreach (var stateKey in relevantStates)
+                {
+                    var maxRoleByEndpoint = new Dictionary<string, int>();
 
-                    // Construct state key the same way registration does:
-                    // - If stateServiceId == serviceId (same service): stateKey = stateValue
-                    // - If stateServiceId != serviceId (different service): stateKey = "{stateServiceId}:{stateValue}"
-                    var stateKey = stateServiceId == serviceId ? stateValue : $"{stateServiceId}:{stateValue}";
-
-                    var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, stateKey, role);
-                    var endpoints = await _daprClient.GetStateAsync<HashSet<string>>(STATE_STORE, matrixKey);
-
-                    _logger.LogDebug("State-based lookup: service={ServiceId}, stateKey={StateKey}, role={Role}, key={Key}, found={Count}",
-                        serviceId, stateKey, role, matrixKey, endpoints?.Count ?? 0);
-
-                    if (endpoints != null && endpoints.Count > 0)
+                    // Walk all roles to find the highest required role for each endpoint in this state
+                    foreach (var roleName in ROLE_ORDER)
                     {
-                        if (!compiledPermissions.ContainsKey(serviceId))
-                        {
-                            compiledPermissions[serviceId] = new List<string>();
-                        }
-                        // Add unique endpoints (avoid duplicates)
+                        var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, stateKey, roleName);
+                        var endpoints = await _daprClient.GetStateAsync<HashSet<string>>(STATE_STORE, matrixKey);
+
+                        _logger.LogDebug("State-based lookup: service={ServiceId}, stateKey={StateKey}, role={Role}, key={Key}, found={Count}",
+                            serviceId, stateKey, roleName, matrixKey, endpoints?.Count ?? 0);
+
+                        if (endpoints == null) continue;
+
                         foreach (var endpoint in endpoints)
                         {
-                            if (!compiledPermissions[serviceId].Contains(endpoint))
-                            {
-                                compiledPermissions[serviceId].Add(endpoint);
-                            }
+                            var priority = Array.IndexOf(ROLE_ORDER, roleName);
+                            maxRoleByEndpoint[endpoint] = maxRoleByEndpoint.TryGetValue(endpoint, out var existing)
+                                ? Math.Max(existing, priority)
+                                : priority;
                         }
-                        _logger.LogInformation("Added {Count} state-based endpoints for service {ServiceId} (state: {StateKey})",
-                            endpoints.Count, serviceId, stateKey);
+                    }
+
+                    // Allow endpoints where session role meets or exceeds highest required
+                    var sessionPriority = Array.IndexOf(ROLE_ORDER, role);
+                    foreach (var kvp in maxRoleByEndpoint)
+                    {
+                        if (sessionPriority < kvp.Value)
+                        {
+                            continue;
+                        }
+
+                        if (!compiledPermissions.ContainsKey(serviceId))
+                        {
+                            compiledPermissions[serviceId] = new HashSet<string>();
+                        }
+
+                        compiledPermissions[serviceId].Add(kvp.Key);
                     }
                 }
             }
@@ -882,7 +911,7 @@ public class PermissionsService : IPermissionsService
             var newPermissionData = new Dictionary<string, object>();
             foreach (var kvp in compiledPermissions)
             {
-                newPermissionData[kvp.Key] = kvp.Value;
+                newPermissionData[kvp.Key] = kvp.Value.ToList();
             }
             newPermissionData["version"] = newVersion;
             newPermissionData["generated_at"] = DateTimeOffset.UtcNow.ToString();
@@ -893,7 +922,7 @@ public class PermissionsService : IPermissionsService
             _sessionCapabilityCache.TryRemove(sessionId, out _);
 
             // Publish capability update to Connect service
-            await PublishCapabilityUpdateAsync(sessionId, compiledPermissions, reason);
+            await PublishCapabilityUpdateAsync(sessionId, compiledPermissions.ToDictionary(k => k.Key, v => (IEnumerable<string>)v.Value.ToList()), reason);
 
             _logger.LogInformation("Recompiled permissions for session {SessionId}: {ServiceCount} services, version {Version}",
                 sessionId, compiledPermissions.Count, newVersion);
@@ -901,6 +930,12 @@ public class PermissionsService : IPermissionsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error recompiling permissions for session {SessionId}", sessionId);
+            await PublishErrorEventAsync(
+                "RecompileSessionPermissions",
+                "dependency_failure",
+                ex.Message,
+                dependency: "dapr-state",
+                details: new { sessionId, reason });
         }
     }
 
@@ -908,7 +943,7 @@ public class PermissionsService : IPermissionsService
     /// Publish capability update to Connect service via the permissions.capabilities-updated topic.
     /// Connect service subscribes to this topic and pushes updates to affected WebSocket clients.
     /// </summary>
-    private async Task PublishCapabilityUpdateAsync(string sessionId, Dictionary<string, List<string>> permissions, string reason)
+    private async Task PublishCapabilityUpdateAsync(string sessionId, Dictionary<string, IEnumerable<string>> permissions, string reason)
     {
         try
         {
@@ -930,6 +965,22 @@ public class PermissionsService : IPermissionsService
         {
             _logger.LogError(ex, "Error publishing capability update for session {SessionId}", sessionId);
         }
+    }
+
+    private Task PublishErrorEventAsync(
+        string operation,
+        string errorType,
+        string message,
+        string? dependency = null,
+        object? details = null)
+    {
+        return _errorEventEmitter.TryPublishAsync(
+            serviceId: "permissions",
+            operation: operation,
+            errorType: errorType,
+            message: message,
+            dependency: dependency,
+            details: details);
     }
 
     /// <summary>

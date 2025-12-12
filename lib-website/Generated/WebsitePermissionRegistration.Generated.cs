@@ -51,6 +51,261 @@ public static class WebsitePermissionRegistration
     {
         var endpoints = new List<ServiceEndpoint>();
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/status",
+            Method = ServiceEndpointMethod.GET,
+            Description = "getStatus",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "anonymous",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/content/{slug}",
+            Method = ServiceEndpointMethod.GET,
+            Description = "getPageContent",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "anonymous",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/news",
+            Method = ServiceEndpointMethod.GET,
+            Description = "getNews",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "anonymous",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/server-status",
+            Method = ServiceEndpointMethod.GET,
+            Description = "getServerStatus",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "anonymous",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/downloads",
+            Method = ServiceEndpointMethod.GET,
+            Description = "getDownloads",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "anonymous",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/contact",
+            Method = ServiceEndpointMethod.POST,
+            Description = "submitContact",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "anonymous",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/account/profile",
+            Method = ServiceEndpointMethod.GET,
+            Description = "getAccountProfile",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/account/characters",
+            Method = ServiceEndpointMethod.GET,
+            Description = "getAccountCharacters",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/cms/pages",
+            Method = ServiceEndpointMethod.GET,
+            Description = "listPages",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/cms/pages",
+            Method = ServiceEndpointMethod.POST,
+            Description = "createPage",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/cms/pages/{slug}",
+            Method = ServiceEndpointMethod.PUT,
+            Description = "updatePage",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/cms/pages/{slug}",
+            Method = ServiceEndpointMethod.DELETE,
+            Description = "deletePage",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/cms/site-settings",
+            Method = ServiceEndpointMethod.GET,
+            Description = "getSiteSettings",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/cms/site-settings",
+            Method = ServiceEndpointMethod.PUT,
+            Description = "updateSiteSettings",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/cms/theme",
+            Method = ServiceEndpointMethod.GET,
+            Description = "getTheme",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/cms/theme",
+            Method = ServiceEndpointMethod.PUT,
+            Description = "updateTheme",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/website/account/subscription",
+            Method = ServiceEndpointMethod.GET,
+            Description = "getSubscription",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
+                },
+            }
+        });
+
         return endpoints;
     }
 

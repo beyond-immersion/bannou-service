@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -15,12 +16,14 @@ public class AccountsServiceTests
     private readonly Mock<ILogger<AccountsService>> _mockLogger;
     private readonly AccountsServiceConfiguration _configuration;
     private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
 
     public AccountsServiceTests()
     {
         _mockLogger = new Mock<ILogger<AccountsService>>();
         _configuration = new AccountsServiceConfiguration();
         _mockDaprClient = new Mock<DaprClient>();
+        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
     }
 
     [Fact]
@@ -30,7 +33,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object);
 
         Assert.NotNull(service);
     }
@@ -66,16 +70,18 @@ public class AccountsServiceTests
     }
 
     [Fact]
-    public void AccountsPermissionRegistration_GetEndpoints_ShouldRequireServiceOrAdminRole()
+    public void AccountsPermissionRegistration_GetEndpoints_ShouldRequireUserOrHigherRole()
     {
         // Act
         var endpoints = AccountsPermissionRegistration.GetEndpoints();
 
-        // Assert - All account endpoints should require either service or admin role
-        var serviceEndpoints = endpoints.Where(e =>
-            e.Permissions.Any(p => p.Role == "service" || p.Role == "admin")).ToList();
+        // Assert - All account endpoints should require user or admin (no anonymous/service)
+        var guardedEndpoints = endpoints.Where(e =>
+            e.Permissions.All(p => p.Role == "user" || p.Role == "admin")).ToList();
 
-        Assert.Equal(13, serviceEndpoints.Count); // All endpoints require elevated access
+        Assert.Equal(13, guardedEndpoints.Count);
+        Assert.Equal(10, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "admin")));
+        Assert.Equal(3, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "user")));
     }
 
     [Fact]
@@ -117,7 +123,8 @@ public class AccountsServiceTests
         return new AccountsService(
             _mockLogger.Object,
             configuration,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object);
     }
 
     [Fact]
@@ -218,6 +225,109 @@ public class AccountsServiceTests
         // Verify the saved account also has admin role
         Assert.NotNull(savedAccount);
         Assert.Contains("admin", savedAccount.Roles);
+    }
+
+    [Fact]
+    public async Task UpdatePasswordHashAsync_PublishesAccountUpdatedEvent()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var accountModel = new AccountModel
+        {
+            AccountId = accountId.ToString(),
+            Email = "user@test.local",
+            PasswordHash = "old",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<AccountModel>(
+                "accounts-statestore",
+                $"account-{accountId}",
+                It.IsAny<ConsistencyMode?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountModel);
+
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                "accounts-statestore",
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (status, _) = await service.UpdatePasswordHashAsync(new UpdatePasswordRequest
+        {
+            AccountId = accountId,
+            PasswordHash = "new-hash"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        _mockDaprClient.Verify(d => d.PublishEventAsync(
+            "bannou-pubsub",
+            "account.updated",
+            It.IsAny<AccountUpdatedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateVerificationStatusAsync_PublishesAccountUpdatedEvent()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var accountModel = new AccountModel
+        {
+            AccountId = accountId.ToString(),
+            Email = "user@test.local",
+            PasswordHash = "hash",
+            IsVerified = false,
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<AccountModel>(
+                "accounts-statestore",
+                $"account-{accountId}",
+                It.IsAny<ConsistencyMode?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountModel);
+
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                "accounts-statestore",
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (status, _) = await service.UpdateVerificationStatusAsync(new UpdateVerificationRequest
+        {
+            AccountId = accountId,
+            EmailVerified = true
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        _mockDaprClient.Verify(d => d.PublishEventAsync(
+            "bannou-pubsub",
+            "account.updated",
+            It.IsAny<AccountUpdatedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -440,7 +550,8 @@ public class AccountsServiceTests
         Assert.Throws<ArgumentNullException>(() => new AccountsService(
             null!,
             _configuration,
-            _mockDaprClient.Object));
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object));
     }
 
     [Fact]
@@ -450,7 +561,8 @@ public class AccountsServiceTests
         Assert.Throws<ArgumentNullException>(() => new AccountsService(
             _mockLogger.Object,
             null!,
-            _mockDaprClient.Object));
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object));
     }
 
     [Fact]
@@ -460,7 +572,8 @@ public class AccountsServiceTests
         Assert.Throws<ArgumentNullException>(() => new AccountsService(
             _mockLogger.Object,
             _configuration,
-            null!));
+            null!,
+            _mockErrorEventEmitter.Object));
     }
 
     #endregion
@@ -474,7 +587,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object);
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest());
@@ -492,7 +606,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object);
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = -5 });
@@ -510,7 +625,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object);
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { PageSize = -10 });
@@ -528,7 +644,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object);
 
         // Act
         var (statusCode, response) = await service.ListAccountsAsync(new ListAccountsRequest { Page = 0 });
@@ -550,7 +667,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object);
 
         var request = new CreateAccountRequest
         {
@@ -577,7 +695,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object);
 
         var request = new CreateAccountRequest
         {
@@ -603,7 +722,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object);
 
         var request = new CreateAccountRequest
         {
@@ -629,7 +749,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object);
 
         var accountIds = new List<Guid>();
 
@@ -660,7 +781,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object);
 
         // Truncate to second precision to match Unix timestamp storage
         var beforeCreation = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
@@ -694,7 +816,8 @@ public class AccountsServiceTests
         var service = new AccountsService(
             _mockLogger.Object,
             _configuration,
-            _mockDaprClient.Object);
+            _mockDaprClient.Object,
+            _mockErrorEventEmitter.Object);
 
         var request = new CreateAccountRequest
         {

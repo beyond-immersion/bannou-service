@@ -63,16 +63,6 @@ public static class SubscriptionsPermissionRegistration
                     Role = "user",
                     RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
                 },
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
             }
         });
 
@@ -88,16 +78,6 @@ public static class SubscriptionsPermissionRegistration
                     Role = "user",
                     RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
                 },
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
             }
         });
 
@@ -112,16 +92,6 @@ public static class SubscriptionsPermissionRegistration
                 {
                     Role = "user",
                     RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
-                },
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
                 },
             }
         });
@@ -167,11 +137,6 @@ public static class SubscriptionsPermissionRegistration
                 {
                     Role = "user",
                     RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
-                },
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
                 },
             }
         });

@@ -32,7 +32,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../lib-subscriptions/lib-subscriptions.csproj" />
-    <ProjectReference Include="../lib-servicedata/lib-servicedata.csproj" />
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
   </ItemGroup>
 

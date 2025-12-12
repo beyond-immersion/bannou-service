@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,7 @@ public class ServicedataService : IServicedataService
     private readonly DaprClient _daprClient;
     private readonly ILogger<ServicedataService> _logger;
     private readonly ServicedataServiceConfiguration _configuration;
+    private readonly IErrorEventEmitter _errorEventEmitter;
 
     // Key patterns for Dapr state store
     private const string SERVICE_KEY_PREFIX = "service:";
@@ -28,11 +30,13 @@ public class ServicedataService : IServicedataService
     public ServicedataService(
         DaprClient daprClient,
         ILogger<ServicedataService> logger,
-        ServicedataServiceConfiguration configuration)
+        ServicedataServiceConfiguration configuration,
+        IErrorEventEmitter errorEventEmitter)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
     }
 
     private string StateStoreName => _configuration.StateStoreName ?? "servicedata-statestore";
@@ -416,6 +420,30 @@ public class ServicedataService : IServicedataService
     {
         _logger.LogInformation("Registering ServiceData service permissions...");
         await ServicedataPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+    }
+
+    #endregion
+
+    #region Error Event Publishing
+
+    /// <summary>
+    /// Publishes an error event for unexpected/internal failures.
+    /// Does NOT publish for validation errors or expected failure cases.
+    /// </summary>
+    private Task PublishErrorEventAsync(
+        string operation,
+        string errorType,
+        string message,
+        string? dependency = null,
+        object? details = null)
+    {
+        return _errorEventEmitter.TryPublishAsync(
+            serviceId: "servicedata",
+            operation: operation,
+            errorType: errorType,
+            message: message,
+            dependency: dependency,
+            details: details);
     }
 
     #endregion

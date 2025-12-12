@@ -63,11 +63,6 @@ public static class AuthPermissionRegistration
                     Role = "anonymous",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
-                new PermissionRequirement
-                {
-                    Role = "user",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
             }
         });
 
@@ -157,11 +152,6 @@ public static class AuthPermissionRegistration
                 {
                     Role = "user",
                     RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
-                },
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
                 },
             }
         });

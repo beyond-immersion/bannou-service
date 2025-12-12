@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Servicedata;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Subscriptions;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,7 @@ public class SubscriptionsServiceTests
     private readonly Mock<ILogger<SubscriptionsService>> _mockLogger;
     private readonly SubscriptionsServiceConfiguration _configuration;
     private readonly Mock<IServicedataClient> _mockServicedataClient;
+    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private const string STATE_STORE = "subscriptions-statestore";
 
     public SubscriptionsServiceTests()
@@ -28,6 +30,7 @@ public class SubscriptionsServiceTests
         _mockLogger = new Mock<ILogger<SubscriptionsService>>();
         _configuration = new SubscriptionsServiceConfiguration();
         _mockServicedataClient = new Mock<IServicedataClient>();
+        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
     }
 
     private SubscriptionsService CreateService()
@@ -36,7 +39,8 @@ public class SubscriptionsServiceTests
             _mockDaprClient.Object,
             _mockLogger.Object,
             _configuration,
-            _mockServicedataClient.Object);
+            _mockServicedataClient.Object,
+            _mockErrorEventEmitter.Object);
     }
 
     #region Constructor Tests
@@ -59,7 +63,8 @@ public class SubscriptionsServiceTests
             null!,
             _mockLogger.Object,
             _configuration,
-            _mockServicedataClient.Object));
+            _mockServicedataClient.Object,
+            _mockErrorEventEmitter.Object));
     }
 
     [Fact]
@@ -70,7 +75,8 @@ public class SubscriptionsServiceTests
             _mockDaprClient.Object,
             null!,
             _configuration,
-            _mockServicedataClient.Object));
+            _mockServicedataClient.Object,
+            _mockErrorEventEmitter.Object));
     }
 
     [Fact]
@@ -81,7 +87,8 @@ public class SubscriptionsServiceTests
             _mockDaprClient.Object,
             _mockLogger.Object,
             null!,
-            _mockServicedataClient.Object));
+            _mockServicedataClient.Object,
+            _mockErrorEventEmitter.Object));
     }
 
     [Fact]
@@ -92,7 +99,8 @@ public class SubscriptionsServiceTests
             _mockDaprClient.Object,
             _mockLogger.Object,
             _configuration,
-            null!));
+            null!,
+            _mockErrorEventEmitter.Object));
     }
 
     #endregion

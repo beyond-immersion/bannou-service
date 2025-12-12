@@ -27,9 +27,15 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
     private const string HEARTBEAT_KEY_PREFIX = "service:heartbeat:";
     private const string ROUTING_KEY_PREFIX = "service:routing:";
 
+    // Configuration versioning key patterns
+    private const string CONFIG_VERSION_KEY = "config:version";
+    private const string CONFIG_CURRENT_KEY = "config:current";
+    private const string CONFIG_HISTORY_PREFIX = "config:history:";
+
     // TTL values
     private static readonly TimeSpan HEARTBEAT_TTL = TimeSpan.FromSeconds(90);
     private static readonly TimeSpan ROUTING_TTL = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan CONFIG_HISTORY_TTL = TimeSpan.FromDays(30); // Keep history for 30 days
 
     // JSON options matching generated types (camelCase) for consistent serialization/deserialization
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -407,6 +413,196 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
         catch (RedisException ex)
         {
             _logger.LogError(ex, "Failed to remove routing for {ServiceName}", serviceName);
+        }
+    }
+
+    /// <summary>
+    /// Get the current configuration version number.
+    /// </summary>
+    public async Task<int> GetConfigVersionAsync()
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Returning version 0.");
+            return 0;
+        }
+
+        try
+        {
+            var value = await _database.StringGetAsync(CONFIG_VERSION_KEY);
+            if (value.IsNullOrEmpty)
+            {
+                return 0;
+            }
+
+            return int.TryParse(value.ToString(), out var version) ? version : 0;
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to get configuration version");
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Save the current configuration state as a new version.
+    /// Stores deployment topology for potential rollback.
+    /// </summary>
+    public async Task<int> SaveConfigurationVersionAsync(DeploymentConfiguration configuration)
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot save configuration.");
+            return 0;
+        }
+
+        try
+        {
+            // Get current version and increment
+            var currentVersion = await GetConfigVersionAsync();
+            var newVersion = currentVersion + 1;
+
+            configuration.Version = newVersion;
+            configuration.Timestamp = DateTimeOffset.UtcNow;
+
+            var json = JsonSerializer.Serialize(configuration, JsonOptions);
+
+            // Save to history with TTL
+            var historyKey = $"{CONFIG_HISTORY_PREFIX}{newVersion}";
+            await _database.StringSetAsync(historyKey, json, CONFIG_HISTORY_TTL);
+
+            // Update current configuration (no TTL - always present)
+            await _database.StringSetAsync(CONFIG_CURRENT_KEY, json);
+
+            // Update version number (no TTL)
+            await _database.StringSetAsync(CONFIG_VERSION_KEY, newVersion.ToString());
+
+            _logger.LogInformation(
+                "Saved configuration version {Version} with {ServiceCount} services",
+                newVersion, configuration.Services.Count);
+
+            return newVersion;
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to save configuration version");
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Get a specific configuration version from history.
+    /// </summary>
+    public async Task<DeploymentConfiguration?> GetConfigurationVersionAsync(int version)
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot get configuration.");
+            return null;
+        }
+
+        try
+        {
+            var key = $"{CONFIG_HISTORY_PREFIX}{version}";
+            var value = await _database.StringGetAsync(key);
+
+            if (value.IsNullOrEmpty)
+            {
+                _logger.LogDebug("Configuration version {Version} not found", version);
+                return null;
+            }
+
+            return JsonSerializer.Deserialize<DeploymentConfiguration>(value.ToString(), JsonOptions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get configuration version {Version}", version);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Get the current active configuration.
+    /// </summary>
+    public async Task<DeploymentConfiguration?> GetCurrentConfigurationAsync()
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot get current configuration.");
+            return null;
+        }
+
+        try
+        {
+            var value = await _database.StringGetAsync(CONFIG_CURRENT_KEY);
+
+            if (value.IsNullOrEmpty)
+            {
+                _logger.LogDebug("No current configuration found");
+                return null;
+            }
+
+            return JsonSerializer.Deserialize<DeploymentConfiguration>(value.ToString(), JsonOptions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get current configuration");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Restore a previous configuration version as the current configuration.
+    /// </summary>
+    public async Task<bool> RestoreConfigurationVersionAsync(int version)
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot restore configuration.");
+            return false;
+        }
+
+        try
+        {
+            // Get the historical configuration
+            var historicalConfig = await GetConfigurationVersionAsync(version);
+            if (historicalConfig == null)
+            {
+                _logger.LogWarning("Cannot restore configuration version {Version} - not found", version);
+                return false;
+            }
+
+            // Get current version for reference
+            var currentVersion = await GetConfigVersionAsync();
+
+            // Create a new version representing the rollback (don't overwrite history)
+            var rollbackVersion = currentVersion + 1;
+            historicalConfig.Version = rollbackVersion;
+            historicalConfig.Timestamp = DateTimeOffset.UtcNow;
+            historicalConfig.Description = $"Rolled back from version {currentVersion} to version {version}";
+
+            var json = JsonSerializer.Serialize(historicalConfig, JsonOptions);
+
+            // Save the rollback as a new version in history
+            var historyKey = $"{CONFIG_HISTORY_PREFIX}{rollbackVersion}";
+            await _database.StringSetAsync(historyKey, json, CONFIG_HISTORY_TTL);
+
+            // Update current configuration
+            await _database.StringSetAsync(CONFIG_CURRENT_KEY, json);
+
+            // Update version number
+            await _database.StringSetAsync(CONFIG_VERSION_KEY, rollbackVersion.ToString());
+
+            _logger.LogInformation(
+                "Restored configuration from version {OldVersion} to version {NewVersion} (rollback to v{RestoredVersion})",
+                currentVersion, rollbackVersion, version);
+
+            return true;
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to restore configuration version {Version}", version);
+            return false;
         }
     }
 }

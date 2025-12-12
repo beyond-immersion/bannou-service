@@ -898,6 +898,56 @@
             Internal server error (500).
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Events.EventPublisherBase">
+            <summary>
+            Base class for type-safe event publishers.
+            Provides consistent event publishing patterns across services.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Events.EventPublisherBase.PUBSUB_NAME">
+            <summary>
+            Standard pub/sub component name for all Bannou services.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Events.EventPublisherBase.DaprClient">
+            <summary>
+            Dapr client for publishing events.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Events.EventPublisherBase.Logger">
+            <summary>
+            Logger for event publishing operations.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.EventPublisherBase.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            Creates an event publisher with the specified dependencies.
+            </summary>
+            <param name="daprClient">Dapr client for publishing.</param>
+            <param name="logger">Logger for event operations.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.EventPublisherBase.PublishEventAsync``1(System.String,``0,System.Threading.CancellationToken)">
+            <summary>
+            Publishes an event to the specified topic with standardized error handling.
+            </summary>
+            <typeparam name="TEvent">Event type to publish.</typeparam>
+            <param name="topic">Topic name (e.g., "account.created").</param>
+            <param name="eventData">Event data to publish.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if published successfully.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.EventPublisherBase.NewEventId">
+            <summary>
+            Creates a new event ID for an event.
+            </summary>
+            <returns>New GUID for event identification.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.EventPublisherBase.CurrentTimestamp">
+            <summary>
+            Gets the current UTC timestamp for an event.
+            </summary>
+            <returns>Current UTC time as DateTimeOffset.</returns>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Events.IDaprEvent">
             <summary>
             Base interface for all Dapr events.
@@ -912,6 +962,20 @@
         <member name="P:BeyondImmersion.BannouService.Events.IDaprEvent.Timestamp">
             <summary>
             Timestamp when the event occurred.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ServiceErrorPublisher">
+            <summary>
+            Helper publisher for emitting ServiceErrorEvent to the shared error topic.
+            Use for unexpected/internal failures only (not user/input errors).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.ServiceErrorPublisher.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Events.ServiceErrorPublisher})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Events.ServiceErrorPublisher.PublishErrorAsync(System.String,System.String,System.String,System.String,System.String,System.String,BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity,System.Object,System.String,System.String,System.String,System.Single,System.Single,System.Threading.CancellationToken)">
+            <summary>
+            Publishes a structured service error event.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Events.ServiceRegistrationEvent">
@@ -1108,10 +1172,92 @@
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.InstanceCapacity.CpuUsage">
             <summary>
-            CPU usage percentage (0.0 - 1.0)
+            CPU usage ratio (0.0 - 1.0)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Events.InstanceCapacity.MemoryUsage">
+            <summary>
+            Memory usage ratio (0.0 - 1.0)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Events.ServiceErrorEvent">
+            <summary>
+            Structured error event for unexpected service failures (akin to Sentry).
+            <br/>Use ONLY for internal faults, not for user/input errors.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.EventId">
+            <summary>
+            Unique identifier for this error event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Timestamp">
+            <summary>
+            When the error occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.ServiceId">
+            <summary>
+            Logical service name emitting the error (e.g., "accounts")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.AppId">
+            <summary>
+            Dapr app-id of the instance emitting the error
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Operation">
+            <summary>
+            Operation/method name where the error occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.ErrorType">
+            <summary>
+            High-level classification (e.g., "unexpected_exception", "dependency_failure")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Message">
+            <summary>
+            Human-readable error summary
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.CorrelationId">
+            <summary>
+            Correlation ID / request ID, if available
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Severity">
+            <summary>
+            Severity for triage/routing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Dependency">
+            <summary>
+            Dependency implicated in the failure (e.g., redis, dapr-pubsub, http:accounts)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Endpoint">
+            <summary>
+            Service endpoint involved (e.g., POST /accounts/create)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Details">
+            <summary>
+            Redacted structured context (exclude PII/secrets)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.Stack">
+            <summary>
+            Optional stack trace for debugging (avoid PII)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.CpuUsage">
+            <summary>
+            CPU usage percentage (0.0 - 1.0)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Events.ServiceErrorEvent.MemoryUsage">
             <summary>
             Memory usage percentage (0.0 - 1.0)
             </summary>
@@ -1282,6 +1428,107 @@
             <summary>
             Add property headers.
             </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Helpers.ErrorResponses">
+            <summary>
+            Standardized error response factory methods for consistent error handling across services.
+            Provides logging, status code assignment, and structured error responses.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Helpers.ErrorResponses.NotFound``1(Microsoft.Extensions.Logging.ILogger,System.String,System.String)">
+            <summary>
+            Returns a NotFound response with standardized logging.
+            </summary>
+            <typeparam name="T">Response type (nullable).</typeparam>
+            <param name="logger">Logger instance for recording the not found event.</param>
+            <param name="entityType">Type of entity not found (e.g., "Account", "Session").</param>
+            <param name="entityId">Identifier of the missing entity.</param>
+            <returns>Tuple with NotFound status code and null response.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Helpers.ErrorResponses.NotFound``1(Microsoft.Extensions.Logging.ILogger,System.String,System.Guid)">
+            <summary>
+            Returns a NotFound response with standardized logging using a Guid identifier.
+            </summary>
+            <typeparam name="T">Response type (nullable).</typeparam>
+            <param name="logger">Logger instance for recording the not found event.</param>
+            <param name="entityType">Type of entity not found (e.g., "Account", "Session").</param>
+            <param name="entityId">Guid identifier of the missing entity.</param>
+            <returns>Tuple with NotFound status code and null response.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Helpers.ErrorResponses.BadRequest``1(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            Returns a BadRequest response with standardized logging.
+            </summary>
+            <typeparam name="T">Response type (nullable).</typeparam>
+            <param name="logger">Logger instance for recording the validation failure.</param>
+            <param name="message">Description of what validation failed.</param>
+            <returns>Tuple with BadRequest status code and null response.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Helpers.ErrorResponses.Conflict``1(Microsoft.Extensions.Logging.ILogger,System.String,System.String)">
+            <summary>
+            Returns a Conflict response with standardized logging.
+            </summary>
+            <typeparam name="T">Response type (nullable).</typeparam>
+            <param name="logger">Logger instance for recording the conflict.</param>
+            <param name="entityType">Type of entity with conflict.</param>
+            <param name="conflictReason">Description of the conflict.</param>
+            <returns>Tuple with Conflict status code and null response.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Helpers.ErrorResponses.Unauthorized``1(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            Returns an Unauthorized response with standardized logging.
+            </summary>
+            <typeparam name="T">Response type (nullable).</typeparam>
+            <param name="logger">Logger instance for recording the auth failure.</param>
+            <param name="reason">Description of why authorization failed.</param>
+            <returns>Tuple with Unauthorized status code and null response.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Helpers.ErrorResponses.Forbidden``1(Microsoft.Extensions.Logging.ILogger,System.String)">
+            <summary>
+            Returns a Forbidden response with standardized logging.
+            </summary>
+            <typeparam name="T">Response type (nullable).</typeparam>
+            <param name="logger">Logger instance for recording the forbidden access attempt.</param>
+            <param name="reason">Description of why access is forbidden.</param>
+            <returns>Tuple with Forbidden status code and null response.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Helpers.ErrorResponses.ServiceError``1(Microsoft.Extensions.Logging.ILogger,System.Exception,System.String)">
+            <summary>
+            Returns an InternalServerError response with standardized logging.
+            </summary>
+            <typeparam name="T">Response type (nullable).</typeparam>
+            <param name="logger">Logger instance for recording the error.</param>
+            <param name="ex">Exception that caused the error.</param>
+            <param name="operation">Description of the operation that failed.</param>
+            <returns>Tuple with InternalServerError status code and null response.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Helpers.ErrorResponses.ServiceError``1(Microsoft.Extensions.Logging.ILogger,System.String,System.String)">
+            <summary>
+            Returns an InternalServerError response with standardized logging (no exception).
+            </summary>
+            <typeparam name="T">Response type (nullable).</typeparam>
+            <param name="logger">Logger instance for recording the error.</param>
+            <param name="errorMessage">Description of the error.</param>
+            <param name="operation">Description of the operation that failed.</param>
+            <returns>Tuple with InternalServerError status code and null response.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Helpers.ErrorResponses.MapStatusCode(System.Int32)">
+            <summary>
+            Maps an ApiException status code to the appropriate StatusCodes enum.
+            </summary>
+            <param name="httpStatusCode">HTTP status code from ApiException.</param>
+            <returns>Corresponding StatusCodes enum value.</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Helpers.ErrorResponses.FromApiException``1(Microsoft.Extensions.Logging.ILogger,BeyondImmersion.BannouService.ApiException,System.String,System.String)">
+            <summary>
+            Handles an ApiException and returns appropriate status code with logging.
+            </summary>
+            <typeparam name="T">Response type (nullable).</typeparam>
+            <param name="logger">Logger instance for recording the error.</param>
+            <param name="ex">ApiException from a service client call.</param>
+            <param name="serviceName">Name of the service that was called.</param>
+            <param name="operation">Description of the operation that failed.</param>
+            <returns>Tuple with mapped status code and null response.</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.ILockResponse">
             <summary>
@@ -2017,6 +2264,17 @@
         <member name="P:BeyondImmersion.BannouService.Services.DaprService`1.Configuration">
             <inheritdoc/>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Services.ErrorEventEmitter">
+            <summary>
+            Centralized emitter for ServiceErrorEvent with guards against cascading failures.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ErrorEventEmitter.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILoggerFactory)">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ErrorEventEmitter.TryPublishAsync(System.String,System.String,System.String,System.String,System.String,System.String,BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity,System.Object,System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Services.IDaprService">
              <summary>
              Interface to implement for all internal dapr service,
@@ -2160,6 +2418,14 @@
             Find the implementation for the given service handler.
             </summary>
             <returns>Interface Type, Implementation Type, Service Attribute</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Services.IErrorEventEmitter">
+            <summary>
+            Shared contract for emitting ServiceErrorEvent for unexpected/internal failures.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IErrorEventEmitter.TryPublishAsync(System.String,System.String,System.String,System.String,System.String,System.String,BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity,System.Object,System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs">
             <summary>
@@ -2520,6 +2786,144 @@
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceResponse`1.#ctor(BeyondImmersion.BannouService.StatusCodes,`0)">
             <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Testing.ServiceTestBase`1">
+             <summary>
+             Base class for service unit tests providing common configuration and assertion helpers.
+             Extend this class in your lib-*.tests projects and add mock setup using Moq.
+            
+             Example usage:
+             <code>
+             public class MyServiceTests : ServiceTestBase&lt;MyServiceConfiguration&gt;
+             {
+                 private readonly Mock&lt;DaprClient&gt; _mockDaprClient;
+                 private readonly Mock&lt;ILogger&lt;MyService&gt;&gt; _mockLogger;
+            
+                 public MyServiceTests()
+                 {
+                     _mockDaprClient = new Mock&lt;DaprClient&gt;();
+                     _mockLogger = new Mock&lt;ILogger&lt;MyService&gt;&gt;();
+                 }
+            
+                 private MyService CreateService() =&gt; new MyService(
+                     _mockDaprClient.Object,
+                     _mockLogger.Object,
+                     Configuration);
+             }
+             </code>
+             </summary>
+             <typeparam name="TConfig">The service configuration type</typeparam>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Testing.ServiceTestBase`1.Configuration">
+            <summary>
+            Gets or sets the configuration instance for tests.
+            Override CreateConfiguration() to customize the default configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.ServiceTestBase`1.#ctor">
+            <summary>
+            Initializes the test base with a default configuration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.ServiceTestBase`1.CreateConfiguration">
+            <summary>
+            Creates the default configuration for tests. Override to customize.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.ServiceTestBase`1.CreateConfigurationFromEnvironment">
+            <summary>
+            Creates a test configuration from environment variables (useful for integration tests).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Testing.TestAssertionException">
+            <summary>
+            Exception thrown when a test assertion fails.
+            Used by ServiceTestBase assertions without requiring Xunit dependency.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionException.#ctor(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Testing.TestAssertionExtensions">
+            <summary>
+            Extension methods for common test assertions.
+            These throw TestAssertionException which test frameworks will catch and report.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertSuccess(BeyondImmersion.BannouService.StatusCodes)">
+            <summary>
+            Asserts that the status code indicates success (OK, Created, NoContent).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertStatusCode(BeyondImmersion.BannouService.StatusCodes,BeyondImmersion.BannouService.StatusCodes)">
+            <summary>
+            Asserts that the status code matches the expected value.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertOkWithResult``1(System.ValueTuple{BeyondImmersion.BannouService.StatusCodes,``0})">
+            <summary>
+            Asserts that the tuple result has the expected status code and non-null response.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertCreatedWithResult``1(System.ValueTuple{BeyondImmersion.BannouService.StatusCodes,``0})">
+            <summary>
+            Asserts that the tuple result has Created status and non-null response.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertNotFound``1(System.ValueTuple{BeyondImmersion.BannouService.StatusCodes,``0})">
+            <summary>
+            Asserts that the tuple result has NotFound status and null response.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertBadRequest``1(System.ValueTuple{BeyondImmersion.BannouService.StatusCodes,``0})">
+            <summary>
+            Asserts that the tuple result has BadRequest status.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertUnauthorized``1(System.ValueTuple{BeyondImmersion.BannouService.StatusCodes,``0})">
+            <summary>
+            Asserts that the tuple result has Unauthorized status.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.AssertConflict``1(System.ValueTuple{BeyondImmersion.BannouService.StatusCodes,``0})">
+            <summary>
+            Asserts that the tuple result has Conflict status.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestAssertionExtensions.IsSuccess(BeyondImmersion.BannouService.StatusCodes)">
+            <summary>
+            Checks if the status code indicates success without throwing.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Testing.TestDataGenerators">
+            <summary>
+            Test data generators for common scenarios.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestDataGenerators.GenerateTestEmail(System.String)">
+            <summary>
+            Generates a random valid email address for testing.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestDataGenerators.GenerateTestAccountId">
+            <summary>
+            Generates a random account ID for testing.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestDataGenerators.GenerateTestSessionId">
+            <summary>
+            Generates a random session ID for testing.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestDataGenerators.GenerateTestDisplayName(System.String)">
+            <summary>
+            Generates a random display name for testing.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Testing.TestDataGenerators.GenerateTestTimestamp">
+            <summary>
+            Generates a test timestamp.
+            </summary>
         </member>
         <member name="T:System.Text.RegularExpressions.Generated.REGEX_InvalidChars_0">
             <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the REGEX_InvalidChars method.</summary>

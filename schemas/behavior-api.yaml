@@ -31,6 +31,9 @@ paths:
       operationId: CompileAbmlBehavior
       tags:
         - ABML
+      x-permissions:
+        - role: developer
+          states: {}
       requestBody:
         required: true
         content:
@@ -106,6 +109,9 @@ paths:
       operationId: CompileBehaviorStack
       tags:
         - BehaviorStacks
+      x-permissions:
+        - role: developer
+          states: {}
       requestBody:
         required: true
         content:
@@ -135,6 +141,9 @@ paths:
       operationId: ValidateAbml
       tags:
         - Validation
+      x-permissions:
+        - role: developer
+          states: {}
       requestBody:
         required: true
         content:
@@ -162,6 +171,9 @@ paths:
       operationId: GetCachedBehavior
       tags:
         - Cache
+      x-permissions:
+        - role: developer
+          states: {}
       requestBody:
         required: true
         content:
@@ -191,6 +203,9 @@ paths:
       operationId: InvalidateCachedBehavior
       tags:
         - Cache
+      x-permissions:
+        - role: developer
+          states: {}
       requestBody:
         required: true
         content:
@@ -212,6 +227,9 @@ paths:
       operationId: ResolveContextVariables
       tags:
         - Context
+      x-permissions:
+        - role: developer
+          states: {}
       requestBody:
         required: true
         content:

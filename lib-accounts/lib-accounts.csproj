@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="lib-accounts.tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
   </ItemGroup>
 

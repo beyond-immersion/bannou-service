@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Servicedata;
+using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -16,6 +17,7 @@ public class ServicedataServiceTests
     private readonly Mock<DaprClient> _mockDaprClient;
     private readonly Mock<ILogger<ServicedataService>> _mockLogger;
     private readonly ServicedataServiceConfiguration _configuration;
+    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private const string STATE_STORE = "servicedata-statestore";
 
     public ServicedataServiceTests()
@@ -23,11 +25,16 @@ public class ServicedataServiceTests
         _mockDaprClient = new Mock<DaprClient>();
         _mockLogger = new Mock<ILogger<ServicedataService>>();
         _configuration = new ServicedataServiceConfiguration();
+        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
     }
 
     private ServicedataService CreateService()
     {
-        return new ServicedataService(_mockDaprClient.Object, _mockLogger.Object, _configuration);
+        return new ServicedataService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            _configuration,
+            _mockErrorEventEmitter.Object);
     }
 
     #region Constructor Tests
@@ -46,21 +53,24 @@ public class ServicedataServiceTests
     public void Constructor_WithNullDaprClient_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ServicedataService(null!, _mockLogger.Object, _configuration));
+        Assert.Throws<ArgumentNullException>(() => new ServicedataService(
+            null!, _mockLogger.Object, _configuration, _mockErrorEventEmitter.Object));
     }
 
     [Fact]
     public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ServicedataService(_mockDaprClient.Object, null!, _configuration));
+        Assert.Throws<ArgumentNullException>(() => new ServicedataService(
+            _mockDaprClient.Object, null!, _configuration, _mockErrorEventEmitter.Object));
     }
 
     [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ServicedataService(_mockDaprClient.Object, _mockLogger.Object, null!));
+        Assert.Throws<ArgumentNullException>(() => new ServicedataService(
+            _mockDaprClient.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object));
     }
 
     #endregion

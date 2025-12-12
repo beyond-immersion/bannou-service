@@ -22,8 +22,6 @@ paths:
       x-permissions:
         - role: admin
           states: {}
-        - role: service
-          states: {}
       requestBody:
         required: true
         content:
@@ -46,8 +44,6 @@ paths:
         - Account Management
       x-permissions:
         - role: admin
-          states: {}
-        - role: service
           states: {}
       requestBody:
         required: true
@@ -76,8 +72,6 @@ paths:
       x-permissions:
         - role: admin
           states: {}
-        - role: service
-          states: {}
       requestBody:
         required: true
         content:
@@ -102,8 +96,6 @@ paths:
         - Account Management
       x-permissions:
         - role: admin
-          states: {}
-        - role: service
           states: {}
       requestBody:
         required: true
@@ -153,7 +145,7 @@ paths:
       tags:
         - Account Lookup
       x-permissions:
-        - role: service
+        - role: admin
           states: {}
       requestBody:
         required: true
@@ -180,8 +172,6 @@ paths:
       x-permissions:
         - role: admin
           states: {}
-        - role: service
-          states: {}
       requestBody:
         required: true
         content:
@@ -206,8 +196,6 @@ paths:
         - Authentication Methods
       x-permissions:
         - role: admin
-          states: {}
-        - role: service
           states: {}
       requestBody:
         required: true
@@ -236,8 +224,6 @@ paths:
       x-permissions:
         - role: admin
           states: {}
-        - role: service
-          states: {}
       requestBody:
         required: true
         content:
@@ -259,7 +245,7 @@ paths:
       tags:
         - Account Lookup
       x-permissions:
-        - role: service
+        - role: admin
           states: {}
       requestBody:
         required: true
@@ -287,10 +273,6 @@ paths:
         - role: user
           states:
             auth: authenticated
-        - role: admin
-          states: {}
-        - role: service
-          states: {}
       requestBody:
         required: true
         content:
@@ -314,8 +296,9 @@ paths:
       tags:
         - Account Management
       x-permissions:
-        - role: service
-          states: {}
+        - role: user
+          states:
+            auth: authenticated
       requestBody:
         required: true
         content:
@@ -335,8 +318,9 @@ paths:
       tags:
         - Account Management
       x-permissions:
-        - role: service
-          states: {}
+        - role: user
+          states:
+            auth: authenticated
       requestBody:
         required: true
         content:
@@ -351,6 +335,17 @@ paths:
 
 components:
   schemas:
+    # Shared Enum Definitions (consolidated to avoid duplication)
+    AuthProvider:
+      type: string
+      description: All authentication provider types including email
+      enum: [email, google, discord, twitch, steam]
+
+    OAuthProvider:
+      type: string
+      description: OAuth provider types (excludes email)
+      enum: [google, discord, twitch, steam]
+
     # Request Models for POST-only pattern
     ListAccountsRequest:
       type: object
@@ -364,8 +359,8 @@ components:
           type: string
           nullable: true
         provider:
-          type: string
-          enum: [email, google, discord, twitch, steam]
+          allOf:
+            - $ref: '#/components/schemas/AuthProvider'
           nullable: true
         verified:
           type: boolean
@@ -448,8 +443,7 @@ components:
         - externalId
       properties:
         provider:
-          type: string
-          enum: [google, discord, twitch, steam]
+          $ref: '#/components/schemas/OAuthProvider'
           description: OAuth provider type
         externalId:
           type: string
@@ -562,8 +556,7 @@ components:
           format: uuid
           description: ID of the account to add auth method to
         provider:
-          type: string
-          enum: [google, discord, twitch, steam]
+          $ref: '#/components/schemas/OAuthProvider'
         externalId:
           type: string
         displayName:
@@ -625,8 +618,7 @@ components:
           type: string
           format: uuid
         provider:
-          type: string
-          enum: [email, google, discord, twitch, steam]
+          $ref: '#/components/schemas/AuthProvider'
         externalId:
           type: string
           nullable: true
@@ -648,8 +640,7 @@ components:
           type: string
           format: uuid
         provider:
-          type: string
-          enum: [google, discord, twitch, steam]
+          $ref: '#/components/schemas/OAuthProvider'
         externalId:
           type: string
         displayName:
