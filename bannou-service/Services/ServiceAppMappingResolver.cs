@@ -16,6 +16,9 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
     private readonly ILogger<ServiceAppMappingResolver> _logger;
 
     /// <inheritdoc/>
+    public event EventHandler<ServiceMappingChangedEventArgs>? MappingChanged;
+
+    /// <inheritdoc/>
     public ServiceAppMappingResolver(ILogger<ServiceAppMappingResolver> logger)
     {
         _logger = logger;
@@ -78,12 +81,22 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
             return;
         }
 
-        var previousAppId = _serviceMappings.AddOrUpdate(serviceName, appId, (key, oldValue) => appId);
+        _serviceMappings.TryGetValue(serviceName, out var previousAppId);
+
+        _serviceMappings.AddOrUpdate(serviceName, appId, (key, oldValue) => appId);
 
         if (previousAppId != appId)
         {
             _logger.LogInformation("Updated service mapping: {ServiceName} -> {AppId} (was: {PreviousAppId})",
-                serviceName, appId, previousAppId);
+                serviceName, appId, previousAppId ?? "default");
+
+            // Raise event to notify listeners (e.g., ServiceHeartbeatManager)
+            MappingChanged?.Invoke(this, new ServiceMappingChangedEventArgs
+            {
+                ServiceName = serviceName,
+                NewAppId = appId,
+                PreviousAppId = previousAppId
+            });
         }
         else
         {
@@ -106,6 +119,14 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
         {
             _logger.LogInformation("Removed service mapping: {ServiceName} -> {AppId} (reverting to default)",
                 serviceName, removedAppId);
+
+            // Raise event to notify listeners - service reverts to default routing
+            MappingChanged?.Invoke(this, new ServiceMappingChangedEventArgs
+            {
+                ServiceName = serviceName,
+                NewAppId = null, // null means reverted to default
+                PreviousAppId = removedAppId
+            });
         }
         else
         {

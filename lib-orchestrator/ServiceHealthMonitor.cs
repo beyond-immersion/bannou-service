@@ -74,6 +74,9 @@ public class ServiceHealthMonitor : IServiceHealthMonitor
 
     /// <summary>
     /// Write heartbeat to Redis and update routing for each service in the heartbeat.
+    /// Heartbeats can only initialize routing for new services or update status/load for services
+    /// already routed to this app-id. They cannot change the app-id for a service - only
+    /// explicit ServiceMappingEvents from orchestrator can do that.
     /// </summary>
     private async Task WriteHeartbeatAndUpdateRoutingAsync(ServiceHeartbeatEvent heartbeat)
     {
@@ -94,23 +97,48 @@ public class ServiceHealthMonitor : IServiceHealthMonitor
             foreach (var serviceStatus in heartbeat.Services)
             {
                 var serviceName = serviceStatus.ServiceName;
-                var newRouting = new ServiceRouting
-                {
-                    AppId = heartbeat.AppId,
-                    Host = heartbeat.AppId, // In Docker, container name = app_id
-                    Port = 80,
-                    Status = serviceStatus.Status.ToString().ToLowerInvariant(),
-                    LoadPercent = loadPercent
-                };
 
-                // Only update if routing changed or doesn't exist
-                if (ShouldUpdateRouting(serviceName, newRouting))
+                // Check if routing already exists for this service
+                if (_currentRoutings.TryGetValue(serviceName, out var existingRouting))
                 {
+                    // Routing exists - only update if heartbeat is from the SAME app-id
+                    // This prevents heartbeats from overwriting explicit routing set by orchestrator
+                    if (!string.Equals(existingRouting.AppId, heartbeat.AppId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogDebug(
+                            "Ignoring heartbeat for {ServiceName} from {HeartbeatAppId} - service is routed to {RoutedAppId}",
+                            serviceName, heartbeat.AppId, existingRouting.AppId);
+                        continue;
+                    }
+
+                    // Same app-id - update status and load only
+                    existingRouting.Status = serviceStatus.Status.ToString().ToLowerInvariant();
+                    existingRouting.LoadPercent = loadPercent;
+                    existingRouting.LastUpdated = DateTimeOffset.UtcNow;
+
+                    await _redisManager.WriteServiceRoutingAsync(serviceName, existingRouting);
+
+                    _logger.LogDebug(
+                        "Updated health for {ServiceName} on {AppId} (status: {Status}, load: {Load}%)",
+                        serviceName, heartbeat.AppId, serviceStatus.Status, loadPercent);
+                }
+                else
+                {
+                    // No existing routing - heartbeat can initialize it
+                    var newRouting = new ServiceRouting
+                    {
+                        AppId = heartbeat.AppId,
+                        Host = heartbeat.AppId, // In Docker, container name = app_id
+                        Port = 80,
+                        Status = serviceStatus.Status.ToString().ToLowerInvariant(),
+                        LoadPercent = loadPercent
+                    };
+
                     await _redisManager.WriteServiceRoutingAsync(serviceName, newRouting);
                     _currentRoutings[serviceName] = newRouting;
 
                     _logger.LogInformation(
-                        "Updated routing for {ServiceName} -> {AppId} (status: {Status})",
+                        "Initialized routing for {ServiceName} -> {AppId} (status: {Status})",
                         serviceName, heartbeat.AppId, serviceStatus.Status);
                 }
             }
@@ -153,22 +181,6 @@ public class ServiceHealthMonitor : IServiceHealthMonitor
             _logger.LogError(ex, "Failed to update routing from mapping event for {ServiceName}",
                 mappingEvent.ServiceName);
         }
-    }
-
-    /// <summary>
-    /// Check if routing should be updated (changed or new).
-    /// </summary>
-    private bool ShouldUpdateRouting(string serviceName, ServiceRouting newRouting)
-    {
-        if (!_currentRoutings.TryGetValue(serviceName, out var existingRouting))
-        {
-            return true; // New service
-        }
-
-        // Check if significant changes
-        return existingRouting.AppId != newRouting.AppId ||
-                existingRouting.Host != newRouting.Host ||
-                existingRouting.Port != newRouting.Port;
     }
 
     /// <summary>

@@ -2194,10 +2194,30 @@
             </summary>
             <returns>Interface Type, Implementation Type, Service Attribute</returns>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs">
+            <summary>
+            Event arguments for service mapping changes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs.ServiceName">
+            <summary>The service name that changed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs.NewAppId">
+            <summary>The new app-id for the service (null if removed).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs.PreviousAppId">
+            <summary>The previous app-id (null if new mapping).</summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver">
             <summary>
             Resolves service names to Dapr app-ids for distributed service routing.
             Supports dynamic mapping via RabbitMQ events for production scaling.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.MappingChanged">
+            <summary>
+            Event raised when a service mapping changes.
+            Used by ServiceHeartbeatManager to stop heartbeating services routed elsewhere.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.GetAppIdForService(System.String)">
@@ -2242,6 +2262,9 @@
             updated based on service discovery events for distributed production deployments.
             </summary>
         </member>
+        <member name="E:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.MappingChanged">
+            <inheritdoc/>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Services.ServiceAppMappingResolver})">
             <inheritdoc/>
         </member>
@@ -2282,6 +2305,12 @@
             <summary>
             Manages heartbeat publishing for all services in a bannou instance.
             Publishes aggregated heartbeats via Dapr pub/sub on startup and periodically.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager._suppressedServices">
+            <summary>
+            Services that are suppressed from heartbeats because they are routed to a different app-id.
+            When orchestrator routes a service elsewhere, this instance should stop heartbeating for it.
             </summary>
         </member>
         <member name="F:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager._daprHttpEndpoint">
@@ -2325,7 +2354,7 @@
             The topic name for heartbeat events.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Services.ServiceHeartbeatManager},BeyondImmersion.BannouService.Plugins.PluginLoader)">
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Services.ServiceHeartbeatManager},BeyondImmersion.BannouService.Plugins.PluginLoader,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver)">
             <inheritdoc/>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.PublishStartupHeartbeatAsync(System.Threading.CancellationToken)">
@@ -2385,15 +2414,29 @@
             Publish a shutdown heartbeat to notify orchestrator this instance is going down.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.OnMappingChanged(System.Object,BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs)">
+            <summary>
+            Handle service mapping changes from orchestrator.
+            When a service is routed to a different app-id, suppress heartbeats for it.
+            When routed back to this instance (or removed = reverts to default), resume heartbeats.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.ShouldHeartbeatService(System.String)">
+            <summary>
+            Check if a service should be included in heartbeats.
+            Returns false if the service is routed to a different app-id.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.BuildHeartbeatEvent(BeyondImmersion.BannouService.Events.ServiceHeartbeatEventStatus)">
             <summary>
             Build the heartbeat event with all service statuses.
+            Filters out services that are routed to a different app-id.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.DetermineOverallStatus">
             <summary>
             Determine the overall status based on all service statuses.
-            Returns the worst status among all services.
+            Returns the worst status among all services (excluding suppressed services).
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.GetInstanceCapacity">

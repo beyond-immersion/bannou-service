@@ -1,7 +1,9 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Services;
@@ -16,10 +18,17 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     private readonly ILogger<ServiceHeartbeatManager> _logger;
     private readonly PluginLoader _pluginLoader;
     private readonly HttpClient _httpClient;
+    private readonly IServiceAppMappingResolver _mappingResolver;
 
     private Timer? _heartbeatTimer;
     private bool _isRunning;
     private readonly List<string> _currentIssues = new();
+
+    /// <summary>
+    /// Services that are suppressed from heartbeats because they are routed to a different app-id.
+    /// When orchestrator routes a service elsewhere, this instance should stop heartbeating for it.
+    /// </summary>
+    private readonly ConcurrentDictionary<string, string> _suppressedServices = new();
 
     /// <summary>
     /// Dapr HTTP endpoint for metadata API queries.
@@ -66,12 +75,17 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     public ServiceHeartbeatManager(
         DaprClient daprClient,
         ILogger<ServiceHeartbeatManager> logger,
-        PluginLoader pluginLoader)
+        PluginLoader pluginLoader,
+        IServiceAppMappingResolver mappingResolver)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _pluginLoader = pluginLoader ?? throw new ArgumentNullException(nameof(pluginLoader));
+        _mappingResolver = mappingResolver ?? throw new ArgumentNullException(nameof(mappingResolver));
         _httpClient = new HttpClient();
+
+        // Subscribe to mapping changes to suppress/resume heartbeats for services routed elsewhere
+        _mappingResolver.MappingChanged += OnMappingChanged;
 
         // Resolve app-id from environment
         AppId = Environment.GetEnvironmentVariable("DAPR_APP_ID")
@@ -459,15 +473,68 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     }
 
     /// <summary>
+    /// Handle service mapping changes from orchestrator.
+    /// When a service is routed to a different app-id, suppress heartbeats for it.
+    /// When routed back to this instance (or removed = reverts to default), resume heartbeats.
+    /// </summary>
+    private void OnMappingChanged(object? sender, ServiceMappingChangedEventArgs e)
+    {
+        var serviceName = e.ServiceName;
+        var newAppId = e.NewAppId ?? AppConstants.DEFAULT_APP_NAME; // null means reverted to default
+
+        // Check if the service is routed to this instance or elsewhere
+        var routedToUs = string.Equals(newAppId, AppId, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(newAppId, AppConstants.DEFAULT_APP_NAME, StringComparison.OrdinalIgnoreCase);
+
+        if (routedToUs)
+        {
+            // Service is routed to us - resume heartbeating
+            if (_suppressedServices.TryRemove(serviceName, out var previousAppId))
+            {
+                _logger.LogInformation(
+                    "Resumed heartbeats for service {ServiceName} (routed back to {AppId} from {PreviousAppId})",
+                    serviceName, AppId, previousAppId);
+            }
+        }
+        else
+        {
+            // Service is routed elsewhere - suppress heartbeats
+            _suppressedServices[serviceName] = newAppId;
+            _logger.LogInformation(
+                "Suppressed heartbeats for service {ServiceName} (routed to {NewAppId}, not {AppId})",
+                serviceName, newAppId, AppId);
+        }
+    }
+
+    /// <summary>
+    /// Check if a service should be included in heartbeats.
+    /// Returns false if the service is routed to a different app-id.
+    /// </summary>
+    private bool ShouldHeartbeatService(string serviceName)
+    {
+        return !_suppressedServices.ContainsKey(serviceName);
+    }
+
+    /// <summary>
     /// Build the heartbeat event with all service statuses.
+    /// Filters out services that are routed to a different app-id.
     /// </summary>
     private ServiceHeartbeatEvent BuildHeartbeatEvent(ServiceHeartbeatEventStatus overallStatus)
     {
         var serviceStatuses = new List<ServiceStatus>();
 
-        // Collect heartbeat data from each resolved service
+        // Collect heartbeat data from each resolved service (excluding suppressed services)
         foreach (var plugin in _pluginLoader.EnabledPlugins)
         {
+            // Skip services that are routed to a different app-id
+            if (!ShouldHeartbeatService(plugin.PluginName))
+            {
+                _logger.LogDebug(
+                    "Skipping heartbeat for service {ServiceName} (routed to different app-id)",
+                    plugin.PluginName);
+                continue;
+            }
+
             var service = _pluginLoader.GetResolvedService(plugin.PluginName);
             if (service != null)
             {
@@ -515,7 +582,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
 
     /// <summary>
     /// Determine the overall status based on all service statuses.
-    /// Returns the worst status among all services.
+    /// Returns the worst status among all services (excluding suppressed services).
     /// </summary>
     private ServiceHeartbeatEventStatus DetermineOverallStatus()
     {
@@ -528,6 +595,12 @@ public class ServiceHeartbeatManager : IAsyncDisposable
 
         foreach (var plugin in _pluginLoader.EnabledPlugins)
         {
+            // Skip services that are routed to a different app-id
+            if (!ShouldHeartbeatService(plugin.PluginName))
+            {
+                continue;
+            }
+
             var service = _pluginLoader.GetResolvedService(plugin.PluginName);
             if (service != null)
             {

@@ -1,11 +1,31 @@
 namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
+/// Event arguments for service mapping changes.
+/// </summary>
+public class ServiceMappingChangedEventArgs : EventArgs
+{
+    /// <summary>The service name that changed.</summary>
+    public required string ServiceName { get; init; }
+
+    /// <summary>The new app-id for the service (null if removed).</summary>
+    public string? NewAppId { get; init; }
+
+    /// <summary>The previous app-id (null if new mapping).</summary>
+    public string? PreviousAppId { get; init; }
+}
+
+/// <summary>
 /// Resolves service names to Dapr app-ids for distributed service routing.
 /// Supports dynamic mapping via RabbitMQ events for production scaling.
 /// </summary>
 public interface IServiceAppMappingResolver
 {
+    /// <summary>
+    /// Event raised when a service mapping changes.
+    /// Used by ServiceHeartbeatManager to stop heartbeating services routed elsewhere.
+    /// </summary>
+    event EventHandler<ServiceMappingChangedEventArgs>? MappingChanged;
     /// <summary>
     /// Gets the Dapr app-id for the specified service name.
     /// Defaults to "bannou" (omnipotent local node) but can be overridden

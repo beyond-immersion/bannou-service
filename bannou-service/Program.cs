@@ -385,7 +385,8 @@ public static class Program
 
                 using var heartbeatLoggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
                 var heartbeatLogger = heartbeatLoggerFactory.CreateLogger<ServiceHeartbeatManager>();
-                HeartbeatManager = new ServiceHeartbeatManager(DaprClient, heartbeatLogger, PluginLoader);
+                var mappingResolver = webApp.Services.GetRequiredService<IServiceAppMappingResolver>();
+                HeartbeatManager = new ServiceHeartbeatManager(DaprClient, heartbeatLogger, PluginLoader, mappingResolver);
 
                 // Wait for Dapr connectivity using heartbeat publishing as the test
                 // This replaces the old WaitForDaprReadiness() - publishing a heartbeat proves both
