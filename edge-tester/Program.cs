@@ -261,7 +261,7 @@ public class Program
     /// <param name="client">The connected BannouClient instance.</param>
     /// <param name="timeoutSeconds">Maximum time to wait for APIs.</param>
     /// <returns>True if expected APIs are present, false if timeout.</returns>
-    private static async Task<bool> WaitForCapabilityManifest(BannouClient client, int timeoutSeconds = 60)
+    private static async Task<bool> WaitForCapabilityManifest(BannouClient client, int timeoutSeconds = 60, HashSet<string>? customExpectedPaths = null)
     {
         if (client == null || !client.IsConnected)
         {
@@ -278,7 +278,7 @@ public class Program
         // NOTE: The main client is a regular user, so we expect user-role endpoints with "default" state.
         // Admin-only endpoints (like /accounts, /permissions/services) are tested via AdminClient.
         // Anonymous-only endpoints (like /auth/register) are not available to authenticated users.
-        var expectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        var expectedPaths = customExpectedPaths ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "/auth/login",        // Auth service - user role, default state
             "/sessions"           // GameSession service - user role, default state (e.g., GET:/sessions)
@@ -370,7 +370,6 @@ public class Program
                 connected = await _client.RegisterAndConnectAsync(serverUrl, username, email, password);
                 if (!connected)
                 {
-                    Console.WriteLine($"Registration failed: {_client.LastError}");
                     throw new InvalidOperationException($"Failed to register and connect using BannouClient: {_client.LastError}");
                 }
 
@@ -388,7 +387,7 @@ public class Program
             // The capability manifest is the source of truth for what APIs are available
             if (!await WaitForCapabilityManifest(_client, 60))
             {
-                Console.WriteLine("⚠️ Capability manifest check failed - some tests may fail due to missing service permissions.");
+                throw new Exception("Capability manifest check failed.");
             }
 
             // Also authenticate with admin credentials for orchestrator API tests
@@ -396,7 +395,7 @@ public class Program
             bool adminAuthenticated = await EnsureAdminAuthenticated();
             if (!adminAuthenticated)
             {
-                Console.WriteLine("⚠️ Admin authentication failed - orchestrator tests may fail.");
+                throw new Exception("Admin authentication failed.");
             }
             Console.WriteLine();
 
@@ -409,11 +408,6 @@ public class Program
 
             if (!connectivityPassed)
             {
-                if (IsDaemonMode(args))
-                {
-                    Console.WriteLine("❌ Basic WebSocket connectivity test FAILED");
-                    Environment.Exit(1); // CI failure exit code
-                }
                 throw new Exception("WebSocket protocol test failed.");
             }
 
@@ -545,7 +539,7 @@ public class Program
 
         if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
         {
-            Console.WriteLine("⚠️ Admin credentials not configured - orchestrator tests will be skipped.");
+            Console.WriteLine("⚠️ Admin credentials not configured.");
             return false;
         }
 
@@ -558,7 +552,7 @@ public class Program
             connected = await _adminClient.RegisterAndConnectAsync(serverUrl, adminUsername, adminEmail, adminPassword);
             if (!connected)
             {
-                Console.WriteLine("⚠️ Failed to create admin account - orchestrator tests will be skipped.");
+                Console.WriteLine("❌ Failed to create admin account.");
                 _adminClient = null;
                 return false;
             }
@@ -572,21 +566,82 @@ public class Program
 
         Console.WriteLine($"   Admin Session ID: {_adminClient.SessionId}");
         Console.WriteLine($"   Admin Available APIs: {_adminClient.AvailableApis.Count}");
+
+        // Wait for admin-specific APIs to be available in the capability manifest.
+        // This ensures the accounts service (MySQL) is fully ready before tests run.
+        var adminExpectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "/accounts/delete",   // Accounts service - admin role, needed for account deletion tests
+            "/accounts"           // Accounts service - admin role, list/get operations
+        };
+
+        if (!await WaitForCapabilityManifest(_adminClient, 60, adminExpectedPaths))
+        {
+            Console.WriteLine("⚠️ Admin capability manifest check failed - some admin APIs may not be available.");
+            // Don't fail - some tests may still work, and the APIs might appear later
+        }
+
         Console.WriteLine($"✅ Admin authenticated as: {adminEmail}");
         return true;
     }
 
     private static async Task<bool> EstablishWebsocketAndSendMessage()
     {
+        // IMPORTANT: This test creates its own account and JWT to avoid interfering with
+        // the main _client connection. The server only allows one WebSocket per session,
+        // so using the same JWT would disconnect _client (the "subsume" behavior).
+
+        Console.WriteLine("📋 Creating dedicated test account for binary protocol validation...");
+
+        var openrestyHost = Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Configuration.OpenResty_Port ?? 80;
+        var uniqueId = Guid.NewGuid().ToString("N")[..12];
+        var testEmail = $"binproto_{uniqueId}@test.local";
+        var testPassword = "BinaryProtocolTest123!";
+
+        // Register a new account to get a unique JWT
+        var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+        var registerContent = new { username = $"binproto_{uniqueId}", email = testEmail, password = testPassword };
+
+        string testAccessToken;
+        try
+        {
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await HttpClient.SendAsync(registerRequest);
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Failed to create test account: {registerResponse.StatusCode} - {errorBody}");
+                return false;
+            }
+
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+            var responseObj = System.Text.Json.JsonDocument.Parse(responseBody);
+            testAccessToken = responseObj.RootElement.GetProperty("accessToken").GetString()
+                ?? throw new InvalidOperationException("No accessToken in response");
+
+            Console.WriteLine($"✅ Test account created: {testEmail}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to create test account: {ex.Message}");
+            return false;
+        }
+
         var serverUri = new Uri($"ws://{Configuration.Connect_Endpoint}");
 
         using var webSocket = new ClientWebSocket();
-        webSocket.Options.SetRequestHeader("Authorization", "Bearer " + sAccessToken);
+        webSocket.Options.SetRequestHeader("Authorization", "Bearer " + testAccessToken);
 
         try
         {
             await webSocket.ConnectAsync(serverUri, CancellationToken.None);
-            Console.WriteLine("✅ Connected to the server");
+            Console.WriteLine("✅ Connected to the server with dedicated test JWT");
 
             // Create a test message using our enhanced binary protocol
             var testPayload = Encoding.UTF8.GetBytes("{ \"test\": \"Enhanced WebSocket protocol validation\" }");
@@ -737,6 +792,17 @@ public class Program
         // load orchestrator websocket tests
         var orchestratorTestHandler = new OrchestratorWebSocketTestHandler();
         foreach (ServiceTest serviceTest in orchestratorTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load game session websocket tests
+        var gameSessionTestHandler = new GameSessionWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in gameSessionTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load split-service routing tests (MUST BE LAST - modifies deployment topology)
+        // These tests deploy a multi-node configuration and validate dynamic routing
+        var splitRoutingTestHandler = new SplitServiceRoutingTestHandler();
+        foreach (ServiceTest serviceTest in splitRoutingTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
     }
 

@@ -49,6 +49,10 @@ public class OrchestratorTestHandler : IServiceTestHandler
             new ServiceTest(TestGetContainerStatus, "GetContainerStatus", "Orchestrator", "Test container status endpoint"),
             new ServiceTest(TestGetContainerStatusUnknown, "ContainerStatusUnknown", "Orchestrator", "Test container status for unknown container"),
 
+            // Service Routing Tests
+            new ServiceTest(TestGetServiceRouting, "GetServiceRouting", "Orchestrator", "Test service routing mappings endpoint"),
+            new ServiceTest(TestServiceRoutingDefaults, "ServiceRoutingDefaults", "Orchestrator", "Test service routing returns default app-id"),
+
             // Configuration Tests
             new ServiceTest(TestGetConfigVersion, "GetConfigVersion", "Orchestrator", "Test configuration version endpoint"),
             new ServiceTest(TestRollbackConfigurationNoHistory, "RollbackNoHistory", "Orchestrator", "Test rollback when no previous config exists"),
@@ -57,10 +61,8 @@ public class OrchestratorTestHandler : IServiceTestHandler
             new ServiceTest(TestGetLogs, "GetLogs", "Orchestrator", "Test logs retrieval endpoint"),
             new ServiceTest(TestGetLogsWithTail, "GetLogsWithTail", "Orchestrator", "Test logs retrieval with tail parameter"),
 
-            // Lifecycle Tests
-            new ServiceTest(TestDeployAndTeardown, "DeployAndTeardown", "Orchestrator", "Test deploy and teardown lifecycle"),
+            // Deploy Tests (Teardown not tested - it destroys the test target)
             new ServiceTest(TestDeployWithInvalidBackend, "DeployInvalidBackend", "Orchestrator", "Test deploy with unavailable backend fails"),
-            new ServiceTest(TestDeploymentEvents, "DeploymentEvents", "Orchestrator", "Test deployment event publishing via RabbitMQ"),
 
             // Clean Tests
             new ServiceTest(TestCleanDryRun, "CleanDryRun", "Orchestrator", "Test clean operation with dry run"),
@@ -399,6 +401,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Test the should-restart service recommendation endpoint.
+    /// Uses the 'bannou' service which MUST exist since we're testing against it.
     /// </summary>
     private static async Task<TestResult> TestShouldRestartService(ITestClient client, string[] args)
     {
@@ -406,10 +409,10 @@ public class OrchestratorTestHandler : IServiceTestHandler
         {
             var orchestratorClient = new OrchestratorClient();
 
-            // Request recommendation for a known service
+            // Request recommendation for bannou - this MUST exist since we're testing against it
             var request = new ShouldRestartServiceRequest
             {
-                ServiceName = "accounts"
+                ServiceName = "bannou"
             };
 
             var response = await orchestratorClient.ShouldRestartServiceAsync(request);
@@ -424,14 +427,25 @@ public class OrchestratorTestHandler : IServiceTestHandler
             if (string.IsNullOrEmpty(response.Reason))
                 return TestResult.Failed("Response missing reason");
 
+            // Bannou should report as running/healthy since we're testing against it
+            var acceptableStatuses = new[] { "running", "healthy", "available", "up" };
+            var statusLower = response.CurrentStatus.ToLower();
+            if (!acceptableStatuses.Any(s => statusLower.Contains(s)) && !response.ShouldRestart)
+            {
+                // If status isn't healthy but shouldRestart is false, that's suspicious
+                return TestResult.Failed(
+                    $"Service 'bannou' status is '{response.CurrentStatus}' but shouldRestart={response.ShouldRestart}. " +
+                    $"Since we're testing against bannou, status should indicate healthy/running.");
+            }
+
             return TestResult.Successful(
                 $"Should restart '{response.ServiceName}': {response.ShouldRestart}, " +
                 $"status={response.CurrentStatus}, reason={response.Reason}");
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            // Service not found is acceptable behavior
-            return TestResult.Successful("Service 'accounts' not found (acceptable when not deployed)");
+            // The bannou service MUST exist since we're testing against it
+            return TestResult.Failed($"Service 'bannou' not found - orchestrator cannot detect its own service. Status: {ex.StatusCode}");
         }
         catch (ApiException ex)
         {
@@ -490,6 +504,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Test the container status endpoint.
+    /// The bannou container MUST exist since we're running tests against it.
     /// </summary>
     private static async Task<TestResult> TestGetContainerStatus(ITestClient client, string[] args)
     {
@@ -497,7 +512,7 @@ public class OrchestratorTestHandler : IServiceTestHandler
         {
             var orchestratorClient = new OrchestratorClient();
 
-            // Get status for the main "bannou" container
+            // Get status for the main "bannou" container - this MUST exist since we're testing against it
             var response = await orchestratorClient.GetContainerStatusAsync(new GetContainerStatusRequest { AppName = "bannou" });
 
             // Verify required fields
@@ -507,6 +522,18 @@ public class OrchestratorTestHandler : IServiceTestHandler
             if (response.Timestamp == default)
                 return TestResult.Failed("Container status missing timestamp");
 
+            // Verify the container is actually running (since we're testing against it)
+            if (response.Status != ContainerStatusStatus.Running)
+            {
+                return TestResult.Failed($"Container 'bannou' status is {response.Status}, expected Running");
+            }
+
+            // Verify we have at least one instance
+            if (response.Instances <= 0)
+            {
+                return TestResult.Failed($"Container 'bannou' has {response.Instances} instances, expected at least 1");
+            }
+
             return TestResult.Successful(
                 $"Container 'bannou': status={response.Status}, " +
                 $"instances={response.Instances}, " +
@@ -514,7 +541,9 @@ public class OrchestratorTestHandler : IServiceTestHandler
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            return TestResult.Successful("Container 'bannou' not found (acceptable in some configurations)");
+            // The bannou container MUST exist since we're testing against it
+            // A 404 here indicates a real problem with the orchestrator's container detection
+            return TestResult.Failed($"Container 'bannou' not found - orchestrator cannot detect its own container. Status: {ex.StatusCode}");
         }
         catch (ApiException ex)
         {
@@ -556,6 +585,93 @@ public class OrchestratorTestHandler : IServiceTestHandler
         catch (ApiException ex)
         {
             return TestResult.Failed($"Unknown container check failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test the service routing endpoint.
+    /// Returns service-to-app-id mappings for Dapr service invocation.
+    /// </summary>
+    private static async Task<TestResult> TestGetServiceRouting(ITestClient client, string[] args)
+    {
+        try
+        {
+            var orchestratorClient = new OrchestratorClient();
+
+            var response = await orchestratorClient.GetServiceRoutingAsync(new GetServiceRoutingRequest());
+
+            // Verify required fields
+            if (response.Mappings == null)
+                return TestResult.Failed("Service routing missing mappings");
+
+            if (string.IsNullOrEmpty(response.DefaultAppId))
+                return TestResult.Failed("Service routing missing defaultAppId");
+
+            if (response.GeneratedAt == default)
+                return TestResult.Failed("Service routing missing generatedAt timestamp");
+
+            return TestResult.Successful(
+                $"Service routing: {response.TotalServices} services mapped, " +
+                $"defaultAppId='{response.DefaultAppId}', " +
+                $"deploymentId={response.DeploymentId ?? "(none)"}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Service routing check failed: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test that service routing returns default app-id correctly.
+    /// In development mode, all services should route to "bannou".
+    /// </summary>
+    private static async Task<TestResult> TestServiceRoutingDefaults(ITestClient client, string[] args)
+    {
+        try
+        {
+            var orchestratorClient = new OrchestratorClient();
+
+            var response = await orchestratorClient.GetServiceRoutingAsync(new GetServiceRoutingRequest());
+
+            // Default app-id should be "bannou" in development mode
+            if (response.DefaultAppId != "bannou")
+            {
+                return TestResult.Failed($"Expected defaultAppId='bannou', got '{response.DefaultAppId}'");
+            }
+
+            // In monolith mode (single container), mappings may be empty since everything
+            // routes to the default. This is correct behavior.
+            if (response.TotalServices == 0)
+            {
+                return TestResult.Successful(
+                    $"Service routing defaults verified: defaultAppId='bannou', " +
+                    $"no custom mappings (all services use default)");
+            }
+
+            // If there are mappings, verify they all point to valid app-ids
+            foreach (var mapping in response.Mappings ?? new Dictionary<string, string>())
+            {
+                if (string.IsNullOrEmpty(mapping.Value))
+                {
+                    return TestResult.Failed($"Service '{mapping.Key}' has empty app-id mapping");
+                }
+            }
+
+            return TestResult.Successful(
+                $"Service routing defaults verified: defaultAppId='bannou', " +
+                $"{response.TotalServices} custom mappings");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"Service routing defaults check failed: {ex.StatusCode} - {ex.Message}");
         }
         catch (Exception ex)
         {
@@ -664,7 +780,8 @@ public class OrchestratorTestHandler : IServiceTestHandler
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            return TestResult.Successful("Service 'bannou' not found for logs (acceptable when not deployed)");
+            // The bannou service MUST exist since we're testing against it
+            return TestResult.Failed($"Service 'bannou' not found for logs - orchestrator cannot retrieve logs from its own service. Status: {ex.StatusCode}");
         }
         catch (ApiException ex)
         {
@@ -708,7 +825,8 @@ public class OrchestratorTestHandler : IServiceTestHandler
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            return TestResult.Successful("Service 'bannou' not found for logs (acceptable when not deployed)");
+            // The bannou service MUST exist since we're testing against it
+            return TestResult.Failed($"Service 'bannou' not found for logs - orchestrator cannot retrieve logs from its own service. Status: {ex.StatusCode}");
         }
         catch (ApiException ex)
         {
@@ -721,9 +839,8 @@ public class OrchestratorTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Test deploy with an unavailable backend handles appropriately.
-    /// Note: The orchestrator may fall back to an available backend in DryRun mode,
-    /// or may succeed with a no-op when the backend isn't available.
+    /// Test deploy with an unavailable backend fails appropriately.
+    /// The orchestrator should NOT silently fall back - it should fail or explicitly report the fallback.
     /// </summary>
     private static async Task<TestResult> TestDeployWithInvalidBackend(ITestClient client, string[] args)
     {
@@ -740,17 +857,18 @@ public class OrchestratorTestHandler : IServiceTestHandler
 
             if (unavailableBackend == null)
             {
-                // All backends are available, this is unusual but not a failure
-                return TestResult.Successful("All backends available, cannot test unavailable backend scenario");
+                // All backends are available - skip this test
+                return TestResult.Successful("All backends available, skipping unavailable backend test");
             }
 
-            // Try to deploy with an unavailable backend
+            // Try to deploy with an unavailable backend - this SHOULD fail
             try
             {
                 var deployRequest = new DeployRequest
                 {
                     Backend = unavailableBackend.Type,
                     Mode = DeploymentMode.Force,
+                    WaitForHealthy = false,
                     Timeout = 10,
                     Topology = new ServiceTopology
                     {
@@ -770,18 +888,31 @@ public class OrchestratorTestHandler : IServiceTestHandler
 
                 if (!response.Success)
                 {
-                    return TestResult.Successful($"Deploy correctly failed for unavailable backend {unavailableBackend.Type}");
+                    // This is the expected behavior - deploy should fail for unavailable backend
+                    return TestResult.Successful(
+                        $"Deploy correctly failed for unavailable backend {unavailableBackend.Type}: {response.Message}");
                 }
 
-                // Deploy succeeded - this could be because:
-                // 1. Orchestrator fell back to available backend
-                // 2. DryRun mode returned success without actually deploying
-                // 3. Backend became available
-                return TestResult.Successful($"Deploy with unavailable backend {unavailableBackend.Type} succeeded (may have used fallback)");
+                // Deploy succeeded when it shouldn't have
+                // Check if it actually used a different backend (which would be a bug - silent fallback)
+                var postStatus = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
+
+                if (postStatus.Backend != unavailableBackend.Type)
+                {
+                    // Silent fallback happened - this is bad behavior we should report
+                    return TestResult.Failed(
+                        $"Deploy silently fell back from {unavailableBackend.Type} to {postStatus.Backend}. " +
+                        $"Orchestrator should either fail or explicitly report fallback in response.");
+                }
+
+                // If we get here, the backend somehow became available or the deploy was a no-op
+                return TestResult.Failed(
+                    $"Deploy succeeded for supposedly unavailable backend {unavailableBackend.Type}. " +
+                    $"This may indicate the backend detection is incorrect.");
             }
             catch (ApiException ex) when (ex.StatusCode == 409 || ex.StatusCode == 400 || ex.StatusCode == 503)
             {
-                return TestResult.Successful($"Deploy correctly returned {ex.StatusCode} for unavailable backend");
+                return TestResult.Successful($"Deploy correctly returned {ex.StatusCode} for unavailable backend {unavailableBackend.Type}");
             }
         }
         catch (ApiException ex)
@@ -846,252 +977,9 @@ public class OrchestratorTestHandler : IServiceTestHandler
         }
     }
 
-    /// <summary>
-    /// Test the full deploy and teardown lifecycle.
-    /// This is the critical test for orchestrator functionality.
-    /// Tests actual container deployment and teardown via the orchestrator service.
-    /// </summary>
-    private static async Task<TestResult> TestDeployAndTeardown(ITestClient client, string[] args)
-    {
-        try
-        {
-            var orchestratorClient = new OrchestratorClient();
-
-            // Step 1: Get initial status
-            var initialStatus = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
-            var initialServiceCount = initialStatus.Services?.Count ?? 0;
-
-            // Step 2: Create a deploy request for a test container
-            var deployRequest = new DeployRequest
-            {
-                Backend = BackendType.Compose,
-                Mode = DeploymentMode.Force,
-                WaitForHealthy = false,
-                Timeout = 30,
-                Topology = new ServiceTopology
-                {
-                    Nodes = new List<TopologyNode>
-                    {
-                        new TopologyNode
-                        {
-                            Name = "bannou-test-node",
-                            Services = new List<string> { "testing" },
-                            Replicas = 1,
-                            DaprEnabled = true
-                        }
-                    }
-                }
-            };
-
-            // Step 3: Execute deploy
-            var deployResponse = await orchestratorClient.DeployAsync(deployRequest);
-
-            if (!deployResponse.Success)
-            {
-                return TestResult.Failed($"Deploy failed: {deployResponse.Message}");
-            }
-
-            // Step 4: Verify deployment by checking status
-            var postDeployStatus = await orchestratorClient.GetStatusAsync(new GetStatusRequest());
-
-            // Step 5: Teardown
-            var teardownRequest = new TeardownRequest
-            {
-                Mode = TeardownMode.Graceful,
-                RemoveVolumes = false,
-                RemoveNetworks = false,
-                Timeout = 30
-            };
-
-            var teardownResponse = await orchestratorClient.TeardownAsync(teardownRequest);
-
-            if (!teardownResponse.Success)
-            {
-                return TestResult.Failed($"Teardown failed: {teardownResponse.Message}");
-            }
-
-            return TestResult.Successful(
-                $"Deploy/Teardown lifecycle completed: " +
-                $"initial={initialServiceCount} services, " +
-                $"deployed={postDeployStatus.Services?.Count ?? 0} services, " +
-                $"teardown success={teardownResponse.Success}");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Deploy/Teardown failed: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-    }
-
-    /// <summary>
-    /// Test that deployment events are published to RabbitMQ during deploy/teardown operations.
-    /// This test subscribes directly to the deployment events exchange to verify event publishing.
-    /// </summary>
-    private static async Task<TestResult> TestDeploymentEvents(ITestClient client, string[] args)
-    {
-        const string DEPLOYMENT_EXCHANGE = "bannou-deployment-events";
-        var connectionString = Environment.GetEnvironmentVariable("BANNOU_RabbitMqConnectionString")
-            ?? Environment.GetEnvironmentVariable("RabbitMqConnectionString")
-            ?? "amqp://guest:guest@rabbitmq:5672";
-
-        IConnection? connection = null;
-        IChannel? channel = null;
-
-        try
-        {
-            // Step 1: Connect to RabbitMQ and create a consumer for deployment events
-            var factory = new ConnectionFactory
-            {
-                Uri = new Uri(connectionString),
-                AutomaticRecoveryEnabled = true
-            };
-
-            connection = await factory.CreateConnectionAsync();
-            channel = await connection.CreateChannelAsync();
-
-            // Ensure the exchange exists (same config as orchestrator)
-            await channel.ExchangeDeclareAsync(DEPLOYMENT_EXCHANGE, ExchangeType.Fanout, durable: true);
-
-            // Create exclusive queue that auto-deletes when consumer disconnects
-            var queueDeclareResult = await channel.QueueDeclareAsync(
-                queue: "",  // Let RabbitMQ generate a unique name
-                durable: false,
-                exclusive: true,
-                autoDelete: true);
-            var queueName = queueDeclareResult.QueueName;
-
-            // Bind queue to the deployment events exchange
-            await channel.QueueBindAsync(queueName, DEPLOYMENT_EXCHANGE, "");
-
-            // Set up event collection
-            var receivedEvents = new ConcurrentBag<DeploymentEvent>();
-            var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.ReceivedAsync += (sender, eventArgs) =>
-            {
-                try
-                {
-                    var body = eventArgs.Body.ToArray();
-                    var message = Encoding.UTF8.GetString(body);
-                    var deploymentEvent = JsonSerializer.Deserialize<DeploymentEvent>(message);
-                    if (deploymentEvent != null)
-                    {
-                        receivedEvents.Add(deploymentEvent);
-                        Console.WriteLine($"  📬 Received deployment event: {deploymentEvent.Action} - {deploymentEvent.DeploymentId}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"  ⚠️ Failed to deserialize event: {ex.Message}");
-                }
-                return Task.CompletedTask;
-            };
-
-            await channel.BasicConsumeAsync(queueName, autoAck: true, consumer: consumer);
-            Console.WriteLine("  🎧 Subscribed to deployment events exchange");
-
-            // Step 2: Execute a deploy operation
-            var orchestratorClient = new OrchestratorClient();
-            var deployRequest = new DeployRequest
-            {
-                Backend = BackendType.Compose,
-                Mode = DeploymentMode.Force,
-                WaitForHealthy = false,
-                Timeout = 30,
-                Topology = new ServiceTopology
-                {
-                    Nodes = new List<TopologyNode>
-                    {
-                        new TopologyNode
-                        {
-                            Name = "bannou-event-test-node",
-                            Services = new List<string> { "testing" },
-                            Replicas = 1,
-                            DaprEnabled = true
-                        }
-                    }
-                }
-            };
-
-            Console.WriteLine("  🚀 Triggering deploy operation...");
-            var deployResponse = await orchestratorClient.DeployAsync(deployRequest);
-
-            // Give some time for events to be processed
-            await Task.Delay(1000);
-
-            // Step 3: Execute teardown
-            var teardownRequest = new TeardownRequest
-            {
-                Mode = TeardownMode.Graceful,
-                RemoveVolumes = false,
-                RemoveNetworks = false,
-                Timeout = 30
-            };
-
-            Console.WriteLine("  🛑 Triggering teardown operation...");
-            await orchestratorClient.TeardownAsync(teardownRequest);
-
-            // Give some time for events to be processed
-            await Task.Delay(1000);
-
-            // Step 4: Verify events were received
-            var eventsList = receivedEvents.ToList();
-            var startedEvents = eventsList.Count(e => e.Action == DeploymentEventAction.Started);
-            var completedEvents = eventsList.Count(e => e.Action == DeploymentEventAction.Completed);
-            var topologyChangedEvents = eventsList.Count(e => e.Action == DeploymentEventAction.TopologyChanged);
-            var failedEvents = eventsList.Count(e => e.Action == DeploymentEventAction.Failed);
-
-            Console.WriteLine($"  📊 Events received: Started={startedEvents}, Completed={completedEvents}, TopologyChanged={topologyChangedEvents}, Failed={failedEvents}");
-
-            // Verify we received the expected events
-            // Deploy: Started + Completed (or Failed)
-            // Teardown: TopologyChanged + Completed (or Failed)
-            if (eventsList.Count == 0)
-            {
-                return TestResult.Failed("No deployment events received - RabbitMQ connection may be failing");
-            }
-
-            if (startedEvents == 0)
-            {
-                return TestResult.Failed($"No 'started' deployment events received. Total events: {eventsList.Count}");
-            }
-
-            if (completedEvents + failedEvents == 0)
-            {
-                return TestResult.Failed($"No 'completed' or 'failed' deployment events received. Total events: {eventsList.Count}");
-            }
-
-            return TestResult.Successful(
-                $"Deployment events verified: {eventsList.Count} events received " +
-                $"(started={startedEvents}, completed={completedEvents}, topology_changed={topologyChangedEvents}, failed={failedEvents})");
-        }
-        catch (RabbitMQ.Client.Exceptions.BrokerUnreachableException ex)
-        {
-            return TestResult.Failed($"RabbitMQ not reachable: {ex.Message}. Ensure RabbitMQ is running and accessible.");
-        }
-        catch (ApiException ex)
-        {
-            return TestResult.Failed($"Orchestrator API error: {ex.StatusCode} - {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return TestResult.Failed($"Test exception: {ex.Message}", ex);
-        }
-        finally
-        {
-            // Clean up RabbitMQ resources
-            if (channel != null)
-            {
-                await channel.CloseAsync();
-                await channel.DisposeAsync();
-            }
-            if (connection != null)
-            {
-                await connection.CloseAsync();
-                await connection.DisposeAsync();
-            }
-        }
-    }
+    // NOTE: TestDeployAndTeardown and TestDeploymentEvents removed
+    // Teardown API destroys the test target (and potentially the tester), making integration testing impossible.
+    // The Clean API can be tested safely via TestCleanDryRun.
+    // Teardown with includeInfrastructure=true will remove all infrastructure (Redis, RabbitMQ, MySQL, etc.)
+    // and requires manual verification since it obliterates the entire environment.
 }

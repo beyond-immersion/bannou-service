@@ -111,8 +111,12 @@ dotnet_diagnostic.CS8602.severity = error
 dotnet_diagnostic.CS8603.severity = error
 dotnet_diagnostic.CS8604.severity = error
 
-# Discourage null-forgiving operator
+# Discourage null-forgiving operator (CS8632 warns about nullable in non-nullable context)
 dotnet_diagnostic.CS8632.severity = warning
+
+# Discourage use of null-forgiving operator (!) - prefer explicit null checks
+# Note: There's no direct diagnostic for the operator itself, but these help enforce null safety
+csharp_prefer_explicit_null_check = true:suggestion
 
 # Modifier preferences
 csharp_prefer_static_local_function = true
@@ -245,6 +249,26 @@ dotnet_naming_style.begins_with_i.required_suffix =
 dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 csharp_style_prefer_primary_constructors = true:suggestion
+
+# Relax null-forgiving operator rules for generated files
+# Generated files use = default! pattern which is acceptable for auto-generated code
+[**/Generated/*.cs]
+dotnet_diagnostic.CS8618.severity = none
+dotnet_diagnostic.CS8625.severity = none
+dotnet_diagnostic.CS8600.severity = none
+dotnet_diagnostic.CS8602.severity = none
+dotnet_diagnostic.CS8603.severity = none
+dotnet_diagnostic.CS8604.severity = none
+dotnet_diagnostic.CS8632.severity = none
+
+[*.Generated.cs]
+dotnet_diagnostic.CS8618.severity = none
+dotnet_diagnostic.CS8625.severity = none
+dotnet_diagnostic.CS8600.severity = none
+dotnet_diagnostic.CS8602.severity = none
+dotnet_diagnostic.CS8603.severity = none
+dotnet_diagnostic.CS8604.severity = none
+dotnet_diagnostic.CS8632.severity = none
 
 [*.{cs,vb}]
 dotnet_style_operator_placement_when_wrapping = beginning_of_line

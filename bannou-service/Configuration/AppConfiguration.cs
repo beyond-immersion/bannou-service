@@ -88,10 +88,18 @@ public class AppConfiguration : BaseServiceConfiguration
     /// <summary>
     /// The minimum level of logs for the application code to write to the console.
     /// </summary>
-    public virtual LogLevel App_Logging_Level { get; set; } = LogLevel.Warning;
+    public virtual LogLevel App_Logging_Level { get; set; } = LogLevel.Information;
 
     /// <summary>
     /// The minimum level of logs for kestrel to write to the console.
     /// </summary>
-    public virtual LogLevel Web_Host_Logging_Level { get; set; } = LogLevel.Warning;
+    public virtual LogLevel Web_Host_Logging_Level { get; set; } = LogLevel.Information;
+
+    /// <summary>
+    /// The app-id to query for initial service mappings during startup.
+    /// Only set on containers deployed by orchestrator - when set, this container
+    /// will query the specified app-id for service mappings before publishing heartbeats.
+    /// This ensures newly deployed containers have correct routing information.
+    /// </summary>
+    public string? MappingSourceAppId { get; set; }
 }

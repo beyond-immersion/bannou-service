@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Client.SDK;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using System.Net.WebSockets;
 using System.Text;
@@ -8,6 +9,67 @@ namespace BeyondImmersion.EdgeTester.Tests;
 
 public class ConnectWebSocketTestHandler : IServiceTestHandler
 {
+    #region Helper Methods for Test Account Creation
+
+    /// <summary>
+    /// Creates a dedicated test account and returns the access token.
+    /// Each test should create its own account to avoid JWT reuse which causes subsume behavior.
+    /// </summary>
+    private async Task<string?> CreateTestAccountAsync(string testPrefix)
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("   Configuration not available");
+            return null;
+        }
+
+        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var uniqueId = Guid.NewGuid().ToString("N")[..12];
+        var testEmail = $"{testPrefix}_{uniqueId}@test.local";
+        var testPassword = $"{testPrefix}Test123!";
+
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = $"{testPrefix}_{uniqueId}", email = testEmail, password = testPassword };
+
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"   Failed to create test account: {registerResponse.StatusCode} - {errorBody}");
+                return null;
+            }
+
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+            var responseObj = JsonDocument.Parse(responseBody);
+            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Console.WriteLine("   No accessToken in registration response");
+                return null;
+            }
+
+            Console.WriteLine($"   Created test account: {testEmail}");
+            return accessToken;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Failed to create test account: {ex.Message}");
+            return null;
+        }
+    }
+
+    #endregion
+
     public ServiceTest[] GetServiceTests()
     {
         return new ServiceTest[]
@@ -23,7 +85,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             new ServiceTest(TestAccountDeletionDisconnectsWebSocket, "WebSocket - Account Deletion Disconnect", "WebSocket",
                 "Test that deleting an account disconnects the WebSocket connection via event chain"),
             new ServiceTest(TestReconnectionTokenFlow, "WebSocket - Reconnection Token", "WebSocket",
-                "Test that graceful disconnect provides reconnection token and reconnection works")
+                "Test that graceful disconnect provides reconnection token and reconnection works"),
+            new ServiceTest(TestSessionSubsumeBehavior, "WebSocket - Session Subsume", "WebSocket",
+                "Test that second WebSocket with same JWT subsumes (takes over) the first connection"),
+            new ServiceTest(TestBannouClientWithDedicatedAccount, "WebSocket - BannouClient SDK Flow", "WebSocket",
+                "Test BannouClient SDK with dedicated account: register -> connect -> invoke -> dispose"),
+            new ServiceTest(TestCapabilityManifestCaching, "WebSocket - Manifest GUID Caching", "WebSocket",
+                "Test that all API GUIDs are cached from a single capability manifest")
         };
     }
 
@@ -131,12 +199,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        // Get access token from BannouClient
-        var accessToken = Program.Client?.AccessToken;
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for WebSocket upgrade test...");
+        var accessToken = await CreateTestAccountAsync("ws_upgrade");
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -185,11 +254,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = Program.Client?.AccessToken;
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for binary protocol test...");
+        var accessToken = await CreateTestAccountAsync("ws_binary");
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -292,11 +363,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = Program.Client?.AccessToken;
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for capability manifest test...");
+        var accessToken = await CreateTestAccountAsync("ws_manifest");
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -390,11 +463,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = Program.Client?.AccessToken;
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for internal API proxy test...");
+        var accessToken = await CreateTestAccountAsync("ws_apiproxy");
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -654,70 +729,37 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             Console.WriteLine("⚠️ Timeout waiting for capability manifest (continuing anyway)");
         }
 
-        // Step 3: Connect admin WebSocket and delete account via binary protocol
-        // (accounts endpoints are only accessible via WebSocket, not HTTP)
-        Console.WriteLine("📋 Step 3: Connecting admin WebSocket for account deletion...");
-        using var adminWebSocket = new ClientWebSocket();
-        adminWebSocket.Options.SetRequestHeader("Authorization", "Bearer " + Program.AdminAccessToken);
+        // Step 3: Delete account via shared admin WebSocket
+        // IMPORTANT: We must use Program.AdminClient (the shared admin WebSocket) instead of
+        // creating a new WebSocket, because creating a new WebSocket with the same JWT would
+        // "subsume" (disconnect) the shared admin client that other tests depend on.
+        Console.WriteLine("📋 Step 3: Deleting account via shared admin WebSocket...");
+
+        var adminClient = Program.AdminClient;
+        if (adminClient == null || !adminClient.IsConnected)
+        {
+            Console.WriteLine("❌ Admin client not connected - cannot delete account");
+            await CloseWebSocketSafely(userWebSocket);
+            return false;
+        }
 
         try
         {
-            await adminWebSocket.ConnectAsync(serverUri, CancellationToken.None);
-            Console.WriteLine("✅ Admin WebSocket connected");
+            Console.WriteLine($"📋 Step 4: Deleting account {accountId} via shared admin WebSocket...");
+            var deleteRequest = new { accountId = accountId.ToString() };
+            var response = await adminClient.InvokeAsync<object, JsonElement>(
+                "POST",
+                "/accounts/delete",
+                deleteRequest,
+                timeout: TimeSpan.FromSeconds(10));
 
-            // Wait for admin capability manifest and find POST:/accounts/delete GUID
-            Console.WriteLine("📋 Step 3b: Waiting for admin capability manifest...");
-            var adminServiceGuid = await ReceiveCapabilityManifestAndFindAccountDeleteGuid(adminWebSocket);
-
-            if (adminServiceGuid == Guid.Empty)
-            {
-                Console.WriteLine("❌ Could not find POST:/accounts/delete in admin capabilities");
-                Console.WriteLine("   Admin may not have permission to delete accounts");
-                await CloseWebSocketSafely(userWebSocket);
-                await CloseWebSocketSafely(adminWebSocket);
-                return false;
-            }
-
-            Console.WriteLine($"✅ Found POST:/accounts/delete service GUID: {adminServiceGuid}");
-
-            // Step 4: Delete the account via WebSocket binary protocol
-            Console.WriteLine($"📋 Step 4: Deleting account {accountId} via WebSocket...");
-
-            var deleteRequestBody = new { accountId = accountId.ToString() };
-            var deleteRequest = new
-            {
-                method = "POST",
-                path = "/accounts/delete",
-                headers = new Dictionary<string, string>(),
-                body = JsonSerializer.Serialize(deleteRequestBody)
-            };
-            var requestPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(deleteRequest));
-
-            var binaryMessage = new BinaryMessage(
-                flags: MessageFlags.None,
-                channel: 2, // API proxy channel
-                sequenceNumber: 1,
-                serviceGuid: adminServiceGuid,
-                messageId: GuidGenerator.GenerateMessageId(),
-                payload: requestPayload
-            );
-
-            var messageBytes = binaryMessage.ToByteArray();
-            await adminWebSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Binary, true, CancellationToken.None);
-            Console.WriteLine("✅ Account deletion request sent via WebSocket");
-
-            // Wait briefly for deletion to process (we don't need to parse the response)
-            await Task.Delay(500);
+            Console.WriteLine($"✅ Account deletion response received: {response.GetRawText().Substring(0, Math.Min(100, response.GetRawText().Length))}...");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Failed to delete account via WebSocket: {ex.Message}");
             await CloseWebSocketSafely(userWebSocket);
             return false;
-        }
-        finally
-        {
-            await CloseWebSocketSafely(adminWebSocket);
         }
 
         // Step 5: Wait for user's WebSocket to be closed by the server
@@ -840,11 +882,13 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = Program.Client?.AccessToken;
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for reconnection token test...");
+        var accessToken = await CreateTestAccountAsync("ws_reconnect");
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure BannouClient login completed successfully");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -1031,6 +1075,253 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
         Console.WriteLine("✅ Full reconnection flow completed successfully!");
         return true;
+    }
+
+    private void TestSessionSubsumeBehavior(string[] args)
+    {
+        Console.WriteLine("=== Session Subsume Behavior Test ===");
+        Console.WriteLine("Testing that second WebSocket with same JWT subsumes the first connection...");
+
+        try
+        {
+            var result = Task.Run(async () => await PerformSessionSubsumeTest()).Result;
+            if (result)
+            {
+                Console.WriteLine("✅ Session subsume behavior test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Session subsume behavior test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Session subsume behavior test FAILED with exception: {ex.Message}");
+            Console.WriteLine($"   Stack trace: {ex.StackTrace}");
+        }
+    }
+
+    /// <summary>
+    /// Tests the WebSocket session subsume behavior:
+    /// The server only allows one WebSocket per session. When a second WebSocket connects
+    /// with the same JWT (same session_key), the server closes the first connection with
+    /// the message "New connection established" and the second connection takes over.
+    ///
+    /// This is the expected behavior for session management and is critical for:
+    /// - Reconnection scenarios where a client reconnects with the same JWT
+    /// - Preventing stale connections from consuming server resources
+    /// - Ensuring single-WebSocket-per-session invariant
+    ///
+    /// IMPORTANT: This test creates its own account to avoid interfering with other tests.
+    /// </summary>
+    private async Task<bool> PerformSessionSubsumeTest()
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("❌ Configuration not available");
+            return false;
+        }
+
+        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+
+        // Step 1: Create a dedicated test account to avoid interfering with other tests
+        Console.WriteLine("📋 Step 1: Creating dedicated test account for subsume test...");
+        var uniqueId = Guid.NewGuid().ToString("N")[..12];
+        var testEmail = $"subsume_{uniqueId}@test.local";
+        var testPassword = "SubsumeTest123!";
+
+        string accessToken;
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = $"subsume_{uniqueId}", email = testEmail, password = testPassword };
+
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Failed to create test account: {registerResponse.StatusCode} - {errorBody}");
+                return false;
+            }
+
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+            var responseObj = System.Text.Json.JsonDocument.Parse(responseBody);
+            accessToken = responseObj.RootElement.GetProperty("accessToken").GetString()
+                ?? throw new InvalidOperationException("No accessToken in response");
+            Console.WriteLine($"✅ Test account created: {testEmail}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to create test account: {ex.Message}");
+            return false;
+        }
+
+        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+
+        // Step 2: Establish first WebSocket connection
+        Console.WriteLine("📋 Step 2: Establishing first WebSocket connection...");
+        using var webSocket1 = new ClientWebSocket();
+        webSocket1.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
+
+        try
+        {
+            await webSocket1.ConnectAsync(serverUri, CancellationToken.None);
+            if (webSocket1.State != WebSocketState.Open)
+            {
+                Console.WriteLine($"❌ First WebSocket failed to connect: {webSocket1.State}");
+                return false;
+            }
+            Console.WriteLine("✅ First WebSocket connected");
+        }
+        catch (WebSocketException wse)
+        {
+            Console.WriteLine($"❌ First WebSocket connection failed: {wse.Message}");
+            return false;
+        }
+
+        // Wait for capability manifest on first connection
+        Console.WriteLine("📋 Step 2b: Waiting for capability manifest on first connection...");
+        var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
+        using var capabilityCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+        try
+        {
+            var capResult = await webSocket1.ReceiveAsync(receiveBuffer, capabilityCts.Token);
+            if (capResult.Count > 0)
+            {
+                Console.WriteLine($"✅ First connection received capability manifest ({capResult.Count} bytes)");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("⚠️ Timeout waiting for capability manifest on first connection");
+        }
+
+        // Step 3: Establish second WebSocket connection with the SAME JWT
+        Console.WriteLine("📋 Step 3: Establishing second WebSocket with SAME JWT (should subsume first)...");
+        using var webSocket2 = new ClientWebSocket();
+        webSocket2.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
+
+        try
+        {
+            await webSocket2.ConnectAsync(serverUri, CancellationToken.None);
+            if (webSocket2.State != WebSocketState.Open)
+            {
+                Console.WriteLine($"❌ Second WebSocket failed to connect: {webSocket2.State}");
+                return false;
+            }
+            Console.WriteLine("✅ Second WebSocket connected");
+        }
+        catch (WebSocketException wse)
+        {
+            Console.WriteLine($"❌ Second WebSocket connection failed: {wse.Message}");
+            return false;
+        }
+
+        // Step 4: Verify the first WebSocket gets closed by the server
+        Console.WriteLine("📋 Step 4: Verifying first WebSocket is closed by server (subsume behavior)...");
+
+        // The server closes the first connection asynchronously when the second connects
+        // We need to wait for the close message or detect the connection is no longer open
+        using var closeCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+        try
+        {
+            // Try to receive on the first WebSocket - should get a close message
+            var closeResult = await webSocket1.ReceiveAsync(receiveBuffer, closeCts.Token);
+
+            if (closeResult.MessageType == WebSocketMessageType.Close)
+            {
+                Console.WriteLine($"✅ First WebSocket received close from server:");
+                Console.WriteLine($"   Close Status: {closeResult.CloseStatus}");
+                Console.WriteLine($"   Close Description: \"{closeResult.CloseStatusDescription}\"");
+
+                // Verify the close description indicates subsume
+                if (closeResult.CloseStatusDescription?.Contains("New connection") == true)
+                {
+                    Console.WriteLine("✅ Server correctly indicated 'New connection established' as close reason");
+                }
+
+                // Complete the close handshake
+                if (webSocket1.State == WebSocketState.CloseReceived)
+                {
+                    await webSocket1.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Acknowledged", CancellationToken.None);
+                }
+            }
+            else
+            {
+                Console.WriteLine($"📥 First WebSocket received data instead of close ({closeResult.Count} bytes)");
+                Console.WriteLine("   Checking WebSocket state...");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Timeout - check the WebSocket state directly
+            Console.WriteLine($"⏳ Timeout waiting for close, checking WebSocket1 state: {webSocket1.State}");
+        }
+        catch (WebSocketException wse)
+        {
+            // Connection error is expected if the server already closed
+            Console.WriteLine($"✅ First WebSocket connection terminated: {wse.Message}");
+        }
+
+        // Verify final states
+        var ws1Closed = webSocket1.State == WebSocketState.Closed ||
+                        webSocket1.State == WebSocketState.Aborted ||
+                        webSocket1.State == WebSocketState.CloseReceived;
+        var ws2Open = webSocket2.State == WebSocketState.Open;
+
+        Console.WriteLine($"📋 Final states: WebSocket1={webSocket1.State}, WebSocket2={webSocket2.State}");
+
+        // Step 5: Verify second WebSocket is still functional
+        Console.WriteLine("📋 Step 5: Verifying second WebSocket is still functional...");
+
+        try
+        {
+            // Receive capability manifest on second connection
+            using var ws2CapCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var ws2Result = await webSocket2.ReceiveAsync(receiveBuffer, ws2CapCts.Token);
+
+            if (ws2Result.Count > 0)
+            {
+                Console.WriteLine($"✅ Second WebSocket received data ({ws2Result.Count} bytes) - still functional");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("⚠️ Timeout on second WebSocket - may not have received capability manifest yet");
+            // This isn't necessarily a failure - the second connection is still open
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error on second WebSocket: {ex.Message}");
+            ws2Open = false;
+        }
+
+        // Clean up
+        await CloseWebSocketSafely(webSocket1);
+        await CloseWebSocketSafely(webSocket2);
+
+        // Test passes if:
+        // 1. First WebSocket was closed (subsumed)
+        // 2. Second WebSocket remained open (took over the session)
+        if (ws1Closed && ws2Open)
+        {
+            Console.WriteLine("✅ Subsume behavior verified: Second WebSocket took over session, first was closed");
+            return true;
+        }
+        else
+        {
+            Console.WriteLine($"❌ Unexpected behavior: ws1Closed={ws1Closed}, ws2Open={ws2Open}");
+            return false;
+        }
     }
 
     /// <summary>
@@ -1474,4 +1765,443 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         Console.WriteLine($"❌ Timeout waiting for Response message (waited {timeout.TotalSeconds}s)");
         return null;
     }
+
+    /// <summary>
+    /// Tests the BannouClient SDK flow with a dedicated test account.
+    /// This validates the complete SDK experience:
+    /// 1. Register a new account via HTTP
+    /// 2. Create a new BannouClient instance
+    /// 3. Connect with ConnectWithTokenAsync
+    /// 4. Call InvokeAsync to hit the /testing/debug/path endpoint
+    /// 5. Verify the response
+    /// 6. Dispose the client
+    ///
+    /// This test is critical for validating BannouClient works correctly before
+    /// other tests (like GameSession) use it. If BannouClient has a bug, this test
+    /// fails first, making the issue clear.
+    /// </summary>
+    private void TestBannouClientWithDedicatedAccount(string[] args)
+    {
+        Console.WriteLine("=== BannouClient SDK Flow Test ===");
+        Console.WriteLine("Testing BannouClient with dedicated account: register -> connect -> invoke -> dispose...");
+
+        try
+        {
+            var result = Task.Run(async () => await PerformBannouClientSdkTest()).Result;
+            if (result)
+            {
+                Console.WriteLine("PASSED BannouClient SDK flow test");
+            }
+            else
+            {
+                Console.WriteLine("FAILED BannouClient SDK flow test");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FAILED BannouClient SDK flow test with exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+
+    private async Task<bool> PerformBannouClientSdkTest()
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("   Configuration not available");
+            return false;
+        }
+
+        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+
+        // Step 1: Create a dedicated test account
+        Console.WriteLine("   Step 1: Creating dedicated test account...");
+        var uniqueId = Guid.NewGuid().ToString("N")[..12];
+        var testEmail = $"bannouclient_test_{uniqueId}@test.local";
+        var testPassword = "BannouClientTest123!";
+
+        string accessToken;
+        string connectUrl;
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = $"bannouclient_{uniqueId}", email = testEmail, password = testPassword };
+
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"   Failed to create test account: {registerResponse.StatusCode} - {errorBody}");
+                return false;
+            }
+
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+            var responseObj = JsonDocument.Parse(responseBody);
+            accessToken = responseObj.RootElement.GetProperty("accessToken").GetString()
+                ?? throw new InvalidOperationException("No accessToken in response");
+            connectUrl = responseObj.RootElement.GetProperty("connectUrl").GetString()
+                ?? throw new InvalidOperationException("No connectUrl in response");
+            Console.WriteLine($"   Test account created: {testEmail}");
+            Console.WriteLine($"   Connect URL from auth: {connectUrl}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Failed to create test account: {ex.Message}");
+            return false;
+        }
+
+        // Step 2: Create a new BannouClient instance
+        Console.WriteLine("   Step 2: Creating BannouClient instance...");
+        await using var client = new BannouClient();
+
+        // Step 3: Connect with the JWT using the connectUrl from auth response
+        Console.WriteLine("   Step 3: Connecting with ConnectWithTokenAsync...");
+        var serverUrl = connectUrl;
+
+        try
+        {
+            var connected = await client.ConnectWithTokenAsync(serverUrl, accessToken);
+            if (!connected)
+            {
+                Console.WriteLine("   ConnectWithTokenAsync returned false");
+                return false;
+            }
+
+            if (!client.IsConnected)
+            {
+                Console.WriteLine("   Client reports not connected after ConnectWithTokenAsync");
+                return false;
+            }
+            Console.WriteLine($"   Connected successfully, session: {client.SessionId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Connection failed: {ex.Message}");
+            return false;
+        }
+
+        // Step 4: Call InvokeAsync to hit /testing/debug/path
+        Console.WriteLine("   Step 4: Calling InvokeAsync for /testing/debug/path...");
+        try
+        {
+            // The /testing/debug/path endpoint returns routing debug info
+            // It accepts GET or POST with no body required
+            var response = await client.InvokeAsync<object, JsonElement>(
+                "GET",
+                "/testing/debug/path",
+                new { }, // Empty body for GET
+                timeout: TimeSpan.FromSeconds(15));
+
+            // Verify we got a valid response with expected fields
+            var hasPath = response.TryGetProperty("Path", out var pathProp) ||
+                        response.TryGetProperty("path", out pathProp);
+            var hasMethod = response.TryGetProperty("Method", out var methodProp) ||
+                            response.TryGetProperty("method", out methodProp);
+            var hasTimestamp = response.TryGetProperty("Timestamp", out var timestampProp) ||
+                                response.TryGetProperty("timestamp", out timestampProp);
+
+            Console.WriteLine($"   Response received:");
+            Console.WriteLine($"      Path field present: {hasPath}");
+            Console.WriteLine($"      Method field present: {hasMethod}");
+            Console.WriteLine($"      Timestamp field present: {hasTimestamp}");
+
+            if (!hasPath || !hasMethod)
+            {
+                Console.WriteLine($"   Response missing expected fields");
+                Console.WriteLine($"   Full response: {response}");
+                return false;
+            }
+
+            Console.WriteLine($"   InvokeAsync succeeded");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   InvokeAsync failed: {ex.Message}");
+            return false;
+        }
+
+        // Step 5: Verify client is still connected
+        Console.WriteLine("   Step 5: Verifying client still connected...");
+        if (!client.IsConnected)
+        {
+            Console.WriteLine("   Client disconnected unexpectedly");
+            return false;
+        }
+        Console.WriteLine($"   Client still connected");
+
+        // Step 6: Dispose happens automatically via using statement
+        Console.WriteLine("   Step 6: Test complete, client will be disposed");
+
+        return true;
+    }
+
+    #region Capability Manifest Caching Test
+
+    /// <summary>
+    /// Cache for service GUIDs to validate manifest caching behavior.
+    /// </summary>
+    private readonly Dictionary<string, Guid> _manifestGuidCache = new();
+
+    /// <summary>
+    /// Tests that the capability manifest caching behavior works correctly.
+    /// This validates that when a capability manifest arrives, ALL GUIDs in the manifest
+    /// are cached - not just the one being looked up. This is critical because:
+    /// 1. Server only pushes the manifest once at connection time
+    /// 2. Without caching all GUIDs upfront, subsequent API calls would wait forever
+    ///    for a manifest that never arrives
+    ///
+    /// This test uses a raw WebSocket to validate the protocol behavior directly.
+    /// </summary>
+    private void TestCapabilityManifestCaching(string[] args)
+    {
+        Console.WriteLine("=== Capability Manifest Caching Test ===");
+        Console.WriteLine("Validating that all API GUIDs are cached from capability manifest...");
+
+        // Clear the cache to ensure fresh state
+        _manifestGuidCache.Clear();
+
+        try
+        {
+            var result = Task.Run(async () => await PerformManifestCachingTest()).Result;
+            if (result)
+            {
+                Console.WriteLine("PASSED Manifest caching behavior test");
+            }
+            else
+            {
+                Console.WriteLine("FAILED Manifest caching behavior test");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FAILED Manifest caching test with exception: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> PerformManifestCachingTest()
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("   Configuration not available");
+            return false;
+        }
+
+        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+
+        // Create dedicated test account for this test
+        Console.WriteLine("   Creating dedicated test account...");
+        var uniqueId = Guid.NewGuid().ToString("N")[..12];
+        var testEmail = $"manifest_test_{uniqueId}@test.local";
+        var testPassword = "ManifestTest123!";
+
+        string accessToken;
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = $"manifest_{uniqueId}", email = testEmail, password = testPassword };
+
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"   Failed to create test account: {registerResponse.StatusCode} - {errorBody}");
+                return false;
+            }
+
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+            var responseObj = JsonDocument.Parse(responseBody);
+            accessToken = responseObj.RootElement.GetProperty("accessToken").GetString()
+                ?? throw new InvalidOperationException("No accessToken in response");
+            Console.WriteLine($"   Test account created: {testEmail}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Failed to create test account: {ex.Message}");
+            return false;
+        }
+
+        // Connect via raw WebSocket to observe manifest directly
+        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        using var webSocket = new ClientWebSocket();
+        webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
+
+        await webSocket.ConnectAsync(serverUri, CancellationToken.None);
+        Console.WriteLine("   WebSocket connected");
+
+        // Request one API - this triggers receiving the manifest
+        var firstGuid = await ReceiveAndCacheAllGuids(webSocket, "POST", "/sessions/list");
+
+        if (firstGuid == Guid.Empty)
+        {
+            Console.WriteLine("   Failed to get GUID for /sessions/list");
+            return false;
+        }
+        Console.WriteLine($"   Got GUID for /sessions/list: {firstGuid}");
+
+        // Verify that OTHER APIs are also in the cache (without waiting for another manifest)
+        var cachedApis = new[]
+        {
+            ("POST", "/sessions/create"),
+            ("POST", "/sessions/join"),
+            ("POST", "/sessions/leave"),
+            ("POST", "/sessions/get")
+        };
+
+        var allCached = true;
+        foreach (var (method, path) in cachedApis)
+        {
+            var cacheKey = $"{method}:{path}";
+            if (_manifestGuidCache.TryGetValue(cacheKey, out var cachedGuid))
+            {
+                Console.WriteLine($"   {cacheKey} cached: {cachedGuid}");
+            }
+            else
+            {
+                Console.WriteLine($"   {cacheKey} NOT in cache - this would cause timeout!");
+                allCached = false;
+            }
+        }
+
+        Console.WriteLine($"   Total APIs in cache: {_manifestGuidCache.Count}");
+
+        if (webSocket.State == WebSocketState.Open)
+        {
+            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Test complete", CancellationToken.None);
+        }
+
+        return allCached;
+    }
+
+    /// <summary>
+    /// Receives the capability manifest and caches ALL GUIDs from it.
+    /// Returns the GUID for the requested endpoint, or Guid.Empty if not found.
+    /// </summary>
+    private async Task<Guid> ReceiveAndCacheAllGuids(ClientWebSocket webSocket, string method, string path)
+    {
+        var overallTimeout = TimeSpan.FromSeconds(30);
+        var startTime = DateTime.UtcNow;
+        var receiveBuffer = new ArraySegment<byte>(new byte[65536]);
+
+        while (DateTime.UtcNow - startTime < overallTimeout)
+        {
+            try
+            {
+                var remainingTime = overallTimeout - (DateTime.UtcNow - startTime);
+                if (remainingTime <= TimeSpan.Zero) break;
+
+                using var cts = new CancellationTokenSource(remainingTime);
+                var result = await webSocket.ReceiveAsync(receiveBuffer, cts.Token);
+
+                if (receiveBuffer.Array == null || result.Count == 0)
+                {
+                    continue;
+                }
+
+                // Parse the binary message
+                var receivedMessage = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
+
+                // Check if this is an event message (capability manifest)
+                if (!receivedMessage.Flags.HasFlag(MessageFlags.Event))
+                {
+                    continue;
+                }
+
+                if (receivedMessage.Payload.Length == 0)
+                {
+                    continue;
+                }
+
+                var payloadJson = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
+
+                JsonObject? manifest;
+                try
+                {
+                    manifest = JsonNode.Parse(payloadJson)?.AsObject();
+                }
+                catch
+                {
+                    continue;
+                }
+
+                // Verify this is a capability manifest
+                var type = manifest?["type"]?.GetValue<string>();
+                if (type != "capability_manifest")
+                {
+                    continue;
+                }
+
+                var availableApis = manifest?["availableAPIs"]?.AsArray();
+                if (availableApis == null)
+                {
+                    continue;
+                }
+
+                // Cache ALL GUIDs from the manifest
+                var cachedCount = 0;
+                foreach (var api in availableApis)
+                {
+                    var apiMethod = api?["method"]?.GetValue<string>();
+                    var apiPath = api?["path"]?.GetValue<string>();
+                    var apiGuid = api?["serviceGuid"]?.GetValue<string>();
+
+                    if (!string.IsNullOrEmpty(apiMethod) && !string.IsNullOrEmpty(apiPath) && !string.IsNullOrEmpty(apiGuid))
+                    {
+                        if (Guid.TryParse(apiGuid, out var guid))
+                        {
+                            var cacheKey = $"{apiMethod}:{apiPath}";
+                            if (!_manifestGuidCache.ContainsKey(cacheKey))
+                            {
+                                _manifestGuidCache[cacheKey] = guid;
+                                cachedCount++;
+                            }
+                        }
+                    }
+                }
+
+                if (cachedCount > 0)
+                {
+                    Console.WriteLine($"   Cached {cachedCount} API GUIDs from manifest (total: {_manifestGuidCache.Count})");
+                }
+
+                // Return the requested endpoint's GUID
+                var requestedKey = $"{method}:{path}";
+                if (_manifestGuidCache.TryGetValue(requestedKey, out var requestedGuid))
+                {
+                    return requestedGuid;
+                }
+
+                Console.WriteLine($"   API {method}:{path} not found in manifest ({_manifestGuidCache.Count} APIs cached)");
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"   Error receiving message: {ex.Message}, retrying...");
+            }
+        }
+
+        Console.WriteLine($"   Timeout waiting for API {method}:{path} to become available");
+        return Guid.Empty;
+    }
+
+    #endregion
 }

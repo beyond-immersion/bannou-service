@@ -13,6 +13,67 @@ namespace BeyondImmersion.EdgeTester.Tests;
 /// </summary>
 public class CapabilityFlowTestHandler : IServiceTestHandler
 {
+    #region Helper Methods for Test Account Creation
+
+    /// <summary>
+    /// Creates a dedicated test account and returns the access token.
+    /// Each test should create its own account to avoid JWT reuse which causes subsume behavior.
+    /// </summary>
+    private async Task<string?> CreateTestAccountAsync(string testPrefix)
+    {
+        if (Program.Configuration == null)
+        {
+            Console.WriteLine("   Configuration not available");
+            return null;
+        }
+
+        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+        var uniqueId = Guid.NewGuid().ToString("N")[..12];
+        var testEmail = $"{testPrefix}_{uniqueId}@test.local";
+        var testPassword = $"{testPrefix}Test123!";
+
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = $"{testPrefix}_{uniqueId}", email = testEmail, password = testPassword };
+
+            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest.Content = new StringContent(
+                JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
+            if (!registerResponse.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"   Failed to create test account: {registerResponse.StatusCode} - {errorBody}");
+                return null;
+            }
+
+            var responseBody = await registerResponse.Content.ReadAsStringAsync();
+            var responseObj = JsonDocument.Parse(responseBody);
+            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Console.WriteLine("   No accessToken in registration response");
+                return null;
+            }
+
+            Console.WriteLine($"   Created test account: {testEmail}");
+            return accessToken;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Failed to create test account: {ex.Message}");
+            return null;
+        }
+    }
+
+    #endregion
+
     public ServiceTest[] GetServiceTests()
     {
         return new ServiceTest[]
@@ -138,10 +199,12 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = GetAccessToken();
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for capability initialization test...");
+        var accessToken = await CreateTestAccountAsync("cap_init");
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -234,6 +297,9 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
     /// <summary>
     /// Tests that different WebSocket sessions receive different GUIDs for the same endpoints.
     /// This validates the client-salted GUID security model.
+    /// IMPORTANT: This test creates TWO SEPARATE ACCOUNTS with different JWTs.
+    /// The server only allows one WebSocket per session, so using the same JWT
+    /// would cause the second connection to "subsume" (take over) the first.
     /// </summary>
     private async Task<bool> PerformUniqueGuidTest()
     {
@@ -243,42 +309,114 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = GetAccessToken();
-        if (string.IsNullOrEmpty(accessToken))
+        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
+        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
+
+        // Create first test account
+        Console.WriteLine("📋 Creating first test account for unique GUID test...");
+        var uniqueId1 = Guid.NewGuid().ToString("N")[..12];
+        var testEmail1 = $"guidtest1_{uniqueId1}@test.local";
+        var testPassword = "UniqueGuidTest123!";
+
+        string accessToken1;
+        try
         {
-            Console.WriteLine("❌ Access token not available");
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = $"guidtest1_{uniqueId1}", email = testEmail1, password = testPassword };
+
+            using var registerRequest1 = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest1.Content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse1 = await Program.HttpClient.SendAsync(registerRequest1);
+            if (!registerResponse1.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse1.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Failed to create first test account: {registerResponse1.StatusCode} - {errorBody}");
+                return false;
+            }
+
+            var responseBody = await registerResponse1.Content.ReadAsStringAsync();
+            var responseObj = System.Text.Json.JsonDocument.Parse(responseBody);
+            accessToken1 = responseObj.RootElement.GetProperty("accessToken").GetString()
+                ?? throw new InvalidOperationException("No accessToken in response");
+            Console.WriteLine($"✅ First test account created: {testEmail1}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to create first test account: {ex.Message}");
             return false;
         }
 
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
+        // Create second test account (different session)
+        Console.WriteLine("📋 Creating second test account for unique GUID test...");
+        var uniqueId2 = Guid.NewGuid().ToString("N")[..12];
+        var testEmail2 = $"guidtest2_{uniqueId2}@test.local";
 
-        // Connect first session
-        Console.WriteLine("📡 Establishing first WebSocket session...");
+        string accessToken2;
+        try
+        {
+            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
+            var registerContent = new { username = $"guidtest2_{uniqueId2}", email = testEmail2, password = testPassword };
+
+            using var registerRequest2 = new HttpRequestMessage(HttpMethod.Post, registerUrl);
+            registerRequest2.Content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(registerContent),
+                Encoding.UTF8,
+                "application/json");
+
+            using var registerResponse2 = await Program.HttpClient.SendAsync(registerRequest2);
+            if (!registerResponse2.IsSuccessStatusCode)
+            {
+                var errorBody = await registerResponse2.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Failed to create second test account: {registerResponse2.StatusCode} - {errorBody}");
+                return false;
+            }
+
+            var responseBody = await registerResponse2.Content.ReadAsStringAsync();
+            var responseObj = System.Text.Json.JsonDocument.Parse(responseBody);
+            accessToken2 = responseObj.RootElement.GetProperty("accessToken").GetString()
+                ?? throw new InvalidOperationException("No accessToken in response");
+            Console.WriteLine($"✅ Second test account created: {testEmail2}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to create second test account: {ex.Message}");
+            return false;
+        }
+
+        // Connect first session with first account's JWT
+        Console.WriteLine("📡 Establishing first WebSocket session (first account)...");
         using var webSocket1 = new ClientWebSocket();
-        webSocket1.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
+        webSocket1.Options.SetRequestHeader("Authorization", "Bearer " + accessToken1);
         await webSocket1.ConnectAsync(serverUri, CancellationToken.None);
         Console.WriteLine("✅ First session connected");
 
         // Wait a moment to ensure session is initialized
         await Task.Delay(500);
 
-        // Connect second session (different connection)
-        Console.WriteLine("📡 Establishing second WebSocket session...");
+        // Connect second session with second account's JWT
+        Console.WriteLine("📡 Establishing second WebSocket session (second account)...");
         using var webSocket2 = new ClientWebSocket();
-        webSocket2.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
+        webSocket2.Options.SetRequestHeader("Authorization", "Bearer " + accessToken2);
         await webSocket2.ConnectAsync(serverUri, CancellationToken.None);
         Console.WriteLine("✅ Second session connected");
 
         // Both sessions should have been initialized independently
-        // The key test is that both connections were accepted and initialized
-        // The actual GUID uniqueness is validated server-side
-
+        // Since they use different JWTs (different sessions), neither should subsume the other
         bool success = webSocket1.State == WebSocketState.Open && webSocket2.State == WebSocketState.Open;
 
         if (success)
         {
-            Console.WriteLine("✅ Both sessions established independently");
+            Console.WriteLine("✅ Both sessions established independently (different accounts, different sessions)");
             Console.WriteLine("   Server assigns unique client-salted GUIDs to each session");
+        }
+        else
+        {
+            Console.WriteLine($"❌ Session states: webSocket1={webSocket1.State}, webSocket2={webSocket2.State}");
         }
 
         // Clean up
@@ -306,10 +444,12 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = GetAccessToken();
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for authenticated capabilities test...");
+        var accessToken = await CreateTestAccountAsync("cap_auth");
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available - ensure login completed");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -421,10 +561,12 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = GetAccessToken();
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for service GUID routing test...");
+        var accessToken = await CreateTestAccountAsync("cap_routing");
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -554,10 +696,12 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             return false;
         }
 
-        var accessToken = GetAccessToken();
+        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
+        Console.WriteLine("📋 Creating dedicated test account for state-based capability update test...");
+        var accessToken = await CreateTestAccountAsync("cap_state");
         if (string.IsNullOrEmpty(accessToken))
         {
-            Console.WriteLine("❌ Access token not available");
+            Console.WriteLine("❌ Failed to create test account");
             return false;
         }
 
@@ -684,13 +828,5 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Test complete", CancellationToken.None);
             }
         }
-    }
-
-    /// <summary>
-    /// Helper to get access token from BannouClient.
-    /// </summary>
-    private static string? GetAccessToken()
-    {
-        return Program.Client?.AccessToken;
     }
 }

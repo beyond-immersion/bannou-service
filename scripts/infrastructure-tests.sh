@@ -3,13 +3,17 @@
 # Infrastructure Integration Tests
 # Tests MINIMAL infrastructure: bannou + dapr + placement + rabbitmq
 # NO databases, NO OpenResty - just core Bannou service infrastructure
-# Runs with network_mode: service:bannou, so:
-#   - 127.0.0.1 = bannou itself
-#   - Service names (placement, rabbitmq) work via default bridge network
+# Uses Docker DNS for service discovery (standalone Dapr containers)
 
 set -e
 
 echo "🧪 Running minimal infrastructure integration tests..."
+
+# Service hosts - use Docker DNS names (passed via environment or defaults)
+BANNOU_HOST="${BANNOU_HOST:-bannou}"
+DAPR_HOST="${DAPR_HOST:-bannou-dapr}"
+
+echo "   Using BANNOU_HOST=$BANNOU_HOST, DAPR_HOST=$DAPR_HOST"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -41,22 +45,22 @@ run_test() {
     fi
 }
 
-# Test 1-2: Bannou service availability (via 127.0.0.1 - shared network stack)
+# Test 1-2: Bannou service availability (via Docker DNS)
 echo "🔍 Testing Bannou Service..."
-run_test "Bannou service health check" "curl --verbose --fail --max-time 10 http://127.0.0.1:80/health"
-run_test "TESTING plugin enabled" "curl --verbose --fail --max-time 10 http://127.0.0.1:80/testing/health"
+run_test "Bannou service health check" "curl --verbose --fail --max-time 10 http://${BANNOU_HOST}:80/health"
+run_test "TESTING plugin enabled" "curl --verbose --fail --max-time 10 http://${BANNOU_HOST}:80/testing/health"
 
 # Test 3: TESTING plugin functionality
 echo "🔍 Testing TESTING Plugin..."
-run_test "TESTING plugin execution" "curl --verbose --fail --max-time 10 http://127.0.0.1:80/testing/run"
+run_test "TESTING plugin execution" "curl --verbose --fail --max-time 10 http://${BANNOU_HOST}:80/testing/run"
 
-# Test 4: Dapr sidecar availability (via 127.0.0.1 - shared network stack)
+# Test 4: Dapr sidecar availability (via Docker DNS - standalone container)
 echo "🔍 Testing Dapr Sidecar..."
-run_test "Dapr health endpoint" "curl --verbose --fail --max-time 5 http://127.0.0.1:3500/v1.0/healthz"
+run_test "Dapr health endpoint" "curl --verbose --fail --max-time 5 http://${DAPR_HOST}:3500/v1.0/healthz"
 
 # Test 5: Dapr can reach placement service (via service name on default bridge)
 echo "🔍 Testing Dapr Placement Connectivity..."
-run_test "Dapr metadata (verifies placement)" "curl --verbose --fail --max-time 5 http://127.0.0.1:3500/v1.0/metadata"
+run_test "Dapr metadata (verifies placement)" "curl --verbose --fail --max-time 5 http://${DAPR_HOST}:3500/v1.0/metadata"
 
 # Test 6: Configuration validation
 echo "🔍 Testing Configuration..."

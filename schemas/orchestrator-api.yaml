@@ -277,6 +277,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /orchestrator/service-routing:
+    post:
+      summary: Get current service-to-app-id routing mappings
+      description: |
+        Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+        This is the authoritative source of truth for how services are routed in the current deployment.
+
+        In development, all services route to "bannou" by default. In production, services may be
+        distributed across multiple app-ids based on deployment topology.
+
+        **Use Cases**:
+        - Services querying routing on startup
+        - Debugging service communication issues
+        - Monitoring deployment topology
+      operationId: GetServiceRouting
+      x-permissions:
+        - role: admin
+          states: {}
+        - role: service
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetServiceRoutingRequest'
+      responses:
+        '200':
+          description: Service routing mappings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceRoutingResponse'
+
   /orchestrator/status:
     post:
       summary: Get current environment status
@@ -597,6 +631,46 @@ components:
         serviceFilter:
           type: string
           description: Optional filter by service name
+          nullable: true
+
+    GetServiceRoutingRequest:
+      type: object
+      description: Request to get service routing mappings (empty body allowed)
+      properties:
+        serviceFilter:
+          type: string
+          description: Optional filter by service name prefix
+          nullable: true
+
+    ServiceRoutingResponse:
+      type: object
+      required:
+        - mappings
+        - defaultAppId
+        - generatedAt
+      properties:
+        mappings:
+          type: object
+          additionalProperties:
+            type: string
+          description: |
+            Map of service names to Dapr app-id routing destinations.
+            Example: { "accounts": "bannou", "behavior": "npc-processing-01" }
+        defaultAppId:
+          type: string
+          description: Default app-id used when no specific mapping exists
+          default: "bannou"
+        generatedAt:
+          type: string
+          format: date-time
+          description: When this routing information was generated
+        totalServices:
+          type: integer
+          description: Total number of services with routing mappings
+          minimum: 0
+        deploymentId:
+          type: string
+          description: Current deployment identifier (if environment is deployed)
           nullable: true
 
     ListBackendsRequest:
@@ -1393,6 +1467,12 @@ components:
     TeardownRequest:
       type: object
       properties:
+        dryRun:
+          type: boolean
+          default: false
+          description: |
+            When true, simulates teardown without actually stopping or removing containers.
+            Returns what would be torn down. ALWAYS use dryRun=true first to preview the impact.
         mode:
           $ref: '#/components/schemas/TeardownMode'
           default: graceful
@@ -1408,6 +1488,14 @@ components:
           type: boolean
           default: false
           description: Also remove associated networks
+        includeInfrastructure:
+          type: boolean
+          default: false
+          description: |
+            When true, also removes support infrastructure (Redis, RabbitMQ, MySQL, etc.).
+            This is determined by scanning compose files or finding containers in the same
+            Docker swarm/Kubernetes namespace as bannou services. USE WITH EXTREME CAUTION -
+            this will destroy all data and require a full re-deployment.
 
     TeardownResponse:
       type: object
@@ -1434,6 +1522,11 @@ components:
           items:
             type: string
           description: Networks that were removed
+        removedInfrastructure:
+          type: array
+          items:
+            type: string
+          description: Infrastructure services that were removed (Redis, RabbitMQ, MySQL, etc.)
         errors:
           type: array
           items:

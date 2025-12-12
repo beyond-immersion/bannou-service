@@ -22,12 +22,42 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
 
     /// <summary>
     /// Validate that this plugin should be loaded based on environment configuration.
+    /// CRITICAL: Orchestrator can ONLY run on the "bannou" app-id. This is a fundamental
+    /// architectural constraint - the orchestrator is the control plane that manages all
+    /// other service instances. It must never be deployed to a different app-id as it would
+    /// create control plane instability (e.g., TeardownAsync could tear down itself).
     /// </summary>
     protected override bool OnValidatePlugin()
     {
         var enabled = Environment.GetEnvironmentVariable("ORCHESTRATOR_SERVICE_ENABLED")?.ToLower();
         Logger?.LogDebug("Orchestrator service enabled check: {EnabledValue}", enabled);
-        return enabled == "true";
+
+        if (enabled != "true")
+        {
+            return false;
+        }
+
+        // CRITICAL: Enforce that orchestrator ONLY runs on "bannou" app-id
+        var currentAppId = Environment.GetEnvironmentVariable("DAPR_APP_ID") ?? AppConstants.DEFAULT_APP_NAME;
+        if (currentAppId != AppConstants.DEFAULT_APP_NAME)
+        {
+            Logger?.LogCritical(
+                "FATAL: Orchestrator service can ONLY run on '{DefaultAppId}' app-id, not '{CurrentAppId}'. " +
+                "The orchestrator is the control plane that manages all other services - it must remain on the " +
+                "primary 'bannou' instance to prevent control plane instability. " +
+                "To run orchestrator APIs, ensure DAPR_APP_ID is set to '{DefaultAppId}' or unset (defaults to 'bannou').",
+                AppConstants.DEFAULT_APP_NAME, currentAppId, AppConstants.DEFAULT_APP_NAME);
+
+            throw new InvalidOperationException(
+                $"Orchestrator service can ONLY run on '{AppConstants.DEFAULT_APP_NAME}' app-id, not '{currentAppId}'. " +
+                "This is a fundamental architectural constraint to prevent control plane instability.");
+        }
+
+        Logger?.LogInformation(
+            "Orchestrator service validated: running on '{AppId}' (control plane)",
+            currentAppId);
+
+        return true;
     }
 
     /// <summary>
@@ -51,8 +81,7 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
         // to avoid DI lifetime conflicts.
 
         // Register orchestrator helper classes as Singletons to maintain persistent connections
-        // These manage Redis and RabbitMQ connections that should persist across requests
-        // Note: These read connection strings directly from environment variables
+        // These manage Redis connections that should persist across requests
         services.AddSingleton<IOrchestratorRedisManager, OrchestratorRedisManager>();
         services.AddSingleton<IOrchestratorEventManager, OrchestratorEventManager>();
         services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
@@ -99,9 +128,8 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Initialize Redis and RabbitMQ connections (Singleton services, no scope needed)
+            // Initialize Redis connection (Singleton services, no scope needed)
             var redisManager = _serviceProvider?.GetService<IOrchestratorRedisManager>();
-            var eventManager = _serviceProvider?.GetService<IOrchestratorEventManager>();
 
             if (redisManager != null)
             {
@@ -110,16 +138,6 @@ public class OrchestratorServicePlugin : BaseBannouPlugin
                 if (!redisInitialized)
                 {
                     Logger?.LogWarning("Redis connection initialization failed - health checks will report unhealthy");
-                }
-            }
-
-            if (eventManager != null)
-            {
-                Logger?.LogInformation("Initializing RabbitMQ connection for orchestrator...");
-                var rabbitInitialized = await eventManager.InitializeAsync();
-                if (!rabbitInitialized)
-                {
-                    Logger?.LogWarning("RabbitMQ connection initialization failed - health checks will report unhealthy");
                 }
             }
 

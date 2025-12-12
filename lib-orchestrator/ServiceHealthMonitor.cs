@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -8,8 +9,9 @@ namespace LibOrchestrator;
 /// Monitors service health based on ServiceHeartbeatEvent data from Redis.
 /// Uses existing heartbeat schema from common-events.yaml.
 /// Writes heartbeat data and service routing to Redis for NGINX to read.
+/// Publishes FullServiceMappingsEvent periodically and on routing changes.
 /// </summary>
-public class ServiceHealthMonitor : IServiceHealthMonitor
+public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
 {
     private readonly ILogger<ServiceHealthMonitor> _logger;
     private readonly OrchestratorServiceConfiguration _configuration;
@@ -18,6 +20,20 @@ public class ServiceHealthMonitor : IServiceHealthMonitor
 
     // Cache of current service routings to detect changes
     private readonly ConcurrentDictionary<string, ServiceRouting> _currentRoutings = new();
+
+    // Version tracking for full mappings events
+    private long _mappingsVersion = 0;
+
+    // Instance ID for this orchestrator (for source tracking in events)
+    private readonly Guid _instanceId = Guid.NewGuid();
+
+    // Periodic publication timer
+    private Timer? _fullMappingsTimer;
+    private readonly TimeSpan _fullMappingsInterval = TimeSpan.FromSeconds(30);
+
+    // Track if routing changed since last publication
+    private bool _routingChanged = false;
+    private readonly object _routingChangeLock = new();
 
     public ServiceHealthMonitor(
         ILogger<ServiceHealthMonitor> logger,
@@ -33,8 +49,16 @@ public class ServiceHealthMonitor : IServiceHealthMonitor
         // Subscribe to real-time heartbeat events from RabbitMQ
         _eventManager.HeartbeatReceived += OnHeartbeatReceived;
 
-        // Subscribe to service mapping events from RabbitMQ
-        _eventManager.ServiceMappingReceived += OnServiceMappingReceived;
+        // Start periodic full mappings publication
+        _fullMappingsTimer = new Timer(
+            callback: _ => _ = PublishFullMappingsIfNeededAsync(),
+            state: null,
+            dueTime: _fullMappingsInterval,
+            period: _fullMappingsInterval);
+
+        _logger.LogInformation(
+            "ServiceHealthMonitor started with {Interval}s full mappings publication interval",
+            _fullMappingsInterval.TotalSeconds);
     }
 
     /// <summary>
@@ -56,22 +80,9 @@ public class ServiceHealthMonitor : IServiceHealthMonitor
     }
 
     /// <summary>
-    /// Handle service mapping events from RabbitMQ.
-    /// Updates Redis routing when topology changes.
-    /// </summary>
-    private void OnServiceMappingReceived(ServiceMappingEvent mappingEvent)
-    {
-        _logger.LogInformation(
-            "Service mapping event: {ServiceName} -> {AppId} ({Action})",
-            mappingEvent.ServiceName,
-            mappingEvent.AppId,
-            mappingEvent.Action);
-
-        _ = UpdateServiceRoutingFromMappingAsync(mappingEvent);
-    }
-
-    /// <summary>
     /// Write heartbeat to Redis and update routing for each service in the heartbeat.
+    /// Heartbeats can only initialize routing for new services or update status/load for services
+    /// already routed to this app-id. They cannot change the app-id for a service.
     /// </summary>
     private async Task WriteHeartbeatAndUpdateRoutingAsync(ServiceHeartbeatEvent heartbeat)
     {
@@ -88,29 +99,63 @@ public class ServiceHealthMonitor : IServiceHealthMonitor
             }
 
             var loadPercent = CalculateLoadPercent(heartbeat);
+            var routingChanged = false;
 
             foreach (var serviceStatus in heartbeat.Services)
             {
                 var serviceName = serviceStatus.ServiceName;
-                var newRouting = new ServiceRouting
-                {
-                    AppId = heartbeat.AppId,
-                    Host = heartbeat.AppId, // In Docker, container name = app_id
-                    Port = 80,
-                    Status = serviceStatus.Status,
-                    LoadPercent = loadPercent
-                };
 
-                // Only update if routing changed or doesn't exist
-                if (ShouldUpdateRouting(serviceName, newRouting))
+                // Check if routing already exists for this service
+                if (_currentRoutings.TryGetValue(serviceName, out var existingRouting))
                 {
+                    // Routing exists - only update if heartbeat is from the SAME app-id
+                    // This prevents heartbeats from overwriting explicit routing set by orchestrator
+                    if (!string.Equals(existingRouting.AppId, heartbeat.AppId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogDebug(
+                            "Ignoring heartbeat for {ServiceName} from {HeartbeatAppId} - service is routed to {RoutedAppId}",
+                            serviceName, heartbeat.AppId, existingRouting.AppId);
+                        continue;
+                    }
+
+                    // Same app-id - update status and load only
+                    existingRouting.Status = serviceStatus.Status.ToString().ToLowerInvariant();
+                    existingRouting.LoadPercent = loadPercent;
+                    existingRouting.LastUpdated = DateTimeOffset.UtcNow;
+
+                    await _redisManager.WriteServiceRoutingAsync(serviceName, existingRouting);
+
+                    _logger.LogDebug(
+                        "Updated health for {ServiceName} on {AppId} (status: {Status}, load: {Load}%)",
+                        serviceName, heartbeat.AppId, serviceStatus.Status, loadPercent);
+                }
+                else
+                {
+                    // No existing routing - heartbeat can initialize it
+                    var newRouting = new ServiceRouting
+                    {
+                        AppId = heartbeat.AppId,
+                        Host = heartbeat.AppId, // In Docker, container name = app_id
+                        Port = 80,
+                        Status = serviceStatus.Status.ToString().ToLowerInvariant(),
+                        LoadPercent = loadPercent
+                    };
+
                     await _redisManager.WriteServiceRoutingAsync(serviceName, newRouting);
                     _currentRoutings[serviceName] = newRouting;
+                    routingChanged = true;
 
                     _logger.LogInformation(
-                        "Updated routing for {ServiceName} -> {AppId} (status: {Status})",
+                        "Initialized routing for {ServiceName} -> {AppId} (status: {Status})",
                         serviceName, heartbeat.AppId, serviceStatus.Status);
                 }
+            }
+
+            // If routing changed, mark for publication and publish immediately
+            if (routingChanged)
+            {
+                MarkRoutingChanged();
+                await PublishFullMappingsAsync("new service routing initialized");
             }
         }
         catch (Exception ex)
@@ -121,52 +166,106 @@ public class ServiceHealthMonitor : IServiceHealthMonitor
     }
 
     /// <summary>
-    /// Update service routing from explicit mapping event.
+    /// Update service routing for a specific service. Called by OrchestratorService during deployment.
+    /// This is the authoritative way to set routing - heartbeats cannot override these.
     /// </summary>
-    private async Task UpdateServiceRoutingFromMappingAsync(ServiceMappingEvent mappingEvent)
+    public async Task SetServiceRoutingAsync(string serviceName, string appId)
     {
-        try
+        var routing = new ServiceRouting
         {
-            if (mappingEvent.Action == ServiceMappingAction.Unregister)
-            {
-                await _redisManager.RemoveServiceRoutingAsync(mappingEvent.ServiceName);
-                _currentRoutings.TryRemove(mappingEvent.ServiceName, out _);
-            }
-            else
-            {
-                var routing = new ServiceRouting
-                {
-                    AppId = mappingEvent.AppId,
-                    Host = mappingEvent.AppId,
-                    Port = 80,
-                    Status = "healthy"
-                };
+            AppId = appId,
+            Host = appId,
+            Port = 80,
+            Status = "healthy"
+        };
 
-                await _redisManager.WriteServiceRoutingAsync(mappingEvent.ServiceName, routing);
-                _currentRoutings[mappingEvent.ServiceName] = routing;
-            }
-        }
-        catch (Exception ex)
+        await _redisManager.WriteServiceRoutingAsync(serviceName, routing);
+        _currentRoutings[serviceName] = routing;
+        MarkRoutingChanged();
+
+        _logger.LogInformation("Set routing for {ServiceName} -> {AppId}", serviceName, appId);
+    }
+
+    /// <summary>
+    /// Remove service routing. Called by OrchestratorService during teardown.
+    /// </summary>
+    public async Task RemoveServiceRoutingAsync(string serviceName)
+    {
+        await _redisManager.RemoveServiceRoutingAsync(serviceName);
+        _currentRoutings.TryRemove(serviceName, out _);
+        MarkRoutingChanged();
+
+        _logger.LogInformation("Removed routing for {ServiceName}", serviceName);
+    }
+
+    /// <summary>
+    /// Mark that routing has changed, triggering immediate publication.
+    /// </summary>
+    private void MarkRoutingChanged()
+    {
+        lock (_routingChangeLock)
         {
-            _logger.LogError(ex, "Failed to update routing from mapping event for {ServiceName}",
-                mappingEvent.ServiceName);
+            _routingChanged = true;
         }
     }
 
     /// <summary>
-    /// Check if routing should be updated (changed or new).
+    /// Publish full mappings if routing changed or periodic timer fired.
     /// </summary>
-    private bool ShouldUpdateRouting(string serviceName, ServiceRouting newRouting)
+    private async Task PublishFullMappingsIfNeededAsync()
     {
-        if (!_currentRoutings.TryGetValue(serviceName, out var existingRouting))
+        bool shouldPublish;
+        lock (_routingChangeLock)
         {
-            return true; // New service
+            shouldPublish = _routingChanged;
+            _routingChanged = false;
         }
 
-        // Check if significant changes
-        return existingRouting.AppId != newRouting.AppId ||
-                existingRouting.Host != newRouting.Host ||
-                existingRouting.Port != newRouting.Port;
+        // Always publish on timer (periodic heartbeat), but only increment version if changed
+        await PublishFullMappingsAsync(shouldPublish ? "routing changed" : "periodic");
+    }
+
+    /// <summary>
+    /// Publish the complete service mappings to all bannou instances.
+    /// </summary>
+    public async Task PublishFullMappingsAsync(string reason)
+    {
+        try
+        {
+            // Get all current routings from Redis (source of truth)
+            var routings = await _redisManager.GetServiceRoutingsAsync();
+
+            // Build mappings dictionary
+            var mappings = new Dictionary<string, string>();
+            foreach (var routing in routings)
+            {
+                mappings[routing.Key] = routing.Value.AppId;
+            }
+
+            // Increment version
+            var version = Interlocked.Increment(ref _mappingsVersion);
+
+            var fullMappingsEvent = new FullServiceMappingsEvent
+            {
+                EventId = Guid.NewGuid().ToString(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Mappings = mappings,
+                DefaultAppId = "bannou",
+                Version = version,
+                SourceInstanceId = _instanceId,
+                TotalServices = mappings.Count
+            };
+
+            await _eventManager.PublishFullMappingsAsync(fullMappingsEvent);
+
+            _logger.LogDebug(
+                "Published full mappings v{Version} ({Reason}): {Count} services",
+                version, reason, mappings.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish full service mappings");
+        }
     }
 
     /// <summary>
@@ -344,5 +443,16 @@ public class ServiceHealthMonitor : IServiceHealthMonitor
     public async Task<ServiceHealthStatus?> GetServiceHealthStatusAsync(string serviceId, string appId)
     {
         return await _redisManager.GetServiceHeartbeatAsync(serviceId, appId);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_fullMappingsTimer != null)
+        {
+            await _fullMappingsTimer.DisposeAsync();
+            _fullMappingsTimer = null;
+        }
+
+        _eventManager.HeartbeatReceived -= OnHeartbeatReceived;
     }
 }

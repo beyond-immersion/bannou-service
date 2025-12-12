@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
@@ -29,6 +30,13 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
     // TTL values
     private static readonly TimeSpan HEARTBEAT_TTL = TimeSpan.FromSeconds(90);
     private static readonly TimeSpan ROUTING_TTL = TimeSpan.FromMinutes(5);
+
+    // JSON options matching generated types (camelCase) for consistent serialization/deserialization
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true // For robustness when reading
+    };
 
     /// <summary>
     /// Creates OrchestratorRedisManager with connection string read directly from environment.
@@ -137,7 +145,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
                         continue;
                     }
 
-                    var heartbeat = JsonSerializer.Deserialize<ServiceHealthStatus>(value.ToString());
+                    var heartbeat = JsonSerializer.Deserialize<ServiceHealthStatus>(value.ToString(), JsonOptions);
                     if (heartbeat != null)
                     {
                         heartbeats.Add(heartbeat);
@@ -206,7 +214,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
                 return null;
             }
 
-            return JsonSerializer.Deserialize<ServiceHealthStatus>(value.ToString());
+            return JsonSerializer.Deserialize<ServiceHealthStatus>(value.ToString(), JsonOptions);
         }
         catch (Exception ex)
         {
@@ -265,17 +273,17 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
             {
                 InstanceId = heartbeat.ServiceId,
                 AppId = heartbeat.AppId,
-                Status = heartbeat.Status,
+                Status = heartbeat.Status.ToString().ToLowerInvariant(),
                 LastSeen = DateTimeOffset.UtcNow,
                 Services = heartbeat.Services?.Select(s => s.ServiceName).ToList() ?? new List<string>(),
-                Issues = heartbeat.Issues,
+                Issues = heartbeat.Issues?.ToList(),
                 MaxConnections = heartbeat.Capacity?.MaxConnections ?? 0,
                 CurrentConnections = heartbeat.Capacity?.CurrentConnections ?? 0,
                 CpuUsage = heartbeat.Capacity?.CpuUsage ?? 0,
                 MemoryUsage = heartbeat.Capacity?.MemoryUsage ?? 0
             };
 
-            var value = JsonSerializer.Serialize(healthStatus);
+            var value = JsonSerializer.Serialize(healthStatus, JsonOptions);
             await _database.StringSetAsync(key, value, HEARTBEAT_TTL);
 
             _logger.LogDebug(
@@ -307,7 +315,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
             var key = $"{ROUTING_KEY_PREFIX}{serviceName}";
             routing.LastUpdated = DateTimeOffset.UtcNow;
 
-            var value = JsonSerializer.Serialize(routing);
+            var value = JsonSerializer.Serialize(routing, JsonOptions);
             await _database.StringSetAsync(key, value, ROUTING_TTL);
 
             _logger.LogInformation(
@@ -355,7 +363,7 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
                         continue;
                     }
 
-                    var routing = JsonSerializer.Deserialize<ServiceRouting>(value.ToString());
+                    var routing = JsonSerializer.Deserialize<ServiceRouting>(value.ToString(), JsonOptions);
                     if (routing != null)
                     {
                         // Extract service name from key

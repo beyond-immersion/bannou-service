@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Services;
@@ -7,11 +8,21 @@ namespace BeyondImmersion.BannouService.Services;
 /// Default implementation of service-to-app-id mapping with dynamic updates via RabbitMQ.
 /// Defaults to "bannou" (omnipotent local node) for all services, but can be dynamically
 /// updated based on service discovery events for distributed production deployments.
+/// Supports atomic full-state updates from Orchestrator's FullServiceMappingsEvent.
 /// </summary>
 public class ServiceAppMappingResolver : IServiceAppMappingResolver
 {
-    private readonly ConcurrentDictionary<string, string> _serviceMappings = new();
+    // Static so mappings are shared across any accidentally duplicated DI containers (plugins vs host).
+    private static readonly ConcurrentDictionary<string, string> _serviceMappings = new();
+    private static long _currentVersion = 0;
+    private static readonly object _versionLock = new();
     private readonly ILogger<ServiceAppMappingResolver> _logger;
+
+    /// <inheritdoc/>
+    public event EventHandler<ServiceMappingChangedEventArgs>? MappingChanged;
+
+    /// <inheritdoc/>
+    public long CurrentVersion => _currentVersion;
 
     /// <inheritdoc/>
     public ServiceAppMappingResolver(ILogger<ServiceAppMappingResolver> logger)
@@ -32,6 +43,13 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
             return AppConstants.DEFAULT_APP_NAME;
         }
 
+        // Orchestrator is control-plane only and must always run on the default app-id.
+        if (string.Equals(serviceName, AppConstants.ORCHESTRATOR_SERVICE_NAME, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogTrace("Service {ServiceName} forced to control-plane app-id {DefaultAppId}", serviceName, AppConstants.DEFAULT_APP_NAME);
+            return AppConstants.DEFAULT_APP_NAME;
+        }
+
         // Check for dynamic mapping first
         if (_serviceMappings.TryGetValue(serviceName, out var mappedAppId))
         {
@@ -42,6 +60,14 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
         // Default to "bannou" (omnipotent local node)
         _logger.LogTrace("Service {ServiceName} using default app-id {DefaultAppId}", serviceName, AppConstants.DEFAULT_APP_NAME);
         return AppConstants.DEFAULT_APP_NAME;
+    }
+
+    /// <summary>
+    /// Clears all mappings. Intended for test isolation.
+    /// </summary>
+    internal static void ClearAllMappingsForTests()
+    {
+        _serviceMappings.Clear();
     }
 
     /// <summary>
@@ -61,12 +87,22 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
             return;
         }
 
-        var previousAppId = _serviceMappings.AddOrUpdate(serviceName, appId, (key, oldValue) => appId);
+        _serviceMappings.TryGetValue(serviceName, out var previousAppId);
+
+        _serviceMappings.AddOrUpdate(serviceName, appId, (key, oldValue) => appId);
 
         if (previousAppId != appId)
         {
             _logger.LogInformation("Updated service mapping: {ServiceName} -> {AppId} (was: {PreviousAppId})",
-                serviceName, appId, previousAppId);
+                serviceName, appId, previousAppId ?? "default");
+
+            // Raise event to notify listeners (e.g., ServiceHeartbeatManager)
+            MappingChanged?.Invoke(this, new ServiceMappingChangedEventArgs
+            {
+                ServiceName = serviceName,
+                NewAppId = appId,
+                PreviousAppId = previousAppId
+            });
         }
         else
         {
@@ -89,6 +125,14 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
         {
             _logger.LogInformation("Removed service mapping: {ServiceName} -> {AppId} (reverting to default)",
                 serviceName, removedAppId);
+
+            // Raise event to notify listeners - service reverts to default routing
+            MappingChanged?.Invoke(this, new ServiceMappingChangedEventArgs
+            {
+                ServiceName = serviceName,
+                NewAppId = null, // null means reverted to default
+                PreviousAppId = removedAppId
+            });
         }
         else
         {
@@ -102,5 +146,119 @@ public class ServiceAppMappingResolver : IServiceAppMappingResolver
     public IReadOnlyDictionary<string, string> GetAllMappings()
     {
         return _serviceMappings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    }
+
+    /// <summary>
+    /// Imports multiple service mappings at once, typically from a source container.
+    /// Used during startup of containers deployed by orchestrator.
+    /// </summary>
+    /// <param name="mappings">The mappings to import</param>
+    public void ImportMappings(IReadOnlyDictionary<string, string> mappings)
+    {
+        if (mappings == null || mappings.Count == 0)
+        {
+            _logger.LogDebug("No mappings to import");
+            return;
+        }
+
+        var importedCount = 0;
+        foreach (var kvp in mappings)
+        {
+            // Skip internal/info keys
+            if (kvp.Key.StartsWith("_"))
+                continue;
+
+            if (!string.IsNullOrWhiteSpace(kvp.Key) && !string.IsNullOrWhiteSpace(kvp.Value))
+            {
+                _serviceMappings[kvp.Key] = kvp.Value;
+                importedCount++;
+                _logger.LogDebug("Imported mapping: {ServiceName} -> {AppId}", kvp.Key, kvp.Value);
+            }
+        }
+
+        _logger.LogInformation("Imported {Count} service mappings from source", importedCount);
+    }
+
+    /// <summary>
+    /// Atomically replaces all service mappings with a new full state from Orchestrator.
+    /// Implements version checking to reject out-of-order events.
+    /// </summary>
+    public bool ReplaceAllMappings(IReadOnlyDictionary<string, string> mappings, string defaultAppId, long version)
+    {
+        if (mappings == null)
+        {
+            _logger.LogWarning("Received null mappings in ReplaceAllMappings");
+            return false;
+        }
+
+        // Version check with lock to prevent race conditions
+        lock (_versionLock)
+        {
+            if (version <= _currentVersion)
+            {
+                _logger.LogDebug(
+                    "Rejecting stale full mappings event v{Version} (current: v{CurrentVersion})",
+                    version, _currentVersion);
+                return false;
+            }
+
+            // Collect changes for event notification
+            var previousMappings = _serviceMappings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            var changedServices = new List<ServiceMappingChangedEventArgs>();
+
+            // Find services that were removed
+            foreach (var oldMapping in previousMappings)
+            {
+                if (!mappings.ContainsKey(oldMapping.Key))
+                {
+                    changedServices.Add(new ServiceMappingChangedEventArgs
+                    {
+                        ServiceName = oldMapping.Key,
+                        NewAppId = null, // Removed - reverts to default
+                        PreviousAppId = oldMapping.Value
+                    });
+                }
+            }
+
+            // Clear and replace atomically
+            _serviceMappings.Clear();
+
+            foreach (var kvp in mappings)
+            {
+                // Skip internal/info keys
+                if (kvp.Key.StartsWith("_"))
+                    continue;
+
+                if (!string.IsNullOrWhiteSpace(kvp.Key) && !string.IsNullOrWhiteSpace(kvp.Value))
+                {
+                    _serviceMappings[kvp.Key] = kvp.Value;
+
+                    // Check if this is a new or changed mapping
+                    if (!previousMappings.TryGetValue(kvp.Key, out var previousAppId) || previousAppId != kvp.Value)
+                    {
+                        changedServices.Add(new ServiceMappingChangedEventArgs
+                        {
+                            ServiceName = kvp.Key,
+                            NewAppId = kvp.Value,
+                            PreviousAppId = previousAppId
+                        });
+                    }
+                }
+            }
+
+            _currentVersion = version;
+
+            _logger.LogInformation(
+                "Applied full mappings v{Version}: {Count} services ({ChangedCount} changes)",
+                version, mappings.Count, changedServices.Count);
+
+            // Notify listeners of changes (outside the lock would be better, but okay for now)
+            foreach (var change in changedServices)
+            {
+                MappingChanged?.Invoke(this, change);
+            }
+
+            return true;
+        }
     }
 }

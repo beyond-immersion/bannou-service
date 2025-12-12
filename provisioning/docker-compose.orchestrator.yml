@@ -1,4 +1,4 @@
-# Orchestrator with Dapr Sidecar
+# Orchestrator with Standalone Dapr Container
 # The orchestrator connects directly to Redis and RabbitMQ for infrastructure
 # monitoring, but ALSO has a Dapr sidecar so other services can call its APIs
 # via Dapr service invocation (app-id: "orchestrator").
@@ -10,12 +10,12 @@
 #
 # Architecture:
 #   - Direct Redis/RabbitMQ for orchestrator's own infrastructure monitoring
-#   - Dapr sidecar for service-to-service communication (other services call orchestrator)
+#   - Standalone Dapr container for service-to-service communication
 #   - Docker socket access for container management operations
 
 services:
 
-  # Orchestrator instance - with Dapr sidecar for service invocation
+  # Orchestrator instance - with standalone Dapr container for service invocation
   bannou-orchestrator:
     image: bannou:latest
     build:
@@ -36,9 +36,9 @@ services:
       - BANNOU_RedisConnectionString=bannou-redis:6379
       - BANNOU_RabbitMqConnectionString=amqp://guest:guest@rabbitmq:5672
       - BANNOU_DockerHost=unix:///var/run/docker.sock
-      # Dapr endpoints - use 127.0.0.1 since sidecar shares network stack
-      - DAPR_HTTP_ENDPOINT=http://127.0.0.1:3500
-      - DAPR_GRPC_ENDPOINT=http://127.0.0.1:50001
+      # Dapr endpoints - use Docker DNS to reach standalone Dapr container
+      - DAPR_HTTP_ENDPOINT=http://orchestrator-dapr:3500
+      - DAPR_GRPC_ENDPOINT=http://orchestrator-dapr:50001
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"  # Docker socket access
       - "./certificates:/certificates"
@@ -57,10 +57,11 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-      placement:
+      orchestrator-dapr:
         condition: service_started
 
-  # Dapr sidecar for orchestrator - shares network stack
+  # Dapr sidecar for orchestrator - standalone container (NOT network_mode: service:X)
+  # Uses mDNS (default) for Dapr-to-Dapr service discovery
   orchestrator-dapr:
     image: "daprio/daprd:1.16.3"
     command: [
@@ -68,6 +69,7 @@ services:
       "--app-id", "orchestrator",
       "--app-port", "80",
       "--app-protocol", "http",
+      "--app-channel-address", "bannou-orchestrator",
       "--dapr-http-port", "3500",
       "--dapr-grpc-port", "50001",
       "--placement-host-address", "placement:50006",
@@ -79,10 +81,10 @@ services:
       - "./certificates:/certificates"
     environment:
       - "SSL_CERT_DIR=/certificates"
-    network_mode: "service:bannou-orchestrator"  # Share network stack with orchestrator
+    # NO network_mode - standalone container with own IP
     restart: always
     depends_on:
-      - bannou-orchestrator
+      - placement
 
 volumes:
   orchestrator-logs:

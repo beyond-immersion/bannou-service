@@ -47,6 +47,11 @@ cat << 'EOF'
   test-edge                 WebSocket integration tests (interactive)
   test-edge-daemon          WebSocket integration tests (CI mode)
 
+🧹 TEST CLEANUP
+  test-cleanup              Remove leftover test containers (interactive)
+  test-cleanup-dry          Show what would be removed (dry run)
+  test-cleanup-force        Force remove all test containers
+
 🔧 CODE QUALITY
   check                     Fast EditorConfig validation
   check-ci                  Full EditorConfig validation (matches CI)

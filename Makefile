@@ -23,6 +23,15 @@ all: ## Complete development cycle - clean, generate, format, build, test, docke
 	@$(MAKE) test-edge
 	@echo "✅ Complete development cycle finished successfully"
 
+quick: ## Quick development cycle - clean, generate, fix, build, unit tests (no Docker)
+	@echo "🚀 Running quick development cycle (no Docker tests)..."
+	@$(MAKE) clean
+	@$(MAKE) generate
+	@$(MAKE) fix
+	@$(MAKE) build
+	@$(MAKE) test-unit
+	@echo "✅ Quick development cycle finished successfully"
+
 # =============================================================================
 # ENVIRONMENT MANAGEMENT
 # =============================================================================
@@ -207,6 +216,9 @@ fix:
 	@$(MAKE) fix-config
 	@echo "✅ All formatting tasks complete"
 
+# Alias for fix (common convention)
+format: fix
+
 # Pre-push validation (recommended workflow)
 validate:
 	@echo "🔧 Running comprehensive pre-push validation..."
@@ -314,30 +326,33 @@ test-http:
 # Stack: base + services + ingress + test + test.edge
 # Note: Uses 'up -d' + 'wait' instead of '--exit-code-from' for consistency
 #       with HTTP tests and to avoid abort issues with container lifecycle.
-test-edge:
+# Dapr components host path for orchestrator dynamic deployments
+DAPR_COMPONENTS_HOST_PATH := $(PWD)/provisioning/dapr/components-http-test
+
+test-edge: test-pre-cleanup
 	@echo "🧪 Running Edge/WebSocket integration tests..."
-	@docker compose -p bannou-test-edge \
+	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		build --no-cache
-	@docker compose -p bannou-test-edge \
+	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		up -d
-	@( docker compose -p bannou-test-edge \
+	@( DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		logs -f bannou-edge-tester & ); \
-	docker compose -p bannou-test-edge \
+	DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
@@ -381,7 +396,7 @@ test-http-dev: test-logs-dir ## HTTP tests: keep containers running, save logs t
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.http.yml" \
-		up --build --no-cache -d
+		up --build -d
 	@echo "⏳ Waiting for test to complete (check logs with 'make test-http-logs')..."
 	@echo "💡 Use 'make test-http-down' when done to clean up containers"
 	@echo "💡 Use 'make test-http-logs' to view latest output"
@@ -419,14 +434,14 @@ test-http-down: ## Stop HTTP test containers
 test-edge-dev: test-logs-dir ## Edge tests: keep containers running, save logs to ./test-logs/
 	@echo "🧪 Starting Edge/WebSocket tests (dev mode - containers stay running)..."
 	@echo "📁 Logs will be saved to $(TEST_LOG_DIR)/"
-	docker compose -p bannou-test-edge \
+	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.edge.yml" \
 		build --no-cache
-	docker compose -p bannou-test-edge \
+	@DAPR_COMPONENTS_HOST_PATH=$(DAPR_COMPONENTS_HOST_PATH) docker compose -p bannou-test-edge \
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.services.yml" \
 		-f "./provisioning/docker-compose.ingress.yml" \
@@ -472,7 +487,7 @@ test-infra-dev: test-logs-dir ## Infrastructure tests: keep containers running, 
 		-f "./provisioning/docker-compose.yml" \
 		-f "./provisioning/docker-compose.test.yml" \
 		-f "./provisioning/docker-compose.test.infrastructure.yml" \
-		up --build --no-cache -d
+		up --build -d
 	@sleep 5
 	@$(MAKE) test-infra-logs
 	@echo "✅ Dev test containers running. Use 'make test-infra-down' to clean up."
@@ -570,6 +585,28 @@ test-orchestrator: ## Test all orchestrator APIs
 	@curl -s http://localhost:8090/orchestrator/containers | jq . || echo "❌ Failed"
 	@echo ""
 	@echo "✅ Orchestrator API tests completed"
+
+# =============================================================================
+# TEST CONTAINER CLEANUP
+# =============================================================================
+# Cleanup commands for removing leftover containers from failed/interrupted tests.
+# Targets both docker-compose managed containers and dynamically deployed
+# containers created by the orchestrator service.
+# =============================================================================
+
+test-cleanup: ## Remove leftover test containers (interactive)
+	@scripts/cleanup-test-containers.sh
+
+test-cleanup-dry: ## Show what test containers would be removed (dry run)
+	@scripts/cleanup-test-containers.sh --dry-run
+
+test-cleanup-force: ## Force remove all test containers without confirmation
+	@scripts/cleanup-test-containers.sh --force
+
+# Pre-test cleanup (runs before test targets to ensure clean state)
+test-pre-cleanup:
+	@echo "🧹 Pre-test cleanup: removing stale test containers..."
+	@scripts/cleanup-test-containers.sh --force 2>/dev/null || true
 
 # =============================================================================
 # GIT TAGGING

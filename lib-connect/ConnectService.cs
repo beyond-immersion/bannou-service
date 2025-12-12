@@ -57,7 +57,13 @@ public class ConnectService : IConnectService
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
         _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
-        _httpClient = new HttpClient(); // Reusable HttpClient for Dapr service invocation
+        _httpClient = new HttpClient
+        {
+            // Set timeout to 120 seconds to ensure Connect service doesn't hang indefinitely
+            // This should be longer than client timeouts (60s) but shorter than infinite
+            // If Dapr/target service doesn't respond, we'll get TaskCanceledException
+            Timeout = TimeSpan.FromSeconds(120)
+        };
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _sessionManager = sessionManager; // Optional Dapr-based session management
@@ -227,83 +233,47 @@ public class ConnectService : IConnectService
         }
     }
 
-    /// <summary>
-    /// Publishes a service mapping update event to notify all services of routing changes.
-    /// Used when services come online or change their deployment topology.
-    /// </summary>
-    private async Task PublishServiceMappingUpdateAsync(string serviceName, string appId, string action = "update")
-    {
-        try
-        {
-            var mappingEvent = new
-            {
-                EventId = Guid.NewGuid().ToString(),
-                Timestamp = DateTime.UtcNow,
-                ServiceName = serviceName,
-                AppId = appId,
-                Action = action,
-                Metadata = new Dictionary<string, object>
-                {
-                    { "source", "connect-service" },
-                    { "region", Environment.GetEnvironmentVariable("SERVICE_REGION") ?? "default" }
-                }
-            };
-
-            await _daprClient.PublishEventAsync(
-                "bannou-pubsub",
-                "bannou-service-mappings",
-                mappingEvent);
-
-            _logger.LogInformation("Published service mapping update: {Service} -> {AppId} ({Action})",
-                serviceName, appId, action);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish service mapping update for {Service}", serviceName);
-            // Non-critical - continue operation even if event publishing fails
-        }
-    }
-
-    // REMOVED: DiscoverAPIsAsync - API discovery belongs to Permissions service, not Connect service
+    // REMOVED: PublishServiceMappingUpdateAsync - Service mapping events belong to Orchestrator
+    // REMOVED: GetServiceMappingsAsync - Service routing is now in Orchestrator API
+    // REMOVED: DiscoverAPIsAsync - API discovery belongs to Permissions service
     // Connect service ONLY handles WebSocket connections and message routing
 
-
-    // REMOVED: ParseMethod, GetServiceCategory, GetPreferredChannel methods
-    // These were only used by the removed DiscoverAPIsAsync method
-
     /// <summary>
-    /// Gets current service routing information for monitoring/debugging.
-    /// Shows how services are mapped to app-ids in the current deployment.
+    /// Gets the client capability manifest (GUID to API mappings) for the authenticated session.
+    /// Each client receives unique GUIDs for security isolation.
     /// </summary>
-    public Task<(StatusCodes, ServiceMappingsResponse?)> GetServiceMappingsAsync(
-        GetServiceMappingsRequest body,
+    public Task<(StatusCodes, ClientCapabilitiesResponse?)> GetClientCapabilitiesAsync(
+        GetClientCapabilitiesRequest body,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var mappings = _appMappingResolver.GetAllMappings();
+            // For now, return a placeholder response until full capability system is integrated
+            // TODO: Integrate with Permissions service to get actual capabilities for the session
+            _logger.LogDebug("GetClientCapabilitiesAsync called with serviceFilter: {Filter}",
+                body.ServiceFilter ?? "(none)");
 
-            var response = new ServiceMappingsResponse
+            // This would normally:
+            // 1. Get the session ID from context/auth
+            // 2. Query Permissions service for session capabilities
+            // 3. Generate client-salted GUIDs for each capability
+            // 4. Return the manifest
+
+            var response = new ClientCapabilitiesResponse
             {
-                Mappings = new Dictionary<string, string>(mappings),
-                DefaultMapping = "bannou",
-                GeneratedAt = DateTimeOffset.UtcNow,
-                TotalServices = mappings.Count
+                SessionId = "placeholder-session-id",
+                Capabilities = new List<ClientCapability>(),
+                Version = 1,
+                GeneratedAt = DateTimeOffset.UtcNow
             };
 
-            // Add default mapping info if no custom mappings exist
-            if (response.Mappings.Count == 0)
-            {
-                response.Mappings["_info"] = "All services routing to default 'bannou' app-id";
-            }
-
-            _logger.LogDebug("Returning {Count} service mappings", response.TotalServices);
-            return Task.FromResult<(StatusCodes, ServiceMappingsResponse?)>(((StatusCodes, ServiceMappingsResponse?))(StatusCodes.OK, response));
+            _logger.LogInformation("Returning client capabilities (placeholder implementation)");
+            return Task.FromResult<(StatusCodes, ClientCapabilitiesResponse?)>((StatusCodes.OK, response));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving service mappings");
-            return Task.FromResult<(StatusCodes, ServiceMappingsResponse?)>((StatusCodes.InternalServerError, null));
+            _logger.LogError(ex, "Error retrieving client capabilities");
+            return Task.FromResult<(StatusCodes, ClientCapabilitiesResponse?)>((StatusCodes.InternalServerError, null));
         }
     }
 
@@ -311,7 +281,7 @@ public class ConnectService : IConnectService
     /// Validates JWT token and extracts session ID and user roles.
     /// Returns a tuple with session ID and roles for capability initialization.
     /// </summary>
-    public async Task<(string? SessionId, ICollection<string>? Roles)> ValidateJWTAndExtractSessionAsync(
+    public async Task<(string? SessionId, ICollection<string>? Roles, ICollection<string>? Authorizations)> ValidateJWTAndExtractSessionAsync(
         string authorization,
         CancellationToken cancellationToken)
     {
@@ -323,7 +293,7 @@ public class ConnectService : IConnectService
             if (string.IsNullOrEmpty(authorization))
             {
                 _logger.LogWarning("Authorization header missing or empty");
-                return (null, null);
+                return (null, null, null);
             }
 
             // Handle "Bearer <token>" format
@@ -341,20 +311,21 @@ public class ConnectService : IConnectService
                 if (validationResponse == null)
                 {
                     _logger.LogError("Auth service returned null validation response");
-                    return (null, null);
+                    return (null, null, null);
                 }
 
-                _logger.LogDebug("Token validation result - Valid: {Valid}, SessionId: {SessionId}, AccountId: {AccountId}, RolesCount: {RolesCount}",
+                _logger.LogDebug("Token validation result - Valid: {Valid}, SessionId: {SessionId}, AccountId: {AccountId}, RolesCount: {RolesCount}, AuthorizationsCount: {AuthorizationsCount}",
                     validationResponse.Valid,
                     validationResponse.SessionId ?? "(null)",
                     validationResponse.AccountId,
-                    validationResponse.Roles?.Count ?? 0);
+                    validationResponse.Roles?.Count ?? 0,
+                    validationResponse.Authorizations?.Count ?? 0);
 
                 if (validationResponse.Valid && !string.IsNullOrEmpty(validationResponse.SessionId))
                 {
                     _logger.LogDebug("JWT validated successfully, SessionId: {SessionId}", validationResponse.SessionId);
-                    // Return both session ID and roles for capability initialization
-                    return (validationResponse.SessionId, validationResponse.Roles);
+                    // Return session ID, roles, and authorizations for capability initialization
+                    return (validationResponse.SessionId, validationResponse.Roles, validationResponse.Authorizations);
                 }
                 else
                 {
@@ -370,7 +341,7 @@ public class ConnectService : IConnectService
                 if (string.IsNullOrEmpty(reconnectionToken))
                 {
                     _logger.LogWarning("Empty reconnection token provided");
-                    return (null, null);
+                    return (null, null, null);
                 }
 
                 // Use Redis session manager to validate reconnection token
@@ -386,8 +357,8 @@ public class ConnectService : IConnectService
                         if (restoredState != null)
                         {
                             _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
-                            // Return stored roles from reconnection state
-                            return (sessionId, restoredState.UserRoles);
+                            // Return stored roles and authorizations from reconnection state
+                            return (sessionId, restoredState.UserRoles, restoredState.Authorizations);
                         }
                     }
 
@@ -398,16 +369,16 @@ public class ConnectService : IConnectService
                     _logger.LogWarning("Reconnection requires Redis session manager - not configured");
                 }
 
-                return (null, null);
+                return (null, null, null);
             }
 
             _logger.LogWarning("Authorization format not recognized (expected 'Bearer' or 'Reconnect' prefix)");
-            return (null, null);
+            return (null, null, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "JWT validation failed with exception");
-            return (null, null);
+            return (null, null, null);
         }
     }
 
@@ -446,6 +417,7 @@ public class ConnectService : IConnectService
         WebSocket webSocket,
         string sessionId,
         ICollection<string>? userRoles,
+        ICollection<string>? authorizations,
         CancellationToken cancellationToken)
     {
         // Create connection state with service mappings from discovery
@@ -472,8 +444,9 @@ public class ConnectService : IConnectService
             // Determine the highest-priority role for capability initialization
             // Priority: admin > user > anonymous
             var role = DetermineHighestPriorityRole(userRoles);
-            _logger.LogInformation("No existing mappings for session {SessionId}, initializing capabilities for role {Role}", sessionId, role);
-            sessionMappings = await InitializeSessionCapabilitiesAsync(sessionId, role, cancellationToken);
+            _logger.LogInformation("No existing mappings for session {SessionId}, initializing capabilities for role {Role} with {AuthCount} authorizations",
+                sessionId, role, authorizations?.Count ?? 0);
+            sessionMappings = await InitializeSessionCapabilitiesAsync(sessionId, role, authorizations, cancellationToken);
         }
 
         if (sessionMappings != null)
@@ -504,7 +477,8 @@ public class ConnectService : IConnectService
                     SessionId = sessionId,
                     ConnectedAt = DateTimeOffset.UtcNow,
                     LastActivity = DateTimeOffset.UtcNow,
-                    UserRoles = userRoles?.ToList()
+                    UserRoles = userRoles?.ToList(),
+                    Authorizations = authorizations?.ToList()
                 };
                 await _sessionManager.SetConnectionStateAsync(sessionId, connectionStateData);
                 _logger.LogDebug("Created connection state in Redis for session {SessionId}", sessionId);
@@ -800,7 +774,8 @@ public class ConnectService : IConnectService
                 request.Headers.Add("dapr-app-id", appId);
                 request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
-                _logger.LogInformation("Created Dapr HTTP request: Method={Method}, URI={Uri}, AppId={AppId}",
+                // Use Warning level to ensure visibility even when app logging is set to Warning
+                _logger.LogWarning("[ROUTING] WebSocket -> Dapr HTTP: {Method} {Uri} AppId={AppId}",
                     request.Method, daprUrl, appId);
 
                 // Pass JSON payload directly to service - zero-copy forwarding
@@ -808,10 +783,20 @@ public class ConnectService : IConnectService
                 if (!string.IsNullOrWhiteSpace(jsonPayload) && httpMethod == "POST")
                 {
                     request.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+                    _logger.LogDebug("Request body: {Body}", jsonPayload.Length > 500 ? jsonPayload[..500] + "..." : jsonPayload);
                 }
+
+                // Track timing for long-running requests
+                var requestStartTime = DateTimeOffset.UtcNow;
+                _logger.LogDebug("Sending HTTP request to Dapr at {StartTime}", requestStartTime);
 
                 // Invoke the service via direct HTTP (preserves full path)
                 httpResponse = await _httpClient.SendAsync(request, cancellationToken);
+
+                var requestDuration = DateTimeOffset.UtcNow - requestStartTime;
+                // Use Warning level for response timing to ensure visibility in CI
+                _logger.LogWarning("[ROUTING] Dapr HTTP response in {DurationMs}ms: {StatusCode}",
+                    requestDuration.TotalMilliseconds, (int)httpResponse.StatusCode);
 
                 // Read response content
                 responseJson = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
@@ -828,6 +813,51 @@ public class ConnectService : IConnectService
                     _logger.LogWarning("Service {Service} returned non-success status {StatusCode}: {ResponsePreview}",
                         serviceName, (int)httpResponse.StatusCode,
                         responseJson?.Substring(0, Math.Min(500, responseJson?.Length ?? 0)) ?? "(empty body)");
+                }
+            }
+            catch (TaskCanceledException tcEx) when (tcEx.InnerException is TimeoutException)
+            {
+                // HTTP client timeout reached (120 seconds)
+                _logger.LogError("Dapr HTTP request timed out (120s) for {Service} {Method} {Path}",
+                    serviceName, httpMethod, path);
+
+                var errorPayload = new
+                {
+                    error = "Service request timeout",
+                    statusCode = 504,
+                    message = $"Request to {serviceName} timed out after 120 seconds"
+                };
+                responseJson = JsonSerializer.Serialize(errorPayload);
+            }
+            catch (TaskCanceledException tcEx)
+            {
+                // Either cancellation was requested or timeout without inner TimeoutException
+                var isTimeout = !cancellationToken.IsCancellationRequested;
+                if (isTimeout)
+                {
+                    _logger.LogError("Dapr HTTP request timed out for {Service} {Method} {Path}",
+                        serviceName, httpMethod, path);
+
+                    var errorPayload = new
+                    {
+                        error = "Service request timeout",
+                        statusCode = 504,
+                        message = $"Request to {serviceName} timed out"
+                    };
+                    responseJson = JsonSerializer.Serialize(errorPayload);
+                }
+                else
+                {
+                    _logger.LogWarning(tcEx, "Dapr HTTP request cancelled for {Service} {Method} {Path}",
+                        serviceName, httpMethod, path);
+
+                    var errorPayload = new
+                    {
+                        error = "Request cancelled",
+                        statusCode = 499,
+                        message = "Request was cancelled"
+                    };
+                    responseJson = JsonSerializer.Serialize(errorPayload);
                 }
             }
             catch (HttpRequestException httpEx)
@@ -1358,13 +1388,15 @@ public class ConnectService : IConnectService
     internal async Task<Dictionary<string, Guid>> InitializeSessionCapabilitiesAsync(
         string sessionId,
         string? role = "anonymous",
+        ICollection<string>? authorizations = null,
         CancellationToken cancellationToken = default)
     {
         var serviceMappings = new Dictionary<string, Guid>();
 
         try
         {
-            _logger.LogInformation("Initializing capabilities for session {SessionId} with role {Role}", sessionId, role);
+            _logger.LogInformation("Initializing capabilities for session {SessionId} with role {Role} and {AuthCount} authorizations",
+                sessionId, role, authorizations?.Count ?? 0);
 
             // Initialize session in Permissions service with role
             if (role != null && role != "anonymous")
@@ -1374,6 +1406,35 @@ public class ConnectService : IConnectService
                     SessionId = sessionId,
                     NewRole = role
                 }, cancellationToken);
+            }
+
+            // Set authorization states for subscription-based access
+            // Authorization strings are in format "{stubName}:{state}" (e.g., "arcadia:authorized")
+            if (authorizations != null)
+            {
+                foreach (var auth in authorizations)
+                {
+                    var parts = auth.Split(':');
+                    if (parts.Length == 2)
+                    {
+                        var serviceId = parts[0];  // stubName serves as serviceId for authorization
+                        var state = parts[1];
+
+                        await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
+                        {
+                            SessionId = sessionId,
+                            ServiceId = serviceId,
+                            NewState = state
+                        }, cancellationToken);
+
+                        _logger.LogDebug("Set authorization state '{State}' for service '{ServiceId}' on session {SessionId}",
+                            state, serviceId, sessionId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Invalid authorization format: '{Authorization}', expected 'stubName:state'", auth);
+                    }
+                }
             }
 
             // Get available capabilities from Permissions service
@@ -1720,6 +1781,29 @@ public class ConnectService : IConnectService
             _logger.LogWarning(ex, "Error disconnecting session {SessionId}: {Reason}", sessionId, reason);
             // Still try to remove from connection manager even if close fails
             _connectionManager.RemoveConnection(sessionId);
+        }
+    }
+
+    #endregion
+
+    #region Permission Registration
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Overrides the default IDaprService implementation to use generated permission data.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Connect service permissions... (starting)");
+        try
+        {
+            await ConnectPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+            _logger.LogInformation("Connect service permissions registered via event (complete)");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to register Connect service permissions");
+            throw;
         }
     }
 

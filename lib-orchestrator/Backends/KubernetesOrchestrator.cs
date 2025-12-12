@@ -649,6 +649,44 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         }
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Listing infrastructure services (Kubernetes mode)");
+
+        try
+        {
+            // In Kubernetes mode, identify infrastructure by:
+            // 1. Services/Deployments with specific labels
+            // 2. Well-known infrastructure patterns in the same namespace
+            var infrastructurePatterns = new[] { "redis", "rabbitmq", "mysql", "mariadb", "postgres", "mongodb", "placement", "dapr" };
+
+            var deployments = await _client.ListNamespacedDeploymentAsync(_namespace, cancellationToken: cancellationToken);
+
+            var infrastructureServices = deployments.Items
+                .Where(d =>
+                {
+                    var name = d.Metadata.Name ?? "";
+                    return infrastructurePatterns.Any(pattern =>
+                        name.Contains(pattern, StringComparison.OrdinalIgnoreCase));
+                })
+                .Select(d => d.Metadata.Name ?? "")
+                .ToList();
+
+            _logger.LogInformation(
+                "Found {Count} infrastructure services: {Services}",
+                infrastructureServices.Count,
+                string.Join(", ", infrastructureServices));
+
+            return infrastructureServices;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing infrastructure services");
+            return Array.Empty<string>();
+        }
+    }
+
     public void Dispose()
     {
         _client.Dispose();

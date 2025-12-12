@@ -91,6 +91,19 @@ public partial interface IPermissionsClient : BeyondImmersion.BannouService.Serv
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
+    /// Clear session state for specific service
+    /// </summary>
+    /// <remarks>
+    /// Removes state for a specific service from the session and recompiles permissions.
+    /// <br/>If states list is provided, only clears if current state matches one of the values.
+    /// <br/>If states list is empty or not provided, clears the state unconditionally.
+    /// </remarks>
+    /// <returns>Session state cleared and permissions recompiled</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<SessionUpdateResponse> ClearSessionStateAsync(ClearSessionStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
     /// Get complete session information
     /// </summary>
     /// <remarks>
@@ -547,6 +560,91 @@ public partial class PermissionsClient : BeyondImmersion.BannouService.ServiceCl
 
                 // Operation Path: "permissions/update-session-role"
                 urlBuilder_.Append("permissions/update-session-role");
+
+                PrepareRequest(client_, request_, urlBuilder_);
+
+                var url_ = urlBuilder_.ToString();
+                request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    ProcessResponse(client_, response_);
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<SessionUpdateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            if (disposeClient_)
+                client_.Dispose();
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Clear session state for specific service
+    /// </summary>
+    /// <remarks>
+    /// Removes state for a specific service from the session and recompiles permissions.
+    /// <br/>If states list is provided, only clears if current state matches one of the values.
+    /// <br/>If states list is empty or not provided, clears the state unconditionally.
+    /// </remarks>
+    /// <returns>Session state cleared and permissions recompiled</returns>
+    /// <exception cref="ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<SessionUpdateResponse> ClearSessionStateAsync(ClearSessionStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        var client_ = await CreateHttpClientAsync(cancellationToken).ConfigureAwait(false);
+        var disposeClient_ = true;
+        try
+        {
+            using (var request_ = new System.Net.Http.HttpRequestMessage())
+            {
+                var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
+                var content_ = new System.Net.Http.ByteArrayContent(json_);
+                content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+                request_.Content = content_;
+                request_.Method = new System.Net.Http.HttpMethod("POST");
+                request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                var urlBuilder_ = new System.Text.StringBuilder();
+                                if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
+
+                // Operation Path: "permissions/clear-session-state"
+                urlBuilder_.Append("permissions/clear-session-state");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 

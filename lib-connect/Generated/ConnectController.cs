@@ -45,17 +45,28 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InternalProxyResponse>> ProxyInternalRequestAsync(InternalProxyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Get current service routing mappings
+    /// Get client capability manifest (GUID → API mappings)
     /// </summary>
 
     /// <remarks>
-    /// Returns current service-to-app-id routing mappings for monitoring and debugging.
-    /// <br/>Shows how services are mapped in the current deployment topology.
+    /// Returns the capability manifest for the authenticated client's session.
+    /// <br/>Maps client-salted GUIDs to available API endpoints based on the client's
+    /// <br/>current permissions and session state.
+    /// <br/>
+    /// <br/>**Security**: Each client receives unique GUIDs for the same API endpoints.
+    /// <br/>This prevents cross-session exploitation and enables per-client rate limiting.
+    /// <br/>
+    /// <br/>**Dynamic Updates**: Capabilities may change during a session when:
+    /// <br/>- Role changes occur (admin promotion, etc.)
+    /// <br/>- Subscription status changes
+    /// <br/>- Session state transitions
+    /// <br/>
+    /// <br/>Clients should listen for capability update events via WebSocket to stay current.
     /// </remarks>
 
-    /// <returns>Service mappings retrieved successfully</returns>
+    /// <returns>Client capabilities retrieved successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceMappingsResponse>> GetServiceMappingsAsync(GetServiceMappingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ClientCapabilitiesResponse>> GetClientCapabilitiesAsync(GetClientCapabilitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Establish WebSocket connection
@@ -174,19 +185,30 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     }
 
     /// <summary>
-    /// Get current service routing mappings
+    /// Get client capability manifest (GUID → API mappings)
     /// </summary>
     /// <remarks>
-    /// Returns current service-to-app-id routing mappings for monitoring and debugging.
-    /// <br/>Shows how services are mapped in the current deployment topology.
+    /// Returns the capability manifest for the authenticated client's session.
+    /// <br/>Maps client-salted GUIDs to available API endpoints based on the client's
+    /// <br/>current permissions and session state.
+    /// <br/>
+    /// <br/>**Security**: Each client receives unique GUIDs for the same API endpoints.
+    /// <br/>This prevents cross-session exploitation and enables per-client rate limiting.
+    /// <br/>
+    /// <br/>**Dynamic Updates**: Capabilities may change during a session when:
+    /// <br/>- Role changes occur (admin promotion, etc.)
+    /// <br/>- Subscription status changes
+    /// <br/>- Session state transitions
+    /// <br/>
+    /// <br/>Clients should listen for capability update events via WebSocket to stay current.
     /// </remarks>
-    /// <returns>Service mappings retrieved successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("service-mappings")]
+    /// <returns>Client capabilities retrieved successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("client-capabilities")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceMappingsResponse>> GetServiceMappings([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetServiceMappingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ClientCapabilitiesResponse>> GetClientCapabilities([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetClientCapabilitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetServiceMappingsAsync(body, cancellationToken);
+        var (statusCode, result) = await _implementation.GetClientCapabilitiesAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 

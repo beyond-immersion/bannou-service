@@ -162,6 +162,13 @@ public partial class RegisterResponse
     [System.Text.Json.Serialization.JsonPropertyName("refreshToken")]
     public string? RefreshToken { get; set; } = default!;
 
+    /// <summary>
+    /// WebSocket endpoint for Connect service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("connectUrl")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Uri ConnectUrl { get; set; } = default!;
+
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]
@@ -347,6 +354,14 @@ public partial class ValidateTokenResponse
 
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+
+    /// <summary>
+    /// Authorization strings from active subscriptions.
+    /// <br/>Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorizations")]
+    public System.Collections.Generic.ICollection<string> Authorizations { get; set; } = default!;
 
     /// <summary>
     /// Seconds until expiration
@@ -641,6 +656,91 @@ public enum SessionInvalidatedEventReason
 
     [System.Runtime.Serialization.EnumMember(Value = @"session_expired")]
     Session_expired = 4,
+
+}
+
+/// <summary>
+/// Published when a session's roles or authorizations change.
+/// <br/>Permissions service subscribes to update capability compilation.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionUpdatedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the account whose session changed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the session that changed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Current roles for the session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roles")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<string> Roles { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Current authorization strings (e.g., ["arcadia:authorized"])
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorizations")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<string> Authorizations { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionUpdatedEventReason Reason { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Reason for session update
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SessionUpdatedEventReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"role_changed")]
+    Role_changed = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"authorization_changed")]
+    Authorization_changed = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"subscription_changed")]
+    Subscription_changed = 2,
 
 }
 

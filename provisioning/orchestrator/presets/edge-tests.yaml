@@ -16,7 +16,6 @@ topology:
         - connect
         - game-session
         - permissions
-        - orchestrator
         - website
         - testing
       replicas: 1

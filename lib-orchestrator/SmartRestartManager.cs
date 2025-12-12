@@ -129,7 +129,7 @@ public class SmartRestartManager : ISmartRestartManager
                 ServiceName = request.ServiceName,
                 Reason = $"Smart restart - previous status: {previousStatus}",
                 Forced = request.Force,
-                NewEnvironment = request.Environment != null ? new Dictionary<string, string>(request.Environment) : null
+                NewEnvironment = request.Environment != null ? new Dictionary<string, string>(request.Environment) : new Dictionary<string, string>()
             });
 
             return new ServiceRestartResult

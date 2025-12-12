@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using ServiceHealthStatus = BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus;
 

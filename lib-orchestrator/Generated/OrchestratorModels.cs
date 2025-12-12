@@ -78,6 +78,81 @@ public partial class ServiceHealthRequest
 }
 
 /// <summary>
+/// Request to get service routing mappings (empty body allowed)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetServiceRoutingRequest
+{
+
+    /// <summary>
+    /// Optional filter by service name prefix
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceFilter")]
+    public string? ServiceFilter { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServiceRoutingResponse
+{
+
+    /// <summary>
+    /// Map of service names to Dapr app-id routing destinations.
+    /// <br/>Example: { "accounts": "bannou", "behavior": "npc-processing-01" }
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mappings")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.IDictionary<string, string> Mappings { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
+
+    /// <summary>
+    /// Default app-id used when no specific mapping exists
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("defaultAppId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string DefaultAppId { get; set; } = "bannou";
+
+    /// <summary>
+    /// When this routing information was generated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("generatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset GeneratedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of services with routing mappings
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalServices")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int TotalServices { get; set; } = default!;
+
+    /// <summary>
+    /// Current deployment identifier (if environment is deployed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deploymentId")]
+    public string? DeploymentId { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
 /// Request to list available backends (empty body allowed)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1581,6 +1656,14 @@ public enum TeardownMode
 public partial class TeardownRequest
 {
 
+    /// <summary>
+    /// When true, simulates teardown without actually stopping or removing containers.
+    /// <br/>Returns what would be torn down. ALWAYS use dryRun=true first to preview the impact.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
+    public bool DryRun { get; set; } = false;
+
     [System.Text.Json.Serialization.JsonPropertyName("mode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public TeardownMode Mode { get; set; } = BeyondImmersion.BannouService.Orchestrator.TeardownMode.Graceful;
@@ -1602,6 +1685,16 @@ public partial class TeardownRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removeNetworks")]
     public bool RemoveNetworks { get; set; } = false;
+
+    /// <summary>
+    /// When true, also removes support infrastructure (Redis, RabbitMQ, MySQL, etc.).
+    /// <br/>This is determined by scanning compose files or finding containers in the same
+    /// <br/>Docker swarm/Kubernetes namespace as bannou services. USE WITH EXTREME CAUTION -
+    /// <br/>this will destroy all data and require a full re-deployment.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeInfrastructure")]
+    public bool IncludeInfrastructure { get; set; } = false;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1642,6 +1735,12 @@ public partial class TeardownResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedNetworks")]
     public System.Collections.Generic.ICollection<string> RemovedNetworks { get; set; } = default!;
+
+    /// <summary>
+    /// Infrastructure services that were removed (Redis, RabbitMQ, MySQL, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("removedInfrastructure")]
+    public System.Collections.Generic.ICollection<string> RemovedInfrastructure { get; set; } = default!;
 
     /// <summary>
     /// Non-fatal errors during teardown

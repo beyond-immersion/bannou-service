@@ -1,8 +1,8 @@
 # Orchestrator Service Design
 
-**Version**: 2.3.0
-**Last Updated**: 2025-11-29
-**Status**: Core Implementation Complete + Unit Tests (28 passing) + Service Mapping Gap Identified
+**Version**: 2.4.0
+**Last Updated**: 2025-12-11
+**Status**: Core Implementation 95% Complete - Standalone Dapr Architecture + Preset System + Heartbeat Deployment Validation
 
 ---
 
@@ -11,7 +11,8 @@
 1. [Executive Summary](#executive-summary)
 2. [Problem Statement & Root Cause](#problem-statement--root-cause)
 3. [Architecture Overview](#architecture-overview)
-4. [Backend Priority System](#backend-priority-system)
+4. [Architectural Evolution (December 2025)](#architectural-evolution-december-2025)
+5. [Backend Priority System](#backend-priority-system)
 5. [Core Components](#core-components)
 6. [Interface-Based Architecture](#interface-based-architecture)
 7. [Unit Testing](#unit-testing)
@@ -156,6 +157,79 @@ Dapr was designed for Kubernetes environments where:
 - Manages primary instance via Docker/Kubernetes APIs
 - Executes tests via API calls and collects results
 - **Direct connections** to Redis + RabbitMQ (not via Dapr components)
+
+---
+
+## Architectural Evolution (December 2025)
+
+The orchestrator went through significant iteration during development to work around Dapr and Docker Compose limitations. This section documents the key decisions and their rationale.
+
+### Key Decisions Summary
+
+| Decision | Previous Approach | Current Approach | Rationale |
+|----------|-------------------|------------------|-----------|
+| **Dapr sidecar architecture** | `network_mode:service` (shared namespace) | Standalone containers | Dapr compatibility issues with shared network namespaces |
+| **Service discovery** | Consul | mDNS (Dapr default) | Consul was unnecessary complexity - mDNS works on Docker bridge |
+| **Infrastructure resolution** | Docker DNS (127.0.0.11) | ExtraHosts IP injection | Docker DNS unreliable for dynamically created containers |
+| **Orchestrator communication** | Via Dapr components | Direct Redis/RabbitMQ | Chicken-and-egg: orchestrator must start before Dapr |
+
+### Standalone Dapr Sidecar Architecture
+
+The original design attempted to use `network_mode: service:bannou` for Dapr sidecars, which would share the network namespace with the application container. This approach failed due to:
+
+1. **Dapr Compatibility**: Dapr doesn't fully support shared network namespaces in Docker Compose
+2. **Port Conflicts**: Multiple sidecars can't share the same network namespace
+3. **Debugging Complexity**: Harder to diagnose network issues with shared namespaces
+
+**Current Pattern**: Each application container gets a paired standalone Dapr sidecar:
+
+```
+[App Container: bannou]     [Dapr Sidecar: bannou-dapr]
+   - Port 80                   - Port 3500 (HTTP)
+   - DAPR_HTTP_ENDPOINT=       - Port 50001 (gRPC)
+     http://bannou-dapr:3500   - placement-host-address=placement:50006
+```
+
+### mDNS vs Consul for Dapr Discovery
+
+Consul was initially considered for service discovery between Dapr sidecars. However:
+
+1. **Unnecessary Complexity**: mDNS is Dapr's default and works on Docker bridge networks
+2. **Additional Infrastructure**: Consul requires its own container and configuration
+3. **Development Overhead**: Consul adds complexity without meaningful benefit for our use case
+
+**Current Pattern**: Let Dapr use its default mDNS resolver. No additional configuration needed.
+
+### ExtraHosts IP Injection Pattern
+
+Docker's embedded DNS (127.0.0.11) proved unreliable for dynamically created containers. The DockerComposeOrchestrator now:
+
+1. **Discovers Infrastructure IPs**: Scans running containers to find Redis, RabbitMQ, MySQL, placement service
+2. **Injects ExtraHosts**: Adds hostname→IP mappings when creating new containers
+3. **Maintains Fallback Chain**: Multiple discovery strategies with graceful fallback
+
+```csharp
+// DockerComposeOrchestrator.cs - ExtraHosts injection
+var extraHosts = new List<string>
+{
+    $"redis:{redisIp}",
+    $"rabbitmq:{rabbitmqIp}",
+    $"mysql:{mysqlIp}",
+    $"placement:{placementIp}"
+};
+```
+
+### Direct Redis/RabbitMQ Connections
+
+The orchestrator bypasses Dapr for infrastructure connections because:
+
+1. **Startup Order**: Orchestrator must start before Dapr infrastructure exists
+2. **Infrastructure Monitoring**: Need to check Redis/RabbitMQ health even when Dapr is down
+3. **Heartbeat Publishing**: Services write heartbeats directly to Redis for NGINX routing
+
+**Redis Key Patterns**:
+- `service:heartbeat:{appId}` - TTL 90s, health status per service instance
+- `service:routing:{serviceName}` - TTL 5min, current app-id for service
 
 ---
 
@@ -391,93 +465,142 @@ public async Task GetInfrastructureHealthAsync_ReturnsHealthyStatus_WhenAllCompo
 
 ## Service Mapping Architecture
 
-### Current State
+### Full-State Mapping Architecture (December 2025)
 
-The orchestrator monitors service heartbeats and manages container topology. However, there's a **critical gap** in the service mapping event flow.
+The orchestrator uses a **full-state mapping event pattern** where it publishes the complete set of all service-to-app-id mappings atomically, rather than individual events per service change. This prevents race conditions and ensures all bannou instances have consistent routing tables.
+
+### Event Flow
+
+```
+[bannou-1] --heartbeat-->
+[bannou-2] --heartbeat-->  [Orchestrator] --> [Redis source of truth]
+[bannou-3] --heartbeat-->        |
+                                 v
+                    [Every 30s OR on routing change]
+                                 |
+                                 v
+                    [Publish FullServiceMappingsEvent]
+                    {mappings: {all services}, version: N}
+                                 |
+                    +------------+------------+
+                    v            v            v
+              [bannou-1]   [bannou-2]   [bannou-3]
+              _resolver.ReplaceAllMappings(...)
+              (atomic update, version checked)
+```
+
+### ServiceHealthMonitor
+
+`ServiceHealthMonitor` is the central component for service routing management:
+
+1. **Receives heartbeats** from all bannou instances
+2. **Writes routing to Redis** (`service:routing:{serviceName}` keys)
+3. **Publishes FullServiceMappingsEvent** every 30 seconds AND immediately on routing changes
+4. **Protects explicit routing** - heartbeats cannot overwrite orchestrator-set routings
+
+```csharp
+// Set routing during deployment (authoritative)
+await _healthMonitor.SetServiceRoutingAsync("auth", "bannou-auth");
+
+// Remove routing during teardown
+await _healthMonitor.RemoveServiceRoutingAsync("auth");
+
+// Full mappings published automatically on changes
+```
 
 ### ServiceAppMappingResolver
 
-Located in `bannou-service/Services/ServiceAppMappingResolver.cs`, this class resolves service names to Dapr app-ids:
+Located in `bannou-service/Services/ServiceAppMappingResolver.cs`, this class receives full-state updates from Orchestrator:
 
 ```csharp
 public class ServiceAppMappingResolver : IServiceAppMappingResolver
 {
     private const string DEFAULT_APP_ID = "bannou"; // Omnipotent default
-    private readonly ConcurrentDictionary<string, string> _serviceMappings;
+    private static readonly ConcurrentDictionary<string, string> _serviceMappings = new();
+    private static long _currentVersion = 0;
 
     public string GetAppIdForService(string serviceName)
     {
         return _serviceMappings.GetValueOrDefault(serviceName, DEFAULT_APP_ID);
     }
 
-    public async Task UpdateServiceMapping(string serviceName, string appId)
+    // Atomic replacement with version checking
+    public bool ReplaceAllMappings(IReadOnlyDictionary<string, string> mappings, string defaultAppId, long version)
     {
-        _serviceMappings.AddOrUpdate(serviceName, appId, (key, old) => appId);
+        if (version <= _currentVersion) return false; // Reject stale events
+
+        _serviceMappings.Clear();
+        foreach (var kvp in mappings)
+            _serviceMappings[kvp.Key] = kvp.Value;
+
+        _currentVersion = version;
+        return true;
     }
+
+    public long CurrentVersion => _currentVersion;
 }
 ```
 
-### The Gap: Missing Service Mapping Events
+### FullServiceMappingsEvent Schema
 
-**Problem**: `ServiceAppMappingResolver` has methods to update mappings from RabbitMQ events, but **no component currently publishes these events**.
-
-**Expected Flow**:
-```
-1. Orchestrator deploys/moves service to new container
-2. Orchestrator publishes ServiceMappingEvent to RabbitMQ
-3. All bannou instances consume event
-4. ServiceAppMappingResolver updates mappings
-5. Future service calls route to correct app-id
-```
-
-**Current State**:
-- ✅ ServiceAppMappingResolver can consume events
-- ✅ ServiceAppMappingResolver can update mappings
-- ❌ OrchestratorEventManager doesn't publish service mapping events
-- ❌ No `bannou-service-mappings` exchange defined
-
-### Required Implementation
-
-Add to `OrchestratorEventManager`:
-
-```csharp
-// New exchange for service mappings
-private const string SERVICE_MAPPINGS_EXCHANGE = "bannou-service-mappings";
-
-// Publish when topology changes
-public async Task PublishServiceMappingEventAsync(ServiceMappingEvent mappingEvent)
-{
-    var json = JsonSerializer.Serialize(mappingEvent);
-    var body = Encoding.UTF8.GetBytes(json);
-
-    _channel.BasicPublish(
-        exchange: SERVICE_MAPPINGS_EXCHANGE,
-        routingKey: mappingEvent.ServiceName,
-        body: body);
-}
-```
-
-**ServiceMappingEvent Model**:
 ```yaml
-ServiceMappingEvent:
+FullServiceMappingsEvent:
+  type: object
+  description: |
+    Published periodically by Orchestrator as the authoritative source of truth
+    for all service-to-app-id mappings across the entire network.
+    Consumed by all bannou instances to atomically update their routing tables.
+    Published every 30 seconds AND immediately when routing changes.
+  required:
+    - eventId
+    - timestamp
+    - mappings
+    - version
   properties:
-    eventId: string (uuid)
-    timestamp: string (date-time)
-    serviceName: string      # e.g., "auth", "accounts"
-    appId: string            # e.g., "bannou-auth", "npc-omega"
-    action: enum [register, unregister, update]
-    region: string           # Optional: for geographic routing
-    priority: integer        # Optional: for load balancing
+    eventId:
+      type: string
+    timestamp:
+      type: string
+      format: date-time
+    mappings:
+      type: object
+      additionalProperties:
+        type: string
+      description: Complete dictionary of serviceName -> appId mappings
+    defaultAppId:
+      type: string
+      description: Default app-id for unmapped services (usually "bannou")
+    version:
+      type: integer
+      format: int64
+      description: Monotonically increasing version. Consumers reject events with version <= current.
+    sourceInstanceId:
+      type: string
+      format: uuid
+      description: Orchestrator instance GUID that published this event
+    totalServices:
+      type: integer
 ```
 
-### When to Publish Service Mapping Events
+### Separate Event Flows
 
-| Orchestrator Action | Mapping Event |
-|---------------------|---------------|
-| Deploy service to new container | `register` with new app-id |
-| Move service between containers | `update` with new app-id |
-| Teardown container with service | `unregister` to fall back to default |
-| Scale service replicas | No event (same app-id) |
+**Important**: Service mapping is separate from permission/API registration:
+
+| Event Type | Topic | Purpose | Publisher |
+|------------|-------|---------|-----------|
+| `FullServiceMappingsEvent` | `bannou-full-service-mappings` | Service routing (which app-id handles which service) | Orchestrator |
+| `ServiceRegistrationEvent` | `permissions.service-registered` | API endpoints and permission requirements | Each service at startup |
+| `ServiceHeartbeatEvent` | `bannou-service-heartbeats` | Health status and capacity | Each bannou instance |
+
+### When Routing Changes Occur
+
+| Orchestrator Action | What Happens |
+|---------------------|--------------|
+| Deploy service to new container | `SetServiceRoutingAsync()` → Redis → `FullServiceMappingsEvent` |
+| Move service between containers | `SetServiceRoutingAsync()` → Redis → `FullServiceMappingsEvent` |
+| Teardown container with service | `RemoveServiceRoutingAsync()` → Redis → `FullServiceMappingsEvent` |
+| Scale service replicas | No routing change (same app-id) |
+| Periodic (every 30s) | `FullServiceMappingsEvent` published regardless |
 
 ---
 
@@ -1337,28 +1460,33 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 - [x] **28 unit tests passing** with full Moq coverage
 - [x] **Makefile commands** for standalone orchestrator operation
 
-### Phase 2: Environment Management 🔧 In Progress
+### Phase 2: Environment Management ✅ 95% Complete
 
 - [x] API schema design (orchestrator-api.yaml v2.2.0)
 - [x] Backend detection framework with 4-backend support
-- [x] Docker Compose orchestrator (DockerComposeOrchestrator.cs)
+- [x] Docker Compose orchestrator (DockerComposeOrchestrator.cs ~1,347 lines)
 - [x] Docker Swarm orchestrator (DockerSwarmOrchestrator.cs)
 - [x] Portainer orchestrator (PortainerOrchestrator.cs)
 - [x] Kubernetes orchestrator (KubernetesOrchestrator.cs)
 - [x] BackendDetector with priority-based selection
-- [ ] Deployment preset system
-- [ ] Deploy/teardown/status implementation (see TODOs below)
-- [ ] Topology update without full redeploy (see TODOs below)
-- [ ] Log streaming
+- [x] **Deployment preset system** (7 presets in provisioning/orchestrator/presets/)
+- [x] **Deploy implementation** with heartbeat-based validation
+- [x] **Teardown implementation** with graceful container removal
+- [x] **Status implementation** returning current topology
+- [x] **Standalone Dapr sidecar architecture** (mDNS, not Consul)
+- [x] **ExtraHosts IP injection** for Docker DNS limitations
+- [ ] Log streaming (low priority)
+- [ ] CleanAsync and RollbackConfigurationAsync (low priority)
 
-### Phase 3: Service Mapping Events 🚨 Critical Gap
+### Phase 3: Service Mapping Events ✅ Complete
 
-- [x] ServiceAppMappingResolver can consume events
-- [x] ServiceAppMappingResolver can update mappings dynamically
-- [ ] **Service mapping exchange** (`bannou-service-mappings`)
-- [ ] **PublishServiceMappingEventAsync** in OrchestratorEventManager
-- [ ] **ServiceMappingEvent** model in orchestrator schema
-- [ ] **Publish on topology changes** (deploy, move, teardown)
+- [x] ServiceAppMappingResolver receives full-state updates atomically
+- [x] Version checking rejects out-of-order events
+- [x] **FullServiceMappingsEvent** published via Dapr pub/sub (`bannou-full-service-mappings` topic)
+- [x] **Redis heartbeat system** for NGINX routing integration
+- [x] **Periodic publication** every 30 seconds
+- [x] **Immediate publication** on routing changes (deploy, move, teardown)
+- [x] **Heartbeat routing protection** - heartbeats cannot overwrite orchestrator-set routings
 
 ### Phase 4: Secrets Integration 📋 Planned (Research Complete)
 
@@ -1384,56 +1512,22 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 
 ## Critical Unimplemented TODOs
 
-The following TODOs in `OrchestratorService.cs` represent core functionality that needs implementation:
+The following TODOs in `OrchestratorService.cs` represent remaining functionality:
 
 | Location | TODO | Priority | Blocker For |
 |----------|------|----------|-------------|
 | Line 190 | Implement test execution via API calls to test services | Medium | Test orchestration feature |
-| Line 347 | Implement actual deployment via container orchestrator | **HIGH** | Deploy endpoint |
-| Line 421 | Implement actual teardown via container orchestrator | **HIGH** | Teardown endpoint |
-| Line 453 | Implement cleanup via container orchestrator | Medium | Clean endpoint |
-| Line 544 | Implement topology update via container orchestrator | **HIGH** | Live topology changes |
+| Line 453 | Implement cleanup via container orchestrator | Low | Clean endpoint |
 | Line 632 | Implement configuration rollback | Low | Rollback endpoint |
 
-### Deployment TODO (Line 347)
+### ✅ Recently Completed
 
-```csharp
-// TODO: Implement actual deployment via container orchestrator
-// Currently returns success without deploying
-```
+The following critical TODOs have been implemented:
 
-**Required Implementation**:
-1. Get appropriate orchestrator from `_backendDetector`
-2. Parse deployment preset from request
-3. Create/update containers with service configuration
-4. Wait for health checks
-5. Publish ServiceMappingEvents for new services
-
-### Teardown TODO (Line 421)
-
-```csharp
-// TODO: Implement actual teardown via container orchestrator
-// Currently returns success without tearing down
-```
-
-**Required Implementation**:
-1. Get appropriate orchestrator from `_backendDetector`
-2. Stop containers gracefully
-3. Remove containers if requested
-4. Publish ServiceMappingEvents to unregister services
-
-### Topology Update TODO (Line 544)
-
-```csharp
-// TODO: Implement topology update via container orchestrator
-// Currently returns success without updating topology
-```
-
-**Required Implementation**:
-1. Parse topology change requests (move-service, add-node, remove-node)
-2. Coordinate container lifecycle changes
-3. **Publish ServiceMappingEvents** for any service moves
-4. Wait for health verification
+- **Deploy endpoint**: Now uses `_healthMonitor.SetServiceRoutingAsync()` for each deployed service
+- **Teardown endpoint**: Now uses `_healthMonitor.RemoveServiceRoutingAsync()` for removed services
+- **Topology updates**: Now uses `_healthMonitor.SetServiceRoutingAsync()` for moved services
+- **Service mapping publication**: `FullServiceMappingsEvent` auto-published by ServiceHealthMonitor on changes
 
 ---
 
@@ -1487,16 +1581,14 @@ Steps 1-2 currently blocked by auth service issues in http-tester.
 
 ## Risk Assessment
 
-### Risk 1: Service Mapping Event Gap (HIGH)
+### Risk 1: Service Mapping Event Gap ✅ RESOLVED
 
-**Impact**: Distributed service deployments will not route correctly
-**Likelihood**: Certain (gap exists today)
-**Current State**: ServiceAppMappingResolver expects events but no publisher exists
-**Mitigation**:
-- Implement `PublishServiceMappingEventAsync` in OrchestratorEventManager
-- Add `bannou-service-mappings` exchange to RabbitMQ
-- Integrate with deploy/teardown/topology endpoints
-- Test with multi-container deployment preset
+**Status**: Fully implemented (December 2025)
+**Solution**: `FullServiceMappingsEvent` published by ServiceHealthMonitor
+- Atomic full-state updates prevent partial routing tables
+- Version checking prevents out-of-order event application
+- Periodic publication (30s) ensures eventual consistency
+- Immediate publication on routing changes for responsiveness
 
 ### Risk 2: Docker Socket Security Breach (HIGH)
 

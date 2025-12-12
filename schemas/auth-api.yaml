@@ -438,6 +438,7 @@ components:
       description: Response from successful user registration
       required:
         - accessToken
+        - connectUrl
       properties:
         accessToken:
           type: string
@@ -448,6 +449,10 @@ components:
           description: Refresh token for obtaining new access tokens
           nullable: true
           example: "refresh_token_abc123xyz789"
+        connectUrl:
+          type: string
+          format: uri
+          description: WebSocket endpoint for Connect service
 
     LoginResponse:
       type: object
@@ -554,6 +559,13 @@ components:
           type: array
           items:
             type: string
+        authorizations:
+          type: array
+          items:
+            type: string
+          description: |
+            Authorization strings from active subscriptions.
+            Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
         remainingTime:
           type: integer
           description: Seconds until expiration
@@ -710,6 +722,53 @@ components:
       enum: [logout, account_deleted, security_revocation, admin_action, session_expired]
       description: Reason for session invalidation
 
+    SessionUpdatedEvent:
+      type: object
+      description: |
+        Published when a session's roles or authorizations change.
+        Permissions service subscribes to update capability compilation.
+      required:
+        - eventId
+        - timestamp
+        - accountId
+        - sessionId
+        - roles
+        - authorizations
+        - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account whose session changed
+        sessionId:
+          type: string
+          description: ID of the session that changed
+        roles:
+          type: array
+          items:
+            type: string
+          description: Current roles for the session
+        authorizations:
+          type: array
+          items:
+            type: string
+          description: Current authorization strings (e.g., ["arcadia:authorized"])
+        reason:
+          $ref: '#/components/schemas/SessionUpdatedEventReason'
+
+    SessionUpdatedEventReason:
+      type: string
+      enum: [role_changed, authorization_changed, subscription_changed]
+      description: Reason for session update
+
 x-service-configuration:
   properties:
     # JWT Configuration
@@ -823,3 +882,22 @@ x-event-subscriptions:
     schema:
       $ref: 'accounts-events.yaml#/components/schemas/AccountDeletedEvent'
     description: Subscribe to account deletion events to invalidate sessions
+  - topic: account.updated
+    pubsub: bannou-pubsub
+    path: handle-account-updated
+    schema:
+      $ref: 'accounts-events.yaml#/components/schemas/AccountUpdatedEvent'
+    description: Subscribe to account update events to propagate role changes to sessions
+  - topic: subscription.updated
+    pubsub: bannou-pubsub
+    path: handle-subscription-updated
+    schema:
+      $ref: 'subscriptions-events.yaml#/components/schemas/SubscriptionUpdatedEvent'
+    description: Subscribe to subscription update events to propagate authorization changes to sessions
+
+x-event-publications:
+  - topic: session.updated
+    pubsub: bannou-pubsub
+    schema:
+      $ref: '#/components/schemas/SessionUpdatedEvent'
+    description: Published when a session's roles or authorizations change

@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
     <ProjectReference Include="../lib-accounts/lib-accounts.csproj" />
+    <ProjectReference Include="../lib-subscriptions/lib-subscriptions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

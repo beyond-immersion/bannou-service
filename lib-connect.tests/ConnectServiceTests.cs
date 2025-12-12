@@ -8,7 +8,6 @@ using Dapr.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Moq;
-using StackExchange.Redis;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;

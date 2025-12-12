@@ -18,8 +18,8 @@ info:
     - Integration with Dapr service mesh for distributed character agents
 
 servers:
-  - url: http://localhost/api/behavior
-    description: Development server
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
+    description: Dapr sidecar endpoint (internal only)
 
 paths:
   /compile:

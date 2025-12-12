@@ -10,6 +10,8 @@ spec:
   metadata:
   - name: host
     value: amqp://rabbitmq:5672
+  - name: heartbeatInterval
+    value: "30s"
   - name: username
     value: guest
   - name: password
@@ -20,3 +22,14 @@ spec:
     value: "5s"
   - name: maxReconnectAttempts
     value: "0"  # 0 = infinite retries - component keeps trying until RabbitMQ is available
+  # Use fanout exchanges so topic names become exchange names
+  # Required for orchestrator direct-RabbitMQ publishes to reach Dapr subscribers
+  - name: exchangeKind
+    value: "fanout"
+  # Auto-delete exchanges to match orchestrator's exchange settings
+  - name: autoDeleteExchange
+    value: "true"
+  # Explicit heartbeat to prevent connection drops with network_mode: container:ID
+  # Default is 10s which can cause issues with container network sharing
+  - name: heartBeat
+    value: "30s"

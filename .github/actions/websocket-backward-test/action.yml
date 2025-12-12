@@ -23,6 +23,8 @@ runs:
       shell: bash
       run: |
         echo "📋 Using .env.test.edge configuration for backward-compatibility WebSocket testing..."
+        export DAPR_COMPONENTS_HOST_PATH="$(pwd)/provisioning/dapr/components-http-test"
+        echo "DAPR_COMPONENTS_HOST_PATH=${DAPR_COMPONENTS_HOST_PATH}"
         echo "🔧 Building edge-tester container with published SDK (UsePublishedSDK=true)..."
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \
@@ -37,6 +39,8 @@ runs:
       shell: bash
       run: |
         echo "📡 Running WebSocket tests with published NuGet SDK (backwards compatibility)..."
+        export DAPR_COMPONENTS_HOST_PATH="$(pwd)/provisioning/dapr/components-http-test"
+        echo "DAPR_COMPONENTS_HOST_PATH=${DAPR_COMPONENTS_HOST_PATH}"
         # Start all services in detached mode
         docker compose -p bannou-ci-edge \
           -f "./provisioning/docker-compose.yml" \

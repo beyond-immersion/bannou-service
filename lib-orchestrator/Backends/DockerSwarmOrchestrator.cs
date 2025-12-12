@@ -581,6 +581,43 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
         }
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Listing infrastructure services (Docker Swarm mode)");
+
+        try
+        {
+            // In Docker Swarm mode, identify infrastructure services by label or name patterns
+            var infrastructurePatterns = new[] { "redis", "rabbitmq", "mysql", "mariadb", "postgres", "mongodb", "placement", "dapr" };
+
+            var services = await _client.Swarm.ListServicesAsync(cancellationToken: cancellationToken);
+
+            var infrastructureServices = services
+                .Where(s =>
+                {
+                    var name = s.Spec.Name ?? "";
+                    // Check if service name matches infrastructure patterns
+                    return infrastructurePatterns.Any(pattern =>
+                        name.Contains(pattern, StringComparison.OrdinalIgnoreCase));
+                })
+                .Select(s => s.Spec.Name ?? s.ID)
+                .ToList();
+
+            _logger.LogInformation(
+                "Found {Count} infrastructure services: {Services}",
+                infrastructureServices.Count,
+                string.Join(", ", infrastructureServices));
+
+            return infrastructureServices;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing infrastructure services");
+            return Array.Empty<string>();
+        }
+    }
+
     public void Dispose()
     {
         _client.Dispose();

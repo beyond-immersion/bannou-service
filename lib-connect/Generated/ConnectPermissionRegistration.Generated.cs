@@ -51,6 +51,21 @@ public static class ConnectPermissionRegistration
     {
         var endpoints = new List<ServiceEndpoint>();
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/client-capabilities",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getClientCapabilities",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

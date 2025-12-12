@@ -83,7 +83,9 @@ public static class ServiceClientExtensions
                             throw new InvalidOperationException($"Cannot resolve parameter {parameters[i].Name} of type {paramType.Name}");
             }
 
-            return (TInterface)Activator.CreateInstance(typeof(TClient), args)!;
+            var instance = Activator.CreateInstance(typeof(TClient), args)
+                ?? throw new InvalidOperationException($"Failed to create instance of {typeof(TClient).Name}");
+            return (TInterface)instance;
         });
 
         return services;
@@ -119,10 +121,12 @@ public static class ServiceClientExtensions
         var assemblies = new List<Assembly> { typeof(ServiceClientExtensions).Assembly };
 
         // Add plugin assemblies if PluginLoader is available
+        // Use GetAllPluginAssemblies() to include client types from ALL plugins (enabled and disabled)
+        // Client types from disabled plugins are needed for inter-service communication
         var pluginLoader = Program.PluginLoader;
         if (pluginLoader != null)
         {
-            assemblies.AddRange(pluginLoader.GetControllerAssemblies());
+            assemblies.AddRange(pluginLoader.GetAllPluginAssemblies());
         }
 
         foreach (var assembly in assemblies)

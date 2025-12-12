@@ -1,8 +1,10 @@
 using BeyondImmersion.BannouService.Accounts;
+using BeyondImmersion.BannouService.Subscriptions;
 using Dapr;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Auth;
@@ -68,6 +70,121 @@ public class AuthEventsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "[AUTH-EVENT] Failed to process account.deleted event");
+            return StatusCode(500, "Internal server error processing event");
+        }
+    }
+
+    /// <summary>
+    /// Handle account update events from the Accounts service.
+    /// Called by Dapr when an account's roles change to propagate to sessions.
+    /// </summary>
+    [Topic("bannou-pubsub", "account.updated")]
+    [HttpPost("handle-account-updated")]
+    public async Task<IActionResult> HandleAccountUpdatedAsync()
+    {
+        try
+        {
+            var accountUpdatedEvent = await DaprEventHelper.ReadEventAsync<AccountUpdatedEvent>(Request);
+
+            if (accountUpdatedEvent == null)
+            {
+                _logger.LogWarning("[AUTH-EVENT] Failed to parse AccountUpdatedEvent from request body");
+                return BadRequest("Invalid event data");
+            }
+
+            _logger.LogInformation("[AUTH-EVENT] Processing account.updated event for AccountId: {AccountId}, ChangedFields: {ChangedFields}",
+                accountUpdatedEvent.AccountId, string.Join(", ", accountUpdatedEvent.ChangedFields ?? new List<string>()));
+
+            // Only propagate if roles changed
+            if (accountUpdatedEvent.ChangedFields?.Contains("roles") != true)
+            {
+                _logger.LogDebug("[AUTH-EVENT] Account update did not include role changes, skipping propagation");
+                return Ok();
+            }
+
+            var authService = _authService as AuthService;
+            if (authService == null)
+            {
+                _logger.LogWarning("[AUTH-EVENT] Auth service implementation not available for role propagation");
+                return Ok();
+            }
+
+            // Extract new roles from the event (NewValues is typed as object, may be JsonElement)
+            var newRoles = new List<string>();
+            if (accountUpdatedEvent.NewValues is JsonElement jsonElement)
+            {
+                if (jsonElement.TryGetProperty("roles", out var rolesElement) && rolesElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var role in rolesElement.EnumerateArray())
+                    {
+                        var roleStr = role.GetString();
+                        if (!string.IsNullOrEmpty(roleStr))
+                        {
+                            newRoles.Add(roleStr);
+                        }
+                    }
+                }
+            }
+            else if (accountUpdatedEvent.NewValues is IDictionary<string, object> dict)
+            {
+                if (dict.TryGetValue("roles", out var rolesObj) && rolesObj is IEnumerable<object> rolesList)
+                {
+                    newRoles.AddRange(rolesList.Select(r => r?.ToString() ?? "").Where(r => !string.IsNullOrEmpty(r)));
+                }
+            }
+
+            await authService.PropagateRoleChangesAsync(accountUpdatedEvent.AccountId, newRoles, CancellationToken.None);
+
+            _logger.LogInformation("[AUTH-EVENT] Successfully propagated role changes for account: {AccountId}",
+                accountUpdatedEvent.AccountId);
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[AUTH-EVENT] Failed to process account.updated event");
+            return StatusCode(500, "Internal server error processing event");
+        }
+    }
+
+    /// <summary>
+    /// Handle subscription update events from the Subscriptions service.
+    /// Called by Dapr when a subscription changes to propagate authorization changes to sessions.
+    /// </summary>
+    [Topic("bannou-pubsub", "subscription.updated")]
+    [HttpPost("handle-subscription-updated")]
+    public async Task<IActionResult> HandleSubscriptionUpdatedAsync()
+    {
+        try
+        {
+            var subscriptionUpdatedEvent = await DaprEventHelper.ReadEventAsync<SubscriptionUpdatedEvent>(Request);
+
+            if (subscriptionUpdatedEvent == null)
+            {
+                _logger.LogWarning("[AUTH-EVENT] Failed to parse SubscriptionUpdatedEvent from request body");
+                return BadRequest("Invalid event data");
+            }
+
+            _logger.LogInformation("[AUTH-EVENT] Processing subscription.updated event for AccountId: {AccountId}, StubName: {StubName}, Action: {Action}",
+                subscriptionUpdatedEvent.AccountId, subscriptionUpdatedEvent.StubName, subscriptionUpdatedEvent.Action);
+
+            var authService = _authService as AuthService;
+            if (authService == null)
+            {
+                _logger.LogWarning("[AUTH-EVENT] Auth service implementation not available for authorization propagation");
+                return Ok();
+            }
+
+            await authService.PropagateSubscriptionChangesAsync(subscriptionUpdatedEvent.AccountId, CancellationToken.None);
+
+            _logger.LogInformation("[AUTH-EVENT] Successfully propagated subscription changes for account: {AccountId}",
+                subscriptionUpdatedEvent.AccountId);
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[AUTH-EVENT] Failed to process subscription.updated event");
             return StatusCode(500, "Internal server error processing event");
         }
     }

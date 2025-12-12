@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.Accounts;
 using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Subscriptions;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -16,8 +18,12 @@ public class AuthServiceTests
     private readonly Mock<ILogger<AuthService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly Mock<IAccountsClient> _mockAccountsClient;
+    private readonly Mock<ISubscriptionsClient> _mockSubscriptionsClient;
     private readonly Mock<DaprClient> _mockDaprClient;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<ITokenService> _mockTokenService;
+    private readonly Mock<ISessionService> _mockSessionService;
+    private readonly Mock<IOAuthProviderService> _mockOAuthService;
 
     public AuthServiceTests()
     {
@@ -44,24 +50,40 @@ public class AuthServiceTests
             SteamAppId = "123456"
         };
         _mockAccountsClient = new Mock<IAccountsClient>();
+        _mockSubscriptionsClient = new Mock<ISubscriptionsClient>();
         _mockDaprClient = new Mock<DaprClient>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockTokenService = new Mock<ITokenService>();
+        _mockSessionService = new Mock<ISessionService>();
+        _mockOAuthService = new Mock<IOAuthProviderService>();
 
         // Setup default HttpClient for mock factory
         var mockHttpClient = new HttpClient();
         _mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(mockHttpClient);
     }
 
+    /// <summary>
+    /// Helper method to create an AuthService with all required dependencies.
+    /// </summary>
+    private AuthService CreateAuthService()
+    {
+        return new AuthService(
+            _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object);
+    }
+
     [Fact]
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
         // Arrange & Act & Assert
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         Assert.NotNull(service);
     }
@@ -226,12 +248,7 @@ public class AuthServiceTests
     public async Task LoginAsync_WithNullEmail_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new LoginRequest
         {
@@ -251,12 +268,7 @@ public class AuthServiceTests
     public async Task LoginAsync_WithEmptyPassword_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new LoginRequest
         {
@@ -276,12 +288,7 @@ public class AuthServiceTests
     public async Task LoginAsync_WithWhitespaceEmail_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new LoginRequest
         {
@@ -301,12 +308,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_WithNullUsername_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new RegisterRequest
         {
@@ -326,12 +328,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_WithEmptyPassword_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new RegisterRequest
         {
@@ -351,12 +348,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_WithWhitespaceUsername_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new RegisterRequest
         {
@@ -376,12 +368,7 @@ public class AuthServiceTests
     public async Task CompleteOAuthAsync_WithEmptyCode_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new OAuthCallbackRequest
         {
@@ -400,12 +387,7 @@ public class AuthServiceTests
     public async Task VerifySteamAuthAsync_WithEmptyTicket_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new SteamVerifyRequest
         {
@@ -424,12 +406,7 @@ public class AuthServiceTests
     public async Task RefreshTokenAsync_WithEmptyRefreshToken_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new RefreshRequest
         {
@@ -448,12 +425,7 @@ public class AuthServiceTests
     public async Task ValidateTokenAsync_WithEmptyJwt_ShouldReturnUnauthorized()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         // Act
         var (status, response) = await service.ValidateTokenAsync("");
@@ -467,12 +439,7 @@ public class AuthServiceTests
     public async Task ValidateTokenAsync_WithNullJwt_ShouldReturnUnauthorized()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         // Act
         var (status, response) = await service.ValidateTokenAsync(null!);
@@ -486,12 +453,7 @@ public class AuthServiceTests
     public async Task ValidateTokenAsync_WithMalformedJwt_ShouldReturnUnauthorized()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         // Act - pass a clearly invalid JWT format
         var (status, response) = await service.ValidateTokenAsync("not-a-valid-jwt");
@@ -505,12 +467,7 @@ public class AuthServiceTests
     public async Task LogoutAsync_WithEmptyJwt_ShouldReturnUnauthorized()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         // Act
         var (status, response) = await service.LogoutAsync("", null);
@@ -524,12 +481,7 @@ public class AuthServiceTests
     public async Task GetSessionsAsync_WithEmptyJwt_ShouldReturnUnauthorized()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         // Act
         var (status, response) = await service.GetSessionsAsync("");
@@ -549,10 +501,30 @@ public class AuthServiceTests
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             null!,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
-            _mockHttpClientFactory.Object));
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullSubscriptionsClient_ShouldThrow()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new AuthService(
+            _mockAccountsClient.Object,
+            null!,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object));
     }
 
     [Fact]
@@ -561,10 +533,14 @@ public class AuthServiceTests
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             null!,
             _configuration,
             _mockLogger.Object,
-            _mockHttpClientFactory.Object));
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object));
     }
 
     [Fact]
@@ -573,10 +549,14 @@ public class AuthServiceTests
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             null!,
             _mockLogger.Object,
-            _mockHttpClientFactory.Object));
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object));
     }
 
     [Fact]
@@ -585,10 +565,14 @@ public class AuthServiceTests
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             null!,
-            _mockHttpClientFactory.Object));
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object));
     }
 
     [Fact]
@@ -597,9 +581,61 @@ public class AuthServiceTests
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new AuthService(
             _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
             _mockDaprClient.Object,
             _configuration,
             _mockLogger.Object,
+            null!,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
+            _mockOAuthService.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullTokenService_ShouldThrow()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new AuthService(
+            _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object,
+            null!,
+            _mockSessionService.Object,
+            _mockOAuthService.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullSessionService_ShouldThrow()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new AuthService(
+            _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            null!,
+            _mockOAuthService.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullOAuthService_ShouldThrow()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new AuthService(
+            _mockAccountsClient.Object,
+            _mockSubscriptionsClient.Object,
+            _mockDaprClient.Object,
+            _configuration,
+            _mockLogger.Object,
+            _mockHttpClientFactory.Object,
+            _mockTokenService.Object,
+            _mockSessionService.Object,
             null!));
     }
 
@@ -622,12 +658,7 @@ public class AuthServiceTests
     public async Task InitOAuthAsync_ShouldReturnAuthorizationUrl()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         // Act
         var (status, response) = await service.InitOAuthAsync(
@@ -644,12 +675,7 @@ public class AuthServiceTests
     public async Task InitSteamAuthAsync_ShouldReturnAuthorizationUrl()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         // Act
         var (status, response) = await service.InitSteamAuthAsync("https://example.com/steam-callback");
@@ -663,12 +689,7 @@ public class AuthServiceTests
     public async Task RequestPasswordResetAsync_WithValidEmail_ShouldReturnOK()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new PasswordResetRequest
         {
@@ -705,12 +726,7 @@ public class AuthServiceTests
                 ExpiresAt = DateTimeOffset.UtcNow.AddHours(1) // Not expired
             });
 
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new PasswordResetConfirmRequest
         {
@@ -730,12 +746,7 @@ public class AuthServiceTests
     public async Task ConfirmPasswordResetAsync_WithInvalidToken_ShouldReturnBadRequest()
     {
         // Arrange - No mock setup means GetStateAsync returns null (invalid token)
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new PasswordResetConfirmRequest
         {
@@ -765,19 +776,14 @@ public class AuthServiceTests
         // Mock the account sessions lookup
         _mockDaprClient
             .Setup(d => d.GetStateAsync<List<string>>(
-                "statestore",
+                "auth-statestore",
                 $"account-sessions:{accountId}",
                 It.IsAny<ConsistencyMode?>(),
                 It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { sessionKey1, sessionKey2 });
 
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var accountDeletedEvent = new BeyondImmersion.BannouService.Accounts.AccountDeletedEvent
         {
@@ -811,19 +817,14 @@ public class AuthServiceTests
         // Mock returns empty session list
         _mockDaprClient
             .Setup(d => d.GetStateAsync<List<string>?>(
-                "statestore",
+                "auth-statestore",
                 $"account-sessions:{accountId}",
                 It.IsAny<ConsistencyMode?>(),
                 It.IsAny<IReadOnlyDictionary<string, string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string>?)null);
 
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var accountDeletedEvent = new BeyondImmersion.BannouService.Accounts.AccountDeletedEvent
         {
@@ -849,12 +850,7 @@ public class AuthServiceTests
     public async Task OnEventReceivedAsync_UnknownEventTopic_ShouldNotThrow()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var unknownEvent = new { SomeProperty = "value" };
 
@@ -873,12 +869,7 @@ public class AuthServiceTests
     public async Task RequestPasswordResetAsync_WithEmptyEmail_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new PasswordResetRequest
         {
@@ -896,12 +887,7 @@ public class AuthServiceTests
     public async Task RequestPasswordResetAsync_WithNullEmail_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new PasswordResetRequest
         {
@@ -919,12 +905,7 @@ public class AuthServiceTests
     public async Task RequestPasswordResetAsync_WithWhitespaceEmail_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new PasswordResetRequest
         {
@@ -947,12 +928,7 @@ public class AuthServiceTests
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
 
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new PasswordResetRequest
         {
@@ -970,12 +946,7 @@ public class AuthServiceTests
     public async Task ConfirmPasswordResetAsync_WithEmptyToken_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new PasswordResetConfirmRequest
         {
@@ -994,12 +965,7 @@ public class AuthServiceTests
     public async Task ConfirmPasswordResetAsync_WithEmptyNewPassword_ShouldReturnBadRequest()
     {
         // Arrange
-        var service = new AuthService(
-            _mockAccountsClient.Object,
-            _mockDaprClient.Object,
-            _configuration,
-            _mockLogger.Object,
-            _mockHttpClientFactory.Object);
+        var service = CreateAuthService();
 
         var request = new PasswordResetConfirmRequest
         {

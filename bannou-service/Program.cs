@@ -13,6 +13,7 @@ using System.Runtime.CompilerServices;
 
 [assembly: ApiController]
 [assembly: InternalsVisibleTo("unit-tests")]
+[assembly: InternalsVisibleTo("lib-testing")]
 namespace BeyondImmersion.BannouService;
 
 /// <summary>
@@ -256,7 +257,6 @@ public static class Program
                 {
                     loggingOptions
                         .AddSerilog()
-                        .AddSimpleConsole()
                         .SetMinimumLevel(Configuration.Web_Host_Logging_Level);
                 });
         }
@@ -324,6 +324,9 @@ public static class Program
             // Add CloudEvents support for Dapr pub/sub
             webApp.UseCloudEvents();
 
+            // Normalize Dapr invoke paths so controllers work with any sidecar app-id
+            webApp.UseMiddleware<BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware>();
+
             // map controller routes and subscription handlers
             _ = webApp.UseRouting().UseEndpoints(endpointOptions =>
             {
@@ -382,7 +385,8 @@ public static class Program
 
                 using var heartbeatLoggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
                 var heartbeatLogger = heartbeatLoggerFactory.CreateLogger<ServiceHeartbeatManager>();
-                HeartbeatManager = new ServiceHeartbeatManager(DaprClient, heartbeatLogger, PluginLoader);
+                var mappingResolver = webApp.Services.GetRequiredService<IServiceAppMappingResolver>();
+                HeartbeatManager = new ServiceHeartbeatManager(DaprClient, heartbeatLogger, PluginLoader, mappingResolver);
 
                 // Wait for Dapr connectivity using heartbeat publishing as the test
                 // This replaces the old WaitForDaprReadiness() - publishing a heartbeat proves both
@@ -395,6 +399,30 @@ public static class Program
                 {
                     Logger.Log(LogLevel.Error, null, "Dapr pub/sub connectivity check failed - exiting application.");
                     return 1;
+                }
+
+                // Initialize service mappings before participating in the network
+                // This ensures newly deployed containers have correct routing information
+                if (!string.IsNullOrEmpty(Configuration.MappingSourceAppId))
+                {
+                    // Container deployed by orchestrator - query source for mappings
+                    Logger.Log(LogLevel.Information, null,
+                        $"Fetching initial service mappings from app-id: {Configuration.MappingSourceAppId}");
+
+                    if (!await ImportServiceMappingsFromSourceAsync(
+                        Configuration.MappingSourceAppId,
+                        webApp,
+                        ShutdownCancellationTokenSource.Token))
+                    {
+                        Logger.Log(LogLevel.Error, null,
+                            $"Failed to import service mappings from {Configuration.MappingSourceAppId} - exiting application.");
+                        return 1;
+                    }
+                }
+                else
+                {
+                    // Orchestrator/primary container - try loading persisted mappings from Redis
+                    await LoadPersistedMappingsAsync(webApp, ShutdownCancellationTokenSource.Token);
                 }
 
                 // Start periodic heartbeats now that we've confirmed connectivity
@@ -415,6 +443,8 @@ public static class Program
             else
             {
                 Logger.Log(LogLevel.Warning, null, "Heartbeat system disabled via HEARTBEAT_ENABLED=false (infrastructure testing mode).");
+                // Do NOT register permissions here: infra profile uses empty Dapr components (no pubsub),
+                // and permission registration publishes over pubsub. Calling it would fail startup.
             }
 
             // Invoke plugin running methods
@@ -534,6 +564,14 @@ public static class Program
 
         var assemblyName = new AssemblyName(args.Name).Name;
 
+        // CRITICAL: Avoid loading duplicate copies of already-loaded assemblies.
+        // Assembly.LoadFile will always load a new copy; we must reuse the existing one
+        // so static singletons (e.g., ServiceAppMappingResolver) stay process-wide.
+        var alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies()
+            .FirstOrDefault(a => a.GetName().Name == assemblyName);
+        if (alreadyLoaded != null)
+            return alreadyLoaded;
+
         // try in app directory
         var appDirectory = Directory.GetCurrentDirectory();
         {
@@ -587,4 +625,139 @@ public static class Program
     /// </summary>
     public static void InitiateShutdown() => ShutdownCancellationTokenSource.Cancel();
 
+    /// <summary>
+    /// Import service mappings from a source app-id during startup.
+    /// Used by newly deployed containers to get the current routing table
+    /// from the orchestrator before participating in the network.
+    /// </summary>
+    /// <param name="sourceAppId">The app-id to query for mappings</param>
+    /// <param name="webApp">The web application for service resolution</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if import succeeded, false otherwise</returns>
+    private static async Task<bool> ImportServiceMappingsFromSourceAsync(
+        string sourceAppId,
+        WebApplication webApp,
+        CancellationToken cancellationToken)
+    {
+        const int maxRetries = 3;
+        const int retryDelayMs = 1000;
+
+        var daprHttpEndpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT")
+            ?? "http://127.0.0.1:3500";
+        var url = $"{daprHttpEndpoint}/v1.0/invoke/{sourceAppId}/method/orchestrator/service-routing";
+
+        using var httpClient = new HttpClient();
+        httpClient.Timeout = TimeSpan.FromSeconds(10);
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Post, url);
+                request.Headers.Add("dapr-app-id", sourceAppId);
+                request.Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json");
+
+                var response = await httpClient.SendAsync(request, cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                    var mappingsResponse = System.Text.Json.JsonSerializer.Deserialize<ServiceMappingsResponse>(json);
+
+                    if (mappingsResponse?.Mappings != null)
+                    {
+                        var resolver = webApp.Services.GetService<IServiceAppMappingResolver>();
+                        if (resolver != null)
+                        {
+                            resolver.ImportMappings(mappingsResponse.Mappings);
+                            Logger.Log(LogLevel.Information, null,
+                                $"Successfully imported {mappingsResponse.TotalServices} service mappings from {sourceAppId}");
+                            return true;
+                        }
+                        else
+                        {
+                            Logger.Log(LogLevel.Error, null, "ServiceAppMappingResolver not found in DI container");
+                        }
+                    }
+                }
+                else
+                {
+                    Logger.Log(LogLevel.Warning, null,
+                        $"Mapping import attempt {attempt}/{maxRetries} failed: HTTP {(int)response.StatusCode} {response.ReasonPhrase}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log(LogLevel.Warning, ex,
+                    $"Mapping import attempt {attempt}/{maxRetries} failed");
+            }
+
+            if (attempt < maxRetries)
+            {
+                await Task.Delay(retryDelayMs * attempt, cancellationToken);
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Load persisted service mappings from Dapr state store (Redis).
+    /// Used by orchestrator containers on restart to recover their routing table.
+    /// </summary>
+    /// <param name="webApp">The web application for service resolution</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    private static async Task LoadPersistedMappingsAsync(
+        WebApplication webApp,
+        CancellationToken cancellationToken)
+    {
+        const string StateStore = "connect-statestore";
+        const string MappingsKey = "service-mappings:all";
+
+        try
+        {
+            if (DaprClient == null)
+            {
+                Logger.Log(LogLevel.Warning, null, "DaprClient not available, skipping persisted mappings load");
+                return;
+            }
+
+            var mappings = await DaprClient.GetStateAsync<Dictionary<string, string>>(
+                StateStore,
+                MappingsKey,
+                cancellationToken: cancellationToken);
+
+            if (mappings != null && mappings.Count > 0)
+            {
+                var resolver = webApp.Services.GetService<IServiceAppMappingResolver>();
+                if (resolver != null)
+                {
+                    resolver.ImportMappings(mappings);
+                    Logger.Log(LogLevel.Information, null,
+                        $"Loaded {mappings.Count} persisted service mappings from Redis");
+                }
+            }
+            else
+            {
+                Logger.Log(LogLevel.Debug, null, "No persisted service mappings found in Redis");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Non-fatal - orchestrator can rebuild from new deployments
+            Logger.Log(LogLevel.Warning, ex, "Could not load persisted mappings from Redis");
+        }
+    }
+
+    /// <summary>
+    /// Response model for service mappings query.
+    /// </summary>
+    private class ServiceMappingsResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("mappings")]
+        public Dictionary<string, string>? Mappings { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("totalServices")]
+        public int TotalServices { get; set; }
+    }
 }

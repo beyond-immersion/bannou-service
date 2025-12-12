@@ -460,6 +460,86 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         }
     }
 
+    /// <summary>
+    /// Event handler for account.updated events
+    /// </summary>
+    /// <remarks>
+    /// Subscribe to account update events to propagate role changes to sessions
+    /// </remarks>
+    [Dapr.Topic("bannou-pubsub", "account.updated")]
+    [Microsoft.AspNetCore.Mvc.HttpPost("handle-account-updated")]
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleAccountUpdatedEvent([Microsoft.AspNetCore.Mvc.FromBody] object eventData)
+    {
+        try
+        {
+            var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(logger, "Processing Dapr event: {Topic}", "account.updated");
+
+            // Use System.Text.Json for consistent serialization with generated models
+            var serializedData = System.Text.Json.JsonSerializer.Serialize(eventData);
+
+            // Deserialize using System.Text.Json with case-insensitive property matching
+            var typedEventData = System.Text.Json.JsonSerializer.Deserialize<BeyondImmersion.BannouService.Accounts.AccountUpdatedEvent>(serializedData, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (typedEventData != null)
+            {
+                Microsoft.Extensions.Logging.LoggerExtensions.LogInformation(logger, "Processing account.updated event for entity: {EntityId}", typedEventData.AccountId);
+                await _implementation.OnEventReceivedAsync("account.updated", typedEventData);
+            }
+            else
+            {
+                Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger, "Failed to deserialize account.updated event data");
+            }
+            return Ok();
+        }
+        catch (System.Exception ex)
+        {
+            var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, ex, "Failed to process account.updated event");
+            return StatusCode(500, new { error = "Event processing failed" });
+        }
+    }
+
+    /// <summary>
+    /// Event handler for subscription.updated events
+    /// </summary>
+    /// <remarks>
+    /// Subscribe to subscription update events to propagate authorization changes to sessions
+    /// </remarks>
+    [Dapr.Topic("bannou-pubsub", "subscription.updated")]
+    [Microsoft.AspNetCore.Mvc.HttpPost("handle-subscription-updated")]
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleSubscriptionUpdatedEvent([Microsoft.AspNetCore.Mvc.FromBody] object eventData)
+    {
+        try
+        {
+            var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(logger, "Processing Dapr event: {Topic}", "subscription.updated");
+
+            // Use System.Text.Json for consistent serialization with generated models
+            var serializedData = System.Text.Json.JsonSerializer.Serialize(eventData);
+
+            // Deserialize using System.Text.Json with case-insensitive property matching
+            var typedEventData = System.Text.Json.JsonSerializer.Deserialize<BeyondImmersion.BannouService.Subscriptions.SubscriptionUpdatedEvent>(serializedData, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (typedEventData != null)
+            {
+                Microsoft.Extensions.Logging.LoggerExtensions.LogInformation(logger, "Processing subscription.updated event for entity: {EntityId}", typedEventData.AccountId);
+                await _implementation.OnEventReceivedAsync("subscription.updated", typedEventData);
+            }
+            else
+            {
+                Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger, "Failed to deserialize subscription.updated event data");
+            }
+            return Ok();
+        }
+        catch (System.Exception ex)
+        {
+            var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, ex, "Failed to process subscription.updated event");
+            return StatusCode(500, new { error = "Event processing failed" });
+        }
+    }
+
 }
 
 

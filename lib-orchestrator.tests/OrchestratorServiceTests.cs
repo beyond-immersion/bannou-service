@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using Dapr.Client;
 using LibOrchestrator;
@@ -15,6 +16,7 @@ public class OrchestratorServiceTests
 {
     private readonly Mock<DaprClient> _mockDaprClient;
     private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly Mock<IOrchestratorRedisManager> _mockRedisManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
@@ -26,6 +28,10 @@ public class OrchestratorServiceTests
     {
         _mockDaprClient = new Mock<DaprClient>();
         _mockLogger = new Mock<ILogger<OrchestratorService>>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockLoggerFactory
+            .Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(new Mock<ILogger>().Object);
         _configuration = new OrchestratorServiceConfiguration
         {
             RedisConnectionString = "redis:6379",
@@ -45,6 +51,7 @@ public class OrchestratorServiceTests
         return new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -70,6 +77,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             null!,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -87,6 +95,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             null!,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -98,12 +107,31 @@ public class OrchestratorServiceTests
     }
 
     [Fact]
+    public void Constructor_WithNullLoggerFactory_ShouldThrowArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            null!,
+            _configuration,
+            _mockRedisManager.Object,
+            _mockEventManager.Object,
+            _mockHealthMonitor.Object,
+            _mockRestartManager.Object,
+            _mockBackendDetector.Object));
+
+        Assert.Equal("loggerFactory", exception.ParamName);
+    }
+
+    [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrowArgumentNullException()
     {
         // Arrange & Act & Assert
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             null!,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -121,6 +149,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             null!,
             _mockEventManager.Object,
@@ -138,6 +167,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             null!,
@@ -155,6 +185,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -172,6 +203,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -189,6 +221,7 @@ public class OrchestratorServiceTests
         var exception = Assert.Throws<ArgumentNullException>(() => new OrchestratorService(
             _mockDaprClient.Object,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _configuration,
             _mockRedisManager.Object,
             _mockEventManager.Object,
@@ -211,13 +244,14 @@ public class OrchestratorServiceTests
             .Setup(x => x.CheckHealthAsync())
             .ReturnsAsync((true, "Redis connected", TimeSpan.FromMilliseconds(1.5)));
 
-        _mockEventManager
-            .Setup(x => x.CheckHealth())
-            .Returns((true, "RabbitMQ connected"));
-
+        // Pub/sub healthy
         _mockDaprClient
-            .Setup(x => x.CheckHealthAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(true));
+            .Setup(x => x.PublishEventAsync(
+                "bannou-pubsub",
+                "orchestrator-health",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         var service = CreateService();
 
@@ -239,13 +273,14 @@ public class OrchestratorServiceTests
             .Setup(x => x.CheckHealthAsync())
             .ReturnsAsync((false, "Redis connection failed", (TimeSpan?)null));
 
-        _mockEventManager
-            .Setup(x => x.CheckHealth())
-            .Returns((true, "RabbitMQ connected"));
-
+        // Simulate pub/sub failure via Dapr publish failure
         _mockDaprClient
-            .Setup(x => x.CheckHealthAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(true));
+            .Setup(x => x.PublishEventAsync(
+                "bannou-pubsub",
+                "orchestrator-health",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Dapr sidecar unavailable"));
 
         var service = CreateService();
 
@@ -269,13 +304,14 @@ public class OrchestratorServiceTests
             .Setup(x => x.CheckHealthAsync())
             .ReturnsAsync((true, "Redis connected", TimeSpan.FromMilliseconds(1.5)));
 
-        _mockEventManager
-            .Setup(x => x.CheckHealth())
-            .Returns((false, "RabbitMQ connection failed"));
-
+        // Pub/sub unhealthy via publish failure
         _mockDaprClient
-            .Setup(x => x.CheckHealthAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(true));
+            .Setup(x => x.PublishEventAsync(
+                "bannou-pubsub",
+                "orchestrator-health",
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Dapr sidecar unavailable"));
 
         var service = CreateService();
 
@@ -287,8 +323,8 @@ public class OrchestratorServiceTests
         Assert.NotNull(response);
         Assert.False(response.Healthy);
 
-        var rabbitComponent = response.Components.First(c => c.Name == "rabbitmq");
-        Assert.Equal(ComponentHealthStatus.Unavailable, rabbitComponent.Status);
+        var pubsubComponent = response.Components.First(c => c.Name == "pubsub");
+        Assert.Equal(ComponentHealthStatus.Unavailable, pubsubComponent.Status);
     }
 
     #endregion
@@ -599,6 +635,116 @@ public class OrchestratorServiceTests
     }
 
     #endregion
+
+    #region GetServiceRoutingAsync Tests
+
+    [Fact]
+    public async Task GetServiceRoutingAsync_WithServiceMappingsInRedis_ShouldReturnMappings()
+    {
+        // Arrange
+        var serviceRoutings = new Dictionary<string, ServiceRouting>
+        {
+            ["auth"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
+            ["accounts"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
+            ["connect"] = new ServiceRouting { AppId = "bannou-main", Host = "bannou-main-container" }
+        };
+
+        _mockRedisManager
+            .Setup(x => x.GetServiceRoutingsAsync())
+            .ReturnsAsync(serviceRoutings);
+
+        var service = CreateService();
+
+        // Act
+        var (statusCode, response) = await service.GetServiceRoutingAsync(
+            new GetServiceRoutingRequest(),
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(3, response.Mappings.Count);
+        Assert.Equal("bannou-auth", response.Mappings["auth"]);
+        Assert.Equal("bannou-auth", response.Mappings["accounts"]);
+        Assert.Equal("bannou-main", response.Mappings["connect"]);
+        Assert.Equal("bannou", response.DefaultAppId);
+    }
+
+    [Fact]
+    public async Task GetServiceRoutingAsync_WithNoMappings_ShouldReturnEmptyWithDefault()
+    {
+        // Arrange
+        _mockRedisManager
+            .Setup(x => x.GetServiceRoutingsAsync())
+            .ReturnsAsync(new Dictionary<string, ServiceRouting>());
+
+        var service = CreateService();
+
+        // Act
+        var (statusCode, response) = await service.GetServiceRoutingAsync(
+            new GetServiceRoutingRequest(),
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Empty(response.Mappings);
+        Assert.Equal("bannou", response.DefaultAppId);
+        Assert.Equal(0, response.TotalServices);
+    }
+
+    [Fact]
+    public async Task GetServiceRoutingAsync_WithServiceFilter_ShouldFilterResults()
+    {
+        // Arrange
+        var serviceRoutings = new Dictionary<string, ServiceRouting>
+        {
+            ["auth"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
+            ["accounts"] = new ServiceRouting { AppId = "bannou-auth", Host = "bannou-auth-container" },
+            ["connect"] = new ServiceRouting { AppId = "bannou-main", Host = "bannou-main-container" }
+        };
+
+        _mockRedisManager
+            .Setup(x => x.GetServiceRoutingsAsync())
+            .ReturnsAsync(serviceRoutings);
+
+        var service = CreateService();
+
+        // Act - filter for services starting with "a"
+        var (statusCode, response) = await service.GetServiceRoutingAsync(
+            new GetServiceRoutingRequest { ServiceFilter = "a" },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Mappings.Count);
+        Assert.True(response.Mappings.ContainsKey("auth"));
+        Assert.True(response.Mappings.ContainsKey("accounts"));
+        Assert.False(response.Mappings.ContainsKey("connect"));
+    }
+
+    [Fact]
+    public async Task GetServiceRoutingAsync_WhenRedisThrows_ShouldReturnInternalServerError()
+    {
+        // Arrange
+        _mockRedisManager
+            .Setup(x => x.GetServiceRoutingsAsync())
+            .ThrowsAsync(new InvalidOperationException("Redis connection failed"));
+
+        var service = CreateService();
+
+        // Act
+        var (statusCode, response) = await service.GetServiceRoutingAsync(
+            new GetServiceRoutingRequest(),
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, statusCode);
+        Assert.Null(response);
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -791,5 +937,241 @@ public class ServiceHealthMonitorTests
         // Assert
         Assert.True(recommendation.ShouldRestart);
         Assert.Equal("unavailable", recommendation.CurrentStatus);
+    }
+}
+
+/// <summary>
+/// Tests for the routing protection logic in ServiceHealthMonitor.
+/// These tests verify that heartbeats cannot overwrite explicit service mappings
+/// set via SetServiceRoutingAsync.
+/// </summary>
+public class ServiceHealthMonitorRoutingProtectionTests
+{
+    private readonly Mock<ILogger<ServiceHealthMonitor>> _mockLogger;
+    private readonly Mock<IOrchestratorRedisManager> _mockRedisManager;
+    private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly OrchestratorServiceConfiguration _configuration;
+
+    // Event handler captured from the mock
+    private Action<ServiceHeartbeatEvent>? _heartbeatHandler;
+
+    public ServiceHealthMonitorRoutingProtectionTests()
+    {
+        _mockLogger = new Mock<ILogger<ServiceHealthMonitor>>();
+        _mockRedisManager = new Mock<IOrchestratorRedisManager>();
+        _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _configuration = new OrchestratorServiceConfiguration
+        {
+            HeartbeatTimeoutSeconds = 90,
+            DegradationThresholdMinutes = 5
+        };
+    }
+
+    private ServiceHealthMonitor CreateMonitorWithEventCapture()
+    {
+        // Capture the heartbeat event subscription handler
+        _mockEventManager
+            .SetupAdd(m => m.HeartbeatReceived += It.IsAny<Action<ServiceHeartbeatEvent>>())
+            .Callback<Action<ServiceHeartbeatEvent>>(handler => _heartbeatHandler = handler);
+
+        // Setup for GetServiceRoutingsAsync (needed for PublishFullMappingsAsync)
+        _mockRedisManager
+            .Setup(x => x.GetServiceRoutingsAsync())
+            .ReturnsAsync(new Dictionary<string, ServiceRouting>());
+
+        return new ServiceHealthMonitor(
+            _mockLogger.Object,
+            _configuration,
+            _mockRedisManager.Object,
+            _mockEventManager.Object);
+    }
+
+    [Fact]
+    public async Task Heartbeat_WhenNoExistingRouting_ShouldInitializeRouting()
+    {
+        // Arrange
+        var monitor = CreateMonitorWithEventCapture();
+
+        var heartbeat = new ServiceHeartbeatEvent
+        {
+            AppId = "bannou",
+            ServiceId = Guid.NewGuid(),
+            Status = ServiceHeartbeatEventStatus.Healthy,
+            Services = new List<ServiceStatus>
+            {
+                new() { ServiceName = "auth", Status = ServiceStatusStatus.Healthy }
+            }
+        };
+
+        ServiceRouting? capturedRouting = null;
+        _mockRedisManager
+            .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
+            .Callback<string, ServiceRouting>((name, routing) => capturedRouting = routing)
+            .Returns(Task.CompletedTask);
+
+        _mockRedisManager
+            .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
+            .Returns(Task.CompletedTask);
+
+        // Act - simulate heartbeat event
+        _heartbeatHandler?.Invoke(heartbeat);
+
+        // Allow async processing
+        await Task.Delay(100);
+
+        // Assert - routing should be initialized
+        Assert.NotNull(capturedRouting);
+        Assert.Equal("bannou", capturedRouting.AppId);
+    }
+
+    [Fact]
+    public async Task Heartbeat_WhenExplicitMappingExists_ShouldNotOverwriteRouting()
+    {
+        // Arrange
+        var monitor = CreateMonitorWithEventCapture();
+
+        _mockRedisManager
+            .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
+            .Returns(Task.CompletedTask);
+
+        _mockRedisManager
+            .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
+            .Returns(Task.CompletedTask);
+
+        // First, set an explicit mapping via SetServiceRoutingAsync (like orchestrator does during deploy)
+        await monitor.SetServiceRoutingAsync("auth", "bannou-auth");
+
+        // Now simulate a heartbeat from different app-id trying to claim the service
+        var heartbeat = new ServiceHeartbeatEvent
+        {
+            AppId = "bannou", // Different from "bannou-auth"
+            ServiceId = Guid.NewGuid(),
+            Status = ServiceHeartbeatEventStatus.Healthy,
+            Services = new List<ServiceStatus>
+            {
+                new() { ServiceName = "auth", Status = ServiceStatusStatus.Healthy }
+            }
+        };
+
+        // Reset the mock to track new calls
+        _mockRedisManager.Invocations.Clear();
+
+        _heartbeatHandler?.Invoke(heartbeat);
+        await Task.Delay(100);
+
+        // Assert - WriteServiceRoutingAsync for "auth" should NOT have been called with "bannou"
+        // (heartbeat from "bannou" should be ignored because "auth" is routed to "bannou-auth")
+        _mockRedisManager.Verify(
+            x => x.WriteServiceRoutingAsync("auth", It.Is<ServiceRouting>(r => r.AppId == "bannou")),
+            Times.Never(),
+            "Heartbeat from wrong app-id should not overwrite explicit routing");
+    }
+
+    [Fact]
+    public async Task Heartbeat_WhenFromCorrectAppId_ShouldUpdateHealthStatus()
+    {
+        // Arrange
+        var monitor = CreateMonitorWithEventCapture();
+
+        ServiceRouting? lastCapturedRouting = null;
+        _mockRedisManager
+            .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
+            .Callback<string, ServiceRouting>((name, routing) => lastCapturedRouting = routing)
+            .Returns(Task.CompletedTask);
+
+        _mockRedisManager
+            .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
+            .Returns(Task.CompletedTask);
+
+        // First, set an explicit mapping via SetServiceRoutingAsync
+        await monitor.SetServiceRoutingAsync("auth", "bannou-auth");
+
+        // Now simulate a heartbeat from the CORRECT app-id
+        var heartbeat = new ServiceHeartbeatEvent
+        {
+            AppId = "bannou-auth", // Same as the mapped app-id
+            ServiceId = Guid.NewGuid(),
+            Status = ServiceHeartbeatEventStatus.Healthy,
+            Services = new List<ServiceStatus>
+            {
+                new() { ServiceName = "auth", Status = ServiceStatusStatus.Degraded }
+            }
+        };
+
+        _heartbeatHandler?.Invoke(heartbeat);
+        await Task.Delay(100);
+
+        // Assert - routing should be updated (health status changed)
+        Assert.NotNull(lastCapturedRouting);
+        Assert.Equal("bannou-auth", lastCapturedRouting.AppId);
+        Assert.Equal("degraded", lastCapturedRouting.Status);
+    }
+
+    [Fact]
+    public async Task SetServiceRoutingAsync_ShouldOverwriteHeartbeatRouting()
+    {
+        // Arrange
+        var monitor = CreateMonitorWithEventCapture();
+
+        ServiceRouting? lastCapturedRouting = null;
+        _mockRedisManager
+            .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
+            .Callback<string, ServiceRouting>((name, routing) => lastCapturedRouting = routing)
+            .Returns(Task.CompletedTask);
+
+        _mockRedisManager
+            .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
+            .Returns(Task.CompletedTask);
+
+        // First, let heartbeat initialize routing
+        var heartbeat = new ServiceHeartbeatEvent
+        {
+            AppId = "bannou",
+            ServiceId = Guid.NewGuid(),
+            Status = ServiceHeartbeatEventStatus.Healthy,
+            Services = new List<ServiceStatus>
+            {
+                new() { ServiceName = "auth", Status = ServiceStatusStatus.Healthy }
+            }
+        };
+
+        _heartbeatHandler?.Invoke(heartbeat);
+        await Task.Delay(50);
+
+        Assert.Equal("bannou", lastCapturedRouting?.AppId);
+
+        // Now set an explicit mapping that routes to different app-id
+        await monitor.SetServiceRoutingAsync("auth", "bannou-auth");
+
+        // Assert - explicit mapping should overwrite heartbeat routing
+        Assert.NotNull(lastCapturedRouting);
+        Assert.Equal("bannou-auth", lastCapturedRouting.AppId);
+    }
+
+    [Fact]
+    public async Task RemoveServiceRoutingAsync_ShouldRemoveRouting()
+    {
+        // Arrange
+        var monitor = CreateMonitorWithEventCapture();
+
+        _mockRedisManager
+            .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
+            .Returns(Task.CompletedTask);
+
+        _mockRedisManager
+            .Setup(x => x.RemoveServiceRoutingAsync("auth"))
+            .Returns(Task.CompletedTask);
+
+        // First, set a routing
+        await monitor.SetServiceRoutingAsync("auth", "bannou-auth");
+
+        // Act - remove the routing
+        await monitor.RemoveServiceRoutingAsync("auth");
+
+        // Assert - RemoveServiceRoutingAsync was called on redis
+        _mockRedisManager.Verify(
+            x => x.RemoveServiceRoutingAsync("auth"),
+            Times.Once(),
+            "RemoveServiceRoutingAsync should be called on redis manager");
     }
 }

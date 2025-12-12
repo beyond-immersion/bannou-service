@@ -91,6 +91,20 @@ public interface IPermissionsController : BeyondImmersion.BannouService.Controll
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> UpdateSessionRoleAsync(SessionRoleUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Clear session state for specific service
+    /// </summary>
+
+    /// <remarks>
+    /// Removes state for a specific service from the session and recompiles permissions.
+    /// <br/>If states list is provided, only clears if current state matches one of the values.
+    /// <br/>If states list is empty or not provided, clears the state unconditionally.
+    /// </remarks>
+
+    /// <returns>Session state cleared and permissions recompiled</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> ClearSessionStateAsync(ClearSessionStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Get complete session information
     /// </summary>
 
@@ -255,6 +269,24 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
     }
 
     /// <summary>
+    /// Clear session state for specific service
+    /// </summary>
+    /// <remarks>
+    /// Removes state for a specific service from the session and recompiles permissions.
+    /// <br/>If states list is provided, only clears if current state matches one of the values.
+    /// <br/>If states list is empty or not provided, clears the state unconditionally.
+    /// </remarks>
+    /// <returns>Session state cleared and permissions recompiled</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("permissions/clear-session-state")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> ClearSessionState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ClearSessionStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.ClearSessionStateAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
     /// Get complete session information
     /// </summary>
     /// <remarks>
@@ -290,6 +322,46 @@ public partial class PermissionsController : Microsoft.AspNetCore.Mvc.Controller
 
         var (statusCode, result) = await _implementation.GetRegisteredServicesAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Event handler for session.updated events
+    /// </summary>
+    /// <remarks>
+    /// Handle session updates from Auth service to update role and authorization states.
+    /// </remarks>
+    [Dapr.Topic("bannou-pubsub", "session.updated")]
+    [Microsoft.AspNetCore.Mvc.HttpPost("handle-session-updated")]
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleSessionUpdatedEvent([Microsoft.AspNetCore.Mvc.FromBody] object eventData)
+    {
+        try
+        {
+            var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PermissionsController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(logger, "Processing Dapr event: {Topic}", "session.updated");
+
+            // Use System.Text.Json for consistent serialization with generated models
+            var serializedData = System.Text.Json.JsonSerializer.Serialize(eventData);
+
+            // Deserialize using System.Text.Json with case-insensitive property matching
+            var typedEventData = System.Text.Json.JsonSerializer.Deserialize<BeyondImmersion.BannouService.Auth.SessionUpdatedEvent>(serializedData, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (typedEventData != null)
+            {
+                Microsoft.Extensions.Logging.LoggerExtensions.LogInformation(logger, "Processing session.updated event for entity: {EntityId}", typedEventData.AccountId);
+                await _implementation.OnEventReceivedAsync("session.updated", typedEventData);
+            }
+            else
+            {
+                Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger, "Failed to deserialize session.updated event data");
+            }
+            return Ok();
+        }
+        catch (System.Exception ex)
+        {
+            var logger = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PermissionsController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, ex, "Failed to process session.updated event");
+            return StatusCode(500, new { error = "Event processing failed" });
+        }
     }
 
 }

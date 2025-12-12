@@ -4,6 +4,8 @@ namespace LibOrchestrator;
 
 /// <summary>
 /// Interface for monitoring service health based on ServiceHeartbeatEvent data.
+/// Writes heartbeat data and service routing to Redis for NGINX to read.
+/// Publishes FullServiceMappingsEvent periodically and on routing changes.
 /// Enables unit testing through mocking.
 /// </summary>
 public interface IServiceHealthMonitor
@@ -24,4 +26,21 @@ public interface IServiceHealthMonitor
     /// Get health status for a specific service instance.
     /// </summary>
     Task<ServiceHealthStatus?> GetServiceHealthStatusAsync(string serviceId, string appId);
+
+    /// <summary>
+    /// Update service routing for a specific service. Called by OrchestratorService during deployment.
+    /// This is the authoritative way to set routing - heartbeats cannot override these.
+    /// </summary>
+    Task SetServiceRoutingAsync(string serviceName, string appId);
+
+    /// <summary>
+    /// Remove service routing. Called by OrchestratorService during teardown.
+    /// </summary>
+    Task RemoveServiceRoutingAsync(string serviceName);
+
+    /// <summary>
+    /// Publish the complete service mappings to all bannou instances.
+    /// Called periodically (every 30s) and immediately when routing changes.
+    /// </summary>
+    Task PublishFullMappingsAsync(string reason);
 }

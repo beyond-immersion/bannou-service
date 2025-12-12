@@ -51,6 +51,7 @@ components:
         metadata:
           type: object
           additionalProperties: true
+          nullable: true
           description: Additional service registration metadata
 
     ServiceEndpoint:
@@ -156,6 +157,7 @@ components:
         metadata:
           type: object
           additionalProperties: true
+          nullable: true
           description: Additional instance-level metadata
 
     ServiceStatus:
@@ -183,6 +185,7 @@ components:
         metadata:
           type: object
           additionalProperties: true
+          nullable: true
           description: Service-specific metadata from OnHeartbeat callback
 
     InstanceCapacity:
@@ -204,42 +207,42 @@ components:
           format: float
           description: Memory usage percentage (0.0 - 1.0)
 
-    ServiceMappingEvent:
+    FullServiceMappingsEvent:
       type: object
       description: |
-        Published when service-to-app-id mappings change for distributed deployment.
-        Enables dynamic service routing without service restarts.
+        Published periodically by Orchestrator as the authoritative source of truth
+        for all service-to-app-id mappings across the entire network.
+        Consumed by all bannou instances to atomically update their routing tables.
+        Published every 30 seconds AND immediately when routing changes.
       required:
         - eventId
         - timestamp
-        - serviceName
-        - appId
-        - action
+        - mappings
+        - version
       properties:
         eventId:
           type: string
-          description: Unique identifier for this mapping event
+          description: Unique identifier for this mappings event
         timestamp:
           type: string
           format: date-time
-          description: When the mapping change occurred
-        serviceName:
-          type: string
-          description: Service name being mapped (e.g., "behavior", "accounts")
-        appId:
-          type: string
-          description: Target Dapr app-id for routing
-        action:
-          type: string
-          enum: [register, unregister, update]
-          description: Type of mapping operation
-        region:
-          type: string
-          description: Optional regional routing information
-        priority:
-          type: integer
-          description: Load balancing weight for this mapping
-        metadata:
+          description: When this mappings snapshot was generated
+        mappings:
           type: object
-          additionalProperties: true
-          description: Additional mapping metadata
+          additionalProperties:
+            type: string
+          description: Complete dictionary of serviceName -> appId mappings
+        defaultAppId:
+          type: string
+          description: Default app-id for unmapped services (usually "bannou")
+        version:
+          type: integer
+          format: int64
+          description: Monotonically increasing version for ordering. Consumers reject events with version <= current.
+        sourceInstanceId:
+          type: string
+          format: uuid
+          description: Orchestrator instance GUID that published this event
+        totalServices:
+          type: integer
+          description: Total number of services in the mappings dictionary

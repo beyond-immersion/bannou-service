@@ -1,0 +1,4 @@
+# Dapr Subscriptions
+# Note: Most subscriptions are handled via [Topic] attributes on controllers (programmatic subscriptions)
+# This file is only needed for declarative subscriptions that can't use the attribute approach
+# See: https://docs.dapr.io/developing-applications/building-blocks/pubsub/subscription-methods/

@@ -9,6 +9,8 @@ runs:
       run: |
         echo "🔧 Building Docker image with all services for HTTP integration testing..."
         echo "📋 Service-to-service testing via Dapr (no ingress - uses generated clients)..."
+        export DAPR_COMPONENTS_HOST_PATH="$(pwd)/provisioning/dapr/components-http-test"
+        echo "DAPR_COMPONENTS_HOST_PATH=${DAPR_COMPONENTS_HOST_PATH}"
         docker compose -p bannou-ci-http \
           -f "./provisioning/docker-compose.yml" \
           -f "./provisioning/docker-compose.services.yml" \
@@ -20,6 +22,8 @@ runs:
       shell: bash
       run: |
         echo "🔗 Running HTTP integration tests via Dapr service invocation..."
+        export DAPR_COMPONENTS_HOST_PATH="$(pwd)/provisioning/dapr/components-http-test"
+        echo "DAPR_COMPONENTS_HOST_PATH=${DAPR_COMPONENTS_HOST_PATH}"
         # Start all services in detached mode
         docker compose -p bannou-ci-http \
           -f "./provisioning/docker-compose.yml" \

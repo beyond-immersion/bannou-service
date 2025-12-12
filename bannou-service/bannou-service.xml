@@ -46,6 +46,11 @@
             Default application name for service routing ("bannou" - omnipotent routing).
             </summary>
         </member>
+        <member name="F:BeyondImmersion.BannouService.AppConstants.ORCHESTRATOR_SERVICE_NAME">
+            <summary>
+            Logical service name for the orchestrator control plane.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Attributes.BaseServiceAttribute">
             <summary>
             Easy base type for custom attributes.
@@ -370,6 +375,14 @@
         <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.Web_Host_Logging_Level">
             <summary>
             The minimum level of logs for kestrel to write to the console.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Configuration.AppConfiguration.MappingSourceAppId">
+            <summary>
+            The app-id to query for initial service mappings during startup.
+            Only set on containers deployed by orchestrator - when set, this container
+            will query the specified app-id for service mappings before publishing heartbeats.
+            This ensures newly deployed containers have correct routing information.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Configuration.BaseServiceConfiguration">
@@ -701,6 +714,40 @@
         <member name="P:BeyondImmersion.BannouService.Controllers.Messages.ApiResponse.Message">
             <summary>
             Optional message associated with the response.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController">
+            <summary>
+            Handles full service mapping events from Orchestrator.
+            Atomically updates the ServiceAppMappingResolver with complete routing state.
+            This controller subscribes to the bannou-full-service-mappings topic via Dapr pub/sub.
+            </summary>
+            <remarks>
+            Architecture:
+            - Orchestrator is the single source of truth for service-to-app-id mappings
+            - Orchestrator publishes FullServiceMappingsEvent every 30 seconds AND on routing changes
+            - All bannou instances consume this event to atomically update their local routing tables
+            - Version checking prevents out-of-order event application
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.#ctor(BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.HandleFullServiceMappings(BeyondImmersion.BannouService.Events.FullServiceMappingsEvent)">
+            <summary>
+            Handles full service mappings events from the Orchestrator.
+            Atomically replaces all local service mappings with the complete state from Orchestrator.
+            Implements version checking to reject out-of-order events.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.GetCurrentMappings">
+            <summary>
+            Debug endpoint to view current service mappings and event statistics.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.Health">
+            <summary>
+            Simple health check endpoint to verify the controller is reachable.
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.DaprEventHelper">
@@ -1069,51 +1116,48 @@
             Memory usage percentage (0.0 - 1.0)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Events.ServiceMappingEvent">
+        <member name="T:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent">
             <summary>
-            Published when service-to-app-id mappings change for distributed deployment.
-            <br/>Enables dynamic service routing without service restarts.
+            Published periodically by Orchestrator as the authoritative source of truth
+            <br/>for all service-to-app-id mappings across the entire network.
+            <br/>Consumed by all bannou instances to atomically update their routing tables.
+            <br/>Published every 30 seconds AND immediately when routing changes.
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.EventId">
             <summary>
-            Unique identifier for this mapping event
+            Unique identifier for this mappings event
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Timestamp">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.Timestamp">
             <summary>
-            When the mapping change occurred
+            When this mappings snapshot was generated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.ServiceName">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.Mappings">
             <summary>
-            Service name being mapped (e.g., "behavior", "accounts")
+            Complete dictionary of serviceName -&gt; appId mappings
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.AppId">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.DefaultAppId">
             <summary>
-            Target Dapr app-id for routing
+            Default app-id for unmapped services (usually "bannou")
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Action">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.Version">
             <summary>
-            Type of mapping operation
+            Monotonically increasing version for ordering. Consumers reject events with version &lt;= current.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Region">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.SourceInstanceId">
             <summary>
-            Optional regional routing information
+            Orchestrator instance GUID that published this event
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Priority">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.TotalServices">
             <summary>
-            Load balancing weight for this mapping
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Metadata">
-            <summary>
-            Additional mapping metadata
+            Total number of services in the mappings dictionary
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ExtensionMethods">
@@ -1304,6 +1348,20 @@
             <summary>
             Create a simple logger for the given service type.
             </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware">
+            <summary>
+            Rewrites Dapr invoke URLs so generated controllers can handle requests regardless of app-id.
+            Dapr preserves the /v1.0/invoke/{appId}/method/ prefix when forwarding, while our generated
+            controllers are hardcoded to "/v1.0/invoke/bannou/method". This middleware normalizes the path
+            to use the default app-id so routing continues to work even when sidecars run with different IDs.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware.#ctor(Microsoft.AspNetCore.Http.RequestDelegate,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware})">
+            <inheritdoc/>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Middleware.InvokeAppIdRewriteMiddleware.Invoke(Microsoft.AspNetCore.Http.HttpContext)">
+            <inheritdoc/>
         </member>
         <member name="T:BeyondImmersion.BannouService.Plugins.BaseBannouPlugin">
             <summary>
@@ -1567,10 +1625,18 @@
             <param name="pluginName">Name of the plugin</param>
             <returns>Resolved service instance or null if not found</returns>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.GetAllPluginAssemblies">
+            <summary>
+            Get assemblies for ALL loaded plugins (enabled and disabled).
+            Used for client type registration where disabled plugin client types are needed
+            for inter-service communication.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.GetControllerAssemblies">
             <summary>
-            Get assemblies containing controllers for all loaded plugins.
-            Controllers are available for all plugins (enabled and disabled) for client generation.
+            Get assemblies containing controllers for ENABLED plugins only.
+            Controllers from disabled plugins should not be registered to avoid DI failures
+            when their service dependencies are not registered.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Plugins.PluginLoader.ConfigureApplication(Microsoft.AspNetCore.Builder.WebApplication)">
@@ -1692,6 +1758,30 @@
             Will stop the webhost and initiate a service shutdown.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Program.ImportServiceMappingsFromSourceAsync(System.String,Microsoft.AspNetCore.Builder.WebApplication,System.Threading.CancellationToken)">
+            <summary>
+            Import service mappings from a source app-id during startup.
+            Used by newly deployed containers to get the current routing table
+            from the orchestrator before participating in the network.
+            </summary>
+            <param name="sourceAppId">The app-id to query for mappings</param>
+            <param name="webApp">The web application for service resolution</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>True if import succeeded, false otherwise</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Program.LoadPersistedMappingsAsync(Microsoft.AspNetCore.Builder.WebApplication,System.Threading.CancellationToken)">
+            <summary>
+            Load persisted service mappings from Dapr state store (Redis).
+            Used by orchestrator containers on restart to recover their routing table.
+            </summary>
+            <param name="webApp">The web application for service resolution</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Program.ServiceMappingsResponse">
+            <summary>
+            Response model for service mappings query.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase">
             <summary>
             Base class for all Dapr-aware service clients.
@@ -1739,11 +1829,30 @@
             <param name="serviceName">Name of the target service.</param>
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.BaseUrl">
-            <summary>
-            Gets the base URL for Dapr service invocation with dynamic app-id resolution.
-            For parameterless constructor, falls back to "bannou" app-id.
-            Uses environment variable DAPR_HTTP_ENDPOINT if available for containerized environments.
-            </summary>
+             <summary>
+             Gets the base URL for Dapr service invocation with dynamic app-id resolution.
+             For parameterless constructor, falls back to "bannou" app-id.
+             Uses environment variable DAPR_HTTP_ENDPOINT if available for containerized environments.
+             </summary>
+             <remarks>
+             CRITICAL ARCHITECTURAL CONSTRAINT:
+             The app-id used here ("bannou" by default) becomes part of the URL path that Dapr
+             forwards to the target service. Dapr does NOT strip the /v1.0/invoke/{app-id}/method/
+             prefix - it preserves the full path.
+            
+             This means all OpenAPI schemas MUST use the same app-id in their `servers` URL:
+               servers:
+                 - url: http://localhost:3500/v1.0/invoke/bannou/method
+            
+             NSwag generates controller route prefixes from this URL. If the schema uses a different
+             app-id (e.g., "game-session"), the generated controller route won't match the path
+             that clients send, resulting in 404 errors.
+            
+             The ServiceAppMappingResolver can dynamically route to different Dapr sidecars, but
+             the path structure (including app-id) must match what controllers expect.
+            
+             See API-DESIGN.md "servers URL Constraint" section for full documentation.
+             </remarks>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.String)">
             <summary>
@@ -2052,10 +2161,30 @@
             </summary>
             <returns>Interface Type, Implementation Type, Service Attribute</returns>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs">
+            <summary>
+            Event arguments for service mapping changes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs.ServiceName">
+            <summary>The service name that changed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs.NewAppId">
+            <summary>The new app-id for the service (null if removed).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs.PreviousAppId">
+            <summary>The previous app-id (null if new mapping).</summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver">
             <summary>
             Resolves service names to Dapr app-ids for distributed service routing.
             Supports dynamic mapping via RabbitMQ events for production scaling.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.MappingChanged">
+            <summary>
+            Event raised when a service mapping changes.
+            Used by ServiceHeartbeatManager to stop heartbeating services routed elsewhere.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.GetAppIdForService(System.String)">
@@ -2086,12 +2215,41 @@
             </summary>
             <returns>Dictionary of service name to app-id mappings</returns>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.ImportMappings(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Imports multiple service mappings at once, typically from a source container.
+            Used during startup of containers deployed by orchestrator.
+            </summary>
+            <param name="mappings">The mappings to import</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.ReplaceAllMappings(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.String,System.Int64)">
+            <summary>
+            Atomically replaces all service mappings with a new full state from Orchestrator.
+            Implements version checking to reject out-of-order events.
+            </summary>
+            <param name="mappings">Complete dictionary of serviceName -> appId mappings</param>
+            <param name="defaultAppId">Default app-id for unmapped services</param>
+            <param name="version">Monotonically increasing version number</param>
+            <returns>True if mappings were applied, false if version was stale</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.CurrentVersion">
+            <summary>
+            Gets the current version of the service mappings.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver">
             <summary>
             Default implementation of service-to-app-id mapping with dynamic updates via RabbitMQ.
             Defaults to "bannou" (omnipotent local node) for all services, but can be dynamically
             updated based on service discovery events for distributed production deployments.
+            Supports atomic full-state updates from Orchestrator's FullServiceMappingsEvent.
             </summary>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.MappingChanged">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.CurrentVersion">
+            <inheritdoc/>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Services.ServiceAppMappingResolver})">
             <inheritdoc/>
@@ -2100,6 +2258,11 @@
             <summary>
             Gets the Dapr app-id for the specified service.
             Defaults to "bannou" but can be overridden by RabbitMQ service mapping events.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.ClearAllMappingsForTests">
+            <summary>
+            Clears all mappings. Intended for test isolation.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.UpdateServiceMapping(System.String,System.String)">
@@ -2117,15 +2280,35 @@
             Gets all current service mappings for debugging/monitoring.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.ImportMappings(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Imports multiple service mappings at once, typically from a source container.
+            Used during startup of containers deployed by orchestrator.
+            </summary>
+            <param name="mappings">The mappings to import</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.ReplaceAllMappings(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.String,System.Int64)">
+            <summary>
+            Atomically replaces all service mappings with a new full state from Orchestrator.
+            Implements version checking to reject out-of-order events.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager">
             <summary>
             Manages heartbeat publishing for all services in a bannou instance.
             Publishes aggregated heartbeats via Dapr pub/sub on startup and periodically.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager._daprHttpPort">
+        <member name="F:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager._suppressedServices">
             <summary>
-            Dapr HTTP port for metadata API queries.
+            Services that are suppressed from heartbeats because they are routed to a different app-id.
+            When orchestrator routes a service elsewhere, this instance should stop heartbeating for it.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager._daprHttpEndpoint">
+            <summary>
+            Dapr HTTP endpoint for metadata API queries.
+            Supports standalone container architecture (e.g., "http://bannou-dapr:3500").
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.InstanceId">
@@ -2163,7 +2346,7 @@
             The topic name for heartbeat events.
             </summary>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Services.ServiceHeartbeatManager},BeyondImmersion.BannouService.Plugins.PluginLoader)">
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Services.ServiceHeartbeatManager},BeyondImmersion.BannouService.Plugins.PluginLoader,BeyondImmersion.BannouService.Services.IServiceAppMappingResolver)">
             <inheritdoc/>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.PublishStartupHeartbeatAsync(System.Threading.CancellationToken)">
@@ -2223,15 +2406,29 @@
             Publish a shutdown heartbeat to notify orchestrator this instance is going down.
             </summary>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.OnMappingChanged(System.Object,BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs)">
+            <summary>
+            Handle service mapping changes from orchestrator.
+            When a service is routed to a different app-id, suppress heartbeats for it.
+            When routed back to this instance (or removed = reverts to default), resume heartbeats.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.ShouldHeartbeatService(System.String)">
+            <summary>
+            Check if a service should be included in heartbeats.
+            Returns false if the service is routed to a different app-id.
+            </summary>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.BuildHeartbeatEvent(BeyondImmersion.BannouService.Events.ServiceHeartbeatEventStatus)">
             <summary>
             Build the heartbeat event with all service statuses.
+            Filters out services that are routed to a different app-id.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.DetermineOverallStatus">
             <summary>
             Determine the overall status based on all service statuses.
-            Returns the worst status among all services.
+            Returns the worst status among all services (excluding suppressed services).
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager.GetInstanceCapacity">

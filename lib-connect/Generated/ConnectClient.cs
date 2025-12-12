@@ -49,15 +49,26 @@ public partial interface IConnectClient : BeyondImmersion.BannouService.ServiceC
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Get current service routing mappings
+    /// Get client capability manifest (GUID → API mappings)
     /// </summary>
     /// <remarks>
-    /// Returns current service-to-app-id routing mappings for monitoring and debugging.
-    /// <br/>Shows how services are mapped in the current deployment topology.
+    /// Returns the capability manifest for the authenticated client's session.
+    /// <br/>Maps client-salted GUIDs to available API endpoints based on the client's
+    /// <br/>current permissions and session state.
+    /// <br/>
+    /// <br/>**Security**: Each client receives unique GUIDs for the same API endpoints.
+    /// <br/>This prevents cross-session exploitation and enables per-client rate limiting.
+    /// <br/>
+    /// <br/>**Dynamic Updates**: Capabilities may change during a session when:
+    /// <br/>- Role changes occur (admin promotion, etc.)
+    /// <br/>- Subscription status changes
+    /// <br/>- Session state transitions
+    /// <br/>
+    /// <br/>Clients should listen for capability update events via WebSocket to stay current.
     /// </remarks>
-    /// <returns>Service mappings retrieved successfully</returns>
+    /// <returns>Client capabilities retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<ServiceMappingsResponse> GetServiceMappingsAsync(GetServiceMappingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<ClientCapabilitiesResponse> GetClientCapabilitiesAsync(GetClientCapabilitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -268,15 +279,26 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
 
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Get current service routing mappings
+    /// Get client capability manifest (GUID → API mappings)
     /// </summary>
     /// <remarks>
-    /// Returns current service-to-app-id routing mappings for monitoring and debugging.
-    /// <br/>Shows how services are mapped in the current deployment topology.
+    /// Returns the capability manifest for the authenticated client's session.
+    /// <br/>Maps client-salted GUIDs to available API endpoints based on the client's
+    /// <br/>current permissions and session state.
+    /// <br/>
+    /// <br/>**Security**: Each client receives unique GUIDs for the same API endpoints.
+    /// <br/>This prevents cross-session exploitation and enables per-client rate limiting.
+    /// <br/>
+    /// <br/>**Dynamic Updates**: Capabilities may change during a session when:
+    /// <br/>- Role changes occur (admin promotion, etc.)
+    /// <br/>- Subscription status changes
+    /// <br/>- Session state transitions
+    /// <br/>
+    /// <br/>Clients should listen for capability update events via WebSocket to stay current.
     /// </remarks>
-    /// <returns>Service mappings retrieved successfully</returns>
+    /// <returns>Client capabilities retrieved successfully</returns>
     /// <exception cref="ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<ServiceMappingsResponse> GetServiceMappingsAsync(GetServiceMappingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<ClientCapabilitiesResponse> GetClientCapabilitiesAsync(GetClientCapabilitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -297,8 +319,8 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
                 var urlBuilder_ = new System.Text.StringBuilder();
                                 if (!string.IsNullOrEmpty(BaseUrl)) urlBuilder_.Append(BaseUrl);
 
-                // Operation Path: "service-mappings"
-                urlBuilder_.Append("service-mappings");
+                // Operation Path: "client-capabilities"
+                urlBuilder_.Append("client-capabilities");
 
                 PrepareRequest(client_, request_, urlBuilder_);
 
@@ -323,7 +345,7 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<ServiceMappingsResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<ClientCapabilitiesResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -331,10 +353,16 @@ public partial class ConnectClient : BeyondImmersion.BannouService.ServiceClient
                         return objectResponse_.Object;
                     }
                     else
+                    if (status_ == 401)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new ApiException("Not authenticated - requires valid session", status_, responseText_, headers_, null);
+                    }
+                    else
                     if (status_ == 500)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new ApiException("Error retrieving service mappings", status_, responseText_, headers_, null);
+                        throw new ApiException("Error retrieving capabilities", status_, responseText_, headers_, null);
                     }
                     else
                     {

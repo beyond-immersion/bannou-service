@@ -158,6 +158,26 @@ public static class OrchestratorPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/orchestrator/service-routing",
+            Method = ServiceEndpointMethod.POST,
+            Description = "GetServiceRouting",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+                new PermissionRequirement
+                {
+                    Role = "service",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/orchestrator/status",
             Method = ServiceEndpointMethod.POST,
             Description = "GetStatus",

@@ -5,6 +5,8 @@ metadata:
 spec:
   type: state.mysql
   version: v1
+  initTimeout: 60s
+  ignoreErrors: true
   metadata:
   - name: connectionString
     value: "guest:guest@tcp(account-db:3306)/?allowNativePasswords=true"

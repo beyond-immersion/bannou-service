@@ -589,6 +589,90 @@ public class PermissionsService : IPermissionsService
     }
 
     /// <summary>
+    /// Clear session state for a specific service and recompile permissions.
+    /// If states list is provided, only clears if current state matches one of the values.
+    /// If states list is empty or not provided, clears the state unconditionally.
+    /// </summary>
+    public async Task<(StatusCodes, SessionUpdateResponse?)> ClearSessionStateAsync(
+        ClearSessionStateRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
+
+            // Get current session states
+            var sessionStates = await _daprClient.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE, statesKey, cancellationToken: cancellationToken);
+
+            if (sessionStates == null || !sessionStates.ContainsKey(body.ServiceId))
+            {
+                _logger.LogInformation("No state to clear for session {SessionId}, service {ServiceId}",
+                    body.SessionId, body.ServiceId);
+
+                return (StatusCodes.OK, new SessionUpdateResponse
+                {
+                    SessionId = body.SessionId,
+                    Success = true,
+                    PermissionsChanged = false,
+                    Message = $"No state was set for service {body.ServiceId}"
+                });
+            }
+
+            var currentState = sessionStates[body.ServiceId];
+
+            // If states list is provided and non-empty, check if current state matches
+            if (body.States != null && body.States.Count > 0)
+            {
+                if (!body.States.Contains(currentState))
+                {
+                    _logger.LogInformation(
+                        "State '{CurrentState}' for session {SessionId}, service {ServiceId} does not match filter {States}",
+                        currentState, body.SessionId, body.ServiceId, string.Join(", ", body.States));
+
+                    return (StatusCodes.OK, new SessionUpdateResponse
+                    {
+                        SessionId = body.SessionId,
+                        Success = true,
+                        PermissionsChanged = false,
+                        Message = $"Current state '{currentState}' does not match filter; not cleared"
+                    });
+                }
+            }
+
+            _logger.LogInformation("Clearing state '{CurrentState}' for session {SessionId}, service {ServiceId}",
+                currentState, body.SessionId, body.ServiceId);
+
+            // Remove the state
+            sessionStates.Remove(body.ServiceId);
+
+            // Atomic update
+            var transactionRequests = new List<StateTransactionRequest>
+            {
+                new StateTransactionRequest(statesKey, JsonSerializer.SerializeToUtf8Bytes(sessionStates), StateOperationType.Upsert)
+            };
+
+            await _daprClient.ExecuteStateTransactionAsync(STATE_STORE, transactionRequests, cancellationToken: cancellationToken);
+
+            // Recompile session permissions
+            await RecompileSessionPermissionsAsync(body.SessionId, sessionStates, "session_state_cleared");
+
+            return (StatusCodes.OK, new SessionUpdateResponse
+            {
+                SessionId = body.SessionId,
+                Success = true,
+                PermissionsChanged = true,
+                Message = $"Cleared state '{currentState}' for service {body.ServiceId}"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error clearing session state for {SessionId}", body.SessionId);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
     /// Get complete session information including states, role, and compiled permissions.
     /// </summary>
     public async Task<(StatusCodes, SessionInfo?)> GetSessionInfoAsync(

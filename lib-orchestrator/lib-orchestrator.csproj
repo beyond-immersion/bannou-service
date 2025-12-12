@@ -9,16 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../bannou-service/bannou-service.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
     <PackageReference Include="KubernetesClient" Version="18.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
     <PackageReference Include="StackExchange.Redis" Version="2.9.25" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    <PackageReference Include="Dapr.Client" Version="1.16.1" />
   </ItemGroup>
 
   <Import Project="../ServiceLib.targets" />

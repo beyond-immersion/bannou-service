@@ -166,6 +166,27 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeployResponse>> DeployAsync(DeployRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Get current service-to-app-id routing mappings
+    /// </summary>
+
+    /// <remarks>
+    /// Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+    /// <br/>This is the authoritative source of truth for how services are routed in the current deployment.
+    /// <br/>
+    /// <br/>In development, all services route to "bannou" by default. In production, services may be
+    /// <br/>distributed across multiple app-ids based on deployment topology.
+    /// <br/>
+    /// <br/>**Use Cases**:
+    /// <br/>- Services querying routing on startup
+    /// <br/>- Debugging service communication issues
+    /// <br/>- Monitoring deployment topology
+    /// </remarks>
+
+    /// <returns>Service routing mappings</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceRoutingResponse>> GetServiceRoutingAsync(GetServiceRoutingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Get current environment status
     /// </summary>
 
@@ -536,6 +557,31 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     {
 
         var (statusCode, result) = await _implementation.DeployAsync(body, cancellationToken);
+        return ConvertToActionResult(statusCode, result);
+    }
+
+    /// <summary>
+    /// Get current service-to-app-id routing mappings
+    /// </summary>
+    /// <remarks>
+    /// Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+    /// <br/>This is the authoritative source of truth for how services are routed in the current deployment.
+    /// <br/>
+    /// <br/>In development, all services route to "bannou" by default. In production, services may be
+    /// <br/>distributed across multiple app-ids based on deployment topology.
+    /// <br/>
+    /// <br/>**Use Cases**:
+    /// <br/>- Services querying routing on startup
+    /// <br/>- Debugging service communication issues
+    /// <br/>- Monitoring deployment topology
+    /// </remarks>
+    /// <returns>Service routing mappings</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("orchestrator/service-routing")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceRoutingResponse>> GetServiceRouting([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetServiceRoutingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var (statusCode, result) = await _implementation.GetServiceRoutingAsync(body, cancellationToken);
         return ConvertToActionResult(statusCode, result);
     }
 
