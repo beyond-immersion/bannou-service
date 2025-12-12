@@ -465,93 +465,142 @@ public async Task GetInfrastructureHealthAsync_ReturnsHealthyStatus_WhenAllCompo
 
 ## Service Mapping Architecture
 
-### Current State
+### Full-State Mapping Architecture (December 2025)
 
-The orchestrator monitors service heartbeats and manages container topology. However, there's a **critical gap** in the service mapping event flow.
+The orchestrator uses a **full-state mapping event pattern** where it publishes the complete set of all service-to-app-id mappings atomically, rather than individual events per service change. This prevents race conditions and ensures all bannou instances have consistent routing tables.
+
+### Event Flow
+
+```
+[bannou-1] --heartbeat-->
+[bannou-2] --heartbeat-->  [Orchestrator] --> [Redis source of truth]
+[bannou-3] --heartbeat-->        |
+                                 v
+                    [Every 30s OR on routing change]
+                                 |
+                                 v
+                    [Publish FullServiceMappingsEvent]
+                    {mappings: {all services}, version: N}
+                                 |
+                    +------------+------------+
+                    v            v            v
+              [bannou-1]   [bannou-2]   [bannou-3]
+              _resolver.ReplaceAllMappings(...)
+              (atomic update, version checked)
+```
+
+### ServiceHealthMonitor
+
+`ServiceHealthMonitor` is the central component for service routing management:
+
+1. **Receives heartbeats** from all bannou instances
+2. **Writes routing to Redis** (`service:routing:{serviceName}` keys)
+3. **Publishes FullServiceMappingsEvent** every 30 seconds AND immediately on routing changes
+4. **Protects explicit routing** - heartbeats cannot overwrite orchestrator-set routings
+
+```csharp
+// Set routing during deployment (authoritative)
+await _healthMonitor.SetServiceRoutingAsync("auth", "bannou-auth");
+
+// Remove routing during teardown
+await _healthMonitor.RemoveServiceRoutingAsync("auth");
+
+// Full mappings published automatically on changes
+```
 
 ### ServiceAppMappingResolver
 
-Located in `bannou-service/Services/ServiceAppMappingResolver.cs`, this class resolves service names to Dapr app-ids:
+Located in `bannou-service/Services/ServiceAppMappingResolver.cs`, this class receives full-state updates from Orchestrator:
 
 ```csharp
 public class ServiceAppMappingResolver : IServiceAppMappingResolver
 {
     private const string DEFAULT_APP_ID = "bannou"; // Omnipotent default
-    private readonly ConcurrentDictionary<string, string> _serviceMappings;
+    private static readonly ConcurrentDictionary<string, string> _serviceMappings = new();
+    private static long _currentVersion = 0;
 
     public string GetAppIdForService(string serviceName)
     {
         return _serviceMappings.GetValueOrDefault(serviceName, DEFAULT_APP_ID);
     }
 
-    public async Task UpdateServiceMapping(string serviceName, string appId)
+    // Atomic replacement with version checking
+    public bool ReplaceAllMappings(IReadOnlyDictionary<string, string> mappings, string defaultAppId, long version)
     {
-        _serviceMappings.AddOrUpdate(serviceName, appId, (key, old) => appId);
+        if (version <= _currentVersion) return false; // Reject stale events
+
+        _serviceMappings.Clear();
+        foreach (var kvp in mappings)
+            _serviceMappings[kvp.Key] = kvp.Value;
+
+        _currentVersion = version;
+        return true;
     }
+
+    public long CurrentVersion => _currentVersion;
 }
 ```
 
-### The Gap: Missing Service Mapping Events
+### FullServiceMappingsEvent Schema
 
-**Problem**: `ServiceAppMappingResolver` has methods to update mappings from RabbitMQ events, but **no component currently publishes these events**.
-
-**Expected Flow**:
-```
-1. Orchestrator deploys/moves service to new container
-2. Orchestrator publishes ServiceMappingEvent to RabbitMQ
-3. All bannou instances consume event
-4. ServiceAppMappingResolver updates mappings
-5. Future service calls route to correct app-id
-```
-
-**Current State**:
-- ✅ ServiceAppMappingResolver can consume events
-- ✅ ServiceAppMappingResolver can update mappings
-- ❌ OrchestratorEventManager doesn't publish service mapping events
-- ❌ No `bannou-service-mappings` exchange defined
-
-### Required Implementation
-
-Add to `OrchestratorEventManager`:
-
-```csharp
-// New exchange for service mappings
-private const string SERVICE_MAPPINGS_EXCHANGE = "bannou-service-mappings";
-
-// Publish when topology changes
-public async Task PublishServiceMappingEventAsync(ServiceMappingEvent mappingEvent)
-{
-    var json = JsonSerializer.Serialize(mappingEvent);
-    var body = Encoding.UTF8.GetBytes(json);
-
-    _channel.BasicPublish(
-        exchange: SERVICE_MAPPINGS_EXCHANGE,
-        routingKey: mappingEvent.ServiceName,
-        body: body);
-}
-```
-
-**ServiceMappingEvent Model**:
 ```yaml
-ServiceMappingEvent:
+FullServiceMappingsEvent:
+  type: object
+  description: |
+    Published periodically by Orchestrator as the authoritative source of truth
+    for all service-to-app-id mappings across the entire network.
+    Consumed by all bannou instances to atomically update their routing tables.
+    Published every 30 seconds AND immediately when routing changes.
+  required:
+    - eventId
+    - timestamp
+    - mappings
+    - version
   properties:
-    eventId: string (uuid)
-    timestamp: string (date-time)
-    serviceName: string      # e.g., "auth", "accounts"
-    appId: string            # e.g., "bannou-auth", "npc-omega"
-    action: enum [register, unregister, update]
-    region: string           # Optional: for geographic routing
-    priority: integer        # Optional: for load balancing
+    eventId:
+      type: string
+    timestamp:
+      type: string
+      format: date-time
+    mappings:
+      type: object
+      additionalProperties:
+        type: string
+      description: Complete dictionary of serviceName -> appId mappings
+    defaultAppId:
+      type: string
+      description: Default app-id for unmapped services (usually "bannou")
+    version:
+      type: integer
+      format: int64
+      description: Monotonically increasing version. Consumers reject events with version <= current.
+    sourceInstanceId:
+      type: string
+      format: uuid
+      description: Orchestrator instance GUID that published this event
+    totalServices:
+      type: integer
 ```
 
-### When to Publish Service Mapping Events
+### Separate Event Flows
 
-| Orchestrator Action | Mapping Event |
-|---------------------|---------------|
-| Deploy service to new container | `register` with new app-id |
-| Move service between containers | `update` with new app-id |
-| Teardown container with service | `unregister` to fall back to default |
-| Scale service replicas | No event (same app-id) |
+**Important**: Service mapping is separate from permission/API registration:
+
+| Event Type | Topic | Purpose | Publisher |
+|------------|-------|---------|-----------|
+| `FullServiceMappingsEvent` | `bannou-full-service-mappings` | Service routing (which app-id handles which service) | Orchestrator |
+| `ServiceRegistrationEvent` | `permissions.service-registered` | API endpoints and permission requirements | Each service at startup |
+| `ServiceHeartbeatEvent` | `bannou-service-heartbeats` | Health status and capacity | Each bannou instance |
+
+### When Routing Changes Occur
+
+| Orchestrator Action | What Happens |
+|---------------------|--------------|
+| Deploy service to new container | `SetServiceRoutingAsync()` → Redis → `FullServiceMappingsEvent` |
+| Move service between containers | `SetServiceRoutingAsync()` → Redis → `FullServiceMappingsEvent` |
+| Teardown container with service | `RemoveServiceRoutingAsync()` → Redis → `FullServiceMappingsEvent` |
+| Scale service replicas | No routing change (same app-id) |
+| Periodic (every 30s) | `FullServiceMappingsEvent` published regardless |
 
 ---
 
@@ -1431,11 +1480,13 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 
 ### Phase 3: Service Mapping Events ✅ Complete
 
-- [x] ServiceAppMappingResolver can consume events
-- [x] ServiceAppMappingResolver can update mappings dynamically
-- [x] **Service mapping events** via Dapr pub/sub
+- [x] ServiceAppMappingResolver receives full-state updates atomically
+- [x] Version checking rejects out-of-order events
+- [x] **FullServiceMappingsEvent** published via Dapr pub/sub (`bannou-full-service-mappings` topic)
 - [x] **Redis heartbeat system** for NGINX routing integration
-- [x] **Publish on topology changes** (deploy, move, teardown)
+- [x] **Periodic publication** every 30 seconds
+- [x] **Immediate publication** on routing changes (deploy, move, teardown)
+- [x] **Heartbeat routing protection** - heartbeats cannot overwrite orchestrator-set routings
 
 ### Phase 4: Secrets Integration 📋 Planned (Research Complete)
 
@@ -1461,56 +1512,22 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 
 ## Critical Unimplemented TODOs
 
-The following TODOs in `OrchestratorService.cs` represent core functionality that needs implementation:
+The following TODOs in `OrchestratorService.cs` represent remaining functionality:
 
 | Location | TODO | Priority | Blocker For |
 |----------|------|----------|-------------|
 | Line 190 | Implement test execution via API calls to test services | Medium | Test orchestration feature |
-| Line 347 | Implement actual deployment via container orchestrator | **HIGH** | Deploy endpoint |
-| Line 421 | Implement actual teardown via container orchestrator | **HIGH** | Teardown endpoint |
-| Line 453 | Implement cleanup via container orchestrator | Medium | Clean endpoint |
-| Line 544 | Implement topology update via container orchestrator | **HIGH** | Live topology changes |
+| Line 453 | Implement cleanup via container orchestrator | Low | Clean endpoint |
 | Line 632 | Implement configuration rollback | Low | Rollback endpoint |
 
-### Deployment TODO (Line 347)
+### ✅ Recently Completed
 
-```csharp
-// TODO: Implement actual deployment via container orchestrator
-// Currently returns success without deploying
-```
+The following critical TODOs have been implemented:
 
-**Required Implementation**:
-1. Get appropriate orchestrator from `_backendDetector`
-2. Parse deployment preset from request
-3. Create/update containers with service configuration
-4. Wait for health checks
-5. Publish ServiceMappingEvents for new services
-
-### Teardown TODO (Line 421)
-
-```csharp
-// TODO: Implement actual teardown via container orchestrator
-// Currently returns success without tearing down
-```
-
-**Required Implementation**:
-1. Get appropriate orchestrator from `_backendDetector`
-2. Stop containers gracefully
-3. Remove containers if requested
-4. Publish ServiceMappingEvents to unregister services
-
-### Topology Update TODO (Line 544)
-
-```csharp
-// TODO: Implement topology update via container orchestrator
-// Currently returns success without updating topology
-```
-
-**Required Implementation**:
-1. Parse topology change requests (move-service, add-node, remove-node)
-2. Coordinate container lifecycle changes
-3. **Publish ServiceMappingEvents** for any service moves
-4. Wait for health verification
+- **Deploy endpoint**: Now uses `_healthMonitor.SetServiceRoutingAsync()` for each deployed service
+- **Teardown endpoint**: Now uses `_healthMonitor.RemoveServiceRoutingAsync()` for removed services
+- **Topology updates**: Now uses `_healthMonitor.SetServiceRoutingAsync()` for moved services
+- **Service mapping publication**: `FullServiceMappingsEvent` auto-published by ServiceHealthMonitor on changes
 
 ---
 
@@ -1564,16 +1581,14 @@ Steps 1-2 currently blocked by auth service issues in http-tester.
 
 ## Risk Assessment
 
-### Risk 1: Service Mapping Event Gap (HIGH)
+### Risk 1: Service Mapping Event Gap ✅ RESOLVED
 
-**Impact**: Distributed service deployments will not route correctly
-**Likelihood**: Certain (gap exists today)
-**Current State**: ServiceAppMappingResolver expects events but no publisher exists
-**Mitigation**:
-- Implement `PublishServiceMappingEventAsync` in OrchestratorEventManager
-- Add `bannou-service-mappings` exchange to RabbitMQ
-- Integrate with deploy/teardown/topology endpoints
-- Test with multi-container deployment preset
+**Status**: Fully implemented (December 2025)
+**Solution**: `FullServiceMappingsEvent` published by ServiceHealthMonitor
+- Atomic full-state updates prevent partial routing tables
+- Version checking prevents out-of-order event application
+- Periodic publication (30s) ensures eventual consistency
+- Immediate publication on routing changes for responsiveness
 
 ### Risk 2: Docker Socket Security Breach (HIGH)
 
