@@ -365,67 +365,60 @@ public partial class InstanceCapacity
 }
 
 /// <summary>
-/// Published when service-to-app-id mappings change for distributed deployment.
-/// <br/>Enables dynamic service routing without service restarts.
+/// Published periodically by Orchestrator as the authoritative source of truth
+/// <br/>for all service-to-app-id mappings across the entire network.
+/// <br/>Consumed by all bannou instances to atomically update their routing tables.
+/// <br/>Published every 30 seconds AND immediately when routing changes.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServiceMappingEvent
+public partial class FullServiceMappingsEvent
 {
 
     /// <summary>
-    /// Unique identifier for this mapping event
+    /// Unique identifier for this mappings event
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string EventId { get; set; } = default!;
 
     /// <summary>
-    /// When the mapping change occurred
+    /// When this mappings snapshot was generated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Service name being mapped (e.g., "behavior", "accounts")
+    /// Complete dictionary of serviceName -&gt; appId mappings
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string ServiceName { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("mappings")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.IDictionary<string, string> Mappings { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
 
     /// <summary>
-    /// Target Dapr app-id for routing
+    /// Default app-id for unmapped services (usually "bannou")
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("appId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    public string AppId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("defaultAppId")]
+    public string DefaultAppId { get; set; } = default!;
 
     /// <summary>
-    /// Type of mapping operation
+    /// Monotonically increasing version for ordering. Consumers reject events with version &lt;= current.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("action")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ServiceMappingEventAction Action { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public long Version { get; set; } = default!;
 
     /// <summary>
-    /// Optional regional routing information
+    /// Orchestrator instance GUID that published this event
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("region")]
-    public string Region { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("sourceInstanceId")]
+    public System.Guid SourceInstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Load balancing weight for this mapping
+    /// Total number of services in the mappings dictionary
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("priority")]
-    public int Priority { get; set; } = default!;
-
-    /// <summary>
-    /// Additional mapping metadata
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("totalServices")]
+    public int TotalServices { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -492,21 +485,6 @@ public enum ServiceStatusStatus
 
     [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
     Unavailable = 2,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ServiceMappingEventAction
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"register")]
-    Register = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"unregister")]
-    Unregister = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"update")]
-    Update = 2,
 
 }
 

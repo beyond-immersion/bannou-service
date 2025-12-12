@@ -60,4 +60,19 @@ public interface IServiceAppMappingResolver
     /// </summary>
     /// <param name="mappings">The mappings to import</param>
     void ImportMappings(IReadOnlyDictionary<string, string> mappings);
+
+    /// <summary>
+    /// Atomically replaces all service mappings with a new full state from Orchestrator.
+    /// Implements version checking to reject out-of-order events.
+    /// </summary>
+    /// <param name="mappings">Complete dictionary of serviceName -> appId mappings</param>
+    /// <param name="defaultAppId">Default app-id for unmapped services</param>
+    /// <param name="version">Monotonically increasing version number</param>
+    /// <returns>True if mappings were applied, false if version was stale</returns>
+    bool ReplaceAllMappings(IReadOnlyDictionary<string, string> mappings, string defaultAppId, long version);
+
+    /// <summary>
+    /// Gets the current version of the service mappings.
+    /// </summary>
+    long CurrentVersion { get; }
 }

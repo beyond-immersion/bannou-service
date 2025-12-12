@@ -8,7 +8,6 @@ using LibOrchestrator.Backends;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
-using ServiceMappingAction = BeyondImmersion.BannouService.Events.ServiceMappingEventAction;
 
 [assembly: InternalsVisibleTo("lib-orchestrator.tests")]
 
@@ -497,23 +496,18 @@ public class OrchestratorService : IOrchestratorService
                         Node = Environment.MachineName
                     });
 
-                    // Publish service mapping events for each service on this node
+                    // Register service routing for each service on this node
+                    // ServiceHealthMonitor will automatically publish FullServiceMappingsEvent
                     foreach (var serviceName in node.Services)
                     {
-                        await PublishServiceMappingAsync(new ServiceMappingEvent
-                        {
-                            EventId = Guid.NewGuid().ToString(),
-                            ServiceName = serviceName,
-                            AppId = appId,
-                            Action = ServiceMappingAction.Register
-                        }, cancellationToken);
+                        await _healthMonitor.SetServiceRoutingAsync(serviceName, appId);
                     }
 
                     // Track this app-id for heartbeat waiting
                     expectedAppIds.Add(appId);
 
                     _logger.LogInformation(
-                        "Node {NodeName} deployed with app-id {AppId}, {ServiceCount} service mapping events published",
+                        "Node {NodeName} deployed with app-id {AppId}, {ServiceCount} service routings set",
                         node.Name, appId, node.Services.Count);
                 }
                 else
@@ -921,17 +915,11 @@ public class OrchestratorService : IOrchestratorService
                         ? appName.Substring(7)
                         : appName;
 
-                    // Publish service mapping event to notify all bannou instances to remove routing
-                    await PublishServiceMappingAsync(new ServiceMappingEvent
-                    {
-                        EventId = Guid.NewGuid().ToString(),
-                        ServiceName = serviceName,
-                        AppId = appName,
-                        Action = ServiceMappingAction.Unregister
-                    }, cancellationToken);
+                    // Remove service routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
+                    await _healthMonitor.RemoveServiceRoutingAsync(serviceName);
 
                     _logger.LogInformation(
-                        "Service {AppName} torn down, unregister mapping event published",
+                        "Service {AppName} torn down, routing removed",
                         appName);
                 }
                 else
@@ -1005,26 +993,6 @@ public class OrchestratorService : IOrchestratorService
             failedTeardowns.Count);
 
         return (stoppedContainers, removedVolumes, removedInfrastructure, failedTeardowns);
-    }
-
-    /// <summary>
-    /// Publishes a service mapping event via Dapr pubsub (single, CloudEvents format).
-    /// We avoid dual-path (RabbitMQ + Dapr) to keep formats consistent for Connect consumers.
-    /// </summary>
-    private async Task PublishServiceMappingAsync(ServiceMappingEvent mappingEvent, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await _daprClient.PublishEventAsync(
-                "bannou-pubsub",
-                "bannou-service-mappings",
-                mappingEvent,
-                cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish service mapping to Dapr pubsub for {Service}", mappingEvent.ServiceName);
-        }
     }
 
     /// <summary>
@@ -1181,14 +1149,8 @@ public class OrchestratorService : IOrchestratorService
 
                                     if (deployResult.Success)
                                     {
-                                        // Publish register mapping event for each service on the new node
-                                        await PublishServiceMappingAsync(new ServiceMappingEvent
-                                        {
-                                            EventId = Guid.NewGuid().ToString(),
-                                            ServiceName = serviceName,
-                                            AppId = appId,
-                                            Action = ServiceMappingAction.Register
-                                        }, cancellationToken);
+                                        // Set service routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
+                                        await _healthMonitor.SetServiceRoutingAsync(serviceName, appId);
                                     }
                                     else
                                     {
@@ -1217,14 +1179,8 @@ public class OrchestratorService : IOrchestratorService
 
                                     if (teardownResult.Success)
                                     {
-                                        // Publish unregister mapping event
-                                        await PublishServiceMappingAsync(new ServiceMappingEvent
-                                        {
-                                            EventId = Guid.NewGuid().ToString(),
-                                            ServiceName = serviceName,
-                                            AppId = appId,
-                                            Action = ServiceMappingAction.Unregister
-                                        }, cancellationToken);
+                                        // Remove routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
+                                        await _healthMonitor.RemoveServiceRoutingAsync(serviceName);
                                     }
                                     else
                                     {
@@ -1247,14 +1203,8 @@ public class OrchestratorService : IOrchestratorService
                                 {
                                     var newAppId = $"bannou-{serviceName}-{change.NodeName}";
 
-                                    // Publish update mapping event to change routing
-                                    await PublishServiceMappingAsync(new ServiceMappingEvent
-                                    {
-                                        EventId = Guid.NewGuid().ToString(),
-                                        ServiceName = serviceName,
-                                        AppId = newAppId,
-                                        Action = ServiceMappingAction.Update
-                                    }, cancellationToken);
+                                    // Update routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
+                                    await _healthMonitor.SetServiceRoutingAsync(serviceName, newAppId);
                                 }
                                 appliedChange.Success = true;
                             }

@@ -1,4 +1,5 @@
-using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Services;
 using Dapr;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -6,44 +7,17 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.Controllers;
 
 /// <summary>
-/// Action types for service mapping events.
-/// Defined locally to avoid circular dependency with lib-orchestrator.
-/// Must match LibOrchestrator.ServiceMappingAction enum values.
+/// Handles full service mapping events from Orchestrator.
+/// Atomically updates the ServiceAppMappingResolver with complete routing state.
+/// This controller subscribes to the bannou-full-service-mappings topic via Dapr pub/sub.
 /// </summary>
-public enum ServiceMappingAction
-{
-    /// <inheritdoc/>
-    Register = 0,
-    /// <inheritdoc/>
-    Update = 1,
-    /// <inheritdoc/>
-    Unregister = 2
-}
-
-/// <summary>
-/// Event model for service mapping updates.
-/// Defined locally to avoid circular dependency with lib-orchestrator.
-/// Must match LibOrchestrator.ServiceMappingEvent structure.
-/// </summary>
-public class ServiceMappingEventModel
-{
-    /// <inheritdoc/>
-    public string EventId { get; set; } = string.Empty;
-    /// <inheritdoc/>
-    public DateTime Timestamp { get; set; }
-    /// <inheritdoc/>
-    public string ServiceName { get; set; } = string.Empty;
-    /// <inheritdoc/>
-    public string AppId { get; set; } = string.Empty;
-    /// <inheritdoc/>
-    public ServiceMappingAction Action { get; set; }
-}
-
-/// <summary>
-/// Handles service mapping events from orchestrator.
-/// Updates the ServiceAppMappingResolver to enable dynamic service routing.
-/// This controller subscribes to the bannou-service-mappings topic via Dapr pub/sub.
-/// </summary>
+/// <remarks>
+/// Architecture:
+/// - Orchestrator is the single source of truth for service-to-app-id mappings
+/// - Orchestrator publishes FullServiceMappingsEvent every 30 seconds AND on routing changes
+/// - All bannou instances consume this event to atomically update their local routing tables
+/// - Version checking prevents out-of-order event application
+/// </remarks>
 [ApiController]
 [Route("[controller]")]
 public class ServiceMappingEventsController : ControllerBase
@@ -53,7 +27,9 @@ public class ServiceMappingEventsController : ControllerBase
 
     // Debug counter to track received events
     private static int _eventsReceived = 0;
-    private static DateTime _lastEventTime = DateTime.MinValue;
+    private static int _eventsApplied = 0;
+    private static int _eventsRejected = 0;
+    private static DateTimeOffset _lastEventTime = DateTimeOffset.MinValue;
 
     /// <inheritdoc/>
     public ServiceMappingEventsController(
@@ -65,73 +41,65 @@ public class ServiceMappingEventsController : ControllerBase
     }
 
     /// <summary>
-    /// Handles service mapping events from the orchestrator.
-    /// Updates the local ServiceAppMappingResolver to route service calls to the correct app-id.
+    /// Handles full service mappings events from the Orchestrator.
+    /// Atomically replaces all local service mappings with the complete state from Orchestrator.
+    /// Implements version checking to reject out-of-order events.
     /// </summary>
-    [Topic("bannou-pubsub", "bannou-service-mappings")]
+    [Topic("bannou-pubsub", "bannou-full-service-mappings")]
     [HttpPost("handle")]
-    public IActionResult HandleServiceMappingEvent([FromBody] ServiceMappingEventModel eventData)
+    public IActionResult HandleFullServiceMappings([FromBody] FullServiceMappingsEvent eventData)
     {
         // Track all incoming events for debugging
         _eventsReceived++;
-        _lastEventTime = DateTime.UtcNow;
-        _logger.LogInformation("ServiceMappingEventsController.HandleServiceMappingEvent called (total: {Count})", _eventsReceived);
+        _lastEventTime = DateTimeOffset.UtcNow;
 
         if (eventData == null)
         {
-            _logger.LogWarning("Received null service mapping event");
+            _logger.LogWarning("Received null full service mappings event");
             return BadRequest("Event data is required");
         }
 
-        if (string.IsNullOrWhiteSpace(eventData.ServiceName))
+        if (eventData.Mappings == null)
         {
-            _logger.LogWarning("Received service mapping event with empty service name");
-            return BadRequest("Service name is required");
+            _logger.LogWarning("Received full service mappings event with null mappings dictionary");
+            return BadRequest("Mappings dictionary is required");
         }
 
-        _logger.LogInformation(
-            "Processing service mapping event: {ServiceName} -> {AppId} ({Action})",
-            eventData.ServiceName, eventData.AppId, eventData.Action);
+        _logger.LogDebug(
+            "Received full service mappings v{Version} with {Count} services from {Source}",
+            eventData.Version,
+            eventData.TotalServices,
+            eventData.SourceInstanceId);
 
         try
         {
-            switch (eventData.Action)
+            // Atomically replace all mappings (with version checking)
+            var applied = _resolver.ReplaceAllMappings(
+                (IReadOnlyDictionary<string, string>)eventData.Mappings,
+                eventData.DefaultAppId ?? "bannou",
+                eventData.Version);
+
+            if (applied)
             {
-                case ServiceMappingAction.Register:
-                case ServiceMappingAction.Update:
-                    if (string.IsNullOrWhiteSpace(eventData.AppId))
-                    {
-                        _logger.LogWarning(
-                            "Received {Action} event with empty app-id for service {ServiceName}",
-                            eventData.Action, eventData.ServiceName);
-                        return BadRequest("App-id is required for Register/Update actions");
-                    }
-                    _resolver.UpdateServiceMapping(eventData.ServiceName, eventData.AppId);
-                    _logger.LogInformation(
-                        "Updated service mapping: {ServiceName} -> {AppId}",
-                        eventData.ServiceName, eventData.AppId);
-                    break;
-
-                case ServiceMappingAction.Unregister:
-                    _resolver.RemoveServiceMapping(eventData.ServiceName);
-                    _logger.LogInformation(
-                        "Removed service mapping: {ServiceName} (reverted to default)",
-                        eventData.ServiceName);
-                    break;
-
-                default:
-                    _logger.LogWarning(
-                        "Unknown service mapping action: {Action}",
-                        eventData.Action);
-                    return BadRequest($"Unknown action: {eventData.Action}");
+                _eventsApplied++;
+                _logger.LogInformation(
+                    "Applied full service mappings v{Version}: {Count} services (total applied: {TotalApplied})",
+                    eventData.Version, eventData.TotalServices, _eventsApplied);
+            }
+            else
+            {
+                _eventsRejected++;
+                _logger.LogDebug(
+                    "Rejected stale full service mappings v{Version} (current: v{CurrentVersion}, total rejected: {TotalRejected})",
+                    eventData.Version, _resolver.CurrentVersion, _eventsRejected);
             }
 
             return Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing service mapping event for {ServiceName}", eventData.ServiceName);
-            return StatusCode(500, "Internal error processing service mapping event");
+            _logger.LogError(ex, "Error processing full service mappings event v{Version}", eventData.Version);
+            return StatusCode(500, "Internal error processing full service mappings event");
         }
     }
 
@@ -145,10 +113,13 @@ public class ServiceMappingEventsController : ControllerBase
         return Ok(new
         {
             DefaultAppId = "bannou",
+            CurrentVersion = _resolver.CurrentVersion,
             CustomMappings = mappings,
             MappingCount = mappings.Count,
             EventsReceived = _eventsReceived,
-            LastEventTime = _lastEventTime == DateTime.MinValue ? "never" : _lastEventTime.ToString("o")
+            EventsApplied = _eventsApplied,
+            EventsRejected = _eventsRejected,
+            LastEventTime = _lastEventTime == DateTimeOffset.MinValue ? "never" : _lastEventTime.ToString("o")
         });
     }
 
@@ -162,7 +133,9 @@ public class ServiceMappingEventsController : ControllerBase
         {
             Status = "healthy",
             Controller = "ServiceMappingEventsController",
-            EventsReceived = _eventsReceived
+            CurrentVersion = _resolver.CurrentVersion,
+            EventsReceived = _eventsReceived,
+            EventsApplied = _eventsApplied
         });
     }
 }

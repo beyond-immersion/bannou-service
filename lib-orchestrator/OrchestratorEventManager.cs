@@ -14,11 +14,10 @@ public class OrchestratorEventManager : IOrchestratorEventManager
     private readonly DaprClient _daprClient;
 
     public event Action<ServiceHeartbeatEvent>? HeartbeatReceived;
-    public event Action<ServiceMappingEvent>? ServiceMappingReceived;
 
     private const string PUBSUB_NAME = "bannou-pubsub";
     private const string HEARTBEAT_TOPIC = "bannou-service-heartbeats";
-    private const string MAPPINGS_TOPIC = "bannou-service-mappings";
+    private const string FULL_MAPPINGS_TOPIC = "bannou-full-service-mappings";
     private const string RESTART_TOPIC = "bannou-service-restart";
     private const string DEPLOYMENT_TOPIC = "bannou-deployment-events";
 
@@ -42,18 +41,6 @@ public class OrchestratorEventManager : IOrchestratorEventManager
         }
     }
 
-    public void ReceiveServiceMapping(ServiceMappingEvent mappingEvent)
-    {
-        try
-        {
-            ServiceMappingReceived?.Invoke(mappingEvent);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling service mapping event");
-        }
-    }
-
     public async Task PublishServiceRestartEventAsync(ServiceRestartEvent restartEvent)
     {
         await _daprClient.PublishEventAsync(PUBSUB_NAME, RESTART_TOPIC, restartEvent);
@@ -64,6 +51,15 @@ public class OrchestratorEventManager : IOrchestratorEventManager
     {
         await _daprClient.PublishEventAsync(PUBSUB_NAME, DEPLOYMENT_TOPIC, deploymentEvent);
         _logger.LogInformation("Published deployment event: {Action} ({DeploymentId})", deploymentEvent.Action, deploymentEvent.DeploymentId);
+    }
+
+    public async Task PublishFullMappingsAsync(FullServiceMappingsEvent mappingsEvent)
+    {
+        await _daprClient.PublishEventAsync(PUBSUB_NAME, FULL_MAPPINGS_TOPIC, mappingsEvent);
+        _logger.LogInformation(
+            "Published full service mappings v{Version} with {Count} services",
+            mappingsEvent.Version,
+            mappingsEvent.TotalServices);
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;

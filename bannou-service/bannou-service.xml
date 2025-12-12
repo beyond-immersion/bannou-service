@@ -716,58 +716,28 @@
             Optional message associated with the response.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Controllers.ServiceMappingAction">
-            <summary>
-            Action types for service mapping events.
-            Defined locally to avoid circular dependency with lib-orchestrator.
-            Must match LibOrchestrator.ServiceMappingAction enum values.
-            </summary>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Controllers.ServiceMappingAction.Register">
-            <inheritdoc/>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Controllers.ServiceMappingAction.Update">
-            <inheritdoc/>
-        </member>
-        <member name="F:BeyondImmersion.BannouService.Controllers.ServiceMappingAction.Unregister">
-            <inheritdoc/>
-        </member>
-        <member name="T:BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel">
-            <summary>
-            Event model for service mapping updates.
-            Defined locally to avoid circular dependency with lib-orchestrator.
-            Must match LibOrchestrator.ServiceMappingEvent structure.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel.EventId">
-            <inheritdoc/>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel.Timestamp">
-            <inheritdoc/>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel.ServiceName">
-            <inheritdoc/>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel.AppId">
-            <inheritdoc/>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel.Action">
-            <inheritdoc/>
-        </member>
         <member name="T:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController">
             <summary>
-            Handles service mapping events from orchestrator.
-            Updates the ServiceAppMappingResolver to enable dynamic service routing.
-            This controller subscribes to the bannou-service-mappings topic via Dapr pub/sub.
+            Handles full service mapping events from Orchestrator.
+            Atomically updates the ServiceAppMappingResolver with complete routing state.
+            This controller subscribes to the bannou-full-service-mappings topic via Dapr pub/sub.
             </summary>
+            <remarks>
+            Architecture:
+            - Orchestrator is the single source of truth for service-to-app-id mappings
+            - Orchestrator publishes FullServiceMappingsEvent every 30 seconds AND on routing changes
+            - All bannou instances consume this event to atomically update their local routing tables
+            - Version checking prevents out-of-order event application
+            </remarks>
         </member>
         <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.#ctor(BeyondImmersion.BannouService.Services.IServiceAppMappingResolver,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController})">
             <inheritdoc/>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.HandleServiceMappingEvent(BeyondImmersion.BannouService.Controllers.ServiceMappingEventModel)">
+        <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.HandleFullServiceMappings(BeyondImmersion.BannouService.Events.FullServiceMappingsEvent)">
             <summary>
-            Handles service mapping events from the orchestrator.
-            Updates the local ServiceAppMappingResolver to route service calls to the correct app-id.
+            Handles full service mappings events from the Orchestrator.
+            Atomically replaces all local service mappings with the complete state from Orchestrator.
+            Implements version checking to reject out-of-order events.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Controllers.ServiceMappingEventsController.GetCurrentMappings">
@@ -1146,51 +1116,48 @@
             Memory usage percentage (0.0 - 1.0)
             </summary>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Events.ServiceMappingEvent">
+        <member name="T:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent">
             <summary>
-            Published when service-to-app-id mappings change for distributed deployment.
-            <br/>Enables dynamic service routing without service restarts.
+            Published periodically by Orchestrator as the authoritative source of truth
+            <br/>for all service-to-app-id mappings across the entire network.
+            <br/>Consumed by all bannou instances to atomically update their routing tables.
+            <br/>Published every 30 seconds AND immediately when routing changes.
             <br/>
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.EventId">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.EventId">
             <summary>
-            Unique identifier for this mapping event
+            Unique identifier for this mappings event
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Timestamp">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.Timestamp">
             <summary>
-            When the mapping change occurred
+            When this mappings snapshot was generated
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.ServiceName">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.Mappings">
             <summary>
-            Service name being mapped (e.g., "behavior", "accounts")
+            Complete dictionary of serviceName -&gt; appId mappings
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.AppId">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.DefaultAppId">
             <summary>
-            Target Dapr app-id for routing
+            Default app-id for unmapped services (usually "bannou")
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Action">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.Version">
             <summary>
-            Type of mapping operation
+            Monotonically increasing version for ordering. Consumers reject events with version &lt;= current.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Region">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.SourceInstanceId">
             <summary>
-            Optional regional routing information
+            Orchestrator instance GUID that published this event
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Priority">
+        <member name="P:BeyondImmersion.BannouService.Events.FullServiceMappingsEvent.TotalServices">
             <summary>
-            Load balancing weight for this mapping
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Events.ServiceMappingEvent.Metadata">
-            <summary>
-            Additional mapping metadata
+            Total number of services in the mappings dictionary
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ExtensionMethods">
@@ -2255,14 +2222,33 @@
             </summary>
             <param name="mappings">The mappings to import</param>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.ReplaceAllMappings(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.String,System.Int64)">
+            <summary>
+            Atomically replaces all service mappings with a new full state from Orchestrator.
+            Implements version checking to reject out-of-order events.
+            </summary>
+            <param name="mappings">Complete dictionary of serviceName -> appId mappings</param>
+            <param name="defaultAppId">Default app-id for unmapped services</param>
+            <param name="version">Monotonically increasing version number</param>
+            <returns>True if mappings were applied, false if version was stale</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.CurrentVersion">
+            <summary>
+            Gets the current version of the service mappings.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver">
             <summary>
             Default implementation of service-to-app-id mapping with dynamic updates via RabbitMQ.
             Defaults to "bannou" (omnipotent local node) for all services, but can be dynamically
             updated based on service discovery events for distributed production deployments.
+            Supports atomic full-state updates from Orchestrator's FullServiceMappingsEvent.
             </summary>
         </member>
         <member name="E:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.MappingChanged">
+            <inheritdoc/>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.CurrentVersion">
             <inheritdoc/>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.#ctor(Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.Services.ServiceAppMappingResolver})">
@@ -2300,6 +2286,12 @@
             Used during startup of containers deployed by orchestrator.
             </summary>
             <param name="mappings">The mappings to import</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.ServiceAppMappingResolver.ReplaceAllMappings(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.String,System.Int64)">
+            <summary>
+            Atomically replaces all service mappings with a new full state from Orchestrator.
+            Implements version checking to reject out-of-order events.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Services.ServiceHeartbeatManager">
             <summary>
