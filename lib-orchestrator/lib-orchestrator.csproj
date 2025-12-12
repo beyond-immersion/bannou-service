@@ -9,6 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="lib-orchestrator.tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../bannou-service/bannou-service.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
     <PackageReference Include="KubernetesClient" Version="18.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />

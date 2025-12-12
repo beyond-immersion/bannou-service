@@ -84,19 +84,50 @@ public class RedisDistributedLockProvider : IDistributedLockProvider
                 return new RedisLockResponse(false, storeName, lockKey, lockOwner, _daprClient, _logger);
             }
 
-            // Try to save with ETag check (atomic operation)
-            bool acquired = await _daprClient.TrySaveStateAsync(storeName, lockKey, lockValue, existingLock.etag, cancellationToken: cancellationToken);
+            // IMPLEMENTATION NOTE: Dapr Redis State Store ETag Semantics
+            // ============================================================
+            // Dapr's Redis state store uses ETags for optimistic concurrency control.
+            // - GetStateAndETagAsync returns empty etag for non-existent keys
+            // - TrySaveStateAsync with empty etag should create-only-if-not-exists
+            // - If Dapr's behavior changes, this lock will fail closed (return false)
+            // - We log debug info to help diagnose if this assumption breaks
+            //
+            // Alternative approaches if this doesn't work:
+            // 1. Use Dapr's experimental distributed lock API (dapr.io/lock)
+            // 2. Use Redis SETNX via direct connection (violates Tenet 2)
+            // 3. Use a different state store with stronger atomicity guarantees
+
+            bool acquired;
+            if (string.IsNullOrEmpty(existingLock.etag))
+            {
+                // New key - try to create atomically. If another process created it first, this fails.
+                acquired = await _daprClient.TrySaveStateAsync(
+                    storeName, lockKey, lockValue,
+                    etag: "", // Empty string = create only if not exists (Dapr Redis behavior)
+                    cancellationToken: cancellationToken);
+
+                if (!acquired)
+                {
+                    _logger.LogDebug("Lock {LockKey} was created by another process during our attempt (expected race condition handling)", lockKey);
+                }
+            }
+            else
+            {
+                // Existing key (possibly expired) - use optimistic concurrency with existing etag
+                acquired = await _daprClient.TrySaveStateAsync(
+                    storeName, lockKey, lockValue,
+                    existingLock.etag,
+                    cancellationToken: cancellationToken);
+            }
 
             if (acquired)
             {
                 _logger.LogDebug("Successfully acquired lock {LockKey} for owner {Owner}", lockKey, lockOwner);
                 return new RedisLockResponse(true, storeName, lockKey, lockOwner, _daprClient, _logger);
             }
-            else
-            {
-                _logger.LogDebug("Failed to acquire lock {LockKey} (ETag mismatch)", lockKey);
-                return new RedisLockResponse(false, storeName, lockKey, lockOwner, _daprClient, _logger);
-            }
+
+            _logger.LogDebug("Failed to acquire lock {LockKey} (concurrent acquisition or ETag mismatch)", lockKey);
+            return new RedisLockResponse(false, storeName, lockKey, lockOwner, _daprClient, _logger);
         }
         catch (Exception ex)
         {

@@ -4,9 +4,13 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>BeyondImmersion.BannouService.Game-session</RootNamespace>
+    <RootNamespace>BeyondImmersion.BannouService.GameSession</RootNamespace>
     <ServiceLib>game-session</ServiceLib>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="lib-game-session.tests" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />

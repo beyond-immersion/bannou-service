@@ -168,11 +168,6 @@ public static class OrchestratorPermissionRegistration
                     Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
             }
         });
 

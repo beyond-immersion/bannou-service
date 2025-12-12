@@ -56,6 +56,7 @@ echo -e "${YELLOW}🔄 Creating service implementation template...${NC}"
 # Create service implementation template
 cat > "$IMPLEMENTATION_FILE" << EOF
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
 
@@ -73,17 +74,20 @@ public class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
     private readonly DaprClient _daprClient;
     private readonly ILogger<${SERVICE_PASCAL}Service> _logger;
     private readonly ${SERVICE_PASCAL}ServiceConfiguration _configuration;
+    private readonly IErrorEventEmitter _errorEventEmitter;
 
     private const string STATE_STORE = "${SERVICE_NAME}-store";
 
     public ${SERVICE_PASCAL}Service(
         DaprClient daprClient,
         ILogger<${SERVICE_PASCAL}Service> logger,
-        ${SERVICE_PASCAL}ServiceConfiguration configuration)
+        ${SERVICE_PASCAL}ServiceConfiguration configuration,
+        IErrorEventEmitter errorEventEmitter)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
     }
 
 EOF
@@ -242,6 +246,15 @@ try:
         catch (Exception ex)
         {{
             _logger.LogError(ex, \"Error executing {method_name} operation\");
+            await _errorEventEmitter.TryPublishAsync(
+                \"${SERVICE_NAME}\",
+                \"{method_name}\",
+                \"unexpected_exception\",
+                ex.Message,
+                dependency: null,
+                endpoint: \"{http_method}:/{path.strip('/')}\",
+                details: null,
+                stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, default);
         }}
     }}

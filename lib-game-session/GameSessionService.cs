@@ -23,6 +23,7 @@ public class GameSessionService : IGameSessionService
     private readonly DaprClient _daprClient;
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionServiceConfiguration _configuration;
+    private readonly IErrorEventEmitter _errorEventEmitter;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -37,11 +38,13 @@ public class GameSessionService : IGameSessionService
     public GameSessionService(
         DaprClient daprClient,
         ILogger<GameSessionService> logger,
-        GameSessionServiceConfiguration configuration)
+        GameSessionServiceConfiguration configuration,
+        IErrorEventEmitter errorEventEmitter)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
     }
 
     /// <summary>
@@ -611,6 +614,30 @@ public class GameSessionService : IGameSessionService
     {
         _logger.LogInformation("Registering GameSession service permissions...");
         await GameSessionPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+    }
+
+    #endregion
+
+    #region Error Event Publishing
+
+    /// <summary>
+    /// Publishes an error event for unexpected/internal failures.
+    /// Does NOT publish for validation errors or expected failure cases.
+    /// </summary>
+    private Task PublishErrorEventAsync(
+        string operation,
+        string errorType,
+        string message,
+        string? dependency = null,
+        object? details = null)
+    {
+        return _errorEventEmitter.TryPublishAsync(
+            serviceId: "game-session",
+            operation: operation,
+            errorType: errorType,
+            message: message,
+            dependency: dependency,
+            details: details);
     }
 
     #endregion

@@ -1380,10 +1380,13 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
+                    // TENETS Tenet 10: Exactly one role per endpoint
+                    // Admin inherits user permissions via role hierarchy, so admin-only
+                    // endpoints should ONLY be listed under admin role
                     ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/public", "POST:/user/action" },
-                        ["admin"] = new Collection<string> { "GET:/public", "POST:/user/action", "DELETE:/admin/critical" }
+                        ["admin"] = new Collection<string> { "DELETE:/admin/critical" }  // Admin-ONLY endpoint
                     }
                 }
             });
@@ -1451,10 +1454,12 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
+                    // TENETS Tenet 10: Exactly one role per endpoint
+                    // Admin inherits user permissions via role hierarchy
                     ["default"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/data" },
-                        ["admin"] = new Collection<string> { "GET:/data", "POST:/data", "DELETE:/data" }
+                        ["admin"] = new Collection<string> { "POST:/data", "DELETE:/data" }  // Admin-ONLY endpoints
                     }
                 }
             });

@@ -8,6 +8,14 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<InternalsVisibleTo Include="lib-behavior.tests" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\bannou-service\bannou-service.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="YamlDotNet" Version="16.3.0" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.0" />

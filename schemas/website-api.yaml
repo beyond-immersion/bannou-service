@@ -14,6 +14,9 @@ paths:
       operationId: getStatus
       tags:
         - Status
+      x-permissions:
+        - role: anonymous
+          states: {}
       responses:
         '200':
           description: Website service status
@@ -28,6 +31,9 @@ paths:
       operationId: getPageContent
       tags:
         - Content
+      x-permissions:
+        - role: anonymous
+          states: {}
       parameters:
         - name: slug
           in: path
@@ -56,6 +62,9 @@ paths:
       operationId: getNews
       tags:
         - Content
+      x-permissions:
+        - role: anonymous
+          states: {}
       parameters:
         - name: limit
           in: query
@@ -86,6 +95,9 @@ paths:
       operationId: getServerStatus
       tags:
         - Status
+      x-permissions:
+        - role: anonymous
+          states: {}
       responses:
         '200':
           description: Server status information
@@ -100,6 +112,9 @@ paths:
       operationId: getDownloads
       tags:
         - Downloads
+      x-permissions:
+        - role: anonymous
+          states: {}
       parameters:
         - name: platform
           in: query
@@ -121,6 +136,9 @@ paths:
       operationId: submitContact
       tags:
         - Contact
+      x-permissions:
+        - role: anonymous
+          states: {}
       requestBody:
         required: true
         content:
@@ -153,6 +171,10 @@ paths:
       operationId: getAccountProfile
       tags:
         - Account
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
       security:
         - BearerAuth: []
       responses:
@@ -175,6 +197,10 @@ paths:
       operationId: getAccountCharacters
       tags:
         - Account
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
       security:
         - BearerAuth: []
       responses:
@@ -197,6 +223,9 @@ paths:
       operationId: listPages
       tags:
         - CMS
+      x-permissions:
+        - role: developer
+          states: {}
       security:
         - BearerAuth: []
       parameters:
@@ -219,6 +248,9 @@ paths:
       operationId: createPage
       tags:
         - CMS
+      x-permissions:
+        - role: developer
+          states: {}
       security:
         - BearerAuth: []
       requestBody:
@@ -241,6 +273,9 @@ paths:
       operationId: updatePage
       tags:
         - CMS
+      x-permissions:
+        - role: developer
+          states: {}
       security:
         - BearerAuth: []
       parameters:
@@ -267,6 +302,9 @@ paths:
       operationId: deletePage
       tags:
         - CMS
+      x-permissions:
+        - role: developer
+          states: {}
       security:
         - BearerAuth: []
       parameters:
@@ -285,6 +323,9 @@ paths:
       operationId: getSiteSettings
       tags:
         - CMS
+      x-permissions:
+        - role: developer
+          states: {}
       responses:
         '200':
           description: Site settings retrieved
@@ -297,6 +338,9 @@ paths:
       operationId: updateSiteSettings
       tags:
         - CMS
+      x-permissions:
+        - role: developer
+          states: {}
       security:
         - BearerAuth: []
       requestBody:
@@ -319,6 +363,9 @@ paths:
       operationId: getTheme
       tags:
         - CMS
+      x-permissions:
+        - role: developer
+          states: {}
       responses:
         '200':
           description: Theme configuration retrieved
@@ -331,6 +378,9 @@ paths:
       operationId: updateTheme
       tags:
         - CMS
+      x-permissions:
+        - role: developer
+          states: {}
       security:
         - BearerAuth: []
       requestBody:
@@ -349,6 +399,10 @@ paths:
       operationId: getSubscription
       tags:
         - Account
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
       security:
         - BearerAuth: []
       responses:

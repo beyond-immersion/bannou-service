@@ -26,8 +26,6 @@ paths:
         - Authentication
       x-permissions:
         - role: anonymous
-          states: {}
-        - role: user
           states: {}  # Allow re-login when already authenticated
       requestBody:
         required: true
@@ -220,9 +218,7 @@ paths:
       x-permissions:
         - role: user
           states:
-            auth: authenticated
-        - role: service
-          states: {}  # Services can validate tokens without auth
+            auth: authenticated  # Services can validate tokens without auth
       parameters:
         - name: jwt
           in: header

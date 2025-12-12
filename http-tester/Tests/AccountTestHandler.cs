@@ -276,7 +276,7 @@ public class AccountTestHandler : IServiceTestHandler
             // Try to look up a non-existent provider account (should return 404)
             try
             {
-                await accountsClient.GetAccountByProviderAsync(new GetAccountByProviderRequest { Provider = GetAccountByProviderRequestProvider.Discord, ExternalId = "nonexistent_id_12345" });
+                await accountsClient.GetAccountByProviderAsync(new GetAccountByProviderRequest { Provider = OAuthProvider.Discord, ExternalId = "nonexistent_id_12345" });
                 return TestResult.Failed("GetAccountByProvider should have returned 404 for non-existent account");
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
@@ -349,7 +349,7 @@ public class AccountTestHandler : IServiceTestHandler
             var addAuthRequest = new AddAuthMethodRequest
             {
                 AccountId = createResponse.AccountId,
-                Provider = AddAuthMethodRequestProvider.Discord,
+                Provider = OAuthProvider.Discord,
                 ExternalId = $"discord_{DateTime.Now.Ticks}",
                 DisplayName = "Test Discord User"
             };

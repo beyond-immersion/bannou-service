@@ -21,6 +21,7 @@ public class AccountsService : IAccountsService
     private readonly ILogger<AccountsService> _logger;
     private readonly AccountsServiceConfiguration _configuration;
     private readonly DaprClient _daprClient;
+    private readonly IErrorEventEmitter _errorEventEmitter;
 
     private const string ACCOUNTS_STATE_STORE = "accounts-statestore"; // MySQL-backed state store
     private const string ACCOUNTS_KEY_PREFIX = "account-";
@@ -36,11 +37,13 @@ public class AccountsService : IAccountsService
     public AccountsService(
         ILogger<AccountsService> logger,
         AccountsServiceConfiguration configuration,
-        DaprClient daprClient)
+        DaprClient daprClient,
+        IErrorEventEmitter errorEventEmitter)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
     }
 
     public async Task<(StatusCodes, AccountListResponse?)> ListAccountsAsync(
@@ -633,7 +636,7 @@ public class AccountsService : IAccountsService
             var newMethod = new AuthMethodInfo
             {
                 MethodId = methodId,
-                Provider = MapProviderToAuthMethodProvider(body.Provider),
+                Provider = MapOAuthProviderToAuthProvider(body.Provider),
                 ExternalId = body.ExternalId ?? string.Empty,
                 LinkedAt = DateTimeOffset.UtcNow
             };
@@ -658,10 +661,21 @@ public class AccountsService : IAccountsService
             _logger.LogInformation("Auth method added for account: {AccountId}, methodId: {MethodId}, provider: {Provider}",
                 accountId, methodId, body.Provider);
 
+            // Publish account updated event (redacted payload)
+            await PublishAccountUpdatedEventAsync(
+                accountId,
+                new[] { "authMethods" },
+                previousValues: null,
+                newValues: new
+                {
+                    provider = body.Provider.ToString(),
+                    linkedAt = newMethod.LinkedAt
+                });
+
             var response = new AuthMethodResponse
             {
                 MethodId = methodId,
-                Provider = MapProviderToAuthMethodResponseProvider(body.Provider),
+                Provider = body.Provider, // Both are OAuthProvider now
                 ExternalId = body.ExternalId ?? string.Empty,
                 LinkedAt = DateTimeOffset.UtcNow
             };
@@ -676,32 +690,17 @@ public class AccountsService : IAccountsService
     }
 
     /// <summary>
-    /// Maps AddAuthMethodRequestProvider to AuthMethodInfoProvider
+    /// Maps OAuthProvider (OAuth-only providers) to AuthProvider (all providers including email)
     /// </summary>
-    private static AuthMethodInfoProvider MapProviderToAuthMethodProvider(AddAuthMethodRequestProvider provider)
+    private static AuthProvider MapOAuthProviderToAuthProvider(OAuthProvider provider)
     {
         return provider switch
         {
-            AddAuthMethodRequestProvider.Discord => AuthMethodInfoProvider.Discord,
-            AddAuthMethodRequestProvider.Google => AuthMethodInfoProvider.Google,
-            AddAuthMethodRequestProvider.Steam => AuthMethodInfoProvider.Steam,
-            AddAuthMethodRequestProvider.Twitch => AuthMethodInfoProvider.Twitch,
-            _ => AuthMethodInfoProvider.Google // Default fallback
-        };
-    }
-
-    /// <summary>
-    /// Maps AddAuthMethodRequestProvider to AuthMethodResponseProvider
-    /// </summary>
-    private static AuthMethodResponseProvider MapProviderToAuthMethodResponseProvider(AddAuthMethodRequestProvider provider)
-    {
-        return provider switch
-        {
-            AddAuthMethodRequestProvider.Discord => AuthMethodResponseProvider.Discord,
-            AddAuthMethodRequestProvider.Google => AuthMethodResponseProvider.Google,
-            AddAuthMethodRequestProvider.Steam => AuthMethodResponseProvider.Steam,
-            AddAuthMethodRequestProvider.Twitch => AuthMethodResponseProvider.Twitch,
-            _ => AuthMethodResponseProvider.Google // Default fallback
+            OAuthProvider.Discord => AuthProvider.Discord,
+            OAuthProvider.Google => AuthProvider.Google,
+            OAuthProvider.Steam => AuthProvider.Steam,
+            OAuthProvider.Twitch => AuthProvider.Twitch,
+            _ => AuthProvider.Google // Default fallback
         };
     }
 
@@ -972,6 +971,12 @@ public class AccountsService : IAccountsService
             _logger.LogInformation("Auth method removed for account: {AccountId}, methodId: {MethodId}",
                 accountId, methodId);
 
+            await PublishAccountUpdatedEventAsync(
+                accountId,
+                new[] { "authMethods" },
+                previousValues: new { provider = methodToRemove.Provider.ToString(), removedAt = DateTimeOffset.UtcNow },
+                newValues: null);
+
             return (StatusCodes.NoContent, null);
         }
         catch (Exception ex)
@@ -1014,6 +1019,12 @@ public class AccountsService : IAccountsService
                 cancellationToken: cancellationToken);
 
             _logger.LogInformation("Password hash updated for account: {AccountId}", accountId);
+            await PublishAccountUpdatedEventAsync(
+                accountId,
+                new[] { "passwordHash" },
+                previousValues: null,
+                newValues: new { passwordHash = "***redacted***" });
+
             return (StatusCodes.OK, new { Message = "Password updated successfully" });
         }
         catch (Exception ex)
@@ -1046,6 +1057,7 @@ public class AccountsService : IAccountsService
             }
 
             // Update verification status
+            var previousVerified = account.IsVerified;
             account.IsVerified = body.EmailVerified;
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -1058,6 +1070,12 @@ public class AccountsService : IAccountsService
 
             _logger.LogInformation("Verification status updated for account: {AccountId} -> {Verified}",
                 accountId, body.EmailVerified);
+
+            await PublishAccountUpdatedEventAsync(
+                accountId,
+                new[] { "isVerified" },
+                previousValues: new { isVerified = previousVerified },
+                newValues: new { isVerified = body.EmailVerified });
             return (StatusCodes.OK, new { Message = "Verification status updated successfully" });
         }
         catch (Exception ex)
@@ -1099,9 +1117,9 @@ public class AccountsService : IAccountsService
     /// </summary>
     private async Task PublishAccountUpdatedEventAsync(
         Guid accountId,
-        List<string> changedFields,
-        Dictionary<string, object?> previousValues,
-        Dictionary<string, object?> newValues)
+        IEnumerable<string> changedFields,
+        object? previousValues,
+        object? newValues)
     {
         try
         {
@@ -1110,9 +1128,9 @@ public class AccountsService : IAccountsService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
-                ChangedFields = changedFields,
-                PreviousValues = previousValues,
-                NewValues = newValues
+                ChangedFields = changedFields.ToList(),
+                PreviousValues = previousValues ?? new { },
+                NewValues = newValues ?? new { }
             };
 
             await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_UPDATED_TOPIC, eventModel);
@@ -1163,19 +1181,18 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            var accountIds = await _daprClient.GetStateAsync<List<string>>(
+            var stateEntry = await _daprClient.GetStateEntryAsync<List<string>>(
                 ACCOUNTS_STATE_STORE,
                 ACCOUNTS_LIST_KEY,
-                cancellationToken: cancellationToken) ?? new List<string>();
+                cancellationToken: cancellationToken);
+
+            var accountIds = stateEntry.Value ?? new List<string>();
 
             if (!accountIds.Contains(accountId))
             {
                 accountIds.Add(accountId);
-                await _daprClient.SaveStateAsync(
-                    ACCOUNTS_STATE_STORE,
-                    ACCOUNTS_LIST_KEY,
-                    accountIds,
-                    cancellationToken: cancellationToken);
+                stateEntry.Value = accountIds;
+                await stateEntry.SaveAsync(cancellationToken: cancellationToken);
 
                 _logger.LogDebug("Added account {AccountId} to accounts index (total: {Count})", accountId, accountIds.Count);
             }
@@ -1194,18 +1211,17 @@ public class AccountsService : IAccountsService
     {
         try
         {
-            var accountIds = await _daprClient.GetStateAsync<List<string>>(
+            var stateEntry = await _daprClient.GetStateEntryAsync<List<string>>(
                 ACCOUNTS_STATE_STORE,
                 ACCOUNTS_LIST_KEY,
-                cancellationToken: cancellationToken) ?? new List<string>();
+                cancellationToken: cancellationToken);
+
+            var accountIds = stateEntry.Value ?? new List<string>();
 
             if (accountIds.Remove(accountId))
             {
-                await _daprClient.SaveStateAsync(
-                    ACCOUNTS_STATE_STORE,
-                    ACCOUNTS_LIST_KEY,
-                    accountIds,
-                    cancellationToken: cancellationToken);
+                stateEntry.Value = accountIds;
+                await stateEntry.SaveAsync(cancellationToken: cancellationToken);
 
                 _logger.LogDebug("Removed account {AccountId} from accounts index (remaining: {Count})", accountId, accountIds.Count);
             }
@@ -1238,6 +1254,30 @@ public class AccountsService : IAccountsService
             _logger.LogError(ex, "Failed to register Accounts service permissions");
             throw;
         }
+    }
+
+    #endregion
+
+    #region Error Event Publishing
+
+    /// <summary>
+    /// Publishes an error event for unexpected/internal failures.
+    /// Does NOT publish for validation errors or expected failure cases.
+    /// </summary>
+    private Task PublishErrorEventAsync(
+        string operation,
+        string errorType,
+        string message,
+        string? dependency = null,
+        object? details = null)
+    {
+        return _errorEventEmitter.TryPublishAsync(
+            serviceId: "accounts",
+            operation: operation,
+            errorType: errorType,
+            message: message,
+            dependency: dependency,
+            details: details);
     }
 
     #endregion

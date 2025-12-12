@@ -10,11 +10,12 @@ components:
   schemas:
     AccountCreatedEvent:
       type: object
+      description: Event published when a new account is created
       required:
         - eventId
         - timestamp
         - accountId
-        - username
+        - email
       properties:
         eventId:
           type: string
@@ -28,13 +29,13 @@ components:
           type: string
           format: uuid
           description: ID of the created account
-        username:
-          type: string
-          description: Username of the created account
         email:
           type: string
           format: email
           description: Email address of the created account
+        displayName:
+          type: string
+          description: Display name of the created account
         roles:
           type: array
           items:
@@ -43,10 +44,12 @@ components:
 
     AccountUpdatedEvent:
       type: object
+      description: Event published when account properties change
       required:
         - eventId
         - timestamp
         - accountId
+        - changedFields
       properties:
         eventId:
           type: string
@@ -65,13 +68,16 @@ components:
           description: List of fields that were changed
         previousValues:
           type: object
-          description: Previous values of changed fields
+          nullable: true
+          description: Previous values of changed fields (omit sensitive values)
         newValues:
           type: object
-          description: New values of changed fields
+          nullable: true
+          description: New values of changed fields (omit sensitive values)
 
     AccountDeletedEvent:
       type: object
+      description: Event published when an account is deleted
       required:
         - eventId
         - timestamp
@@ -87,9 +93,10 @@ components:
           type: string
           format: uuid
           description: ID of the deleted account
-        username:
+        email:
           type: string
-          description: Username of the deleted account
+          format: email
+          description: Email of the deleted account
         deletionReason:
           type: string
           description: Reason for account deletion

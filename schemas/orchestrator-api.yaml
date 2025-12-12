@@ -295,8 +295,6 @@ paths:
       x-permissions:
         - role: admin
           states: {}
-        - role: service
-          states: {}
       requestBody:
         required: true
         content:

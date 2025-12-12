@@ -71,6 +71,10 @@ if [ ! -f "$PROJECT_FILE" ]; then
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="lib-${SERVICE_NAME}.tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
   </ItemGroup>
 

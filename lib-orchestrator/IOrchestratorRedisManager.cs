@@ -60,6 +60,81 @@ public interface IOrchestratorRedisManager : IAsyncDisposable, IDisposable
     /// Called when a service is unregistered.
     /// </summary>
     Task RemoveServiceRoutingAsync(string serviceName);
+
+    /// <summary>
+    /// Get the current configuration version number.
+    /// </summary>
+    Task<int> GetConfigVersionAsync();
+
+    /// <summary>
+    /// Save the current configuration state as a new version.
+    /// Stores deployment topology for potential rollback.
+    /// </summary>
+    /// <param name="configuration">Configuration snapshot to save.</param>
+    /// <returns>The new version number.</returns>
+    Task<int> SaveConfigurationVersionAsync(DeploymentConfiguration configuration);
+
+    /// <summary>
+    /// Get a specific configuration version from history.
+    /// </summary>
+    /// <param name="version">Version number to retrieve.</param>
+    /// <returns>Configuration at that version, or null if not found.</returns>
+    Task<DeploymentConfiguration?> GetConfigurationVersionAsync(int version);
+
+    /// <summary>
+    /// Get the current active configuration.
+    /// </summary>
+    Task<DeploymentConfiguration?> GetCurrentConfigurationAsync();
+
+    /// <summary>
+    /// Restore a previous configuration version as the current configuration.
+    /// </summary>
+    /// <param name="version">Version to restore.</param>
+    /// <returns>True if successful.</returns>
+    Task<bool> RestoreConfigurationVersionAsync(int version);
+}
+
+/// <summary>
+/// Configuration snapshot for deployment versioning.
+/// Tracks which services are deployed with what settings.
+/// </summary>
+public class DeploymentConfiguration
+{
+    /// <summary>Version number of this configuration.</summary>
+    public int Version { get; set; }
+
+    /// <summary>When this configuration was created.</summary>
+    public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>Deployment preset name used (if applicable).</summary>
+    public string? PresetName { get; set; }
+
+    /// <summary>Service configurations in this deployment.</summary>
+    public Dictionary<string, ServiceDeploymentConfig> Services { get; set; } = new();
+
+    /// <summary>Environment variables applied.</summary>
+    public Dictionary<string, string> EnvironmentVariables { get; set; } = new();
+
+    /// <summary>Reason/description for this configuration.</summary>
+    public string? Description { get; set; }
+}
+
+/// <summary>
+/// Service-level deployment configuration.
+/// </summary>
+public class ServiceDeploymentConfig
+{
+    /// <summary>Whether the service is enabled.</summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>Dapr app-id for the service.</summary>
+    public string? AppId { get; set; }
+
+    /// <summary>Number of replicas.</summary>
+    public int Replicas { get; set; } = 1;
+
+    /// <summary>Service-specific settings.</summary>
+    public Dictionary<string, string> Settings { get; set; } = new();
 }
 
 /// <summary>

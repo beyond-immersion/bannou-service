@@ -39,9 +39,10 @@ public class ConnectService : IConnectService
     private readonly ILogger<ConnectService> _logger;
     private readonly WebSocketConnectionManager _connectionManager;
     private readonly ISessionManager? _sessionManager;
+    private readonly IErrorEventEmitter _errorEventEmitter;
 
     // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
-    private readonly ConcurrentDictionary<string, Dictionary<string, Guid>> _sessionServiceMappings;
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
     private readonly string _instanceId;
 
@@ -52,6 +53,7 @@ public class ConnectService : IConnectService
         IServiceAppMappingResolver appMappingResolver,
         ConnectServiceConfiguration configuration,
         ILogger<ConnectService> logger,
+        IErrorEventEmitter errorEventEmitter,
         ISessionManager? sessionManager = null)
     {
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
@@ -66,9 +68,10 @@ public class ConnectService : IConnectService
         };
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _sessionManager = sessionManager; // Optional Dapr-based session management
 
-        _sessionServiceMappings = new ConcurrentDictionary<string, Dictionary<string, Guid>>();
+        _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
 
         // Generate server salt for GUID generation (use cryptographic salt)
@@ -434,8 +437,8 @@ public class ConnectService : IConnectService
 
         if (sessionMappings == null && _sessionServiceMappings.TryGetValue(sessionId, out var fallbackMappings))
         {
-            // Fallback to in-memory mappings
-            sessionMappings = fallbackMappings;
+            // Fallback to in-memory mappings (thread-safe copy)
+            sessionMappings = new Dictionary<string, Guid>(fallbackMappings);
         }
 
         // If no mappings exist, initialize capabilities from Permissions service
@@ -1391,7 +1394,7 @@ public class ConnectService : IConnectService
         ICollection<string>? authorizations = null,
         CancellationToken cancellationToken = default)
     {
-        var serviceMappings = new Dictionary<string, Guid>();
+        var serviceMappings = new ConcurrentDictionary<string, Guid>();
 
         try
         {
@@ -1445,7 +1448,7 @@ public class ConnectService : IConnectService
             if (capabilityResponse?.Permissions == null)
             {
                 _logger.LogWarning("No capabilities returned for session {SessionId}", sessionId);
-                return serviceMappings;
+                return new Dictionary<string, Guid>(serviceMappings);
             }
 
             _logger.LogInformation("Session {SessionId} has access to {ServiceCount} services",
@@ -1475,21 +1478,23 @@ public class ConnectService : IConnectService
             // Store mappings in session manager for persistence
             if (_sessionManager != null)
             {
-                await _sessionManager.SetSessionServiceMappingsAsync(sessionId, serviceMappings);
+                await _sessionManager.SetSessionServiceMappingsAsync(
+                    sessionId,
+                    serviceMappings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
             }
 
             // Store in in-memory cache as fallback
-            _sessionServiceMappings[sessionId] = serviceMappings;
+            _sessionServiceMappings[sessionId] = new ConcurrentDictionary<string, Guid>(serviceMappings);
 
             _logger.LogInformation("Initialized {Count} service GUIDs for session {SessionId}",
                 serviceMappings.Count, sessionId);
 
-            return serviceMappings;
+            return new Dictionary<string, Guid>(serviceMappings);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to initialize capabilities for session {SessionId}", sessionId);
-            return serviceMappings;
+            return new Dictionary<string, Guid>(serviceMappings);
         }
     }
 
@@ -1805,6 +1810,30 @@ public class ConnectService : IConnectService
             _logger.LogError(ex, "Failed to register Connect service permissions");
             throw;
         }
+    }
+
+    #endregion
+
+    #region Error Event Publishing
+
+    /// <summary>
+    /// Publishes an error event for unexpected/internal failures.
+    /// Does NOT publish for validation errors or expected failure cases.
+    /// </summary>
+    private Task PublishErrorEventAsync(
+        string operation,
+        string errorType,
+        string message,
+        string? dependency = null,
+        object? details = null)
+    {
+        return _errorEventEmitter.TryPublishAsync(
+            serviceId: "connect",
+            operation: operation,
+            errorType: errorType,
+            message: message,
+            dependency: dependency,
+            details: details);
     }
 
     #endregion

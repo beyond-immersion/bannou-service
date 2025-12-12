@@ -63,11 +63,6 @@ public static class AccountsPermissionRegistration
                     Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
             }
         });
 
@@ -81,11 +76,6 @@ public static class AccountsPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-                new PermissionRequirement
-                {
-                    Role = "service",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -103,11 +93,6 @@ public static class AccountsPermissionRegistration
                     Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
             }
         });
 
@@ -121,11 +106,6 @@ public static class AccountsPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-                new PermissionRequirement
-                {
-                    Role = "service",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -155,7 +135,7 @@ public static class AccountsPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "service",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -173,11 +153,6 @@ public static class AccountsPermissionRegistration
                     Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
             }
         });
 
@@ -191,11 +166,6 @@ public static class AccountsPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-                new PermissionRequirement
-                {
-                    Role = "service",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -213,11 +183,6 @@ public static class AccountsPermissionRegistration
                     Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
             }
         });
 
@@ -230,7 +195,7 @@ public static class AccountsPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "service",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }
@@ -248,16 +213,6 @@ public static class AccountsPermissionRegistration
                     Role = "user",
                     RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
                 },
-                new PermissionRequirement
-                {
-                    Role = "admin",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-                new PermissionRequirement
-                {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
             }
         });
 
@@ -270,8 +225,8 @@ public static class AccountsPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
                 },
             }
         });
@@ -285,8 +240,8 @@ public static class AccountsPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "service",
-                    RequiredStates = new Dictionary<string, string> {  }
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
                 },
             }
         });

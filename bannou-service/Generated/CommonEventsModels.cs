@@ -342,6 +342,124 @@ public partial class InstanceCapacity
     public int CurrentConnections { get; set; } = default!;
 
     /// <summary>
+    /// CPU usage ratio (0.0 - 1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cpuUsage")]
+    public float CpuUsage { get; set; } = default!;
+
+    /// <summary>
+    /// Memory usage ratio (0.0 - 1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("memoryUsage")]
+    public float MemoryUsage { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Structured error event for unexpected service failures (akin to Sentry).
+/// <br/>Use ONLY for internal faults, not for user/input errors.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServiceErrorEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this error event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the error occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Logical service name emitting the error (e.g., "accounts")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Dapr app-id of the instance emitting the error
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("appId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string AppId { get; set; } = default!;
+
+    /// <summary>
+    /// Operation/method name where the error occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("operation")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Operation { get; set; } = default!;
+
+    /// <summary>
+    /// High-level classification (e.g., "unexpected_exception", "dependency_failure")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ErrorType { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable error summary
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("message")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Message { get; set; } = default!;
+
+    /// <summary>
+    /// Correlation ID / request ID, if available
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("correlationId")]
+    public string? CorrelationId { get; set; } = default!;
+
+    /// <summary>
+    /// Severity for triage/routing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("severity")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ServiceErrorEventSeverity Severity { get; set; } = BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error;
+
+    /// <summary>
+    /// Dependency implicated in the failure (e.g., redis, dapr-pubsub, http:accounts)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dependency")]
+    public string? Dependency { get; set; } = default!;
+
+    /// <summary>
+    /// Service endpoint involved (e.g., POST /accounts/create)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
+    public string? Endpoint { get; set; } = default!;
+
+    /// <summary>
+    /// Redacted structured context (exclude PII/secrets)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("details")]
+    public object? Details { get; set; } = default!;
+
+    /// <summary>
+    /// Optional stack trace for debugging (avoid PII)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("stack")]
+    public string? Stack { get; set; } = default!;
+
+    /// <summary>
     /// CPU usage percentage (0.0 - 1.0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cpuUsage")]
@@ -485,6 +603,24 @@ public enum ServiceStatusStatus
 
     [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
     Unavailable = 2,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ServiceErrorEventSeverity
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"info")]
+    Info = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"warning")]
+    Warning = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"error")]
+    Error = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"critical")]
+    Critical = 3,
 
 }
 

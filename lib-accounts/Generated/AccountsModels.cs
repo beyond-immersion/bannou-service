@@ -30,6 +30,51 @@ namespace BeyondImmersion.BannouService.Accounts;
 using System = global::System;
 
 /// <summary>
+/// All authentication provider types including email
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthProvider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"email")]
+    Email = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 4,
+
+}
+
+/// <summary>
+/// OAuth provider types (excludes email)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum OAuthProvider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"google")]
+    Google = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
+    Discord = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
+    Twitch = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
+    Steam = 3,
+
+}
+
+/// <summary>
 /// Request to list accounts with optional filtering
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -44,7 +89,7 @@ public partial class ListAccountsRequest
 
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ListAccountsRequestProvider? Provider { get; set; } = default!;
+    public AuthProvider? Provider { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("verified")]
     public bool? Verified { get; set; } = default!;
@@ -213,7 +258,7 @@ public partial class GetAccountByProviderRequest
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GetAccountByProviderRequestProvider Provider { get; set; } = default!;
+    public OAuthProvider Provider { get; set; } = default!;
 
     /// <summary>
     /// External ID from the provider
@@ -400,7 +445,7 @@ public partial class AddAuthMethodRequest
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AddAuthMethodRequestProvider Provider { get; set; } = default!;
+    public OAuthProvider Provider { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("externalId")]
     public string ExternalId { get; set; } = default!;
@@ -481,7 +526,7 @@ public partial class AuthMethodInfo
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AuthMethodInfoProvider Provider { get; set; } = default!;
+    public AuthProvider Provider { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("externalId")]
     public string? ExternalId { get; set; } = default!;
@@ -515,7 +560,7 @@ public partial class AuthMethodResponse
     [System.Text.Json.Serialization.JsonPropertyName("provider")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AuthMethodResponseProvider Provider { get; set; } = default!;
+    public OAuthProvider Provider { get; set; } = default!;
 
     [System.Text.Json.Serialization.JsonPropertyName("externalId")]
     public string ExternalId { get; set; } = default!;
@@ -742,102 +787,6 @@ public partial class AccountDeletedEvent
         get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ListAccountsRequestProvider
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"email")]
-    Email = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
-    Google = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-    Discord = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-    Twitch = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-    Steam = 4,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GetAccountByProviderRequestProvider
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
-    Google = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-    Discord = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-    Twitch = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-    Steam = 3,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AddAuthMethodRequestProvider
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
-    Google = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-    Discord = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-    Twitch = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-    Steam = 3,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AuthMethodInfoProvider
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"email")]
-    Email = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
-    Google = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-    Discord = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-    Twitch = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-    Steam = 4,
-
-}
-
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AuthMethodResponseProvider
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"google")]
-    Google = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"discord")]
-    Discord = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"twitch")]
-    Twitch = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"steam")]
-    Steam = 3,
 
 }
 

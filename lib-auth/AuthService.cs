@@ -41,6 +41,7 @@ public class AuthService : IAuthService
     private readonly ITokenService _tokenService;
     private readonly ISessionService _sessionService;
     private readonly IOAuthProviderService _oauthService;
+    private readonly IErrorEventEmitter _errorEventEmitter;
 
     private const string REDIS_STATE_STORE = "auth-statestore";
     private const string PUBSUB_NAME = "bannou-pubsub";
@@ -65,7 +66,8 @@ public class AuthService : IAuthService
         IHttpClientFactory httpClientFactory,
         ITokenService tokenService,
         ISessionService sessionService,
-        IOAuthProviderService oauthService)
+        IOAuthProviderService oauthService,
+        IErrorEventEmitter errorEventEmitter)
     {
         _accountsClient = accountsClient ?? throw new ArgumentNullException(nameof(accountsClient));
         _subscriptionsClient = subscriptionsClient ?? throw new ArgumentNullException(nameof(subscriptionsClient));
@@ -76,6 +78,7 @@ public class AuthService : IAuthService
         _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
         _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
         _oauthService = oauthService ?? throw new ArgumentNullException(nameof(oauthService));
+        _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
 
         _logger.LogInformation("AuthService initialized with JwtSecret length: {Length}, Issuer: {Issuer}, Audience: {Audience}, MockProviders: {MockProviders}",
             _configuration.JwtSecret?.Length ?? 0, _configuration.JwtIssuer, _configuration.JwtAudience, _configuration.MockProviders);
@@ -2566,6 +2569,30 @@ public class AuthService : IAuthService
     {
         _logger.LogInformation("Registering Auth service permissions...");
         await AuthPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+    }
+
+    #endregion
+
+    #region Error Event Publishing
+
+    /// <summary>
+    /// Publishes an error event for unexpected/internal failures.
+    /// Does NOT publish for validation errors or expected failure cases.
+    /// </summary>
+    private Task PublishErrorEventAsync(
+        string operation,
+        string errorType,
+        string message,
+        string? dependency = null,
+        object? details = null)
+    {
+        return _errorEventEmitter.TryPublishAsync(
+            serviceId: "auth",
+            operation: operation,
+            errorType: errorType,
+            message: message,
+            dependency: dependency,
+            details: details);
     }
 
     #endregion

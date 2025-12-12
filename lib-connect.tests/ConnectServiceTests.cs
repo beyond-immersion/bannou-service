@@ -28,6 +28,7 @@ public class ConnectServiceTests
     private readonly Mock<IPermissionsClient> _mockPermissionsClient;
     private readonly Mock<DaprClient> _mockDaprClient;
     private readonly Mock<IServiceAppMappingResolver> _mockAppMappingResolver;
+    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly string _testServerSalt = "test-server-salt-2025";
 
     public ConnectServiceTests()
@@ -41,6 +42,7 @@ public class ConnectServiceTests
         _mockPermissionsClient = new Mock<IPermissionsClient>();
         _mockDaprClient = new Mock<DaprClient>();
         _mockAppMappingResolver = new Mock<IServiceAppMappingResolver>();
+        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
     }
 
     #region Basic Constructor Tests
@@ -566,7 +568,8 @@ public class ConnectServiceTests
             _mockDaprClient.Object,
             _mockAppMappingResolver.Object,
             _configuration,
-            _mockLogger.Object
+            _mockLogger.Object,
+            _mockErrorEventEmitter.Object
         );
     }
 
