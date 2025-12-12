@@ -1,6 +1,8 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Connect.ClientEvents;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permissions;
@@ -41,6 +43,10 @@ public class ConnectService : IConnectService
     private readonly ISessionManager? _sessionManager;
     private readonly IErrorEventEmitter _errorEventEmitter;
 
+    // Client event subscriber for session-specific RabbitMQ subscriptions (TENET exception)
+    private ClientEventRabbitMQSubscriber? _clientEventSubscriber;
+    private readonly ILoggerFactory _loggerFactory;
+
     // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
@@ -53,6 +59,7 @@ public class ConnectService : IConnectService
         IServiceAppMappingResolver appMappingResolver,
         ConnectServiceConfiguration configuration,
         ILogger<ConnectService> logger,
+        ILoggerFactory loggerFactory,
         IErrorEventEmitter errorEventEmitter,
         ISessionManager? sessionManager = null)
     {
@@ -68,6 +75,7 @@ public class ConnectService : IConnectService
         };
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _sessionManager = sessionManager; // Optional Dapr-based session management
 
@@ -491,6 +499,20 @@ public class ConnectService : IConnectService
             // This tells the client what APIs they can access and provides their client-salted GUIDs
             await SendCapabilityManifestAsync(webSocket, sessionId, connectionState, cancellationToken);
 
+            // Subscribe to session-specific client events via RabbitMQ
+            if (_clientEventSubscriber != null)
+            {
+                var subscribed = await _clientEventSubscriber.SubscribeToSessionAsync(sessionId, cancellationToken);
+                if (subscribed)
+                {
+                    _logger.LogDebug("Subscribed to client events for session {SessionId}", sessionId);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to subscribe to client events for session {SessionId}", sessionId);
+                }
+            }
+
             while (webSocket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
             {
                 var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
@@ -539,6 +561,13 @@ public class ConnectService : IConnectService
         }
         finally
         {
+            // Unsubscribe from session-specific client events
+            if (_clientEventSubscriber != null)
+            {
+                await _clientEventSubscriber.UnsubscribeFromSessionAsync(sessionId);
+                _logger.LogDebug("Unsubscribed from client events for session {SessionId}", sessionId);
+            }
+
             // Check if this was a forced disconnect BEFORE removing from connection manager
             var connection = _connectionManager.GetConnection(sessionId);
             var isForcedDisconnect = connection?.Metadata?.ContainsKey("forced_disconnect") == true;
@@ -1024,7 +1053,7 @@ public class ConnectService : IConnectService
     /// Note: Capability updates are handled via ConnectEventsController which subscribes
     /// to permissions.capabilities-updated topic via subscriptions.yaml.
     /// </summary>
-    public Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
+    public async Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
 
@@ -1049,7 +1078,25 @@ public class ConnectService : IConnectService
             .WithMetadata("Connect service client RPC handler");
 
         _logger.LogInformation("Connect service RabbitMQ event handlers registered successfully");
-        return Task.CompletedTask;
+
+        // Initialize direct RabbitMQ subscriber for session-specific client events
+        // TENET exception: Dapr doesn't support dynamic runtime subscriptions
+        _logger.LogInformation("Initializing client event RabbitMQ subscriber");
+        var subscriberLogger = _loggerFactory.CreateLogger<ClientEventRabbitMQSubscriber>();
+        _clientEventSubscriber = new ClientEventRabbitMQSubscriber(
+            subscriberLogger,
+            HandleClientEventAsync,
+            _instanceId);
+
+        var subscriberInitialized = await _clientEventSubscriber.InitializeAsync(cancellationToken);
+        if (subscriberInitialized)
+        {
+            _logger.LogInformation("Client event RabbitMQ subscriber initialized successfully");
+        }
+        else
+        {
+            _logger.LogWarning("Client event RabbitMQ subscriber failed to initialize - client events will not be delivered");
+        }
     }
 
     #endregion
@@ -1259,6 +1306,60 @@ public class ConnectService : IConnectService
     #endregion
 
     #region Helper Methods for Event Handling
+
+    /// <summary>
+    /// Handles client events received from RabbitMQ and routes them to WebSocket connections.
+    /// This is the callback invoked by ClientEventRabbitMQSubscriber when events arrive.
+    /// </summary>
+    private async Task HandleClientEventAsync(string sessionId, byte[] eventPayload)
+    {
+        try
+        {
+            // Check if session has active WebSocket connection
+            var connection = _connectionManager.GetConnection(sessionId);
+            if (connection == null)
+            {
+                // Client disconnected - queue the event for later delivery during reconnection window
+                _logger.LogDebug("Session {SessionId} not connected, attempting to queue event for later delivery",
+                    sessionId);
+
+                // Try to get ClientEventQueueManager from DI (it's scoped, so we need to handle this carefully)
+                // For now, log and drop - the queue manager integration requires scope handling
+                // TODO: Consider making ClientEventQueueManager singleton or handling scope properly
+                _logger.LogWarning("Session {SessionId} not connected - event dropped (event queuing not yet integrated)",
+                    sessionId);
+                return;
+            }
+
+            // Create binary message for the client event
+            var eventMessage = new BinaryMessage(
+                flags: MessageFlags.Event, // Server-initiated event, no response expected
+                channel: 0, // Event channel
+                sequenceNumber: 0, // Events don't need sequence numbers
+                serviceGuid: Guid.Empty, // System event
+                messageId: GuidGenerator.GenerateMessageId(),
+                payload: eventPayload
+            );
+
+            // Send to WebSocket client
+            var sent = await _connectionManager.SendMessageAsync(sessionId, eventMessage, CancellationToken.None);
+
+            if (sent)
+            {
+                _logger.LogDebug("Delivered client event to session {SessionId} ({PayloadSize} bytes)",
+                    sessionId, eventPayload.Length);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to deliver client event to session {SessionId} - WebSocket send failed",
+                    sessionId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling client event for session {SessionId}", sessionId);
+        }
+    }
 
     /// <summary>
     /// Checks if a session has an active WebSocket connection.

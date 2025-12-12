@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Connect.ClientEvents;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
@@ -35,6 +36,11 @@ public class ConnectServicePlugin : BaseBannouPlugin
         // Uses Dapr state store (connect-statestore) instead of direct Redis
         services.AddSingleton<ISessionManager, DaprSessionManager>();
         Logger?.LogDebug("Registered DaprSessionManager for session state management");
+
+        // Register client event queue manager for disconnection handling
+        // Uses Dapr state store to queue events during client reconnection window
+        services.AddScoped<ClientEventQueueManager>();
+        Logger?.LogDebug("Registered ClientEventQueueManager for event queuing");
 
         // The generated clients should already be registered by AddAllBannouServiceClients()
 

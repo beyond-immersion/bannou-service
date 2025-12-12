@@ -280,6 +280,337 @@
             <param name="serviceImplementation">The service implementation type this configuration is for (required).</param>
             <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
         </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.ClientEventsDependencyInjection">
+            <summary>
+            Extension methods for registering client event services.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.ClientEventsDependencyInjection.AddClientEventPublisher(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Adds the client event publisher to the service collection.
+            </summary>
+            <param name="services">The service collection.</param>
+            <returns>The service collection for chaining.</returns>
+            <remarks>
+            Registers:
+            - IClientEventPublisher as scoped service (uses DaprClient per request)
+            </remarks>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.DaprClientEventPublisher">
+            <summary>
+            Dapr-based implementation of IClientEventPublisher.
+            Publishes client events to session-specific RabbitMQ topics.
+            </summary>
+            <remarks>
+            <para>
+            Uses Dapr pub/sub to publish to dynamic topics (CONNECT_SESSION_{sessionId}).
+            Dapr's RabbitMQ component creates fanout exchanges for each topic automatically.
+            </para>
+            <para>
+            The Connect service uses direct RabbitMQ to subscribe to these exchanges
+            because Dapr doesn't support dynamic runtime subscriptions.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ClientEvents.DaprClientEventPublisher.PUBSUB_NAME">
+            <summary>
+            Standard pub/sub component name for Bannou services.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ClientEvents.DaprClientEventPublisher.SESSION_TOPIC_PREFIX">
+            <summary>
+            Prefix for session-specific topics.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.DaprClientEventPublisher.#ctor(Dapr.Client.DaprClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.BannouService.ClientEvents.DaprClientEventPublisher})">
+            <summary>
+            Creates a new DaprClientEventPublisher.
+            </summary>
+            <param name="daprClient">Dapr client for publishing events.</param>
+            <param name="logger">Logger for event operations.</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.DaprClientEventPublisher.PublishToSessionAsync``1(System.String,``0,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.DaprClientEventPublisher.PublishToSessionsAsync``1(System.Collections.Generic.IEnumerable{System.String},``0,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.DaprClientEventPublisher.IsValidEventName(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher">
+            <summary>
+            Interface for publishing events to specific WebSocket clients via session-specific channels.
+            Services use this to push events to clients without knowing which Connect instance handles them.
+            </summary>
+            <remarks>
+            <para>
+            Events are published to RabbitMQ topics named CONNECT_SESSION_{sessionId}.
+            The Connect service subscribes to these topics and forwards events to the appropriate WebSocket.
+            </para>
+            <para>
+            All events must have a valid event_name that exists in the ClientEventWhitelist.
+            Events with invalid names will be rejected by the publisher.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher.PublishToSessionAsync``1(System.String,``0,System.Threading.CancellationToken)">
+            <summary>
+            Publishes an event to a specific client session.
+            </summary>
+            <typeparam name="TEvent">Type of client event (must inherit from BaseClientEvent).</typeparam>
+            <param name="sessionId">The target session ID.</param>
+            <param name="eventData">The event data to publish.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if the event was published successfully, false otherwise.</returns>
+            <exception cref="T:System.ArgumentException">Thrown if the event name is not in the whitelist.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher.PublishToSessionsAsync``1(System.Collections.Generic.IEnumerable{System.String},``0,System.Threading.CancellationToken)">
+            <summary>
+            Publishes an event to multiple client sessions.
+            </summary>
+            <typeparam name="TEvent">Type of client event (must inherit from BaseClientEvent).</typeparam>
+            <param name="sessionIds">The target session IDs.</param>
+            <param name="eventData">The event data to publish.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The number of sessions the event was successfully published to.</returns>
+            <exception cref="T:System.ArgumentException">Thrown if the event name is not in the whitelist.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.IClientEventPublisher.IsValidEventName(System.String)">
+            <summary>
+            Checks if an event name is valid (exists in the whitelist).
+            </summary>
+            <param name="eventName">The event name to check.</param>
+            <returns>True if the event name is valid.</returns>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.ClientEventWhitelist">
+            <summary>
+            Generated whitelist of valid client event names.
+            Used by Connect service for O(1) validation before forwarding events to WebSocket clients.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.BannouService.ClientEvents.ClientEventWhitelist.ValidEventNames">
+            <summary>
+            HashSet of all valid client event names extracted from *-client-events.yaml schemas.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.ClientEventWhitelist.IsValidEventName(System.String)">
+            <summary>
+            Check if an event name is in the whitelist.
+            </summary>
+            <param name="eventName">The event name to validate (e.g., "connect.capability_manifest")</param>
+            <returns>True if the event name is valid, false otherwise</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.ClientEventWhitelist.GetAllValidEventNames">
+            <summary>
+            Get all valid event names (for debugging/logging).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientEventWhitelist.Count">
+            <summary>
+            Get the count of registered client event types.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent">
+            <summary>
+            Base schema for all server-to-client push events.
+            <br/>All client events MUST include these fields.
+            <br/>The event_name field is used for whitelist validation in Connect service.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Event_name">
+            <summary>
+            Unique event type identifier (e.g., "connect.capability_manifest").
+            <br/>Must be in the generated ClientEventWhitelist or will be rejected.
+            <br/>Convention: {service}.{event_type}
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Event_id">
+            <summary>
+            Unique identifier for this event instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Timestamp">
+            <summary>
+            When the event was generated (ISO 8601 format)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Correlation_id">
+            <summary>
+            Optional correlation ID for request tracing
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent">
+            <summary>
+            Sent to client when their available API capabilities change.
+            <br/>Contains the complete list of service GUIDs the client can access.
+            <br/>Delivered on initial connection and when permissions change.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Session_id">
+            <summary>
+            Session ID this manifest applies to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Available_apis">
+            <summary>
+            List of available API endpoints with their GUIDs
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Version">
+            <summary>
+            Manifest version number (incremented on each change)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Reason">
+            <summary>
+            Reason for manifest update (e.g., "initial_connection", "capabilities_updated", "role_changed")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry">
+            <summary>
+            Individual API capability entry with routing information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Service_guid">
+            <summary>
+            Client-salted GUID for this endpoint (unique per client)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Service_name">
+            <summary>
+            Service name (e.g., "accounts", "game-session")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Method">
+            <summary>
+            HTTP method for WebSocket routing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Path">
+            <summary>
+            API endpoint path (e.g., "/accounts/get")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Endpoint_key">
+            <summary>
+            Full endpoint key for routing (e.g., "accounts:POST:/accounts/get")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent">
+            <summary>
+            Sent to client before WebSocket connection is closed.
+            <br/>If reconnectable, includes a token for session restoration.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Reconnection_token">
+            <summary>
+            Token for reconnecting to the same session (valid for 5 minutes)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Expires_at">
+            <summary>
+            When the reconnection token expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Reconnectable">
+            <summary>
+            Whether this session can be reconnected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Reason">
+            <summary>
+            Reason for disconnection:
+            <br/>- graceful_disconnect: Client-initiated or idle timeout
+            <br/>- session_invalidated: Session was revoked (e.g., logout, account deleted)
+            <br/>- server_shutdown: Server is shutting down gracefully
+            <br/>- forced_disconnect: Administrative disconnection
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent">
+            <summary>
+            Generic error notification sent to client.
+            <br/>Used for recoverable errors that the client should be aware of.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.Error_code">
+            <summary>
+            Machine-readable error code (e.g., "SERVICE_UNAVAILABLE", "RATE_LIMITED")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.Message">
+            <summary>
+            Human-readable error message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.Details">
+            <summary>
+            Additional error details (service-specific)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.Recoverable">
+            <summary>
+            Whether the client can retry the operation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent">
+            <summary>
+            Generic notification event for system-level messages.
+            <br/>Used for announcements, maintenance notices, etc.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Notification_type">
+            <summary>
+            Type of notification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Message">
+            <summary>
+            Human-readable notification message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Title">
+            <summary>
+            Optional notification title
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Action_url">
+            <summary>
+            Optional URL for more information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Expires_at">
+            <summary>
+            When this notification expires/becomes irrelevant
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Configuration.AppConfiguration">
             <summary>
             Main application configuration for the Bannou service platform.

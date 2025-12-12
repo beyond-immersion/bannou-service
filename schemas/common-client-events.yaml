@@ -1,0 +1,231 @@
+openapi: 3.0.3
+info:
+  title: Common Client Events API
+  description: |
+    Base schemas for server-to-client push events delivered via WebSocket.
+    All client events inherit from BaseClientEvent and are routed through
+    session-specific RabbitMQ channels (CONNECT_SESSION_{sessionId}).
+
+    These events are different from service-to-service events:
+    - Service events: Dapr pub/sub between services
+    - Client events: Services → RabbitMQ → Connect service → WebSocket → Client
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    BaseClientEvent:
+      type: object
+      x-client-event: true
+      description: |
+        Base schema for all server-to-client push events.
+        All client events MUST include these fields.
+        The event_name field is used for whitelist validation in Connect service.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+      properties:
+        event_name:
+          type: string
+          description: |
+            Unique event type identifier (e.g., "connect.capability_manifest").
+            Must be in the generated ClientEventWhitelist or will be rejected.
+            Convention: {service}.{event_type}
+        event_id:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event was generated (ISO 8601 format)
+        correlation_id:
+          type: string
+          nullable: true
+          description: Optional correlation ID for request tracing
+
+    CapabilityManifestEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to client when their available API capabilities change.
+        Contains the complete list of service GUIDs the client can access.
+        Delivered on initial connection and when permissions change.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - session_id
+        - available_apis
+        - version
+      properties:
+        event_name:
+          type: string
+          enum: ["connect.capability_manifest"]
+          description: Fixed event type identifier
+        session_id:
+          type: string
+          description: Session ID this manifest applies to
+        available_apis:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientCapabilityEntry'
+          description: List of available API endpoints with their GUIDs
+        version:
+          type: integer
+          description: Manifest version number (incremented on each change)
+        reason:
+          type: string
+          nullable: true
+          description: Reason for manifest update (e.g., "initial_connection", "capabilities_updated", "role_changed")
+
+    ClientCapabilityEntry:
+      type: object
+      description: Individual API capability entry with routing information
+      required:
+        - service_guid
+        - service_name
+        - method
+        - path
+        - endpoint_key
+      properties:
+        service_guid:
+          type: string
+          format: uuid
+          description: Client-salted GUID for this endpoint (unique per client)
+        service_name:
+          type: string
+          description: Service name (e.g., "accounts", "game-session")
+        method:
+          type: string
+          enum: [GET, POST]
+          description: HTTP method for WebSocket routing
+        path:
+          type: string
+          description: API endpoint path (e.g., "/accounts/get")
+        endpoint_key:
+          type: string
+          description: Full endpoint key for routing (e.g., "accounts:POST:/accounts/get")
+
+    DisconnectNotificationEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to client before WebSocket connection is closed.
+        If reconnectable, includes a token for session restoration.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - reconnectable
+        - reason
+      properties:
+        event_name:
+          type: string
+          enum: ["connect.disconnect_notification"]
+          description: Fixed event type identifier
+        reconnection_token:
+          type: string
+          nullable: true
+          description: Token for reconnecting to the same session (valid for 5 minutes)
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the reconnection token expires
+        reconnectable:
+          type: boolean
+          description: Whether this session can be reconnected
+        reason:
+          type: string
+          description: |
+            Reason for disconnection:
+            - graceful_disconnect: Client-initiated or idle timeout
+            - session_invalidated: Session was revoked (e.g., logout, account deleted)
+            - server_shutdown: Server is shutting down gracefully
+            - forced_disconnect: Administrative disconnection
+
+    SystemErrorEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Generic error notification sent to client.
+        Used for recoverable errors that the client should be aware of.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - error_code
+        - message
+      properties:
+        event_name:
+          type: string
+          enum: ["system.error"]
+          description: Fixed event type identifier
+        error_code:
+          type: string
+          description: Machine-readable error code (e.g., "SERVICE_UNAVAILABLE", "RATE_LIMITED")
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional error details (service-specific)
+        recoverable:
+          type: boolean
+          default: true
+          description: Whether the client can retry the operation
+
+    SystemNotificationEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Generic notification event for system-level messages.
+        Used for announcements, maintenance notices, etc.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - notification_type
+        - message
+      properties:
+        event_name:
+          type: string
+          enum: ["system.notification"]
+          description: Fixed event type identifier
+        notification_type:
+          type: string
+          enum: [info, warning, maintenance, announcement]
+          description: Type of notification
+        message:
+          type: string
+          description: Human-readable notification message
+        title:
+          type: string
+          nullable: true
+          description: Optional notification title
+        action_url:
+          type: string
+          nullable: true
+          description: Optional URL for more information
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this notification expires/becomes irrelevant

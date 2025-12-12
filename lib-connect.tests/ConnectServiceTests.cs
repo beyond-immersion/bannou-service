@@ -23,6 +23,7 @@ namespace BeyondImmersion.BannouService.Connect.Tests;
 public class ConnectServiceTests
 {
     private readonly Mock<ILogger<ConnectService>> _mockLogger;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
     private readonly ConnectServiceConfiguration _configuration;
     private readonly Mock<IAuthClient> _mockAuthClient;
     private readonly Mock<IPermissionsClient> _mockPermissionsClient;
@@ -34,6 +35,10 @@ public class ConnectServiceTests
     public ConnectServiceTests()
     {
         _mockLogger = new Mock<ILogger<ConnectService>>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        // Set up logger factory to return a mock logger for any type
+        _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(Mock.Of<ILogger>());
         _configuration = new ConnectServiceConfiguration
         {
             BinaryProtocolVersion = "2.0"
@@ -569,6 +574,7 @@ public class ConnectServiceTests
             _mockAppMappingResolver.Object,
             _configuration,
             _mockLogger.Object,
+            _mockLoggerFactory.Object,
             _mockErrorEventEmitter.Object
         );
     }

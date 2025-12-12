@@ -25,6 +25,8 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <!-- Direct RabbitMQ for dynamic session-specific event subscriptions (TENET exception) -->
+    <PackageReference Include="RabbitMQ.Client" Version="7.2.0" />
   </ItemGroup>
 
   <Import Project="../ServiceLib.targets" />
