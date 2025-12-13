@@ -1532,6 +1532,34 @@
             Whether the client can retry the operation
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent">
+            <summary>
+            Internal event carrying compiled capabilities from Permissions to Connect.
+            <br/>NOT forwarded to clients - Connect intercepts, generates client-salted GUIDs,
+            <br/>and sends CapabilityManifestEvent to the client.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Event_name">
+            <summary>
+            Fixed event type identifier (internal, not forwarded to client)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Session_id">
+            <summary>
+            Session ID these capabilities apply to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Permissions">
+            <summary>
+            Map of ServiceID -&gt; List of available methods (e.g., "accounts" -&gt; ["POST:/get-account"])
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Reason">
+            <summary>
+            Why capabilities were sent (e.g., "session_connected", "service_registered", "role_changed")
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent">
             <summary>
             Generic notification event for system-level messages.
@@ -4981,6 +5009,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerStatus.RestartHistory">
             <summary>
             Recent restart history
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerStatus.Labels">
+            <summary>
+            Container labels for metadata and management
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.RestartHistoryEntry.Duration">
