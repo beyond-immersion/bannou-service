@@ -58,7 +58,7 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// <summary>
 /// Service interface for $SERVICE_PASCAL API
 /// </summary>
-public interface I${SERVICE_PASCAL}Service : IDaprService
+public partial interface I${SERVICE_PASCAL}Service : IDaprService
 {
 EOF
 

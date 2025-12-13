@@ -3,15 +3,15 @@
 # This validates the core multi-node routing architecture
 #
 # Topology:
-# - bannou-main: connect, permissions, game-session, behavior, orchestrator, testing
-# - bannou-auth: accounts, auth
+# - Main node (already running): connect, permissions, game-session, behavior, orchestrator, etc.
+# - bannou-auth (deployed by this preset): accounts, auth
+#
+# NOTE: The main node is NOT included here - orchestrator never deploys itself.
+# Presets only define ADDITIONAL nodes to deploy alongside the main orchestrator node.
 #
 # When deployed, ServiceMappingEvents are published:
 # - accounts -> bannou-auth
 # - auth -> bannou-auth
-# - connect -> bannou-main
-# - permissions -> bannou-main
-# - etc.
 #
 # The ServiceAppMappingResolver receives these events and routes accordingly.
 
@@ -21,23 +21,8 @@ category: testing
 
 topology:
   nodes:
-    # Main node - handles most services
-    - name: bannou-main
-      services:
-        - connect
-        - permissions
-        - game-session
-        - behavior
-        - website
-        - testing
-      replicas: 1
-      environment:
-        ASPNETCORE_ENVIRONMENT: Development
-        TESTING_SERVICE_ENABLED: "true"
-        # This node is the "main" entry point
-        BANNOU_IS_MAIN_NODE: "true"
-
     # Auth node - handles authentication services only
+    # Deployed as a SEPARATE container from the main orchestrator node
     - name: bannou-auth
       services:
         - accounts

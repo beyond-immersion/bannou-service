@@ -1,9 +1,10 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Connect.ClientEvents;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using Dapr;
@@ -32,7 +33,6 @@ namespace BeyondImmersion.BannouService.Connect;
 public class ConnectService : IConnectService
 {
     private readonly IAuthClient _authClient;
-    private readonly IPermissionsClient _permissionsClient;
     private readonly DaprClient _daprClient;
     private readonly HttpClient _httpClient;
     private readonly IServiceAppMappingResolver _appMappingResolver;
@@ -41,6 +41,11 @@ public class ConnectService : IConnectService
     private readonly ISessionManager? _sessionManager;
     private readonly IErrorEventEmitter _errorEventEmitter;
 
+    // Client event subscriber for session-specific RabbitMQ subscriptions (TENET exception)
+    private ClientEventRabbitMQSubscriber? _clientEventSubscriber;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly ClientEventQueueManager? _clientEventQueueManager;
+
     // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>> _sessionServiceMappings;
     private readonly string _serverSalt;
@@ -48,16 +53,16 @@ public class ConnectService : IConnectService
 
     public ConnectService(
         IAuthClient authClient,
-        IPermissionsClient permissionsClient,
         DaprClient daprClient,
         IServiceAppMappingResolver appMappingResolver,
         ConnectServiceConfiguration configuration,
         ILogger<ConnectService> logger,
+        ILoggerFactory loggerFactory,
         IErrorEventEmitter errorEventEmitter,
-        ISessionManager? sessionManager = null)
+        ISessionManager? sessionManager = null,
+        ClientEventQueueManager? clientEventQueueManager = null)
     {
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
-        _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _httpClient = new HttpClient
         {
@@ -68,8 +73,10 @@ public class ConnectService : IConnectService
         };
         _appMappingResolver = appMappingResolver ?? throw new ArgumentNullException(nameof(appMappingResolver));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _sessionManager = sessionManager; // Optional Dapr-based session management
+        _clientEventQueueManager = clientEventQueueManager; // Optional client event queuing
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
@@ -97,27 +104,26 @@ public class ConnectService : IConnectService
             _logger.LogInformation("Processing internal proxy request to {TargetService}/{Method} {Endpoint}",
                 body.TargetService, body.Method, body.TargetEndpoint);
 
-            // Validate session has access to this API
-            var validationRequest = new ValidationRequest
-            {
-                SessionId = body.SessionId,
-                ServiceId = body.TargetService,
-                Method = $"{body.Method}:{body.TargetEndpoint}"
-            };
+            // Validate session has access to this API via local capability mappings
+            // Session capabilities are pushed via SessionCapabilitiesEvent from Permissions service
+            var endpointKey = $"{body.TargetService}:{body.Method}:{body.TargetEndpoint}";
+            var hasAccess = false;
 
-            var validationResponse = await _permissionsClient.ValidateApiAccessAsync(
-                validationRequest, cancellationToken);
-
-            if (!validationResponse.Allowed)
+            if (_sessionServiceMappings.TryGetValue(body.SessionId, out var sessionMappings))
             {
-                _logger.LogWarning("Session {SessionId} denied access to {Service}/{Method}",
+                hasAccess = sessionMappings.ContainsKey(endpointKey);
+            }
+
+            if (!hasAccess)
+            {
+                _logger.LogWarning("Session {SessionId} denied access to {Service}/{Method} - not in capability manifest",
                     body.SessionId, body.TargetService, body.Method);
 
                 return (StatusCodes.Forbidden, new InternalProxyResponse
                 {
                     Success = false,
                     StatusCode = 403,
-                    Error = validationResponse.Reason ?? "Access denied"
+                    Error = "Access denied - endpoint not in capability manifest"
                 });
             }
 
@@ -284,7 +290,7 @@ public class ConnectService : IConnectService
     /// Validates JWT token and extracts session ID and user roles.
     /// Returns a tuple with session ID and roles for capability initialization.
     /// </summary>
-    public async Task<(string? SessionId, ICollection<string>? Roles, ICollection<string>? Authorizations)> ValidateJWTAndExtractSessionAsync(
+    public async Task<(string? SessionId, Guid? AccountId, ICollection<string>? Roles, ICollection<string>? Authorizations)> ValidateJWTAndExtractSessionAsync(
         string authorization,
         CancellationToken cancellationToken)
     {
@@ -296,7 +302,7 @@ public class ConnectService : IConnectService
             if (string.IsNullOrEmpty(authorization))
             {
                 _logger.LogWarning("Authorization header missing or empty");
-                return (null, null, null);
+                return (null, null, null, null);
             }
 
             // Handle "Bearer <token>" format
@@ -314,7 +320,7 @@ public class ConnectService : IConnectService
                 if (validationResponse == null)
                 {
                     _logger.LogError("Auth service returned null validation response");
-                    return (null, null, null);
+                    return (null, null, null, null);
                 }
 
                 _logger.LogDebug("Token validation result - Valid: {Valid}, SessionId: {SessionId}, AccountId: {AccountId}, RolesCount: {RolesCount}, AuthorizationsCount: {AuthorizationsCount}",
@@ -327,8 +333,8 @@ public class ConnectService : IConnectService
                 if (validationResponse.Valid && !string.IsNullOrEmpty(validationResponse.SessionId))
                 {
                     _logger.LogDebug("JWT validated successfully, SessionId: {SessionId}", validationResponse.SessionId);
-                    // Return session ID, roles, and authorizations for capability initialization
-                    return (validationResponse.SessionId, validationResponse.Roles, validationResponse.Authorizations);
+                    // Return session ID, account ID, roles, and authorizations for capability initialization
+                    return (validationResponse.SessionId, validationResponse.AccountId, validationResponse.Roles, validationResponse.Authorizations);
                 }
                 else
                 {
@@ -344,7 +350,7 @@ public class ConnectService : IConnectService
                 if (string.IsNullOrEmpty(reconnectionToken))
                 {
                     _logger.LogWarning("Empty reconnection token provided");
-                    return (null, null, null);
+                    return (null, null, null, null);
                 }
 
                 // Use Redis session manager to validate reconnection token
@@ -361,7 +367,9 @@ public class ConnectService : IConnectService
                         {
                             _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
                             // Return stored roles and authorizations from reconnection state
-                            return (sessionId, restoredState.UserRoles, restoredState.Authorizations);
+                            // Parse AccountId from string back to Guid (stored as string for Redis serialization)
+                            Guid? restoredAccountId = Guid.TryParse(restoredState.AccountId, out var parsedGuid) ? parsedGuid : null;
+                            return (sessionId, restoredAccountId, restoredState.UserRoles, restoredState.Authorizations);
                         }
                     }
 
@@ -372,16 +380,16 @@ public class ConnectService : IConnectService
                     _logger.LogWarning("Reconnection requires Redis session manager - not configured");
                 }
 
-                return (null, null, null);
+                return (null, null, null, null);
             }
 
             _logger.LogWarning("Authorization format not recognized (expected 'Bearer' or 'Reconnect' prefix)");
-            return (null, null, null);
+            return (null, null, null, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "JWT validation failed with exception");
-            return (null, null, null);
+            return (null, null, null, null);
         }
     }
 
@@ -419,6 +427,7 @@ public class ConnectService : IConnectService
     public async Task HandleWebSocketCommunicationAsync(
         WebSocket webSocket,
         string sessionId,
+        Guid? accountId,
         ICollection<string>? userRoles,
         ICollection<string>? authorizations,
         CancellationToken cancellationToken)
@@ -478,18 +487,87 @@ public class ConnectService : IConnectService
                 var connectionStateData = new ConnectionStateData
                 {
                     SessionId = sessionId,
+                    AccountId = accountId?.ToString(),
                     ConnectedAt = DateTimeOffset.UtcNow,
                     LastActivity = DateTimeOffset.UtcNow,
                     UserRoles = userRoles?.ToList(),
                     Authorizations = authorizations?.ToList()
                 };
                 await _sessionManager.SetConnectionStateAsync(sessionId, connectionStateData);
-                _logger.LogDebug("Created connection state in Redis for session {SessionId}", sessionId);
+                _logger.LogDebug("Created connection state in Redis for session {SessionId}, AccountId {AccountId}", sessionId, accountId);
             }
 
-            // Push initial capability manifest to client
-            // This tells the client what APIs they can access and provides their client-salted GUIDs
-            await SendCapabilityManifestAsync(webSocket, sessionId, connectionState, cancellationToken);
+            // Subscribe to session-specific client events via RabbitMQ
+            // IMPORTANT: Must subscribe BEFORE sending capability manifest to avoid race condition
+            // where events published during capability compilation are lost
+            if (_clientEventSubscriber != null)
+            {
+                var subscribed = await _clientEventSubscriber.SubscribeToSessionAsync(sessionId, cancellationToken);
+                if (subscribed)
+                {
+                    _logger.LogDebug("Subscribed to client events for session {SessionId}", sessionId);
+
+                    // CRITICAL: Publish session.connected event AFTER RabbitMQ subscription
+                    // This ensures the exchange exists before any service tries to publish to it
+                    // Fixes race condition where services publish to non-existent exchange (crashes RabbitMQ channel)
+                    var sessionConnectedEvent = new SessionConnectedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        SessionId = sessionId,
+                        AccountId = accountId?.ToString() ?? string.Empty,
+                        Roles = userRoles?.ToList(),
+                        Authorizations = authorizations?.ToList(),
+                        ConnectInstanceId = Guid.TryParse(_instanceId.Split('-').LastOrDefault(), out var instanceGuid)
+                            ? instanceGuid : (Guid?)null
+                    };
+                    await _daprClient.PublishEventAsync("bannou-pubsub", "session.connected", sessionConnectedEvent, cancellationToken);
+                    _logger.LogInformation("Published session.connected event for session {SessionId}", sessionId);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to subscribe to client events for session {SessionId}", sessionId);
+                }
+            }
+
+            // Deliver any queued events from the reconnection window
+            // Events are queued in Redis when client disconnects but session is still valid
+            if (_clientEventQueueManager != null)
+            {
+                var queuedEvents = await _clientEventQueueManager.DequeueEventsAsync(sessionId, cancellationToken);
+                if (queuedEvents.Count > 0)
+                {
+                    _logger.LogInformation("Delivering {Count} queued events to reconnected session {SessionId}",
+                        queuedEvents.Count, sessionId);
+
+                    foreach (var eventPayload in queuedEvents)
+                    {
+                        var eventMessage = new BinaryMessage(
+                            flags: MessageFlags.Event,
+                            channel: 0,
+                            sequenceNumber: 0,
+                            serviceGuid: Guid.Empty,
+                            messageId: GuidGenerator.GenerateMessageId(),
+                            payload: eventPayload
+                        );
+
+                        var sent = await _connectionManager.SendMessageAsync(sessionId, eventMessage, cancellationToken);
+                        if (!sent)
+                        {
+                            _logger.LogWarning("Failed to deliver queued event to session {SessionId}", sessionId);
+                            // Don't re-queue - client just reconnected but send failed, likely connection issue
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Capability manifest is delivered via event-driven flow:
+            // 1. session.connected event published above
+            // 2. Permissions compiles capabilities and publishes SessionCapabilitiesEvent
+            // 3. RabbitMQ subscriber receives event and calls ProcessCapabilitiesAsync
+            // 4. ProcessCapabilitiesAsync sends the manifest with real APIs
+            // DO NOT send an empty placeholder manifest here - it causes race conditions
 
             while (webSocket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
             {
@@ -539,19 +617,50 @@ public class ConnectService : IConnectService
         }
         finally
         {
-            // Check if this was a forced disconnect BEFORE removing from connection manager
+            // Check if this was a forced disconnect BEFORE any cleanup
             var connection = _connectionManager.GetConnection(sessionId);
             var isForcedDisconnect = connection?.Metadata?.ContainsKey("forced_disconnect") == true;
 
-            // Remove from connection manager
-            _connectionManager.RemoveConnection(sessionId);
+            // CRITICAL: Publish session.disconnected event BEFORE unsubscribing from RabbitMQ
+            // This ensures Permissions removes session from activeConnections before the exchange is torn down
+            // Without this, services could still try to publish to the session during the brief cleanup window
+            try
+            {
+                var sessionDisconnectedEvent = new SessionDisconnectedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    SessionId = sessionId,
+                    AccountId = accountId?.ToString(),
+                    Reconnectable = !isForcedDisconnect,
+                    Reason = isForcedDisconnect ? "forced_disconnect" : "graceful_disconnect"
+                };
+                await _daprClient.PublishEventAsync("bannou-pubsub", "session.disconnected", sessionDisconnectedEvent);
+                _logger.LogInformation("Published session.disconnected event for session {SessionId}, reconnectable: {Reconnectable}",
+                    sessionId, !isForcedDisconnect);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to publish session.disconnected event for session {SessionId}", sessionId);
+            }
+
+            // Remove from connection manager - use instance-matching removal to prevent
+            // race condition during session subsume where old connection's cleanup could
+            // accidentally remove a new connection that replaced it (Tenet 4 compliance)
+            _connectionManager.RemoveConnectionIfMatch(sessionId, webSocket);
 
             // Initiate reconnection window instead of immediate cleanup (unless forced disconnect)
             if (_sessionManager != null)
             {
                 if (isForcedDisconnect)
                 {
-                    // Forced disconnect - clean up immediately
+                    // Forced disconnect - unsubscribe from RabbitMQ and clean up immediately
+                    if (_clientEventSubscriber != null)
+                    {
+                        await _clientEventSubscriber.UnsubscribeFromSessionAsync(sessionId);
+                        _logger.LogDebug("Unsubscribed from client events for forced disconnect session {SessionId}", sessionId);
+                    }
+
                     await _sessionManager.RemoveSessionAsync(sessionId);
                     await _sessionManager.PublishSessionEventAsync("disconnect", sessionId, new { instanceId = _instanceId, reconnectable = false });
                     _logger.LogInformation("Session {SessionId} force disconnected - no reconnection allowed", sessionId);
@@ -559,6 +668,12 @@ public class ConnectService : IConnectService
                 else
                 {
                     // Normal disconnect - initiate reconnection window
+                    // IMPORTANT: Keep RabbitMQ subscription active so events can be queued during
+                    // the reconnection window. HandleClientEventAsync will detect the missing WebSocket
+                    // connection and queue events for delivery when the client reconnects.
+                    _logger.LogDebug("Keeping RabbitMQ subscription active for session {SessionId} during reconnection window",
+                        sessionId);
+
                     var reconnectionToken = connectionState.InitiateReconnectionWindow(
                         reconnectionWindowMinutes: 5,
                         userRoles: userRoles);
@@ -1024,7 +1139,7 @@ public class ConnectService : IConnectService
     /// Note: Capability updates are handled via ConnectEventsController which subscribes
     /// to permissions.capabilities-updated topic via subscriptions.yaml.
     /// </summary>
-    public Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
+    public async Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
 
@@ -1049,7 +1164,26 @@ public class ConnectService : IConnectService
             .WithMetadata("Connect service client RPC handler");
 
         _logger.LogInformation("Connect service RabbitMQ event handlers registered successfully");
-        return Task.CompletedTask;
+
+        // Initialize direct RabbitMQ subscriber for session-specific client events
+        // TENET exception: Dapr doesn't support dynamic runtime subscriptions
+        _logger.LogInformation("Initializing client event RabbitMQ subscriber");
+        var subscriberLogger = _loggerFactory.CreateLogger<ClientEventRabbitMQSubscriber>();
+        _clientEventSubscriber = new ClientEventRabbitMQSubscriber(
+            subscriberLogger,
+            HandleClientEventAsync,
+            _instanceId);
+
+        var subscriberInitialized = await _clientEventSubscriber.InitializeAsync(cancellationToken);
+        if (subscriberInitialized)
+        {
+            _logger.LogInformation("Client event RabbitMQ subscriber initialized successfully");
+        }
+        else
+        {
+            _logger.LogWarning("Failed to initialize RabbitMQ subscriber - client events will not be delivered");
+            _clientEventSubscriber = null;
+        }
     }
 
     #endregion
@@ -1261,6 +1395,213 @@ public class ConnectService : IConnectService
     #region Helper Methods for Event Handling
 
     /// <summary>
+    /// Handles client events received from RabbitMQ and routes them to WebSocket connections.
+    /// This is the callback invoked by ClientEventRabbitMQSubscriber when events arrive.
+    /// Internal events (like CapabilitiesRefreshEvent) are handled locally without forwarding to client.
+    /// </summary>
+    private async Task HandleClientEventAsync(string sessionId, byte[] eventPayload)
+    {
+        try
+        {
+            // Unwrap CloudEvents envelope if present - Dapr pub/sub wraps events in CloudEvents format
+            // Clients should receive the actual event data, not the CloudEvents wrapper
+            var unwrappedPayload = DaprEventHelper.UnwrapCloudEventsEnvelope(eventPayload);
+
+            // Check if this is an internal event that should be handled locally, not forwarded to client
+            if (await TryHandleInternalEventAsync(sessionId, unwrappedPayload))
+            {
+                // Internal event was handled - don't forward to client
+                return;
+            }
+
+            // Validate event against whitelist and normalize the event_name
+            // NSwag/JSON serialization can mangle event names (e.g., "system.notification" -> "system_notification")
+            // We need to validate the mangled name and rewrite it to canonical form before sending to client
+            var (canonicalName, clientPayload) = ClientEventNormalizer.NormalizeEventPayload(unwrappedPayload);
+
+            if (string.IsNullOrEmpty(canonicalName))
+            {
+                _logger.LogWarning("Rejected client event for session {SessionId} - event name not in whitelist or missing",
+                    sessionId);
+                return;
+            }
+
+            _logger.LogDebug("Validated and normalized client event '{CanonicalName}' for session {SessionId}",
+                canonicalName, sessionId);
+
+            // Check if session has active WebSocket connection
+            var connection = _connectionManager.GetConnection(sessionId);
+            if (connection == null)
+            {
+                // Client disconnected - queue the event for later delivery during reconnection window
+                _logger.LogDebug("Session {SessionId} not connected, attempting to queue event for later delivery",
+                    sessionId);
+
+                // Queue event for delivery when client reconnects (if within reconnection window)
+                // Note: We queue the unwrapped payload so it's ready for client delivery
+                if (_clientEventQueueManager != null)
+                {
+                    var queued = await _clientEventQueueManager.QueueEventAsync(sessionId, clientPayload);
+                    if (queued)
+                    {
+                        _logger.LogDebug("Queued client event for disconnected session {SessionId} ({PayloadSize} bytes)",
+                            sessionId, clientPayload.Length);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to queue client event for session {SessionId}", sessionId);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Session {SessionId} not connected - event dropped (queue manager not available)",
+                        sessionId);
+                }
+                return;
+            }
+
+            // Create binary message for the client event
+            var eventMessage = new BinaryMessage(
+                flags: MessageFlags.Event, // Server-initiated event, no response expected
+                channel: 0, // Event channel
+                sequenceNumber: 0, // Events don't need sequence numbers
+                serviceGuid: Guid.Empty, // System event
+                messageId: GuidGenerator.GenerateMessageId(),
+                payload: clientPayload
+            );
+
+            // Send to WebSocket client
+            var sent = await _connectionManager.SendMessageAsync(sessionId, eventMessage, CancellationToken.None);
+
+            if (sent)
+            {
+                _logger.LogDebug("Delivered client event to session {SessionId} ({PayloadSize} bytes)",
+                    sessionId, eventPayload.Length);
+            }
+            else
+            {
+                // Send failed - client may have disconnected between check and send
+                // Queue the event for reconnection delivery
+                if (_clientEventQueueManager != null)
+                {
+                    await _clientEventQueueManager.QueueEventAsync(sessionId, eventPayload);
+                    _logger.LogDebug("WebSocket send failed, queued event for session {SessionId}", sessionId);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to deliver client event to session {SessionId} - WebSocket send failed",
+                        sessionId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling client event for session {SessionId}", sessionId);
+        }
+    }
+
+    /// <summary>
+    /// Attempts to handle internal events that should not be forwarded to clients.
+    /// Returns true if the event was handled internally, false if it should be forwarded to the client.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Internal events like CapabilitiesRefreshEvent are used for service-to-Connect communication
+    /// via session-specific RabbitMQ channels. These events trigger internal actions (like refreshing
+    /// capabilities) but should NOT be sent to the WebSocket client.
+    /// </para>
+    /// </remarks>
+    private async Task<bool> TryHandleInternalEventAsync(string sessionId, byte[] eventPayload)
+    {
+        try
+        {
+            // Try to parse just the event_name field to determine event type
+            using var doc = JsonDocument.Parse(eventPayload);
+
+            // Handle CloudEvents envelope - Dapr wraps pub/sub messages in CloudEvents format
+            // The actual event data is in the "data" property
+            var root = doc.RootElement;
+            if (root.TryGetProperty("data", out var dataElement))
+            {
+                root = dataElement;
+            }
+
+            if (!root.TryGetProperty("event_name", out var eventNameElement))
+            {
+                // Also try Event_name (NSwag naming without JsonPropertyName)
+                if (!root.TryGetProperty("Event_name", out eventNameElement))
+                {
+                    return false; // Not a valid event, let normal handling proceed
+                }
+            }
+
+            var eventName = eventNameElement.GetString();
+            if (string.IsNullOrEmpty(eventName))
+            {
+                return false;
+            }
+
+            // Handle SessionCapabilitiesEvent - extract permissions and send to client
+            // Check both the EnumMember value and the C# enum name (JsonStringEnumConverter uses C# name)
+            if (eventName == "permissions.session_capabilities" ||
+                eventName == "Permissions_session_capabilities")
+            {
+                _logger.LogDebug("Handling SessionCapabilitiesEvent for session {SessionId}", sessionId);
+
+                // Extract permissions from event payload - no API call needed
+                if (root.TryGetProperty("permissions", out var permissionsElement) ||
+                    root.TryGetProperty("Permissions", out permissionsElement))
+                {
+                    var permissions = new Dictionary<string, List<string>>();
+                    foreach (var service in permissionsElement.EnumerateObject())
+                    {
+                        var methods = new List<string>();
+                        foreach (var method in service.Value.EnumerateArray())
+                        {
+                            var methodStr = method.GetString();
+                            if (!string.IsNullOrEmpty(methodStr))
+                            {
+                                methods.Add(methodStr);
+                            }
+                        }
+                        permissions[service.Name] = methods;
+                    }
+
+                    // Extract reason if present
+                    var reason = "capabilities_updated";
+                    if (root.TryGetProperty("reason", out var reasonElement) ||
+                        root.TryGetProperty("Reason", out reasonElement))
+                    {
+                        reason = reasonElement.GetString() ?? reason;
+                    }
+
+                    await ProcessCapabilitiesAsync(sessionId, permissions, reason);
+                }
+                else
+                {
+                    _logger.LogWarning("SessionCapabilitiesEvent missing permissions for session {SessionId}", sessionId);
+                }
+
+                return true; // Event handled internally
+            }
+
+            // Add more internal event handlers here as needed
+
+            return false; // Not an internal event, forward to client
+        }
+        catch (JsonException)
+        {
+            // Not valid JSON - let normal handling proceed (it will likely fail, but consistently)
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error checking for internal event for session {SessionId}", sessionId);
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Checks if a session has an active WebSocket connection.
     /// </summary>
     internal bool HasConnection(string sessionId)
@@ -1385,117 +1726,29 @@ public class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Initializes session capabilities by querying the Permissions service.
-    /// Generates client-salted GUIDs for each available API endpoint.
+    /// Placeholder for session capability initialization. Capabilities are delivered via
+    /// SessionCapabilitiesEvent from Permissions service after session.connected event.
+    /// This method exists for reconnection scenarios where existing mappings may be restored.
     /// </summary>
-    internal async Task<Dictionary<string, Guid>> InitializeSessionCapabilitiesAsync(
+    internal Task<Dictionary<string, Guid>> InitializeSessionCapabilitiesAsync(
         string sessionId,
         string? role = "anonymous",
         ICollection<string>? authorizations = null,
         CancellationToken cancellationToken = default)
     {
-        var serviceMappings = new ConcurrentDictionary<string, Guid>();
+        // Capabilities are delivered via event-driven flow:
+        // 1. Connect publishes session.connected with roles/authorizations
+        // 2. Permissions receives event, compiles capabilities, publishes SessionCapabilitiesEvent
+        // 3. Connect receives SessionCapabilitiesEvent and calls ProcessCapabilitiesAsync
+        //
+        // For reconnection scenarios, existing mappings are loaded from session manager.
+        // For new sessions, return empty mappings - capabilities arrive via event.
 
-        try
-        {
-            _logger.LogInformation("Initializing capabilities for session {SessionId} with role {Role} and {AuthCount} authorizations",
-                sessionId, role, authorizations?.Count ?? 0);
+        _logger.LogInformation("Session {SessionId} will receive capabilities via event (role: {Role}, auth count: {AuthCount})",
+            sessionId, role ?? "anonymous", authorizations?.Count ?? 0);
 
-            // Initialize session in Permissions service with role
-            if (role != null && role != "anonymous")
-            {
-                await _permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
-                {
-                    SessionId = sessionId,
-                    NewRole = role
-                }, cancellationToken);
-            }
-
-            // Set authorization states for subscription-based access
-            // Authorization strings are in format "{stubName}:{state}" (e.g., "arcadia:authorized")
-            if (authorizations != null)
-            {
-                foreach (var auth in authorizations)
-                {
-                    var parts = auth.Split(':');
-                    if (parts.Length == 2)
-                    {
-                        var serviceId = parts[0];  // stubName serves as serviceId for authorization
-                        var state = parts[1];
-
-                        await _permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
-                        {
-                            SessionId = sessionId,
-                            ServiceId = serviceId,
-                            NewState = state
-                        }, cancellationToken);
-
-                        _logger.LogDebug("Set authorization state '{State}' for service '{ServiceId}' on session {SessionId}",
-                            state, serviceId, sessionId);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Invalid authorization format: '{Authorization}', expected 'stubName:state'", auth);
-                    }
-                }
-            }
-
-            // Get available capabilities from Permissions service
-            var capabilityResponse = await _permissionsClient.GetCapabilitiesAsync(
-                new CapabilityRequest { SessionId = sessionId },
-                cancellationToken);
-
-            if (capabilityResponse?.Permissions == null)
-            {
-                _logger.LogWarning("No capabilities returned for session {SessionId}", sessionId);
-                return new Dictionary<string, Guid>(serviceMappings);
-            }
-
-            _logger.LogInformation("Session {SessionId} has access to {ServiceCount} services",
-                sessionId, capabilityResponse.Permissions.Count);
-
-            // Generate client-salted GUIDs for each service:method combination
-            foreach (var servicePermissions in capabilityResponse.Permissions)
-            {
-                var serviceName = servicePermissions.Key;
-                var methods = servicePermissions.Value;
-
-                foreach (var method in methods)
-                {
-                    // Create unique key combining service and method
-                    var endpointKey = $"{serviceName}:{method}";
-
-                    // Generate client-salted GUID using session ID as salt
-                    var guid = GuidGenerator.GenerateServiceGuid(endpointKey, sessionId, _serverSalt);
-
-                    serviceMappings[endpointKey] = guid;
-
-                    _logger.LogDebug("Generated GUID {Guid} for endpoint {Endpoint} in session {SessionId}",
-                        guid, endpointKey, sessionId);
-                }
-            }
-
-            // Store mappings in session manager for persistence
-            if (_sessionManager != null)
-            {
-                await _sessionManager.SetSessionServiceMappingsAsync(
-                    sessionId,
-                    serviceMappings.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
-            }
-
-            // Store in in-memory cache as fallback
-            _sessionServiceMappings[sessionId] = new ConcurrentDictionary<string, Guid>(serviceMappings);
-
-            _logger.LogInformation("Initialized {Count} service GUIDs for session {SessionId}",
-                serviceMappings.Count, sessionId);
-
-            return new Dictionary<string, Guid>(serviceMappings);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to initialize capabilities for session {SessionId}", sessionId);
-            return new Dictionary<string, Guid>(serviceMappings);
-        }
+        // Return empty mappings - real capabilities come via SessionCapabilitiesEvent
+        return Task.FromResult(new Dictionary<string, Guid>());
     }
 
     /// <summary>
@@ -1602,35 +1855,26 @@ public class ConnectService : IConnectService
     }
 
     /// <summary>
-    /// Pushes updated capability manifest to a connected WebSocket client.
-    /// Called when permissions change (e.g., new service registered, role change, state change).
+    /// Processes capabilities received from Permissions service via SessionCapabilitiesEvent.
+    /// Generates client-salted GUIDs, updates connection state, and sends manifest to client.
+    /// NO API call to Permissions - capabilities are passed directly from the event.
     /// </summary>
-    public async Task PushCapabilityUpdateAsync(string sessionId, CancellationToken cancellationToken = default)
+    private async Task ProcessCapabilitiesAsync(string sessionId, Dictionary<string, List<string>> permissions, string reason, CancellationToken cancellationToken = default)
     {
         try
         {
             var connection = _connectionManager.GetConnection(sessionId);
             if (connection == null)
             {
-                _logger.LogDebug("No active connection found for session {SessionId}, skipping capability update", sessionId);
+                _logger.LogDebug("No active connection found for session {SessionId}, skipping capability processing", sessionId);
                 return;
             }
 
-            // Re-fetch capabilities from permissions service
-            var capabilityRequest = new Permissions.CapabilityRequest { SessionId = sessionId };
-            var capabilitiesResult = await _permissionsClient.GetCapabilitiesAsync(capabilityRequest, cancellationToken);
-            if (capabilitiesResult == null || capabilitiesResult.Permissions == null)
-            {
-                _logger.LogWarning("Failed to get capabilities for session {SessionId}", sessionId);
-                return;
-            }
-
-            // Regenerate client-salted GUIDs and update connection state atomically
+            // Generate client-salted GUIDs for each service:method combination
             var connectionState = connection.ConnectionState;
             var newMappings = new Dictionary<string, Guid>();
 
-            // Generate client-salted GUIDs for each service:method combination
-            foreach (var servicePermissions in capabilitiesResult.Permissions)
+            foreach (var servicePermissions in permissions)
             {
                 var serviceName = servicePermissions.Key;
                 var methods = servicePermissions.Value;
@@ -1646,7 +1890,7 @@ public class ConnectService : IConnectService
             // Atomic update to prevent race conditions
             connectionState.UpdateAllServiceMappings(newMappings);
 
-            // Build and send updated capability manifest using the new mappings
+            // Build and send updated capability manifest
             var availableApis = new List<object>();
             foreach (var mapping in newMappings)
             {
@@ -1662,8 +1906,7 @@ public class ConnectService : IConnectService
                 var method = methodPathColon > 0 ? methodAndPath[..methodPathColon] : methodAndPath;
                 var path = methodPathColon > 0 ? methodAndPath[(methodPathColon + 1)..] : "";
 
-                // CRITICAL: Skip endpoints with path templates (e.g., /accounts/{accountId})
-                // WebSocket binary protocol requires POST endpoints with JSON body parameters
+                // Skip endpoints with path templates - WebSocket requires POST with JSON body
                 if (path.Contains('{'))
                 {
                     continue;
@@ -1692,7 +1935,7 @@ public class ConnectService : IConnectService
                 availableAPIs = availableApis,
                 version = 1,
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                reason = "capabilities_updated"
+                reason = reason
             };
 
             var manifestJson = JsonSerializer.Serialize(capabilityManifest);
@@ -1710,26 +1953,13 @@ public class ConnectService : IConnectService
             await _connectionManager.SendMessageAsync(sessionId, capabilityMessage, cancellationToken);
 
             _logger.LogInformation(
-                "Pushed capability update to session {SessionId} with {ApiCount} available APIs",
-                sessionId, availableApis.Count);
+                "Processed capabilities for session {SessionId}: {ApiCount} APIs (reason: {Reason})",
+                sessionId, availableApis.Count, reason);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to push capability update to session {SessionId}", sessionId);
+            _logger.LogError(ex, "Failed to process capabilities for session {SessionId}", sessionId);
         }
-    }
-
-    /// <summary>
-    /// Pushes capability updates to all connected WebSocket clients.
-    /// Called when a new service registers (no specific sessions affected).
-    /// </summary>
-    public async Task PushCapabilityUpdateToAllAsync(CancellationToken cancellationToken = default)
-    {
-        var sessionIds = _connectionManager.GetActiveSessionIds().ToList();
-        _logger.LogInformation("Pushing capability updates to {Count} connected sessions", sessionIds.Count);
-
-        var tasks = sessionIds.Select(sessionId => PushCapabilityUpdateAsync(sessionId, cancellationToken));
-        await Task.WhenAll(tasks);
     }
 
     /// <summary>
@@ -1739,9 +1969,10 @@ public class ConnectService : IConnectService
     /// </summary>
     public async Task DisconnectSessionAsync(string sessionId, string reason, CancellationToken cancellationToken = default)
     {
+        WebSocketConnection? connection = null;
         try
         {
-            var connection = _connectionManager.GetConnection(sessionId);
+            connection = _connectionManager.GetConnection(sessionId);
             if (connection == null)
             {
                 _logger.LogDebug("Session {SessionId} not found for disconnection (may already be disconnected)", sessionId);
@@ -1772,8 +2003,9 @@ public class ConnectService : IConnectService
                     sessionId, connection.WebSocket.State);
             }
 
-            // Remove from connection manager
-            _connectionManager.RemoveConnection(sessionId);
+            // Remove from connection manager - use instance-matching to ensure we only
+            // remove the connection we fetched, not a potential replacement
+            _connectionManager.RemoveConnectionIfMatch(sessionId, connection.WebSocket);
 
             // Clean up Redis session data (forced disconnect = no reconnection)
             if (_sessionManager != null)
@@ -1785,7 +2017,11 @@ public class ConnectService : IConnectService
         {
             _logger.LogWarning(ex, "Error disconnecting session {SessionId}: {Reason}", sessionId, reason);
             // Still try to remove from connection manager even if close fails
-            _connectionManager.RemoveConnection(sessionId);
+            // Use instance-matching if we have a valid connection reference
+            if (connection != null)
+            {
+                _connectionManager.RemoveConnectionIfMatch(sessionId, connection.WebSocket);
+            }
         }
     }
 

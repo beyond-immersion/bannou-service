@@ -11,6 +11,11 @@ public class ConnectionStateData
     /// </summary>
     public string SessionId { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Account ID owning this session.
+    /// </summary>
+    public string? AccountId { get; set; }
+
     // Store as Unix epoch timestamps (long) to avoid Dapr/System.Text.Json DateTimeOffset serialization bugs
     public long ConnectedAtUnix { get; set; }
     public long LastActivityUnix { get; set; }

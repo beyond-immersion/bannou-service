@@ -35,6 +35,7 @@
   <!-- Generated Files via MSBuild Target (VS-Compatible) -->
   <Target Name="IncludeGeneratedFiles" BeforeTargets="BeforeBuild">
     <ItemGroup>
+      <Compile Include="../bannou-service/Generated/CommonClientEventsModels.cs" />
       <Compile Include="../lib-behavior/Generated/BehaviorClient.cs" />
       <Compile Include="../lib-permissions/Generated/PermissionsClient.cs" />
       <Compile Include="../lib-subscriptions/Generated/SubscriptionsClient.cs" />
@@ -53,6 +54,7 @@
       <Compile Include="../lib-servicedata/Generated/ServicedataModels.cs" />
       <Compile Include="../lib-connect/Generated/ConnectModels.cs" />
       <Compile Include="../lib-auth/Generated/AuthModels.cs" />
+      <Compile Include="../lib-game-session/Generated/GameSessionClientEventsModels.cs" />
       <Compile Include="../lib-game-session/Generated/GameSessionModels.cs" />
       <Compile Include="../lib-website/Generated/WebsiteModels.cs" />
     </ItemGroup>

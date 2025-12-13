@@ -2427,6 +2427,12 @@ public partial class ContainerStatus
     [System.Text.Json.Serialization.JsonPropertyName("healthChecks")]
     public HealthChecks HealthChecks { get; set; } = default!;
 
+    /// <summary>
+    /// Container labels for metadata and management
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("labels")]
+    public System.Collections.Generic.IDictionary<string, string> Labels { get; set; } = default!;
+
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
     [System.Text.Json.Serialization.JsonExtensionData]

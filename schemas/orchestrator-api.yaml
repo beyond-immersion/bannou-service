@@ -1924,6 +1924,11 @@ components:
               type: string
             consecutiveFailures:
               type: integer
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+          description: Container labels for metadata and management
 
     RestartHistoryEntry:
       type: object
@@ -2090,6 +2095,10 @@ x-service-configuration:
       type: integer
       default: 90
       description: Seconds before heartbeat considered expired
+    OrchestratorCacheTtlMinutes:
+      type: integer
+      default: 60
+      description: TTL for cached orchestrator connections in minutes. Set to 0 to disable caching.
 
     # ==========================================================================
     # DEPLOYMENT BEHAVIOR

@@ -442,16 +442,69 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Verify accounts API calls route to bannou-auth node.
+    /// Makes a real accounts API call to verify routing works.
     /// </summary>
     private void TestAccountsRoutesToSplitNode(string[] args)
     {
         Console.WriteLine("=== Accounts Routes to Split Node Test ===");
 
-        // This would require admin access to accounts API
-        // For now, just verify auth routing works (accounts is on same node)
-        Console.WriteLine("   Accounts routing shares bannou-auth node with auth");
-        Console.WriteLine("   If auth routing works, accounts routing should too");
-        Console.WriteLine("✅ Accounts routing test PASSED (validated via auth)");
+        try
+        {
+            var result = Task.Run(async () => await TestAccountsRoutingAsync()).Result;
+
+            if (result)
+            {
+                Console.WriteLine("✅ Accounts routing test PASSED");
+            }
+            else
+            {
+                Console.WriteLine("❌ Accounts routing test FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Accounts routing test FAILED with exception: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> TestAccountsRoutingAsync()
+    {
+        // Use the admin client to make an accounts API call
+        var adminClient = Program.AdminClient;
+        if (adminClient == null || !adminClient.IsConnected)
+        {
+            Console.WriteLine("   Admin client not connected - cannot test accounts routing");
+            return false;
+        }
+
+        // Try to call an accounts API endpoint that admin has access to
+        try
+        {
+            // List accounts requires admin role
+            var response = await adminClient.InvokeAsync<object, JsonElement>(
+                "POST",
+                "/accounts/list",
+                new { limit = 1 },
+                timeout: TimeSpan.FromSeconds(15));
+
+            var content = response.GetRawText();
+            Console.WriteLine($"   Accounts API response: {content[..Math.Min(200, content.Length)]}...");
+
+            // If we got a response, routing is working
+            Console.WriteLine("   ✅ Accounts API call succeeded - routing to bannou-auth node works");
+            return true;
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
+        {
+            Console.WriteLine($"   Accounts API not available in capability manifest");
+            Console.WriteLine("   Admin may not have access to accounts list API");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   Accounts API call failed: {ex.Message}");
+            return false;
+        }
     }
 
     /// <summary>
@@ -587,20 +640,21 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Deploy the default edge-tests topology to restore single-node operation.
-    /// Uses the shared admin WebSocket since orchestrator APIs are not exposed via NGINX.
+    /// Restore default topology by deploying with "default" preset.
+    /// The orchestrator handles "default"/"bannou"/empty as reset-to-default-topology,
+    /// which tears down all dynamically deployed containers and resets service mappings.
     /// </summary>
     private async Task<bool> RestoreDefaultTopologyAsync(BannouClient adminClient)
     {
-        // Deploy edge-tests preset which has all services on single 'bannou' node
+        // Deploy with "default" preset - orchestrator interprets this as reset-to-default
         var deployRequest = new
         {
-            preset = "edge-tests",
+            preset = "default",
             backend = "compose",
             dryRun = false
         };
 
-        Console.WriteLine($"   Deploying preset: edge-tests via WebSocket");
+        Console.WriteLine($"   Deploying preset: default via WebSocket (reset to single-node topology)");
         Console.WriteLine($"   Request: {JsonSerializer.Serialize(deployRequest)}");
 
         try
@@ -623,7 +677,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (success)
             {
-                // Wait for deployment to stabilize
+                // Wait for topology to stabilize
                 Console.WriteLine("   Waiting for topology to stabilize...");
                 await Task.Delay(3000);
                 return true;

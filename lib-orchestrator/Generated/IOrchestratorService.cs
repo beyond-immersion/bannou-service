@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 /// <summary>
 /// Service interface for Orchestrator API
 /// </summary>
-public interface IOrchestratorService : IDaprService
+public partial interface IOrchestratorService : IDaprService
 {
     /// <summary>
     /// GetInfrastructureHealth operation

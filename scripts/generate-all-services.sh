@@ -49,6 +49,25 @@ else
 fi
 echo ""
 
+# Generate client events (server-to-client push events via WebSocket)
+echo -e "${BLUE}🌟 Generating client events...${NC}"
+if ./generate-client-events.sh; then
+    echo -e "${GREEN}✅ Client events generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate client events${NC}"
+    exit 1
+fi
+
+# Generate client event whitelist (for Connect service validation)
+echo -e "${BLUE}🔐 Generating client event whitelist...${NC}"
+if ./generate-client-event-whitelist.sh; then
+    echo -e "${GREEN}✅ Client event whitelist generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate client event whitelist${NC}"
+    exit 1
+fi
+echo ""
+
 # Find all schema files
 SCHEMA_FILES=(../schemas/*-api.yaml)
 if [ ! -e "${SCHEMA_FILES[0]}" ]; then

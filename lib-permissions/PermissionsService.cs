@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Services;
 using Dapr;
 using Dapr.Client;
@@ -30,6 +31,7 @@ public class PermissionsService : IPermissionsService
     private readonly DaprClient _daprClient;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IErrorEventEmitter _errorEventEmitter;
+    private readonly IClientEventPublisher _clientEventPublisher;
     private static readonly string[] ROLE_ORDER = new[] { "anonymous", "user", "developer", "admin" };
 
     // Dapr state store name
@@ -37,6 +39,7 @@ public class PermissionsService : IPermissionsService
 
     // State key patterns
     private const string ACTIVE_SESSIONS_KEY = "active_sessions";
+    private const string ACTIVE_CONNECTIONS_KEY = "active_connections"; // Tracks sessions with active WebSocket connections (exchange exists)
     private const string REGISTERED_SERVICES_KEY = "registered_services"; // List of all services that have registered permissions
     private const string SERVICE_REGISTERED_KEY = "service-registered:{0}"; // Individual service registration marker (race-condition safe)
     private const string SESSION_STATES_KEY = "session:{0}:states";
@@ -54,16 +57,18 @@ public class PermissionsService : IPermissionsService
         PermissionsServiceConfiguration configuration,
         DaprClient daprClient,
         IDistributedLockProvider lockProvider,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IClientEventPublisher clientEventPublisher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _lockProvider = lockProvider ?? throw new ArgumentNullException(nameof(lockProvider));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+        _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
         _sessionCapabilityCache = new ConcurrentDictionary<string, CapabilityResponse>();
 
-        _logger.LogInformation("Permissions service initialized with Dapr state store");
+        _logger.LogInformation("Permissions service initialized with Dapr state store and session-specific client event publishing");
     }
 
     /// <summary>
@@ -444,7 +449,7 @@ public class PermissionsService : IPermissionsService
                     _logger.LogInformation("Service {ServiceId} already in registered services list", body.ServiceId);
                 }
 
-                // Get all active sessions and recompile
+                // Get all active sessions and recompile (for state tracking)
                 var activeSessions = await _daprClient.GetStateAsync<HashSet<string>>(
                     STATE_STORE, ACTIVE_SESSIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
 
@@ -459,28 +464,8 @@ public class PermissionsService : IPermissionsService
                 _logger.LogInformation("Service {ServiceId} registered successfully, recompiled {Count} sessions",
                     body.ServiceId, recompiledCount);
 
-                // Publish capability update event so Connect service can push updates to connected clients
-                try
-                {
-                    await _daprClient.PublishEventAsync(
-                        "bannou-pubsub",
-                        "permissions.capabilities-updated",
-                        new
-                        {
-                            eventId = Guid.NewGuid().ToString(),
-                            timestamp = DateTimeOffset.UtcNow,
-                            serviceId = body.ServiceId,
-                            affectedSessions = activeSessions.ToList(),
-                            reason = "service_registered"
-                        },
-                        cancellationToken);
-                    _logger.LogDebug("Published capabilities-updated event for service {ServiceId}", body.ServiceId);
-                }
-                catch (Exception pubEx)
-                {
-                    // Don't fail registration if event publishing fails - Connect will get updates on next client request
-                    _logger.LogWarning(pubEx, "Failed to publish capabilities-updated event for {ServiceId}", body.ServiceId);
-                }
+                // Note: RecompileSessionPermissionsAsync already handles publishing via PublishCapabilityUpdateAsync,
+                // which checks activeConnections before publishing to avoid RabbitMQ crashes
 
                 // Store the new hash for idempotent registration detection
                 await _daprClient.SaveStateAsync(STATE_STORE, hashKey, newHash, cancellationToken: cancellationToken);
@@ -817,7 +802,15 @@ public class PermissionsService : IPermissionsService
     ///   - Same service (stateServiceId == serviceId): stateKey = stateValue (e.g., "authenticated")
     ///   - Cross-service (stateServiceId != serviceId): stateKey = "{stateServiceId}:{stateValue}" (e.g., "auth:authenticated")
     /// </summary>
-    private async Task RecompileSessionPermissionsAsync(string sessionId, Dictionary<string, string> sessionStates, string reason)
+    /// <param name="sessionId">Session ID to recompile permissions for.</param>
+    /// <param name="sessionStates">Session states dictionary (avoids re-reading from Dapr).</param>
+    /// <param name="reason">Reason for recompilation (for logging).</param>
+    /// <param name="skipActiveConnectionsCheck">Skip activeConnections check in PublishCapabilityUpdateAsync (used when session just added).</param>
+    private async Task RecompileSessionPermissionsAsync(
+        string sessionId,
+        Dictionary<string, string> sessionStates,
+        string reason,
+        bool skipActiveConnectionsCheck = false)
     {
         try
         {
@@ -922,7 +915,11 @@ public class PermissionsService : IPermissionsService
             _sessionCapabilityCache.TryRemove(sessionId, out _);
 
             // Publish capability update to Connect service
-            await PublishCapabilityUpdateAsync(sessionId, compiledPermissions.ToDictionary(k => k.Key, v => (IEnumerable<string>)v.Value.ToList()), reason);
+            await PublishCapabilityUpdateAsync(
+                sessionId,
+                compiledPermissions.ToDictionary(k => k.Key, v => (IEnumerable<string>)v.Value.ToList()),
+                reason,
+                skipActiveConnectionsCheck);
 
             _logger.LogInformation("Recompiled permissions for session {SessionId}: {ServiceCount} services, version {Version}",
                 sessionId, compiledPermissions.Count, newVersion);
@@ -940,30 +937,69 @@ public class PermissionsService : IPermissionsService
     }
 
     /// <summary>
-    /// Publish capability update to Connect service via the permissions.capabilities-updated topic.
-    /// Connect service subscribes to this topic and pushes updates to affected WebSocket clients.
+    /// Publish compiled capabilities directly to the session via session-specific RabbitMQ channel.
+    /// Connect service receives this via ClientEventRabbitMQSubscriber, generates client-salted GUIDs,
+    /// and sends CapabilityManifestEvent to the client. No API callback required.
+    /// CRITICAL: Only publishes to sessions in activeConnections to avoid RabbitMQ exchange not_found crashes,
+    /// unless skipActiveConnectionsCheck is true (used when called from HandleSessionConnectedAsync where we
+    /// just added the session to activeConnections and want to avoid Dapr read-after-write consistency issues).
     /// </summary>
-    private async Task PublishCapabilityUpdateAsync(string sessionId, Dictionary<string, IEnumerable<string>> permissions, string reason)
+    private async Task PublishCapabilityUpdateAsync(
+        string sessionId,
+        Dictionary<string, IEnumerable<string>> permissions,
+        string reason,
+        bool skipActiveConnectionsCheck = false)
     {
         try
         {
-            var capabilityUpdate = new
+            // CRITICAL: Only publish to sessions with active WebSocket connections
+            // Publishing to sessions without connections causes RabbitMQ channel crash (exchange not_found)
+            // Skip this check when called from HandleSessionConnectedAsync (we just added the session)
+            if (!skipActiveConnectionsCheck)
             {
-                serviceId = "permissions",
-                affectedSessions = new[] { sessionId },
-                version = DateTimeOffset.UtcNow.Ticks,
-                reason = reason
+                var activeConnections = await _daprClient.GetStateAsync<HashSet<string>>(
+                    STATE_STORE, ACTIVE_CONNECTIONS_KEY) ?? new HashSet<string>();
+
+                if (!activeConnections.Contains(sessionId))
+                {
+                    _logger.LogDebug("Skipping capability publish for session {SessionId} - not in activeConnections (reason: {Reason})",
+                        sessionId, reason);
+                    return;
+                }
+            }
+
+            // Convert permissions to the format expected by SessionCapabilitiesEvent
+            var permissionsDict = permissions.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.ToList() as ICollection<string>);
+
+            // Create SessionCapabilitiesEvent with actual permissions data
+            var capabilitiesEvent = new SessionCapabilitiesEvent
+            {
+                Event_name = SessionCapabilitiesEventEvent_name.Permissions_session_capabilities,
+                Event_id = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Session_id = sessionId,
+                Permissions = permissionsDict,
+                Reason = reason
             };
 
-            // Publish to the topic that Connect service subscribes to (via subscriptions.yaml)
-            await _daprClient.PublishEventAsync("bannou-pubsub", "permissions.capabilities-updated", capabilityUpdate);
+            // Publish directly to session-specific channel
+            var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, capabilitiesEvent);
 
-            _logger.LogDebug("Published capability update to permissions.capabilities-updated for session {SessionId}",
-                sessionId);
+            if (published)
+            {
+                _logger.LogDebug("Published capabilities to session {SessionId} ({ServiceCount} services, reason: {Reason})",
+                    sessionId, permissions.Count, reason);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to publish capabilities to session {SessionId}", sessionId);
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error publishing capability update for session {SessionId}", sessionId);
+            _logger.LogError(ex, "Error publishing capabilities for session {SessionId}", sessionId);
         }
     }
 
@@ -1114,6 +1150,215 @@ public class PermissionsService : IPermissionsService
     {
         _logger.LogInformation("Registering Permissions service permissions...");
         await PermissionsPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+    }
+
+    #endregion
+
+    #region Session Connection Tracking
+
+    /// <summary>
+    /// Handles a session connection event from the Connect service.
+    /// Adds the session to activeConnections and triggers initial capability delivery.
+    /// CRITICAL: This method should only be called AFTER the RabbitMQ exchange exists.
+    /// Roles and authorizations are used to compile capabilities without API calls.
+    /// </summary>
+    /// <param name="sessionId">The session ID that connected.</param>
+    /// <param name="accountId">The account ID owning the session.</param>
+    /// <param name="roles">User roles from JWT (e.g., ["user", "admin"]).</param>
+    /// <param name="authorizations">Authorization states from JWT (e.g., ["arcadia:authorized"]).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code indicating success or failure.</returns>
+    public async Task<(StatusCodes, SessionUpdateResponse?)> HandleSessionConnectedAsync(
+        string sessionId,
+        string accountId,
+        ICollection<string>? roles,
+        ICollection<string>? authorizations,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Handling session connected: {SessionId} for account {AccountId} with {RoleCount} roles and {AuthCount} authorizations",
+                sessionId, accountId, roles?.Count ?? 0, authorizations?.Count ?? 0);
+
+            // Build session states dictionary with role and authorizations
+            // This is the format expected by RecompileSessionPermissionsAsync
+            var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+            var sessionStates = await _daprClient.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE, statesKey, cancellationToken: cancellationToken) ?? new Dictionary<string, string>();
+
+            // Add role to session states
+            var role = DetermineHighestPriorityRole(roles);
+            sessionStates["role"] = role;
+            _logger.LogDebug("Set role '{Role}' for session {SessionId}", role, sessionId);
+
+            // Add authorization states (format: "{serviceId}:{state}" -> stored as serviceId=state)
+            if (authorizations != null && authorizations.Count > 0)
+            {
+                foreach (var auth in authorizations)
+                {
+                    var parts = auth.Split(':');
+                    if (parts.Length == 2)
+                    {
+                        var serviceId = parts[0];
+                        var state = parts[1];
+                        sessionStates[serviceId] = state;
+                        _logger.LogDebug("Set authorization state '{State}' for service '{ServiceId}' on session {SessionId}",
+                            state, serviceId, sessionId);
+                    }
+                }
+            }
+
+            // Store session states atomically
+            await _daprClient.SaveStateAsync(STATE_STORE, statesKey, sessionStates, cancellationToken: cancellationToken);
+
+            // Add to activeConnections (sessions with WebSocket connections where exchange exists)
+            var activeConnections = await _daprClient.GetStateAsync<HashSet<string>>(
+                STATE_STORE, ACTIVE_CONNECTIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+
+            if (!activeConnections.Contains(sessionId))
+            {
+                activeConnections.Add(sessionId);
+                await _daprClient.SaveStateAsync(STATE_STORE, ACTIVE_CONNECTIONS_KEY, activeConnections, cancellationToken: cancellationToken);
+                _logger.LogDebug("Added session {SessionId} to active connections. Total: {Count}",
+                    sessionId, activeConnections.Count);
+            }
+
+            // Also ensure session is in activeSessions for state tracking
+            var activeSessions = await _daprClient.GetStateAsync<HashSet<string>>(
+                STATE_STORE, ACTIVE_SESSIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+
+            if (!activeSessions.Contains(sessionId))
+            {
+                activeSessions.Add(sessionId);
+                await _daprClient.SaveStateAsync(STATE_STORE, ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
+            }
+
+            // Compile and publish initial capabilities for this session using the states we just built
+            // This overload avoids read-after-write consistency issues
+            // RecompileSessionPermissionsAsync calls PublishCapabilityUpdateAsync which sends
+            // SessionCapabilitiesEvent with actual permissions data to Connect
+            // CRITICAL: skipActiveConnectionsCheck=true because we JUST added sessionId to activeConnections above
+            // and Dapr state store has eventual consistency - re-reading might not show the session yet
+            await RecompileSessionPermissionsAsync(sessionId, sessionStates, "session_connected", skipActiveConnectionsCheck: true);
+
+            return (StatusCodes.OK, new SessionUpdateResponse
+            {
+                Success = true,
+                SessionId = sessionId,
+                Message = "Session connection registered and capabilities published"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to handle session connected for {SessionId}", sessionId);
+            return (StatusCodes.InternalServerError, new SessionUpdateResponse
+            {
+                Success = false,
+                SessionId = sessionId,
+                Message = $"Error: {ex.Message}"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Handles a session disconnection event from the Connect service.
+    /// Removes the session from activeConnections to prevent publishing to non-existent exchanges.
+    /// </summary>
+    /// <param name="sessionId">The session ID that disconnected.</param>
+    /// <param name="reconnectable">Whether the session can reconnect within the window.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code indicating success or failure.</returns>
+    public async Task<(StatusCodes, SessionUpdateResponse?)> HandleSessionDisconnectedAsync(
+        string sessionId,
+        bool reconnectable,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Handling session disconnected: {SessionId}, Reconnectable: {Reconnectable}",
+                sessionId, reconnectable);
+
+            // Remove from activeConnections (no longer has WebSocket/exchange)
+            var activeConnections = await _daprClient.GetStateAsync<HashSet<string>>(
+                STATE_STORE, ACTIVE_CONNECTIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+
+            if (activeConnections.Contains(sessionId))
+            {
+                activeConnections.Remove(sessionId);
+                await _daprClient.SaveStateAsync(STATE_STORE, ACTIVE_CONNECTIONS_KEY, activeConnections, cancellationToken: cancellationToken);
+                _logger.LogDebug("Removed session {SessionId} from active connections. Remaining: {Count}",
+                    sessionId, activeConnections.Count);
+            }
+
+            // If not reconnectable, also remove from activeSessions and clear session state
+            if (!reconnectable)
+            {
+                var activeSessions = await _daprClient.GetStateAsync<HashSet<string>>(
+                    STATE_STORE, ACTIVE_SESSIONS_KEY, cancellationToken: cancellationToken) ?? new HashSet<string>();
+
+                if (activeSessions.Contains(sessionId))
+                {
+                    activeSessions.Remove(sessionId);
+                    await _daprClient.SaveStateAsync(STATE_STORE, ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
+                }
+
+                // Clear session state and permissions cache
+                await ClearSessionStateAsync(new ClearSessionStateRequest { SessionId = sessionId }, cancellationToken);
+                _sessionCapabilityCache.TryRemove(sessionId, out _);
+
+                _logger.LogDebug("Cleared state for non-reconnectable session {SessionId}", sessionId);
+            }
+
+            return (StatusCodes.OK, new SessionUpdateResponse
+            {
+                Success = true,
+                SessionId = sessionId,
+                Message = reconnectable
+                    ? "Session connection removed (reconnectable)"
+                    : "Session connection removed and state cleared"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to handle session disconnected for {SessionId}", sessionId);
+            return (StatusCodes.InternalServerError, new SessionUpdateResponse
+            {
+                Success = false,
+                SessionId = sessionId,
+                Message = $"Error: {ex.Message}"
+            });
+        }
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    /// <summary>
+    /// Determines the highest priority role from a collection of roles.
+    /// Priority: admin > user > anonymous
+    /// </summary>
+    private static string DetermineHighestPriorityRole(ICollection<string>? roles)
+    {
+        if (roles == null || roles.Count == 0)
+        {
+            return "anonymous";
+        }
+
+        // Check for admin role (highest priority)
+        if (roles.Any(r => r.Equals("admin", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "admin";
+        }
+
+        // Check for user role
+        if (roles.Any(r => r.Equals("user", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "user";
+        }
+
+        // If roles exist but none are recognized, use the first one
+        return roles.FirstOrDefault() ?? "anonymous";
     }
 
     #endregion

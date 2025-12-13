@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Servicedata;
 /// <summary>
 /// Service interface for Servicedata API
 /// </summary>
-public interface IServicedataService : IDaprService
+public partial interface IServicedataService : IDaprService
 {
     /// <summary>
     /// ListServices operation

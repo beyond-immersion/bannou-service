@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
@@ -34,10 +35,12 @@ public class PermissionsServiceTests
     private readonly Mock<DaprClient> _mockDaprClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IErrorEventEmitter> _mockErrorEmitter;
+    private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
 
     // State store constants (must match PermissionsService)
     private const string STATE_STORE = "permissions-store";
     private const string ACTIVE_SESSIONS_KEY = "active_sessions";
+    private const string ACTIVE_CONNECTIONS_KEY = "active_connections"; // Phase 6: tracks WebSocket-connected sessions
     private const string REGISTERED_SERVICES_KEY = "registered_services";
     private const string SESSION_STATES_KEY = "session:{0}:states";
     private const string SESSION_PERMISSIONS_KEY = "session:{0}:permissions";
@@ -50,6 +53,14 @@ public class PermissionsServiceTests
         _mockDaprClient = new Mock<DaprClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockErrorEmitter = new Mock<IErrorEventEmitter>();
+        _mockClientEventPublisher = new Mock<IClientEventPublisher>();
+
+        // Setup default behavior for client event publisher
+        _mockClientEventPublisher.Setup(x => x.PublishToSessionAsync(
+            It.IsAny<string>(),
+            It.IsAny<BaseClientEvent>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
     }
 
     private PermissionsService CreateService()
@@ -59,7 +70,8 @@ public class PermissionsServiceTests
             _mockConfiguration.Object,
             _mockDaprClient.Object,
             _mockLockProvider.Object,
-            _mockErrorEmitter.Object);
+            _mockErrorEmitter.Object,
+            _mockClientEventPublisher.Object);
     }
 
     [Fact]
@@ -937,4 +949,1297 @@ public class PermissionsServiceTests
         Assert.NotNull(response);
         Assert.False(response.Allowed);
     }
+
+    #region Phase 6: Session Connection Tracking Tests
+
+    /// <summary>
+    /// Tests for HandleSessionConnectedAsync - Phase 6 session connection tracking.
+    /// These methods ensure safe capability publishing by tracking which sessions have active WebSocket connections.
+    /// </summary>
+
+    [Fact]
+    public async Task HandleSessionConnectedAsync_AddsSessionToActiveConnections()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-connect-001";
+        var accountId = "account-001";
+
+        // Setup empty activeConnections
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty activeSessions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty registered services (for recompile)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                REGISTERED_SERVICES_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup session states for recompile
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE,
+                statesKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        // Setup session permissions for recompile
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
+                STATE_STORE,
+                permissionsKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        // Track what gets saved to activeConnections
+        HashSet<string>? savedConnections = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                It.IsAny<HashSet<string>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, HashSet<string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, value, opt, meta, ct) => savedConnections = value)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(
+            sessionId, accountId, roles: null, authorizations: null);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal(sessionId, response.SessionId);
+        Assert.Contains("registered", response.Message);
+
+        // Verify session was added to activeConnections
+        Assert.NotNull(savedConnections);
+        Assert.Contains(sessionId, savedConnections!);
+    }
+
+    [Fact]
+    public async Task HandleSessionConnectedAsync_PreservesExistingConnections()
+    {
+        // Arrange
+        var service = CreateService();
+        var newSessionId = "session-connect-002";
+        var accountId = "account-002";
+        var existingSessionId = "session-existing-001";
+
+        // Setup activeConnections with an existing session
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { existingSessionId });
+
+        // Setup activeSessions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { existingSessionId });
+
+        // Setup registered services
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                REGISTERED_SERVICES_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup session states
+        var statesKey = string.Format(SESSION_STATES_KEY, newSessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE,
+                statesKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        // Setup session permissions
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, newSessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
+                STATE_STORE,
+                permissionsKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        HashSet<string>? savedConnections = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                It.IsAny<HashSet<string>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, HashSet<string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, value, opt, meta, ct) => savedConnections = value)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(newSessionId, accountId, roles: null, authorizations: null);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.True(response?.Success);
+
+        // Verify both sessions are in activeConnections
+        Assert.NotNull(savedConnections);
+        Assert.Contains(existingSessionId, savedConnections!);
+        Assert.Contains(newSessionId, savedConnections!);
+        Assert.Equal(2, savedConnections!.Count);
+    }
+
+    [Fact]
+    public async Task HandleSessionConnectedAsync_DoesNotDuplicateExistingSession()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-connect-003";
+        var accountId = "account-003";
+
+        // Setup activeConnections with the same session already present
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { sessionId });
+
+        // Setup activeSessions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { sessionId });
+
+        // Setup registered services
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                REGISTERED_SERVICES_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup session states
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE,
+                statesKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
+
+        // Setup session permissions
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
+                STATE_STORE,
+                permissionsKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 1 });
+
+        // Act
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(sessionId, accountId, roles: null, authorizations: null);
+
+        // Assert - should succeed but not duplicate
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.True(response?.Success);
+
+        // Verify SaveStateAsync was NOT called for activeConnections (no change needed)
+        _mockDaprClient.Verify(d => d.SaveStateAsync(
+            STATE_STORE,
+            ACTIVE_CONNECTIONS_KEY,
+            It.IsAny<HashSet<string>>(),
+            null,
+            null,
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleSessionConnectedAsync_PublishesSessionCapabilitiesEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-connect-004";
+        var accountId = "account-004";
+
+        // Setup empty activeConnections
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup activeSessions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup registered services
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                REGISTERED_SERVICES_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup session states
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE,
+                statesKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        // Setup session permissions
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
+                STATE_STORE,
+                permissionsKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        // Act
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(sessionId, accountId, roles: null, authorizations: null);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.True(response?.Success);
+
+        // Verify SessionCapabilitiesEvent was published via client event publisher
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            sessionId,
+            It.Is<BaseClientEvent>(e => e is SessionCapabilitiesEvent),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task HandleSessionConnectedAsync_AlsoAddsToActiveSessions()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-connect-005";
+        var accountId = "account-005";
+
+        // Setup empty activeConnections
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty activeSessions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup registered services
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                REGISTERED_SERVICES_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup session states
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE,
+                statesKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        // Setup session permissions
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
+                STATE_STORE,
+                permissionsKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        // Track what gets saved to activeSessions
+        HashSet<string>? savedSessions = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                It.IsAny<HashSet<string>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, HashSet<string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, value, opt, meta, ct) => savedSessions = value)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(sessionId, accountId, roles: null, authorizations: null);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+
+        // Verify session was added to activeSessions
+        Assert.NotNull(savedSessions);
+        Assert.Contains(sessionId, savedSessions!);
+    }
+
+    [Fact]
+    public async Task HandleSessionConnectedAsync_WithRoles_StoresRoleInSessionStates()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-connect-roles-001";
+        var accountId = "account-roles-001";
+        var roles = new List<string> { "user", "admin" };
+
+        // Setup empty activeConnections
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty activeSessions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup registered services
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                REGISTERED_SERVICES_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty session states (will be populated)
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE,
+                statesKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        // Setup session permissions
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
+                STATE_STORE,
+                permissionsKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        // Track what gets saved to session states
+        Dictionary<string, string>? savedSessionStates = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                statesKey,
+                It.IsAny<Dictionary<string, string>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, Dictionary<string, string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, value, opt, meta, ct) => savedSessionStates = value)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(
+            sessionId, accountId, roles: roles, authorizations: null);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+
+        // Verify role was stored in session states
+        // Admin should take priority over user (highest priority role wins)
+        Assert.NotNull(savedSessionStates);
+        Assert.True(savedSessionStates!.ContainsKey("role"), "Session states should contain 'role' key");
+        Assert.Equal("admin", savedSessionStates["role"]); // Admin is highest priority
+    }
+
+    [Fact]
+    public async Task HandleSessionConnectedAsync_WithUserRole_StoresUserRole()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-connect-roles-002";
+        var accountId = "account-roles-002";
+        var roles = new List<string> { "user" };
+
+        // Setup empty activeConnections
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty activeSessions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup registered services
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                REGISTERED_SERVICES_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty session states
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE,
+                statesKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        // Setup session permissions
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
+                STATE_STORE,
+                permissionsKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        // Track what gets saved to session states
+        Dictionary<string, string>? savedSessionStates = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                statesKey,
+                It.IsAny<Dictionary<string, string>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, Dictionary<string, string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, value, opt, meta, ct) => savedSessionStates = value)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(
+            sessionId, accountId, roles: roles, authorizations: null);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(savedSessionStates);
+        Assert.Equal("user", savedSessionStates!["role"]);
+    }
+
+    [Fact]
+    public async Task HandleSessionConnectedAsync_WithNoRoles_StoresAnonymousRole()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-connect-roles-003";
+        var accountId = "account-roles-003";
+
+        // Setup empty activeConnections
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty activeSessions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup registered services
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                REGISTERED_SERVICES_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty session states
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE,
+                statesKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        // Setup session permissions
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
+                STATE_STORE,
+                permissionsKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        // Track what gets saved to session states
+        Dictionary<string, string>? savedSessionStates = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                statesKey,
+                It.IsAny<Dictionary<string, string>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, Dictionary<string, string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, value, opt, meta, ct) => savedSessionStates = value)
+            .Returns(Task.CompletedTask);
+
+        // Act - no roles or authorizations
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(
+            sessionId, accountId, roles: null, authorizations: null);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(savedSessionStates);
+        Assert.Equal("anonymous", savedSessionStates!["role"]); // Default role when none provided
+    }
+
+    [Fact]
+    public async Task HandleSessionConnectedAsync_WithAuthorizations_StoresAuthorizationsInSessionStates()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-connect-auth-001";
+        var accountId = "account-auth-001";
+        var authorizations = new List<string> { "arcadia:authorized", "omega:registered" };
+
+        // Setup empty activeConnections
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty activeSessions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup registered services
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                REGISTERED_SERVICES_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty session states
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE,
+                statesKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        // Setup session permissions
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
+                STATE_STORE,
+                permissionsKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        // Track what gets saved to session states
+        Dictionary<string, string>? savedSessionStates = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                statesKey,
+                It.IsAny<Dictionary<string, string>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, Dictionary<string, string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, value, opt, meta, ct) => savedSessionStates = value)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(
+            sessionId, accountId, roles: null, authorizations: authorizations);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(savedSessionStates);
+
+        // Authorization states should be stored as serviceId=state
+        // Format: "arcadia:authorized" -> sessionStates["arcadia"] = "authorized"
+        Assert.True(savedSessionStates!.ContainsKey("arcadia"), "Should have 'arcadia' authorization state");
+        Assert.Equal("authorized", savedSessionStates["arcadia"]);
+
+        Assert.True(savedSessionStates.ContainsKey("omega"), "Should have 'omega' authorization state");
+        Assert.Equal("registered", savedSessionStates["omega"]);
+    }
+
+    [Fact]
+    public async Task HandleSessionConnectedAsync_WithRolesAndAuthorizations_StoresBoth()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-connect-both-001";
+        var accountId = "account-both-001";
+        var roles = new List<string> { "admin" };
+        var authorizations = new List<string> { "arcadia:authorized" };
+
+        // Setup empty activeConnections
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty activeSessions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup registered services
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                REGISTERED_SERVICES_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup empty session states
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE,
+                statesKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        // Setup session permissions
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
+                STATE_STORE,
+                permissionsKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        // Track what gets saved to session states
+        Dictionary<string, string>? savedSessionStates = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                statesKey,
+                It.IsAny<Dictionary<string, string>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, Dictionary<string, string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, value, opt, meta, ct) => savedSessionStates = value)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (statusCode, response) = await service.HandleSessionConnectedAsync(
+            sessionId, accountId, roles: roles, authorizations: authorizations);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(savedSessionStates);
+
+        // Should have both role and authorization state
+        Assert.Equal("admin", savedSessionStates!["role"]);
+        Assert.Equal("authorized", savedSessionStates["arcadia"]);
+    }
+
+    #endregion
+
+    #region Phase 6: Session Disconnection Tests
+
+    [Fact]
+    public async Task HandleSessionDisconnectedAsync_RemovesSessionFromActiveConnections()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-disconnect-001";
+
+        // Setup activeConnections with the session
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { sessionId, "other-session" });
+
+        // Track what gets saved
+        HashSet<string>? savedConnections = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                It.IsAny<HashSet<string>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, HashSet<string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, value, opt, meta, ct) => savedConnections = value)
+            .Returns(Task.CompletedTask);
+
+        // Act - reconnectable = true (just removes from connections, keeps state)
+        var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: true);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.True(response?.Success);
+        Assert.Contains("reconnectable", response?.Message ?? "");
+
+        // Verify session was removed from activeConnections
+        Assert.NotNull(savedConnections);
+        Assert.DoesNotContain(sessionId, savedConnections!);
+        Assert.Contains("other-session", savedConnections!);
+    }
+
+    [Fact]
+    public async Task HandleSessionDisconnectedAsync_Reconnectable_KeepsActiveSessions()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-disconnect-002";
+
+        // Setup activeConnections with the session
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { sessionId });
+
+        // Act - reconnectable = true
+        var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: true);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+
+        // Verify activeSessions was NOT modified (reconnectable sessions keep their state)
+        _mockDaprClient.Verify(d => d.GetStateAsync<HashSet<string>>(
+            STATE_STORE,
+            ACTIVE_SESSIONS_KEY,
+            null,
+            null,
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleSessionDisconnectedAsync_NotReconnectable_ClearsActiveSessions()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-disconnect-003";
+
+        // Setup activeConnections with the session
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { sessionId });
+
+        // Setup activeSessions with the session
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { sessionId, "other-session" });
+
+        // Setup for ClearSessionStateAsync (called internally)
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                STATE_STORE,
+                statesKey,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        // Track what gets saved to activeSessions
+        HashSet<string>? savedSessions = null;
+        _mockDaprClient
+            .Setup(d => d.SaveStateAsync(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                It.IsAny<HashSet<string>>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string, HashSet<string>, StateOptions?, IReadOnlyDictionary<string, string>?, CancellationToken>(
+                (store, key, value, opt, meta, ct) => savedSessions = value)
+            .Returns(Task.CompletedTask);
+
+        // Act - reconnectable = false (clears all state)
+        var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: false);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.True(response?.Success);
+        Assert.Contains("cleared", response?.Message ?? "");
+
+        // Verify session was removed from activeSessions
+        Assert.NotNull(savedSessions);
+        Assert.DoesNotContain(sessionId, savedSessions!);
+        Assert.Contains("other-session", savedSessions!);
+    }
+
+    [Fact]
+    public async Task HandleSessionDisconnectedAsync_SessionNotInConnections_ReturnsSuccess()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-disconnect-004";
+
+        // Setup activeConnections without the session
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "other-session" });
+
+        // Act
+        var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: true);
+
+        // Assert - should still succeed (idempotent)
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.True(response?.Success);
+
+        // Verify SaveStateAsync was NOT called (no change needed)
+        _mockDaprClient.Verify(d => d.SaveStateAsync(
+            STATE_STORE,
+            ACTIVE_CONNECTIONS_KEY,
+            It.IsAny<HashSet<string>>(),
+            null,
+            null,
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleSessionDisconnectedAsync_EmptyConnections_ReturnsSuccess()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = "session-disconnect-005";
+
+        // Setup empty activeConnections
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Act
+        var (statusCode, response) = await service.HandleSessionDisconnectedAsync(sessionId, reconnectable: true);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.True(response?.Success);
+    }
+
+    #endregion
+
+    #region Phase 6: RegisterServicePermissionsAsync ActiveConnections Tests
+
+    [Fact]
+    public async Task RegisterServicePermissionsAsync_PublishesOnlyToActiveConnections()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Set up a successful lock
+        var lockResponse = new TestLockResponse { Success = true };
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lockResponse);
+
+        // Setup empty stored hash (first registration)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<string?>(
+                STATE_STORE,
+                It.IsAny<string>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Setup registered services (empty initially, will be updated)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                REGISTERED_SERVICES_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Setup activeSessions with 3 sessions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "session-1", "session-2", "session-3" });
+
+        // Setup activeConnections with only 1 session (the connected one)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string> { "session-1" });
+
+        // Setup session states/permissions for recompile
+        foreach (var sessionId in new[] { "session-1", "session-2", "session-3" })
+        {
+            var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+            _mockDaprClient
+                .Setup(d => d.GetStateAsync<Dictionary<string, string>>(
+                    STATE_STORE,
+                    statesKey,
+                    null,
+                    null,
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
+
+            var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+            _mockDaprClient
+                .Setup(d => d.GetStateAsync<Dictionary<string, object>>(
+                    STATE_STORE,
+                    permissionsKey,
+                    null,
+                    null,
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<string, object>());
+        }
+
+        // Setup state transactions
+        _mockDaprClient
+            .Setup(d => d.ExecuteStateTransactionAsync(
+                STATE_STORE,
+                It.IsAny<IReadOnlyList<StateTransactionRequest>>(),
+                null,
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var permissions = new ServicePermissionMatrix
+        {
+            ServiceId = "test-service",
+            Version = "1.0.0",
+            Permissions = new Dictionary<string, StatePermissions>
+            {
+                ["default"] = new StatePermissions
+                {
+                    ["user"] = new System.Collections.ObjectModel.Collection<string> { "GET:/test" }
+                }
+            }
+        };
+
+        // Act
+        var (statusCode, response) = await service.RegisterServicePermissionsAsync(permissions);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.True(response?.Success);
+
+        // Verify capability refresh was published to connected session (session-1)
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            "session-1",
+            It.Is<BaseClientEvent>(e => e is SessionCapabilitiesEvent),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+
+        // CRITICAL: Capability refresh should NOT be published to non-connected sessions
+        // Publishing to sessions without WebSocket connections causes RabbitMQ exchange not_found errors
+        // which crash the entire pub/sub channel. This is the core bug Phase 6 was designed to fix.
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            "session-2",
+            It.IsAny<SessionCapabilitiesEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            "session-3",
+            It.IsAny<SessionCapabilitiesEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RegisterServicePermissionsAsync_EmptyActiveConnections_DoesNotPublish()
+    {
+        // Arrange
+        var service = CreateService();
+
+        var lockResponse = new TestLockResponse { Success = true };
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lockResponse);
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<string?>(
+                STATE_STORE,
+                It.IsAny<string>(),
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                REGISTERED_SERVICES_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Empty activeSessions
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_SESSIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Empty activeConnections
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<HashSet<string>>(
+                STATE_STORE,
+                ACTIVE_CONNECTIONS_KEY,
+                null,
+                null,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        _mockDaprClient
+            .Setup(d => d.ExecuteStateTransactionAsync(
+                STATE_STORE,
+                It.IsAny<IReadOnlyList<StateTransactionRequest>>(),
+                null,
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var permissions = new ServicePermissionMatrix
+        {
+            ServiceId = "empty-test-service",
+            Version = "1.0.0",
+            Permissions = new Dictionary<string, StatePermissions>
+            {
+                ["default"] = new StatePermissions
+                {
+                    ["user"] = new System.Collections.ObjectModel.Collection<string> { "GET:/test" }
+                }
+            }
+        };
+
+        // Act
+        var (statusCode, response) = await service.RegisterServicePermissionsAsync(permissions);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.True(response?.Success);
+
+        // Verify no capability refresh events were published (no connected sessions)
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            It.IsAny<string>(),
+            It.IsAny<SessionCapabilitiesEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
 }

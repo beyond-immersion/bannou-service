@@ -32,6 +32,9 @@ public class PluginLoader
     // Resolved service instances for enabled plugins only
     private readonly Dictionary<string, IDaprService> _resolvedServices = new();
 
+    // WebApplication reference for service startup (stored during ConfigureApplication)
+    private WebApplication? _webApp;
+
     // Types discovered for registration in DI
     private readonly List<Type> _clientTypesToRegister = new();
     private readonly List<(Type interfaceType, Type implementationType, ServiceLifetime lifetime)> _serviceTypesToRegister = new();
@@ -702,6 +705,9 @@ public class PluginLoader
     /// <param name="app">Web application</param>
     public void ConfigureApplication(WebApplication app)
     {
+        // Store WebApplication reference for use during service startup
+        _webApp = app;
+
         _logger.LogInformation("Configuring application pipeline for {EnabledCount} enabled plugins", _enabledPlugins.Count);
 
         foreach (var plugin in _enabledPlugins)
@@ -751,12 +757,28 @@ public class PluginLoader
         }
 
         // STAGE 2: Initialize centrally resolved services
+        // Use OnStartAsync(WebApplication, CancellationToken) to allow services to register minimal API endpoints
+        if (_webApp == null)
+        {
+            _logger.LogWarning("WebApplication reference not set - services requiring WebApplication will not initialize fully. " +
+                "Ensure ConfigureApplication() is called before InitializeAsync().");
+        }
+
         foreach (var (pluginName, service) in _resolvedServices)
         {
             try
             {
                 _logger.LogDebug("Initializing centrally resolved service for plugin: {PluginName}", pluginName);
-                await service.OnStartAsync(CancellationToken.None);
+                if (_webApp != null)
+                {
+                    // Call the WebApplication-aware version for services that need endpoint registration
+                    await service.OnStartAsync(_webApp, CancellationToken.None);
+                }
+                else
+                {
+                    // Fall back to simple version if WebApplication not available
+                    await service.OnStartAsync(CancellationToken.None);
+                }
             }
             catch (Exception ex)
             {

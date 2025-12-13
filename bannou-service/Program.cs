@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Controllers.Filters;
 using BeyondImmersion.BannouService.Logging;
@@ -224,6 +225,9 @@ public static class Program
 
             // Add core service infrastructure (but not clients - PluginLoader handles those)
             webAppBuilder.Services.AddBannouServiceClients();
+
+            // Add client event publisher (for pushing events to WebSocket clients via Dapr pub/sub)
+            webAppBuilder.Services.AddClientEventPublisher();
 
             // Configure plugin services (includes centralized client, service, and configuration registration)
             PluginLoader?.ConfigureServices(webAppBuilder.Services);

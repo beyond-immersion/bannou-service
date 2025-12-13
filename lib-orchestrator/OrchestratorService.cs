@@ -39,6 +39,11 @@ public class OrchestratorService : IOrchestratorService
     /// </summary>
     private IContainerOrchestrator? _orchestrator;
 
+    /// <summary>
+    /// Timestamp when the orchestrator was cached. Used for TTL-based invalidation.
+    /// </summary>
+    private DateTimeOffset _orchestratorCachedAt;
+
     private const string STATE_STORE = "orchestrator-store";
     private const string CONFIG_VERSION_KEY = "orchestrator:config:version";
 
@@ -77,15 +82,54 @@ public class OrchestratorService : IOrchestratorService
 
     /// <summary>
     /// Gets or creates the container orchestrator for the best available backend.
+    /// Implements TTL-based cache invalidation to handle connection staleness.
     /// </summary>
     private async Task<IContainerOrchestrator> GetOrchestratorAsync(CancellationToken cancellationToken)
     {
         if (_orchestrator != null)
         {
-            return _orchestrator;
+            // Check if TTL has expired (0 = caching disabled)
+            var ttlMinutes = _configuration.OrchestratorCacheTtlMinutes;
+            if (ttlMinutes > 0)
+            {
+                var cacheAge = DateTimeOffset.UtcNow - _orchestratorCachedAt;
+                if (cacheAge.TotalMinutes >= ttlMinutes)
+                {
+                    _logger.LogDebug(
+                        "Orchestrator cache TTL expired ({Age:F1}min >= {Ttl}min), re-validating connection",
+                        cacheAge.TotalMinutes, ttlMinutes);
+
+                    // Re-validate the connection using CheckAvailabilityAsync
+                    var (isAvailable, message) = await _orchestrator.CheckAvailabilityAsync(cancellationToken);
+
+                    if (isAvailable)
+                    {
+                        // Connection still valid - refresh the cache timestamp
+                        _orchestratorCachedAt = DateTimeOffset.UtcNow;
+                        _logger.LogDebug(
+                            "Orchestrator connection re-validated successfully: {Message}",
+                            message);
+                    }
+                    else
+                    {
+                        // Connection invalid - dispose and re-detect
+                        _logger.LogWarning(
+                            "Orchestrator connection invalid after TTL expiry: {Message}. Re-detecting backend.",
+                            message);
+                        _orchestrator.Dispose();
+                        _orchestrator = null;
+                    }
+                }
+            }
+
+            if (_orchestrator != null)
+            {
+                return _orchestrator;
+            }
         }
 
         _orchestrator = await _backendDetector.CreateBestOrchestratorAsync(cancellationToken);
+        _orchestratorCachedAt = DateTimeOffset.UtcNow;
         return _orchestrator;
     }
 
@@ -144,34 +188,31 @@ public class OrchestratorService : IOrchestratorService
             });
             overallHealthy = overallHealthy && pubsubHealthy;
 
-            // Check Dapr Placement service (reuse publish probe)
+            // Check Dapr sidecar health via metadata endpoint
+            bool daprHealthy;
+            string daprMessage;
             try
             {
-                await _daprClient.PublishEventAsync(
-                    "bannou-pubsub",
-                    "orchestrator-health",
-                    new { ping = "ok" },
-                    cancellationToken);
-                components.Add(new ComponentHealth
-                {
-                    Name = "placement",
-                    Status = ComponentHealthStatus.Healthy,
-                    LastSeen = DateTimeOffset.UtcNow,
-                    Message = "Dapr sidecar responding"
-                });
+                var metadata = await _daprClient.GetMetadataAsync(cancellationToken);
+                daprHealthy = metadata != null;
+                daprMessage = daprHealthy
+                    ? "Dapr sidecar responding"
+                    : "Dapr sidecar not responding";
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Dapr health check failed");
-                components.Add(new ComponentHealth
-                {
-                    Name = "placement",
-                    Status = ComponentHealthStatus.Unavailable,
-                    LastSeen = DateTimeOffset.UtcNow,
-                    Message = $"Dapr check failed: {ex.Message}"
-                });
-                overallHealthy = false;
+                _logger.LogWarning(ex, "Dapr sidecar health check failed");
+                daprHealthy = false;
+                daprMessage = $"Dapr sidecar check failed: {ex.Message}";
             }
+            components.Add(new ComponentHealth
+            {
+                Name = "dapr",
+                Status = daprHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
+                LastSeen = DateTimeOffset.UtcNow,
+                Message = daprMessage
+            });
+            overallHealthy = overallHealthy && daprHealthy;
 
             var response = new InfrastructureHealthResponse
             {
@@ -401,7 +442,35 @@ public class OrchestratorService : IOrchestratorService
             ICollection<TopologyNode> nodesToDeploy;
             IDictionary<string, string>? presetEnvironment = null;
 
-            if (!string.IsNullOrEmpty(body.Preset))
+            // Check for "reset to default" request - "default", "bannou", or empty preset with no topology
+            var isResetToDefault = IsResetToDefaultRequest(body.Preset, body.Topology);
+
+            if (isResetToDefault)
+            {
+                // Reset to default topology: tear down all dynamically deployed nodes, reset mappings to "bannou"
+                _logger.LogInformation("Reset to default topology requested (preset: '{Preset}')", body.Preset ?? "(empty)");
+
+                var resetResult = await ResetToDefaultTopologyAsync(orchestrator, deploymentId, cancellationToken);
+
+                var resetDuration = DateTime.UtcNow - startTime;
+                return (StatusCodes.OK, new DeployResponse
+                {
+                    Success = resetResult.Success,
+                    DeploymentId = deploymentId,
+                    Backend = orchestrator.BackendType,
+                    Preset = "default",
+                    Duration = $"{resetDuration.TotalSeconds:F1}s",
+                    Message = resetResult.Message,
+                    Topology = new ServiceTopology { Nodes = new List<TopologyNode>() }, // Empty topology = default
+                    Services = resetResult.TornDownServices.Select(s => new DeployedService
+                    {
+                        Name = s,
+                        Status = DeployedServiceStatus.Stopped,
+                        Node = "bannou"
+                    }).ToList()
+                });
+            }
+            else if (!string.IsNullOrEmpty(body.Preset))
             {
                 // Load preset by name
                 var preset = await _presetLoader.LoadPresetAsync(body.Preset, cancellationToken);
@@ -445,9 +514,23 @@ public class OrchestratorService : IOrchestratorService
             var failedServices = new List<string>();
             var expectedAppIds = new HashSet<string>(); // Track app-ids that should send heartbeats
 
+            // Track successfully deployed nodes for rollback on partial failure
+            var successfullyDeployedNodes = new List<(string AppId, ICollection<string> Services)>();
+
             foreach (var node in nodesToDeploy)
             {
                 var appId = node.DaprAppId ?? node.Name;
+
+                // VALIDATION: Reject any node attempting to deploy orchestrator service
+                // Orchestrator cannot deploy itself or another orchestrator - route cannot be overridden
+                if (node.Services.Any(s => s.Equals("orchestrator", StringComparison.OrdinalIgnoreCase)))
+                {
+                    _logger.LogError(
+                        "REJECTED: Node '{NodeName}' contains 'orchestrator' service - orchestrator cannot deploy itself or another orchestrator",
+                        node.Name);
+                    failedServices.Add($"{node.Name}: Cannot deploy orchestrator service - route cannot be overridden");
+                    continue; // Skip this node
+                }
 
                 // Start with preset environment (lowest priority)
                 var environment = new Dictionary<string, string>();
@@ -510,6 +593,9 @@ public class OrchestratorService : IOrchestratorService
                     // Track this app-id for heartbeat waiting
                     expectedAppIds.Add(appId);
 
+                    // Track for potential rollback
+                    successfullyDeployedNodes.Add((appId, node.Services));
+
                     _logger.LogInformation(
                         "Node {NodeName} deployed with app-id {AppId}, {ServiceCount} service routings set",
                         node.Name, appId, node.Services.Count);
@@ -520,6 +606,52 @@ public class OrchestratorService : IOrchestratorService
                     _logger.LogWarning(
                         "Failed to deploy node {NodeName}: {Message}",
                         node.Name, deployResult.Message);
+
+                    // ROLLBACK: On partial failure, tear down all previously successful deployments
+                    if (successfullyDeployedNodes.Count > 0)
+                    {
+                        _logger.LogWarning(
+                            "Initiating rollback of {Count} previously deployed nodes due to failure of {NodeName}",
+                            successfullyDeployedNodes.Count, node.Name);
+
+                        foreach (var (rolledBackAppId, rolledBackServices) in successfullyDeployedNodes)
+                        {
+                            // Tear down the container
+                            var teardownResult = await orchestrator.TeardownServiceAsync(
+                                rolledBackAppId,
+                                false,
+                                cancellationToken);
+
+                            if (teardownResult.Success)
+                            {
+                                _logger.LogInformation(
+                                    "Rolled back deployment of {AppId}",
+                                    rolledBackAppId);
+                            }
+                            else
+                            {
+                                _logger.LogError(
+                                    "Failed to rollback deployment of {AppId}: {Message}",
+                                    rolledBackAppId, teardownResult.Message);
+                            }
+
+                            // Remove service routings that were set
+                            foreach (var serviceName in rolledBackServices)
+                            {
+                                await _healthMonitor.RemoveServiceRoutingAsync(serviceName);
+                            }
+                        }
+
+                        // Clear tracking - rollback complete
+                        successfullyDeployedNodes.Clear();
+                        deployedServices.Clear();
+                        expectedAppIds.Clear();
+
+                        failedServices.Add("Deployment rolled back due to partial failure");
+                    }
+
+                    // Stop processing further nodes after rollback
+                    break;
                 }
             }
 
@@ -569,7 +701,7 @@ public class OrchestratorService : IOrchestratorService
                     await Task.Delay(pollInterval, cancellationToken);
                 }
 
-                // Check for timeout - treat as deployment failure
+                // Check for timeout - treat as deployment failure and rollback
                 var missingHeartbeats = expectedAppIds.Except(receivedHeartbeats).ToList();
                 if (missingHeartbeats.Count > 0)
                 {
@@ -578,6 +710,42 @@ public class OrchestratorService : IOrchestratorService
                     _logger.LogWarning(
                         "Deployment heartbeat timeout after {Elapsed}s - missing heartbeats from: [{AppIds}]",
                         elapsed.TotalSeconds, string.Join(", ", missingHeartbeats));
+
+                    // ROLLBACK: Tear down all deployed nodes since deployment is incomplete
+                    if (successfullyDeployedNodes.Count > 0)
+                    {
+                        _logger.LogWarning(
+                            "Initiating rollback of {Count} deployed nodes due to heartbeat timeout",
+                            successfullyDeployedNodes.Count);
+
+                        foreach (var (rolledBackAppId, rolledBackServices) in successfullyDeployedNodes)
+                        {
+                            var teardownResult = await orchestrator.TeardownServiceAsync(
+                                rolledBackAppId,
+                                false,
+                                cancellationToken);
+
+                            if (teardownResult.Success)
+                            {
+                                _logger.LogInformation("Rolled back deployment of {AppId}", rolledBackAppId);
+                            }
+                            else
+                            {
+                                _logger.LogError(
+                                    "Failed to rollback deployment of {AppId}: {Message}",
+                                    rolledBackAppId, teardownResult.Message);
+                            }
+
+                            foreach (var serviceName in rolledBackServices)
+                            {
+                                await _healthMonitor.RemoveServiceRoutingAsync(serviceName);
+                            }
+                        }
+
+                        successfullyDeployedNodes.Clear();
+                        deployedServices.Clear();
+                        failedServices.Add("Deployment rolled back due to heartbeat timeout");
+                    }
                 }
             }
 
@@ -1108,34 +1276,66 @@ public class OrchestratorService : IOrchestratorService
             }
 
             // Note: Network, volume, and image pruning would require extending IContainerOrchestrator
-            // or direct Docker SDK access. For now, we log what would be cleaned.
+            // or direct Docker SDK access. Track unsupported operations to report accurately.
+            var unsupportedOperations = new List<string>();
+
             if (cleanNetworks)
             {
-                _logger.LogInformation("Network pruning requested - requires direct Docker API access");
-                // Future: Implement network pruning via Docker SDK
+                _logger.LogWarning("Network pruning requested but not yet implemented");
+                unsupportedOperations.Add("networks");
             }
 
             if (cleanVolumes)
             {
-                _logger.LogInformation("Volume pruning requested - requires direct Docker API access");
-                // Future: Implement volume pruning via Docker SDK
+                _logger.LogWarning("Volume pruning requested but not yet implemented");
+                unsupportedOperations.Add("volumes");
             }
 
             if (cleanImages)
             {
-                _logger.LogInformation("Image pruning requested - requires direct Docker API access");
-                // Future: Implement image pruning via Docker SDK
+                _logger.LogWarning("Image pruning requested but not yet implemented");
+                unsupportedOperations.Add("images");
             }
+
+            // Build response message
+            var messageBuilder = new System.Text.StringBuilder();
+            if (cleanedItems.Count > 0)
+            {
+                messageBuilder.Append($"Cleaned: {string.Join(", ", cleanedItems)}");
+            }
+            else if (cleanContainers)
+            {
+                messageBuilder.Append("No orphaned containers found");
+            }
+
+            if (unsupportedOperations.Count > 0)
+            {
+                if (messageBuilder.Length > 0)
+                    messageBuilder.Append(". ");
+                messageBuilder.Append($"Unsupported operations skipped: {string.Join(", ", unsupportedOperations)}");
+            }
+
+            if (messageBuilder.Length == 0)
+            {
+                messageBuilder.Append("No cleanup targets specified");
+            }
+
+            // Success is true only if all requested operations were attempted
+            // (even if they found nothing to clean)
+            var allOperationsSupported = !unsupportedOperations.Any(op =>
+                (op == "networks" && cleanNetworks) ||
+                (op == "volumes" && cleanVolumes) ||
+                (op == "images" && cleanImages));
 
             var response = new CleanResponse
             {
-                Success = true,
+                Success = unsupportedOperations.Count == 0 || cleanContainers,
                 ReclaimedSpaceMb = (int)(reclaimedBytes / (1024 * 1024)),
                 RemovedContainers = removedContainers,
                 RemovedNetworks = removedNetworks,
                 RemovedVolumes = removedVolumes,
                 RemovedImages = removedImages,
-                Message = cleanedItems.Count > 0 ? $"Cleaned: {string.Join(", ", cleanedItems)}" : "No items cleaned"
+                Message = messageBuilder.ToString()
             };
 
             _logger.LogInformation(
@@ -1154,14 +1354,36 @@ public class OrchestratorService : IOrchestratorService
     /// <summary>
     /// Determines if a container is orphaned (no longer part of active deployment).
     /// </summary>
+    /// <remarks>
+    /// Uses the 'bannou.orchestrator-managed' label to identify containers deployed
+    /// by the orchestrator. Only containers with this label AND stopped status AND
+    /// stopped for more than 24 hours are considered orphaned.
+    ///
+    /// This approach is more reliable than name-based parsing and ensures we only
+    /// clean up containers the orchestrator actually created.
+    /// </remarks>
     private static bool IsOrphanedContainer(ContainerStatus container)
     {
-        // A container is considered orphaned if:
-        // 1. It has been stopped for more than 24 hours
-        // 2. It's not in the active service mapping
-        // Use the Timestamp field which indicates when the status was last updated
-        var stoppedDuration = DateTimeOffset.UtcNow - container.Timestamp;
-        return stoppedDuration.TotalHours > 24;
+        // Container must be stopped to be considered orphaned
+        if (container.Status != ContainerStatusStatus.Stopped)
+        {
+            return false;
+        }
+
+        // Only consider containers that were deployed by the orchestrator
+        // Check for the orchestrator-managed label
+        if (container.Labels == null ||
+            !container.Labels.TryGetValue(DockerComposeOrchestrator.BANNOU_ORCHESTRATOR_MANAGED_LABEL, out var labelValue) ||
+            labelValue != "true")
+        {
+            return false;
+        }
+
+        // Use Timestamp as best-effort proxy for stop time
+        // Conservative 24-hour threshold to avoid removing recently-stopped containers
+        // that might be part of an active deployment restart cycle
+        var timeSinceLastUpdate = DateTimeOffset.UtcNow - container.Timestamp;
+        return timeSinceLastUpdate.TotalHours > 24;
     }
 
     /// <summary>
@@ -1379,19 +1601,49 @@ public class OrchestratorService : IOrchestratorService
                             break;
 
                         case TopologyChangeAction.UpdateEnv:
-                            // Update environment variables for services
+                            // Update environment variables for services by redeploying with new env vars.
+                            // DeployServiceAsync handles container cleanup and recreation automatically.
                             if (change.Services != null && change.Environment != null)
                             {
+                                var envDict = new Dictionary<string, string>(change.Environment);
+                                var allEnvDeploysSucceeded = true;
+
                                 foreach (var serviceName in change.Services)
                                 {
-                                    // For environment updates, we need to restart with new env vars
-                                    // This is a placeholder - actual implementation would depend on orchestrator capabilities
+                                    // Construct appId the same way as other actions
+                                    var appId = !string.IsNullOrEmpty(change.NodeName)
+                                        ? $"bannou-{serviceName}-{change.NodeName}"
+                                        : $"bannou-{serviceName}";
+
                                     _logger.LogInformation(
-                                        "Environment update requested for {ServiceName} with {EnvCount} variables",
-                                        serviceName, change.Environment.Count);
+                                        "Updating environment for {ServiceName} (appId: {AppId}) with {EnvCount} variables",
+                                        serviceName, appId, envDict.Count);
+
+                                    // DeployServiceAsync cleans up existing container and redeploys with new env vars
+                                    var deployResult = await orchestrator.DeployServiceAsync(
+                                        serviceName,
+                                        appId,
+                                        envDict,
+                                        cancellationToken);
+
+                                    if (!deployResult.Success)
+                                    {
+                                        warnings.Add($"Failed to update environment for {serviceName}: {deployResult.Message}");
+                                        allEnvDeploysSucceeded = false;
+                                    }
+                                    else
+                                    {
+                                        _logger.LogInformation(
+                                            "Successfully updated environment for {ServiceName} (container: {ContainerId})",
+                                            serviceName, deployResult.ContainerId ?? "unknown");
+                                    }
                                 }
-                                appliedChange.Success = true;
-                                warnings.Add("Environment updates require service restart to take effect");
+
+                                appliedChange.Success = allEnvDeploysSucceeded;
+                                if (!allEnvDeploysSucceeded)
+                                {
+                                    appliedChange.Error = "Some services failed to update environment - check warnings for details";
+                                }
                             }
                             else
                             {
@@ -1718,5 +1970,124 @@ public class OrchestratorService : IOrchestratorService
             message: message,
             dependency: dependency,
             details: details);
+    }
+
+    /// <summary>
+    /// Checks if the deploy request is a "reset to default topology" request.
+    /// Returns true if preset is "default", "bannou", empty/null AND no direct topology is specified.
+    /// </summary>
+    private static bool IsResetToDefaultRequest(string? preset, ServiceTopology? topology)
+    {
+        // If a direct topology is specified, it's not a reset request
+        if (topology?.Nodes != null && topology.Nodes.Count > 0)
+        {
+            return false;
+        }
+
+        // Check if preset indicates reset to default
+        if (string.IsNullOrWhiteSpace(preset))
+        {
+            return true; // Empty/null preset with no topology = reset to default
+        }
+
+        var normalizedPreset = preset.Trim().ToLowerInvariant();
+        return normalizedPreset == "default" || normalizedPreset == "bannou";
+    }
+
+    /// <summary>
+    /// Resets to default topology by tearing down containers tracked in the current deployment configuration
+    /// and resetting service mappings to all point to "bannou".
+    /// Uses explicit configuration tracking instead of inferring from container names.
+    /// </summary>
+    private async Task<(bool Success, string Message, List<string> TornDownServices)> ResetToDefaultTopologyAsync(
+        IContainerOrchestrator orchestrator,
+        string deploymentId,
+        CancellationToken cancellationToken)
+    {
+        var tornDownServices = new List<string>();
+
+        try
+        {
+            // Get the current deployment configuration - this tells us exactly what we deployed
+            var currentConfig = await _redisManager.GetCurrentConfigurationAsync();
+
+            if (currentConfig == null || currentConfig.Services.Count == 0)
+            {
+                // No configuration tracked or empty - already at default topology
+                _logger.LogInformation("Reset to default: No deployment configuration found, already at default topology");
+
+                // Still reset mappings to ensure clean state
+                await _healthMonitor.ResetAllMappingsToDefaultAsync();
+
+                return (true, "Already at default topology - no tracked deployments, mappings reset", tornDownServices);
+            }
+
+            // Extract unique AppIds (container names) from the tracked deployment
+            // Exclude "bannou" as that's the default monolith
+            var deployedAppIds = currentConfig.Services.Values
+                .Where(s => s.Enabled && !string.IsNullOrEmpty(s.AppId))
+                .Select(s => s.AppId!)
+                .Where(appId => !appId.Equals("bannou", StringComparison.OrdinalIgnoreCase))
+                .Distinct()
+                .ToList();
+
+            _logger.LogInformation(
+                "Reset to default: Found {Count} tracked deployments to tear down: [{AppIds}]",
+                deployedAppIds.Count,
+                string.Join(", ", deployedAppIds));
+
+            if (deployedAppIds.Count == 0)
+            {
+                // All services were deployed to "bannou" - nothing to tear down
+                await _healthMonitor.ResetAllMappingsToDefaultAsync();
+                await _redisManager.ClearCurrentConfigurationAsync();
+
+                return (true, "Already at default topology - all services on 'bannou', configuration cleared", tornDownServices);
+            }
+
+            // Tear down each tracked deployment
+            foreach (var appId in deployedAppIds)
+            {
+                try
+                {
+                    var teardownResult = await orchestrator.TeardownServiceAsync(
+                        appId,
+                        removeVolumes: false,
+                        cancellationToken);
+
+                    if (teardownResult.Success)
+                    {
+                        tornDownServices.Add(appId);
+                        _logger.LogInformation("Torn down tracked container {AppId}", appId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to tear down tracked container {AppId}: {Message}",
+                            appId, teardownResult.Message);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error tearing down tracked container {AppId}", appId);
+                }
+            }
+
+            // Reset all service mappings to default ("bannou")
+            await _healthMonitor.ResetAllMappingsToDefaultAsync();
+
+            // Clear the deployment configuration (saves empty config as new version for audit trail)
+            await _redisManager.ClearCurrentConfigurationAsync();
+
+            var message = tornDownServices.Count > 0
+                ? $"Reset to default topology: torn down {tornDownServices.Count} tracked container(s), all services now route to 'bannou'"
+                : "Reset to default topology: no containers torn down (may have already been removed), configuration cleared";
+
+            return (true, message, tornDownServices);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resetting to default topology");
+            return (false, $"Failed to reset to default topology: {ex.Message}", tornDownServices);
+        }
     }
 }

@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,15 +17,18 @@ public class TestingService : ITestingService
     private readonly ILogger<TestingService> _logger;
     private readonly TestingServiceConfiguration _configuration;
     private readonly DaprClient _daprClient;
+    private readonly IClientEventPublisher _clientEventPublisher;
 
     public TestingService(
         ILogger<TestingService> logger,
         TestingServiceConfiguration configuration,
-        DaprClient daprClient)
+        DaprClient daprClient,
+        IClientEventPublisher clientEventPublisher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
+        _clientEventPublisher = clientEventPublisher ?? throw new ArgumentNullException(nameof(clientEventPublisher));
     }
 
     /// <summary>
@@ -142,6 +146,86 @@ public class TestingService : ITestingService
         }
     }
 
+    #region Client Event Testing
+
+    /// <summary>
+    /// Publishes a test notification event to a specific session.
+    /// Used for testing the client event delivery system.
+    /// </summary>
+    /// <param name="sessionId">The session ID to send the event to</param>
+    /// <param name="message">The notification message</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Status code and response indicating success or failure</returns>
+    public async Task<(StatusCodes, PublishTestEventResponse?)> PublishTestEventAsync(
+        string sessionId,
+        string message,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            return (StatusCodes.BadRequest, new PublishTestEventResponse
+            {
+                Success = false,
+                Message = "Session ID is required",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        try
+        {
+            _logger.LogInformation("Publishing test notification event to session {SessionId}", sessionId);
+
+            var testEvent = new SystemNotificationEvent
+            {
+                Event_name = SystemNotificationEventEvent_name.System_notification,
+                Event_id = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Notification_type = SystemNotificationEventNotification_type.Info,
+                Title = "Test Notification",
+                Message = message ?? "This is a test notification from the Testing service"
+            };
+
+            var published = await _clientEventPublisher.PublishToSessionAsync(sessionId, testEvent, cancellationToken);
+
+            if (published)
+            {
+                _logger.LogInformation("Successfully published test event to session {SessionId}", sessionId);
+                return (StatusCodes.OK, new PublishTestEventResponse
+                {
+                    Success = true,
+                    Message = "Test event published successfully",
+                    EventId = testEvent.Event_id,
+                    SessionId = sessionId,
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+            else
+            {
+                _logger.LogWarning("Failed to publish test event to session {SessionId}", sessionId);
+                return (StatusCodes.InternalServerError, new PublishTestEventResponse
+                {
+                    Success = false,
+                    Message = "Failed to publish test event",
+                    SessionId = sessionId,
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error publishing test event to session {SessionId}", sessionId);
+            return (StatusCodes.InternalServerError, new PublishTestEventResponse
+            {
+                Success = false,
+                Message = $"Error: {ex.Message}",
+                SessionId = sessionId,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+    }
+
+    #endregion
+
     #region Permission Registration
 
     /// <summary>
@@ -166,6 +250,7 @@ public interface ITestingService : IDaprService
     Task<(StatusCodes, TestResponse?)> RunTestAsync(string testName, CancellationToken cancellationToken = default);
     Task<(StatusCodes, ConfigTestResponse?)> TestConfigurationAsync(CancellationToken cancellationToken = default);
     Task<(StatusCodes, DependencyTestResponse?)> TestDependencyInjectionHealthAsync(CancellationToken cancellationToken = default);
+    Task<(StatusCodes, PublishTestEventResponse?)> PublishTestEventAsync(string sessionId, string message, CancellationToken cancellationToken = default);
 }
 
 
@@ -200,6 +285,18 @@ public class DependencyTestResponse
     public bool LoggerFunctional { get; set; }
     public bool ConfigurationFunctional { get; set; }
     public string Message { get; set; } = string.Empty;
+    public DateTime Timestamp { get; set; }
+}
+
+/// <summary>
+/// Response model for publishing test events to client sessions.
+/// </summary>
+public class PublishTestEventResponse
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public Guid? EventId { get; set; }
+    public string? SessionId { get; set; }
     public DateTime Timestamp { get; set; }
 }
 

@@ -79,11 +79,30 @@
             <param name="serviceName">Name of the target service.</param>
         </member>
         <member name="P:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.BaseUrl">
-            <summary>
-            Gets the base URL for Dapr service invocation with dynamic app-id resolution.
-            For parameterless constructor, falls back to "bannou" app-id.
-            Uses environment variable DAPR_HTTP_ENDPOINT if available for containerized environments.
-            </summary>
+             <summary>
+             Gets the base URL for Dapr service invocation with dynamic app-id resolution.
+             For parameterless constructor, falls back to "bannou" app-id.
+             Uses environment variable DAPR_HTTP_ENDPOINT if available for containerized environments.
+             </summary>
+             <remarks>
+             CRITICAL ARCHITECTURAL CONSTRAINT:
+             The app-id used here ("bannou" by default) becomes part of the URL path that Dapr
+             forwards to the target service. Dapr does NOT strip the /v1.0/invoke/{app-id}/method/
+             prefix - it preserves the full path.
+            
+             This means all OpenAPI schemas MUST use the same app-id in their `servers` URL:
+               servers:
+                 - url: http://localhost:3500/v1.0/invoke/bannou/method
+            
+             NSwag generates controller route prefixes from this URL. If the schema uses a different
+             app-id (e.g., "game-session"), the generated controller route won't match the path
+             that clients send, resulting in 404 errors.
+            
+             The ServiceAppMappingResolver can dynamically route to different Dapr sidecars, but
+             the path structure (including app-id) must match what controllers expect.
+            
+             See API-DESIGN.md "servers URL Constraint" section for full documentation.
+             </remarks>
         </member>
         <member name="M:BeyondImmersion.BannouService.ServiceClients.DaprServiceClientBase.PrepareRequest(System.Net.Http.HttpClient,System.Net.Http.HttpRequestMessage,System.String)">
             <summary>
@@ -139,10 +158,30 @@
             URL pattern: http://localhost:3500/v1.0/invoke/{app-id}/method/...
             </summary>
         </member>
+        <member name="T:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs">
+            <summary>
+            Event arguments for service mapping changes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs.ServiceName">
+            <summary>The service name that changed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs.NewAppId">
+            <summary>The new app-id for the service (null if removed).</summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.ServiceMappingChangedEventArgs.PreviousAppId">
+            <summary>The previous app-id (null if new mapping).</summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver">
             <summary>
             Resolves service names to Dapr app-ids for distributed service routing.
             Supports dynamic mapping via RabbitMQ events for production scaling.
+            </summary>
+        </member>
+        <member name="E:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.MappingChanged">
+            <summary>
+            Event raised when a service mapping changes.
+            Used by ServiceHeartbeatManager to stop heartbeating services routed elsewhere.
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.GetAppIdForService(System.String)">
@@ -172,6 +211,28 @@
             Gets all current service mappings for debugging/monitoring.
             </summary>
             <returns>Dictionary of service name to app-id mappings</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.ImportMappings(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Imports multiple service mappings at once, typically from a source container.
+            Used during startup of containers deployed by orchestrator.
+            </summary>
+            <param name="mappings">The mappings to import</param>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.ReplaceAllMappings(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.String,System.Int64)">
+            <summary>
+            Atomically replaces all service mappings with a new full state from Orchestrator.
+            Implements version checking to reject out-of-order events.
+            </summary>
+            <param name="mappings">Complete dictionary of serviceName -> appId mappings</param>
+            <param name="defaultAppId">Default app-id for unmapped services</param>
+            <param name="version">Monotonically increasing version number</param>
+            <returns>True if mappings were applied, false if version was stale</returns>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Services.IServiceAppMappingResolver.CurrentVersion">
+            <summary>
+            Gets the current version of the service mappings.
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.ApiException">
             <summary>
@@ -675,16 +736,27 @@
             <returns>Request proxied successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Connect.IConnectClient.GetServiceMappingsAsync(BeyondImmersion.BannouService.Connect.GetServiceMappingsRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Connect.IConnectClient.GetClientCapabilitiesAsync(BeyondImmersion.BannouService.Connect.GetClientCapabilitiesRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
-            Get current service routing mappings
+            Get client capability manifest (GUID → API mappings)
             </summary>
             <remarks>
-            Returns current service-to-app-id routing mappings for monitoring and debugging.
-            <br/>Shows how services are mapped in the current deployment topology.
+            Returns the capability manifest for the authenticated client's session.
+            <br/>Maps client-salted GUIDs to available API endpoints based on the client's
+            <br/>current permissions and session state.
+            <br/>
+            <br/>**Security**: Each client receives unique GUIDs for the same API endpoints.
+            <br/>This prevents cross-session exploitation and enables per-client rate limiting.
+            <br/>
+            <br/>**Dynamic Updates**: Capabilities may change during a session when:
+            <br/>- Role changes occur (admin promotion, etc.)
+            <br/>- Subscription status changes
+            <br/>- Session state transitions
+            <br/>
+            <br/>Clients should listen for capability update events via WebSocket to stay current.
             </remarks>
-            <returns>Service mappings retrieved successfully</returns>
+            <returns>Client capabilities retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Connect.IConnectClient.ConnectWebSocketAsync(BeyondImmersion.BannouService.Connect.Connection,BeyondImmersion.BannouService.Connect.Upgrade,System.String,System.Threading.CancellationToken)">
@@ -753,16 +825,27 @@
             <returns>Request proxied successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="M:BeyondImmersion.BannouService.Connect.ConnectClient.GetServiceMappingsAsync(BeyondImmersion.BannouService.Connect.GetServiceMappingsRequest,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.BannouService.Connect.ConnectClient.GetClientCapabilitiesAsync(BeyondImmersion.BannouService.Connect.GetClientCapabilitiesRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
-            Get current service routing mappings
+            Get client capability manifest (GUID → API mappings)
             </summary>
             <remarks>
-            Returns current service-to-app-id routing mappings for monitoring and debugging.
-            <br/>Shows how services are mapped in the current deployment topology.
+            Returns the capability manifest for the authenticated client's session.
+            <br/>Maps client-salted GUIDs to available API endpoints based on the client's
+            <br/>current permissions and session state.
+            <br/>
+            <br/>**Security**: Each client receives unique GUIDs for the same API endpoints.
+            <br/>This prevents cross-session exploitation and enables per-client rate limiting.
+            <br/>
+            <br/>**Dynamic Updates**: Capabilities may change during a session when:
+            <br/>- Role changes occur (admin promotion, etc.)
+            <br/>- Subscription status changes
+            <br/>- Session state transitions
+            <br/>
+            <br/>Clients should listen for capability update events via WebSocket to stay current.
             </remarks>
-            <returns>Service mappings retrieved successfully</returns>
+            <returns>Client capabilities retrieved successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Connect.ConnectClient.ConnectWebSocketAsync(BeyondImmersion.BannouService.Connect.Connection,BeyondImmersion.BannouService.Connect.Upgrade,System.String,System.Threading.CancellationToken)">
@@ -803,14 +886,74 @@
             <param name="body">Optional connection parameters</param>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
-        <member name="T:BeyondImmersion.BannouService.Connect.GetServiceMappingsRequest">
+        <member name="T:BeyondImmersion.BannouService.Connect.GetClientCapabilitiesRequest">
             <summary>
-            Request to get service mappings (empty body allowed)
+            Request to get client capability manifest (empty body allowed)
             </summary>
         </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.GetServiceMappingsRequest.ServiceFilter">
+        <member name="P:BeyondImmersion.BannouService.Connect.GetClientCapabilitiesRequest.ServiceFilter">
             <summary>
             Optional filter by service name prefix
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.GetClientCapabilitiesRequest.IncludeMetadata">
+            <summary>
+            Include additional metadata about each capability
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientCapabilitiesResponse.SessionId">
+            <summary>
+            Session ID this capability manifest belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientCapabilitiesResponse.Capabilities">
+            <summary>
+            Available API capabilities for this client
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientCapabilitiesResponse.Version">
+            <summary>
+            Capability manifest version (increments on changes)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientCapabilitiesResponse.GeneratedAt">
+            <summary>
+            When this capability manifest was generated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientCapabilitiesResponse.ExpiresAt">
+            <summary>
+            When these capabilities expire and need refresh
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientCapability.Guid">
+            <summary>
+            Client-salted GUID for this API endpoint (unique per session)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientCapability.Service">
+            <summary>
+            Service name (e.g., "accounts", "auth")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientCapability.Endpoint">
+            <summary>
+            API endpoint path (e.g., "/accounts/create")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientCapability.Method">
+            <summary>
+            HTTP method for this endpoint
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientCapability.Description">
+            <summary>
+            Human-readable description of this capability
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Connect.ClientCapability.Channel">
+            <summary>
+            Preferred WebSocket channel for this capability
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.InternalProxyRequest.SessionId">
@@ -910,26 +1053,6 @@
         <member name="P:BeyondImmersion.BannouService.Connect.ConnectErrorResponse.Status_code">
             <summary>
             HTTP status code
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ServiceMappingsResponse.Mappings">
-            <summary>
-            Map of service names to app-id routing destinations
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ServiceMappingsResponse.DefaultMapping">
-            <summary>
-            Default app-id used when no specific mapping exists
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ServiceMappingsResponse.GeneratedAt">
-            <summary>
-            When this mapping information was generated
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ServiceMappingsResponse.TotalServices">
-            <summary>
-            Total number of services with routing mappings
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Connect.ResponseCodes">
@@ -1044,11 +1167,6 @@
         <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.Client_reconnection_time">
             <summary>
             Time in seconds to allow client reconnection
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.Redis_connection_string">
-            <summary>
-            Redis connection string for session management
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Connect.ConnectionConfiguration.Token_public_key">
@@ -1249,6 +1367,234 @@
         <member name="P:BeyondImmersion.BannouService.Connect.PermissionRecompileEvent.Metadata">
             <summary>
             Additional context for the recompilation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent">
+            <summary>
+            Base schema for all server-to-client push events.
+            <br/>All client events MUST include these fields.
+            <br/>The event_name field is used for whitelist validation in Connect service.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Event_name">
+            <summary>
+            Unique event type identifier (e.g., "connect.capability_manifest").
+            <br/>Must be in the generated ClientEventWhitelist or will be rejected.
+            <br/>Convention: {service}.{event_type}
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Event_id">
+            <summary>
+            Unique identifier for this event instance
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Timestamp">
+            <summary>
+            When the event was generated (ISO 8601 format)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.BaseClientEvent.Correlation_id">
+            <summary>
+            Optional correlation ID for request tracing
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent">
+            <summary>
+            Sent to client when their available API capabilities change.
+            <br/>Contains the complete list of service GUIDs the client can access.
+            <br/>Delivered on initial connection and when permissions change.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Session_id">
+            <summary>
+            Session ID this manifest applies to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Available_apis">
+            <summary>
+            List of available API endpoints with their GUIDs
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Version">
+            <summary>
+            Manifest version number (incremented on each change)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.CapabilityManifestEvent.Reason">
+            <summary>
+            Reason for manifest update (e.g., "initial_connection", "capabilities_updated", "role_changed")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry">
+            <summary>
+            Individual API capability entry with routing information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Service_guid">
+            <summary>
+            Client-salted GUID for this endpoint (unique per client)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Service_name">
+            <summary>
+            Service name (e.g., "accounts", "game-session")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Method">
+            <summary>
+            HTTP method for WebSocket routing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Path">
+            <summary>
+            API endpoint path (e.g., "/accounts/get")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.ClientCapabilityEntry.Endpoint_key">
+            <summary>
+            Full endpoint key for routing (e.g., "accounts:POST:/accounts/get")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent">
+            <summary>
+            Sent to client before WebSocket connection is closed.
+            <br/>If reconnectable, includes a token for session restoration.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Reconnection_token">
+            <summary>
+            Token for reconnecting to the same session (valid for 5 minutes)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Expires_at">
+            <summary>
+            When the reconnection token expires
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Reconnectable">
+            <summary>
+            Whether this session can be reconnected
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.DisconnectNotificationEvent.Reason">
+            <summary>
+            Reason for disconnection:
+            <br/>- graceful_disconnect: Client-initiated or idle timeout
+            <br/>- session_invalidated: Session was revoked (e.g., logout, account deleted)
+            <br/>- server_shutdown: Server is shutting down gracefully
+            <br/>- forced_disconnect: Administrative disconnection
+            <br/>
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent">
+            <summary>
+            Generic error notification sent to client.
+            <br/>Used for recoverable errors that the client should be aware of.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.Error_code">
+            <summary>
+            Machine-readable error code (e.g., "SERVICE_UNAVAILABLE", "RATE_LIMITED")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.Message">
+            <summary>
+            Human-readable error message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.Details">
+            <summary>
+            Additional error details (service-specific)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemErrorEvent.Recoverable">
+            <summary>
+            Whether the client can retry the operation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent">
+            <summary>
+            Internal event carrying compiled capabilities from Permissions to Connect.
+            <br/>NOT forwarded to clients - Connect intercepts, generates client-salted GUIDs,
+            <br/>and sends CapabilityManifestEvent to the client.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Event_name">
+            <summary>
+            Fixed event type identifier (internal, not forwarded to client)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Session_id">
+            <summary>
+            Session ID these capabilities apply to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Permissions">
+            <summary>
+            Map of ServiceID -&gt; List of available methods (e.g., "accounts" -&gt; ["POST:/get-account"])
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SessionCapabilitiesEvent.Reason">
+            <summary>
+            Why capabilities were sent (e.g., "session_connected", "service_registered", "role_changed")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent">
+            <summary>
+            Generic notification event for system-level messages.
+            <br/>Used for announcements, maintenance notices, etc.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Notification_type">
+            <summary>
+            Type of notification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Message">
+            <summary>
+            Human-readable notification message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Title">
+            <summary>
+            Optional notification title
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Action_url">
+            <summary>
+            Optional URL for more information
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.ClientEvents.SystemNotificationEvent.Expires_at">
+            <summary>
+            When this notification expires/becomes irrelevant
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Behavior.IBehaviorClient.CompileAbmlBehaviorAsync(System.String,System.Threading.CancellationToken)">
@@ -1785,6 +2131,19 @@
             <returns>Session role updated and all permissions recompiled</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Permissions.IPermissionsClient.ClearSessionStateAsync(BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Clear session state for specific service
+            </summary>
+            <remarks>
+            Removes state for a specific service from the session and recompiles permissions.
+            <br/>If states list is provided, only clears if current state matches one of the values.
+            <br/>If states list is empty or not provided, clears the state unconditionally.
+            </remarks>
+            <returns>Session state cleared and permissions recompiled</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Permissions.IPermissionsClient.GetSessionInfoAsync(BeyondImmersion.BannouService.Permissions.SessionInfoRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
@@ -1881,6 +2240,19 @@
             Updates SessionID -&gt; Role and recompiles all service permissions
             </remarks>
             <returns>Session role updated and all permissions recompiled</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Permissions.PermissionsClient.ClearSessionStateAsync(BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Clear session state for specific service
+            </summary>
+            <remarks>
+            Removes state for a specific service from the session and recompiles permissions.
+            <br/>If states list is provided, only clears if current state matches one of the values.
+            <br/>If states list is empty or not provided, clears the state unconditionally.
+            </remarks>
+            <returns>Session state cleared and permissions recompiled</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
         <member name="M:BeyondImmersion.BannouService.Permissions.PermissionsClient.GetSessionInfoAsync(BeyondImmersion.BannouService.Permissions.SessionInfoRequest,System.Threading.CancellationToken)">
@@ -2036,6 +2408,24 @@
             Previous role (null for initial role)
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest.SessionId">
+            <summary>
+            Session ID to clear state from
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest.ServiceId">
+            <summary>
+            Service whose state should be cleared
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Permissions.ClearSessionStateRequest.States">
+            <summary>
+            Optional list of state values to match. If provided, only clears if
+            <br/>current state matches one of these values. If empty or not provided,
+            <br/>clears the state unconditionally.
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Permissions.SessionUpdateResponse.Success">
             <summary>
             Whether update was successful
@@ -2119,6 +2509,393 @@
         <member name="P:BeyondImmersion.BannouService.Permissions.RegisteredServiceInfo.EndpointCount">
             <summary>
             Number of API endpoints registered by this service
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient.GetAccountSubscriptionsAsync(BeyondImmersion.BannouService.Subscriptions.GetAccountSubscriptionsRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get subscriptions for an account
+            </summary>
+            <remarks>
+            Returns all subscriptions for a given account, with optional filtering.
+            </remarks>
+            <returns>Subscriptions retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient.GetCurrentSubscriptionsAsync(BeyondImmersion.BannouService.Subscriptions.GetCurrentSubscriptionsRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get current (active, non-expired) subscriptions
+            </summary>
+            <remarks>
+            Returns only active, non-expired subscriptions as authorization strings.
+            <br/>Used by Auth service during session creation to populate session authorizations.
+            </remarks>
+            <returns>Current subscriptions retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient.GetSubscriptionAsync(BeyondImmersion.BannouService.Subscriptions.GetSubscriptionRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get a specific subscription by ID
+            </summary>
+            <returns>Subscription retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient.CreateSubscriptionAsync(BeyondImmersion.BannouService.Subscriptions.CreateSubscriptionRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new subscription
+            </summary>
+            <remarks>
+            Admin-only endpoint to create a new subscription for an account.
+            </remarks>
+            <returns>Subscription created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient.UpdateSubscriptionAsync(BeyondImmersion.BannouService.Subscriptions.UpdateSubscriptionRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update a subscription
+            </summary>
+            <remarks>
+            Admin-only endpoint to update an existing subscription.
+            </remarks>
+            <returns>Subscription updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient.CancelSubscriptionAsync(BeyondImmersion.BannouService.Subscriptions.CancelSubscriptionRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Cancel a subscription
+            </summary>
+            <remarks>
+            Cancels a subscription. Users can cancel their own subscriptions,
+            <br/>admins can cancel any subscription.
+            </remarks>
+            <returns>Subscription cancelled successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.ISubscriptionsClient.RenewSubscriptionAsync(BeyondImmersion.BannouService.Subscriptions.RenewSubscriptionRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Renew or extend a subscription
+            </summary>
+            <remarks>
+            Admin-only endpoint to renew or extend an existing subscription.
+            </remarks>
+            <returns>Subscription renewed successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+            <summary>
+            Creates and configures an HttpClient instance for this service client.
+            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.GetAccountSubscriptionsAsync(BeyondImmersion.BannouService.Subscriptions.GetAccountSubscriptionsRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get subscriptions for an account
+            </summary>
+            <remarks>
+            Returns all subscriptions for a given account, with optional filtering.
+            </remarks>
+            <returns>Subscriptions retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.GetCurrentSubscriptionsAsync(BeyondImmersion.BannouService.Subscriptions.GetCurrentSubscriptionsRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get current (active, non-expired) subscriptions
+            </summary>
+            <remarks>
+            Returns only active, non-expired subscriptions as authorization strings.
+            <br/>Used by Auth service during session creation to populate session authorizations.
+            </remarks>
+            <returns>Current subscriptions retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.GetSubscriptionAsync(BeyondImmersion.BannouService.Subscriptions.GetSubscriptionRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get a specific subscription by ID
+            </summary>
+            <returns>Subscription retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.CreateSubscriptionAsync(BeyondImmersion.BannouService.Subscriptions.CreateSubscriptionRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new subscription
+            </summary>
+            <remarks>
+            Admin-only endpoint to create a new subscription for an account.
+            </remarks>
+            <returns>Subscription created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.UpdateSubscriptionAsync(BeyondImmersion.BannouService.Subscriptions.UpdateSubscriptionRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update a subscription
+            </summary>
+            <remarks>
+            Admin-only endpoint to update an existing subscription.
+            </remarks>
+            <returns>Subscription updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.CancelSubscriptionAsync(BeyondImmersion.BannouService.Subscriptions.CancelSubscriptionRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Cancel a subscription
+            </summary>
+            <remarks>
+            Cancels a subscription. Users can cancel their own subscriptions,
+            <br/>admins can cancel any subscription.
+            </remarks>
+            <returns>Subscription cancelled successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Subscriptions.SubscriptionsClient.RenewSubscriptionAsync(BeyondImmersion.BannouService.Subscriptions.RenewSubscriptionRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Renew or extend a subscription
+            </summary>
+            <remarks>
+            Admin-only endpoint to renew or extend an existing subscription.
+            </remarks>
+            <returns>Subscription renewed successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Subscriptions.GetAccountSubscriptionsRequest">
+            <summary>
+            Request to get subscriptions for an account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.GetAccountSubscriptionsRequest.AccountId">
+            <summary>
+            ID of the account to get subscriptions for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.GetAccountSubscriptionsRequest.IncludeInactive">
+            <summary>
+            If true, include cancelled subscriptions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.GetAccountSubscriptionsRequest.IncludeExpired">
+            <summary>
+            If true, include expired subscriptions
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Subscriptions.GetCurrentSubscriptionsRequest">
+            <summary>
+            Request to get current active subscriptions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.GetCurrentSubscriptionsRequest.AccountId">
+            <summary>
+            ID of the account to get current subscriptions for
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Subscriptions.GetSubscriptionRequest">
+            <summary>
+            Request to get a specific subscription
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.GetSubscriptionRequest.SubscriptionId">
+            <summary>
+            ID of the subscription to retrieve
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Subscriptions.CreateSubscriptionRequest">
+            <summary>
+            Request to create a new subscription
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.CreateSubscriptionRequest.AccountId">
+            <summary>
+            ID of the account to create subscription for
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.CreateSubscriptionRequest.ServiceId">
+            <summary>
+            ID of the service (game) to subscribe to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.CreateSubscriptionRequest.StartDate">
+            <summary>
+            When the subscription starts (defaults to now)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.CreateSubscriptionRequest.ExpirationDate">
+            <summary>
+            When the subscription expires (null for unlimited)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.CreateSubscriptionRequest.DurationDays">
+            <summary>
+            Alternative to expirationDate - number of days from startDate
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Subscriptions.UpdateSubscriptionRequest">
+            <summary>
+            Request to update an existing subscription
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.UpdateSubscriptionRequest.SubscriptionId">
+            <summary>
+            ID of the subscription to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.UpdateSubscriptionRequest.ExpirationDate">
+            <summary>
+            New expiration date
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.UpdateSubscriptionRequest.IsActive">
+            <summary>
+            New active status
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Subscriptions.CancelSubscriptionRequest">
+            <summary>
+            Request to cancel a subscription
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.CancelSubscriptionRequest.SubscriptionId">
+            <summary>
+            ID of the subscription to cancel
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.CancelSubscriptionRequest.Reason">
+            <summary>
+            Optional reason for cancellation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Subscriptions.RenewSubscriptionRequest">
+            <summary>
+            Request to renew or extend a subscription
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.RenewSubscriptionRequest.SubscriptionId">
+            <summary>
+            ID of the subscription to renew
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.RenewSubscriptionRequest.ExtensionDays">
+            <summary>
+            Number of days to extend the subscription
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.RenewSubscriptionRequest.NewExpirationDate">
+            <summary>
+            Alternative to extensionDays - set specific new expiration
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo">
+            <summary>
+            Information about a subscription
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo.SubscriptionId">
+            <summary>
+            Unique identifier for the subscription
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo.AccountId">
+            <summary>
+            ID of the account this subscription belongs to
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo.ServiceId">
+            <summary>
+            ID of the subscribed service (game)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo.StubName">
+            <summary>
+            Stub name of the service (denormalized for efficiency)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo.DisplayName">
+            <summary>
+            Display name of the service (denormalized for efficiency)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo.StartDate">
+            <summary>
+            When the subscription started
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo.ExpirationDate">
+            <summary>
+            When the subscription expires (null for unlimited)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo.IsActive">
+            <summary>
+            Whether the subscription is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo.CancelledAt">
+            <summary>
+            When the subscription was cancelled (if applicable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo.CancellationReason">
+            <summary>
+            Reason for cancellation (if applicable)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo.CreatedAt">
+            <summary>
+            When the subscription was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionInfo.UpdatedAt">
+            <summary>
+            When the subscription was last updated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Subscriptions.CurrentSubscriptionsResponse">
+            <summary>
+            Response containing current active subscriptions and authorization strings
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.CurrentSubscriptionsResponse.AccountId">
+            <summary>
+            ID of the account
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.CurrentSubscriptionsResponse.Authorizations">
+            <summary>
+            List of authorization strings (e.g., ["arcadia:authorized", "fantasia:authorized"])
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.CurrentSubscriptionsResponse.Subscriptions">
+            <summary>
+            Full subscription details (optional, for debugging)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Subscriptions.SubscriptionListResponse">
+            <summary>
+            Response containing list of subscriptions
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Subscriptions.SubscriptionListResponse.TotalCount">
+            <summary>
+            Total number of subscriptions matching the filter
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Accounts.IAccountsClient.ListAccountsAsync(BeyondImmersion.BannouService.Accounts.ListAccountsRequest,System.Threading.CancellationToken)">
@@ -2343,6 +3120,16 @@
             </summary>
             <returns>Verification status updated successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.AuthProvider">
+            <summary>
+            All authentication provider types including email
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Accounts.OAuthProvider">
+            <summary>
+            OAuth provider types (excludes email)
+            </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Accounts.ListAccountsRequest">
             <summary>
@@ -2667,6 +3454,26 @@
             <returns>Deployment initiated successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient.GetServiceRoutingAsync(BeyondImmersion.BannouService.Orchestrator.GetServiceRoutingRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get current service-to-app-id routing mappings
+            </summary>
+            <remarks>
+            Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+            <br/>This is the authoritative source of truth for how services are routed in the current deployment.
+            <br/>
+            <br/>In development, all services route to "bannou" by default. In production, services may be
+            <br/>distributed across multiple app-ids based on deployment topology.
+            <br/>
+            <br/>**Use Cases**:
+            <br/>- Services querying routing on startup
+            <br/>- Debugging service communication issues
+            <br/>- Monitoring deployment topology
+            </remarks>
+            <returns>Service routing mappings</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient.GetStatusAsync(BeyondImmersion.BannouService.Orchestrator.GetStatusRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
@@ -2958,6 +3765,26 @@
             <returns>Deployment initiated successfully</returns>
             <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
         </member>
+        <member name="M:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.GetServiceRoutingAsync(BeyondImmersion.BannouService.Orchestrator.GetServiceRoutingRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get current service-to-app-id routing mappings
+            </summary>
+            <remarks>
+            Returns the current service-to-app-id routing mappings used for Dapr service invocation.
+            <br/>This is the authoritative source of truth for how services are routed in the current deployment.
+            <br/>
+            <br/>In development, all services route to "bannou" by default. In production, services may be
+            <br/>distributed across multiple app-ids based on deployment topology.
+            <br/>
+            <br/>**Use Cases**:
+            <br/>- Services querying routing on startup
+            <br/>- Debugging service communication issues
+            <br/>- Monitoring deployment topology
+            </remarks>
+            <returns>Service routing mappings</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
         <member name="M:BeyondImmersion.BannouService.Orchestrator.OrchestratorClient.GetStatusAsync(BeyondImmersion.BannouService.Orchestrator.GetStatusRequest,System.Threading.CancellationToken)">
             <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
             <summary>
@@ -3124,6 +3951,43 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceHealthRequest.ServiceFilter">
             <summary>
             Optional filter by service name
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Orchestrator.GetServiceRoutingRequest">
+            <summary>
+            Request to get service routing mappings (empty body allowed)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.GetServiceRoutingRequest.ServiceFilter">
+            <summary>
+            Optional filter by service name prefix
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceRoutingResponse.Mappings">
+            <summary>
+            Map of service names to Dapr app-id routing destinations.
+            <br/>Example: { "accounts": "bannou", "behavior": "npc-processing-01" }
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceRoutingResponse.DefaultAppId">
+            <summary>
+            Default app-id used when no specific mapping exists
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceRoutingResponse.GeneratedAt">
+            <summary>
+            When this routing information was generated
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceRoutingResponse.TotalServices">
+            <summary>
+            Total number of services with routing mappings
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ServiceRoutingResponse.DeploymentId">
+            <summary>
+            Current deployment identifier (if environment is deployed)
             </summary>
         </member>
         <member name="T:BeyondImmersion.BannouService.Orchestrator.ListBackendsRequest">
@@ -3848,6 +4712,13 @@
             <br/>
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownRequest.DryRun">
+            <summary>
+            When true, simulates teardown without actually stopping or removing containers.
+            <br/>Returns what would be torn down. ALWAYS use dryRun=true first to preview the impact.
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownRequest.Timeout">
             <summary>
             Graceful shutdown timeout in seconds
@@ -3863,6 +4734,15 @@
             Also remove associated networks
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownRequest.IncludeInfrastructure">
+            <summary>
+            When true, also removes support infrastructure (Redis, RabbitMQ, MySQL, etc.).
+            <br/>This is determined by scanning compose files or finding containers in the same
+            <br/>Docker swarm/Kubernetes namespace as bannou services. USE WITH EXTREME CAUTION -
+            <br/>this will destroy all data and require a full re-deployment.
+            <br/>
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownResponse.StoppedContainers">
             <summary>
             Container IDs that were stopped
@@ -3876,6 +4756,11 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownResponse.RemovedNetworks">
             <summary>
             Networks that were removed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownResponse.RemovedInfrastructure">
+            <summary>
+            Infrastructure services that were removed (Redis, RabbitMQ, MySQL, etc.)
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.TeardownResponse.Errors">
@@ -4126,6 +5011,11 @@
             Recent restart history
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Orchestrator.ContainerStatus.Labels">
+            <summary>
+            Container labels for metadata and management
+            </summary>
+        </member>
         <member name="P:BeyondImmersion.BannouService.Orchestrator.RestartHistoryEntry.Duration">
             <summary>
             Time taken to restart
@@ -4179,6 +5069,266 @@
         <member name="P:BeyondImmersion.BannouService.Orchestrator.ConfigVersionResponse.KeyPrefixes">
             <summary>
             Configuration key prefixes present (e.g., "auth", "database")
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.IServicedataClient.ListServicesAsync(BeyondImmersion.BannouService.Servicedata.ListServicesRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List all registered game services
+            </summary>
+            <remarks>
+            Returns all game services, optionally filtered by active status.
+            </remarks>
+            <returns>Services retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.IServicedataClient.GetServiceAsync(BeyondImmersion.BannouService.Servicedata.GetServiceRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get service by ID or stub name
+            </summary>
+            <remarks>
+            Retrieves a single service by either serviceId (GUID) or stubName.
+            </remarks>
+            <returns>Service retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.IServicedataClient.CreateServiceAsync(BeyondImmersion.BannouService.Servicedata.CreateServiceRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new game service entry
+            </summary>
+            <remarks>
+            Admin-only endpoint to register a new game service in the registry.
+            </remarks>
+            <returns>Service created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.IServicedataClient.UpdateServiceAsync(BeyondImmersion.BannouService.Servicedata.UpdateServiceRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update a game service entry
+            </summary>
+            <remarks>
+            Admin-only endpoint to update an existing game service.
+            </remarks>
+            <returns>Service updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.IServicedataClient.DeleteServiceAsync(BeyondImmersion.BannouService.Servicedata.DeleteServiceRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete a game service entry
+            </summary>
+            <remarks>
+            Admin-only endpoint to remove a game service from the registry.
+            </remarks>
+            <returns>Service deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.CreateHttpClientAsync(System.Threading.CancellationToken)">
+            <summary>
+            Creates and configures an HttpClient instance for this service client.
+            Uses HttpClientFactory pattern for proper connection pooling and lifecycle management.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.WithAuthorization(System.String)">
+            <summary>
+            Sets the Authorization header for the next request.
+            Automatically prefixes with "Bearer " if not already present.
+            Returns this instance for method chaining.
+            </summary>
+            <param name="token">JWT token or authorization value</param>
+            <returns>This client instance for method chaining</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.ListServicesAsync(BeyondImmersion.BannouService.Servicedata.ListServicesRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            List all registered game services
+            </summary>
+            <remarks>
+            Returns all game services, optionally filtered by active status.
+            </remarks>
+            <returns>Services retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.GetServiceAsync(BeyondImmersion.BannouService.Servicedata.GetServiceRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Get service by ID or stub name
+            </summary>
+            <remarks>
+            Retrieves a single service by either serviceId (GUID) or stubName.
+            </remarks>
+            <returns>Service retrieved successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.CreateServiceAsync(BeyondImmersion.BannouService.Servicedata.CreateServiceRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Create a new game service entry
+            </summary>
+            <remarks>
+            Admin-only endpoint to register a new game service in the registry.
+            </remarks>
+            <returns>Service created successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.UpdateServiceAsync(BeyondImmersion.BannouService.Servicedata.UpdateServiceRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Update a game service entry
+            </summary>
+            <remarks>
+            Admin-only endpoint to update an existing game service.
+            </remarks>
+            <returns>Service updated successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.Servicedata.ServicedataClient.DeleteServiceAsync(BeyondImmersion.BannouService.Servicedata.DeleteServiceRequest,System.Threading.CancellationToken)">
+            <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+            <summary>
+            Delete a game service entry
+            </summary>
+            <remarks>
+            Admin-only endpoint to remove a game service from the registry.
+            </remarks>
+            <returns>Service deleted successfully</returns>
+            <exception cref="T:BeyondImmersion.BannouService.ApiException">A server side error occurred.</exception>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Servicedata.ListServicesRequest">
+            <summary>
+            Request to list all game services
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.ListServicesRequest.ActiveOnly">
+            <summary>
+            If true, only return active services
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Servicedata.GetServiceRequest">
+            <summary>
+            Request to get a service by ID or stub name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.GetServiceRequest.ServiceId">
+            <summary>
+            ID of the service to retrieve
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.GetServiceRequest.StubName">
+            <summary>
+            Stub name of the service to retrieve (e.g., "arcadia")
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Servicedata.CreateServiceRequest">
+            <summary>
+            Request to create a new game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.CreateServiceRequest.StubName">
+            <summary>
+            URL-safe identifier for the service (e.g., "arcadia", "fantasia")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.CreateServiceRequest.DisplayName">
+            <summary>
+            Human-readable name for the service (e.g., "Arcadia Online")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.CreateServiceRequest.Description">
+            <summary>
+            Optional description of the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.CreateServiceRequest.IsActive">
+            <summary>
+            Whether the service is currently active
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Servicedata.UpdateServiceRequest">
+            <summary>
+            Request to update an existing game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.UpdateServiceRequest.ServiceId">
+            <summary>
+            ID of the service to update
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.UpdateServiceRequest.DisplayName">
+            <summary>
+            New display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.UpdateServiceRequest.Description">
+            <summary>
+            New description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.UpdateServiceRequest.IsActive">
+            <summary>
+            New active status
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Servicedata.DeleteServiceRequest">
+            <summary>
+            Request to delete a game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.DeleteServiceRequest.ServiceId">
+            <summary>
+            ID of the service to delete
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Servicedata.ServiceInfo">
+            <summary>
+            Information about a game service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.ServiceInfo.ServiceId">
+            <summary>
+            Unique identifier for the service
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.ServiceInfo.StubName">
+            <summary>
+            URL-safe identifier (e.g., "arcadia")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.ServiceInfo.DisplayName">
+            <summary>
+            Human-readable name (e.g., "Arcadia Online")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.ServiceInfo.Description">
+            <summary>
+            Optional description
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.ServiceInfo.IsActive">
+            <summary>
+            Whether the service is currently active
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.ServiceInfo.CreatedAt">
+            <summary>
+            When the service was created
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.ServiceInfo.UpdatedAt">
+            <summary>
+            When the service was last updated
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Servicedata.ListServicesResponse">
+            <summary>
+            Response containing list of game services
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Servicedata.ListServicesResponse.TotalCount">
+            <summary>
+            Total number of services matching the filter
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.Auth.IAuthClient.LoginAsync(BeyondImmersion.BannouService.Auth.LoginRequest,System.Threading.CancellationToken)">
@@ -4474,6 +5624,11 @@
             Refresh token for obtaining new access tokens
             </summary>
         </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.RegisterResponse.ConnectUrl">
+            <summary>
+            WebSocket endpoint for Connect service
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.Auth.LoginResponse">
             <summary>
             Response from successful user login
@@ -4517,6 +5672,13 @@
         <member name="P:BeyondImmersion.BannouService.Auth.ValidateTokenResponse.SessionId">
             <summary>
             Session identifier for WebSocket connections and service routing
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.ValidateTokenResponse.Authorizations">
+            <summary>
+            Authorization strings from active subscriptions.
+            <br/>Format: "{stubName}:{state}" (e.g., "arcadia:authorized")
+            <br/>
             </summary>
         </member>
         <member name="P:BeyondImmersion.BannouService.Auth.ValidateTokenResponse.RemainingTime">
@@ -4582,6 +5744,48 @@
         <member name="T:BeyondImmersion.BannouService.Auth.SessionInvalidatedEventReason">
             <summary>
             Reason for session invalidation
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent">
+            <summary>
+            Published when a session's roles or authorizations change.
+            <br/>Permissions service subscribes to update capability compilation.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent.EventId">
+            <summary>
+            Unique identifier for this event
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent.Timestamp">
+            <summary>
+            When the event occurred
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent.AccountId">
+            <summary>
+            ID of the account whose session changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent.SessionId">
+            <summary>
+            ID of the session that changed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent.Roles">
+            <summary>
+            Current roles for the session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.BannouService.Auth.SessionUpdatedEvent.Authorizations">
+            <summary>
+            Current authorization strings (e.g., ["arcadia:authorized"])
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.BannouService.Auth.SessionUpdatedEventReason">
+            <summary>
+            Reason for session update
             </summary>
         </member>
         <member name="M:BeyondImmersion.BannouService.GameSession.IGameSessionClient.ListGameSessionsAsync(BeyondImmersion.BannouService.GameSession.ListGameSessionsRequest,System.Threading.CancellationToken)">
@@ -5305,6 +6509,323 @@
         <member name="M:BeyondImmersion.Bannou.Client.SDK.BannouClient.DisposeAsync">
             <summary>
             Disposes resources.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent">
+            <summary>
+            Sent to all session participants when the session state changes.
+            <br/>Examples: session starts, pauses, resumes, or ends.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Previous_state">
+            <summary>
+            State before the change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.New_state">
+            <summary>
+            State after the change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Reason">
+            <summary>
+            Reason for state change (e.g., "host_started", "timeout", "admin_action")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.SessionStateChangedEvent.Changed_by">
+            <summary>
+            Account ID of user who triggered the change (if applicable)
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent">
+            <summary>
+            Sent to all session participants when a new player joins.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Current_player_count">
+            <summary>
+            Total players in session after join
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerJoinedEvent.Max_players">
+            <summary>
+            Maximum allowed players
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent">
+            <summary>
+            Sent to all session participants when a player leaves voluntarily.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Player_id">
+            <summary>
+            Account ID of player who left
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Display_name">
+            <summary>
+            Display name for UI notification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.Current_player_count">
+            <summary>
+            Total players remaining after departure
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerLeftEvent.New_owner_id">
+            <summary>
+            New session owner if ownership transferred
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent">
+            <summary>
+            Sent to all session participants when a player is kicked.
+            <br/>The kicked player receives this before being removed from the session.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Kicked_player_id">
+            <summary>
+            Account ID of player who was kicked
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Kicked_player_name">
+            <summary>
+            Display name for UI notification
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Kicked_by">
+            <summary>
+            Account ID of user who performed the kick
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerKickedEvent.Reason">
+            <summary>
+            Reason provided for the kick
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent">
+            <summary>
+            Sent to recipients when a chat message is posted in the session.
+            <br/>Public messages go to all participants, whispers only to the target.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Message_id">
+            <summary>
+            Unique identifier for this chat message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Sender_id">
+            <summary>
+            Account ID of message sender
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Sender_name">
+            <summary>
+            Display name of sender
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Message">
+            <summary>
+            Chat message content
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Message_type">
+            <summary>
+            Type of chat message
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.ChatMessageReceivedEvent.Is_whisper_to_me">
+            <summary>
+            True if this is a whisper directed at the receiving client
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent">
+            <summary>
+            Sent when game state changes that all players should see.
+            <br/>Contains partial state updates rather than full state for efficiency.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Update_type">
+            <summary>
+            Type of update (game-specific, e.g., "turn_changed", "score_updated")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.State_delta">
+            <summary>
+            Partial game state changes
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Triggered_by">
+            <summary>
+            Account ID that triggered the state change
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameStateUpdatedEvent.Sequence_number">
+            <summary>
+            Monotonically increasing sequence for ordering state updates
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent">
+            <summary>
+            Sent to relevant players when a game action produces results.
+            <br/>May be sent to all players or just the acting player depending on visibility rules.
+            <br/>
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Event_name">
+            <summary>
+            Fixed event type identifier
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Session_id">
+            <summary>
+            ID of the game session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Action_id">
+            <summary>
+            ID of the action that produced this result
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Action_type">
+            <summary>
+            Type of action performed
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Actor_id">
+            <summary>
+            Account ID of player who performed the action
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Success">
+            <summary>
+            Whether the action succeeded
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Result_data">
+            <summary>
+            Action-specific result data
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.GameActionResultEvent.Visible_effects">
+            <summary>
+            Visual/audio effects other players should see
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo">
+            <summary>
+            Information about a player in the session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.Account_id">
+            <summary>
+            Player's account ID
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.Display_name">
+            <summary>
+            Player's display name
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.Role">
+            <summary>
+            Player's role in the session
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.PlayerInfo.Character_data">
+            <summary>
+            Game-specific character data
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect">
+            <summary>
+            A visual or audio effect that should be rendered
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.Effect_type">
+            <summary>
+            Type of effect (e.g., "damage_number", "particle", "sound")
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.Target_id">
+            <summary>
+            Entity the effect targets
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.Position">
+            <summary>
+            World position for the effect
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.GameSession.ClientEvents.VisibleEffect.Effect_data">
+            <summary>
+            Effect-specific parameters
             </summary>
         </member>
     </members>

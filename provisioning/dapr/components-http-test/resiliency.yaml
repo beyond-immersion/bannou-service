@@ -10,8 +10,29 @@ spec:
         maxInterval: 15s
         maxRetries: -1  # Retry indefinitely until RabbitMQ is available
 
+      # Short retry for publish operations - fail fast to avoid blocking
+      pubsubPublishRetry:
+        policy: constant
+        duration: 1s
+        maxRetries: 2  # Quick retries, then give up (event loss is acceptable)
+
+    circuitBreakers:
+      # Circuit breaker to prevent cascading failures when RabbitMQ channel is broken
+      # After 5 consecutive failures, stop trying for 30s to allow recovery
+      pubsubCircuitBreaker:
+        maxRequests: 1          # Allow 1 request through when half-open
+        interval: 30s           # Time window for failure counting
+        timeout: 30s            # How long to stay open before half-open
+        trip: consecutiveFailures > 5
+
+    timeouts:
+      # Fail fast on publish - don't block indefinitely
+      pubsubTimeout: 5s
+
   targets:
     components:
       bannou-pubsub:
         outbound:
-          retry: componentInitRetry
+          retry: pubsubPublishRetry
+          circuitBreaker: pubsubCircuitBreaker
+          timeout: pubsubTimeout

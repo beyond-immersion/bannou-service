@@ -59,8 +59,8 @@ public class ConnectController : ConnectControllerBase
                 return StatusCode(500, "Service implementation not available");
             }
 
-            // Validate and parse JWT token, extracting session ID, roles, and authorizations
-            var (sessionId, roles, authorizations) = await connectService.ValidateJWTAndExtractSessionAsync(authorization, cancellationToken);
+            // Validate and parse JWT token, extracting session ID, account ID, roles, and authorizations
+            var (sessionId, accountId, roles, authorizations) = await connectService.ValidateJWTAndExtractSessionAsync(authorization, cancellationToken);
             if (sessionId == null)
             {
                 return Unauthorized("Invalid or expired JWT token");
@@ -69,8 +69,8 @@ public class ConnectController : ConnectControllerBase
             // Accept WebSocket connection - this starts the HTTP 101 response
             var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 
-            // Handle WebSocket communication with binary protocol, passing user roles and authorizations for capability initialization
-            await connectService.HandleWebSocketCommunicationAsync(webSocket, sessionId, roles, authorizations, cancellationToken);
+            // Handle WebSocket communication with binary protocol, passing account ID, roles, and authorizations for capability initialization
+            await connectService.HandleWebSocketCommunicationAsync(webSocket, sessionId, accountId, roles, authorizations, cancellationToken);
 
             // Return EmptyResult since the response already started with 101 Switching Protocols
             return new EmptyResult();

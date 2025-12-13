@@ -136,6 +136,23 @@ public static class TestingPermissionRegistration
             }
         });
 
+        // Publish test event to a session - user role (for testing client event delivery)
+        // Users can only send to sessions they know the ID of (which they receive in their capability manifest)
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/testing/publish-test-event",
+            Method = ServiceEndpointMethod.POST,
+            Description = "Publish a test notification event to a WebSocket session",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string>()
+                }
+            }
+        });
+
         return endpoints;
     }
 

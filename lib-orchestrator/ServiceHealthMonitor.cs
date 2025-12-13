@@ -199,6 +199,33 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     }
 
     /// <summary>
+    /// Reset all service mappings to default ("bannou").
+    /// Clears all custom routing from Redis and in-memory cache, then publishes updated mappings.
+    /// </summary>
+    public async Task ResetAllMappingsToDefaultAsync()
+    {
+        try
+        {
+            // Clear all service-specific routings from Redis
+            await _redisManager.ClearAllServiceRoutingsAsync();
+
+            // Clear in-memory cache
+            _currentRoutings.Clear();
+
+            // Mark routing changed and publish immediately
+            MarkRoutingChanged();
+            await PublishFullMappingsAsync("reset to default topology");
+
+            _logger.LogInformation("Reset all service mappings to default - all services now route to 'bannou'");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to reset all service mappings to default");
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Mark that routing has changed, triggering immediate publication.
     /// </summary>
     private void MarkRoutingChanged()

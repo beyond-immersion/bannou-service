@@ -1,0 +1,390 @@
+openapi: 3.0.3
+info:
+  title: Game Session Client Events API
+  description: |
+    Server-to-client push events for the Game Session service.
+    These events notify clients of game session state changes, player actions,
+    chat messages, and game state updates delivered via WebSocket.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "game_session.{event_type}" naming convention.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Session Lifecycle Events
+    # ============================================
+
+    SessionStateChangedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to all session participants when the session state changes.
+        Examples: session starts, pauses, resumes, or ends.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - session_id
+        - previous_state
+        - new_state
+      properties:
+        event_name:
+          type: string
+          enum: ["game_session.state_changed"]
+          description: Fixed event type identifier
+        session_id:
+          type: string
+          format: uuid
+          description: ID of the game session
+        previous_state:
+          type: string
+          enum: [waiting, active, paused, finished]
+          description: State before the change
+        new_state:
+          type: string
+          enum: [waiting, active, paused, finished]
+          description: State after the change
+        reason:
+          type: string
+          nullable: true
+          description: Reason for state change (e.g., "host_started", "timeout", "admin_action")
+        changed_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: Account ID of user who triggered the change (if applicable)
+
+    # ============================================
+    # Player Events
+    # ============================================
+
+    PlayerJoinedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to all session participants when a new player joins.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - session_id
+        - player
+      properties:
+        event_name:
+          type: string
+          enum: ["game_session.player_joined"]
+          description: Fixed event type identifier
+        session_id:
+          type: string
+          format: uuid
+          description: ID of the game session
+        player:
+          $ref: '#/components/schemas/PlayerInfo'
+        current_player_count:
+          type: integer
+          description: Total players in session after join
+        max_players:
+          type: integer
+          description: Maximum allowed players
+
+    PlayerLeftEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to all session participants when a player leaves voluntarily.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - session_id
+        - player_id
+      properties:
+        event_name:
+          type: string
+          enum: ["game_session.player_left"]
+          description: Fixed event type identifier
+        session_id:
+          type: string
+          format: uuid
+          description: ID of the game session
+        player_id:
+          type: string
+          format: uuid
+          description: Account ID of player who left
+        display_name:
+          type: string
+          nullable: true
+          description: Display name for UI notification
+        current_player_count:
+          type: integer
+          description: Total players remaining after departure
+        new_owner_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: New session owner if ownership transferred
+
+    PlayerKickedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to all session participants when a player is kicked.
+        The kicked player receives this before being removed from the session.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - session_id
+        - kicked_player_id
+        - kicked_by
+      properties:
+        event_name:
+          type: string
+          enum: ["game_session.player_kicked"]
+          description: Fixed event type identifier
+        session_id:
+          type: string
+          format: uuid
+          description: ID of the game session
+        kicked_player_id:
+          type: string
+          format: uuid
+          description: Account ID of player who was kicked
+        kicked_player_name:
+          type: string
+          nullable: true
+          description: Display name for UI notification
+        kicked_by:
+          type: string
+          format: uuid
+          description: Account ID of user who performed the kick
+        reason:
+          type: string
+          nullable: true
+          description: Reason provided for the kick
+
+    # ============================================
+    # Chat Events
+    # ============================================
+
+    ChatMessageReceivedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to recipients when a chat message is posted in the session.
+        Public messages go to all participants, whispers only to the target.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - session_id
+        - message_id
+        - sender_id
+        - message
+        - message_type
+      properties:
+        event_name:
+          type: string
+          enum: ["game_session.chat_received"]
+          description: Fixed event type identifier
+        session_id:
+          type: string
+          format: uuid
+          description: ID of the game session
+        message_id:
+          type: string
+          format: uuid
+          description: Unique identifier for this chat message
+        sender_id:
+          type: string
+          format: uuid
+          description: Account ID of message sender
+        sender_name:
+          type: string
+          nullable: true
+          description: Display name of sender
+        message:
+          type: string
+          description: Chat message content
+        message_type:
+          type: string
+          enum: [public, whisper, system]
+          description: Type of chat message
+        is_whisper_to_me:
+          type: boolean
+          default: false
+          description: True if this is a whisper directed at the receiving client
+
+    # ============================================
+    # Game State Events
+    # ============================================
+
+    GameStateUpdatedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent when game state changes that all players should see.
+        Contains partial state updates rather than full state for efficiency.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - session_id
+        - update_type
+      properties:
+        event_name:
+          type: string
+          enum: ["game_session.state_updated"]
+          description: Fixed event type identifier
+        session_id:
+          type: string
+          format: uuid
+          description: ID of the game session
+        update_type:
+          type: string
+          description: Type of update (game-specific, e.g., "turn_changed", "score_updated")
+        state_delta:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Partial game state changes
+        triggered_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: Account ID that triggered the state change
+        sequence_number:
+          type: integer
+          description: Monotonically increasing sequence for ordering state updates
+
+    GameActionResultEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Sent to relevant players when a game action produces results.
+        May be sent to all players or just the acting player depending on visibility rules.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - session_id
+        - action_id
+        - action_type
+        - success
+      properties:
+        event_name:
+          type: string
+          enum: ["game_session.action_result"]
+          description: Fixed event type identifier
+        session_id:
+          type: string
+          format: uuid
+          description: ID of the game session
+        action_id:
+          type: string
+          format: uuid
+          description: ID of the action that produced this result
+        action_type:
+          type: string
+          enum: [move, interact, attack, cast_spell, use_item]
+          description: Type of action performed
+        actor_id:
+          type: string
+          format: uuid
+          description: Account ID of player who performed the action
+        success:
+          type: boolean
+          description: Whether the action succeeded
+        result_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Action-specific result data
+        visible_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisibleEffect'
+          nullable: true
+          description: Visual/audio effects other players should see
+
+    # ============================================
+    # Supporting Types
+    # ============================================
+
+    PlayerInfo:
+      type: object
+      description: Information about a player in the session
+      required:
+        - account_id
+        - role
+      properties:
+        account_id:
+          type: string
+          format: uuid
+          description: Player's account ID
+        display_name:
+          type: string
+          nullable: true
+          description: Player's display name
+        role:
+          type: string
+          enum: [player, spectator, moderator]
+          description: Player's role in the session
+        character_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Game-specific character data
+
+    VisibleEffect:
+      type: object
+      description: A visual or audio effect that should be rendered
+      required:
+        - effect_type
+      properties:
+        effect_type:
+          type: string
+          description: Type of effect (e.g., "damage_number", "particle", "sound")
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Entity the effect targets
+        position:
+          type: object
+          nullable: true
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+          description: World position for the effect
+        effect_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Effect-specific parameters

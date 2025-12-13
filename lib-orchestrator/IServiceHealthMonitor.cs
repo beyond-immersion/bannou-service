@@ -43,4 +43,11 @@ public interface IServiceHealthMonitor
     /// Called periodically (every 30s) and immediately when routing changes.
     /// </summary>
     Task PublishFullMappingsAsync(string reason);
+
+    /// <summary>
+    /// Reset all service mappings to default ("bannou").
+    /// Called when resetting to default topology.
+    /// Clears all custom routing and publishes updated mappings.
+    /// </summary>
+    Task ResetAllMappingsToDefaultAsync();
 }

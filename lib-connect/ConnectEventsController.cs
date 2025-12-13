@@ -27,82 +27,11 @@ public class ConnectEventsController : ControllerBase
         _connectService = connectService ?? throw new ArgumentNullException(nameof(connectService));
     }
 
-    /// <summary>
-    /// Handle capability update events from the Permissions service.
-    /// Called by Dapr when permissions change and connected clients need updates.
-    /// </summary>
-    [Topic("bannou-pubsub", "permissions.capabilities-updated")]
-    [HttpPost("handle-capabilities-updated")]
-    public async Task<IActionResult> HandleCapabilitiesUpdatedAsync()
-    {
-        try
-        {
-            // Read and parse event using shared helper (handles both CloudEvents and raw formats)
-            var actualEventData = await DaprEventHelper.ReadEventJsonAsync(Request);
-
-            if (actualEventData == null)
-            {
-                _logger.LogWarning("Received empty or invalid capabilities-updated event");
-                return Ok(); // Don't fail - just ignore empty/invalid events
-            }
-
-            // Extract affected sessions and service ID
-            string? serviceId = null;
-            var affectedSessions = new List<string>();
-
-            if (actualEventData.Value.TryGetProperty("serviceId", out var serviceIdElement))
-            {
-                serviceId = serviceIdElement.GetString();
-            }
-
-            if (actualEventData.Value.TryGetProperty("affectedSessions", out var sessionsElement) &&
-                sessionsElement.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var sessionElement in sessionsElement.EnumerateArray())
-                {
-                    var sessionId = sessionElement.GetString();
-                    if (!string.IsNullOrEmpty(sessionId))
-                    {
-                        affectedSessions.Add(sessionId);
-                    }
-                }
-            }
-
-            _logger.LogInformation(
-                "Processing capabilities update for service {ServiceId}, {SessionCount} affected sessions",
-                serviceId, affectedSessions.Count);
-
-            // Cast to concrete service to call capability update method
-            var connectService = _connectService as ConnectService;
-            if (connectService == null)
-            {
-                _logger.LogWarning("Connect service implementation not available for capability updates");
-                return Ok();
-            }
-
-            // Push updates to affected sessions, or all sessions if none specified
-            if (affectedSessions.Count > 0)
-            {
-                foreach (var sessionId in affectedSessions)
-                {
-                    await connectService.PushCapabilityUpdateAsync(sessionId);
-                }
-            }
-            else
-            {
-                // No specific sessions - push to all connected clients
-                await connectService.PushCapabilityUpdateToAllAsync();
-            }
-
-            _logger.LogInformation("Capability updates pushed for service {ServiceId}", serviceId);
-            return Ok();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling capabilities-updated event");
-            return Ok(); // Don't fail Dapr retries - log and continue
-        }
-    }
+    // NOTE: Capability updates use session-specific RabbitMQ channels via IClientEventPublisher.
+    // Permissions service publishes SessionCapabilitiesEvent (with actual permissions data) to
+    // CONNECT_SESSION_{sessionId} topics. Connect's ClientEventRabbitMQSubscriber receives these
+    // and calls TryHandleInternalEventAsync, which processes capabilities via ProcessCapabilitiesAsync.
+    // NO API calls from Connect to Permissions - all capability data flows via events.
 
     /// <summary>
     /// Handle session invalidation events from the Auth service.

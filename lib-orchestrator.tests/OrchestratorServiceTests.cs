@@ -266,6 +266,15 @@ public class OrchestratorServiceTests
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        // Dapr sidecar healthy (metadata endpoint)
+        _mockDaprClient
+            .Setup(x => x.GetMetadataAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dapr.Client.DaprMetadata(
+                "test-app",
+                new List<Dapr.Client.DaprActorMetadata>(),
+                new Dictionary<string, string>(),
+                new List<Dapr.Client.DaprComponentsMetadata>()));
+
         var service = CreateService();
 
         // Act
@@ -1186,5 +1195,512 @@ public class ServiceHealthMonitorRoutingProtectionTests
             x => x.RemoveServiceRoutingAsync("auth"),
             Times.Once(),
             "RemoveServiceRoutingAsync should be called on redis manager");
+    }
+
+    [Fact]
+    public async Task ResetAllMappingsToDefaultAsync_ShouldClearAllRoutingsAndPublishMappings()
+    {
+        // Arrange
+        var monitor = CreateMonitorWithEventCapture();
+
+        _mockRedisManager
+            .Setup(x => x.ClearAllServiceRoutingsAsync())
+            .Returns(Task.CompletedTask);
+
+        _mockRedisManager
+            .Setup(x => x.GetServiceRoutingsAsync())
+            .ReturnsAsync(new Dictionary<string, ServiceRouting>());
+
+        _mockEventManager
+            .Setup(x => x.PublishFullMappingsAsync(It.IsAny<FullServiceMappingsEvent>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await monitor.ResetAllMappingsToDefaultAsync();
+
+        // Assert
+        _mockRedisManager.Verify(x => x.ClearAllServiceRoutingsAsync(), Times.Once(),
+            "ClearAllServiceRoutingsAsync should be called to clear Redis routing keys");
+
+        _mockEventManager.Verify(
+            x => x.PublishFullMappingsAsync(It.Is<FullServiceMappingsEvent>(e =>
+                e.DefaultAppId == "bannou" && e.TotalServices == 0)),
+            Times.Once(),
+            "Should publish full mappings event with empty mappings");
+    }
+
+    [Fact]
+    public async Task ResetAllMappingsToDefaultAsync_ShouldClearInMemoryCache()
+    {
+        // Arrange
+        var monitor = CreateMonitorWithEventCapture();
+
+        _mockRedisManager
+            .Setup(x => x.WriteServiceRoutingAsync(It.IsAny<string>(), It.IsAny<ServiceRouting>()))
+            .Returns(Task.CompletedTask);
+
+        _mockRedisManager
+            .Setup(x => x.ClearAllServiceRoutingsAsync())
+            .Returns(Task.CompletedTask);
+
+        _mockRedisManager
+            .Setup(x => x.GetServiceRoutingsAsync())
+            .ReturnsAsync(new Dictionary<string, ServiceRouting>());
+
+        _mockEventManager
+            .Setup(x => x.PublishFullMappingsAsync(It.IsAny<FullServiceMappingsEvent>()))
+            .Returns(Task.CompletedTask);
+
+        // First, set some routings
+        await monitor.SetServiceRoutingAsync("auth", "bannou-auth");
+        await monitor.SetServiceRoutingAsync("accounts", "bannou-accounts");
+
+        // Act
+        await monitor.ResetAllMappingsToDefaultAsync();
+
+        // Now simulate a heartbeat - it should be able to initialize routing again
+        // (because in-memory cache was cleared)
+        _mockRedisManager
+            .Setup(x => x.WriteServiceHeartbeatAsync(It.IsAny<ServiceHeartbeatEvent>()))
+            .Returns(Task.CompletedTask);
+
+        var heartbeat = new ServiceHeartbeatEvent
+        {
+            AppId = "bannou",
+            ServiceId = Guid.NewGuid(),
+            Status = ServiceHeartbeatEventStatus.Healthy,
+            Services = new List<ServiceStatus>
+            {
+                new() { ServiceName = "auth", Status = ServiceStatusStatus.Healthy }
+            }
+        };
+
+        ServiceRouting? capturedRouting = null;
+        _mockRedisManager
+            .Setup(x => x.WriteServiceRoutingAsync("auth", It.IsAny<ServiceRouting>()))
+            .Callback<string, ServiceRouting>((name, routing) => capturedRouting = routing)
+            .Returns(Task.CompletedTask);
+
+        _heartbeatHandler?.Invoke(heartbeat);
+        await Task.Delay(100);
+
+        // Assert - heartbeat should initialize routing (cache was cleared)
+        Assert.NotNull(capturedRouting);
+        Assert.Equal("bannou", capturedRouting.AppId);
+    }
+}
+
+/// <summary>
+/// Tests for OrchestratorRedisManager operations.
+/// These tests verify Redis key management for deployment configuration tracking.
+/// </summary>
+public class OrchestratorRedisManagerTests
+{
+    [Fact]
+    public void ClearAllServiceRoutingsAsync_Interface_ShouldExist()
+    {
+        // Arrange & Act & Assert
+        // Verify the interface method exists (compile-time check)
+        var mockRedisManager = new Mock<IOrchestratorRedisManager>();
+        mockRedisManager.Setup(x => x.ClearAllServiceRoutingsAsync()).Returns(Task.CompletedTask);
+
+        Assert.NotNull(mockRedisManager.Object);
+    }
+
+    [Fact]
+    public void ClearCurrentConfigurationAsync_Interface_ShouldExist()
+    {
+        // Arrange & Act & Assert
+        // Verify the interface method exists (compile-time check)
+        var mockRedisManager = new Mock<IOrchestratorRedisManager>();
+        mockRedisManager.Setup(x => x.ClearCurrentConfigurationAsync()).ReturnsAsync(1);
+
+        Assert.NotNull(mockRedisManager.Object);
+    }
+
+    [Fact]
+    public async Task ClearCurrentConfigurationAsync_ShouldReturnNewVersion()
+    {
+        // Arrange
+        var mockRedisManager = new Mock<IOrchestratorRedisManager>();
+        mockRedisManager.Setup(x => x.ClearCurrentConfigurationAsync()).ReturnsAsync(5);
+
+        // Act
+        var newVersion = await mockRedisManager.Object.ClearCurrentConfigurationAsync();
+
+        // Assert
+        Assert.Equal(5, newVersion);
+    }
+}
+
+/// <summary>
+/// Tests for reset-to-default topology functionality in OrchestratorService.
+/// These tests verify the "deploy default/bannou/empty" behavior that resets
+/// to default topology by tearing down tracked deployments.
+/// </summary>
+public class OrchestratorResetToDefaultTests
+{
+    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<ILogger<OrchestratorService>> _mockLogger;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
+    private readonly Mock<IOrchestratorRedisManager> _mockRedisManager;
+    private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
+    private readonly Mock<ISmartRestartManager> _mockRestartManager;
+    private readonly Mock<IBackendDetector> _mockBackendDetector;
+    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+    private readonly OrchestratorServiceConfiguration _configuration;
+
+    public OrchestratorResetToDefaultTests()
+    {
+        _mockDaprClient = new Mock<DaprClient>();
+        _mockLogger = new Mock<ILogger<OrchestratorService>>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockRedisManager = new Mock<IOrchestratorRedisManager>();
+        _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
+        _mockRestartManager = new Mock<ISmartRestartManager>();
+        _mockBackendDetector = new Mock<IBackendDetector>();
+        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+        _configuration = new OrchestratorServiceConfiguration
+        {
+            HeartbeatTimeoutSeconds = 90,
+            DegradationThresholdMinutes = 5
+        };
+
+        // Setup logger factory
+        _mockLoggerFactory
+            .Setup(x => x.CreateLogger(It.IsAny<string>()))
+            .Returns(Mock.Of<ILogger>());
+    }
+
+    private OrchestratorService CreateService()
+    {
+        return new OrchestratorService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            _mockLoggerFactory.Object,
+            _configuration,
+            _mockRedisManager.Object,
+            _mockEventManager.Object,
+            _mockHealthMonitor.Object,
+            _mockRestartManager.Object,
+            _mockBackendDetector.Object,
+            _mockErrorEventEmitter.Object);
+    }
+
+    [Theory]
+    [InlineData("default")]
+    [InlineData("Default")]
+    [InlineData("DEFAULT")]
+    [InlineData("bannou")]
+    [InlineData("Bannou")]
+    [InlineData("BANNOU")]
+    [InlineData("")]
+    public async Task DeployAsync_WithResetPresets_ShouldTriggerResetToDefault(string? preset)
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockEventManager
+            .Setup(x => x.PublishDeploymentEventAsync(It.IsAny<DeploymentEvent>()))
+            .Returns(Task.CompletedTask);
+
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+
+        _mockBackendDetector
+            .Setup(x => x.DetectBackendsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BackendsResponse
+            {
+                Backends = new List<BackendInfo>
+                {
+                    new() { Type = BackendType.Compose, Available = true }
+                },
+                Recommended = BackendType.Compose
+            });
+
+        _mockBackendDetector
+            .Setup(x => x.CreateOrchestrator(BackendType.Compose))
+            .Returns(mockOrchestrator.Object);
+
+        // No deployment configuration - already at default
+        _mockRedisManager
+            .Setup(x => x.GetCurrentConfigurationAsync())
+            .ReturnsAsync((DeploymentConfiguration?)null);
+
+        _mockHealthMonitor
+            .Setup(x => x.ResetAllMappingsToDefaultAsync())
+            .Returns(Task.CompletedTask);
+
+        var request = new DeployRequest
+        {
+            Preset = preset ?? string.Empty
+        };
+
+        // Act
+        var (statusCode, response) = await service.DeployAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal("default", response.Preset);
+        Assert.Contains("default topology", response.Message, StringComparison.OrdinalIgnoreCase);
+
+        _mockHealthMonitor.Verify(x => x.ResetAllMappingsToDefaultAsync(), Times.Once(),
+            "ResetAllMappingsToDefaultAsync should be called for reset-to-default requests");
+    }
+
+    [Fact]
+    public async Task DeployAsync_WithTrackedDeployments_ShouldTearDownTrackedContainers()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockEventManager
+            .Setup(x => x.PublishDeploymentEventAsync(It.IsAny<DeploymentEvent>()))
+            .Returns(Task.CompletedTask);
+
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+
+        mockOrchestrator
+            .Setup(x => x.TeardownServiceAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TeardownServiceResult { Success = true, StoppedContainers = new List<string>() });
+
+        _mockBackendDetector
+            .Setup(x => x.DetectBackendsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BackendsResponse
+            {
+                Backends = new List<BackendInfo>
+                {
+                    new() { Type = BackendType.Compose, Available = true }
+                },
+                Recommended = BackendType.Compose
+            });
+
+        _mockBackendDetector
+            .Setup(x => x.CreateOrchestrator(BackendType.Compose))
+            .Returns(mockOrchestrator.Object);
+
+        // Setup: there's a tracked deployment with services on "bannou-auth"
+        var existingConfig = new DeploymentConfiguration
+        {
+            PresetName = "split-auth",
+            Services = new Dictionary<string, ServiceDeploymentConfig>
+            {
+                ["auth"] = new() { Enabled = true, AppId = "bannou-auth" },
+                ["permissions"] = new() { Enabled = true, AppId = "bannou-auth" }
+            }
+        };
+
+        _mockRedisManager
+            .Setup(x => x.GetCurrentConfigurationAsync())
+            .ReturnsAsync(existingConfig);
+
+        _mockRedisManager
+            .Setup(x => x.ClearCurrentConfigurationAsync())
+            .ReturnsAsync(2);
+
+        _mockHealthMonitor
+            .Setup(x => x.ResetAllMappingsToDefaultAsync())
+            .Returns(Task.CompletedTask);
+
+        var request = new DeployRequest
+        {
+            Preset = "default"
+        };
+
+        // Act
+        var (statusCode, response) = await service.DeployAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+
+        // Should tear down "bannou-auth" (the tracked deployment)
+        mockOrchestrator.Verify(
+            x => x.TeardownServiceAsync("bannou-auth", false, It.IsAny<CancellationToken>()),
+            Times.Once(),
+            "Should tear down tracked container bannou-auth");
+
+        // Should NOT tear down "bannou" (excluded from teardown)
+        mockOrchestrator.Verify(
+            x => x.TeardownServiceAsync("bannou", It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+            Times.Never(),
+            "Should NOT tear down default 'bannou' container");
+
+        _mockRedisManager.Verify(x => x.ClearCurrentConfigurationAsync(), Times.Once(),
+            "ClearCurrentConfigurationAsync should be called to save empty config");
+
+        _mockHealthMonitor.Verify(x => x.ResetAllMappingsToDefaultAsync(), Times.Once(),
+            "ResetAllMappingsToDefaultAsync should be called");
+    }
+
+    [Fact]
+    public async Task DeployAsync_WithDirectTopology_ShouldNotTriggerReset()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockEventManager
+            .Setup(x => x.PublishDeploymentEventAsync(It.IsAny<DeploymentEvent>()))
+            .Returns(Task.CompletedTask);
+
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+
+        mockOrchestrator
+            .Setup(x => x.DeployServiceAsync(It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeployServiceResult { Success = true, ContainerId = "test-container" });
+
+        _mockBackendDetector
+            .Setup(x => x.DetectBackendsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BackendsResponse
+            {
+                Backends = new List<BackendInfo>
+                {
+                    new() { Type = BackendType.Compose, Available = true }
+                },
+                Recommended = BackendType.Compose
+            });
+
+        _mockBackendDetector
+            .Setup(x => x.CreateOrchestrator(BackendType.Compose))
+            .Returns(mockOrchestrator.Object);
+
+        _mockRedisManager
+            .Setup(x => x.GetServiceHeartbeatsAsync())
+            .ReturnsAsync(new List<ServiceHealthStatus>
+            {
+                new() { AppId = "bannou-auth", ServiceId = "auth", Status = "healthy", LastSeen = DateTimeOffset.UtcNow }
+            });
+
+        _mockRedisManager
+            .Setup(x => x.SaveConfigurationVersionAsync(It.IsAny<DeploymentConfiguration>()))
+            .ReturnsAsync(1);
+
+        _mockHealthMonitor
+            .Setup(x => x.SetServiceRoutingAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(Task.CompletedTask);
+
+        // Request with direct topology (not a reset request because topology is specified)
+        // NOTE: Do NOT provide a preset, otherwise the service tries to load it before using the topology
+        var request = new DeployRequest
+        {
+            Backend = BackendType.Compose, // Explicitly request the mocked backend
+            Topology = new ServiceTopology
+            {
+                Nodes = new List<TopologyNode>
+                {
+                    new()
+                    {
+                        Name = "bannou-auth",
+                        DaprAppId = "bannou-auth",
+                        Services = new List<string> { "auth" }
+                    }
+                }
+            }
+        };
+
+        // Act
+        var (statusCode, response) = await service.DeployAsync(request, CancellationToken.None);
+
+        // Assert - should deploy normally, not reset
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+
+        // Should NOT call ResetAllMappingsToDefaultAsync (because direct topology was specified)
+        _mockHealthMonitor.Verify(x => x.ResetAllMappingsToDefaultAsync(), Times.Never(),
+            "ResetAllMappingsToDefaultAsync should NOT be called when direct topology is specified");
+
+        // Should call DeployServiceAsync
+        mockOrchestrator.Verify(
+            x => x.DeployServiceAsync(It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()),
+            Times.Once(),
+            "Should deploy the topology node");
+    }
+
+    [Fact]
+    public async Task DeployAsync_ResetWithAllServicesOnBannou_ShouldClearConfigButNotTearDown()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockEventManager
+            .Setup(x => x.PublishDeploymentEventAsync(It.IsAny<DeploymentEvent>()))
+            .Returns(Task.CompletedTask);
+
+        var mockOrchestrator = new Mock<IContainerOrchestrator>();
+        mockOrchestrator.Setup(x => x.BackendType).Returns(BackendType.Compose);
+
+        _mockBackendDetector
+            .Setup(x => x.DetectBackendsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BackendsResponse
+            {
+                Backends = new List<BackendInfo>
+                {
+                    new() { Type = BackendType.Compose, Available = true }
+                },
+                Recommended = BackendType.Compose
+            });
+
+        _mockBackendDetector
+            .Setup(x => x.CreateOrchestrator(BackendType.Compose))
+            .Returns(mockOrchestrator.Object);
+
+        // All services are on "bannou" - nothing to tear down
+        var existingConfig = new DeploymentConfiguration
+        {
+            PresetName = "monolith",
+            Services = new Dictionary<string, ServiceDeploymentConfig>
+            {
+                ["auth"] = new() { Enabled = true, AppId = "bannou" },
+                ["accounts"] = new() { Enabled = true, AppId = "bannou" }
+            }
+        };
+
+        _mockRedisManager
+            .Setup(x => x.GetCurrentConfigurationAsync())
+            .ReturnsAsync(existingConfig);
+
+        _mockRedisManager
+            .Setup(x => x.ClearCurrentConfigurationAsync())
+            .ReturnsAsync(2);
+
+        _mockHealthMonitor
+            .Setup(x => x.ResetAllMappingsToDefaultAsync())
+            .Returns(Task.CompletedTask);
+
+        var request = new DeployRequest
+        {
+            Preset = "default"
+        };
+
+        // Act
+        var (statusCode, response) = await service.DeployAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Contains("'bannou'", response.Message);
+
+        // Should NOT tear down any containers (all on "bannou")
+        mockOrchestrator.Verify(
+            x => x.TeardownServiceAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+            Times.Never(),
+            "Should NOT tear down any containers when all services are on 'bannou'");
+
+        // Should still clear configuration
+        _mockRedisManager.Verify(x => x.ClearCurrentConfigurationAsync(), Times.Once(),
+            "ClearCurrentConfigurationAsync should still be called");
+
+        _mockHealthMonitor.Verify(x => x.ResetAllMappingsToDefaultAsync(), Times.Once(),
+            "ResetAllMappingsToDefaultAsync should be called");
     }
 }
