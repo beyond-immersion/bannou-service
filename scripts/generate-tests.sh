@@ -85,7 +85,7 @@ if [ ! -f "$TEST_PROJECT_FILE" ]; then
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.2" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="Dapr.Client" Version="1.15.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.11" />
   </ItemGroup>
 
   <ItemGroup>
