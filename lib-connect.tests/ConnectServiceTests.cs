@@ -2,7 +2,6 @@ using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Permissions;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.AspNetCore.Builder;
@@ -26,7 +25,6 @@ public class ConnectServiceTests
     private readonly Mock<ILoggerFactory> _mockLoggerFactory;
     private readonly ConnectServiceConfiguration _configuration;
     private readonly Mock<IAuthClient> _mockAuthClient;
-    private readonly Mock<IPermissionsClient> _mockPermissionsClient;
     private readonly Mock<DaprClient> _mockDaprClient;
     private readonly Mock<IServiceAppMappingResolver> _mockAppMappingResolver;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
@@ -44,7 +42,6 @@ public class ConnectServiceTests
             BinaryProtocolVersion = "2.0"
         };
         _mockAuthClient = new Mock<IAuthClient>();
-        _mockPermissionsClient = new Mock<IPermissionsClient>();
         _mockDaprClient = new Mock<DaprClient>();
         _mockAppMappingResolver = new Mock<IServiceAppMappingResolver>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
@@ -569,7 +566,6 @@ public class ConnectServiceTests
     {
         return new ConnectService(
             _mockAuthClient.Object,
-            _mockPermissionsClient.Object,
             _mockDaprClient.Object,
             _mockAppMappingResolver.Object,
             _configuration,

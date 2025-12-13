@@ -33,6 +33,7 @@ public static class ClientEventWhitelist
         "game_session.player_left",
         "game_session.state_changed",
         "game_session.state_updated",
+        "permissions.session_capabilities",
         "system.error",
         "system.notification",
     };

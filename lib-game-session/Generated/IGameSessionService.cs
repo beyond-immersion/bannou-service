@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// <summary>
 /// Service interface for GameSession API
 /// </summary>
-public interface IGameSessionService : IDaprService
+public partial interface IGameSessionService : IDaprService
 {
     /// <summary>
     /// ListGameSessions operation

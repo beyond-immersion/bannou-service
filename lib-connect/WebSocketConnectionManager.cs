@@ -71,6 +71,29 @@ public class WebSocketConnectionManager
     }
 
     /// <summary>
+    /// Removes a WebSocket connection only if the WebSocket instance matches.
+    /// This prevents race conditions during session subsume where the old connection's
+    /// cleanup could accidentally remove a new connection that replaced it.
+    /// </summary>
+    /// <param name="sessionId">The session ID to remove.</param>
+    /// <param name="expectedWebSocket">The WebSocket instance that must match for removal.</param>
+    /// <returns>True if the connection was removed, false if not found or instance didn't match.</returns>
+    public virtual bool RemoveConnectionIfMatch(string sessionId, WebSocket expectedWebSocket)
+    {
+        if (_connections.TryGetValue(sessionId, out var connection))
+        {
+            // Only remove if it's the SAME WebSocket instance (reference equality)
+            // This ensures that during subsume, the old connection's cleanup doesn't
+            // accidentally remove the new connection that replaced it
+            if (ReferenceEquals(connection.WebSocket, expectedWebSocket))
+            {
+                return _connections.TryRemove(new KeyValuePair<string, WebSocketConnection>(sessionId, connection));
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
     /// Gets all active connection session IDs.
     /// </summary>
     public IEnumerable<string> GetActiveSessionIds()

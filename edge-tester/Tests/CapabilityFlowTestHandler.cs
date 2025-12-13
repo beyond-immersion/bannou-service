@@ -744,15 +744,17 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             var initialApiCount = initialApis?.Count ?? 0;
             Console.WriteLine($"✅ Initial capability manifest: {initialApiCount} APIs, sessionId: {sessionId}");
 
-            // Now we need to set the auth:authenticated state via HTTP
+            // Now we need to set the auth:authenticated state via admin WebSocket
             // This should trigger a capability update event → new WebSocket message
-            Console.WriteLine("📤 Setting auth:authenticated state via HTTP API...");
+            Console.WriteLine("📤 Setting auth:authenticated state via admin WebSocket...");
 
-            using var httpClient = new HttpClient();
-            var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-            var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
-            httpClient.BaseAddress = new Uri($"http://{openrestyHost}:{openrestyPort}");
-            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + accessToken);
+            var adminClient = Program.AdminClient;
+            if (adminClient == null || !adminClient.IsConnected)
+            {
+                Console.WriteLine("❌ Admin client not connected - cannot update session state");
+                Console.WriteLine("   Permissions APIs require admin role. Check AdminEmails/AdminEmailDomain configuration.");
+                return false;
+            }
 
             var stateUpdate = new
             {
@@ -761,15 +763,22 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 newState = "authenticated"
             };
 
-            var httpResponse = await httpClient.PostAsJsonAsync("/permissions/session/state", stateUpdate);
-
-            if (!httpResponse.IsSuccessStatusCode)
+            try
             {
-                Console.WriteLine($"⚠️ State update returned {httpResponse.StatusCode} - may not have permissions API access");
-                // This is expected if permissions service doesn't expose the endpoint to users
-                // The test still validates the WebSocket capability flow
-                Console.WriteLine("ℹ️ State update via HTTP not available - this validates the state system is properly restricted");
-                return true; // Pass - the restriction is correct behavior
+                var response = await adminClient.InvokeAsync<object, JsonElement>(
+                    "POST",
+                    "/permissions/update-session-state",
+                    stateUpdate,
+                    timeout: TimeSpan.FromSeconds(30));
+
+                Console.WriteLine($"✅ State update succeeded: {response.GetRawText().Substring(0, Math.Min(200, response.GetRawText().Length))}...");
+            }
+            catch (Exception ex)
+            {
+                // TENET 12: If state update fails, we cannot test capability updates
+                Console.WriteLine($"❌ State update failed: {ex.Message}");
+                Console.WriteLine("   Cannot test state-based capability updates without state update API access");
+                return false;
             }
 
             Console.WriteLine("✅ State update succeeded, waiting for capability manifest update...");
@@ -800,20 +809,24 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     }
                     else
                     {
-                        Console.WriteLine($"⚠️ API count did not increase: {initialApiCount} → {updatedApiCount}");
-                        return true; // Still pass - we received the update
+                        // TENET 12: API count should increase when auth:authenticated is set
+                        Console.WriteLine($"❌ API count did not increase: {initialApiCount} → {updatedApiCount}");
+                        Console.WriteLine("   State update should grant additional API access");
+                        return false;
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"📥 Received message type: {updatedType}");
-                    return true; // Other message types are acceptable
+                    // TENET 12: We expected capability_manifest, not something else
+                    Console.WriteLine($"❌ Expected capability_manifest but received: {updatedType}");
+                    return false;
                 }
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("⚠️ Timeout waiting for capability update - state may not trigger WebSocket push");
-                return true; // Pass - timeout is acceptable if the state was set
+                // TENET 11: Timeout is a failure - state change should trigger WebSocket push
+                Console.WriteLine("❌ Timeout waiting for capability update - state change did not trigger WebSocket push");
+                return false;
             }
         }
         catch (Exception ex)

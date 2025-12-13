@@ -449,6 +449,17 @@ public class OrchestratorService : IOrchestratorService
             {
                 var appId = node.DaprAppId ?? node.Name;
 
+                // VALIDATION: Reject any node attempting to deploy orchestrator service
+                // Orchestrator cannot deploy itself or another orchestrator - route cannot be overridden
+                if (node.Services.Any(s => s.Equals("orchestrator", StringComparison.OrdinalIgnoreCase)))
+                {
+                    _logger.LogError(
+                        "REJECTED: Node '{NodeName}' contains 'orchestrator' service - orchestrator cannot deploy itself or another orchestrator",
+                        node.Name);
+                    failedServices.Add($"{node.Name}: Cannot deploy orchestrator service - route cannot be overridden");
+                    continue; // Skip this node
+                }
+
                 // Start with preset environment (lowest priority)
                 var environment = new Dictionary<string, string>();
                 if (presetEnvironment != null)

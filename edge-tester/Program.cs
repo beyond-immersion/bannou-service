@@ -799,6 +799,11 @@ public class Program
         foreach (ServiceTest serviceTest in gameSessionTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
+        // load client event tests (tests session-specific event delivery via RabbitMQ)
+        var clientEventTestHandler = new ClientEventTestHandler();
+        foreach (ServiceTest serviceTest in clientEventTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
         // load split-service routing tests (MUST BE LAST - modifies deployment topology)
         // These tests deploy a multi-node configuration and validate dynamic routing
         var splitRoutingTestHandler = new SplitServiceRoutingTestHandler();

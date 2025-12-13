@@ -4,7 +4,7 @@
 > **Last Updated**: 2025-12-11
 > **Scope**: All Bannou microservices and related infrastructure
 
-This document establishes the mandatory tenets for developing high-quality Bannou services. All service implementations, tests, and infrastructure MUST adhere to these tenets.
+This document establishes the mandatory tenets for developing high-quality Bannou services. All service implementations, tests, and infrastructure MUST adhere to these tenets. Tenets must not be changed or added without EXPLICIT approval, without exception.
 
 ---
 
@@ -82,9 +82,9 @@ var (statusCode, result) = await _accountsClient.GetAccountAsync(request, ct);
 var response = await httpClient.PostAsync("http://accounts/api/..."); // NO!
 ```
 
-### Exception: Orchestrator Service
+### Exceptions: Orchestrator Service and Connect Service
 
-Orchestrator uses direct Redis/RabbitMQ connections to avoid Dapr chicken-and-egg startup dependency. This is the **only** exception.
+Orchestrator uses direct Redis/RabbitMQ connections to avoid Dapr chicken-and-egg startup dependency. Connect uses a direct RabbitMQ for dynamic per-session channel subscriptions, which Dapr doesn't support. These are the **only** exceptions.
 
 ### State Store Naming Convention
 
@@ -605,6 +605,64 @@ await daprClient.PublishEventAsync("bannou-pubsub", "entity.action", event);
 
 ---
 
+## Tenet 12: Test Integrity (ABSOLUTE)
+
+**Rule**: Tests MUST assert CORRECT expected behavior. NEVER modify a failing test to match buggy implementation.
+
+### The Golden Rule
+
+**A failing test with correct assertions = implementation bug that needs fixing.**
+
+**NEVER**:
+- Change `Times.Never` to `Times.AtLeastOnce` to make tests pass
+- Remove assertions that "inconveniently" fail
+- Weaken test conditions to accommodate wrong behavior
+- Add exceptions or special cases to avoid test failures
+- Claim success when tests fail
+
+### When a Test Fails
+
+1. **Verify the test is correct** - Does it assert the expected behavior per requirements?
+2. **If test is correct**: The IMPLEMENTATION is wrong - fix the implementation
+3. **If test is wrong**: Fix the test to assert correct behavior, then ensure implementation passes
+4. **NEVER**: Change a correct test to pass with buggy implementation
+
+### Example: The Session Publishing Bug
+
+```csharp
+// CORRECT TEST - asserts sessions without WebSocket connections should NOT receive events
+_mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+    "session-without-connection",
+    It.IsAny<CapabilitiesRefreshEvent>(),
+    It.IsAny<CancellationToken>()), Times.Never);  // CORRECT
+
+// WRONG "FIX" - changing to pass with buggy implementation
+_mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+    "session-without-connection",
+    It.IsAny<CapabilitiesRefreshEvent>(),
+    It.IsAny<CancellationToken>()), Times.AtLeastOnce);  // HIDES BUG!
+```
+
+### Why This Matters
+
+- **Masked bugs**: Changing tests hides real issues until production
+- **False confidence**: Green tests with weakened assertions are worthless
+- **Technical debt**: Hidden bugs compound and cause cascading failures
+- **Production crashes**: The session publishing bug causes RabbitMQ channel crashes
+- **Trust erosion**: Tests that don't test anything destroy pipeline confidence
+
+### Reporting Requirements
+
+When a test fails, report:
+1. What the test was asserting (the expected behavior)
+2. What the implementation actually does (the actual behavior)
+3. Where in the implementation the bug exists
+4. The impact of the bug (e.g., "crashes RabbitMQ channel")
+
+**DO NOT** silently change the test and claim success.
+
+---
+
 ## Quick Reference: Common Violations
 
 | Violation | Tenet | Fix |
@@ -618,6 +676,7 @@ await daprClient.PublishEventAsync("bannou-pubsub", "entity.action", event);
 | No tests for service | 9 | Add three-tier tests |
 | Missing x-permissions | 10 | Add to schema |
 | HTTP fallback in tests | 11 | Remove fallback, fix root cause |
+| Changing test to pass with buggy impl | 12 | Keep test, fix implementation |
 
 ---
 

@@ -190,6 +190,41 @@ components:
           default: true
           description: Whether the client can retry the operation
 
+    SessionCapabilitiesEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseClientEvent'
+      type: object
+      x-client-event: true
+      description: |
+        Internal event carrying compiled capabilities from Permissions to Connect.
+        NOT forwarded to clients - Connect intercepts, generates client-salted GUIDs,
+        and sends CapabilityManifestEvent to the client.
+      required:
+        - event_name
+        - event_id
+        - timestamp
+        - session_id
+        - permissions
+      properties:
+        event_name:
+          type: string
+          enum: ["permissions.session_capabilities"]
+          description: Fixed event type identifier (internal, not forwarded to client)
+        session_id:
+          type: string
+          description: Session ID these capabilities apply to
+        permissions:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Map of ServiceID -> List of available methods (e.g., "accounts" -> ["POST:/get-account"])
+        reason:
+          type: string
+          nullable: true
+          description: Why capabilities were sent (e.g., "session_connected", "service_registered", "role_changed")
+
     SystemNotificationEvent:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'

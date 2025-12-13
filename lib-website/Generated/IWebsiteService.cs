@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Website;
 /// <summary>
 /// Service interface for Website API
 /// </summary>
-public interface IWebsiteService : IDaprService
+public partial interface IWebsiteService : IDaprService
 {
     /// <summary>
     /// GetStatus operation

@@ -197,6 +197,52 @@ public class TestingController : ControllerBase
     }
 
     /// <summary>
+    /// Publishes a test notification event to a specific WebSocket session.
+    /// Used for testing the client event delivery system.
+    /// </summary>
+    /// <param name="request">Request containing session ID and optional message</param>
+    /// <returns>Result of the event publication</returns>
+    [HttpPost("publish-test-event")]
+    public async Task<IActionResult> PublishTestEvent([FromBody] PublishTestEventRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(request.SessionId))
+            {
+                return BadRequest(new { Success = false, Message = "Session ID is required" });
+            }
+
+            _logger.LogInformation("Received request to publish test event to session {SessionId}", request.SessionId);
+
+            var (statusCode, response) = await _testingService.PublishTestEventAsync(
+                request.SessionId,
+                request.Message ?? "Test notification",
+                HttpContext.RequestAborted);
+
+            return statusCode switch
+            {
+                StatusCodes.OK => Ok(response),
+                StatusCodes.BadRequest => BadRequest(response),
+                _ => StatusCode(500, response)
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error publishing test event");
+            return StatusCode(500, new { Success = false, Message = "Internal error", Error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Request model for publishing test events.
+    /// </summary>
+    public class PublishTestEventRequest
+    {
+        public string SessionId { get; set; } = string.Empty;
+        public string? Message { get; set; }
+    }
+
+    /// <summary>
     /// Debug endpoint to log and return the actual HTTP request path received by the controller.
     /// This helps diagnose routing issues, particularly for verifying Dapr path handling.
     /// </summary>

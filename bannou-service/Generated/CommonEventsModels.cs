@@ -549,6 +549,148 @@ public partial class FullServiceMappingsEvent
 
 }
 
+/// <summary>
+/// Published by Connect service when a WebSocket connection is fully established.
+/// <br/>This event ensures the RabbitMQ exchange exists before any service publishes
+/// <br/>to the session-specific topic (CONNECT_SESSION_{sessionId}).
+/// <br/>Permissions service uses this to track activeConnections and compile capabilities.
+/// <br/>The roles and authorizations enable event-driven capability compilation without
+/// <br/>synchronous API calls from Connect to Permissions.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionConnectedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this connection event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the WebSocket connection was established
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Session ID that just connected via WebSocket
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID owning the session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// User roles from JWT (e.g., ["user", "admin"]). Used by Permissions to compile capabilities.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roles")]
+    public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
+
+    /// <summary>
+    /// Authorization states from JWT (e.g., ["arcadia:authorized"]). Format is "serviceId:state".
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorizations")]
+    public System.Collections.Generic.ICollection<string>? Authorizations { get; set; } = default!;
+
+    /// <summary>
+    /// Connect service instance handling this connection (for debugging)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("connectInstanceId")]
+    public System.Guid? ConnectInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Optional client metadata (version, platform, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("clientInfo")]
+    public object? ClientInfo { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
+/// <summary>
+/// Published by Connect service when a WebSocket connection is closed.
+/// <br/>Used by Permissions service to remove session from activeConnections.
+/// <br/>Also enables cleanup of session-specific resources across services.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionDisconnectedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this disconnection event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the WebSocket connection was closed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Session ID that disconnected
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID that was connected (if known)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    public string? AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Disconnect reason (logout, timeout, error, server_shutdown)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Whether session can reconnect within the reconnection window
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reconnectable")]
+    public bool Reconnectable { get; set; } = false;
+
+    /// <summary>
+    /// How long the session was connected (for metrics)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("durationSeconds")]
+    public int? DurationSeconds { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+    {
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+        set { _additionalProperties = value; }
+    }
+
+}
+
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum ServiceEndpointMethod
 {

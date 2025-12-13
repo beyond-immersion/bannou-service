@@ -1296,8 +1296,8 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("⚠️ Timeout on second WebSocket - may not have received capability manifest yet");
-            // This isn't necessarily a failure - the second connection is still open
+            Console.WriteLine("❌ Timeout on second WebSocket - may not have received capability manifest");
+            ws2Open = false;
         }
         catch (Exception ex)
         {

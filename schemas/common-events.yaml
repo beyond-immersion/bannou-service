@@ -318,3 +318,94 @@ components:
         totalServices:
           type: integer
           description: Total number of services in the mappings dictionary
+
+    SessionConnectedEvent:
+      type: object
+      description: |
+        Published by Connect service when a WebSocket connection is fully established.
+        This event ensures the RabbitMQ exchange exists before any service publishes
+        to the session-specific topic (CONNECT_SESSION_{sessionId}).
+        Permissions service uses this to track activeConnections and compile capabilities.
+        The roles and authorizations enable event-driven capability compilation without
+        synchronous API calls from Connect to Permissions.
+      required:
+        - eventId
+        - timestamp
+        - sessionId
+        - accountId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this connection event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the WebSocket connection was established
+        sessionId:
+          type: string
+          description: Session ID that just connected via WebSocket
+        accountId:
+          type: string
+          description: Account ID owning the session
+        roles:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: User roles from JWT (e.g., ["user", "admin"]). Used by Permissions to compile capabilities.
+        authorizations:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Authorization states from JWT (e.g., ["arcadia:authorized"]). Format is "serviceId:state".
+        connectInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Connect service instance handling this connection (for debugging)
+        clientInfo:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Optional client metadata (version, platform, etc.)
+
+    SessionDisconnectedEvent:
+      type: object
+      description: |
+        Published by Connect service when a WebSocket connection is closed.
+        Used by Permissions service to remove session from activeConnections.
+        Also enables cleanup of session-specific resources across services.
+      required:
+        - eventId
+        - timestamp
+        - sessionId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this disconnection event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the WebSocket connection was closed
+        sessionId:
+          type: string
+          description: Session ID that disconnected
+        accountId:
+          type: string
+          nullable: true
+          description: Account ID that was connected (if known)
+        reason:
+          type: string
+          nullable: true
+          description: Disconnect reason (logout, timeout, error, server_shutdown)
+        reconnectable:
+          type: boolean
+          default: false
+          description: Whether session can reconnect within the reconnection window
+        durationSeconds:
+          type: integer
+          nullable: true
+          description: How long the session was connected (for metrics)

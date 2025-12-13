@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// <summary>
 /// Service interface for Connect API
 /// </summary>
-public interface IConnectService : IDaprService
+public partial interface IConnectService : IDaprService
 {
     /// <summary>
     /// ProxyInternalRequest operation

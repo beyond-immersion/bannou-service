@@ -272,6 +272,46 @@ public partial class SystemErrorEvent : BaseClientEvent
 }
 
 /// <summary>
+/// Internal event carrying compiled capabilities from Permissions to Connect.
+/// <br/>NOT forwarded to clients - Connect intercepts, generates client-salted GUIDs,
+/// <br/>and sends CapabilityManifestEvent to the client.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionCapabilitiesEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier (internal, not forwarded to client)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("event_name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionCapabilitiesEventEvent_name Event_name { get; set; } = default!;
+
+    /// <summary>
+    /// Session ID these capabilities apply to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("session_id")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Session_id { get; set; } = default!;
+
+    /// <summary>
+    /// Map of ServiceID -&gt; List of available methods (e.g., "accounts" -&gt; ["POST:/get-account"])
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("permissions")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
+
+    /// <summary>
+    /// Why capabilities were sent (e.g., "session_connected", "service_registered", "role_changed")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Generic notification event for system-level messages.
 /// <br/>Used for announcements, maintenance notices, etc.
 /// <br/>
@@ -359,6 +399,15 @@ public enum SystemErrorEventEvent_name
 
     [System.Runtime.Serialization.EnumMember(Value = @"system.error")]
     System_error = 0,
+
+}
+
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SessionCapabilitiesEventEvent_name
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"permissions.session_capabilities")]
+    Permissions_session_capabilities = 0,
 
 }
 

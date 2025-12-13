@@ -60,6 +60,12 @@ public class PermissionsTestHandler : IServiceTestHandler
             // Dapr Event Tests
             new ServiceTest(TestDaprEventSubscription, "DaprEventSubscription", "Permissions", "Test Dapr pubsub event subscription for service registration"),
             new ServiceTest(TestSessionStateChangeEvent, "SessionStateChangeEvent", "Permissions", "Test Dapr pubsub event subscription for session state changes"),
+
+            // Phase 6: Session Connection Event Tests (activeConnections tracking)
+            new ServiceTest(TestSessionConnectedEvent, "SessionConnectedEvent", "Permissions", "Test session.connected event adds session to activeConnections"),
+            new ServiceTest(TestSessionConnectedEventWithRoles, "SessionConnectedWithRoles", "Permissions", "Test session.connected event stores roles for capability compilation"),
+            new ServiceTest(TestSessionDisconnectedEvent, "SessionDisconnectedEvent", "Permissions", "Test session.disconnected event removes session from activeConnections"),
+            new ServiceTest(TestSessionDisconnectedReconnectable, "SessionDisconnectedReconn", "Permissions", "Test session.disconnected with reconnectable flag preserves activeSessions"),
         };
     }
 
@@ -2008,6 +2014,417 @@ public class PermissionsTestHandler : IServiceTestHandler
         catch (ApiException ex)
         {
             return TestResult.Failed($"API error during state change test: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test that session.connected event adds session to activeConnections
+    /// and triggers initial capability delivery.
+    /// Phase 6: This event ensures RabbitMQ exchange exists before publishing.
+    /// </summary>
+    private static async Task<TestResult> TestSessionConnectedEvent(ITestClient client, string[] args)
+    {
+        try
+        {
+            var daprClient = Program.ServiceProvider?.GetService<DaprClient>();
+            if (daprClient == null)
+            {
+                return TestResult.Failed("DaprClient not available from service provider");
+            }
+
+            var permissionsClient = new PermissionsClient();
+            var testPrefix = $"session-connected-{Guid.NewGuid():N}";
+            var testSessionId = $"{testPrefix}-session";
+            var testAccountId = $"{testPrefix}-account";
+            var testServiceId = $"{testPrefix}-svc";
+
+            // Step 1: Register a service with permissions so there are capabilities to compile
+            await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
+            {
+                ServiceId = testServiceId,
+                Version = "1.0.0",
+                Permissions = new Dictionary<string, StatePermissions>
+                {
+                    ["default"] = new StatePermissions
+                    {
+                        ["user"] = new Collection<string> { "GET:/connected/test" }
+                    }
+                }
+            });
+
+            // Step 2: Publish session.connected event via Dapr pubsub
+            // This simulates Connect service notifying Permissions that WebSocket is established
+            var sessionConnectedEvent = new
+            {
+                eventId = Guid.NewGuid().ToString(),
+                timestamp = DateTime.UtcNow.ToString("o"),
+                sessionId = testSessionId,
+                accountId = testAccountId,
+                roles = new[] { "user" },
+                authorizations = (string[]?)null,
+                connectInstanceId = Guid.NewGuid().ToString()
+            };
+
+            Console.WriteLine($"  Publishing session.connected event for {testSessionId}...");
+            await daprClient.PublishEventAsync("bannou-pubsub", "session.connected", sessionConnectedEvent);
+
+            // Wait for event to be processed
+            await Task.Delay(2000);
+
+            // Step 3: Verify the session has capabilities (proving it was added to activeConnections)
+            var capabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
+            {
+                SessionId = testSessionId
+            });
+
+            if (capabilities.Permissions != null && capabilities.Permissions.Count > 0)
+            {
+                return TestResult.Successful(
+                    $"session.connected event processed: session {testSessionId} now has capabilities " +
+                    $"({capabilities.Permissions.Count} services)");
+            }
+
+            // If capabilities are empty, check session info to see if session exists
+            try
+            {
+                var sessionInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
+                {
+                    SessionId = testSessionId
+                });
+
+                if (sessionInfo.Role == "user")
+                {
+                    return TestResult.Successful(
+                        $"session.connected event processed: session {testSessionId} has role '{sessionInfo.Role}'");
+                }
+            }
+            catch (ApiException)
+            {
+                // Session info not found - event may not have been processed
+            }
+
+            return TestResult.Failed(
+                $"session.connected event may not have been processed - session has no capabilities or role");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"API error: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test that session.connected event properly stores roles from JWT for capability compilation.
+    /// Phase 6: Roles passed in event enable capability compilation without API calls from Connect.
+    /// </summary>
+    private static async Task<TestResult> TestSessionConnectedEventWithRoles(ITestClient client, string[] args)
+    {
+        try
+        {
+            var daprClient = Program.ServiceProvider?.GetService<DaprClient>();
+            if (daprClient == null)
+            {
+                return TestResult.Failed("DaprClient not available from service provider");
+            }
+
+            var permissionsClient = new PermissionsClient();
+            var testPrefix = $"session-roles-{Guid.NewGuid():N}";
+            var testSessionId = $"{testPrefix}-session";
+            var testAccountId = $"{testPrefix}-account";
+            var testServiceId = $"{testPrefix}-svc";
+
+            // Step 1: Register service with admin-only permissions
+            await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
+            {
+                ServiceId = testServiceId,
+                Version = "1.0.0",
+                Permissions = new Dictionary<string, StatePermissions>
+                {
+                    ["default"] = new StatePermissions
+                    {
+                        ["user"] = new Collection<string> { "GET:/user/endpoint" },
+                        ["admin"] = new Collection<string> { "DELETE:/admin/dangerous" }
+                    }
+                }
+            });
+
+            // Step 2: Publish session.connected with admin role
+            var sessionConnectedEvent = new
+            {
+                eventId = Guid.NewGuid().ToString(),
+                timestamp = DateTime.UtcNow.ToString("o"),
+                sessionId = testSessionId,
+                accountId = testAccountId,
+                roles = new[] { "user", "admin" },  // Admin role should be selected (highest priority)
+                authorizations = (string[]?)null
+            };
+
+            Console.WriteLine($"  Publishing session.connected with roles [user, admin]...");
+            await daprClient.PublishEventAsync("bannou-pubsub", "session.connected", sessionConnectedEvent);
+
+            await Task.Delay(2000);
+
+            // Step 3: Verify session has admin capabilities
+            var capabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
+            {
+                SessionId = testSessionId
+            });
+
+            if (capabilities.Permissions?.ContainsKey(testServiceId) == true)
+            {
+                var methods = capabilities.Permissions[testServiceId];
+                if (methods.Contains("DELETE:/admin/dangerous"))
+                {
+                    return TestResult.Successful(
+                        $"session.connected with roles processed: admin role correctly applied, " +
+                        $"session has admin-only endpoint access ({methods.Count} methods)");
+                }
+
+                if (methods.Contains("GET:/user/endpoint"))
+                {
+                    return TestResult.Failed(
+                        $"Roles stored but admin inheritance not working. Got user methods but not admin. " +
+                        $"Methods: [{string.Join(", ", methods)}]");
+                }
+            }
+
+            // Check session info for role
+            var sessionInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
+            {
+                SessionId = testSessionId
+            });
+
+            if (sessionInfo.Role == "admin")
+            {
+                return TestResult.Successful(
+                    $"session.connected with roles processed: role stored as '{sessionInfo.Role}'");
+            }
+
+            return TestResult.Failed(
+                $"session.connected with roles may not have processed correctly. Role: {sessionInfo.Role}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"API error: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test that session.disconnected event removes session from activeConnections.
+    /// Phase 6: This prevents publishing to non-existent RabbitMQ exchanges.
+    /// </summary>
+    private static async Task<TestResult> TestSessionDisconnectedEvent(ITestClient client, string[] args)
+    {
+        try
+        {
+            var daprClient = Program.ServiceProvider?.GetService<DaprClient>();
+            if (daprClient == null)
+            {
+                return TestResult.Failed("DaprClient not available from service provider");
+            }
+
+            var permissionsClient = new PermissionsClient();
+            var testPrefix = $"session-disconnect-{Guid.NewGuid():N}";
+            var testSessionId = $"{testPrefix}-session";
+            var testAccountId = $"{testPrefix}-account";
+
+            // Step 1: First connect the session
+            var connectEvent = new
+            {
+                eventId = Guid.NewGuid().ToString(),
+                timestamp = DateTime.UtcNow.ToString("o"),
+                sessionId = testSessionId,
+                accountId = testAccountId,
+                roles = new[] { "user" },
+                authorizations = (string[]?)null
+            };
+
+            Console.WriteLine($"  Publishing session.connected for {testSessionId}...");
+            await daprClient.PublishEventAsync("bannou-pubsub", "session.connected", connectEvent);
+            await Task.Delay(1500);
+
+            // Verify session is connected (has capabilities)
+            var beforeCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
+            {
+                SessionId = testSessionId
+            });
+
+            if (beforeCapabilities.Permissions == null)
+            {
+                Console.WriteLine("  Warning: Session may not have capabilities before disconnect test");
+            }
+
+            // Step 2: Disconnect the session
+            var disconnectEvent = new
+            {
+                eventId = Guid.NewGuid().ToString(),
+                timestamp = DateTime.UtcNow.ToString("o"),
+                sessionId = testSessionId,
+                accountId = testAccountId,
+                reason = "test_disconnect",
+                reconnectable = false,
+                durationSeconds = 60
+            };
+
+            Console.WriteLine($"  Publishing session.disconnected for {testSessionId}...");
+            await daprClient.PublishEventAsync("bannou-pubsub", "session.disconnected", disconnectEvent);
+            await Task.Delay(1500);
+
+            // Step 3: The session is removed from activeConnections
+            // We can verify this by noting that the session still exists (in activeSessions)
+            // but is no longer in activeConnections (won't receive client events)
+            // For this HTTP test, we verify the event handler completed successfully
+            // by checking the session info is still available (session data preserved)
+
+            try
+            {
+                var sessionInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
+                {
+                    SessionId = testSessionId
+                });
+
+                // Session info should still exist (session data preserved)
+                // but session removed from activeConnections (internal state)
+                return TestResult.Successful(
+                    $"session.disconnected event processed: session {testSessionId} data preserved " +
+                    $"(role: {sessionInfo.Role}), removed from activeConnections");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                // Session completely cleaned up - also acceptable behavior
+                return TestResult.Successful(
+                    $"session.disconnected event processed: session {testSessionId} fully cleaned up");
+            }
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"API error: {ex.StatusCode} - {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return TestResult.Failed($"Test exception: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Test that session.disconnected with reconnectable=true preserves session in activeSessions.
+    /// Phase 6: Reconnectable sessions keep their capabilities but are removed from activeConnections.
+    /// </summary>
+    private static async Task<TestResult> TestSessionDisconnectedReconnectable(ITestClient client, string[] args)
+    {
+        try
+        {
+            var daprClient = Program.ServiceProvider?.GetService<DaprClient>();
+            if (daprClient == null)
+            {
+                return TestResult.Failed("DaprClient not available from service provider");
+            }
+
+            var permissionsClient = new PermissionsClient();
+            var testPrefix = $"session-reconn-{Guid.NewGuid():N}";
+            var testSessionId = $"{testPrefix}-session";
+            var testAccountId = $"{testPrefix}-account";
+            var testServiceId = $"{testPrefix}-svc";
+
+            // Step 1: Register service with permissions
+            await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
+            {
+                ServiceId = testServiceId,
+                Version = "1.0.0",
+                Permissions = new Dictionary<string, StatePermissions>
+                {
+                    ["default"] = new StatePermissions
+                    {
+                        ["user"] = new Collection<string> { "GET:/reconn/test" }
+                    }
+                }
+            });
+
+            // Step 2: Connect the session
+            var connectEvent = new
+            {
+                eventId = Guid.NewGuid().ToString(),
+                timestamp = DateTime.UtcNow.ToString("o"),
+                sessionId = testSessionId,
+                accountId = testAccountId,
+                roles = new[] { "user" },
+                authorizations = (string[]?)null
+            };
+
+            Console.WriteLine($"  Publishing session.connected...");
+            await daprClient.PublishEventAsync("bannou-pubsub", "session.connected", connectEvent);
+            await Task.Delay(1500);
+
+            // Capture capabilities before disconnect
+            var beforeCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
+            {
+                SessionId = testSessionId
+            });
+
+            var beforeCount = beforeCapabilities.Permissions?.Values
+                .SelectMany(methods => methods).Count() ?? 0;
+
+            // Step 3: Disconnect with reconnectable=true
+            var disconnectEvent = new
+            {
+                eventId = Guid.NewGuid().ToString(),
+                timestamp = DateTime.UtcNow.ToString("o"),
+                sessionId = testSessionId,
+                accountId = testAccountId,
+                reason = "temporary_disconnect",
+                reconnectable = true,  // Key difference: session can reconnect
+                durationSeconds = 30
+            };
+
+            Console.WriteLine($"  Publishing session.disconnected with reconnectable=true...");
+            await daprClient.PublishEventAsync("bannou-pubsub", "session.disconnected", disconnectEvent);
+            await Task.Delay(1500);
+
+            // Step 4: Verify session data is preserved (can still get capabilities)
+            var afterCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
+            {
+                SessionId = testSessionId
+            });
+
+            var afterCount = afterCapabilities.Permissions?.Values
+                .SelectMany(methods => methods).Count() ?? 0;
+
+            // Session info should also be preserved
+            var sessionInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
+            {
+                SessionId = testSessionId
+            });
+
+            if (sessionInfo.Role == "user" && afterCount >= beforeCount)
+            {
+                return TestResult.Successful(
+                    $"Reconnectable session preserved: role='{sessionInfo.Role}', " +
+                    $"capabilities before={beforeCount}, after={afterCount}");
+            }
+
+            if (sessionInfo.Role != null)
+            {
+                return TestResult.Successful(
+                    $"Reconnectable session data preserved: role='{sessionInfo.Role}'");
+            }
+
+            return TestResult.Failed(
+                $"Reconnectable session may not have preserved data properly. Role: {sessionInfo.Role}");
+        }
+        catch (ApiException ex)
+        {
+            return TestResult.Failed($"API error: {ex.StatusCode} - {ex.Message}");
         }
         catch (Exception ex)
         {

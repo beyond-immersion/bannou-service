@@ -85,7 +85,7 @@ public class ClientEventTests
         var sessionId = "test-session-123";
         var payload = new byte[] { 1, 2, 3, 4 };
 
-        _mockDaprClient.Setup(x => x.GetStateAsync<List<object>>(
+        _mockDaprClient.Setup(x => x.GetStateAsync<List<object>?>(
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<ConsistencyMode?>(),
@@ -140,7 +140,7 @@ public class ClientEventTests
         var manager = new ClientEventQueueManager(_mockDaprClient.Object, _mockLogger.Object);
         var sessionId = "test-session";
 
-        _mockDaprClient.Setup(x => x.GetStateAsync<List<object>>(
+        _mockDaprClient.Setup(x => x.GetStateAsync<List<object>?>(
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<ConsistencyMode?>(),

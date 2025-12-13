@@ -1,5 +1,7 @@
 using Dapr.Client;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace BeyondImmersion.BannouService.ClientEvents;
 
@@ -56,8 +58,8 @@ public class DaprClientEventPublisher : IClientEventPublisher
             return false;
         }
 
-        // Validate event name against whitelist
-        var eventName = eventData.Event_name;
+        // Validate event name against whitelist (handles NSwag enum shadowing)
+        var eventName = GetEventName(eventData);
         if (!ClientEventWhitelist.IsValidEventName(eventName))
         {
             _logger.LogError(
@@ -104,8 +106,8 @@ public class DaprClientEventPublisher : IClientEventPublisher
             return 0;
         }
 
-        // Validate event name once (same event going to multiple sessions)
-        var eventName = eventData.Event_name;
+        // Validate event name once (handles NSwag enum shadowing)
+        var eventName = GetEventName(eventData);
         if (!ClientEventWhitelist.IsValidEventName(eventName))
         {
             _logger.LogError(
@@ -157,5 +159,69 @@ public class DaprClientEventPublisher : IClientEventPublisher
     public bool IsValidEventName(string? eventName)
     {
         return ClientEventWhitelist.IsValidEventName(eventName);
+    }
+
+    /// <summary>
+    /// Extracts the event name from a client event, handling NSwag-generated enum shadowing.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// NSwag generates derived event classes that shadow the base Event_name (string) property
+    /// with an enum property (e.g., CapabilityManifestEventEvent_name). When accessing Event_name
+    /// via the BaseClientEvent constraint, we get the base string property which may be unset.
+    /// </para>
+    /// <para>
+    /// This method uses reflection to find the actual Event_name property on the runtime type
+    /// and extracts the correct string value, handling EnumMember attributes for enum values.
+    /// </para>
+    /// </remarks>
+    /// <typeparam name="TEvent">The event type.</typeparam>
+    /// <param name="eventData">The event instance.</param>
+    /// <returns>The event name string, or null if not found.</returns>
+    private static string? GetEventName<TEvent>(TEvent eventData) where TEvent : BaseClientEvent
+    {
+        // Get the actual runtime type (may be derived)
+        var actualType = eventData.GetType();
+
+        // Use DeclaredOnly to get only properties declared on the derived type (not inherited)
+        // This avoids AmbiguousMatchException when derived class shadows Event_name with an enum type
+        var eventNameProp = actualType.GetProperty(
+            "Event_name",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+
+        // If no property declared on derived type, fall back to base class property
+        if (eventNameProp == null)
+        {
+            return eventData.Event_name;
+        }
+
+        // Property is shadowed on derived type - get its value
+        var value = eventNameProp.GetValue(eventData);
+        if (value == null)
+        {
+            // Fall back to base property
+            return eventData.Event_name;
+        }
+
+        // If it's an enum, extract the string value from EnumMember attribute
+        if (value.GetType().IsEnum)
+        {
+            var enumType = value.GetType();
+            var memberName = value.ToString();
+            if (memberName != null)
+            {
+                var memberInfo = enumType.GetMember(memberName).FirstOrDefault();
+                var enumMemberAttr = memberInfo?.GetCustomAttribute<EnumMemberAttribute>();
+                if (enumMemberAttr?.Value != null)
+                {
+                    return enumMemberAttr.Value;
+                }
+            }
+            // Fall back to enum ToString() if no EnumMember attribute
+            return memberName;
+        }
+
+        // Not an enum, just convert to string
+        return value.ToString();
     }
 }

@@ -62,9 +62,9 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventHandler = eventHandler ?? throw new ArgumentNullException(nameof(eventHandler));
 
-        // Read connection string directly from environment (like OrchestratorRedisManager)
-        _connectionString = Environment.GetEnvironmentVariable("BANNOU_RabbitMQConnectionString")
-            ?? Environment.GetEnvironmentVariable("RabbitMQConnectionString")
+        // Read connection string directly from environment (same as Orchestrator)
+        _connectionString = Environment.GetEnvironmentVariable("BANNOU_RabbitMqConnectionString")
+            ?? Environment.GetEnvironmentVariable("RabbitMqConnectionString")
             ?? "amqp://guest:guest@rabbitmq:5672";
 
         // Create unique queue prefix for this instance

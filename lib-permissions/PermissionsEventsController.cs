@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.Events;
 using Dapr;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -356,6 +357,110 @@ public class PermissionsEventsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "[PERM-EVENT] Failed to process session.updated event");
+            return StatusCode(500, "Internal server error processing event");
+        }
+    }
+
+    /// <summary>
+    /// Handle session connected events from the Connect service.
+    /// Called by Dapr when a WebSocket connection is fully established.
+    /// This event ensures the RabbitMQ exchange exists before publishing to session-specific topics.
+    /// Adds session to activeConnections and triggers initial capability delivery.
+    /// </summary>
+    [Topic("bannou-pubsub", "session.connected")]
+    [HttpPost("handle-session-connected")]
+    public async Task<IActionResult> HandleSessionConnectedAsync()
+    {
+        try
+        {
+            // Read and parse event using shared helper (handles both CloudEvents and raw formats)
+            var sessionConnectedEvent = await DaprEventHelper.ReadEventAsync<SessionConnectedEvent>(Request);
+
+            if (sessionConnectedEvent == null)
+            {
+                _logger.LogWarning("[PERM-EVENT] Failed to parse SessionConnectedEvent from request body");
+                return BadRequest("Invalid event data");
+            }
+
+            _logger.LogInformation("[PERM-EVENT] Processing session.connected for SessionId: {SessionId}, AccountId: {AccountId}, Roles: {RoleCount}, Authorizations: {AuthCount}",
+                sessionConnectedEvent.SessionId,
+                sessionConnectedEvent.AccountId,
+                sessionConnectedEvent.Roles?.Count ?? 0,
+                sessionConnectedEvent.Authorizations?.Count ?? 0);
+
+            // Register the session as connected and trigger capability delivery
+            // This ensures capabilities are only published after the RabbitMQ exchange exists
+            // Roles and authorizations enable capability compilation without API calls from Connect
+            var result = await _permissionsService.HandleSessionConnectedAsync(
+                sessionConnectedEvent.SessionId,
+                sessionConnectedEvent.AccountId,
+                sessionConnectedEvent.Roles,
+                sessionConnectedEvent.Authorizations);
+
+            if (result.Item1 != StatusCodes.OK)
+            {
+                _logger.LogWarning("[PERM-EVENT] Failed to handle session connected for {SessionId}: {StatusCode}",
+                    sessionConnectedEvent.SessionId, result.Item1);
+                return StatusCode((int)result.Item1);
+            }
+
+            _logger.LogInformation("[PERM-EVENT] Successfully processed session.connected for SessionId: {SessionId}",
+                sessionConnectedEvent.SessionId);
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[PERM-EVENT] Failed to process session.connected event");
+            return StatusCode(500, "Internal server error processing event");
+        }
+    }
+
+    /// <summary>
+    /// Handle session disconnected events from the Connect service.
+    /// Called by Dapr when a WebSocket connection is closed.
+    /// Removes session from activeConnections to prevent publishing to non-existent exchanges.
+    /// </summary>
+    [Topic("bannou-pubsub", "session.disconnected")]
+    [HttpPost("handle-session-disconnected")]
+    public async Task<IActionResult> HandleSessionDisconnectedAsync()
+    {
+        try
+        {
+            // Read and parse event using shared helper (handles both CloudEvents and raw formats)
+            var sessionDisconnectedEvent = await DaprEventHelper.ReadEventAsync<SessionDisconnectedEvent>(Request);
+
+            if (sessionDisconnectedEvent == null)
+            {
+                _logger.LogWarning("[PERM-EVENT] Failed to parse SessionDisconnectedEvent from request body");
+                return BadRequest("Invalid event data");
+            }
+
+            _logger.LogInformation("[PERM-EVENT] Processing session.disconnected for SessionId: {SessionId}, Reason: {Reason}, Reconnectable: {Reconnectable}",
+                sessionDisconnectedEvent.SessionId,
+                sessionDisconnectedEvent.Reason,
+                sessionDisconnectedEvent.Reconnectable);
+
+            // Remove the session from active connections
+            var result = await _permissionsService.HandleSessionDisconnectedAsync(
+                sessionDisconnectedEvent.SessionId,
+                sessionDisconnectedEvent.Reconnectable);
+
+            if (result.Item1 != StatusCodes.OK)
+            {
+                _logger.LogWarning("[PERM-EVENT] Failed to handle session disconnected for {SessionId}: {StatusCode}",
+                    sessionDisconnectedEvent.SessionId, result.Item1);
+                return StatusCode((int)result.Item1);
+            }
+
+            _logger.LogInformation("[PERM-EVENT] Successfully processed session.disconnected for SessionId: {SessionId}",
+                sessionDisconnectedEvent.SessionId);
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[PERM-EVENT] Failed to process session.disconnected event");
             return StatusCode(500, "Internal server error processing event");
         }
     }
