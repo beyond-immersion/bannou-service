@@ -11,5 +11,16 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 5
     ignore:
+      # Ignore major version updates for Extensions packages
       - dependency-name: "Microsoft.Extensions.*"
         update-types: ["version-update:semver-major"]
+      # Ignore .NET 10 preview packages (not released yet)
+      - dependency-name: "Microsoft.*"
+        versions: ["10.*"]
+      - dependency-name: "System.*"
+        versions: ["10.*"]
+      # Ignore all preview/rc versions for Microsoft packages
+      - dependency-name: "Microsoft.*"
+        versions: ["*-preview*", "*-rc*", "*-alpha*", "*-beta*"]
+      - dependency-name: "System.*"
+        versions: ["*-preview*", "*-rc*", "*-alpha*", "*-beta*"]
