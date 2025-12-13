@@ -14,11 +14,11 @@ public static class ClientEventsDependencyInjection
     /// <returns>The service collection for chaining.</returns>
     /// <remarks>
     /// Registers:
-    /// - IClientEventPublisher as scoped service (uses DaprClient per request)
+    /// - IClientEventPublisher as singleton service (DaprClient is thread-safe)
     /// </remarks>
     public static IServiceCollection AddClientEventPublisher(this IServiceCollection services)
     {
-        services.AddScoped<IClientEventPublisher, DaprClientEventPublisher>();
+        services.AddSingleton<IClientEventPublisher, DaprClientEventPublisher>();
         return services;
     }
 }

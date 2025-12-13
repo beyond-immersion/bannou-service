@@ -83,6 +83,9 @@ paths:
       operationId: updateSessionState
       tags:
         - Session Management
+      x-permissions:
+        - role: admin
+          requiredStates: {}
       requestBody:
         required: true
         content:

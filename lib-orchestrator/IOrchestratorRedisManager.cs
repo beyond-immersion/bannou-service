@@ -62,6 +62,12 @@ public interface IOrchestratorRedisManager : IAsyncDisposable, IDisposable
     Task RemoveServiceRoutingAsync(string serviceName);
 
     /// <summary>
+    /// Clear all service routing mappings from Redis.
+    /// Called when resetting to default topology.
+    /// </summary>
+    Task ClearAllServiceRoutingsAsync();
+
+    /// <summary>
     /// Get the current configuration version number.
     /// </summary>
     Task<int> GetConfigVersionAsync();
@@ -92,6 +98,13 @@ public interface IOrchestratorRedisManager : IAsyncDisposable, IDisposable
     /// <param name="version">Version to restore.</param>
     /// <returns>True if successful.</returns>
     Task<bool> RestoreConfigurationVersionAsync(int version);
+
+    /// <summary>
+    /// Clear the current configuration, resetting to default (no custom deployments).
+    /// Saves an empty configuration as a new version for audit trail.
+    /// </summary>
+    /// <returns>The new version number.</returns>
+    Task<int> ClearCurrentConfigurationAsync();
 }
 
 /// <summary>

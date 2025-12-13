@@ -54,6 +54,12 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
     /// </summary>
     private const string BANNOU_SIDECAR_FOR_LABEL = "bannou.sidecar-for";
 
+    /// <summary>
+    /// Label to identify containers deployed by the orchestrator.
+    /// Used for orphan detection instead of name-based parsing.
+    /// </summary>
+    public const string BANNOU_ORCHESTRATOR_MANAGED_LABEL = "bannou.orchestrator-managed";
+
     // Configuration from environment variables
     private readonly string _configuredDockerNetwork;
     private readonly string _daprComponentsHostPath;
@@ -766,7 +772,8 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             Status = status,
             Timestamp = DateTimeOffset.UtcNow,
             Instances = status == ContainerStatusStatus.Running ? 1 : 0,
-            RestartHistory = new List<RestartHistoryEntry>()
+            RestartHistory = new List<RestartHistoryEntry>(),
+            Labels = container.Labels ?? new Dictionary<string, string>()
         };
     }
 
@@ -1002,7 +1009,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 {
                     [DAPR_APP_ID_LABEL] = appId,
                     [BANNOU_SIDECAR_FOR_LABEL] = containerName,
-                    ["bannou.managed"] = "true"
+                    [BANNOU_ORCHESTRATOR_MANAGED_LABEL] = "true"
                 },
                 HostConfig = new Docker.DotNet.Models.HostConfig
                 {
@@ -1048,7 +1055,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
                 {
                     [DAPR_APP_ID_LABEL] = appId,
                     ["bannou.service"] = serviceName,
-                    ["bannou.managed"] = "true"
+                    [BANNOU_ORCHESTRATOR_MANAGED_LABEL] = "true"
                 },
                 HostConfig = new Docker.DotNet.Models.HostConfig
                 {

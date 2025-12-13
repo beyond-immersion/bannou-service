@@ -644,13 +644,6 @@ public class ConnectService : IConnectService
                 _logger.LogError(ex, "Failed to publish session.disconnected event for session {SessionId}", sessionId);
             }
 
-            // Unsubscribe from session-specific client events
-            if (_clientEventSubscriber != null)
-            {
-                await _clientEventSubscriber.UnsubscribeFromSessionAsync(sessionId);
-                _logger.LogDebug("Unsubscribed from client events for session {SessionId}", sessionId);
-            }
-
             // Remove from connection manager - use instance-matching removal to prevent
             // race condition during session subsume where old connection's cleanup could
             // accidentally remove a new connection that replaced it (Tenet 4 compliance)
@@ -661,7 +654,13 @@ public class ConnectService : IConnectService
             {
                 if (isForcedDisconnect)
                 {
-                    // Forced disconnect - clean up immediately
+                    // Forced disconnect - unsubscribe from RabbitMQ and clean up immediately
+                    if (_clientEventSubscriber != null)
+                    {
+                        await _clientEventSubscriber.UnsubscribeFromSessionAsync(sessionId);
+                        _logger.LogDebug("Unsubscribed from client events for forced disconnect session {SessionId}", sessionId);
+                    }
+
                     await _sessionManager.RemoveSessionAsync(sessionId);
                     await _sessionManager.PublishSessionEventAsync("disconnect", sessionId, new { instanceId = _instanceId, reconnectable = false });
                     _logger.LogInformation("Session {SessionId} force disconnected - no reconnection allowed", sessionId);
@@ -669,6 +668,12 @@ public class ConnectService : IConnectService
                 else
                 {
                     // Normal disconnect - initiate reconnection window
+                    // IMPORTANT: Keep RabbitMQ subscription active so events can be queued during
+                    // the reconnection window. HandleClientEventAsync will detect the missing WebSocket
+                    // connection and queue events for delivery when the client reconnects.
+                    _logger.LogDebug("Keeping RabbitMQ subscription active for session {SessionId} during reconnection window",
+                        sessionId);
+
                     var reconnectionToken = connectionState.InitiateReconnectionWindow(
                         reconnectionWindowMinutes: 5,
                         userRoles: userRoles);
@@ -1398,12 +1403,31 @@ public class ConnectService : IConnectService
     {
         try
         {
+            // Unwrap CloudEvents envelope if present - Dapr pub/sub wraps events in CloudEvents format
+            // Clients should receive the actual event data, not the CloudEvents wrapper
+            var unwrappedPayload = DaprEventHelper.UnwrapCloudEventsEnvelope(eventPayload);
+
             // Check if this is an internal event that should be handled locally, not forwarded to client
-            if (await TryHandleInternalEventAsync(sessionId, eventPayload))
+            if (await TryHandleInternalEventAsync(sessionId, unwrappedPayload))
             {
                 // Internal event was handled - don't forward to client
                 return;
             }
+
+            // Validate event against whitelist and normalize the event_name
+            // NSwag/JSON serialization can mangle event names (e.g., "system.notification" -> "system_notification")
+            // We need to validate the mangled name and rewrite it to canonical form before sending to client
+            var (canonicalName, clientPayload) = ClientEventNormalizer.NormalizeEventPayload(unwrappedPayload);
+
+            if (string.IsNullOrEmpty(canonicalName))
+            {
+                _logger.LogWarning("Rejected client event for session {SessionId} - event name not in whitelist or missing",
+                    sessionId);
+                return;
+            }
+
+            _logger.LogDebug("Validated and normalized client event '{CanonicalName}' for session {SessionId}",
+                canonicalName, sessionId);
 
             // Check if session has active WebSocket connection
             var connection = _connectionManager.GetConnection(sessionId);
@@ -1414,13 +1438,14 @@ public class ConnectService : IConnectService
                     sessionId);
 
                 // Queue event for delivery when client reconnects (if within reconnection window)
+                // Note: We queue the unwrapped payload so it's ready for client delivery
                 if (_clientEventQueueManager != null)
                 {
-                    var queued = await _clientEventQueueManager.QueueEventAsync(sessionId, eventPayload);
+                    var queued = await _clientEventQueueManager.QueueEventAsync(sessionId, clientPayload);
                     if (queued)
                     {
                         _logger.LogDebug("Queued client event for disconnected session {SessionId} ({PayloadSize} bytes)",
-                            sessionId, eventPayload.Length);
+                            sessionId, clientPayload.Length);
                     }
                     else
                     {
@@ -1442,7 +1467,7 @@ public class ConnectService : IConnectService
                 sequenceNumber: 0, // Events don't need sequence numbers
                 serviceGuid: Guid.Empty, // System event
                 messageId: GuidGenerator.GenerateMessageId(),
-                payload: eventPayload
+                payload: clientPayload
             );
 
             // Send to WebSocket client

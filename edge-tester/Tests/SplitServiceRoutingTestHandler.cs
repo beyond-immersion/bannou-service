@@ -640,20 +640,21 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Deploy the default edge-tests topology to restore single-node operation.
-    /// Uses the shared admin WebSocket since orchestrator APIs are not exposed via NGINX.
+    /// Restore default topology by deploying with "default" preset.
+    /// The orchestrator handles "default"/"bannou"/empty as reset-to-default-topology,
+    /// which tears down all dynamically deployed containers and resets service mappings.
     /// </summary>
     private async Task<bool> RestoreDefaultTopologyAsync(BannouClient adminClient)
     {
-        // Deploy edge-tests preset which has all services on single 'bannou' node
+        // Deploy with "default" preset - orchestrator interprets this as reset-to-default
         var deployRequest = new
         {
-            preset = "edge-tests",
+            preset = "default",
             backend = "compose",
             dryRun = false
         };
 
-        Console.WriteLine($"   Deploying preset: edge-tests via WebSocket");
+        Console.WriteLine($"   Deploying preset: default via WebSocket (reset to single-node topology)");
         Console.WriteLine($"   Request: {JsonSerializer.Serialize(deployRequest)}");
 
         try
@@ -676,7 +677,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
             if (success)
             {
-                // Wait for deployment to stabilize
+                // Wait for topology to stabilize
                 Console.WriteLine("   Waiting for topology to stabilize...");
                 await Task.Delay(3000);
                 return true;

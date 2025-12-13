@@ -280,6 +280,49 @@
             <param name="serviceImplementation">The service implementation type this configuration is for (required).</param>
             <param name="envPrefix">The prefix for environment variables used by this configuration.</param>
         </member>
+        <member name="T:BeyondImmersion.BannouService.ClientEvents.ClientEventNormalizer">
+             <summary>
+             Normalizes client event names from their potentially mangled form (from JSON serialization)
+             back to canonical whitelist format.
+            
+             NSwag/JsonStringEnumConverter converts event names like "system.notification" to
+             "system_notification" or "System_notification". This class maps these mangled names
+             back to their canonical form for:
+             1. Validation against the whitelist
+             2. Rewriting the event_name in the payload before sending to clients
+             </summary>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.ClientEventNormalizer.TryGetCanonicalName(System.String,System.String@)">
+            <summary>
+            Attempts to normalize an event name from its potentially mangled form to canonical form.
+            </summary>
+            <param name="eventName">The event name as received (possibly mangled, e.g., "system_notification")</param>
+            <param name="canonicalName">The canonical name if valid (e.g., "system.notification")</param>
+            <returns>True if the event is valid and was normalized, false if not in whitelist</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.ClientEventNormalizer.IsValidEventName(System.String)">
+            <summary>
+            Checks if an event name (possibly mangled) is valid according to the whitelist.
+            </summary>
+            <param name="eventName">The event name to check</param>
+            <returns>True if valid (in whitelist), false otherwise</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.ClientEventNormalizer.NormalizeEventPayload(System.Byte[])">
+            <summary>
+            Normalizes the event_name field in a JSON payload to its canonical form.
+            If the event is not in the whitelist, returns null.
+            </summary>
+            <param name="payload">The JSON event payload bytes</param>
+            <returns>
+            Tuple of (canonicalEventName, normalizedPayload) if valid,
+            or (null, originalPayload) if event not in whitelist or parsing fails
+            </returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.ClientEvents.ClientEventNormalizer.RewriteEventName(System.Text.Json.JsonElement,System.String,System.String)">
+            <summary>
+            Rewrites the event_name property in a JSON object to a new value.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.ClientEventsDependencyInjection">
             <summary>
             Extension methods for registering client event services.
@@ -293,7 +336,7 @@
             <returns>The service collection for chaining.</returns>
             <remarks>
             Registers:
-            - IClientEventPublisher as scoped service (uses DaprClient per request)
+            - IClientEventPublisher as singleton service (DaprClient is thread-safe)
             </remarks>
         </member>
         <member name="T:BeyondImmersion.BannouService.ClientEvents.DaprClientEventPublisher">
@@ -1156,6 +1199,23 @@
             <param name="request">The HTTP request containing the event</param>
             <param name="options">Optional JSON serializer options (defaults to PropertyNameCaseInsensitive)</param>
             <returns>The deserialized event model, or null if parsing fails</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.DaprEventHelper.UnwrapCloudEventsEnvelope(System.Byte[])">
+            <summary>
+            Unwraps a CloudEvents envelope from raw byte payload.
+            Automatically handles both CloudEvents format (with 'data' wrapper) and raw format.
+            Used by Connect service for RabbitMQ subscriber which receives raw bytes.
+            </summary>
+            <param name="payload">Raw event payload bytes (potentially CloudEvents-wrapped)</param>
+            <returns>Unwrapped event data bytes, or original payload if not CloudEvents format</returns>
+        </member>
+        <member name="M:BeyondImmersion.BannouService.DaprEventHelper.UnwrapCloudEventsToJson(System.Byte[])">
+            <summary>
+            Unwraps a CloudEvents envelope and returns the data as a JsonElement.
+            Useful when you need to inspect or modify the unwrapped data before forwarding.
+            </summary>
+            <param name="payload">Raw event payload bytes (potentially CloudEvents-wrapped)</param>
+            <returns>Tuple of (unwrapped JsonElement, raw bytes), or (null, original bytes) if parsing fails</returns>
         </member>
         <member name="T:BeyondImmersion.BannouService.AppRunningStates">
             <summary>

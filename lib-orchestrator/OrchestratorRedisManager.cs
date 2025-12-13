@@ -417,6 +417,44 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
     }
 
     /// <summary>
+    /// Clear all service routing mappings from Redis.
+    /// Called when resetting to default topology.
+    /// </summary>
+    public async Task ClearAllServiceRoutingsAsync()
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot clear routings.");
+            return;
+        }
+
+        try
+        {
+            var server = _redis?.GetServer(_redis.GetEndPoints().First());
+            if (server == null)
+            {
+                _logger.LogWarning("Cannot get Redis server endpoint");
+                return;
+            }
+
+            var keys = server.Keys(pattern: $"{ROUTING_KEY_PREFIX}*").ToArray();
+            var deletedCount = 0;
+
+            foreach (var key in keys)
+            {
+                await _database.KeyDeleteAsync(key);
+                deletedCount++;
+            }
+
+            _logger.LogInformation("Cleared {Count} service routing entries from Redis", deletedCount);
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to clear service routings");
+        }
+    }
+
+    /// <summary>
     /// Get the current configuration version number.
     /// </summary>
     public async Task<int> GetConfigVersionAsync()
@@ -603,6 +641,45 @@ public class OrchestratorRedisManager : IOrchestratorRedisManager
         {
             _logger.LogError(ex, "Failed to restore configuration version {Version}", version);
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Clear the current configuration, resetting to default (no custom deployments).
+    /// Saves an empty configuration as a new version for audit trail.
+    /// </summary>
+    public async Task<int> ClearCurrentConfigurationAsync()
+    {
+        if (_database == null)
+        {
+            _logger.LogWarning("Redis database not initialized. Cannot clear configuration.");
+            return 0;
+        }
+
+        try
+        {
+            // Create an empty "default" configuration
+            var defaultConfig = new DeploymentConfiguration
+            {
+                PresetName = "default",
+                Description = "Reset to default topology - all services route to 'bannou'",
+                Services = new Dictionary<string, ServiceDeploymentConfig>(),
+                EnvironmentVariables = new Dictionary<string, string>()
+            };
+
+            // Save as new version (maintains audit trail)
+            var newVersion = await SaveConfigurationVersionAsync(defaultConfig);
+
+            _logger.LogInformation(
+                "Cleared configuration - saved default topology as version {Version}",
+                newVersion);
+
+            return newVersion;
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Failed to clear current configuration");
+            return 0;
         }
     }
 }

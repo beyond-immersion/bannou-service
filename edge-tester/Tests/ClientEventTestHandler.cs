@@ -250,7 +250,8 @@ public class ClientEventTestHandler : IServiceTestHandler
                 var eventObj = JsonNode.Parse(responseText)?.AsObject();
                 var eventName = eventObj?["event_name"]?.GetValue<string>();
 
-                if (eventName == "system.notification")
+                // Accept both schema value and NSwag enum serialization
+                if (IsSystemNotificationEvent(eventName))
                 {
                     var eventMessage = eventObj?["message"]?.GetValue<string>();
                     Console.WriteLine($"OK Received system.notification event: {eventMessage}");
@@ -267,10 +268,12 @@ public class ClientEventTestHandler : IServiceTestHandler
                     {
                         receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
                         responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
+                        Console.WriteLine($"Received second event: {responseText[..Math.Min(500, responseText.Length)]}");
+
                         eventObj = JsonNode.Parse(responseText)?.AsObject();
                         eventName = eventObj?["event_name"]?.GetValue<string>();
 
-                        if (eventName == "system.notification")
+                        if (IsSystemNotificationEvent(eventName))
                         {
                             Console.WriteLine($"OK Received system.notification event on second message");
                             return true;
@@ -523,5 +526,18 @@ public class ClientEventTestHandler : IServiceTestHandler
                 await webSocket2.CloseAsync(WebSocketCloseStatus.NormalClosure, "Test complete", CancellationToken.None);
             }
         }
+    }
+
+    /// <summary>
+    /// Check if event_name matches system notification event.
+    /// Accepts both schema value ("system.notification") and NSwag enum serialization ("System_notification").
+    /// </summary>
+    private static bool IsSystemNotificationEvent(string? eventName)
+    {
+        if (string.IsNullOrEmpty(eventName))
+            return false;
+
+        return eventName.Equals("system.notification", StringComparison.OrdinalIgnoreCase) ||
+                eventName.Equals("System_notification", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -112,6 +112,12 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     public int HeartbeatTimeoutSeconds { get; set; } = 90;
 
     /// <summary>
+    /// TTL for cached orchestrator connections in minutes. Set to 0 to disable caching.
+    /// Environment variable: ORCHESTRATORCACHETTLMINUTES or BANNOU_ORCHESTRATORCACHETTLMINUTES
+    /// </summary>
+    public int OrchestratorCacheTtlMinutes { get; set; } = 60;
+
+    /// <summary>
     /// Default timeout for deployments (seconds)
     /// Environment variable: DEFAULTDEPLOYMENTTIMEOUT or BANNOU_DEFAULTDEPLOYMENTTIMEOUT
     /// </summary>
