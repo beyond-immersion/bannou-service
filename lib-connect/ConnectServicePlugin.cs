@@ -39,7 +39,8 @@ public class ConnectServicePlugin : BaseBannouPlugin
 
         // Register client event queue manager for disconnection handling
         // Uses Dapr state store to queue events during client reconnection window
-        services.AddScoped<ClientEventQueueManager>();
+        // MUST be Singleton because it's used from RabbitMQ consumer callbacks (outside request scope)
+        services.AddSingleton<ClientEventQueueManager>();
         Logger?.LogDebug("Registered ClientEventQueueManager for event queuing");
 
         // The generated clients should already be registered by AddAllBannouServiceClients()

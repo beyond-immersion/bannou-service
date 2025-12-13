@@ -66,22 +66,40 @@ echo '  <!-- Generated Files via MSBuild Target (VS-Compatible) -->' >> "$SERVER
 echo '  <Target Name="IncludeGeneratedFiles" BeforeTargets="BeforeBuild">' >> "$SERVER_SDK_PROJECT"
 echo '    <ItemGroup>' >> "$SERVER_SDK_PROJECT"
 
+# Track included files to avoid duplicates
+declare -A SERVER_INCLUDED_FILES
+
+# Add CommonClientEventsModels.cs first (contains BaseClientEvent base class)
+if [ -f "./bannou-service/Generated/CommonClientEventsModels.cs" ]; then
+    echo "      <Compile Include=\"../bannou-service/Generated/CommonClientEventsModels.cs\" />" >> "$SERVER_SDK_PROJECT"
+    SERVER_INCLUDED_FILES["./bannou-service/Generated/CommonClientEventsModels.cs"]=1
+fi
+
 # Add ALL client files (ServiceClients) - SERVER SDK INCLUDES THESE
 for file in "${CLIENT_FILES[@]}"; do
-    rel_path="../${file#./}"
-    echo "      <Compile Include=\"$rel_path\" />" >> "$SERVER_SDK_PROJECT"
+    if [ -z "${SERVER_INCLUDED_FILES[$file]}" ]; then
+        rel_path="../${file#./}"
+        echo "      <Compile Include=\"$rel_path\" />" >> "$SERVER_SDK_PROJECT"
+        SERVER_INCLUDED_FILES[$file]=1
+    fi
 done
 
-# Add model files
+# Add model files (avoid duplicates)
 for file in "${MODEL_FILES[@]}"; do
-    rel_path="../${file#./}"
-    echo "      <Compile Include=\"$rel_path\" />" >> "$SERVER_SDK_PROJECT"
+    if [ -z "${SERVER_INCLUDED_FILES[$file]}" ]; then
+        rel_path="../${file#./}"
+        echo "      <Compile Include=\"$rel_path\" />" >> "$SERVER_SDK_PROJECT"
+        SERVER_INCLUDED_FILES[$file]=1
+    fi
 done
 
-# Add event files
+# Add event files (avoid duplicates)
 for file in "${EVENT_FILES[@]}"; do
-    rel_path="../${file#./}"
-    echo "      <Compile Include=\"$rel_path\" />" >> "$SERVER_SDK_PROJECT"
+    if [ -z "${SERVER_INCLUDED_FILES[$file]}" ]; then
+        rel_path="../${file#./}"
+        echo "      <Compile Include=\"$rel_path\" />" >> "$SERVER_SDK_PROJECT"
+        SERVER_INCLUDED_FILES[$file]=1
+    fi
 done
 
 cat >> "$SERVER_SDK_PROJECT" << 'EOF'
@@ -237,16 +255,31 @@ echo '    <ItemGroup>' >> "$CLIENT_SDK_PROJECT"
 # NOTE: NO CLIENT FILES - Client SDK excludes ServiceClients
 # Only models and events are included
 
+# Track included files to avoid duplicates
+declare -A INCLUDED_FILES
+
+# Add CommonClientEventsModels.cs first (contains BaseClientEvent base class)
+if [ -f "./bannou-service/Generated/CommonClientEventsModels.cs" ]; then
+    echo "      <Compile Include=\"../bannou-service/Generated/CommonClientEventsModels.cs\" />" >> "$CLIENT_SDK_PROJECT"
+    INCLUDED_FILES["./bannou-service/Generated/CommonClientEventsModels.cs"]=1
+fi
+
 # Add model files
 for file in "${MODEL_FILES[@]}"; do
-    rel_path="../${file#./}"
-    echo "      <Compile Include=\"$rel_path\" />" >> "$CLIENT_SDK_PROJECT"
+    if [ -z "${INCLUDED_FILES[$file]}" ]; then
+        rel_path="../${file#./}"
+        echo "      <Compile Include=\"$rel_path\" />" >> "$CLIENT_SDK_PROJECT"
+        INCLUDED_FILES[$file]=1
+    fi
 done
 
-# Add event files
+# Add event files (avoid duplicates)
 for file in "${EVENT_FILES[@]}"; do
-    rel_path="../${file#./}"
-    echo "      <Compile Include=\"$rel_path\" />" >> "$CLIENT_SDK_PROJECT"
+    if [ -z "${INCLUDED_FILES[$file]}" ]; then
+        rel_path="../${file#./}"
+        echo "      <Compile Include=\"$rel_path\" />" >> "$CLIENT_SDK_PROJECT"
+        INCLUDED_FILES[$file]=1
+    fi
 done
 
 cat >> "$CLIENT_SDK_PROJECT" << 'EOF'

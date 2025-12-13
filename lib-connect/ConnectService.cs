@@ -46,6 +46,7 @@ public class ConnectService : IConnectService
     // Client event subscriber for session-specific RabbitMQ subscriptions (TENET exception)
     private ClientEventRabbitMQSubscriber? _clientEventSubscriber;
     private readonly ILoggerFactory _loggerFactory;
+    private readonly ClientEventQueueManager? _clientEventQueueManager;
 
     // Session to service GUID mappings (in-memory for low-latency lookups, persisted via ISessionManager)
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>> _sessionServiceMappings;
@@ -61,7 +62,8 @@ public class ConnectService : IConnectService
         ILogger<ConnectService> logger,
         ILoggerFactory loggerFactory,
         IErrorEventEmitter errorEventEmitter,
-        ISessionManager? sessionManager = null)
+        ISessionManager? sessionManager = null,
+        ClientEventQueueManager? clientEventQueueManager = null)
     {
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
         _permissionsClient = permissionsClient ?? throw new ArgumentNullException(nameof(permissionsClient));
@@ -78,6 +80,7 @@ public class ConnectService : IConnectService
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _sessionManager = sessionManager; // Optional Dapr-based session management
+        _clientEventQueueManager = clientEventQueueManager; // Optional client event queuing
 
         _sessionServiceMappings = new ConcurrentDictionary<string, ConcurrentDictionary<string, Guid>>();
         _connectionManager = new WebSocketConnectionManager();
@@ -510,6 +513,38 @@ public class ConnectService : IConnectService
                 else
                 {
                     _logger.LogWarning("Failed to subscribe to client events for session {SessionId}", sessionId);
+                }
+            }
+
+            // Deliver any queued events from the reconnection window
+            // Events are queued in Redis when client disconnects but session is still valid
+            if (_clientEventQueueManager != null)
+            {
+                var queuedEvents = await _clientEventQueueManager.DequeueEventsAsync(sessionId, cancellationToken);
+                if (queuedEvents.Count > 0)
+                {
+                    _logger.LogInformation("Delivering {Count} queued events to reconnected session {SessionId}",
+                        queuedEvents.Count, sessionId);
+
+                    foreach (var eventPayload in queuedEvents)
+                    {
+                        var eventMessage = new BinaryMessage(
+                            flags: MessageFlags.Event,
+                            channel: 0,
+                            sequenceNumber: 0,
+                            serviceGuid: Guid.Empty,
+                            messageId: GuidGenerator.GenerateMessageId(),
+                            payload: eventPayload
+                        );
+
+                        var sent = await _connectionManager.SendMessageAsync(sessionId, eventMessage, cancellationToken);
+                        if (!sent)
+                        {
+                            _logger.LogWarning("Failed to deliver queued event to session {SessionId}", sessionId);
+                            // Don't re-queue - client just reconnected but send failed, likely connection issue
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -1323,11 +1358,25 @@ public class ConnectService : IConnectService
                 _logger.LogDebug("Session {SessionId} not connected, attempting to queue event for later delivery",
                     sessionId);
 
-                // Try to get ClientEventQueueManager from DI (it's scoped, so we need to handle this carefully)
-                // For now, log and drop - the queue manager integration requires scope handling
-                // TODO: Consider making ClientEventQueueManager singleton or handling scope properly
-                _logger.LogWarning("Session {SessionId} not connected - event dropped (event queuing not yet integrated)",
-                    sessionId);
+                // Queue event for delivery when client reconnects (if within reconnection window)
+                if (_clientEventQueueManager != null)
+                {
+                    var queued = await _clientEventQueueManager.QueueEventAsync(sessionId, eventPayload);
+                    if (queued)
+                    {
+                        _logger.LogDebug("Queued client event for disconnected session {SessionId} ({PayloadSize} bytes)",
+                            sessionId, eventPayload.Length);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to queue client event for session {SessionId}", sessionId);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Session {SessionId} not connected - event dropped (queue manager not available)",
+                        sessionId);
+                }
                 return;
             }
 
@@ -1351,8 +1400,18 @@ public class ConnectService : IConnectService
             }
             else
             {
-                _logger.LogWarning("Failed to deliver client event to session {SessionId} - WebSocket send failed",
-                    sessionId);
+                // Send failed - client may have disconnected between check and send
+                // Queue the event for reconnection delivery
+                if (_clientEventQueueManager != null)
+                {
+                    await _clientEventQueueManager.QueueEventAsync(sessionId, eventPayload);
+                    _logger.LogDebug("WebSocket send failed, queued event for session {SessionId}", sessionId);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to deliver client event to session {SessionId} - WebSocket send failed",
+                        sessionId);
+                }
             }
         }
         catch (Exception ex)

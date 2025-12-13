@@ -175,10 +175,14 @@ public class ClientEventRabbitMQSubscriber : IAsyncDisposable
                 cancellationToken: cancellationToken);
 
             // Declare the exchange as fanout (Dapr creates these, but we declare to be safe)
+            // IMPORTANT: Must match Dapr's pubsub-rabbitmq.yaml settings:
+            //   - durable: true (matches Dapr's durable: "true")
+            //   - autoDelete: true (matches Dapr's autoDeleteExchange: "true")
+            // Mismatched settings cause PRECONDITION_FAILED errors from RabbitMQ
             await _channel.ExchangeDeclareAsync(
                 exchange: exchangeName,
                 type: ExchangeType.Fanout,
-                durable: false,
+                durable: true,
                 autoDelete: true,
                 arguments: null,
                 cancellationToken: cancellationToken);

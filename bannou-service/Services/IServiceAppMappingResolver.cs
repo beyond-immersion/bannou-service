@@ -6,7 +6,7 @@ namespace BeyondImmersion.BannouService.Services;
 public class ServiceMappingChangedEventArgs : EventArgs
 {
     /// <summary>The service name that changed.</summary>
-    public required string ServiceName { get; init; }
+    public string ServiceName { get; init; } = string.Empty;
 
     /// <summary>The new app-id for the service (null if removed).</summary>
     public string? NewAppId { get; init; }
