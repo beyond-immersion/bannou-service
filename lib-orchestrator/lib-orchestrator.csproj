@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Dapr.Client comes from bannou-service -->
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
     <PackageReference Include="KubernetesClient" Version="18.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
@@ -24,7 +25,6 @@
     <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
-    <PackageReference Include="Dapr.Client" Version="1.16.1" />
   </ItemGroup>
 
   <Import Project="../ServiceLib.targets" />

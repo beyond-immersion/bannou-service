@@ -68,29 +68,24 @@ if [ ! -f "$TEST_PROJECT_FILE" ]; then
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Test infrastructure packages only - other packages come from lib → bannou-service -->
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeInTargetFramework>false</IncludeInTargetFramework>
-    </PackageReference>
-    <PackageReference Include="xunit.analyzers" Version="1.26.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeInTargetFramework>false</IncludeInTargetFramework>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeInTargetFramework>false</IncludeInTargetFramework>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.2" />
     <PackageReference Include="Moq" Version="4.20.72" />
-    <PackageReference Include="Dapr.Client" Version="1.15.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.11" />
+    <!-- Dapr.Client, Logging.Abstractions, Mvc.Core come from lib-$SERVICE_NAME → bannou-service -->
   </ItemGroup>
 
   <ItemGroup>
+    <!-- bannou-service comes transitively via lib-$SERVICE_NAME -->
     <ProjectReference Include="../lib-$SERVICE_NAME/lib-$SERVICE_NAME.csproj" />
-    <ProjectReference Include="../bannou-service/bannou-service.csproj" />
   </ItemGroup>
 
 </Project>
