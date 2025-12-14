@@ -153,6 +153,38 @@ public static class TestingPermissionRegistration
             }
         });
 
+        // Ping endpoint (GET) - available to any authenticated user for latency testing
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/testing/ping",
+            Method = ServiceEndpointMethod.GET,
+            Description = "Ping endpoint for latency measurement (minimal request)",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string>()
+                }
+            }
+        });
+
+        // Ping endpoint (POST) - available to any authenticated user for latency testing with client timestamp
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/testing/ping",
+            Method = ServiceEndpointMethod.POST,
+            Description = "Ping endpoint for latency measurement (with client timestamp for RTT calculation)",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string>()
+                }
+            }
+        });
+
         return endpoints;
     }
 
