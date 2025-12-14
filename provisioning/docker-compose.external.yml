@@ -1,0 +1,6 @@
+# External Client Testing - Loads environment from .env file
+# Stack with base + services + ingress + this file for external client testing
+
+services:
+  bannou:
+    env_file: ../.env

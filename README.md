@@ -19,6 +19,11 @@ Bannou Service is a versatile ASP.NET Core application designed to provide a Web
     - [Prerequisites](#prerequisites)
     - [Manual](#manual)
     - [Make](#make)
+  - [External Client Testing](#external-client-testing)
+    - [Prerequisites](#prerequisites-1)
+    - [Configuration](#configuration)
+    - [Running External Tests](#running-external-tests)
+    - [Testing Workflow](#testing-workflow)
   - [Extending the Service](#extending-the-service)
     - [Adding APIs](#adding-apis)
     - [Implementing IDaprService](#implementing-idaprservice)
@@ -240,6 +245,117 @@ Alternatively, the following make commands have been provided to simplify the pr
 1. `make build`
 2. `make up -d`
 3. `make down`
+
+## External Client Testing
+
+For testing with real game clients (Unity, Unreal, etc.) from external networks through a domain like `beyond-immersion.com`, Bannou provides a dedicated external testing stack.
+
+### Prerequisites
+
+1. **Domain Configuration**: DNS pointing to your development machine (e.g., `beyond-immersion.com`)
+2. **Port Forwarding**: Forward ports on your router:
+   - Port 80 (HTTP) → Development machine
+   - Port 443 (HTTPS) → Development machine
+   - Ports 8080-8100 (optional direct access)
+3. **Docker & Docker Compose**: Standard container requirements
+
+### Configuration
+
+The external testing configuration is managed through the `.env` file in the repository root. Key settings:
+
+```bash
+# JWT Configuration
+BANNOU_JWTSECRET=your-secure-jwt-secret-key
+BANNOU_JWTISSUER=bannou-auth-external
+BANNOU_JWTAUDIENCE=bannou-api-external
+
+# WebSocket Connect URL (returned to clients after login)
+BANNOU_CONNECTURL=ws://your-domain.com/connect
+
+# OAuth Mock Providers (for testing without real OAuth credentials)
+BANNOU_MOCKPROVIDERS=true
+
+# Admin Role Auto-Assignment (accounts with emails matching this domain get admin role)
+BANNOU_ADMINEMAILDOMAIN=@admin.test.local
+
+# OpenResty Gateway Ports (standard ports for external access)
+OPENRESTY_HTTP_PORT=80
+OPENRESTY_HTTPS_PORT=443
+```
+
+### Running External Tests
+
+```bash
+# Start the external testing stack (OpenResty on ports 80/443)
+make up-external
+
+# View logs for debugging
+make logs-external
+
+# Register a test admin account
+make external-register
+
+# Login and retrieve JWT token
+make external-login
+
+# Stop the external testing stack
+make down-external
+```
+
+### Testing Workflow
+
+1. **Start the Stack**:
+   ```bash
+   make up-external
+   ```
+   This brings up the full Bannou stack with OpenResty exposed on standard HTTP/HTTPS ports.
+
+2. **Register Test Account**:
+   ```bash
+   make external-register
+   # Creates: admin@admin.test.local / admin-test-password-2025
+   ```
+   Accounts with emails matching `@admin.test.local` automatically receive admin role.
+
+3. **Login and Get JWT**:
+   ```bash
+   make external-login
+   # Returns JWT and WebSocket connect URL
+   ```
+
+4. **Connect Game Client**:
+   - Use the returned `connectUrl` (e.g., `ws://beyond-immersion.com/connect`)
+   - Include JWT in the `Authorization` header
+   - Follow the [WebSocket Protocol](WEBSOCKET-PROTOCOL.md) for binary message format
+
+5. **Monitor and Debug**:
+   ```bash
+   make logs-external          # Bannou application logs
+   docker compose -f provisioning/docker-compose.yml \
+     -f provisioning/docker-compose.services.yml \
+     -f provisioning/docker-compose.ingress.yml \
+     -f provisioning/docker-compose.external.yml logs -f
+   ```
+
+### Manual API Testing
+
+Test endpoints directly with curl:
+
+```bash
+# Register new account
+curl -X POST http://your-domain.com/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "secure-password", "username": "testuser"}'
+
+# Login
+curl -X POST http://your-domain.com/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "secure-password"}'
+
+# Use JWT for authenticated requests
+curl http://your-domain.com/accounts/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
 
 ## How Plugins Work
 
