@@ -21,8 +21,21 @@ info:
     service, which handles entity-agnostic relationships between any two entities.
   version: 1.0.0
 servers:
-  - url: http://localhost:3500/v1.0/invoke/bannou/method
-    description: Dapr sidecar endpoint (internal only)
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+  description: Dapr sidecar endpoint (internal only)
+
+# Lifecycle events auto-generated from this definition
+x-lifecycle:
+  Character:
+    model:
+      characterId: { type: string, format: uuid, primary: true, required: true }
+      name: { type: string, required: true }
+      realmId: { type: string, format: uuid, required: true }
+      speciesId: { type: string, format: uuid, required: true }
+      birthDate: { type: string, format: date-time }
+      status: { type: string }
+      createdAt: { type: string, format: date-time, required: true }
+      updatedAt: { type: string, format: date-time }
 
 paths:
   /character/create:
@@ -30,10 +43,10 @@ paths:
       summary: Create new character
       operationId: createCharacter
       tags:
-        - Character Management
+      - Character Management
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -57,11 +70,11 @@ paths:
       summary: Get character by ID
       operationId: getCharacter
       tags:
-        - Character Management
+      - Character Management
       x-permissions:
-        - role: user
-          states:
-            auth: authenticated
+      - role: user
+        states:
+          auth: authenticated
       requestBody:
         required: true
         content:
@@ -83,10 +96,10 @@ paths:
       summary: Update character
       operationId: updateCharacter
       tags:
-        - Character Management
+      - Character Management
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -110,10 +123,10 @@ paths:
       summary: Delete character (permanent removal)
       operationId: deleteCharacter
       tags:
-        - Character Management
+      - Character Management
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -131,11 +144,11 @@ paths:
       summary: List characters with filtering
       operationId: listCharacters
       tags:
-        - Character Management
+      - Character Management
       x-permissions:
-        - role: user
-          states:
-            auth: authenticated
+      - role: user
+        states:
+          auth: authenticated
       requestBody:
         required: true
         content:
@@ -155,11 +168,11 @@ paths:
       summary: Get all characters in a realm (primary query pattern)
       operationId: getCharactersByRealm
       tags:
-        - Character Lookup
+      - Character Lookup
       x-permissions:
-        - role: user
-          states:
-            auth: authenticated
+      - role: user
+        states:
+          auth: authenticated
       requestBody:
         required: true
         content:
@@ -186,10 +199,10 @@ components:
     CreateCharacterRequest:
       type: object
       required:
-        - name
-        - realmId
-        - speciesId
-        - birthDate
+      - name
+      - realmId
+      - speciesId
+      - birthDate
       properties:
         name:
           type: string
@@ -210,13 +223,13 @@ components:
           description: In-game birth timestamp
         status:
           allOf:
-            - $ref: '#/components/schemas/CharacterStatus'
+          - $ref: '#/components/schemas/CharacterStatus'
           default: alive
 
     GetCharacterRequest:
       type: object
       required:
-        - characterId
+      - characterId
       properties:
         characterId:
           type: string
@@ -226,7 +239,7 @@ components:
     UpdateCharacterRequest:
       type: object
       required:
-        - characterId
+      - characterId
       properties:
         characterId:
           type: string
@@ -244,7 +257,7 @@ components:
           description: Update character's species (used for species merge migrations)
         status:
           allOf:
-            - $ref: '#/components/schemas/CharacterStatus'
+          - $ref: '#/components/schemas/CharacterStatus'
           nullable: true
         deathDate:
           type: string
@@ -255,7 +268,7 @@ components:
     DeleteCharacterRequest:
       type: object
       required:
-        - characterId
+      - characterId
       properties:
         characterId:
           type: string
@@ -277,7 +290,7 @@ components:
           description: Filter by species
         status:
           allOf:
-            - $ref: '#/components/schemas/CharacterStatus'
+          - $ref: '#/components/schemas/CharacterStatus'
           nullable: true
           description: Filter by status
         page:
@@ -293,7 +306,7 @@ components:
     GetCharactersByRealmRequest:
       type: object
       required:
-        - realmId
+      - realmId
       properties:
         realmId:
           type: string
@@ -306,7 +319,7 @@ components:
           description: Filter by species
         status:
           allOf:
-            - $ref: '#/components/schemas/CharacterStatus'
+          - $ref: '#/components/schemas/CharacterStatus'
           nullable: true
           description: Optional status filter
         page:
@@ -323,13 +336,13 @@ components:
     CharacterResponse:
       type: object
       required:
-        - characterId
-        - name
-        - realmId
-        - speciesId
-        - birthDate
-        - status
-        - createdAt
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - status
+      - createdAt
       properties:
         characterId:
           type: string
@@ -367,10 +380,10 @@ components:
     CharacterListResponse:
       type: object
       required:
-        - characters
-        - totalCount
-        - page
-        - pageSize
+      - characters
+      - totalCount
+      - page
+      - pageSize
       properties:
         characters:
           type: array
@@ -387,112 +400,15 @@ components:
         hasPreviousPage:
           type: boolean
 
-    # Event Models for Character Lifecycle
-    CharacterCreatedEvent:
-      type: object
-      description: Event published when a new character is created
-      required:
-        - eventId
-        - timestamp
-        - characterId
-        - name
-        - realmId
-        - speciesId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the created character
-        name:
-          type: string
-          description: Character name
-        realmId:
-          type: string
-          format: uuid
-          description: Realm where character was created
-        speciesId:
-          type: string
-          format: uuid
-          description: Species of the character
-        birthDate:
-          type: string
-          format: date-time
-          description: In-game birth timestamp
-
-    CharacterUpdatedEvent:
-      type: object
-      description: Event published when a character is updated
-      required:
-        - eventId
-        - timestamp
-        - characterId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-        timestamp:
-          type: string
-          format: date-time
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the updated character
-        changedFields:
-          type: array
-          items:
-            type: string
-          description: List of fields that were changed
-        previousValues:
-          type: object
-          description: Previous values of changed fields
-        newValues:
-          type: object
-          description: New values of changed fields
-
-    CharacterDeletedEvent:
-      type: object
-      description: Event published when a character is deleted
-      required:
-        - eventId
-        - timestamp
-        - characterId
-        - realmId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-        timestamp:
-          type: string
-          format: date-time
-        characterId:
-          type: string
-          format: uuid
-          description: ID of the deleted character
-        realmId:
-          type: string
-          format: uuid
-          description: Realm where character existed
-        name:
-          type: string
-          description: Name of the deleted character
-
-    # Realm Transition Events
+    # Realm Transition Events (custom, not lifecycle)
     CharacterRealmJoinedEvent:
       type: object
       description: Event published when a character joins a realm
       required:
-        - eventId
-        - timestamp
-        - characterId
-        - realmId
+      - eventId
+      - timestamp
+      - characterId
+      - realmId
       properties:
         eventId:
           type: string
@@ -518,10 +434,10 @@ components:
       type: object
       description: Event published when a character leaves a realm
       required:
-        - eventId
-        - timestamp
-        - characterId
-        - realmId
+      - eventId
+      - timestamp
+      - characterId
+      - realmId
       properties:
         eventId:
           type: string

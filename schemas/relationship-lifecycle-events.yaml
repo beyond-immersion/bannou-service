@@ -1,0 +1,129 @@
+openapi: 3.0.3
+info:
+  title: Relationship Service API Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for relationship service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: relationship-api.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    RelationshipCreatedEvent:
+      type: object
+      description: Published to relationship.created when a relationship is created
+      required:
+      - eventId
+      - timestamp
+      - relationshipId
+      - entity1Id
+      - entity1Type
+      - entity2Id
+      - entity2Type
+      - relationshipTypeId
+      - startedAt
+      - createdAt
+      properties:
+        eventId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp: &id002
+          type: string
+          format: date-time
+          description: When this event occurred
+        relationshipId: &id003
+          type: string
+          format: uuid
+        entity1Id: &id004
+          type: string
+          format: uuid
+        entity1Type: &id005
+          type: string
+        entity2Id: &id006
+          type: string
+          format: uuid
+        entity2Type: &id007
+          type: string
+        relationshipTypeId: &id008
+          type: string
+          format: uuid
+        startedAt: &id009
+          type: string
+          format: date-time
+        endedAt: &id010
+          type: string
+          format: date-time
+        metadata: &id011
+          type: object
+          additionalProperties: true
+        createdAt: &id012
+          type: string
+          format: date-time
+        updatedAt: &id013
+          type: string
+          format: date-time
+    RelationshipUpdatedEvent:
+      type: object
+      description: Published to relationship.updated when a relationship is updated
+      required:
+      - eventId
+      - timestamp
+      - relationshipId
+      - entity1Id
+      - entity1Type
+      - entity2Id
+      - entity2Type
+      - relationshipTypeId
+      - startedAt
+      - createdAt
+      - changedFields
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        relationshipId: *id003
+        entity1Id: *id004
+        entity1Type: *id005
+        entity2Id: *id006
+        entity2Type: *id007
+        relationshipTypeId: *id008
+        startedAt: *id009
+        endedAt: *id010
+        metadata: *id011
+        createdAt: *id012
+        updatedAt: *id013
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    RelationshipDeletedEvent:
+      type: object
+      description: Published to relationship.deleted when a relationship is deleted
+      required:
+      - eventId
+      - timestamp
+      - relationshipId
+      - entity1Id
+      - entity1Type
+      - entity2Id
+      - entity2Type
+      - relationshipTypeId
+      - startedAt
+      - createdAt
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        relationshipId: *id003
+        entity1Id: *id004
+        entity1Type: *id005
+        entity2Id: *id006
+        entity2Type: *id007
+        relationshipTypeId: *id008
+        startedAt: *id009
+        endedAt: *id010
+        metadata: *id011
+        createdAt: *id012
+        updatedAt: *id013
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

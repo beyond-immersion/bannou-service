@@ -1,0 +1,144 @@
+openapi: 3.0.3
+info:
+  title: Bannou Species Service API Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for species service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: species-api.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    SpeciesCreatedEvent:
+      type: object
+      description: Published to species.created when a species is created
+      required:
+      - eventId
+      - timestamp
+      - speciesId
+      - code
+      - name
+      - isPlayable
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        eventId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp: &id002
+          type: string
+          format: date-time
+          description: When this event occurred
+        speciesId: &id003
+          type: string
+          format: uuid
+        code: &id004
+          type: string
+        name: &id005
+          type: string
+        description: &id006
+          type: string
+        category: &id007
+          type: string
+        isPlayable: &id008
+          type: boolean
+        isDeprecated: &id009
+          type: boolean
+        deprecatedAt: &id010
+          type: string
+          format: date-time
+        deprecationReason: &id011
+          type: string
+        baseLifespan: &id012
+          type: integer
+        maturityAge: &id013
+          type: integer
+        traitModifiers: &id014
+          type: object
+          additionalProperties: true
+        realmIds: &id015
+          type: array
+          items: {type: string, format: uuid}
+        metadata: &id016
+          type: object
+          additionalProperties: true
+        createdAt: &id017
+          type: string
+          format: date-time
+        updatedAt: &id018
+          type: string
+          format: date-time
+    SpeciesUpdatedEvent:
+      type: object
+      description: Published to species.updated when a species is updated
+      required:
+      - eventId
+      - timestamp
+      - speciesId
+      - code
+      - name
+      - isPlayable
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        speciesId: *id003
+        code: *id004
+        name: *id005
+        description: *id006
+        category: *id007
+        isPlayable: *id008
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        baseLifespan: *id012
+        maturityAge: *id013
+        traitModifiers: *id014
+        realmIds: *id015
+        metadata: *id016
+        createdAt: *id017
+        updatedAt: *id018
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    SpeciesDeletedEvent:
+      type: object
+      description: Published to species.deleted when a species is deleted
+      required:
+      - eventId
+      - timestamp
+      - speciesId
+      - code
+      - name
+      - isPlayable
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        speciesId: *id003
+        code: *id004
+        name: *id005
+        description: *id006
+        category: *id007
+        isPlayable: *id008
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        baseLifespan: *id012
+        maturityAge: *id013
+        traitModifiers: *id014
+        realmIds: *id015
+        metadata: *id016
+        createdAt: *id017
+        updatedAt: *id018
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

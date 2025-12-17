@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+  title: Bannou Character Service API Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for character service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: character-api.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    CharacterCreatedEvent:
+      type: object
+      description: Published to character.created when a character is created
+      required:
+      - eventId
+      - timestamp
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - createdAt
+      properties:
+        eventId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp: &id002
+          type: string
+          format: date-time
+          description: When this event occurred
+        characterId: &id003
+          type: string
+          format: uuid
+        name: &id004
+          type: string
+        realmId: &id005
+          type: string
+          format: uuid
+        speciesId: &id006
+          type: string
+          format: uuid
+        birthDate: &id007
+          type: string
+          format: date-time
+        status: &id008
+          type: string
+        createdAt: &id009
+          type: string
+          format: date-time
+        updatedAt: &id010
+          type: string
+          format: date-time
+    CharacterUpdatedEvent:
+      type: object
+      description: Published to character.updated when a character is updated
+      required:
+      - eventId
+      - timestamp
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - createdAt
+      - changedFields
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        characterId: *id003
+        name: *id004
+        realmId: *id005
+        speciesId: *id006
+        birthDate: *id007
+        status: *id008
+        createdAt: *id009
+        updatedAt: *id010
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    CharacterDeletedEvent:
+      type: object
+      description: Published to character.deleted when a character is deleted
+      required:
+      - eventId
+      - timestamp
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - createdAt
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        characterId: *id003
+        name: *id004
+        realmId: *id005
+        speciesId: *id006
+        birthDate: *id007
+        status: *id008
+        createdAt: *id009
+        updatedAt: *id010
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

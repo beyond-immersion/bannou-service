@@ -65,6 +65,11 @@
       <Compile Include="../lib-game-session/Generated/GameSessionModels.cs" />
       <Compile Include="../lib-character/Generated/CharacterModels.cs" />
       <Compile Include="../lib-website/Generated/WebsiteModels.cs" />
+      <Compile Include="../lib-relationship/Generated/RelationshipLifecycleEvents.cs" />
+      <Compile Include="../lib-accounts/Generated/AccountsLifecycleEvents.cs" />
+      <Compile Include="../lib-relationship-type/Generated/RelationshipTypeLifecycleEvents.cs" />
+      <Compile Include="../lib-species/Generated/SpeciesLifecycleEvents.cs" />
+      <Compile Include="../lib-character/Generated/CharacterLifecycleEvents.cs" />
     </ItemGroup>
   </Target>
 

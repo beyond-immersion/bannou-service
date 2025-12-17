@@ -2,9 +2,13 @@
 """
 Generate lifecycle events (Created, Updated, Deleted) from x-lifecycle definitions.
 
-This script processes OpenAPI schema files and expands x-lifecycle shorthand
-into full event schema definitions, ensuring consistent event patterns across
-all Bannou services.
+This script reads x-lifecycle definitions from OpenAPI API schemas and generates
+separate lifecycle event schema files. The API schemas are NEVER modified.
+
+Architecture:
+- {service}-api.yaml: API definitions + x-lifecycle (SOURCE OF TRUTH, read-only)
+- {service}-events.yaml: Custom service events (manually maintained, never touched)
+- {service}-lifecycle-events.yaml: Auto-generated lifecycle events (completely overwritten)
 
 Event Pattern:
 - All events have: eventId (uuid), timestamp (datetime)
@@ -26,7 +30,7 @@ The script processes all *-api.yaml files in the schemas/ directory.
 import sys
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Tuple
 
 # Use ruamel.yaml to preserve formatting and comments
 try:
@@ -34,6 +38,7 @@ try:
     yaml = YAML()
     yaml.preserve_quotes = True
     yaml.width = 120
+    yaml.default_flow_style = False
 except ImportError:
     print("ERROR: ruamel.yaml is required. Install with: pip install ruamel.yaml")
     sys.exit(1)
@@ -41,58 +46,43 @@ except ImportError:
 
 def to_kebab_case(name: str) -> str:
     """Convert PascalCase to kebab-case for topic names."""
-    # Insert hyphen before uppercase letters and convert to lowercase
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1-\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1-\2', s1).lower()
 
 
-def process_schema_file(path: Path) -> bool:
-    """
-    Process a single schema file, expanding x-lifecycle definitions.
+def extract_service_name(api_file: Path) -> str:
+    """Extract service name from API file path (e.g., 'accounts' from 'accounts-api.yaml')."""
+    return api_file.stem.replace('-api', '')
 
-    Returns True if the file was modified.
+
+def read_lifecycle_definitions(api_file: Path) -> Tuple[Dict[str, Any], str]:
     """
-    with open(path) as f:
+    Read x-lifecycle definitions from an API schema file.
+
+    Returns:
+        Tuple of (lifecycle_defs dict, service title from info section)
+        Returns (None, None) if no x-lifecycle found
+    """
+    with open(api_file) as f:
         content = f.read()
 
     # Quick check before parsing
     if 'x-lifecycle:' not in content:
-        return False
+        return None, None
 
-    with open(path) as f:
+    with open(api_file) as f:
         schema = yaml.load(f)
 
     if schema is None or 'x-lifecycle' not in schema:
-        return False
+        return None, None
 
-    lifecycle_defs = schema.pop('x-lifecycle')
+    # Extract service title for the generated file
+    title = schema.get('info', {}).get('title', 'Unknown Service')
 
-    # Ensure components.schemas exists
-    if 'components' not in schema:
-        schema['components'] = {}
-    if 'schemas' not in schema['components']:
-        schema['components']['schemas'] = {}
-
-    # Track generated events for reporting
-    generated = []
-
-    # Generate events for each entity
-    for entity_name, config in lifecycle_defs.items():
-        events = generate_events(entity_name, config)
-        schema['components']['schemas'].update(events)
-        generated.append(entity_name)
-
-    # Write back
-    with open(path, 'w') as f:
-        yaml.dump(schema, f)
-
-    if generated:
-        print(f"  {path.name}: Generated events for {', '.join(generated)}")
-
-    return True
+    return schema['x-lifecycle'], title
 
 
-def generate_events(entity: str, config: dict) -> dict:
+def generate_events(entity: str, config: dict) -> Dict[str, Any]:
     """
     Generate Created, Updated, Deleted event schemas for an entity.
 
@@ -165,7 +155,7 @@ def generate_events(entity: str, config: dict) -> dict:
         'type': 'object',
         'description': f'Published to {topic_base}.created when a {entity.lower()} is created',
         'required': required_fields.copy(),
-        'properties': dict(all_props)  # Copy to avoid mutation
+        'properties': dict(all_props)
     }
 
     # UpdatedEvent - adds changedFields
@@ -205,8 +195,60 @@ def generate_events(entity: str, config: dict) -> dict:
     }
 
 
+def generate_lifecycle_events_file(
+    service_name: str,
+    service_title: str,
+    lifecycle_defs: Dict[str, Any],
+    output_path: Path
+) -> List[str]:
+    """
+    Generate a complete lifecycle events schema file.
+
+    Args:
+        service_name: Service name (e.g., "accounts")
+        service_title: Human-readable service title
+        lifecycle_defs: x-lifecycle definitions from API schema
+        output_path: Path to write the generated file
+
+    Returns:
+        List of entity names that had events generated
+    """
+    # Build all event schemas
+    all_schemas = {}
+    generated_entities = []
+
+    for entity_name, config in lifecycle_defs.items():
+        events = generate_events(entity_name, config)
+        all_schemas.update(events)
+        generated_entities.append(entity_name)
+
+    # Build the complete OpenAPI document
+    doc = {
+        'openapi': '3.0.3',
+        'info': {
+            'title': f'{service_title} Lifecycle Events',
+            'description': (
+                f'Auto-generated lifecycle event schemas for {service_name} service.\n'
+                f'DO NOT EDIT - This file is completely overwritten by generate-lifecycle-events.py.\n'
+                f'Source of truth: {service_name}-api.yaml x-lifecycle section.'
+            ),
+            'version': '1.0.0'
+        },
+        'paths': {},  # Events don't have HTTP paths
+        'components': {
+            'schemas': all_schemas
+        }
+    }
+
+    # Write the file (completely overwriting)
+    with open(output_path, 'w') as f:
+        yaml.dump(doc, f)
+
+    return generated_entities
+
+
 def main():
-    """Process all schema files in the schemas/ directory."""
+    """Process all API schema files and generate lifecycle event files."""
     # Find schemas directory relative to script location
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
@@ -217,28 +259,49 @@ def main():
         sys.exit(1)
 
     print("Generating lifecycle events from x-lifecycle definitions...")
+    print("  Reading from: *-api.yaml (source of truth)")
+    print("  Writing to: *-lifecycle-events.yaml (completely overwritten)")
+    print()
 
-    modified = []
+    generated_files = []
     errors = []
 
-    for schema_file in sorted(schema_dir.glob('*-api.yaml')):
+    for api_file in sorted(schema_dir.glob('*-api.yaml')):
         try:
-            if process_schema_file(schema_file):
-                modified.append(schema_file.name)
+            lifecycle_defs, service_title = read_lifecycle_definitions(api_file)
+
+            if lifecycle_defs is None:
+                continue
+
+            service_name = extract_service_name(api_file)
+            output_file = schema_dir / f'{service_name}-lifecycle-events.yaml'
+
+            entities = generate_lifecycle_events_file(
+                service_name,
+                service_title,
+                lifecycle_defs,
+                output_file
+            )
+
+            generated_files.append((output_file.name, entities))
+            print(f"  {output_file.name}: Generated events for {', '.join(entities)}")
+
         except Exception as e:
-            errors.append(f"{schema_file.name}: {e}")
+            errors.append(f"{api_file.name}: {e}")
 
     # Report results
+    print()
     if errors:
-        print("\nErrors:")
+        print("Errors:")
         for error in errors:
             print(f"  {error}")
         sys.exit(1)
 
-    if modified:
-        print(f"\nProcessed {len(modified)} file(s)")
+    if generated_files:
+        print(f"Generated {len(generated_files)} lifecycle event file(s)")
+        print("Note: API schemas were NOT modified (read-only)")
     else:
-        print("No x-lifecycle definitions found")
+        print("No x-lifecycle definitions found in any API schemas")
 
 
 if __name__ == '__main__':

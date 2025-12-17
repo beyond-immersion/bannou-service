@@ -173,39 +173,29 @@ public class CharacterService : ICharacterService
 
             // Track changes for event
             var changedFields = new List<string>();
-            var previousValues = new Dictionary<string, object?>();
-            var newValues = new Dictionary<string, object?>();
 
             // Update fields if provided
             if (body.Name != null && body.Name != character.Name)
             {
                 changedFields.Add("name");
-                previousValues["name"] = character.Name;
-                newValues["name"] = body.Name;
                 character.Name = body.Name;
             }
 
             if (body.Status.HasValue && body.Status.Value != character.Status)
             {
                 changedFields.Add("status");
-                previousValues["status"] = character.Status.ToString();
-                newValues["status"] = body.Status.Value.ToString();
                 character.Status = body.Status.Value;
             }
 
             if (body.DeathDate.HasValue)
             {
                 changedFields.Add("deathDate");
-                previousValues["deathDate"] = character.DeathDate;
-                newValues["deathDate"] = body.DeathDate.Value;
                 character.DeathDate = body.DeathDate.Value;
 
                 // If death date is set, also set status to dead
                 if (character.Status != CharacterStatus.Dead)
                 {
                     changedFields.Add("status");
-                    previousValues["status"] = character.Status.ToString();
-                    newValues["status"] = CharacterStatus.Dead.ToString();
                     character.Status = CharacterStatus.Dead;
                 }
             }
@@ -214,8 +204,6 @@ public class CharacterService : ICharacterService
             if (body.SpeciesId.HasValue && body.SpeciesId.Value != Guid.Parse(character.SpeciesId))
             {
                 changedFields.Add("speciesId");
-                previousValues["speciesId"] = character.SpeciesId;
-                newValues["speciesId"] = body.SpeciesId.Value.ToString();
                 character.SpeciesId = body.SpeciesId.Value.ToString();
             }
 
@@ -236,9 +224,7 @@ public class CharacterService : ICharacterService
             {
                 await PublishCharacterUpdatedEventAsync(
                     Guid.Parse(character.CharacterId),
-                    changedFields,
-                    previousValues,
-                    newValues);
+                    changedFields);
             }
 
             var response = MapToCharacterResponse(character);
@@ -618,9 +604,7 @@ public class CharacterService : ICharacterService
 
     private async Task PublishCharacterUpdatedEventAsync(
         Guid characterId,
-        IEnumerable<string> changedFields,
-        object? previousValues,
-        object? newValues)
+        IEnumerable<string> changedFields)
     {
         try
         {
@@ -629,9 +613,7 @@ public class CharacterService : ICharacterService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = characterId,
-                ChangedFields = changedFields.ToList(),
-                PreviousValues = previousValues ?? new { },
-                NewValues = newValues ?? new { }
+                ChangedFields = changedFields.ToList()
             };
 
             await _daprClient.PublishEventAsync(PUBSUB_NAME, CHARACTER_UPDATED_TOPIC, eventModel);
