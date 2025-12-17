@@ -1,0 +1,557 @@
+openapi: 3.0.0
+info:
+  title: Bannou Character Service API
+  description: |
+    Character management service for Arcadia game world.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See API-DESIGN.md for architectural rationale.
+
+    Characters are independent world assets (not owned by accounts). Guardian spirits
+    (future service) will reference characters for possession mechanics.
+
+    **Scale**: Designed to handle hundreds of thousands of characters with realm-based
+    partitioning for optimal performance.
+
+    **Foreign Keys**: realmId and speciesId are UUIDs referencing future services
+    (Realm, Species).
+
+    **Relationships**: Character relationships are managed by the separate Relationship
+    service, which handles entity-agnostic relationships between any two entities.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3500/v1.0/invoke/bannou/method
+    description: Dapr sidecar endpoint (internal only)
+
+paths:
+  /character/create:
+    post:
+      summary: Create new character
+      operationId: createCharacter
+      tags:
+        - Character Management
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCharacterRequest'
+      responses:
+        '201':
+          description: Character created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '400':
+          description: Invalid character data
+        '409':
+          description: Character already exists
+
+  /character/get:
+    post:
+      summary: Get character by ID
+      operationId: getCharacter
+      tags:
+        - Character Management
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCharacterRequest'
+      responses:
+        '200':
+          description: Character retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '404':
+          description: Character not found
+
+  /character/update:
+    post:
+      summary: Update character
+      operationId: updateCharacter
+      tags:
+        - Character Management
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCharacterRequest'
+      responses:
+        '200':
+          description: Character updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponse'
+        '404':
+          description: Character not found
+        '400':
+          description: Invalid update data
+
+  /character/delete:
+    post:
+      summary: Delete character (permanent removal)
+      operationId: deleteCharacter
+      tags:
+        - Character Management
+      x-permissions:
+        - role: admin
+          states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteCharacterRequest'
+      responses:
+        '204':
+          description: Character deleted successfully
+        '404':
+          description: Character not found
+
+  /character/list:
+    post:
+      summary: List characters with filtering
+      operationId: listCharacters
+      tags:
+        - Character Management
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCharactersRequest'
+      responses:
+        '200':
+          description: Characters retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterListResponse'
+
+  /character/by-realm:
+    post:
+      summary: Get all characters in a realm (primary query pattern)
+      operationId: getCharactersByRealm
+      tags:
+        - Character Lookup
+      x-permissions:
+        - role: user
+          states:
+            auth: authenticated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCharactersByRealmRequest'
+      responses:
+        '200':
+          description: Characters retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterListResponse'
+
+components:
+  schemas:
+    # Shared Enum Definitions
+    CharacterStatus:
+      type: string
+      description: Character lifecycle status
+      enum: [alive, dead, dormant]
+
+    # Request Models for POST-only pattern
+    CreateCharacterRequest:
+      type: object
+      required:
+        - name
+        - realmId
+        - speciesId
+        - birthDate
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Character name
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID (foreign key to future Realm service, partition key)
+        speciesId:
+          type: string
+          format: uuid
+          description: Species ID (foreign key to future Species service)
+        birthDate:
+          type: string
+          format: date-time
+          description: In-game birth timestamp
+        status:
+          allOf:
+            - $ref: '#/components/schemas/CharacterStatus'
+          default: alive
+
+    GetCharacterRequest:
+      type: object
+      required:
+        - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to retrieve
+
+    UpdateCharacterRequest:
+      type: object
+      required:
+        - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to update
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          nullable: true
+        speciesId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Update character's species (used for species merge migrations)
+        status:
+          allOf:
+            - $ref: '#/components/schemas/CharacterStatus'
+          nullable: true
+        deathDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: In-game death timestamp (sets status to dead)
+
+    DeleteCharacterRequest:
+      type: object
+      required:
+        - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to delete
+
+    ListCharactersRequest:
+      type: object
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm
+        speciesId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by species
+        status:
+          allOf:
+            - $ref: '#/components/schemas/CharacterStatus'
+          nullable: true
+          description: Filter by status
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    GetCharactersByRealmRequest:
+      type: object
+      required:
+        - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID to query (uses partition key for efficiency)
+        speciesId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by species
+        status:
+          allOf:
+            - $ref: '#/components/schemas/CharacterStatus'
+          nullable: true
+          description: Optional status filter
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    # Response Models
+    CharacterResponse:
+      type: object
+      required:
+        - characterId
+        - name
+        - realmId
+        - speciesId
+        - birthDate
+        - status
+        - createdAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID (partition key)
+        speciesId:
+          type: string
+          format: uuid
+        birthDate:
+          type: string
+          format: date-time
+          description: In-game birth timestamp
+        deathDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: In-game death timestamp
+        status:
+          $ref: '#/components/schemas/CharacterStatus'
+        createdAt:
+          type: string
+          format: date-time
+          description: Real-world creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Real-world last update timestamp
+
+    CharacterListResponse:
+      type: object
+      required:
+        - characters
+        - totalCount
+        - page
+        - pageSize
+      properties:
+        characters:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterResponse'
+        totalCount:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+
+    # Event Models for Character Lifecycle
+    CharacterCreatedEvent:
+      type: object
+      description: Event published when a new character is created
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - name
+        - realmId
+        - speciesId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the created character
+        name:
+          type: string
+          description: Character name
+        realmId:
+          type: string
+          format: uuid
+          description: Realm where character was created
+        speciesId:
+          type: string
+          format: uuid
+          description: Species of the character
+        birthDate:
+          type: string
+          format: date-time
+          description: In-game birth timestamp
+
+    CharacterUpdatedEvent:
+      type: object
+      description: Event published when a character is updated
+      required:
+        - eventId
+        - timestamp
+        - characterId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the updated character
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of fields that were changed
+        previousValues:
+          type: object
+          description: Previous values of changed fields
+        newValues:
+          type: object
+          description: New values of changed fields
+
+    CharacterDeletedEvent:
+      type: object
+      description: Event published when a character is deleted
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - realmId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the deleted character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm where character existed
+        name:
+          type: string
+          description: Name of the deleted character
+
+    # Realm Transition Events
+    CharacterRealmJoinedEvent:
+      type: object
+      description: Event published when a character joins a realm
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - realmId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm being joined
+        previousRealmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Previous realm (if transitioning)
+
+    CharacterRealmLeftEvent:
+      type: object
+      description: Event published when a character leaves a realm
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - realmId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm being left
+        reason:
+          type: string
+          description: Reason for leaving (death, transfer, deletion)
+
+x-service-configuration:
+  properties:
+    DefaultPageSize:
+      type: integer
+      description: Default page size for character listings
+      default: 20
+    MaxPageSize:
+      type: integer
+      description: Maximum allowed page size for character listings
+      default: 100
+    CharacterRetentionDays:
+      type: integer
+      description: Number of days to retain deleted character data
+      default: 90

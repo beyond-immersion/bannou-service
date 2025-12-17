@@ -637,7 +637,7 @@ public partial class AccountListResponse
 }
 
 /// <summary>
-/// Event published when a new account is created
+/// Published to account.created when a account is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AccountCreatedEvent
@@ -651,37 +651,62 @@ public partial class AccountCreatedEvent
     public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
-    /// When the event occurred
+    /// When this event occurred
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the created account
+    /// Unique identifier for the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Email address of the created account
+    /// Email address
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Email { get; set; } = default!;
 
     /// <summary>
-    /// Display name of the created account
+    /// User's display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
+    public string DisplayName { get; set; } = default!;
 
     /// <summary>
-    /// Roles assigned to the account
+    /// Whether email has been verified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
+    public bool EmailVerified { get; set; } = default!;
+
+    /// <summary>
+    /// Account roles
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+
+    /// <summary>
+    /// When the account was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the account was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Additional account metadata
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object Metadata { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -695,44 +720,83 @@ public partial class AccountCreatedEvent
 }
 
 /// <summary>
-/// Event published when an account is updated
+/// Published to account.updated when a account is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AccountUpdatedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid EventId { get; set; } = default!;
 
+    /// <summary>
+    /// When this event occurred
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the updated account
+    /// Unique identifier for the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// List of fields that were changed
+    /// Email address
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("email")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Email { get; set; } = default!;
+
+    /// <summary>
+    /// User's display name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Whether email has been verified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
+    public bool EmailVerified { get; set; } = default!;
+
+    /// <summary>
+    /// Account roles
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roles")]
+    public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+
+    /// <summary>
+    /// When the account was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the account was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Additional account metadata
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// List of field names that were modified
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
-    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = default!;
-
-    /// <summary>
-    /// Previous values of changed fields
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("previousValues")]
-    public object PreviousValues { get; set; } = default!;
-
-    /// <summary>
-    /// New values of changed fields
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("newValues")]
-    public object NewValues { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -746,38 +810,82 @@ public partial class AccountUpdatedEvent
 }
 
 /// <summary>
-/// Event published when an account is deleted
+/// Published to account.deleted when a account is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AccountDeletedEvent
 {
 
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid EventId { get; set; } = default!;
 
+    /// <summary>
+    /// When this event occurred
+    /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the deleted account
+    /// Unique identifier for the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Email of the deleted account
+    /// Email address
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public string Email { get; set; } = default!;
 
     /// <summary>
-    /// Reason for account deletion
+    /// User's display name
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletionReason")]
-    public string DeletionReason { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Whether email has been verified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
+    public bool EmailVerified { get; set; } = default!;
+
+    /// <summary>
+    /// Account roles
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roles")]
+    public System.Collections.Generic.ICollection<string> Roles { get; set; } = default!;
+
+    /// <summary>
+    /// When the account was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the account was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Additional account metadata
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

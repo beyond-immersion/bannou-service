@@ -94,29 +94,35 @@ EOF
     echo -e "${GREEN}✅ Created test project file: $TEST_PROJECT_FILE${NC}"
 
     # Add project to solution
+    # Note: Path must be relative from repo root, not from scripts directory
+    TEST_PROJECT_FILE_FROM_ROOT="lib-${SERVICE_NAME}.tests/lib-${SERVICE_NAME}.tests.csproj"
     echo -e "${YELLOW}🔗 Adding test project to solution...${NC}"
+
     ORIGINAL_DIR="$(pwd)"
     cd "$(dirname "$0")/.."
 
-    if dotnet sln add "$TEST_PROJECT_FILE" --verbosity quiet 2>/dev/null; then
+    if dotnet sln add "$TEST_PROJECT_FILE_FROM_ROOT" 2>&1; then
         echo -e "${GREEN}✅ Added test project to solution${NC}"
     else
-        echo -e "${YELLOW}⚠️  Test project might already be in solution${NC}"
+        echo -e "${YELLOW}⚠️  Test project might already be in solution or add failed${NC}"
     fi
 
-    # Return to original directory to ensure relative paths work correctly
     cd "$ORIGINAL_DIR"
 
 else
     echo -e "${YELLOW}📝 Test project file already exists: $TEST_PROJECT_FILE${NC}"
 
     # Still try to add to solution in case it's not there
+    # Note: Path must be relative from repo root, not from scripts directory
+    TEST_PROJECT_FILE_FROM_ROOT="lib-${SERVICE_NAME}.tests/lib-${SERVICE_NAME}.tests.csproj"
+
     ORIGINAL_DIR="$(pwd)"
     cd "$(dirname "$0")/.."
-    if dotnet sln add "$TEST_PROJECT_FILE" --verbosity quiet 2>/dev/null; then
+
+    if dotnet sln add "$TEST_PROJECT_FILE_FROM_ROOT" 2>&1; then
         echo -e "${GREEN}✅ Added existing test project to solution${NC}"
     fi
-    # Return to original directory to ensure relative paths work correctly
+
     cd "$ORIGINAL_DIR"
 fi
 
@@ -147,6 +153,30 @@ if [ ! -f "$GLOBAL_USINGS_FILE" ]; then
         echo -e "${RED}❌ Failed to create GlobalUsings.cs${NC}"
         exit 1
     fi
+fi
+
+# Always create/overwrite GlobalSuppressions.cs to ensure latest suppressions are applied
+GLOBAL_SUPPRESSIONS_FILE="$TEST_PROJECT_DIR/GlobalSuppressions.cs"
+echo -e "${YELLOW}📝 Creating GlobalSuppressions.cs...${NC}"
+
+cat > "$GLOBAL_SUPPRESSIONS_FILE" << 'EOF'
+// This file is used to suppress code analysis warnings that are applied project-wide.
+// Note: Compiler warnings (CS8620, CS8602, etc.) are suppressed via Directory.Build.props
+// using the <NoWarn> property, which is the correct MSBuild approach for project-wide suppression.
+
+using System.Diagnostics.CodeAnalysis;
+
+// CA1822: Member does not access instance data and can be marked as static
+// Test methods often don't access instance data but should remain instance methods for test framework compatibility
+[assembly: SuppressMessage("Performance", "CA1822:Mark members as static",
+    Justification = "Test methods should remain instance methods for test framework compatibility")]
+EOF
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ Created GlobalSuppressions.cs${NC}"
+else
+    echo -e "${RED}❌ Failed to create GlobalSuppressions.cs${NC}"
+    exit 1
 fi
 
 # Create basic service tests if they don't exist

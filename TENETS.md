@@ -488,6 +488,31 @@ public class AccountTestHandler : IServiceTestHandler
 | Events | Required | Required | Required |
 | WebSocket-only | N/A | Via proxy | Required |
 
+### Dapr StateEntry Mocking Limitations
+
+**Important**: Dapr's `StateEntry<T>` class is sealed and cannot be instantiated with empty/null values directly. This affects unit testing of methods that use `GetBulkStateAsync` which returns `IReadOnlyList<BulkStateItem>`.
+
+**Workarounds**:
+1. **Mock the BulkStateItem response**: Create proper BulkStateItem instances with serialized JSON values
+2. **Use HTTP integration tests**: For complex state operations requiring realistic Dapr behavior, write HTTP tests (`http-tester/Tests/`) that run against real Dapr components
+3. **Test business logic separately**: Extract complex logic into testable helper methods that don't depend on Dapr types
+
+**Example - Mocking GetBulkStateAsync**:
+```csharp
+var bulkItems = new List<BulkStateItem>
+{
+    new BulkStateItem("key1", JsonSerializer.Serialize(model1), "etag1"),
+    new BulkStateItem("key2", JsonSerializer.Serialize(model2), "etag2")
+};
+_mockDaprClient
+    .Setup(d => d.GetBulkStateAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(),
+        It.IsAny<int?>(), It.IsAny<IReadOnlyDictionary<string, string>?>(),
+        It.IsAny<CancellationToken>()))
+    .ReturnsAsync(bulkItems);
+```
+
+**When HTTP tests are preferred**: Tests that require verifying actual Dapr state store behavior, transaction atomicity, or cross-service event flows should use HTTP integration tests rather than attempting complex mocking.
+
 ---
 
 ## Tenet 10: X-Permissions Usage (DOCUMENTED)
@@ -677,6 +702,238 @@ When a test fails, report:
 | Missing x-permissions | 10 | Add to schema |
 | HTTP fallback in tests | 11 | Remove fallback, fix root cause |
 | Changing test to pass with buggy impl | 12 | Keep test, fix implementation |
+| Composite string FK in API schema | 13 | Use separate ID + Type columns |
+| Direct FK constraints for polymorphic | 13 | Use application-level validation |
+
+---
+
+## Tenet 13: Polymorphic Associations (STANDARDIZED)
+
+**Rule**: When entities can reference multiple entity types (e.g., relationships between characters, NPCs, items, locations), use the **Entity ID + Type Column** pattern in schemas and **composite string keys** for state store operations.
+
+### The Problem
+
+Polymorphic foreign keys—where a single reference can point to different entity types—cannot use traditional SQL foreign key constraints. This is a fundamental limitation of relational databases that applies equally to Dapr state stores.
+
+### Required Pattern: Separate Columns in API Schema
+
+```yaml
+# CORRECT: Explicit columns in OpenAPI schema
+CreateRelationshipRequest:
+  type: object
+  required:
+    - entity1Id
+    - entity1Type
+    - entity2Id
+    - entity2Type
+    - relationshipTypeId
+  properties:
+    entity1Id:
+      type: string
+      format: uuid
+      description: The unique identifier of the first entity
+    entity1Type:
+      $ref: '#/components/schemas/EntityType'
+      description: The type of the first entity
+    entity2Id:
+      type: string
+      format: uuid
+    entity2Type:
+      $ref: '#/components/schemas/EntityType'
+    relationshipTypeId:
+      type: string
+      format: uuid
+
+# Define EntityType enum in components/schemas
+EntityType:
+  type: string
+  enum:
+    - CHARACTER
+    - NPC
+    - MONSTER
+    - ITEM
+    - LOCATION
+    - ORGANIZATION
+    - FACTION
+    - REALM
+```
+
+### Why Separate Columns?
+
+| Benefit | Explanation |
+|---------|-------------|
+| **API Clarity** | Self-documenting OpenAPI schema with explicit types |
+| **Type Safety** | Enum validation at API boundary catches typos at compile time |
+| **Query Filtering** | Easy `if (entityType == EntityType.CHARACTER)` without parsing |
+| **Generated Code** | NSwag generates proper enum types, not stringly-typed code |
+
+### Composite Keys for State Store Operations
+
+Use composite string keys internally for Dapr state store operations:
+
+```csharp
+public class RelationshipService : IRelationshipService
+{
+    private const string STATE_STORE = "relationship-statestore";
+    private const string RELATIONSHIP_KEY_PREFIX = "rel:";
+    private const string ENTITY_INDEX_PREFIX = "entity-index:";
+    private const string COMPOSITE_INDEX_PREFIX = "composite:";
+
+    /// <summary>
+    /// Build a composite entity reference string for storage keys.
+    /// Format: "{entityType}:{entityId}" (lowercase type for consistency)
+    /// </summary>
+    private static string BuildEntityRef(Guid entityId, EntityType entityType)
+        => $"{entityType.ToString().ToLowerInvariant()}:{entityId}";
+
+    /// <summary>
+    /// Build uniqueness constraint key to prevent duplicate relationships.
+    /// </summary>
+    private static string BuildCompositeKey(
+        Guid entity1Id, EntityType entity1Type,
+        Guid entity2Id, EntityType entity2Type,
+        Guid relationshipTypeId)
+        => $"{COMPOSITE_INDEX_PREFIX}{BuildEntityRef(entity1Id, entity1Type)}:" +
+           $"{BuildEntityRef(entity2Id, entity2Type)}:{relationshipTypeId}";
+
+    /// <summary>
+    /// Build index key for finding all relationships involving an entity.
+    /// </summary>
+    private static string BuildEntityIndexKey(Guid entityId, EntityType entityType)
+        => $"{ENTITY_INDEX_PREFIX}{BuildEntityRef(entityId, entityType)}";
+}
+```
+
+### Forbidden Patterns
+
+```yaml
+# WRONG: Composite string in API schema (loses type safety)
+CreateRelationshipRequest:
+  properties:
+    entity1Ref:
+      type: string
+      description: "Format: {entityType}:{guid}"  # NO! Requires parsing
+    entity2Ref:
+      type: string
+```
+
+```csharp
+// WRONG: Parsing composite strings in business logic
+var parts = entity1Ref.Split(':');
+var entityType = parts[0];  // NO! Runtime errors, no compile-time safety
+
+// CORRECT: Use typed parameters
+public async Task<(StatusCodes, RelationshipResponse?)> CreateRelationshipAsync(
+    CreateRelationshipRequest body, CancellationToken ct)
+{
+    // body.Entity1Type is already EntityType enum - no parsing needed
+    if (body.Entity1Type == EntityType.CHARACTER)
+    {
+        // Validate character exists via generated client
+    }
+}
+```
+
+### Application-Level Referential Integrity
+
+Since Dapr state stores cannot enforce foreign key constraints, implement validation in service logic:
+
+```csharp
+public async Task<(StatusCodes, RelationshipResponse?)> CreateRelationshipAsync(
+    CreateRelationshipRequest body, CancellationToken ct)
+{
+    // 1. Validate entities exist before creating relationship
+    var entity1Valid = await ValidateEntityExistsAsync(
+        body.Entity1Id, body.Entity1Type, ct);
+    if (!entity1Valid)
+        return (StatusCodes.BadRequest, null); // Entity1 does not exist
+
+    var entity2Valid = await ValidateEntityExistsAsync(
+        body.Entity2Id, body.Entity2Type, ct);
+    if (!entity2Valid)
+        return (StatusCodes.BadRequest, null); // Entity2 does not exist
+
+    // 2. Check for duplicate relationship (composite uniqueness)
+    var compositeKey = BuildCompositeKey(
+        body.Entity1Id, body.Entity1Type,
+        body.Entity2Id, body.Entity2Type,
+        body.RelationshipTypeId);
+
+    var existing = await _daprClient.GetStateAsync<string>(STATE_STORE, compositeKey, ct);
+    if (!string.IsNullOrEmpty(existing))
+        return (StatusCodes.Conflict, null); // Relationship already exists
+
+    // 3. Create the relationship
+    // ...
+}
+
+private async Task<bool> ValidateEntityExistsAsync(
+    Guid entityId, EntityType entityType, CancellationToken ct)
+{
+    return entityType switch
+    {
+        EntityType.CHARACTER => await ValidateCharacterAsync(entityId, ct),
+        EntityType.NPC => await ValidateNpcAsync(entityId, ct),
+        EntityType.ITEM => await ValidateItemAsync(entityId, ct),
+        // ... other entity types
+        _ => false
+    };
+}
+```
+
+### Event-Driven Cascade Handling
+
+Subscribe to entity deletion events to maintain consistency:
+
+```csharp
+// In RelationshipEventsController.cs
+[Topic("bannou-pubsub", "entity.deleted")]
+[HttpPost("handle-entity-deleted")]
+public async Task<IActionResult> HandleEntityDeleted([FromBody] EntityDeletedEvent evt)
+{
+    // End all relationships involving the deleted entity
+    var entityRef = $"{evt.EntityType.ToLowerInvariant()}:{evt.EntityId}";
+    var indexKey = $"entity-index:{entityRef}";
+
+    var relationshipIds = await _daprClient.GetStateAsync<List<string>>(
+        STATE_STORE, indexKey);
+
+    foreach (var relationshipId in relationshipIds ?? new())
+    {
+        await _relationshipService.EndRelationshipAsync(
+            new EndRelationshipRequest { RelationshipId = relationshipId },
+            default);
+    }
+
+    return Ok();
+}
+```
+
+### Pattern Summary
+
+| Layer | Pattern | Example |
+|-------|---------|---------|
+| **API Schema** | Separate ID + Type columns | `entity1Id: uuid`, `entity1Type: EntityType` |
+| **State Store Keys** | Composite string | `"character:abc123"`, `"rel:character:abc123:npc:def456:friend"` |
+| **Validation** | Application-level | Service validates entity existence before relationship creation |
+| **Cascade Deletes** | Event-driven | Subscribe to `entity.deleted` events |
+| **Uniqueness** | Composite index key | Store relationship ID at composite key to prevent duplicates |
+
+### Why NOT Other Patterns
+
+| Pattern | Why Not |
+|---------|---------|
+| **Exclusive Arc** (multiple nullable FK columns) | Doesn't map to key-value stores; schema explosion with many entity types |
+| **Separate Junction Tables** | N² tables for N entity types; complex union queries |
+| **Common Super Table** | Requires cross-service coordination; single point of failure |
+| **JSON Column** | No schema validation; poor query performance |
+
+### References
+
+This pattern is informed by industry analysis:
+- [DoltHub: Polymorphic Associations](https://www.dolthub.com/blog/2024-06-25-polymorphic-associations/) - Comprehensive comparison of 5 approaches
+- [Hashrocket: Modeling Polymorphic Associations](https://hashrocket.com/blog/posts/modeling-polymorphic-associations-in-a-relational-database) - Exclusive arc vs type discriminator analysis
+- [GitLab: Polymorphic Associations](https://docs.gitlab.com/ee/development/database/polymorphic_associations.html) - Enterprise guidance recommending separate tables
 
 ---
 

@@ -1,0 +1,277 @@
+# Default Relationship Types for Arcadia Game World
+# Hierarchy: Root types at depth 0, children inherit from parents
+# Use the /relationship-type/seed endpoint to load this data
+#
+# SPECIAL ENTRIES:
+# - VOID: Merge target for deleted relationships (like /dev/null)
+# - UNKNOWN: For relationships with unknown/unspecified types
+
+types:
+  # =============================================================================
+  # SPECIAL SYSTEM ENTRIES (Must be seeded first)
+  # =============================================================================
+  - code: VOID
+    name: Void
+    description: |
+      Special system type used as a merge target for deleted relationships.
+      Relationships merged into VOID are effectively marked as "type removed".
+      Cannot be used for new relationships. Functions like /dev/null.
+    category: SYSTEM
+    isBidirectional: true
+    metadata:
+      isSystemType: true
+      allowNewRelationships: false
+      description: "Merge target for deleted relationship types"
+
+  - code: UNKNOWN
+    name: Unknown
+    description: |
+      Special system type for relationships with unspecified or unknown types.
+      Can be used as a fallback when the relationship type is not determined.
+    category: SYSTEM
+    isBidirectional: true
+    metadata:
+      isSystemType: true
+      allowNewRelationships: true
+      description: "Fallback for unspecified relationship types"
+
+  # =============================================================================
+  # FAMILY RELATIONSHIPS (Root Category)
+  # =============================================================================
+  - code: FAMILY
+    name: Family
+    description: Blood relatives and legal family members
+    category: FAMILY
+    isBidirectional: false
+
+  # Parent relationships
+  - code: PARENT
+    name: Parent
+    description: Parent of a child (mother, father, step-parent)
+    category: FAMILY
+    parentTypeCode: FAMILY
+    inverseTypeCode: CHILD
+    isBidirectional: false
+
+  - code: MOTHER
+    name: Mother
+    description: Biological or adoptive mother
+    category: FAMILY
+    parentTypeCode: PARENT
+    inverseTypeCode: SON
+    isBidirectional: false
+
+  - code: FATHER
+    name: Father
+    description: Biological or adoptive father
+    category: FAMILY
+    parentTypeCode: PARENT
+    inverseTypeCode: SON
+    isBidirectional: false
+
+  - code: STEP_PARENT
+    name: Step-Parent
+    description: Parent through marriage
+    category: FAMILY
+    parentTypeCode: PARENT
+    inverseTypeCode: STEP_CHILD
+    isBidirectional: false
+
+  # Child relationships
+  - code: CHILD
+    name: Child
+    description: Child of a parent (son, daughter, step-child)
+    category: FAMILY
+    parentTypeCode: FAMILY
+    inverseTypeCode: PARENT
+    isBidirectional: false
+
+  - code: SON
+    name: Son
+    description: Male child
+    category: FAMILY
+    parentTypeCode: CHILD
+    inverseTypeCode: MOTHER
+    isBidirectional: false
+
+  - code: DAUGHTER
+    name: Daughter
+    description: Female child
+    category: FAMILY
+    parentTypeCode: CHILD
+    inverseTypeCode: MOTHER
+    isBidirectional: false
+
+  - code: STEP_CHILD
+    name: Step-Child
+    description: Child through marriage
+    category: FAMILY
+    parentTypeCode: CHILD
+    inverseTypeCode: STEP_PARENT
+    isBidirectional: false
+
+  # Sibling relationships
+  - code: SIBLING
+    name: Sibling
+    description: Brother or sister
+    category: FAMILY
+    parentTypeCode: FAMILY
+    isBidirectional: true
+
+  - code: BROTHER
+    name: Brother
+    description: Male sibling
+    category: FAMILY
+    parentTypeCode: SIBLING
+    isBidirectional: false
+    inverseTypeCode: SISTER
+
+  - code: SISTER
+    name: Sister
+    description: Female sibling
+    category: FAMILY
+    parentTypeCode: SIBLING
+    isBidirectional: false
+    inverseTypeCode: BROTHER
+
+  - code: HALF_SIBLING
+    name: Half-Sibling
+    description: Sibling sharing one parent
+    category: FAMILY
+    parentTypeCode: SIBLING
+    isBidirectional: true
+
+  # Spouse relationships
+  - code: SPOUSE
+    name: Spouse
+    description: Married partner
+    category: FAMILY
+    parentTypeCode: FAMILY
+    isBidirectional: true
+
+  - code: HUSBAND
+    name: Husband
+    description: Male spouse
+    category: FAMILY
+    parentTypeCode: SPOUSE
+    inverseTypeCode: WIFE
+    isBidirectional: false
+
+  - code: WIFE
+    name: Wife
+    description: Female spouse
+    category: FAMILY
+    parentTypeCode: SPOUSE
+    inverseTypeCode: HUSBAND
+    isBidirectional: false
+
+  # =============================================================================
+  # SOCIAL RELATIONSHIPS (Root Category)
+  # =============================================================================
+  - code: SOCIAL
+    name: Social
+    description: Non-family social connections
+    category: SOCIAL
+    isBidirectional: false
+
+  # Friend relationships
+  - code: FRIEND
+    name: Friend
+    description: General friendship
+    category: SOCIAL
+    parentTypeCode: SOCIAL
+    isBidirectional: true
+
+  - code: CLOSE_FRIEND
+    name: Close Friend
+    description: Intimate friendship with deep trust
+    category: SOCIAL
+    parentTypeCode: FRIEND
+    isBidirectional: true
+
+  - code: ACQUAINTANCE
+    name: Acquaintance
+    description: Casual social connection
+    category: SOCIAL
+    parentTypeCode: FRIEND
+    isBidirectional: true
+
+  # Enemy relationships
+  - code: ENEMY
+    name: Enemy
+    description: Hostile relationship
+    category: SOCIAL
+    parentTypeCode: SOCIAL
+    isBidirectional: true
+
+  - code: RIVAL
+    name: Rival
+    description: Competitive antagonist
+    category: SOCIAL
+    parentTypeCode: ENEMY
+    isBidirectional: true
+
+  # Mentor relationships
+  - code: MENTOR
+    name: Mentor
+    description: Teacher or guide
+    category: SOCIAL
+    parentTypeCode: SOCIAL
+    inverseTypeCode: APPRENTICE
+    isBidirectional: false
+
+  - code: APPRENTICE
+    name: Apprentice
+    description: Student or protege
+    category: SOCIAL
+    parentTypeCode: SOCIAL
+    inverseTypeCode: MENTOR
+    isBidirectional: false
+
+  # =============================================================================
+  # ECONOMIC RELATIONSHIPS (Root Category)
+  # =============================================================================
+  - code: ECONOMIC
+    name: Economic
+    description: Business and economic connections
+    category: ECONOMIC
+    isBidirectional: false
+
+  - code: EMPLOYER
+    name: Employer
+    description: Provides employment
+    category: ECONOMIC
+    parentTypeCode: ECONOMIC
+    inverseTypeCode: EMPLOYEE
+    isBidirectional: false
+
+  - code: EMPLOYEE
+    name: Employee
+    description: Works for employer
+    category: ECONOMIC
+    parentTypeCode: ECONOMIC
+    inverseTypeCode: EMPLOYER
+    isBidirectional: false
+
+  - code: TRADE_PARTNER
+    name: Trade Partner
+    description: Business trading relationship
+    category: ECONOMIC
+    parentTypeCode: ECONOMIC
+    isBidirectional: true
+
+  - code: CUSTOMER
+    name: Customer
+    description: Regular buyer of goods/services
+    category: ECONOMIC
+    parentTypeCode: ECONOMIC
+    inverseTypeCode: VENDOR
+    isBidirectional: false
+
+  - code: VENDOR
+    name: Vendor
+    description: Seller of goods/services
+    category: ECONOMIC
+    parentTypeCode: ECONOMIC
+    inverseTypeCode: CUSTOMER
+    isBidirectional: false

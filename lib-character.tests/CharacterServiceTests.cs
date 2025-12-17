@@ -1,0 +1,694 @@
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Testing;
+using Dapr.Client;
+using Microsoft.Extensions.Logging;
+using Moq;
+using System.Text.Json;
+using Xunit;
+
+#pragma warning disable CS8620 // Argument of type cannot be used for parameter of type due to differences in the nullability
+
+namespace BeyondImmersion.BannouService.Character.Tests;
+
+/// <summary>
+/// Comprehensive unit tests for CharacterService.
+/// Tests all CRUD operations, event publishing, and error handling.
+/// Note: Tests using StateEntry (CreateCharacter, DeleteCharacter with index updates)
+/// are best covered by HTTP integration tests due to StateEntry mocking complexity.
+/// Relationship operations have been moved to the dedicated RelationshipService.
+/// </summary>
+public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfiguration>
+{
+    private readonly Mock<DaprClient> _mockDaprClient;
+    private readonly Mock<ILogger<CharacterService>> _mockLogger;
+    private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
+
+    private const string STATE_STORE = "character-statestore";
+    private const string CHARACTER_KEY_PREFIX = "character:";
+    private const string REALM_INDEX_KEY_PREFIX = "realm-index:";
+    private const string PUBSUB_NAME = "bannou-pubsub";
+
+    public CharacterServiceTests()
+    {
+        _mockDaprClient = new Mock<DaprClient>();
+        _mockLogger = new Mock<ILogger<CharacterService>>();
+        _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
+    }
+
+    private CharacterService CreateService()
+    {
+        return new CharacterService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockErrorEventEmitter.Object);
+    }
+
+    #region Constructor Tests
+
+    [Fact]
+    public void Constructor_WithValidParameters_ShouldNotThrow()
+    {
+        var service = CreateService();
+        Assert.NotNull(service);
+    }
+
+    [Fact]
+    public void Constructor_WithNullDaprClient_ShouldThrow()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new CharacterService(null!, _mockLogger.Object, Configuration, _mockErrorEventEmitter.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullLogger_ShouldThrow()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new CharacterService(_mockDaprClient.Object, null!, Configuration, _mockErrorEventEmitter.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullConfiguration_ShouldThrow()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, null!, _mockErrorEventEmitter.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullErrorEventEmitter_ShouldThrow()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new CharacterService(_mockDaprClient.Object, _mockLogger.Object, Configuration, null!));
+    }
+
+    #endregion
+
+    #region GetCharacter Tests
+
+    [Fact]
+    public async Task GetCharacterAsync_WhenCharacterExists_ShouldReturnCharacter()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new GetCharacterRequest { CharacterId = characterId };
+
+        // Setup global index lookup
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<string>(
+                STATE_STORE, $"character-global-index:{characterId}", null, null, default))
+            .ReturnsAsync(realmId.ToString());
+
+        // Setup character retrieval
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<CharacterModel>(
+                STATE_STORE, $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", null, null, default))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId.ToString(),
+                Name = "Test Character",
+                RealmId = realmId.ToString(),
+                SpeciesId = Guid.NewGuid().ToString(),
+                Status = CharacterStatus.Alive,
+                BirthDate = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.GetCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(characterId, response.CharacterId);
+        Assert.Equal("Test Character", response.Name);
+    }
+
+    [Fact]
+    public async Task GetCharacterAsync_WhenCharacterNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var request = new GetCharacterRequest { CharacterId = characterId };
+
+        // Setup global index to return null (character doesn't exist)
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<string>(
+                STATE_STORE, $"character-global-index:{characterId}", null, null, default))
+            .Returns(Task.FromResult<string?>(null));
+
+        // Act
+        var (status, response) = await service.GetCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetCharacterAsync_WhenDaprFails_ShouldReturnInternalServerError()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new GetCharacterRequest { CharacterId = Guid.NewGuid() };
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<string>(
+                STATE_STORE, It.IsAny<string>(), null, null, default))
+            .ThrowsAsync(new Exception("State store unavailable"));
+
+        // Act
+        var (status, response) = await service.GetCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.InternalServerError, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region UpdateCharacter Tests
+
+    [Fact]
+    public async Task UpdateCharacterAsync_WhenCharacterExists_ShouldUpdateAndPublishEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new UpdateCharacterRequest
+        {
+            CharacterId = characterId,
+            Name = "Updated Name",
+            Status = CharacterStatus.Dead
+        };
+
+        // Setup global index lookup
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<string>(
+                STATE_STORE, $"character-global-index:{characterId}", null, null, default))
+            .ReturnsAsync(realmId.ToString());
+
+        // Setup character retrieval
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<CharacterModel>(
+                STATE_STORE, $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", null, null, default))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId.ToString(),
+                Name = "Original Name",
+                RealmId = realmId.ToString(),
+                SpeciesId = Guid.NewGuid().ToString(),
+                Status = CharacterStatus.Alive,
+                BirthDate = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.UpdateCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("Updated Name", response.Name);
+        Assert.Equal(CharacterStatus.Dead, response.Status);
+
+        // Verify update event published
+        _mockDaprClient.Verify(d => d.PublishEventAsync(
+            PUBSUB_NAME,
+            "character.updated",
+            It.IsAny<CharacterUpdatedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateCharacterAsync_WhenSettingDeathDate_ShouldAlsoSetStatusToDead()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var deathDate = DateTimeOffset.UtcNow;
+        var request = new UpdateCharacterRequest
+        {
+            CharacterId = characterId,
+            DeathDate = deathDate
+        };
+
+        // Setup global index lookup
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<string>(
+                STATE_STORE, $"character-global-index:{characterId}", null, null, default))
+            .ReturnsAsync(realmId.ToString());
+
+        // Setup character retrieval
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<CharacterModel>(
+                STATE_STORE, $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", null, null, default))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId.ToString(),
+                Name = "Test",
+                RealmId = realmId.ToString(),
+                SpeciesId = Guid.NewGuid().ToString(),
+                Status = CharacterStatus.Alive,
+                BirthDate = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.UpdateCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(CharacterStatus.Dead, response.Status);
+        Assert.Equal(deathDate, response.DeathDate);
+    }
+
+    [Fact]
+    public async Task UpdateCharacterAsync_WhenCharacterNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new UpdateCharacterRequest { CharacterId = Guid.NewGuid(), Name = "New Name" };
+
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<string>(
+                STATE_STORE, It.IsAny<string>(), null, null, default))
+            .Returns(Task.FromResult<string?>(null));
+
+        // Act
+        var (status, response) = await service.UpdateCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateCharacterAsync_WithNoChanges_ShouldNotPublishEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new UpdateCharacterRequest { CharacterId = characterId };
+
+        // Setup global index lookup
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<string>(
+                STATE_STORE, $"character-global-index:{characterId}", null, null, default))
+            .ReturnsAsync(realmId.ToString());
+
+        // Setup character retrieval
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<CharacterModel>(
+                STATE_STORE, $"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", null, null, default))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId.ToString(),
+                Name = "Test",
+                RealmId = realmId.ToString(),
+                SpeciesId = Guid.NewGuid().ToString(),
+                Status = CharacterStatus.Alive,
+                BirthDate = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.UpdateCharacterAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify NO update event published (no changes)
+        _mockDaprClient.Verify(d => d.PublishEventAsync(
+            PUBSUB_NAME,
+            "character.updated",
+            It.IsAny<CharacterUpdatedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region ListCharacters Tests
+
+    [Fact]
+    public async Task ListCharactersAsync_WithRealmFilter_ShouldReturnCharactersFromRealm()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var request = new ListCharactersRequest
+        {
+            RealmId = realmId,
+            Page = 1,
+            PageSize = 20
+        };
+
+        // Setup realm index
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>>(
+                STATE_STORE, REALM_INDEX_KEY_PREFIX + realmId, null, null, default))
+            .ReturnsAsync(new List<string> { characterId.ToString() });
+
+        // Setup bulk character retrieval
+        var characterModel = new CharacterModel
+        {
+            CharacterId = characterId.ToString(),
+            Name = "Test Character",
+            RealmId = realmId.ToString(),
+            SpeciesId = Guid.NewGuid().ToString(),
+            Status = CharacterStatus.Alive,
+            BirthDate = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+        SetupBulkStateAsync(new[]
+        {
+            CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", characterModel)
+        });
+
+        // Act
+        var (status, response) = await service.ListCharactersAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Characters);
+        Assert.Equal(1, response.TotalCount);
+        Assert.Equal("Test Character", response.Characters.First().Name);
+    }
+
+    [Fact]
+    public async Task ListCharactersAsync_WithoutRealmFilter_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListCharactersRequest { Page = 1, PageSize = 20 };
+
+        // Act
+        var (status, response) = await service.ListCharactersAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Characters);
+        Assert.Equal(0, response.TotalCount);
+    }
+
+    [Fact]
+    public async Task ListCharactersAsync_WithStatusFilter_ShouldFilterByStatus()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var aliveCharId = Guid.NewGuid();
+        var deadCharId = Guid.NewGuid();
+        var request = new ListCharactersRequest
+        {
+            RealmId = realmId,
+            Status = CharacterStatus.Alive
+        };
+
+        // Setup realm index with both characters
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>>(
+                STATE_STORE, REALM_INDEX_KEY_PREFIX + realmId, null, null, default))
+            .ReturnsAsync(new List<string> { aliveCharId.ToString(), deadCharId.ToString() });
+
+        // Setup bulk character retrieval for both characters
+        var aliveCharacter = new CharacterModel
+        {
+            CharacterId = aliveCharId.ToString(),
+            Name = "Alive Character",
+            RealmId = realmId.ToString(),
+            SpeciesId = Guid.NewGuid().ToString(),
+            Status = CharacterStatus.Alive,
+            BirthDate = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+        var deadCharacter = new CharacterModel
+        {
+            CharacterId = deadCharId.ToString(),
+            Name = "Dead Character",
+            RealmId = realmId.ToString(),
+            SpeciesId = Guid.NewGuid().ToString(),
+            Status = CharacterStatus.Dead,
+            BirthDate = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+        SetupBulkStateAsync(new[]
+        {
+            CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{aliveCharId}", aliveCharacter),
+            CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{deadCharId}", deadCharacter)
+        });
+
+        // Act
+        var (status, response) = await service.ListCharactersAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Characters);
+        Assert.Equal("Alive Character", response.Characters.First().Name);
+    }
+
+    [Fact]
+    public async Task ListCharactersAsync_ShouldPaginateCorrectly()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var characterIds = Enumerable.Range(0, 5).Select(_ => Guid.NewGuid()).ToList();
+        var request = new ListCharactersRequest
+        {
+            RealmId = realmId,
+            Page = 2,
+            PageSize = 2
+        };
+
+        // Setup realm index with 5 characters
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>>(
+                STATE_STORE, REALM_INDEX_KEY_PREFIX + realmId, null, null, default))
+            .ReturnsAsync(characterIds.Select(id => id.ToString()).ToList());
+
+        // Setup bulk character retrieval for all 5 characters
+        var bulkItems = characterIds.Select((charId, index) =>
+        {
+            var model = new CharacterModel
+            {
+                CharacterId = charId.ToString(),
+                Name = $"Character {index}",
+                RealmId = realmId.ToString(),
+                SpeciesId = Guid.NewGuid().ToString(),
+                Status = CharacterStatus.Alive,
+                BirthDate = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            };
+            return CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{charId}", model);
+        }).ToArray();
+        SetupBulkStateAsync(bulkItems);
+
+        // Act
+        var (status, response) = await service.ListCharactersAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Characters.Count);
+        Assert.Equal(5, response.TotalCount);
+        Assert.Equal(2, response.Page);
+        Assert.True(response.HasNextPage);
+        Assert.True(response.HasPreviousPage);
+    }
+
+    #endregion
+
+    #region GetCharactersByRealm Tests
+
+    [Fact]
+    public async Task GetCharactersByRealmAsync_ShouldReturnCharactersFromSpecifiedRealm()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var request = new GetCharactersByRealmRequest
+        {
+            RealmId = realmId,
+            Page = 1,
+            PageSize = 20
+        };
+
+        // Setup realm index
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>>(
+                STATE_STORE, REALM_INDEX_KEY_PREFIX + realmId, null, null, default))
+            .ReturnsAsync(new List<string> { characterId.ToString() });
+
+        // Setup bulk character retrieval
+        var characterModel = new CharacterModel
+        {
+            CharacterId = characterId.ToString(),
+            Name = "Realm Character",
+            RealmId = realmId.ToString(),
+            SpeciesId = Guid.NewGuid().ToString(),
+            Status = CharacterStatus.Alive,
+            BirthDate = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+        SetupBulkStateAsync(new[]
+        {
+            CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", characterModel)
+        });
+
+        // Act
+        var (status, response) = await service.GetCharactersByRealmAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Characters);
+        Assert.Equal("Realm Character", response.Characters.First().Name);
+    }
+
+    [Fact]
+    public async Task GetCharactersByRealmAsync_WithSpeciesFilter_ShouldFilterBySpecies()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId = Guid.NewGuid();
+        var targetSpeciesId = Guid.NewGuid();
+        var otherSpeciesId = Guid.NewGuid();
+        var targetCharId = Guid.NewGuid();
+        var otherCharId = Guid.NewGuid();
+
+        var request = new GetCharactersByRealmRequest
+        {
+            RealmId = realmId,
+            SpeciesId = targetSpeciesId
+        };
+
+        // Setup realm index
+        _mockDaprClient
+            .Setup(d => d.GetStateAsync<List<string>>(
+                STATE_STORE, REALM_INDEX_KEY_PREFIX + realmId, null, null, default))
+            .ReturnsAsync(new List<string> { targetCharId.ToString(), otherCharId.ToString() });
+
+        // Setup bulk character retrieval for both characters
+        var targetCharacter = new CharacterModel
+        {
+            CharacterId = targetCharId.ToString(),
+            Name = "Target Species Character",
+            RealmId = realmId.ToString(),
+            SpeciesId = targetSpeciesId.ToString(),
+            Status = CharacterStatus.Alive,
+            BirthDate = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+        var otherCharacter = new CharacterModel
+        {
+            CharacterId = otherCharId.ToString(),
+            Name = "Other Species Character",
+            RealmId = realmId.ToString(),
+            SpeciesId = otherSpeciesId.ToString(),
+            Status = CharacterStatus.Alive,
+            BirthDate = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+        SetupBulkStateAsync(new[]
+        {
+            CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{targetCharId}", targetCharacter),
+            CreateBulkStateItem($"{CHARACTER_KEY_PREFIX}{realmId}:{otherCharId}", otherCharacter)
+        });
+
+        // Act
+        var (status, response) = await service.GetCharactersByRealmAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Characters);
+        Assert.Equal("Target Species Character", response.Characters.First().Name);
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private static CharacterModel CreateCharacterModel(Guid characterId, Guid realmId, string name)
+    {
+        return new CharacterModel
+        {
+            CharacterId = characterId.ToString(),
+            Name = name,
+            RealmId = realmId.ToString(),
+            SpeciesId = Guid.NewGuid().ToString(),
+            Status = CharacterStatus.Alive,
+            BirthDate = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Creates a BulkStateItem for use in GetBulkStateAsync mocks.
+    /// </summary>
+    private static BulkStateItem CreateBulkStateItem<T>(string key, T model)
+    {
+        var json = JsonSerializer.Serialize(model);
+        return new BulkStateItem(key, json, string.Empty);
+    }
+
+    /// <summary>
+    /// Sets up GetBulkStateAsync mock to return the specified items.
+    /// </summary>
+    private void SetupBulkStateAsync(IEnumerable<BulkStateItem> items)
+    {
+        var resultList = items.ToList();
+        _mockDaprClient
+            .Setup(d => d.GetBulkStateAsync(
+                It.Is<string>(s => s == STATE_STORE),
+                It.IsAny<IReadOnlyList<string>>(),
+                It.IsAny<int?>(),
+                It.IsAny<IReadOnlyDictionary<string, string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<BulkStateItem>)resultList);
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Tests for CharacterServiceConfiguration
+/// </summary>
+public class CharacterConfigurationTests
+{
+    [Fact]
+    public void Configuration_WithValidSettings_ShouldInitializeCorrectly()
+    {
+        var config = new CharacterServiceConfiguration();
+        Assert.NotNull(config);
+        Assert.Equal(20, config.DefaultPageSize);
+        Assert.Equal(100, config.MaxPageSize);
+        Assert.Equal(90, config.CharacterRetentionDays);
+    }
+}

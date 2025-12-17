@@ -1,0 +1,199 @@
+# Default Species for Arcadia Game World
+# Use the /species/seed endpoint to load this data
+#
+# SPECIAL ENTRIES:
+# - VOID: Merge target for deleted species (like /dev/null)
+# - UNKNOWN: For characters with unknown/unspecified species
+#
+# REALM CODES:
+# Species can be associated with realms via realmCodes array.
+# Common realms: OMEGA, ARCADIA, FANTASIA
+
+species:
+  # =============================================================================
+  # SPECIAL SYSTEM ENTRIES (Must be seeded first)
+  # =============================================================================
+  - code: VOID
+    name: Void
+    description: |
+      Special system species used as a merge target for deleted species.
+      Characters merged into VOID are effectively marked as "species removed".
+      Cannot be used for new characters. Functions like /dev/null.
+    category: SYSTEM
+    isPlayable: false
+    metadata:
+      isSystemType: true
+      allowNewCharacters: false
+      description: "Merge target for deleted species"
+
+  - code: UNKNOWN
+    name: Unknown
+    description: |
+      Special system species for characters with unspecified or unknown species.
+      Can be used as a fallback when the species is not determined.
+    category: SYSTEM
+    isPlayable: false
+    metadata:
+      isSystemType: true
+      allowNewCharacters: true
+      description: "Fallback for unspecified species"
+
+  # =============================================================================
+  # HUMANOID SPECIES (Available in all realms)
+  # =============================================================================
+  - code: HUMAN
+    name: Human
+    description: The most adaptable and widespread species across all realms.
+    category: HUMANOID
+    isPlayable: true
+    baseLifespan: 80
+    maturityAge: 18
+    realmCodes:
+      - OMEGA
+      - ARCADIA
+      - FANTASIA
+    traitModifiers:
+      adaptability: 10
+      learning: 5
+
+  # =============================================================================
+  # ARCADIA-SPECIFIC SPECIES (Fantasy realm)
+  # =============================================================================
+  - code: ELF
+    name: Elf
+    description: Long-lived beings with affinity for magic and nature.
+    category: HUMANOID
+    isPlayable: true
+    baseLifespan: 750
+    maturityAge: 100
+    realmCodes:
+      - ARCADIA
+    traitModifiers:
+      magic_affinity: 15
+      dexterity: 10
+      constitution: -5
+
+  - code: DWARF
+    name: Dwarf
+    description: Stout and hardy mountain-dwelling folk known for craftsmanship.
+    category: HUMANOID
+    isPlayable: true
+    baseLifespan: 350
+    maturityAge: 50
+    realmCodes:
+      - ARCADIA
+    traitModifiers:
+      constitution: 15
+      crafting: 10
+      agility: -5
+
+  - code: ORC
+    name: Orc
+    description: Fierce warriors with strong tribal traditions.
+    category: HUMANOID
+    isPlayable: true
+    baseLifespan: 60
+    maturityAge: 14
+    realmCodes:
+      - ARCADIA
+    traitModifiers:
+      strength: 15
+      intimidation: 10
+      charisma: -5
+
+  - code: HALFLING
+    name: Halfling
+    description: Small, nimble folk known for their luck and cheerfulness.
+    category: HUMANOID
+    isPlayable: true
+    baseLifespan: 150
+    maturityAge: 33
+    realmCodes:
+      - ARCADIA
+    traitModifiers:
+      luck: 15
+      stealth: 10
+      strength: -5
+
+  # =============================================================================
+  # FANTASIA-SPECIFIC SPECIES (Post-apocalyptic survival realm)
+  # =============================================================================
+  - code: MUTANT
+    name: Mutant
+    description: Humans altered by radiation or magical fallout with unique abilities.
+    category: HUMANOID
+    isPlayable: true
+    baseLifespan: 50
+    maturityAge: 16
+    realmCodes:
+      - FANTASIA
+    traitModifiers:
+      mutation_resistance: 20
+      special_ability: 10
+      social: -10
+
+  - code: SYNTHETIC
+    name: Synthetic
+    description: Artificial beings created before the cataclysm, now self-aware.
+    category: CONSTRUCTED
+    isPlayable: true
+    baseLifespan: 0
+    maturityAge: 0
+    realmCodes:
+      - FANTASIA
+    traitModifiers:
+      logic: 20
+      durability: 15
+      emotion: -15
+    metadata:
+      immortal: true
+      requiresMaintenance: true
+
+  # =============================================================================
+  # OMEGA-SPECIFIC SPECIES (Cyberpunk realm)
+  # =============================================================================
+  - code: AUGMENTED_HUMAN
+    name: Augmented Human
+    description: Humans with cybernetic enhancements and neural implants.
+    category: HUMANOID
+    isPlayable: true
+    baseLifespan: 100
+    maturityAge: 18
+    realmCodes:
+      - OMEGA
+    traitModifiers:
+      tech_affinity: 15
+      interface: 10
+      organic_healing: -5
+
+  # =============================================================================
+  # CREATURE SPECIES (NPCs only)
+  # =============================================================================
+  - code: GOBLIN
+    name: Goblin
+    description: Small, cunning creatures that live in large groups.
+    category: CREATURE
+    isPlayable: false
+    baseLifespan: 40
+    maturityAge: 8
+    realmCodes:
+      - ARCADIA
+      - FANTASIA
+    traitModifiers:
+      cunning: 10
+      numbers: 15
+      strength: -10
+
+  - code: TROLL
+    name: Troll
+    description: Large, regenerating brutes often found guarding bridges or caves.
+    category: CREATURE
+    isPlayable: false
+    baseLifespan: 200
+    maturityAge: 30
+    realmCodes:
+      - ARCADIA
+    traitModifiers:
+      regeneration: 20
+      strength: 15
+      intelligence: -10

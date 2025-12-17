@@ -1,0 +1,1011 @@
+openapi: 3.0.0
+info:
+  title: Bannou Species Service API
+  description: |
+    Species management service for Arcadia game world.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See API-DESIGN.md for architectural rationale.
+
+    Species define the playable and NPC races in each realm. Each species has unique
+    traits, abilities, and cultural characteristics. Species are realm-specific,
+    allowing different realms to have distinct species populations.
+
+    **Realm Association**: Each species belongs to one or more realms, enabling
+    cross-realm species (e.g., humans in all realms) and realm-specific species
+    (e.g., elves only in Arcadia).
+
+    **Trait System**: Species define base trait modifiers that affect character
+    creation and development.
+
+    **Deprecation System**: Species can be deprecated instead of deleted directly.
+    Deprecated species remain queryable but cannot be used for new characters.
+    Use the merge endpoint to migrate characters from deprecated species to active ones.
+    The special VOID species serves as a sink for characters whose species should be removed.
+
+    **Two-Step Deletion**:
+    1. Deprecate the species (soft delete, prevents new usage)
+    2. Merge deprecated species into another species (or VOID to effectively delete)
+    3. Optionally hard-delete the deprecated species after merge
+  version: 2.0.0
+servers:
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+  description: Dapr sidecar endpoint (internal only)
+
+paths:
+  /species/get:
+    post:
+      summary: Get species by ID
+      operationId: getSpecies
+      tags:
+      - Species
+      x-permissions:
+      - role: user
+        states:
+          auth: authenticated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSpeciesRequest'
+      responses:
+        '200':
+          description: Species retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesResponse'
+        '404':
+          description: Species not found
+
+  /species/get-by-code:
+    post:
+      summary: Get species by code
+      description: Retrieve a species using its unique code (e.g., "HUMAN", "ELF", "DWARF")
+      operationId: getSpeciesByCode
+      tags:
+      - Species
+      x-permissions:
+      - role: user
+        states:
+          auth: authenticated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSpeciesByCodeRequest'
+      responses:
+        '200':
+          description: Species retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesResponse'
+        '404':
+          description: Species not found
+
+  /species/list:
+    post:
+      summary: List all species
+      description: Retrieve all species with optional realm filtering
+      operationId: listSpecies
+      tags:
+      - Species
+      x-permissions:
+      - role: user
+        states:
+          auth: authenticated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListSpeciesRequest'
+      responses:
+        '200':
+          description: Species retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesListResponse'
+
+  /species/list-by-realm:
+    post:
+      summary: List species available in a realm
+      description: Retrieve all species that are available in a specific realm
+      operationId: listSpeciesByRealm
+      tags:
+      - Species
+      x-permissions:
+      - role: user
+        states:
+          auth: authenticated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListSpeciesByRealmRequest'
+      responses:
+        '200':
+          description: Species retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesListResponse'
+        '404':
+          description: Realm not found
+
+  /species/create:
+    post:
+      summary: Create new species
+      operationId: createSpecies
+      tags:
+      - Species Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSpeciesRequest'
+      responses:
+        '201':
+          description: Species created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesResponse'
+        '400':
+          description: Invalid species data
+        '409':
+          description: Species with this code already exists
+
+  /species/update:
+    post:
+      summary: Update species
+      operationId: updateSpecies
+      tags:
+      - Species Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSpeciesRequest'
+      responses:
+        '200':
+          description: Species updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesResponse'
+        '404':
+          description: Species not found
+        '400':
+          description: Invalid update data
+
+  /species/delete:
+    post:
+      summary: Delete species
+      description: |
+        Hard delete a species. This will fail if the species is still in use.
+        For safe removal, first deprecate the species, then merge it into another species
+        (or VOID), then delete. Only deprecated species with zero references can be deleted.
+      operationId: deleteSpecies
+      tags:
+      - Species Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteSpeciesRequest'
+      responses:
+        '204':
+          description: Species deleted successfully
+        '404':
+          description: Species not found
+        '409':
+          description: Cannot delete - species is in use by characters
+
+  /species/deprecate:
+    post:
+      summary: Deprecate a species
+      description: |
+        Soft-delete a species by marking it as deprecated.
+        Deprecated species:
+        - Remain queryable for historical data
+        - Cannot be used for creating new characters
+        - Can be merged into other species using the merge endpoint
+        - Can be hard-deleted after all references are removed
+      operationId: deprecateSpecies
+      tags:
+      - Species Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateSpeciesRequest'
+      responses:
+        '200':
+          description: Species deprecated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesResponse'
+        '404':
+          description: Species not found
+        '409':
+          description: Species is already deprecated
+
+  /species/undeprecate:
+    post:
+      summary: Restore a deprecated species
+      description: |
+        Remove the deprecated status from a species, making it
+        available for new characters again.
+      operationId: undeprecateSpecies
+      tags:
+      - Species Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateSpeciesRequest'
+      responses:
+        '200':
+          description: Species restored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesResponse'
+        '404':
+          description: Species not found
+        '400':
+          description: Species is not deprecated
+
+  /species/merge:
+    post:
+      summary: Merge a deprecated species into another species
+      description: |
+        Migrate all characters using a deprecated species to a target species.
+        This is the recommended way to handle species removal:
+        1. Deprecate the source species
+        2. Merge into the target species (or VOID for effective deletion)
+        3. Optionally hard-delete the now-empty deprecated species
+
+        The merge operation:
+        - Updates all characters using sourceSpeciesId to use targetSpeciesId
+        - Publishes events for each affected character
+        - Returns count of migrated characters
+        - Fails if source is not deprecated (safety check)
+      operationId: mergeSpecies
+      tags:
+      - Species Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeSpeciesRequest'
+      responses:
+        '200':
+          description: Merge completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MergeSpeciesResponse'
+        '404':
+          description: Source or target species not found
+        '400':
+          description: Source species must be deprecated before merging
+        '409':
+          description: Cannot merge into a deprecated species
+
+  /species/add-to-realm:
+    post:
+      summary: Add species to a realm
+      description: Make a species available in an additional realm
+      operationId: addSpeciesToRealm
+      tags:
+      - Species Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddSpeciesToRealmRequest'
+      responses:
+        '200':
+          description: Species added to realm successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesResponse'
+        '404':
+          description: Species or realm not found
+        '409':
+          description: Species already in realm
+
+  /species/remove-from-realm:
+    post:
+      summary: Remove species from a realm
+      description: Remove a species from a realm (species must not have characters in that realm)
+      operationId: removeSpeciesFromRealm
+      tags:
+      - Species Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveSpeciesFromRealmRequest'
+      responses:
+        '200':
+          description: Species removed from realm successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesResponse'
+        '404':
+          description: Species not found or not in realm
+        '409':
+          description: Cannot remove - characters of this species exist in realm
+
+  /species/seed:
+    post:
+      summary: Seed species from configuration
+      description: |
+        Idempotent operation to seed species from provided data.
+        Creates species that don't exist, optionally updates existing species.
+        Typically called at service startup with YAML-defined species.
+      operationId: seedSpecies
+      tags:
+      - Species Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedSpeciesRequest'
+      responses:
+        '200':
+          description: Seed operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedSpeciesResponse'
+        '400':
+          description: Invalid seed data
+
+components:
+  schemas:
+    # Request schemas
+    GetSpeciesRequest:
+      type: object
+      required:
+      - speciesId
+      properties:
+        speciesId:
+          type: string
+          format: uuid
+          description: Unique identifier of the species
+
+    GetSpeciesByCodeRequest:
+      type: object
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique code for the species (e.g., "HUMAN", "ELF", "DWARF")
+
+    ListSpeciesRequest:
+      type: object
+      properties:
+        category:
+          type: string
+          nullable: true
+          description: Filter by category (e.g., "HUMANOID", "BEAST", "MAGICAL")
+        isPlayable:
+          type: boolean
+          nullable: true
+          description: Filter by playable status
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated species in the response
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    ListSpeciesByRealmRequest:
+      type: object
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to filter by
+        isPlayable:
+          type: boolean
+          nullable: true
+          description: Filter by playable status
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    CreateSpeciesRequest:
+      type: object
+      required:
+      - code
+      - name
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique code for the species (e.g., "HUMAN", "ELF")
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Display name for the species
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Description of the species
+        category:
+          type: string
+          maxLength: 50
+          nullable: true
+          description: Category for grouping (e.g., "HUMANOID", "BEAST", "MAGICAL")
+        isPlayable:
+          type: boolean
+          default: true
+          description: Whether players can create characters of this species
+        baseLifespan:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Base lifespan in game years
+        maturityAge:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Age at which the species reaches maturity
+        traitModifiers:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Base trait modifiers for this species (JSON)
+        realmIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Initial realms where this species is available
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional metadata for the species
+
+    UpdateSpeciesRequest:
+      type: object
+      required:
+      - speciesId
+      properties:
+        speciesId:
+          type: string
+          format: uuid
+          description: ID of the species to update
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          nullable: true
+          description: Display name for the species
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Description of the species
+        category:
+          type: string
+          maxLength: 50
+          nullable: true
+          description: Category for grouping
+        isPlayable:
+          type: boolean
+          nullable: true
+          description: Whether players can create characters of this species
+        baseLifespan:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Base lifespan in game years
+        maturityAge:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Age at which the species reaches maturity
+        traitModifiers:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Base trait modifiers for this species
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional metadata
+
+    DeleteSpeciesRequest:
+      type: object
+      required:
+      - speciesId
+      properties:
+        speciesId:
+          type: string
+          format: uuid
+          description: ID of the species to delete
+
+    DeprecateSpeciesRequest:
+      type: object
+      required:
+      - speciesId
+      properties:
+        speciesId:
+          type: string
+          format: uuid
+          description: ID of the species to deprecate
+        reason:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Optional reason for deprecation (for audit purposes)
+
+    UndeprecateSpeciesRequest:
+      type: object
+      required:
+      - speciesId
+      properties:
+        speciesId:
+          type: string
+          format: uuid
+          description: ID of the species to restore
+
+    MergeSpeciesRequest:
+      type: object
+      required:
+      - sourceSpeciesId
+      - targetSpeciesId
+      properties:
+        sourceSpeciesId:
+          type: string
+          format: uuid
+          description: ID of the deprecated species to merge from (must be deprecated)
+        targetSpeciesId:
+          type: string
+          format: uuid
+          description: ID of the species to merge into (can be VOID for effective deletion)
+        deleteAfterMerge:
+          type: boolean
+          default: false
+          description: If true, hard-delete the source species after successful merge
+
+    AddSpeciesToRealmRequest:
+      type: object
+      required:
+      - speciesId
+      - realmId
+      properties:
+        speciesId:
+          type: string
+          format: uuid
+          description: ID of the species
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to add the species to
+
+    RemoveSpeciesFromRealmRequest:
+      type: object
+      required:
+      - speciesId
+      - realmId
+      properties:
+        speciesId:
+          type: string
+          format: uuid
+          description: ID of the species
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to remove the species from
+
+    SeedSpeciesRequest:
+      type: object
+      required:
+      - species
+      properties:
+        species:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedSpecies'
+          description: List of species to seed
+        updateExisting:
+          type: boolean
+          default: false
+          description: Whether to update species that already exist
+
+    SeedSpecies:
+      type: object
+      required:
+      - code
+      - name
+      properties:
+        code:
+          type: string
+          description: Unique code for the species
+        name:
+          type: string
+          description: Display name
+        description:
+          type: string
+          description: Description
+        category:
+          type: string
+          description: Category for grouping
+        isPlayable:
+          type: boolean
+          default: true
+        baseLifespan:
+          type: integer
+          description: Base lifespan in game years
+        maturityAge:
+          type: integer
+          description: Age at maturity
+        traitModifiers:
+          type: object
+          additionalProperties: true
+        realmCodes:
+          type: array
+          items:
+            type: string
+          description: Codes of realms where this species is available (resolved during seeding)
+        metadata:
+          type: object
+          additionalProperties: true
+
+    # Response schemas
+    SpeciesResponse:
+      type: object
+      required:
+      - speciesId
+      - code
+      - name
+      - isPlayable
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        speciesId:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        isPlayable:
+          type: boolean
+        isDeprecated:
+          type: boolean
+          description: Whether this species is deprecated and cannot be used for new characters
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when this species was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Optional reason for deprecation
+        baseLifespan:
+          type: integer
+          nullable: true
+        maturityAge:
+          type: integer
+          nullable: true
+        traitModifiers:
+          type: object
+          additionalProperties: true
+          nullable: true
+        realmIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Realms where this species is available
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SpeciesListResponse:
+      type: object
+      required:
+      - species
+      - totalCount
+      properties:
+        species:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeciesResponse'
+        totalCount:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+
+    SeedSpeciesResponse:
+      type: object
+      required:
+      - created
+      - updated
+      - skipped
+      - errors
+      properties:
+        created:
+          type: integer
+          description: Number of new species created
+        updated:
+          type: integer
+          description: Number of existing species updated
+        skipped:
+          type: integer
+          description: Number of species skipped (already exist, updateExisting=false)
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of error messages for species that failed to seed
+
+    MergeSpeciesResponse:
+      type: object
+      required:
+      - sourceSpeciesId
+      - targetSpeciesId
+      - charactersMigrated
+      - sourceDeleted
+      properties:
+        sourceSpeciesId:
+          type: string
+          format: uuid
+          description: ID of the deprecated species that was merged from
+        targetSpeciesId:
+          type: string
+          format: uuid
+          description: ID of the species that characters were merged into
+        charactersMigrated:
+          type: integer
+          description: Number of characters updated to use the target species
+        sourceDeleted:
+          type: boolean
+          description: Whether the source species was hard-deleted after merge
+
+    # Event Models - Generated from x-lifecycle below
+    # SpeciesCreatedEvent, SpeciesUpdatedEvent, SpeciesDeletedEvent
+    # will be auto-generated by scripts/generate-lifecycle-events.py
+
+    SpeciesCreatedEvent:
+      type: object
+      description: Published to species.created when a species is created
+      required:
+      - eventId
+      - timestamp
+      - speciesId
+      - code
+      - name
+      - isPlayable
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        eventId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp: &id002
+          type: string
+          format: date-time
+          description: When this event occurred
+        speciesId: &id003
+          type: string
+          format: uuid
+          description: Unique identifier for the species
+        code: &id004
+          type: string
+          description: Unique code for the species
+        name: &id005
+          type: string
+          description: Display name
+        description: &id006
+          type: string
+          description: Species description
+        category: &id007
+          type: string
+          description: Species category
+        isPlayable: &id008
+          type: boolean
+          description: Whether players can use this species
+        isDeprecated: &id009
+          type: boolean
+          description: Whether this species is deprecated
+        deprecatedAt: &id010
+          type: string
+          format: date-time
+          description: When the species was deprecated
+        deprecationReason: &id011
+          type: string
+          description: Reason for deprecation
+        baseLifespan: &id012
+          type: integer
+          description: Base lifespan in years
+        maturityAge: &id013
+          type: integer
+          description: Age at maturity
+        traitModifiers: &id014
+          type: object
+          additionalProperties: true
+          description: Trait modification rules
+        realmIds: &id015
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Realms where this species exists
+        createdAt: &id016
+          type: string
+          format: date-time
+          description: When the species was created
+        updatedAt: &id017
+          type: string
+          format: date-time
+          description: When the species was last updated
+    SpeciesUpdatedEvent:
+      type: object
+      description: Published to species.updated when a species is updated
+      required:
+      - eventId
+      - timestamp
+      - speciesId
+      - code
+      - name
+      - isPlayable
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        speciesId: *id003
+        code: *id004
+        name: *id005
+        description: *id006
+        category: *id007
+        isPlayable: *id008
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        baseLifespan: *id012
+        maturityAge: *id013
+        traitModifiers: *id014
+        realmIds: *id015
+        createdAt: *id016
+        updatedAt: *id017
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    SpeciesDeletedEvent:
+      type: object
+      description: Published to species.deleted when a species is deleted
+      required:
+      - eventId
+      - timestamp
+      - speciesId
+      - code
+      - name
+      - isPlayable
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        speciesId: *id003
+        code: *id004
+        name: *id005
+        description: *id006
+        category: *id007
+        isPlayable: *id008
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        baseLifespan: *id012
+        maturityAge: *id013
+        traitModifiers: *id014
+        realmIds: *id015
+        createdAt: *id016
+        updatedAt: *id017
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
