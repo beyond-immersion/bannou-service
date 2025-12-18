@@ -35,6 +35,12 @@ runs:
         echo "🔧 Installing NSwag as global tool (fallback for CI environments)..."
         dotnet tool install --global NSwag.ConsoleCore --version 14.2.0 || echo "NSwag tool already installed or MSBuild package sufficient"
 
+    - name: Install Python Dependencies
+      shell: bash
+      run: |
+        echo "🐍 Installing Python dependencies for code generation..."
+        pip install ruamel.yaml
+
     - name: Generate Services (Initial)
       shell: bash
       run: |

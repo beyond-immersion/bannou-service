@@ -803,7 +803,7 @@ public class AuthServiceTests
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             AccountId = accountId,
-            DeletionReason = "user_requested"
+            DeletedReason = "user_requested"
         };
 
         // Act
@@ -844,7 +844,7 @@ public class AuthServiceTests
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             AccountId = accountId,
-            DeletionReason = "user_requested"
+            DeletedReason = "user_requested"
         };
 
         // Act

@@ -2,9 +2,7 @@
 
 [![Build Status](https://github.com/ParnassianStudios/bannou-service/actions/workflows/ci.integration.yml/badge.svg?branch=master&event=push)](https://github.com/ParnassianStudios/bannou-service/actions/workflows/ci.integration.yml)
 
-Bannou Service is a versatile ASP.NET Core application designed to provide a WebSocket-first microservices architecture for massively multiplayer online games. Featuring an intelligent Connect service edge gateway that routes messages via service GUIDs without payload inspection, Bannou enables zero-copy message routing and seamless dual-transport communication (HTTP for development, WebSocket for production). The platform uses schema-driven development with NSwag code generation to ensure API consistency across all services. Primarily designed to support Arcadia, a revolutionary MMORPG with AI-driven NPCs, Bannou becomes the foundation of the universal cloud-based platform for developing and hosting multiplayer video games, tentatively called "CelestialLink".
-
-**⚠️ IMPORTANT**: For all Bannou development tasks, always reference **API-DESIGN.md** (available in Technical Architecture knowledge base section) first. This document defines the authoritative schema-driven development approach, consolidated service architecture (one plugin per service), and implementation patterns that must be followed for all Bannou services.
+Bannou Service is a versatile ASP.NET Core application designed to provide a WebSocket-first microservices architecture for massively multiplayer online games. Featuring an intelligent Connect service edge gateway that routes messages via service GUIDs without payload inspection, Bannou enables zero-copy message routing and seamless dual-transport communication (HTTP for development, WebSocket for production). The platform uses schema-driven development with NSwag code generation to ensure API consistency across all services. Primarily designed to support Arcadia, a revolutionary MMORPG with AI-driven NPCs, Bannou becomes the foundation of the universal cloud-based platform for developing and hosting multiplayer video games.
 
 ## Table of Contents
 
@@ -12,19 +10,41 @@ Bannou Service is a versatile ASP.NET Core application designed to provide a Web
   - [Table of Contents](#table-of-contents)
   - [Features](#features)
   - [WebSocket-First Architecture](#websocket-first-architecture)
+    - [Connect Service Edge Gateway](#connect-service-edge-gateway)
+    - [Binary Protocol](#binary-protocol)
+    - [Dual Routing Capability](#dual-routing-capability)
   - [Schema-Driven Development](#schema-driven-development)
-  - [Testing & Development Commands](#testing--development-commands)
+    - [NSwag Code Generation](#nswag-code-generation)
+    - [Benefits](#benefits)
+    - [Schema-First Workflow](#schema-first-workflow)
+    - [Development Workflow](#development-workflow)
+  - [Testing \& Development Commands](#testing--development-commands)
+    - [Essential Makefile Commands](#essential-makefile-commands)
+    - [Testing Architecture](#testing-architecture)
   - [Orchestrator Service](#orchestrator-service)
+    - [Key Capabilities](#key-capabilities)
+    - [Architecture Decisions](#architecture-decisions)
+    - [Deployment Presets](#deployment-presets)
+    - [Usage](#usage)
   - [Local Deploy (Compose)](#local-deploy-compose)
     - [Prerequisites](#prerequisites)
     - [Manual](#manual)
     - [Make](#make)
+  - [External Client Testing](#external-client-testing)
+    - [Prerequisites](#prerequisites-1)
+    - [Configuration](#configuration)
+    - [Running External Tests](#running-external-tests)
+    - [Testing Workflow](#testing-workflow)
+    - [Manual API Testing](#manual-api-testing)
+  - [How Plugins Work](#how-plugins-work)
+    - [Schema-First Development Workflow](#schema-first-development-workflow)
+    - [Plugin Architecture Benefits](#plugin-architecture-benefits)
+    - [Service Enable/Disable System](#service-enabledisable-system)
+    - [Integration with Dapr Service Mesh](#integration-with-dapr-service-mesh)
+    - [Advanced Plugin Features](#advanced-plugin-features)
   - [Extending the Service](#extending-the-service)
-    - [Adding APIs](#adding-apis)
-    - [Implementing IDaprService](#implementing-idaprservice)
-    - [Implementing IServiceConfiguration](#implementing-iserviceconfiguration)
-    - [Implementing IDaprController](#implementing-idaprcontroller)
-    - [Implementing IServiceAttribute](#implementing-iserviceattribute)
+    - [Adding a New Service](#adding-a-new-service)
+    - [Special Case: Testing Service Plugin](#special-case-testing-service-plugin)
   - [Deployment Notes](#deployment-notes)
     - [Applications](#applications)
   - [Generated Docs](#generated-docs)
@@ -40,7 +60,6 @@ Bannou Service is a versatile ASP.NET Core application designed to provide a Web
 - Works in conjunction with popular game engines like Unreal and Unity
 - Provides built-in APIs for backend multiplayer video game support with binary protocol efficiency
 - Easily scalable and maintainable with microservices architecture
-- Complements the CelestialLink universal platform for online game development and hosting
 
 ## WebSocket-First Architecture
 
@@ -63,7 +82,7 @@ Bannou features an innovative **Connect service edge gateway** that enables zero
 - **Client-to-Service**: Traditional client-server patterns via Connect service routing
 - **Additional Connections**: WebSocket negotiates separate TCP/UDP connections for specialized needs (low-latency input, streaming)
 
-See [WEBSOCKET-PROTOCOL.md](WEBSOCKET-PROTOCOL.md) for complete technical documentation.
+See [WEBSOCKET-PROTOCOL.md](docs/WEBSOCKET-PROTOCOL.md) for complete technical documentation.
 
 ## Schema-Driven Development
 
@@ -87,8 +106,6 @@ Bannou uses **contract-first development** where OpenAPI specifications define t
 3. Implement business logic in service classes
 4. Generated tests validate schema compliance
 5. TypeScript clients enable type-safe game integration
-
-See API-DESIGN.md (Technical Architecture knowledge base section) for detailed implementation guide.
 
 ### Development Workflow
 After updating schemas or regenerating NSwag code:
@@ -154,7 +171,7 @@ make test PLUGIN=accounts      # Specific service tests only
 make test-ci                   # Full CI pipeline locally
 ```
 
-See **[TESTING.md](TESTING.md)** for complete testing documentation, CI/CD pipeline details, and advanced testing workflows.
+See **[TESTING.md](docs/TESTING.md)** for complete testing documentation, CI/CD pipeline details, and advanced testing workflows.
 
 ## Orchestrator Service
 
@@ -240,6 +257,117 @@ Alternatively, the following make commands have been provided to simplify the pr
 1. `make build`
 2. `make up -d`
 3. `make down`
+
+## External Client Testing
+
+For testing with real game clients (Unity, Unreal, etc.) from external networks through a domain like `beyond-immersion.com`, Bannou provides a dedicated external testing stack.
+
+### Prerequisites
+
+1. **Domain Configuration**: DNS pointing to your development machine (e.g., `beyond-immersion.com`)
+2. **Port Forwarding**: Forward ports on your router:
+   - Port 80 (HTTP) → Development machine
+   - Port 443 (HTTPS) → Development machine
+   - Ports 8080-8100 (optional direct access)
+3. **Docker & Docker Compose**: Standard container requirements
+
+### Configuration
+
+The external testing configuration is managed through the `.env` file in the repository root. Key settings:
+
+```bash
+# JWT Configuration
+BANNOU_JWTSECRET=your-secure-jwt-secret-key
+BANNOU_JWTISSUER=bannou-auth-external
+BANNOU_JWTAUDIENCE=bannou-api-external
+
+# WebSocket Connect URL (returned to clients after login)
+BANNOU_CONNECTURL=ws://your-domain.com/connect
+
+# OAuth Mock Providers (for testing without real OAuth credentials)
+BANNOU_MOCKPROVIDERS=true
+
+# Admin Role Auto-Assignment (accounts with emails matching this domain get admin role)
+BANNOU_ADMINEMAILDOMAIN=@admin.test.local
+
+# OpenResty Gateway Ports (standard ports for external access)
+OPENRESTY_HTTP_PORT=80
+OPENRESTY_HTTPS_PORT=443
+```
+
+### Running External Tests
+
+```bash
+# Start the external testing stack (OpenResty on ports 80/443)
+make up-external
+
+# View logs for debugging
+make logs-external
+
+# Register a test admin account
+make external-register
+
+# Login and retrieve JWT token
+make external-login
+
+# Stop the external testing stack
+make down-external
+```
+
+### Testing Workflow
+
+1. **Start the Stack**:
+   ```bash
+   make up-external
+   ```
+   This brings up the full Bannou stack with OpenResty exposed on standard HTTP/HTTPS ports.
+
+2. **Register Test Account**:
+   ```bash
+   make external-register
+   # Creates: admin@admin.test.local / admin-test-password-2025
+   ```
+   Accounts with emails matching `@admin.test.local` automatically receive admin role.
+
+3. **Login and Get JWT**:
+   ```bash
+   make external-login
+   # Returns JWT and WebSocket connect URL
+   ```
+
+4. **Connect Game Client**:
+   - Use the returned `connectUrl` (e.g., `ws://beyond-immersion.com/connect`)
+   - Include JWT in the `Authorization` header
+   - Follow the [WebSocket Protocol](WEBSOCKET-PROTOCOL.md) for binary message format
+
+5. **Monitor and Debug**:
+   ```bash
+   make logs-external          # Bannou application logs
+   docker compose -f provisioning/docker-compose.yml \
+     -f provisioning/docker-compose.services.yml \
+     -f provisioning/docker-compose.ingress.yml \
+     -f provisioning/docker-compose.external.yml logs -f
+   ```
+
+### Manual API Testing
+
+Test endpoints directly with curl:
+
+```bash
+# Register new account
+curl -X POST http://your-domain.com/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "secure-password", "username": "testuser"}'
+
+# Login
+curl -X POST http://your-domain.com/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "secure-password"}'
+
+# Use JWT for authenticated requests
+curl http://your-domain.com/accounts/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
 
 ## How Plugins Work
 
@@ -582,17 +710,16 @@ The separation between enabling services/controllers (via ENVs) and mapping serv
 
 ## Generated Docs
 
-- [WebSocket Protocol Architecture](WEBSOCKET-PROTOCOL.md) - Complete binary protocol specification
-- API Design & Schema-Driven Development (Technical Architecture knowledge base) - Contract-first development guide
-- [Testing Architecture](TESTING.md) - Dual-transport and schema-driven testing
-- [EditorConfig and Linting Guide](LINTING.md) - CI-compatible formatting and validation
-- [Service Configuration](documentation/configuration.md) - Environment and deployment configuration
-- [Service APIs](documentation/services.md) - Generated API documentation
+- [WebSocket Protocol Architecture](docs/WEBSOCKET-PROTOCOL.md) - Complete binary protocol specification
+- [Testing Architecture](docs/TESTING.md) - Dual-transport and schema-driven testing
+- [EditorConfig and Linting Guide](docs/LINTING.md) - CI-compatible formatting and validation
+- [Service Configuration](docs/configuration.md) - Environment and deployment configuration
+- [Service APIs](docs/services.md) - Generated API documentation
 
 ## Contributing
 
-If you would like to contribute to the Bannou Service project, please follow the [contributing guidelines](documentation/CONTRIBUTING.md).
+If you would like to contribute to the Bannou Service project, please follow the [contributing guidelines](docs/CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](/docs/LICENSE).

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Generate models (DTOs) from OpenAPI schema
+# Also generates lifecycle event models from {service}-lifecycle-events.yaml if present
 # Usage: ./generate-models.sh <service-name> [schema-file]
 
 set -e  # Exit on any error
@@ -123,8 +124,43 @@ fi
 if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
     FILE_SIZE=$(wc -l < "$OUTPUT_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated models ($FILE_SIZE lines)${NC}"
-    exit 0
 else
     echo -e "${RED}❌ Failed to generate models${NC}"
     exit 1
 fi
+
+# Check for lifecycle events file and generate lifecycle event models if present
+LIFECYCLE_EVENTS_FILE="../schemas/${SERVICE_NAME}-lifecycle-events.yaml"
+LIFECYCLE_OUTPUT_FILE="$OUTPUT_DIR/${SERVICE_PASCAL}LifecycleEvents.cs"
+
+if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
+    echo -e "${YELLOW}🔄 Found lifecycle events file, generating lifecycle event models...${NC}"
+    echo -e "  📋 Schema: $LIFECYCLE_EVENTS_FILE"
+    echo -e "  📁 Output: $LIFECYCLE_OUTPUT_FILE"
+
+    "$NSWAG_EXE" openapi2csclient \
+        "/input:$LIFECYCLE_EVENTS_FILE" \
+        "/output:$LIFECYCLE_OUTPUT_FILE" \
+        "/namespace:BeyondImmersion.BannouService.$SERVICE_PASCAL" \
+        "/generateClientClasses:false" \
+        "/generateClientInterfaces:false" \
+        "/generateDtoTypes:true" \
+        "/excludedTypeNames:ApiException,ApiException\<TResult\>" \
+        "/jsonLibrary:SystemTextJson" \
+        "/generateNullableReferenceTypes:true" \
+        "/newLineBehavior:LF" \
+        "/templateDirectory:../templates/nswag" \
+        "/additionalNamespaceUsages:BeyondImmersion.BannouService,BeyondImmersion.BannouService.$SERVICE_PASCAL"
+
+    if [ $? -eq 0 ] && [ -f "$LIFECYCLE_OUTPUT_FILE" ]; then
+        LIFECYCLE_FILE_SIZE=$(wc -l < "$LIFECYCLE_OUTPUT_FILE" 2>/dev/null || echo "0")
+        echo -e "${GREEN}✅ Generated lifecycle event models ($LIFECYCLE_FILE_SIZE lines)${NC}"
+    else
+        echo -e "${RED}❌ Failed to generate lifecycle event models${NC}"
+        exit 1
+    fi
+else
+    echo -e "${BLUE}ℹ️  No lifecycle events file found (${SERVICE_NAME}-lifecycle-events.yaml)${NC}"
+fi
+
+exit 0

@@ -9,8 +9,22 @@ info:
     See API-DESIGN.md for architectural rationale.
   version: 2.0.0
 servers:
-  - url: http://localhost:3500/v1.0/invoke/bannou/method
-    description: Dapr sidecar endpoint (internal only)
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+  description: Dapr sidecar endpoint (internal only)
+
+# Lifecycle events auto-generated from this definition
+x-lifecycle:
+  Account:
+    model:
+      accountId: { type: string, format: uuid, primary: true, required: true }
+      email: { type: string, format: email, required: true }
+      displayName: { type: string }
+      emailVerified: { type: boolean, required: true }
+      roles: { type: array, items: { type: string } }
+      createdAt: { type: string, format: date-time, required: true }
+      updatedAt: { type: string, format: date-time }
+      metadata: { type: object, additionalProperties: true }
+    sensitive: [passwordHash]
 
 paths:
   /accounts/list:
@@ -18,10 +32,10 @@ paths:
       summary: List accounts with filtering
       operationId: listAccounts
       tags:
-        - Account Management
+      - Account Management
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -41,10 +55,10 @@ paths:
       summary: Create new account
       operationId: createAccount
       tags:
-        - Account Management
+      - Account Management
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -68,10 +82,10 @@ paths:
       summary: Get account by ID
       operationId: getAccount
       tags:
-        - Account Management
+      - Account Management
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -93,10 +107,10 @@ paths:
       summary: Update account
       operationId: updateAccount
       tags:
-        - Account Management
+      - Account Management
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -120,10 +134,10 @@ paths:
       summary: Delete account
       operationId: deleteAccount
       tags:
-        - Account Management
+      - Account Management
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -143,10 +157,10 @@ paths:
       summary: Get account by email
       operationId: getAccountByEmail
       tags:
-        - Account Lookup
+      - Account Lookup
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -168,10 +182,10 @@ paths:
       summary: Get authentication methods for account
       operationId: getAuthMethods
       tags:
-        - Authentication Methods
+      - Authentication Methods
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -193,10 +207,10 @@ paths:
       summary: Add authentication method to account
       operationId: addAuthMethod
       tags:
-        - Authentication Methods
+      - Authentication Methods
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -220,10 +234,10 @@ paths:
       summary: Remove authentication method from account
       operationId: removeAuthMethod
       tags:
-        - Authentication Methods
+      - Authentication Methods
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -243,10 +257,10 @@ paths:
       summary: Get account by external provider ID
       operationId: getAccountByProvider
       tags:
-        - Account Lookup
+      - Account Lookup
       x-permissions:
-        - role: admin
-          states: {}
+      - role: admin
+        states: {}
       requestBody:
         required: true
         content:
@@ -268,11 +282,11 @@ paths:
       summary: Update account profile
       operationId: updateProfile
       tags:
-        - Profile Management
+      - Profile Management
       x-permissions:
-        - role: user
-          states:
-            auth: authenticated
+      - role: user
+        states:
+          auth: authenticated
       requestBody:
         required: true
         content:
@@ -294,11 +308,11 @@ paths:
       summary: Update account password hash
       operationId: updatePasswordHash
       tags:
-        - Account Management
+      - Account Management
       x-permissions:
-        - role: user
-          states:
-            auth: authenticated
+      - role: user
+        states:
+          auth: authenticated
       requestBody:
         required: true
         content:
@@ -316,11 +330,11 @@ paths:
       summary: Update email verification status
       operationId: updateVerificationStatus
       tags:
-        - Account Management
+      - Account Management
       x-permissions:
-        - role: user
-          states:
-            auth: authenticated
+      - role: user
+        states:
+          auth: authenticated
       requestBody:
         required: true
         content:
@@ -360,7 +374,7 @@ components:
           nullable: true
         provider:
           allOf:
-            - $ref: '#/components/schemas/AuthProvider'
+          - $ref: '#/components/schemas/AuthProvider'
           nullable: true
         verified:
           type: boolean
@@ -379,7 +393,7 @@ components:
       type: object
       description: Request to get a specific account by ID
       required:
-        - accountId
+      - accountId
       properties:
         accountId:
           type: string
@@ -390,7 +404,7 @@ components:
       type: object
       description: Request to delete a specific account
       required:
-        - accountId
+      - accountId
       properties:
         accountId:
           type: string
@@ -401,7 +415,7 @@ components:
       type: object
       description: Request to get account by email address
       required:
-        - email
+      - email
       properties:
         email:
           type: string
@@ -412,7 +426,7 @@ components:
       type: object
       description: Request to get authentication methods for an account
       required:
-        - accountId
+      - accountId
       properties:
         accountId:
           type: string
@@ -423,8 +437,8 @@ components:
       type: object
       description: Request to remove an authentication method from an account
       required:
-        - accountId
-        - methodId
+      - accountId
+      - methodId
       properties:
         accountId:
           type: string
@@ -439,8 +453,8 @@ components:
       type: object
       description: Request to get account by external provider ID
       required:
-        - provider
-        - externalId
+      - provider
+      - externalId
       properties:
         provider:
           $ref: '#/components/schemas/OAuthProvider'
@@ -452,7 +466,7 @@ components:
     CreateAccountRequest:
       type: object
       required:
-        - email
+      - email
       properties:
         email:
           type: string
@@ -481,7 +495,7 @@ components:
     UpdateAccountRequest:
       type: object
       required:
-        - accountId
+      - accountId
       properties:
         accountId:
           type: string
@@ -503,7 +517,7 @@ components:
     UpdateProfileRequest:
       type: object
       required:
-        - accountId
+      - accountId
       properties:
         accountId:
           type: string
@@ -521,8 +535,8 @@ components:
     UpdatePasswordRequest:
       type: object
       required:
-        - accountId
-        - passwordHash
+      - accountId
+      - passwordHash
       properties:
         accountId:
           type: string
@@ -535,8 +549,8 @@ components:
     UpdateVerificationRequest:
       type: object
       required:
-        - accountId
-        - emailVerified
+      - accountId
+      - emailVerified
       properties:
         accountId:
           type: string
@@ -548,8 +562,8 @@ components:
     AddAuthMethodRequest:
       type: object
       required:
-        - accountId
-        - provider
+      - accountId
+      - provider
       properties:
         accountId:
           type: string
@@ -567,11 +581,11 @@ components:
     AccountResponse:
       type: object
       required:
-        - accountId
-        - email
-        - createdAt
-        - emailVerified
-        - roles
+      - accountId
+      - email
+      - createdAt
+      - emailVerified
+      - roles
       properties:
         accountId:
           type: string
@@ -611,8 +625,8 @@ components:
     AuthMethodInfo:
       type: object
       required:
-        - provider
-        - linkedAt
+      - provider
+      - linkedAt
       properties:
         methodId:
           type: string
@@ -632,9 +646,9 @@ components:
     AuthMethodResponse:
       type: object
       required:
-        - methodId
-        - provider
-        - linkedAt
+      - methodId
+      - provider
+      - linkedAt
       properties:
         methodId:
           type: string
@@ -653,7 +667,7 @@ components:
     AuthMethodsResponse:
       type: object
       required:
-        - authMethods
+      - authMethods
       properties:
         authMethods:
           type: array
@@ -663,10 +677,10 @@ components:
     AccountListResponse:
       type: object
       required:
-        - accounts
-        - totalCount
-        - page
-        - pageSize
+      - accounts
+      - totalCount
+      - page
+      - pageSize
       properties:
         accounts:
           type: array
@@ -682,98 +696,6 @@ components:
           type: boolean
         hasPreviousPage:
           type: boolean
-
-    # Event Models for Account Lifecycle
-    AccountCreatedEvent:
-      type: object
-      description: Event published when a new account is created
-      required:
-        - eventId
-        - timestamp
-        - accountId
-        - email
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
-        accountId:
-          type: string
-          format: uuid
-          description: ID of the created account
-        email:
-          type: string
-          format: email
-          description: Email address of the created account
-        displayName:
-          type: string
-          nullable: true
-          description: Display name of the created account
-        roles:
-          type: array
-          items:
-            type: string
-          description: Roles assigned to the account
-
-    AccountUpdatedEvent:
-      type: object
-      description: Event published when an account is updated
-      required:
-        - eventId
-        - timestamp
-        - accountId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-        timestamp:
-          type: string
-          format: date-time
-        accountId:
-          type: string
-          format: uuid
-          description: ID of the updated account
-        changedFields:
-          type: array
-          items:
-            type: string
-          description: List of fields that were changed
-        previousValues:
-          type: object
-          description: Previous values of changed fields
-        newValues:
-          type: object
-          description: New values of changed fields
-
-    AccountDeletedEvent:
-      type: object
-      description: Event published when an account is deleted
-      required:
-        - eventId
-        - timestamp
-        - accountId
-      properties:
-        eventId:
-          type: string
-          format: uuid
-        timestamp:
-          type: string
-          format: date-time
-        accountId:
-          type: string
-          format: uuid
-          description: ID of the deleted account
-        email:
-          type: string
-          format: email
-          description: Email of the deleted account
-        deletionReason:
-          type: string
-          description: Reason for account deletion
 
 x-service-configuration:
   properties:

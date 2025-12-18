@@ -109,29 +109,8 @@ public class AuthEventsController : ControllerBase
                 return Ok();
             }
 
-            // Extract new roles from the event (NewValues is typed as object, may be JsonElement)
-            var newRoles = new List<string>();
-            if (accountUpdatedEvent.NewValues is JsonElement jsonElement)
-            {
-                if (jsonElement.TryGetProperty("roles", out var rolesElement) && rolesElement.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var role in rolesElement.EnumerateArray())
-                    {
-                        var roleStr = role.GetString();
-                        if (!string.IsNullOrEmpty(roleStr))
-                        {
-                            newRoles.Add(roleStr);
-                        }
-                    }
-                }
-            }
-            else if (accountUpdatedEvent.NewValues is IDictionary<string, object> dict)
-            {
-                if (dict.TryGetValue("roles", out var rolesObj) && rolesObj is IEnumerable<object> rolesList)
-                {
-                    newRoles.AddRange(rolesList.Select(r => r?.ToString() ?? "").Where(r => !string.IsNullOrEmpty(r)));
-                }
-            }
+            // In the new event pattern, Roles contains the current state (full model data)
+            var newRoles = accountUpdatedEvent.Roles?.ToList() ?? new List<string>();
 
             await authService.PropagateRoleChangesAsync(accountUpdatedEvent.AccountId, newRoles, CancellationToken.None);
 

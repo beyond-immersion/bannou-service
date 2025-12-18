@@ -1,0 +1,506 @@
+openapi: 3.0.0
+info:
+  title: Relationship Service API
+  version: 1.0.0
+  description: |
+    Generic relationship management service for entity-to-entity relationships.
+
+    This service manages relationships between ANY two entities in the system,
+    not just characters. Supported entity types include characters, NPCs,
+    monsters, items, locations, organizations, factions, and more.
+
+    Key features:
+    - Entity-agnostic relationship management
+    - Composite uniqueness validation (entity1 + entity2 + type = unique)
+    - Bidirectional relationship support
+    - Type-specific metadata storage
+    - Soft-delete via endedAt (relationships can be re-created after ending)
+
+servers:
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+
+# Lifecycle events auto-generated from this definition
+x-lifecycle:
+  Relationship:
+    model:
+      relationshipId: { type: string, format: uuid, primary: true, required: true }
+      entity1Id: { type: string, format: uuid, required: true }
+      entity1Type: { type: string, required: true }
+      entity2Id: { type: string, format: uuid, required: true }
+      entity2Type: { type: string, required: true }
+      relationshipTypeId: { type: string, format: uuid, required: true }
+      startedAt: { type: string, format: date-time, required: true }
+      endedAt: { type: string, format: date-time }
+      metadata: { type: object, additionalProperties: true }
+      createdAt: { type: string, format: date-time, required: true }
+      updatedAt: { type: string, format: date-time }
+
+paths:
+  /relationship/create:
+    post:
+      operationId: createRelationship
+      tags:
+      - Relationship Management
+      summary: Create a new relationship between two entities
+      description: |
+        Creates a relationship between two entities.
+        Duplicate relationships (same entities + same type) are prevented.
+        Relationships can be re-created after being ended.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRelationshipRequest'
+      responses:
+        '201':
+          description: Relationship created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipResponse'
+        '400':
+          description: Invalid request (missing fields, invalid entity types)
+        '409':
+          description: Relationship already exists between these entities with this type
+      x-permissions:
+      - role: admin
+        states: {}
+
+  /relationship/get:
+    post:
+      operationId: getRelationship
+      tags:
+      - Relationship Management
+      summary: Get a relationship by ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRelationshipRequest'
+      responses:
+        '200':
+          description: Relationship retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipResponse'
+        '404':
+          description: Relationship not found
+      x-permissions:
+      - role: user
+        states:
+          auth: authenticated
+
+  /relationship/list-by-entity:
+    post:
+      operationId: listRelationshipsByEntity
+      tags:
+      - Relationship Management
+      summary: List all relationships for an entity
+      description: |
+        Returns all relationships where the specified entity is either
+        entity1 or entity2. Supports filtering by relationship type,
+        other entity type, and whether to include ended relationships.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListRelationshipsByEntityRequest'
+      responses:
+        '200':
+          description: Relationships retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipListResponse'
+      x-permissions:
+      - role: user
+        states:
+          auth: authenticated
+
+  /relationship/get-between:
+    post:
+      operationId: getRelationshipsBetween
+      tags:
+      - Relationship Management
+      summary: Get all relationships between two specific entities
+      description: |
+        Returns all relationships that exist between two specific entities,
+        regardless of which is entity1 or entity2.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRelationshipsBetweenRequest'
+      responses:
+        '200':
+          description: Relationships retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipListResponse'
+      x-permissions:
+      - role: user
+        states:
+          auth: authenticated
+
+  /relationship/list-by-type:
+    post:
+      operationId: listRelationshipsByType
+      tags:
+      - Relationship Management
+      summary: List all relationships of a specific type
+      description: |
+        Returns all relationships that use a specific relationship type.
+        Useful for finding all "FRIEND" relationships, for example.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListRelationshipsByTypeRequest'
+      responses:
+        '200':
+          description: Relationships retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipListResponse'
+      x-permissions:
+      - role: user
+        states:
+          auth: authenticated
+
+  /relationship/update:
+    post:
+      operationId: updateRelationship
+      tags:
+      - Relationship Management
+      summary: Update relationship metadata
+      description: Only metadata can be updated. Entity IDs and types cannot be changed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRelationshipRequest'
+      responses:
+        '200':
+          description: Relationship updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipResponse'
+        '404':
+          description: Relationship not found
+      x-permissions:
+      - role: admin
+        states: {}
+
+  /relationship/end:
+    post:
+      operationId: endRelationship
+      tags:
+      - Relationship Management
+      summary: End a relationship
+      description: |
+        Marks a relationship as ended with a timestamp.
+        Ended relationships are preserved for history and can be re-created.
+        The composite uniqueness key is cleared, allowing new relationships
+        between the same entities with the same type.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndRelationshipRequest'
+      responses:
+        '200':
+          description: Relationship ended successfully
+        '404':
+          description: Relationship not found
+      x-permissions:
+      - role: admin
+        states: {}
+
+components:
+  schemas:
+    # Enums
+    EntityType:
+      type: string
+      enum:
+      - CHARACTER
+      - NPC
+      - MONSTER
+      - ITEM
+      - LOCATION
+      - ORGANIZATION
+      - FACTION
+      - REALM
+      - OTHER
+      description: |
+        Type of entity in a relationship.
+        - CHARACTER: Player-controlled characters
+        - NPC: Non-player characters
+        - MONSTER: Hostile or neutral creatures
+        - ITEM: Physical objects, artifacts, etc.
+        - LOCATION: Places, regions, buildings
+        - ORGANIZATION: Guilds, companies, groups
+        - FACTION: Political or social factions
+        - REALM: Game realms/worlds
+        - OTHER: Catch-all for future entity types
+
+    # Request Models
+    CreateRelationshipRequest:
+      type: object
+      required:
+      - entity1Id
+      - entity1Type
+      - entity2Id
+      - entity2Type
+      - relationshipTypeId
+      - startedAt
+      properties:
+        entity1Id:
+          type: string
+          format: uuid
+          description: ID of the first entity in the relationship
+        entity1Type:
+          $ref: '#/components/schemas/EntityType'
+        entity2Id:
+          type: string
+          format: uuid
+          description: ID of the second entity in the relationship
+        entity2Type:
+          $ref: '#/components/schemas/EntityType'
+        relationshipTypeId:
+          type: string
+          format: uuid
+          description: Relationship type ID (from RelationshipType service)
+        startedAt:
+          type: string
+          format: date-time
+          description: In-game timestamp when relationship started
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Type-specific relationship data (JSON)
+
+    GetRelationshipRequest:
+      type: object
+      required:
+      - relationshipId
+      properties:
+        relationshipId:
+          type: string
+          format: uuid
+          description: ID of the relationship to retrieve
+
+    ListRelationshipsByEntityRequest:
+      type: object
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity to get relationships for
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        relationshipTypeId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional filter by relationship type
+        otherEntityType:
+          $ref: '#/components/schemas/EntityType'
+          nullable: true
+          description: Optional filter by the other entity's type
+        includeEnded:
+          type: boolean
+          default: false
+          description: Include relationships that have ended
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    GetRelationshipsBetweenRequest:
+      type: object
+      required:
+      - entity1Id
+      - entity1Type
+      - entity2Id
+      - entity2Type
+      properties:
+        entity1Id:
+          type: string
+          format: uuid
+        entity1Type:
+          $ref: '#/components/schemas/EntityType'
+        entity2Id:
+          type: string
+          format: uuid
+        entity2Type:
+          $ref: '#/components/schemas/EntityType'
+        relationshipTypeId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional filter by relationship type
+        includeEnded:
+          type: boolean
+          default: false
+          description: Include relationships that have ended
+
+    ListRelationshipsByTypeRequest:
+      type: object
+      required:
+      - relationshipTypeId
+      properties:
+        relationshipTypeId:
+          type: string
+          format: uuid
+          description: Relationship type to filter by
+        entity1Type:
+          $ref: '#/components/schemas/EntityType'
+          nullable: true
+          description: Optional filter by entity1 type
+        entity2Type:
+          $ref: '#/components/schemas/EntityType'
+          nullable: true
+          description: Optional filter by entity2 type
+        includeEnded:
+          type: boolean
+          default: false
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    UpdateRelationshipRequest:
+      type: object
+      required:
+      - relationshipId
+      properties:
+        relationshipId:
+          type: string
+          format: uuid
+          description: ID of the relationship to update
+        relationshipTypeId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Update relationship type (used for type merge migrations)
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Updated type-specific relationship data
+
+    EndRelationshipRequest:
+      type: object
+      required:
+      - relationshipId
+      properties:
+        relationshipId:
+          type: string
+          format: uuid
+          description: ID of the relationship to end
+        endedAt:
+          type: string
+          format: date-time
+          description: In-game timestamp when relationship ended (defaults to now)
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Optional reason for ending the relationship
+
+    # Response Models
+    RelationshipResponse:
+      type: object
+      required:
+      - relationshipId
+      - entity1Id
+      - entity1Type
+      - entity2Id
+      - entity2Type
+      - relationshipTypeId
+      - startedAt
+      - createdAt
+      properties:
+        relationshipId:
+          type: string
+          format: uuid
+        entity1Id:
+          type: string
+          format: uuid
+        entity1Type:
+          $ref: '#/components/schemas/EntityType'
+        entity2Id:
+          type: string
+          format: uuid
+        entity2Type:
+          $ref: '#/components/schemas/EntityType'
+        relationshipTypeId:
+          type: string
+          format: uuid
+        startedAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: string
+          format: date-time
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Type-specific relationship data
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    RelationshipListResponse:
+      type: object
+      required:
+      - relationships
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        relationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipResponse'
+        totalCount:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean

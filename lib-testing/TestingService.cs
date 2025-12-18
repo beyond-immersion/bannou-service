@@ -146,6 +146,47 @@ public class TestingService : ITestingService
         }
     }
 
+    #region Ping / Latency Testing
+
+    /// <summary>
+    /// Ping endpoint for measuring round-trip latency from game clients.
+    /// Echoes client timestamp and provides server timing for RTT calculation.
+    /// </summary>
+    /// <param name="request">Optional ping request with client timestamp and sequence</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Ping response with timing information</returns>
+    public Task<(StatusCodes, PingResponse?)> PingAsync(
+        PingRequest? request,
+        CancellationToken cancellationToken = default)
+    {
+        var serverReceiveTime = DateTimeOffset.UtcNow;
+
+        try
+        {
+            // Create response with timing data
+            var response = new PingResponse
+            {
+                ServerTimestamp = serverReceiveTime.ToUnixTimeMilliseconds(),
+                ClientTimestamp = request?.ClientTimestamp,
+                Sequence = request?.Sequence ?? 0,
+                ServerProcessingTimeMs = 0 // Will be calculated at the end
+            };
+
+            // Calculate processing time
+            var processingTime = DateTimeOffset.UtcNow - serverReceiveTime;
+            response.ServerProcessingTimeMs = processingTime.TotalMilliseconds;
+
+            return Task.FromResult<(StatusCodes, PingResponse?)>((StatusCodes.OK, response));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing ping request");
+            return Task.FromResult<(StatusCodes, PingResponse?)>((StatusCodes.InternalServerError, null));
+        }
+    }
+
+    #endregion
+
     #region Client Event Testing
 
     /// <summary>
@@ -250,6 +291,7 @@ public interface ITestingService : IDaprService
     Task<(StatusCodes, TestResponse?)> RunTestAsync(string testName, CancellationToken cancellationToken = default);
     Task<(StatusCodes, ConfigTestResponse?)> TestConfigurationAsync(CancellationToken cancellationToken = default);
     Task<(StatusCodes, DependencyTestResponse?)> TestDependencyInjectionHealthAsync(CancellationToken cancellationToken = default);
+    Task<(StatusCodes, PingResponse?)> PingAsync(PingRequest? request, CancellationToken cancellationToken = default);
     Task<(StatusCodes, PublishTestEventResponse?)> PublishTestEventAsync(string sessionId, string message, CancellationToken cancellationToken = default);
 }
 
@@ -298,6 +340,55 @@ public class PublishTestEventResponse
     public Guid? EventId { get; set; }
     public string? SessionId { get; set; }
     public DateTime Timestamp { get; set; }
+}
+
+/// <summary>
+/// Request model for ping/latency testing.
+/// All fields are optional - a minimal ping can be sent with empty body.
+/// </summary>
+public class PingRequest
+{
+    /// <summary>
+    /// Client's Unix timestamp in milliseconds when the request was sent.
+    /// Echoed back in response for client-side RTT calculation.
+    /// </summary>
+    public long? ClientTimestamp { get; set; }
+
+    /// <summary>
+    /// Sequence number for tracking in sustained ping tests.
+    /// Useful for detecting packet loss or reordering.
+    /// </summary>
+    public int Sequence { get; set; }
+}
+
+/// <summary>
+/// Response model for ping/latency testing.
+/// Provides all timing information needed for latency analysis.
+/// </summary>
+public class PingResponse
+{
+    /// <summary>
+    /// Server's Unix timestamp in milliseconds when the request was received.
+    /// Can be compared with client timestamp to detect clock skew.
+    /// </summary>
+    public long ServerTimestamp { get; set; }
+
+    /// <summary>
+    /// Client's timestamp echoed back (if provided in request).
+    /// Client can calculate RTT as: (response_received_time - client_timestamp).
+    /// </summary>
+    public long? ClientTimestamp { get; set; }
+
+    /// <summary>
+    /// Sequence number echoed back from request.
+    /// </summary>
+    public int Sequence { get; set; }
+
+    /// <summary>
+    /// Time in milliseconds the server spent processing this request.
+    /// Network latency = (RTT - ServerProcessingTimeMs) / 2.
+    /// </summary>
+    public double ServerProcessingTimeMs { get; set; }
 }
 
 /// <summary>

@@ -425,15 +425,11 @@ public class AccountsService : IAccountsService
 
             // Track changes for event publishing
             var changedFields = new List<string>();
-            var previousValues = new Dictionary<string, object?>();
-            var newValues = new Dictionary<string, object?>();
 
             // Update fields if provided
             if (body.DisplayName != null && body.DisplayName != account.DisplayName)
             {
                 changedFields.Add("displayName");
-                previousValues["displayName"] = account.DisplayName;
-                newValues["displayName"] = body.DisplayName;
                 account.DisplayName = body.DisplayName;
             }
 
@@ -444,8 +440,6 @@ public class AccountsService : IAccountsService
                 if (!account.Roles.SequenceEqual(newRoles))
                 {
                     changedFields.Add("roles");
-                    previousValues["roles"] = account.Roles;
-                    newValues["roles"] = newRoles;
                     account.Roles = newRoles;
                 }
             }
@@ -464,7 +458,7 @@ public class AccountsService : IAccountsService
             // Publish account updated event if there were changes
             if (changedFields.Count > 0)
             {
-                await PublishAccountUpdatedEventAsync(accountId, changedFields, previousValues, newValues);
+                await PublishAccountUpdatedEventAsync(account, changedFields);
             }
 
             // Get auth methods for the account
@@ -661,16 +655,8 @@ public class AccountsService : IAccountsService
             _logger.LogInformation("Auth method added for account: {AccountId}, methodId: {MethodId}, provider: {Provider}",
                 accountId, methodId, body.Provider);
 
-            // Publish account updated event (redacted payload)
-            await PublishAccountUpdatedEventAsync(
-                accountId,
-                new[] { "authMethods" },
-                previousValues: null,
-                newValues: new
-                {
-                    provider = body.Provider.ToString(),
-                    linkedAt = newMethod.LinkedAt
-                });
+            // Publish account updated event
+            await PublishAccountUpdatedEventAsync(account, new[] { "authMethods" });
 
             var response = new AuthMethodResponse
             {
@@ -905,7 +891,7 @@ public class AccountsService : IAccountsService
             _logger.LogInformation("Account deleted: {AccountId}", accountId);
 
             // Publish account deleted event
-            await PublishAccountDeletedEventAsync(accountId, account, "User requested deletion");
+            await PublishAccountDeletedEventAsync(account, "User requested deletion");
 
             return (StatusCodes.NoContent, null);
         }
@@ -971,11 +957,7 @@ public class AccountsService : IAccountsService
             _logger.LogInformation("Auth method removed for account: {AccountId}, methodId: {MethodId}",
                 accountId, methodId);
 
-            await PublishAccountUpdatedEventAsync(
-                accountId,
-                new[] { "authMethods" },
-                previousValues: new { provider = methodToRemove.Provider.ToString(), removedAt = DateTimeOffset.UtcNow },
-                newValues: null);
+            await PublishAccountUpdatedEventAsync(account, new[] { "authMethods" });
 
             return (StatusCodes.NoContent, null);
         }
@@ -1019,11 +1001,7 @@ public class AccountsService : IAccountsService
                 cancellationToken: cancellationToken);
 
             _logger.LogInformation("Password hash updated for account: {AccountId}", accountId);
-            await PublishAccountUpdatedEventAsync(
-                accountId,
-                new[] { "passwordHash" },
-                previousValues: null,
-                newValues: new { passwordHash = "***redacted***" });
+            await PublishAccountUpdatedEventAsync(account, new[] { "passwordHash" });
 
             return (StatusCodes.OK, new { Message = "Password updated successfully" });
         }
@@ -1057,7 +1035,6 @@ public class AccountsService : IAccountsService
             }
 
             // Update verification status
-            var previousVerified = account.IsVerified;
             account.IsVerified = body.EmailVerified;
             account.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -1071,11 +1048,7 @@ public class AccountsService : IAccountsService
             _logger.LogInformation("Verification status updated for account: {AccountId} -> {Verified}",
                 accountId, body.EmailVerified);
 
-            await PublishAccountUpdatedEventAsync(
-                accountId,
-                new[] { "isVerified" },
-                previousValues: new { isVerified = previousVerified },
-                newValues: new { isVerified = body.EmailVerified });
+            await PublishAccountUpdatedEventAsync(account, new[] { "isVerified" });
             return (StatusCodes.OK, new { Message = "Verification status updated successfully" });
         }
         catch (Exception ex)
@@ -1098,8 +1071,10 @@ public class AccountsService : IAccountsService
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = Guid.Parse(account.AccountId),
                 Email = account.Email,
-                DisplayName = account.DisplayName,
-                Roles = account.Roles // Use stored roles
+                DisplayName = account.DisplayName ?? string.Empty,
+                EmailVerified = account.IsVerified,
+                Roles = account.Roles ?? [],
+                CreatedAt = account.CreatedAt
             };
 
             await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_CREATED_TOPIC, eventModel);
@@ -1113,13 +1088,10 @@ public class AccountsService : IAccountsService
     }
 
     /// <summary>
-    /// Publish AccountUpdatedEvent to RabbitMQ via Dapr
+    /// Publish AccountUpdatedEvent to RabbitMQ via Dapr.
+    /// Event contains the current state of the account plus which fields changed.
     /// </summary>
-    private async Task PublishAccountUpdatedEventAsync(
-        Guid accountId,
-        IEnumerable<string> changedFields,
-        object? previousValues,
-        object? newValues)
+    private async Task PublishAccountUpdatedEventAsync(AccountModel account, IEnumerable<string> changedFields)
     {
         try
         {
@@ -1127,26 +1099,31 @@ public class AccountsService : IAccountsService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AccountId = accountId,
-                ChangedFields = changedFields.ToList(),
-                PreviousValues = previousValues ?? new { },
-                NewValues = newValues ?? new { }
+                AccountId = Guid.Parse(account.AccountId),
+                Email = account.Email,
+                DisplayName = account.DisplayName ?? string.Empty,
+                EmailVerified = account.IsVerified,
+                Roles = account.Roles ?? [],
+                CreatedAt = account.CreatedAt,
+                UpdatedAt = account.UpdatedAt,
+                ChangedFields = changedFields.ToList()
             };
 
             await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_UPDATED_TOPIC, eventModel);
-            _logger.LogDebug("Published AccountUpdatedEvent for account: {AccountId}", accountId);
+            _logger.LogDebug("Published AccountUpdatedEvent for account: {AccountId}", account.AccountId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish AccountUpdatedEvent for account: {AccountId}", accountId);
+            _logger.LogError(ex, "Failed to publish AccountUpdatedEvent for account: {AccountId}", account.AccountId);
             // Don't throw - event publishing failure shouldn't break account update
         }
     }
 
     /// <summary>
-    /// Publish AccountDeletedEvent to RabbitMQ via Dapr
+    /// Publish AccountDeletedEvent to RabbitMQ via Dapr.
+    /// Event contains the final state of the account before deletion.
     /// </summary>
-    private async Task PublishAccountDeletedEventAsync(Guid accountId, AccountModel account, string deletionReason)
+    private async Task PublishAccountDeletedEventAsync(AccountModel account, string? deletedReason)
     {
         try
         {
@@ -1154,20 +1131,25 @@ public class AccountsService : IAccountsService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                AccountId = accountId,
+                AccountId = Guid.Parse(account.AccountId),
                 Email = account.Email,
-                DeletionReason = deletionReason
+                DisplayName = account.DisplayName ?? string.Empty,
+                EmailVerified = account.IsVerified,
+                Roles = account.Roles ?? [],
+                CreatedAt = account.CreatedAt,
+                UpdatedAt = account.UpdatedAt,
+                DeletedReason = deletedReason
             };
 
             _logger.LogDebug("Publishing AccountDeletedEvent for account {AccountId} to topic {Topic}",
-                accountId, ACCOUNT_DELETED_TOPIC);
+                account.AccountId, ACCOUNT_DELETED_TOPIC);
 
             await _daprClient.PublishEventAsync(PUBSUB_NAME, ACCOUNT_DELETED_TOPIC, eventModel);
-            _logger.LogDebug("Published AccountDeletedEvent for account {AccountId}", accountId);
+            _logger.LogDebug("Published AccountDeletedEvent for account {AccountId}", account.AccountId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish AccountDeletedEvent for account {AccountId}", accountId);
+            _logger.LogError(ex, "Failed to publish AccountDeletedEvent for account {AccountId}", account.AccountId);
             // Don't throw - event publishing failure shouldn't break account deletion
         }
     }

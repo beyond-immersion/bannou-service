@@ -197,6 +197,48 @@ public class TestingController : ControllerBase
     }
 
     /// <summary>
+    /// Ping endpoint for measuring round-trip latency from game clients.
+    /// Supports both GET (minimal ping) and POST (with timing data).
+    /// </summary>
+    /// <remarks>
+    /// GET /testing/ping - Simple ping, returns server timestamp only
+    /// POST /testing/ping - Full ping with client timestamp echo for RTT calculation
+    ///
+    /// Example POST body:
+    /// {
+    ///   "clientTimestamp": 1702486800000,  // Unix ms when client sent request
+    ///   "sequence": 1                       // Optional sequence number
+    /// }
+    ///
+    /// Response:
+    /// {
+    ///   "serverTimestamp": 1702486800050,  // Unix ms when server received
+    ///   "clientTimestamp": 1702486800000,  // Echoed back
+    ///   "sequence": 1,                      // Echoed back
+    ///   "serverProcessingTimeMs": 0.123     // Server processing overhead
+    /// }
+    ///
+    /// Client calculates RTT: (now_ms - clientTimestamp)
+    /// Network latency estimate: (RTT - serverProcessingTimeMs) / 2
+    /// </remarks>
+    [HttpGet("ping")]
+    public async Task<IActionResult> PingGet()
+    {
+        var (statusCode, response) = await _testingService.PingAsync(null, HttpContext.RequestAborted);
+        return statusCode == StatusCodes.OK ? Ok(response) : StatusCode((int)statusCode, response);
+    }
+
+    /// <summary>
+    /// Ping endpoint with full timing data for precise RTT measurement.
+    /// </summary>
+    [HttpPost("ping")]
+    public async Task<IActionResult> PingPost([FromBody] PingRequest? request)
+    {
+        var (statusCode, response) = await _testingService.PingAsync(request, HttpContext.RequestAborted);
+        return statusCode == StatusCodes.OK ? Ok(response) : StatusCode((int)statusCode, response);
+    }
+
+    /// <summary>
     /// Publishes a test notification event to a specific WebSocket session.
     /// Used for testing the client event delivery system.
     /// </summary>

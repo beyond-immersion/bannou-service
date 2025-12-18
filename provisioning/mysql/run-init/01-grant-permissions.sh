@@ -17,6 +17,9 @@ mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
 
     -- Create additional databases for Dapr state stores
     -- (accounts is created by MYSQL_DATABASE env var, these are additional)
+    CREATE DATABASE IF NOT EXISTS characters;
+    CREATE DATABASE IF NOT EXISTS relationship_types;
+    CREATE DATABASE IF NOT EXISTS species;
     CREATE DATABASE IF NOT EXISTS servicedata;
     CREATE DATABASE IF NOT EXISTS subscriptions;
 
@@ -25,6 +28,18 @@ mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
     GRANT ALL PRIVILEGES ON \`$MYSQL_DATABASE\`.* TO '$MYSQL_USER'@'localhost';
     GRANT ALL PRIVILEGES ON \`$MYSQL_DATABASE\`.* TO '$MYSQL_USER'@'172.%.%.%';
     GRANT ALL PRIVILEGES ON \`$MYSQL_DATABASE\`.* TO '$MYSQL_USER'@'192.168.%.%';
+
+    -- Grant full privileges on characters database
+    GRANT ALL PRIVILEGES ON characters.* TO '$MYSQL_USER'@'%';
+    GRANT ALL PRIVILEGES ON characters.* TO '$MYSQL_USER'@'localhost';
+    GRANT ALL PRIVILEGES ON characters.* TO '$MYSQL_USER'@'172.%.%.%';
+    GRANT ALL PRIVILEGES ON characters.* TO '$MYSQL_USER'@'192.168.%.%';
+
+    -- Grant full privileges on relationship_types database
+    GRANT ALL PRIVILEGES ON relationship_types.* TO '$MYSQL_USER'@'%';
+    GRANT ALL PRIVILEGES ON relationship_types.* TO '$MYSQL_USER'@'localhost';
+    GRANT ALL PRIVILEGES ON relationship_types.* TO '$MYSQL_USER'@'172.%.%.%';
+    GRANT ALL PRIVILEGES ON relationship_types.* TO '$MYSQL_USER'@'192.168.%.%';
 
     -- Grant full privileges on servicedata database
     GRANT ALL PRIVILEGES ON servicedata.* TO '$MYSQL_USER'@'%';
@@ -38,8 +53,14 @@ mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
     GRANT ALL PRIVILEGES ON subscriptions.* TO '$MYSQL_USER'@'172.%.%.%';
     GRANT ALL PRIVILEGES ON subscriptions.* TO '$MYSQL_USER'@'192.168.%.%';
 
+    -- Grant full privileges on species database
+    GRANT ALL PRIVILEGES ON species.* TO '$MYSQL_USER'@'%';
+    GRANT ALL PRIVILEGES ON species.* TO '$MYSQL_USER'@'localhost';
+    GRANT ALL PRIVILEGES ON species.* TO '$MYSQL_USER'@'172.%.%.%';
+    GRANT ALL PRIVILEGES ON species.* TO '$MYSQL_USER'@'192.168.%.%';
+
     FLUSH PRIVILEGES;
 EOSQL
 
 echo "Permissions granted successfully for user: $MYSQL_USER"
-echo "Databases created: accounts (via env), servicedata, subscriptions"
+echo "Databases created: accounts (via env), characters, relationship_types, species, servicedata, subscriptions"

@@ -1,0 +1,151 @@
+openapi: 3.0.3
+info:
+  title: Bannou RelationshipType Service API Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for relationship-type service.\nDO NOT EDIT - This file is completely
+    overwritten by generate-lifecycle-events.py.\nSource of truth: relationship-type-api.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    RelationshipTypeCreatedEvent:
+      type: object
+      description: Published to relationship-type.created when a relationshiptype is created
+      required:
+      - eventId
+      - timestamp
+      - relationshipTypeId
+      - code
+      - name
+      - isBidirectional
+      - isDeprecated
+      - depth
+      - createdAt
+      - updatedAt
+      properties:
+        eventId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp: &id002
+          type: string
+          format: date-time
+          description: When this event occurred
+        relationshipTypeId: &id003
+          type: string
+          format: uuid
+        code: &id004
+          type: string
+        name: &id005
+          type: string
+        description: &id006
+          type: string
+        category: &id007
+          type: string
+        parentTypeId: &id008
+          type: string
+          format: uuid
+        parentTypeCode: &id009
+          type: string
+        inverseTypeId: &id010
+          type: string
+          format: uuid
+        inverseTypeCode: &id011
+          type: string
+        isBidirectional: &id012
+          type: boolean
+        isDeprecated: &id013
+          type: boolean
+        deprecatedAt: &id014
+          type: string
+          format: date-time
+        deprecationReason: &id015
+          type: string
+        depth: &id016
+          type: integer
+        metadata: &id017
+          type: object
+          additionalProperties: true
+        createdAt: &id018
+          type: string
+          format: date-time
+        updatedAt: &id019
+          type: string
+          format: date-time
+    RelationshipTypeUpdatedEvent:
+      type: object
+      description: Published to relationship-type.updated when a relationshiptype is updated
+      required:
+      - eventId
+      - timestamp
+      - relationshipTypeId
+      - code
+      - name
+      - isBidirectional
+      - isDeprecated
+      - depth
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        relationshipTypeId: *id003
+        code: *id004
+        name: *id005
+        description: *id006
+        category: *id007
+        parentTypeId: *id008
+        parentTypeCode: *id009
+        inverseTypeId: *id010
+        inverseTypeCode: *id011
+        isBidirectional: *id012
+        isDeprecated: *id013
+        deprecatedAt: *id014
+        deprecationReason: *id015
+        depth: *id016
+        metadata: *id017
+        createdAt: *id018
+        updatedAt: *id019
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    RelationshipTypeDeletedEvent:
+      type: object
+      description: Published to relationship-type.deleted when a relationshiptype is deleted
+      required:
+      - eventId
+      - timestamp
+      - relationshipTypeId
+      - code
+      - name
+      - isBidirectional
+      - isDeprecated
+      - depth
+      - createdAt
+      - updatedAt
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        relationshipTypeId: *id003
+        code: *id004
+        name: *id005
+        description: *id006
+        category: *id007
+        parentTypeId: *id008
+        parentTypeCode: *id009
+        inverseTypeId: *id010
+        inverseTypeCode: *id011
+        isBidirectional: *id012
+        isDeprecated: *id013
+        deprecatedAt: *id014
+        deprecationReason: *id015
+        depth: *id016
+        metadata: *id017
+        createdAt: *id018
+        updatedAt: *id019
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

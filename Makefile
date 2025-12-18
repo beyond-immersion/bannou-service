@@ -90,6 +90,77 @@ down-openresty: ## Stop OpenResty setup
 		-f provisioning/docker-compose.ingress.yml \
 		--project-name bannou down --remove-orphans
 
+# =============================================================================
+# EXTERNAL CLIENT TESTING
+# =============================================================================
+# Start Bannou with OpenResty exposed on ports 80/443 for external client
+# testing via DNS (e.g., beyond-immersion.com pointing to your machine).
+#
+# Prerequisites:
+# - Configure .env file with OPENRESTY_HTTP_PORT=80 and OPENRESTY_HTTPS_PORT=443
+# - Ensure ports 80/443 are forwarded to this machine
+# - DNS configured to point to your external IP
+# =============================================================================
+
+up-external: ## Start external client testing stack (OpenResty on ports 80/443)
+	@echo "🌐 Starting external client testing stack..."
+	@echo "📋 OpenResty will be exposed on ports defined in .env (default: 80/443)"
+	docker compose --env-file .env \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.ingress.yml \
+		-f provisioning/docker-compose.external.yml \
+		--project-name bannou-external up -d
+	@echo "⏳ Waiting for services to become healthy..."
+	@sleep 45
+	@docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "bannou-external|NAMES"
+	@echo ""
+	@echo "✅ External testing stack running"
+	@echo ""
+	@echo "📋 Available endpoints (via your configured domain):"
+	@echo "   POST /auth/register  - Register new account"
+	@echo "   POST /auth/login     - Login and get JWT"
+	@echo "   WS   /connect        - WebSocket connection"
+	@echo ""
+	@echo "💡 Use 'make external-register' to create a test admin account"
+	@echo "💡 Use 'make down-external' to stop the stack"
+
+down-external: ## Stop external client testing stack
+	@echo "🛑 Stopping external client testing stack..."
+	docker compose \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.ingress.yml \
+		-f provisioning/docker-compose.external.yml \
+		--project-name bannou-external down --remove-orphans
+	@echo "✅ External testing stack stopped"
+
+logs-external: ## View external stack bannou logs
+	docker compose \
+		-f provisioning/docker-compose.yml \
+		-f provisioning/docker-compose.services.yml \
+		-f provisioning/docker-compose.ingress.yml \
+		-f provisioning/docker-compose.external.yml \
+		--project-name bannou-external logs -f bannou
+
+external-register: ## Register test admin account (admin@admin.test.local)
+	@echo "📝 Registering admin test account..."
+	@curl -s -X POST http://localhost/auth/register \
+		-H "Content-Type: application/json" \
+		-d '{"username":"admin","email":"admin@admin.test.local","password":"admin-test-password-2025"}' \
+		| jq . 2>/dev/null || echo "Account may already exist (409 Conflict is OK)"
+	@echo ""
+	@echo "✅ Admin account: admin@admin.test.local / admin-test-password-2025"
+
+external-login: ## Login with test admin account and display JWT
+	@echo "🔑 Logging in with admin account..."
+	@curl -s -X POST http://localhost/auth/login \
+		-H "Content-Type: application/json" \
+		-d '{"email":"admin@admin.test.local","password":"admin-test-password-2025"}' \
+		| jq .
+	@echo ""
+	@echo "💡 Use the accessToken above for authenticated requests"
+
 clean: ## Clean generated files and caches (add PLUGIN=name for specific plugin)
 	@if [ "$(PLUGIN)" ]; then \
 		echo "🧹 Cleaning plugin: $(PLUGIN)..."; \

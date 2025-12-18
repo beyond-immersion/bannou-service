@@ -1,0 +1,102 @@
+openapi: 3.0.3
+info:
+  title: Bannou Accounts Service API Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for accounts service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: accounts-api.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    AccountCreatedEvent:
+      type: object
+      description: Published to account.created when a account is created
+      required:
+      - eventId
+      - timestamp
+      - accountId
+      - email
+      - emailVerified
+      - createdAt
+      properties:
+        eventId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp: &id002
+          type: string
+          format: date-time
+          description: When this event occurred
+        accountId: &id003
+          type: string
+          format: uuid
+        email: &id004
+          type: string
+          format: email
+        displayName: &id005
+          type: string
+        emailVerified: &id006
+          type: boolean
+        roles: &id007
+          type: array
+          items: {type: string}
+        createdAt: &id008
+          type: string
+          format: date-time
+        updatedAt: &id009
+          type: string
+          format: date-time
+        metadata: &id010
+          type: object
+          additionalProperties: true
+    AccountUpdatedEvent:
+      type: object
+      description: Published to account.updated when a account is updated
+      required:
+      - eventId
+      - timestamp
+      - accountId
+      - email
+      - emailVerified
+      - createdAt
+      - changedFields
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        accountId: *id003
+        email: *id004
+        displayName: *id005
+        emailVerified: *id006
+        roles: *id007
+        createdAt: *id008
+        updatedAt: *id009
+        metadata: *id010
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    AccountDeletedEvent:
+      type: object
+      description: Published to account.deleted when a account is deleted
+      required:
+      - eventId
+      - timestamp
+      - accountId
+      - email
+      - emailVerified
+      - createdAt
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        accountId: *id003
+        email: *id004
+        displayName: *id005
+        emailVerified: *id006
+        roles: *id007
+        createdAt: *id008
+        updatedAt: *id009
+        metadata: *id010
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

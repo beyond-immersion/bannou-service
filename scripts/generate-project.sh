@@ -92,17 +92,36 @@ EOF
     echo -e "${GREEN}✅ Created project file: $PROJECT_FILE${NC}"
 
     # Add project to solution
+    # Note: Path must be relative from repo root, not from scripts directory
+    PROJECT_FILE_FROM_ROOT="lib-${SERVICE_NAME}/lib-${SERVICE_NAME}.csproj"
     echo -e "${YELLOW}🔗 Adding project to solution...${NC}"
+
+    ORIGINAL_DIR="$(pwd)"
     cd "$(dirname "$0")/.."
 
-    if dotnet sln add "$PROJECT_FILE" --verbosity quiet 2>/dev/null; then
+    if dotnet sln add "$PROJECT_FILE_FROM_ROOT" 2>&1; then
         echo -e "${GREEN}✅ Added to solution${NC}"
     else
-        echo -e "${YELLOW}⚠️  Project might already be in solution${NC}"
+        echo -e "${YELLOW}⚠️  Project might already be in solution or add failed${NC}"
     fi
+
+    cd "$ORIGINAL_DIR"
 
 else
     echo -e "${YELLOW}📝 Project file already exists: $PROJECT_FILE${NC}"
+
+    # Still try to add to solution in case it's not there
+    # Note: Path must be relative from repo root, not from scripts directory
+    PROJECT_FILE_FROM_ROOT="lib-${SERVICE_NAME}/lib-${SERVICE_NAME}.csproj"
+
+    ORIGINAL_DIR="$(pwd)"
+    cd "$(dirname "$0")/.."
+
+    if dotnet sln add "$PROJECT_FILE_FROM_ROOT" 2>&1; then
+        echo -e "${GREEN}✅ Added existing project to solution${NC}"
+    fi
+
+    cd "$ORIGINAL_DIR"
 fi
 
 echo -e "${GREEN}✅ Service plugin project setup complete${NC}"

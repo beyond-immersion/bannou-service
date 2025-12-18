@@ -60,59 +60,64 @@ public class AccountsEventPublisher : EventPublisherBase
     }
 
     /// <summary>
-    /// Publishes an account updated event.
+    /// Publishes an account updated event with current account state.
     /// </summary>
-    /// <param name="accountId">ID of the updated account.</param>
+    /// <param name="account">The updated account response containing current state.</param>
     /// <param name="changedFields">Fields that were changed.</param>
-    /// <param name="previousValues">Previous values of changed fields.</param>
-    /// <param name="newValues">New values of changed fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if event was published successfully.</returns>
     public async Task<bool> PublishAccountUpdatedAsync(
-        Guid accountId,
-        IEnumerable<string>? changedFields = null,
-        object? previousValues = null,
-        object? newValues = null,
+        AccountResponse account,
+        IEnumerable<string> changedFields,
         CancellationToken cancellationToken = default)
     {
         var eventData = new AccountUpdatedEvent
         {
             EventId = NewEventId(),
             Timestamp = CurrentTimestamp(),
-            AccountId = accountId,
-            ChangedFields = changedFields?.ToList() ?? [],
-            PreviousValues = previousValues ?? new { },
-            NewValues = newValues ?? new { }
+            AccountId = account.AccountId,
+            Email = account.Email,
+            DisplayName = account.DisplayName ?? string.Empty,
+            EmailVerified = account.EmailVerified,
+            Roles = account.Roles?.ToList() ?? [],
+            CreatedAt = account.CreatedAt,
+            UpdatedAt = account.UpdatedAt ?? DateTimeOffset.UtcNow,
+            Metadata = account.Metadata ?? new Dictionary<string, object>(),
+            ChangedFields = changedFields.ToList()
         };
 
-        Logger.LogInformation("Publishing AccountUpdated event for account {AccountId}", accountId);
+        Logger.LogInformation("Publishing AccountUpdated event for account {AccountId}", account.AccountId);
         return await PublishEventAsync(ACCOUNT_UPDATED_TOPIC, eventData, cancellationToken);
     }
 
     /// <summary>
-    /// Publishes an account deleted event.
+    /// Publishes an account deleted event with account state at deletion time.
     /// </summary>
-    /// <param name="accountId">ID of the deleted account.</param>
-    /// <param name="email">Email of the deleted account.</param>
-    /// <param name="deletionReason">Reason for account deletion.</param>
+    /// <param name="account">The account being deleted.</param>
+    /// <param name="deletedReason">Optional reason for account deletion.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if event was published successfully.</returns>
     public async Task<bool> PublishAccountDeletedAsync(
-        Guid accountId,
-        string? email = null,
-        string? deletionReason = null,
+        AccountResponse account,
+        string? deletedReason = null,
         CancellationToken cancellationToken = default)
     {
         var eventData = new AccountDeletedEvent
         {
             EventId = NewEventId(),
             Timestamp = CurrentTimestamp(),
-            AccountId = accountId,
-            Email = email ?? string.Empty,
-            DeletionReason = deletionReason ?? string.Empty
+            AccountId = account.AccountId,
+            Email = account.Email,
+            DisplayName = account.DisplayName ?? string.Empty,
+            EmailVerified = account.EmailVerified,
+            Roles = account.Roles?.ToList() ?? [],
+            CreatedAt = account.CreatedAt,
+            UpdatedAt = account.UpdatedAt ?? DateTimeOffset.UtcNow,
+            Metadata = account.Metadata ?? new Dictionary<string, object>(),
+            DeletedReason = deletedReason
         };
 
-        Logger.LogInformation("Publishing AccountDeleted event for account {AccountId}", accountId);
+        Logger.LogInformation("Publishing AccountDeleted event for account {AccountId}", account.AccountId);
         return await PublishEventAsync(ACCOUNT_DELETED_TOPIC, eventData, cancellationToken);
     }
 }

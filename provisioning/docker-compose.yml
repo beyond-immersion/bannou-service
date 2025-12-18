@@ -55,8 +55,10 @@ services:
     # NO network_mode - container gets its own IP on the default network
     restart: always
     depends_on:
-      - placement
-      - rabbitmq
+      placement:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
 
   # Dapr placement service - uses default bridge network
   placement:
