@@ -511,6 +511,7 @@ components:
         - 50  # Service_BadRequest
         - 51  # Service_NotFound
         - 52  # Service_Unauthorized
+        - 53  # Service_Conflict
         - 60  # Service_InternalServerError
       x-enumNames:
         - "OK"
@@ -525,6 +526,7 @@ components:
         - "Service_BadRequest"
         - "Service_NotFound"
         - "Service_Unauthorized"
+        - "Service_Conflict"
         - "Service_InternalServerError"
       description: |
         Response codes used in the binary protocol for success/error indication.

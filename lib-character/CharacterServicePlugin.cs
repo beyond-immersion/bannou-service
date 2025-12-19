@@ -19,39 +19,17 @@ public class CharacterServicePlugin : BaseBannouPlugin
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Validate that this plugin should be loaded based on environment configuration.
-    /// </summary>
-    protected override bool OnValidatePlugin()
-    {
-        var enabled = Environment.GetEnvironmentVariable("CHARACTER_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("Character service enabled check: {EnabledValue}", enabled);
-        return enabled == "true";
-    }
-
-    /// <summary>
     /// Configure services for dependency injection - mimics existing [DaprService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("Character service disabled, skipping service registration");
-            return;
-        }
+        Logger?.LogDebug("Configuring service dependencies");
 
-        Logger?.LogInformation("Configuring Character service dependencies");
-
-        // Register the service implementation (existing pattern from [DaprService] attribute)
-        services.AddScoped<ICharacterService, CharacterService>();
-        services.AddScoped<CharacterService>();
-
-        // Register generated configuration class
-        services.AddScoped<CharacterServiceConfiguration>();
-
-        // Add any service-specific dependencies
+        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
-        Logger?.LogInformation("Character service dependencies configured");
+        Logger?.LogDebug("Service dependencies configured");
     }
 
     /// <summary>
@@ -59,21 +37,13 @@ public class CharacterServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("Character service disabled, skipping application configuration");
-            return;
-        }
-
-        Logger?.LogInformation("Configuring Character service application pipeline");
+        Logger?.LogDebug("Configuring application pipeline");
 
         // The generated CharacterController should already be discovered via standard ASP.NET Core controller discovery
-        // since we're not excluding the assembly like we did with IDaprController approach
-
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        Logger?.LogInformation("Character service application pipeline configured");
+        Logger?.LogDebug("Application pipeline configured");
     }
 
     /// <summary>
@@ -81,14 +51,10 @@ public class CharacterServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        if (!OnValidatePlugin()) return true;
-
-        Logger?.LogInformation("Starting Character service");
+        Logger?.LogInformation("Starting service");
 
         try
         {
-            // Get service instance from DI container with proper scope handling
-            // Note: CreateScope() is required for Scoped services to avoid "Cannot resolve scoped service from root provider" error
             using var scope = _serviceProvider?.CreateScope();
             _service = scope?.ServiceProvider.GetService<ICharacterService>();
 
@@ -98,19 +64,18 @@ public class CharacterServicePlugin : BaseBannouPlugin
                 return false;
             }
 
-            // Call existing IDaprService.OnStartAsync if the service implements it
             if (_service is IDaprService daprService)
             {
                 Logger?.LogDebug("Calling IDaprService.OnStartAsync for Character service");
                 await daprService.OnStartAsync(CancellationToken.None);
             }
 
-            Logger?.LogInformation("Character service started successfully");
+            Logger?.LogInformation("Service started");
             return true;
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Failed to start Character service");
+            Logger?.LogError(ex, "Failed to start service");
             return false;
         }
     }
@@ -120,13 +85,12 @@ public class CharacterServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
-        Logger?.LogDebug("Character service running");
+        Logger?.LogDebug("Service running");
 
         try
         {
-            // Call existing IDaprService.OnRunningAsync if the service implements it
             if (_service is IDaprService daprService)
             {
                 Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Character service");
@@ -135,7 +99,7 @@ public class CharacterServicePlugin : BaseBannouPlugin
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "Exception during Character service running phase");
+            Logger?.LogWarning(ex, "Exception during running phase");
         }
     }
 
@@ -144,24 +108,23 @@ public class CharacterServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
-        Logger?.LogInformation("Shutting down Character service");
+        Logger?.LogInformation("Shutting down service");
 
         try
         {
-            // Call existing IDaprService.OnShutdownAsync if the service implements it
             if (_service is IDaprService daprService)
             {
                 Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Character service");
                 await daprService.OnShutdownAsync();
             }
 
-            Logger?.LogInformation("Character service shutdown complete");
+            Logger?.LogInformation("Service shutdown complete");
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "Exception during Character service shutdown");
+            Logger?.LogWarning(ex, "Exception during shutdown");
         }
     }
 }

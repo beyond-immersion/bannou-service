@@ -18,6 +18,9 @@ mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
     -- Create additional databases for Dapr state stores
     -- (accounts is created by MYSQL_DATABASE env var, these are additional)
     CREATE DATABASE IF NOT EXISTS characters;
+    CREATE DATABASE IF NOT EXISTS realms;
+    CREATE DATABASE IF NOT EXISTS locations;
+    CREATE DATABASE IF NOT EXISTS relationships;
     CREATE DATABASE IF NOT EXISTS relationship_types;
     CREATE DATABASE IF NOT EXISTS species;
     CREATE DATABASE IF NOT EXISTS servicedata;
@@ -34,6 +37,24 @@ mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
     GRANT ALL PRIVILEGES ON characters.* TO '$MYSQL_USER'@'localhost';
     GRANT ALL PRIVILEGES ON characters.* TO '$MYSQL_USER'@'172.%.%.%';
     GRANT ALL PRIVILEGES ON characters.* TO '$MYSQL_USER'@'192.168.%.%';
+
+    -- Grant full privileges on realms database
+    GRANT ALL PRIVILEGES ON realms.* TO '$MYSQL_USER'@'%';
+    GRANT ALL PRIVILEGES ON realms.* TO '$MYSQL_USER'@'localhost';
+    GRANT ALL PRIVILEGES ON realms.* TO '$MYSQL_USER'@'172.%.%.%';
+    GRANT ALL PRIVILEGES ON realms.* TO '$MYSQL_USER'@'192.168.%.%';
+
+    -- Grant full privileges on locations database
+    GRANT ALL PRIVILEGES ON locations.* TO '$MYSQL_USER'@'%';
+    GRANT ALL PRIVILEGES ON locations.* TO '$MYSQL_USER'@'localhost';
+    GRANT ALL PRIVILEGES ON locations.* TO '$MYSQL_USER'@'172.%.%.%';
+    GRANT ALL PRIVILEGES ON locations.* TO '$MYSQL_USER'@'192.168.%.%';
+
+    -- Grant full privileges on relationships database
+    GRANT ALL PRIVILEGES ON relationships.* TO '$MYSQL_USER'@'%';
+    GRANT ALL PRIVILEGES ON relationships.* TO '$MYSQL_USER'@'localhost';
+    GRANT ALL PRIVILEGES ON relationships.* TO '$MYSQL_USER'@'172.%.%.%';
+    GRANT ALL PRIVILEGES ON relationships.* TO '$MYSQL_USER'@'192.168.%.%';
 
     -- Grant full privileges on relationship_types database
     GRANT ALL PRIVILEGES ON relationship_types.* TO '$MYSQL_USER'@'%';
@@ -63,4 +84,4 @@ mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
 EOSQL
 
 echo "Permissions granted successfully for user: $MYSQL_USER"
-echo "Databases created: accounts (via env), characters, relationship_types, species, servicedata, subscriptions"
+echo "Databases created: accounts (via env), characters, realms, locations, relationships, relationship_types, species, servicedata, subscriptions"

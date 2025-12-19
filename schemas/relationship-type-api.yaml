@@ -65,8 +65,7 @@ paths:
       - RelationshipType
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -92,8 +91,7 @@ paths:
       - RelationshipType
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -119,8 +117,7 @@ paths:
       - RelationshipType
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -144,8 +141,7 @@ paths:
       - RelationshipType
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -174,8 +170,7 @@ paths:
       - RelationshipType
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -203,8 +198,7 @@ paths:
       - RelationshipType
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:

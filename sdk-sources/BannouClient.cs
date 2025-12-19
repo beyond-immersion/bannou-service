@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Connect.Protocol;
 using System;
 using System.Collections.Concurrent;
 using System.Net.Http;
@@ -8,7 +9,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using BeyondImmersion.BannouService.Connect.Protocol;
 
 namespace BeyondImmersion.Bannou.Client.SDK;
 
@@ -67,7 +67,7 @@ public class BannouClient : IAsyncDisposable
 
     /// <summary>
     /// All available API endpoints with their client-salted GUIDs.
-    /// Key format: "serviceName:METHOD:/path"
+    /// Key format: "METHOD:/path" (e.g., "POST:/species/get")
     /// </summary>
     public IReadOnlyDictionary<string, Guid> AvailableApis => _apiMappings;
 
@@ -177,27 +177,9 @@ public class BannouClient : IAsyncDisposable
     /// <returns>The client-salted GUID, or null if not found</returns>
     public Guid? GetServiceGuid(string method, string path)
     {
-        // Try various key formats
-        foreach (var kvp in _apiMappings)
-        {
-            // Format: "serviceName:METHOD:/path"
-            if (kvp.Key.Contains($":{method}:{path}"))
-            {
-                return kvp.Value;
-            }
-        }
-
-        // Try by method and path only
-        foreach (var kvp in _apiMappings)
-        {
-            var parts = kvp.Key.Split(':', 3);
-            if (parts.Length >= 3 && parts[1] == method && parts[2] == path)
-            {
-                return kvp.Value;
-            }
-        }
-
-        return null;
+        // Key format: "METHOD:/path" (e.g., "POST:/species/get")
+        var key = $"{method}:{path}";
+        return _apiMappings.TryGetValue(key, out var guid) ? guid : null;
     }
 
     /// <summary>
@@ -211,8 +193,8 @@ public class BannouClient : IAsyncDisposable
     /// <param name="channel">Message channel for ordering (default 0)</param>
     /// <param name="timeout">Request timeout</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Response from service</returns>
-    public async Task<TResponse> InvokeAsync<TRequest, TResponse>(
+    /// <returns>ApiResponse containing either the success result or error details</returns>
+    public async Task<ApiResponse<TResponse>> InvokeAsync<TRequest, TResponse>(
         string method,
         string path,
         TRequest request,
@@ -278,12 +260,46 @@ public class BannouClient : IAsyncDisposable
             {
                 var response = await tcs.Task.WaitAsync(timeoutCts.Token);
 
-                // Deserialize response
-                var responseJson = response.GetJsonPayload();
-                var result = JsonSerializer.Deserialize<TResponse>(responseJson)
-                    ?? throw new InvalidOperationException($"Failed to deserialize response as {typeof(TResponse).Name}");
+                // Check response code from binary header (byte 15 of 16-byte response header)
+                // ResponseCode 0 = OK, non-zero = error
+                if (response.ResponseCode != 0)
+                {
+                    // Error response - payload is empty, response code is in header
+                    return ApiResponse<TResponse>.Failure(new ErrorResponse
+                    {
+                        ResponseCode = ErrorResponse.MapToHttpStatusCode(response.ResponseCode),
+                        ErrorName = ErrorResponse.GetErrorName(response.ResponseCode),
+                        Message = null, // No message in binary error responses
+                        MessageId = messageId,
+                        Method = method,
+                        Path = path
+                    });
+                }
 
-                return result;
+                // Success response - parse JSON payload
+                // Handle empty success responses (e.g., 200 OK with no content)
+                if (response.Payload.Length == 0)
+                {
+                    // Return empty success for endpoints that return 200 with no body
+                    return ApiResponse<TResponse>.SuccessEmpty();
+                }
+
+                var responseJson = response.GetJsonPayload();
+                var result = JsonSerializer.Deserialize<TResponse>(responseJson);
+                if (result == null)
+                {
+                    return ApiResponse<TResponse>.Failure(new ErrorResponse
+                    {
+                        ResponseCode = 500,
+                        ErrorName = "DeserializationError",
+                        Message = $"Failed to deserialize response as {typeof(TResponse).Name}",
+                        MessageId = messageId,
+                        Method = method,
+                        Path = path
+                    });
+                }
+
+                return ApiResponse<TResponse>.Success(result);
             }
             catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {
@@ -588,7 +604,9 @@ public class BannouClient : IAsyncDisposable
                     break;
                 }
 
-                if (result.MessageType == WebSocketMessageType.Binary && result.Count >= BinaryMessage.HeaderSize)
+                // Check for minimum message size - response headers are 16 bytes, request headers are 31 bytes
+                // Use ResponseHeaderSize as minimum since that's the smallest valid message
+                if (result.MessageType == WebSocketMessageType.Binary && result.Count >= BinaryMessage.ResponseHeaderSize)
                 {
                     try
                     {
@@ -728,4 +746,141 @@ public class BannouClient : IAsyncDisposable
     }
 
     #endregion
+}
+
+/// <summary>
+/// Represents an error response from a Bannou API call.
+/// Contains all available information about the failed request.
+/// </summary>
+public class ErrorResponse
+{
+    /// <summary>
+    /// The HTTP status code equivalent for this error.
+    /// Standard HTTP codes: 400 = Bad Request, 401 = Unauthorized, 404 = Not Found, 409 = Conflict, 500 = Internal Server Error.
+    /// </summary>
+    public int ResponseCode { get; init; }
+
+    /// <summary>
+    /// Maps internal WebSocket protocol response codes to standard HTTP status codes.
+    /// This hides the binary protocol implementation details from client code.
+    /// </summary>
+    internal static int MapToHttpStatusCode(int wsResponseCode) => wsResponseCode switch
+    {
+        0 => 200,   // OK
+        50 => 400,  // Service_BadRequest
+        51 => 404,  // Service_NotFound
+        52 => 401,  // Service_Unauthorized (covers both 401/403)
+        53 => 409,  // Service_Conflict
+        60 => 500,  // Service_InternalServerError
+        // Pass through other codes as 500 for safety
+        _ => 500
+    };
+
+    /// <summary>
+    /// Maps internal WebSocket protocol response codes to error names.
+    /// </summary>
+    internal static string GetErrorName(int wsResponseCode) => wsResponseCode switch
+    {
+        0 => "OK",
+        50 => "BadRequest",
+        51 => "NotFound",
+        52 => "Unauthorized",
+        53 => "Conflict",
+        60 => "InternalServerError",
+        _ => "UnknownError"
+    };
+
+    /// <summary>
+    /// Human-readable error name (e.g., "Service_InternalServerError", "Unauthorized").
+    /// </summary>
+    public string? ErrorName { get; init; }
+
+    /// <summary>
+    /// Detailed error message from the server, if provided.
+    /// </summary>
+    public string? Message { get; init; }
+
+    /// <summary>
+    /// The unique message ID for request/response correlation.
+    /// </summary>
+    public ulong MessageId { get; init; }
+
+    /// <summary>
+    /// The HTTP method of the original request (e.g., "POST", "GET").
+    /// </summary>
+    public string Method { get; init; } = string.Empty;
+
+    /// <summary>
+    /// The path of the original request (e.g., "/subscriptions/create").
+    /// </summary>
+    public string Path { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Represents the result of an API call, containing either a success response or error details.
+/// </summary>
+/// <typeparam name="T">The expected response type on success.</typeparam>
+public class ApiResponse<T>
+{
+    /// <summary>
+    /// Whether the API call was successful.
+    /// </summary>
+    public bool IsSuccess { get; init; }
+
+    /// <summary>
+    /// The successful response data. Only valid when IsSuccess is true.
+    /// </summary>
+    public T? Result { get; init; }
+
+    /// <summary>
+    /// Error details when the request failed. Only valid when IsSuccess is false.
+    /// </summary>
+    public ErrorResponse? Error { get; init; }
+
+    /// <summary>
+    /// Creates a successful response.
+    /// </summary>
+    public static ApiResponse<T> Success(T result) => new()
+    {
+        IsSuccess = true,
+        Result = result
+    };
+
+    /// <summary>
+    /// Creates a successful response with no content (empty body).
+    /// Used for endpoints that return 200 OK without a response body.
+    /// </summary>
+    public static ApiResponse<T> SuccessEmpty() => new()
+    {
+        IsSuccess = true,
+        Result = default
+    };
+
+    /// <summary>
+    /// Creates an error response.
+    /// </summary>
+    public static ApiResponse<T> Failure(ErrorResponse error) => new()
+    {
+        IsSuccess = false,
+        Error = error
+    };
+
+    /// <summary>
+    /// Gets the result if successful, or throws an InvalidOperationException with error details.
+    /// For empty success responses (200 with no body), returns default(T).
+    /// Useful for test code or scenarios where exceptions are preferred over explicit error handling.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when the response is an error.</exception>
+    public T? GetResultOrThrow()
+    {
+        if (IsSuccess)
+        {
+            // Return result even if null/default (for empty success responses)
+            return Result;
+        }
+
+        var error = Error;
+        throw new InvalidOperationException(
+            $"{error?.ErrorName ?? "Error"}: {error?.Message ?? "Request failed"} (code: {error?.ResponseCode ?? -1})");
+    }
 }

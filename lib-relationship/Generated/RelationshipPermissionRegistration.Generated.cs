@@ -76,7 +76,7 @@ public static class RelationshipPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
+                    RequiredStates = new Dictionary<string, string> {  }
                 },
             }
         });
@@ -91,7 +91,7 @@ public static class RelationshipPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
+                    RequiredStates = new Dictionary<string, string> {  }
                 },
             }
         });
@@ -106,7 +106,7 @@ public static class RelationshipPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
+                    RequiredStates = new Dictionary<string, string> {  }
                 },
             }
         });
@@ -121,7 +121,7 @@ public static class RelationshipPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
+                    RequiredStates = new Dictionary<string, string> {  }
                 },
             }
         });

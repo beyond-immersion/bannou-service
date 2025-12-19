@@ -1,7 +1,5 @@
-using BeyondImmersion.Bannou.Client.SDK;
-using BeyondImmersion.BannouService.RelationshipType;
-using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -9,9 +7,8 @@ namespace BeyondImmersion.EdgeTester.Tests;
 /// WebSocket-based test handler for relationship type service API endpoints.
 /// Tests the relationship type service APIs through the Connect service WebSocket binary protocol.
 ///
-/// IMPORTANT: These tests create dedicated test accounts with their own BannouClient instances.
-/// This avoids interfering with Program.Client or Program.AdminClient, and properly tests
-/// the user experience from account creation through API usage.
+/// Note: RelationshipType create/update/deprecate/undeprecate APIs require admin role,
+/// so these tests use Program.AdminClient which is already connected with admin permissions.
 /// </summary>
 public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
 {
@@ -30,163 +27,41 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
         };
     }
 
-    #region Helper Methods for Test Account Creation
-
-    /// <summary>
-    /// Creates a dedicated admin test account and returns the access token and connect URL.
-    /// Admin accounts have elevated permissions needed for relationship type management.
-    /// </summary>
-    private async Task<(string accessToken, string connectUrl)?> CreateAdminTestAccountAsync(string testPrefix)
-    {
-        if (Program.Configuration == null)
-        {
-            Console.WriteLine("   Configuration not available");
-            return null;
-        }
-
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
-        var uniqueId = Guid.NewGuid().ToString("N")[..12];
-        var testEmail = $"{testPrefix}_{uniqueId}@test.local";
-        var testPassword = $"{testPrefix}Test123!";
-
-        try
-        {
-            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = $"admin_{testPrefix}_{uniqueId}", email = testEmail, password = testPassword, role = "admin" };
-
-            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
-            registerRequest.Content = new StringContent(
-                JsonSerializer.Serialize(registerContent),
-                Encoding.UTF8,
-                "application/json");
-
-            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
-            if (!registerResponse.IsSuccessStatusCode)
-            {
-                var errorBody = await registerResponse.Content.ReadAsStringAsync();
-                Console.WriteLine($"   Failed to create admin test account: {registerResponse.StatusCode} - {errorBody}");
-                return null;
-            }
-
-            var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = JsonDocument.Parse(responseBody);
-            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
-            var connectUrl = responseObj.RootElement.GetProperty("connectUrl").GetString();
-
-            if (string.IsNullOrEmpty(accessToken))
-            {
-                Console.WriteLine("   No accessToken in registration response");
-                return null;
-            }
-
-            if (string.IsNullOrEmpty(connectUrl))
-            {
-                Console.WriteLine("   No connectUrl in registration response");
-                return null;
-            }
-
-            Console.WriteLine($"   Created admin test account: {testEmail}");
-            return (accessToken, connectUrl);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"   Failed to create admin test account: {ex.Message}");
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Creates a BannouClient connected with the given access token and connect URL.
-    /// Returns null if connection fails.
-    /// </summary>
-    private async Task<BannouClient?> CreateConnectedClientAsync(string accessToken, string connectUrl)
-    {
-        var client = new BannouClient();
-
-        try
-        {
-            var connected = await client.ConnectWithTokenAsync(connectUrl, accessToken);
-            if (!connected || !client.IsConnected)
-            {
-                Console.WriteLine("   BannouClient failed to connect");
-                await client.DisposeAsync();
-                return null;
-            }
-
-            Console.WriteLine($"   BannouClient connected, session: {client.SessionId}");
-            return client;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"   BannouClient connection failed: {ex.Message}");
-            await client.DisposeAsync();
-            return null;
-        }
-    }
-
-    #endregion
-
     private void TestListRelationshipTypesViaWebSocket(string[] args)
     {
         Console.WriteLine("=== RelationshipType List Test (WebSocket) ===");
-        Console.WriteLine("Testing /relationship-type/list via dedicated BannouClient...");
+        Console.WriteLine("Testing /relationship-type/list via shared admin WebSocket...");
 
         try
         {
-            var result = Task.Run(async () =>
-            {
-                var authResult = await CreateAdminTestAccountAsync("reltype_list");
-                if (authResult == null)
+            var result = Task.Run(async () => await PerformRelationshipTypeApiTest(
+                "POST",
+                "/relationship-type/list",
+                new { },
+                response =>
                 {
-                    return false;
-                }
-
-                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
-                if (client == null)
-                {
-                    return false;
-                }
-
-                var listRequest = new ListRelationshipTypesRequest();
-
-                try
-                {
-                    Console.WriteLine("   Invoking /relationship-type/list...");
-                    var response = await client.InvokeAsync<ListRelationshipTypesRequest, JsonElement>(
-                        "POST",
-                        "/relationship-type/list",
-                        listRequest,
-                        timeout: TimeSpan.FromSeconds(15));
-
-                    var hasTypesArray = response.TryGetProperty("types", out var typesProp) &&
-                                        typesProp.ValueKind == JsonValueKind.Array;
-                    var totalCount = response.TryGetProperty("totalCount", out var countProp) ? countProp.GetInt32() : 0;
+                    var hasTypesArray = response?["types"] != null &&
+                                        response["types"] is JsonArray;
+                    var totalCount = response?["totalCount"]?.GetValue<int>() ?? 0;
 
                     Console.WriteLine($"   Types array present: {hasTypesArray}");
                     Console.WriteLine($"   Total Count: {totalCount}");
 
                     return hasTypesArray;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"   Invoke failed: {ex.Message}");
-                    return false;
-                }
-            }).Result;
+                })).Result;
 
             if (result)
             {
-                Console.WriteLine("PASSED RelationshipType list test via WebSocket");
+                Console.WriteLine("✅ RelationshipType list test PASSED");
             }
             else
             {
-                Console.WriteLine("FAILED RelationshipType list test via WebSocket");
+                Console.WriteLine("❌ RelationshipType list test FAILED");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"FAILED RelationshipType list test with exception: {ex.Message}");
+            Console.WriteLine($"❌ RelationshipType list test FAILED with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
@@ -197,45 +72,41 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
     private void TestCreateAndGetRelationshipTypeViaWebSocket(string[] args)
     {
         Console.WriteLine("=== RelationshipType Create and Get Test (WebSocket) ===");
-        Console.WriteLine("Testing /relationship-type/create and /relationship-type/get via dedicated BannouClient...");
+        Console.WriteLine("Testing /relationship-type/create and /relationship-type/get via shared admin WebSocket...");
 
         try
         {
             var result = Task.Run(async () =>
             {
-                var authResult = await CreateAdminTestAccountAsync("reltype_crud");
-                if (authResult == null)
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
                 {
-                    return false;
-                }
-
-                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
-                if (client == null)
-                {
+                    Console.WriteLine("❌ Admin client not connected - ensure admin login completed successfully");
                     return false;
                 }
 
                 var uniqueCode = $"TYPE{DateTime.Now.Ticks % 100000}";
-                var createRequest = new CreateRelationshipTypeRequest
-                {
-                    Code = uniqueCode,
-                    Name = $"Test Type {uniqueCode}",
-                    Description = "Created via WebSocket edge test",
-                    Category = "TEST",
-                    IsBidirectional = true
-                };
 
                 try
                 {
+                    // Create relationship type
                     Console.WriteLine("   Invoking /relationship-type/create...");
-                    var createResponse = await client.InvokeAsync<CreateRelationshipTypeRequest, JsonElement>(
+                    var createResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/relationship-type/create",
-                        createRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new
+                        {
+                            code = uniqueCode,
+                            name = $"Test Type {uniqueCode}",
+                            description = "Created via WebSocket edge test",
+                            category = "TEST",
+                            isBidirectional = true
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var typeIdStr = createResponse.TryGetProperty("relationshipTypeId", out var idProp) ? idProp.GetString() : null;
-                    var code = createResponse.TryGetProperty("code", out var codeProp) ? codeProp.GetString() : null;
+                    var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
+                    var typeIdStr = createJson?["relationshipTypeId"]?.GetValue<string>();
+                    var code = createJson?["code"]?.GetValue<string>();
 
                     if (string.IsNullOrEmpty(typeIdStr))
                     {
@@ -246,20 +117,16 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine($"   Created relationship type: {typeIdStr} ({code})");
 
                     // Now retrieve it
-                    var getRequest = new GetRelationshipTypeRequest
-                    {
-                        RelationshipTypeId = Guid.Parse(typeIdStr)
-                    };
-
                     Console.WriteLine("   Invoking /relationship-type/get...");
-                    var getResponse = await client.InvokeAsync<GetRelationshipTypeRequest, JsonElement>(
+                    var getResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/relationship-type/get",
-                        getRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new { relationshipTypeId = typeIdStr },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var retrievedId = getResponse.TryGetProperty("relationshipTypeId", out var retrievedIdProp) ? retrievedIdProp.GetString() : null;
-                    var retrievedCode = getResponse.TryGetProperty("code", out var retrievedCodeProp) ? retrievedCodeProp.GetString() : null;
+                    var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
+                    var retrievedId = getJson?["relationshipTypeId"]?.GetValue<string>();
+                    var retrievedCode = getJson?["code"]?.GetValue<string>();
 
                     Console.WriteLine($"   Retrieved relationship type: {retrievedId} ({retrievedCode})");
 
@@ -274,16 +141,16 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
 
             if (result)
             {
-                Console.WriteLine("PASSED RelationshipType create and get test via WebSocket");
+                Console.WriteLine("✅ RelationshipType create and get test PASSED");
             }
             else
             {
-                Console.WriteLine("FAILED RelationshipType create and get test via WebSocket");
+                Console.WriteLine("❌ RelationshipType create and get test FAILED");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"FAILED RelationshipType create and get test with exception: {ex.Message}");
+            Console.WriteLine($"❌ RelationshipType create and get test FAILED with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
@@ -294,21 +161,16 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
     private void TestRelationshipTypeHierarchyViaWebSocket(string[] args)
     {
         Console.WriteLine("=== RelationshipType Hierarchy Test (WebSocket) ===");
-        Console.WriteLine("Testing hierarchy operations via dedicated BannouClient...");
+        Console.WriteLine("Testing hierarchy operations via shared admin WebSocket...");
 
         try
         {
             var result = Task.Run(async () =>
             {
-                var authResult = await CreateAdminTestAccountAsync("reltype_hier");
-                if (authResult == null)
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
                 {
-                    return false;
-                }
-
-                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
-                if (client == null)
-                {
+                    Console.WriteLine("❌ Admin client not connected - ensure admin login completed successfully");
                     return false;
                 }
 
@@ -317,95 +179,87 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                     // Step 1: Create parent type
                     Console.WriteLine("   Step 1: Creating parent type...");
                     var parentCode = $"PARENT{DateTime.Now.Ticks % 100000}";
-                    var parentRequest = new CreateRelationshipTypeRequest
-                    {
-                        Code = parentCode,
-                        Name = $"Parent Type {parentCode}",
-                        Category = "FAMILY",
-                        IsBidirectional = false
-                    };
 
-                    var parentResponse = await client.InvokeAsync<CreateRelationshipTypeRequest, JsonElement>(
+                    var parentResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/relationship-type/create",
-                        parentRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new
+                        {
+                            code = parentCode,
+                            name = $"Parent Type {parentCode}",
+                            category = "FAMILY",
+                            isBidirectional = false
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var parentIdStr = parentResponse.TryGetProperty("relationshipTypeId", out var parentIdProp) ? parentIdProp.GetString() : null;
+                    var parentJson = JsonNode.Parse(parentResponse.GetRawText())?.AsObject();
+                    var parentIdStr = parentJson?["relationshipTypeId"]?.GetValue<string>();
                     if (string.IsNullOrEmpty(parentIdStr))
                     {
                         Console.WriteLine("   Failed to create parent type");
                         return false;
                     }
-                    var parentId = Guid.Parse(parentIdStr);
-                    Console.WriteLine($"   Created parent type {parentId}");
+                    Console.WriteLine($"   Created parent type {parentIdStr}");
 
                     // Step 2: Create child type with parent
                     Console.WriteLine("   Step 2: Creating child type...");
                     var childCode = $"CHILD{DateTime.Now.Ticks % 100000}";
-                    var childRequest = new CreateRelationshipTypeRequest
-                    {
-                        Code = childCode,
-                        Name = $"Child Type {childCode}",
-                        Category = "FAMILY",
-                        ParentTypeId = parentId,
-                        IsBidirectional = false
-                    };
 
-                    var childResponse = await client.InvokeAsync<CreateRelationshipTypeRequest, JsonElement>(
+                    var childResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/relationship-type/create",
-                        childRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new
+                        {
+                            code = childCode,
+                            name = $"Child Type {childCode}",
+                            category = "FAMILY",
+                            parentTypeId = parentIdStr,
+                            isBidirectional = false
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var childIdStr = childResponse.TryGetProperty("relationshipTypeId", out var childIdProp) ? childIdProp.GetString() : null;
+                    var childJson = JsonNode.Parse(childResponse.GetRawText())?.AsObject();
+                    var childIdStr = childJson?["relationshipTypeId"]?.GetValue<string>();
                     if (string.IsNullOrEmpty(childIdStr))
                     {
                         Console.WriteLine("   Failed to create child type");
                         return false;
                     }
-                    var childId = Guid.Parse(childIdStr);
-                    Console.WriteLine($"   Created child type {childId}");
+                    Console.WriteLine($"   Created child type {childIdStr}");
 
                     // Step 3: Test GetChildRelationshipTypes
                     Console.WriteLine("   Step 3: Getting child types...");
-                    var getChildrenRequest = new GetChildRelationshipTypesRequest
-                    {
-                        ParentTypeId = parentId
-                    };
-
-                    var childrenResponse = await client.InvokeAsync<GetChildRelationshipTypesRequest, JsonElement>(
+                    var childrenResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/relationship-type/get-children",
-                        getChildrenRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new { parentTypeId = parentIdStr },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var hasChildren = childrenResponse.TryGetProperty("types", out var typesProp) &&
-                                    typesProp.ValueKind == JsonValueKind.Array &&
-                                    typesProp.GetArrayLength() > 0;
+                    var childrenJson = JsonNode.Parse(childrenResponse.GetRawText())?.AsObject();
+                    var typesArray = childrenJson?["types"]?.AsArray();
+                    var hasChildren = typesArray != null && typesArray.Count > 0;
 
                     if (!hasChildren)
                     {
                         Console.WriteLine("   No children found for parent type");
                         return false;
                     }
-                    Console.WriteLine($"   Found {typesProp.GetArrayLength()} child type(s)");
+                    Console.WriteLine($"   Found {typesArray?.Count} child type(s)");
 
                     // Step 4: Test MatchesHierarchy
                     Console.WriteLine("   Step 4: Testing hierarchy match...");
-                    var matchRequest = new MatchesHierarchyRequest
-                    {
-                        TypeId = childId,
-                        AncestorTypeId = parentId
-                    };
-
-                    var matchResponse = await client.InvokeAsync<MatchesHierarchyRequest, JsonElement>(
+                    var matchResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/relationship-type/matches-hierarchy",
-                        matchRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new
+                        {
+                            typeId = childIdStr,
+                            ancestorTypeId = parentIdStr
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var matches = matchResponse.TryGetProperty("matches", out var matchesProp) && matchesProp.GetBoolean();
+                    var matchJson = JsonNode.Parse(matchResponse.GetRawText())?.AsObject();
+                    var matches = matchJson?["matches"]?.GetValue<bool>() ?? false;
 
                     if (!matches)
                     {
@@ -416,27 +270,22 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
 
                     // Step 5: Test GetAncestors
                     Console.WriteLine("   Step 5: Getting ancestors...");
-                    var ancestorsRequest = new GetAncestorsRequest
-                    {
-                        TypeId = childId
-                    };
-
-                    var ancestorsResponse = await client.InvokeAsync<GetAncestorsRequest, JsonElement>(
+                    var ancestorsResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/relationship-type/get-ancestors",
-                        ancestorsRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new { typeId = childIdStr },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var hasAncestors = ancestorsResponse.TryGetProperty("types", out var ancestorsProp) &&
-                                        ancestorsProp.ValueKind == JsonValueKind.Array &&
-                                        ancestorsProp.GetArrayLength() > 0;
+                    var ancestorsJson = JsonNode.Parse(ancestorsResponse.GetRawText())?.AsObject();
+                    var ancestorsArray = ancestorsJson?["types"]?.AsArray();
+                    var hasAncestors = ancestorsArray != null && ancestorsArray.Count > 0;
 
                     if (!hasAncestors)
                     {
                         Console.WriteLine("   No ancestors found for child type");
                         return false;
                     }
-                    Console.WriteLine($"   Found {ancestorsProp.GetArrayLength()} ancestor(s)");
+                    Console.WriteLine($"   Found {ancestorsArray?.Count} ancestor(s)");
 
                     return true;
                 }
@@ -449,16 +298,16 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
 
             if (result)
             {
-                Console.WriteLine("PASSED RelationshipType hierarchy test via WebSocket");
+                Console.WriteLine("✅ RelationshipType hierarchy test PASSED");
             }
             else
             {
-                Console.WriteLine("FAILED RelationshipType hierarchy test via WebSocket");
+                Console.WriteLine("❌ RelationshipType hierarchy test FAILED");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"FAILED RelationshipType hierarchy test with exception: {ex.Message}");
+            Console.WriteLine($"❌ RelationshipType hierarchy test FAILED with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
@@ -469,21 +318,16 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
     private void TestRelationshipTypeLifecycleViaWebSocket(string[] args)
     {
         Console.WriteLine("=== RelationshipType Full Lifecycle Test (WebSocket) ===");
-        Console.WriteLine("Testing complete relationship type lifecycle via dedicated BannouClient...");
+        Console.WriteLine("Testing complete relationship type lifecycle via shared admin WebSocket...");
 
         try
         {
             var result = Task.Run(async () =>
             {
-                var authResult = await CreateAdminTestAccountAsync("reltype_lifecycle");
-                if (authResult == null)
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
                 {
-                    return false;
-                }
-
-                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
-                if (client == null)
-                {
+                    Console.WriteLine("❌ Admin client not connected - ensure admin login completed successfully");
                     return false;
                 }
 
@@ -492,46 +336,44 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
                     // Step 1: Create type
                     Console.WriteLine("   Step 1: Creating relationship type...");
                     var uniqueCode = $"LIFE{DateTime.Now.Ticks % 100000}";
-                    var createRequest = new CreateRelationshipTypeRequest
-                    {
-                        Code = uniqueCode,
-                        Name = $"Lifecycle Test {uniqueCode}",
-                        Description = "Lifecycle test type",
-                        Category = "TEST",
-                        IsBidirectional = true
-                    };
 
-                    var createResponse = await client.InvokeAsync<CreateRelationshipTypeRequest, JsonElement>(
+                    var createResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/relationship-type/create",
-                        createRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new
+                        {
+                            code = uniqueCode,
+                            name = $"Lifecycle Test {uniqueCode}",
+                            description = "Lifecycle test type",
+                            category = "TEST",
+                            isBidirectional = true
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var typeIdStr = createResponse.TryGetProperty("relationshipTypeId", out var idProp) ? idProp.GetString() : null;
+                    var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
+                    var typeIdStr = createJson?["relationshipTypeId"]?.GetValue<string>();
                     if (string.IsNullOrEmpty(typeIdStr))
                     {
                         Console.WriteLine("   Failed to create relationship type - no relationshipTypeId in response");
                         return false;
                     }
-                    var typeId = Guid.Parse(typeIdStr);
-                    Console.WriteLine($"   Created relationship type {typeId}");
+                    Console.WriteLine($"   Created relationship type {typeIdStr}");
 
                     // Step 2: Update type
                     Console.WriteLine("   Step 2: Updating relationship type...");
-                    var updateRequest = new UpdateRelationshipTypeRequest
-                    {
-                        RelationshipTypeId = typeId,
-                        Name = $"Updated Lifecycle Test {uniqueCode}",
-                        Description = "Updated description"
-                    };
-
-                    var updateResponse = await client.InvokeAsync<UpdateRelationshipTypeRequest, JsonElement>(
+                    var updateResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/relationship-type/update",
-                        updateRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new
+                        {
+                            relationshipTypeId = typeIdStr,
+                            name = $"Updated Lifecycle Test {uniqueCode}",
+                            description = "Updated description"
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var updatedName = updateResponse.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
+                    var updateJson = JsonNode.Parse(updateResponse.GetRawText())?.AsObject();
+                    var updatedName = updateJson?["name"]?.GetValue<string>();
                     if (!updatedName?.StartsWith("Updated") ?? true)
                     {
                         Console.WriteLine($"   Failed to update relationship type - name: {updatedName}");
@@ -541,19 +383,18 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
 
                     // Step 3: Deprecate type
                     Console.WriteLine("   Step 3: Deprecating relationship type...");
-                    var deprecateRequest = new DeprecateRelationshipTypeRequest
-                    {
-                        RelationshipTypeId = typeId,
-                        Reason = "WebSocket lifecycle test"
-                    };
-
-                    var deprecateResponse = await client.InvokeAsync<DeprecateRelationshipTypeRequest, JsonElement>(
+                    var deprecateResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/relationship-type/deprecate",
-                        deprecateRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new
+                        {
+                            relationshipTypeId = typeIdStr,
+                            reason = "WebSocket lifecycle test"
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var isDeprecated = deprecateResponse.TryGetProperty("isDeprecated", out var deprecatedProp) && deprecatedProp.GetBoolean();
+                    var deprecateJson = JsonNode.Parse(deprecateResponse.GetRawText())?.AsObject();
+                    var isDeprecated = deprecateJson?["isDeprecated"]?.GetValue<bool>() ?? false;
                     if (!isDeprecated)
                     {
                         Console.WriteLine("   Failed to deprecate relationship type");
@@ -563,18 +404,14 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
 
                     // Step 4: Undeprecate type
                     Console.WriteLine("   Step 4: Undeprecating relationship type...");
-                    var undeprecateRequest = new UndeprecateRelationshipTypeRequest
-                    {
-                        RelationshipTypeId = typeId
-                    };
-
-                    var undeprecateResponse = await client.InvokeAsync<UndeprecateRelationshipTypeRequest, JsonElement>(
+                    var undeprecateResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/relationship-type/undeprecate",
-                        undeprecateRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new { relationshipTypeId = typeIdStr },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var isUndeprecated = undeprecateResponse.TryGetProperty("isDeprecated", out var undeprecatedProp) && !undeprecatedProp.GetBoolean();
+                    var undeprecateJson = JsonNode.Parse(undeprecateResponse.GetRawText())?.AsObject();
+                    var isUndeprecated = !(undeprecateJson?["isDeprecated"]?.GetValue<bool>() ?? true);
                     if (!isUndeprecated)
                     {
                         Console.WriteLine("   Failed to undeprecate relationship type");
@@ -593,20 +430,71 @@ public class RelationshipTypeWebSocketTestHandler : IServiceTestHandler
 
             if (result)
             {
-                Console.WriteLine("PASSED RelationshipType complete lifecycle test via WebSocket");
+                Console.WriteLine("✅ RelationshipType complete lifecycle test PASSED");
             }
             else
             {
-                Console.WriteLine("FAILED RelationshipType complete lifecycle test via WebSocket");
+                Console.WriteLine("❌ RelationshipType complete lifecycle test FAILED");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"FAILED RelationshipType lifecycle test with exception: {ex.Message}");
+            Console.WriteLine($"❌ RelationshipType lifecycle test FAILED with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
             }
+        }
+    }
+
+    /// <summary>
+    /// Performs a relationship type API call via the shared admin WebSocket.
+    /// Uses Program.AdminClient which is already connected with admin permissions.
+    /// </summary>
+    private async Task<bool> PerformRelationshipTypeApiTest(
+        string method,
+        string path,
+        object? body,
+        Func<JsonObject?, bool> validateResponse)
+    {
+        var adminClient = Program.AdminClient;
+        if (adminClient == null || !adminClient.IsConnected)
+        {
+            Console.WriteLine("❌ Admin client not connected - ensure admin login completed successfully");
+            Console.WriteLine("   RelationshipType APIs require admin role for create/update/delete operations.");
+            return false;
+        }
+
+        Console.WriteLine($"📤 Sending relationship type API request via shared admin WebSocket:");
+        Console.WriteLine($"   Method: {method}");
+        Console.WriteLine($"   Path: {path}");
+
+        try
+        {
+            var requestBody = body ?? new { };
+            var response = (await adminClient.InvokeAsync<object, JsonElement>(
+                method,
+                path,
+                requestBody,
+                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+
+            var responseJson = response.GetRawText();
+            Console.WriteLine($"📥 Received response: {responseJson.Substring(0, Math.Min(500, responseJson.Length))}...");
+
+            var responseObj = JsonNode.Parse(responseJson)?.AsObject();
+            return validateResponse(responseObj);
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
+        {
+            Console.WriteLine($"❌ Endpoint not available: {method} {path}");
+            Console.WriteLine($"   Admin may not have access to relationship type APIs");
+            Console.WriteLine($"   Available APIs: {string.Join(", ", adminClient.AvailableApis.Keys.Take(10))}...");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ RelationshipType API test failed: {ex.Message}");
+            return false;
         }
     }
 }

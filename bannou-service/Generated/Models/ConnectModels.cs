@@ -364,6 +364,8 @@ public enum ResponseCodes
 
     Service_Unauthorized = 52,
 
+    Service_Conflict = 53,
+
     Service_InternalServerError = 60,
 
 }

@@ -61,7 +61,7 @@ public static class SpeciesPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
+                    RequiredStates = new Dictionary<string, string> {  }
                 },
             }
         });
@@ -76,7 +76,7 @@ public static class SpeciesPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
+                    RequiredStates = new Dictionary<string, string> {  }
                 },
             }
         });
@@ -91,7 +91,7 @@ public static class SpeciesPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
+                    RequiredStates = new Dictionary<string, string> {  }
                 },
             }
         });
@@ -106,7 +106,7 @@ public static class SpeciesPermissionRegistration
                 new PermissionRequirement
                 {
                     Role = "user",
-                    RequiredStates = new Dictionary<string, string> { {"auth", "authenticated"} }
+                    RequiredStates = new Dictionary<string, string> {  }
                 },
             }
         });

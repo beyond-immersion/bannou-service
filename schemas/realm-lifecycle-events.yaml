@@ -1,0 +1,126 @@
+openapi: 3.0.3
+info:
+  title: Bannou Realm Service API Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for realm service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: realm-api.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    RealmCreatedEvent:
+      type: object
+      description: Published to realm.created when a realm is created
+      required:
+      - eventId
+      - timestamp
+      - realmId
+      - code
+      - name
+      - isActive
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        eventId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp: &id002
+          type: string
+          format: date-time
+          description: When this event occurred
+        realmId: &id003
+          type: string
+          format: uuid
+        code: &id004
+          type: string
+        name: &id005
+          type: string
+        description: &id006
+          type: string
+        category: &id007
+          type: string
+        isActive: &id008
+          type: boolean
+        isDeprecated: &id009
+          type: boolean
+        deprecatedAt: &id010
+          type: string
+          format: date-time
+        deprecationReason: &id011
+          type: string
+        metadata: &id012
+          type: object
+          additionalProperties: true
+        createdAt: &id013
+          type: string
+          format: date-time
+        updatedAt: &id014
+          type: string
+          format: date-time
+    RealmUpdatedEvent:
+      type: object
+      description: Published to realm.updated when a realm is updated
+      required:
+      - eventId
+      - timestamp
+      - realmId
+      - code
+      - name
+      - isActive
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        realmId: *id003
+        code: *id004
+        name: *id005
+        description: *id006
+        category: *id007
+        isActive: *id008
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        metadata: *id012
+        createdAt: *id013
+        updatedAt: *id014
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    RealmDeletedEvent:
+      type: object
+      description: Published to realm.deleted when a realm is deleted
+      required:
+      - eventId
+      - timestamp
+      - realmId
+      - code
+      - name
+      - isActive
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        realmId: *id003
+        code: *id004
+        name: *id005
+        description: *id006
+        category: *id007
+        isActive: *id008
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        metadata: *id012
+        createdAt: *id013
+        updatedAt: *id014
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

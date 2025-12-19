@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +26,7 @@ public class SpeciesService : ISpeciesService
     private readonly SpeciesServiceConfiguration _configuration;
     private readonly IErrorEventEmitter _errorEventEmitter;
     private readonly ICharacterClient _characterClient;
+    private readonly IRealmClient _realmClient;
 
     private const string STATE_STORE = "species-statestore";
     private const string PUBSUB_NAME = "bannou-pubsub";
@@ -38,13 +40,15 @@ public class SpeciesService : ISpeciesService
         ILogger<SpeciesService> logger,
         SpeciesServiceConfiguration configuration,
         IErrorEventEmitter errorEventEmitter,
-        ICharacterClient characterClient)
+        ICharacterClient characterClient,
+        IRealmClient realmClient)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
         _characterClient = characterClient ?? throw new ArgumentNullException(nameof(characterClient));
+        _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
     }
 
     #region Key Building Helpers
@@ -52,6 +56,60 @@ public class SpeciesService : ISpeciesService
     private static string BuildSpeciesKey(string speciesId) => $"{SPECIES_KEY_PREFIX}{speciesId}";
     private static string BuildCodeIndexKey(string code) => $"{CODE_INDEX_PREFIX}{code.ToUpperInvariant()}";
     private static string BuildRealmIndexKey(string realmId) => $"{REALM_INDEX_PREFIX}{realmId}";
+
+    #endregion
+
+    #region Realm Validation Helpers
+
+    /// <summary>
+    /// Validates that a realm exists and is active (not deprecated).
+    /// </summary>
+    private async Task<(bool exists, bool isActive)> ValidateRealmAsync(Guid realmId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _realmClient.RealmExistsAsync(
+                new RealmExistsRequest { RealmId = realmId },
+                cancellationToken);
+            return (response.Exists, response.IsActive);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            return (false, false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not validate realm {RealmId} - proceeding with operation", realmId);
+            // If RealmService is unavailable, allow the operation with a warning
+            return (true, true);
+        }
+    }
+
+    /// <summary>
+    /// Validates multiple realms and returns lists of invalid and deprecated realm IDs.
+    /// </summary>
+    private async Task<(List<Guid> invalidRealms, List<Guid> deprecatedRealms)> ValidateRealmsAsync(
+        IEnumerable<Guid> realmIds,
+        CancellationToken cancellationToken)
+    {
+        var invalidRealms = new List<Guid>();
+        var deprecatedRealms = new List<Guid>();
+
+        foreach (var realmId in realmIds)
+        {
+            var (exists, isActive) = await ValidateRealmAsync(realmId, cancellationToken);
+            if (!exists)
+            {
+                invalidRealms.Add(realmId);
+            }
+            else if (!isActive)
+            {
+                deprecatedRealms.Add(realmId);
+            }
+        }
+
+        return (invalidRealms, deprecatedRealms);
+    }
 
     #endregion
 
@@ -208,6 +266,14 @@ public class SpeciesService : ISpeciesService
         {
             _logger.LogInformation("Listing species by realm: {RealmId}", body.RealmId);
 
+            // Validate realm exists (regardless of deprecation status - allow viewing deprecated realm species)
+            var (realmExists, _) = await ValidateRealmAsync(body.RealmId, cancellationToken);
+            if (!realmExists)
+            {
+                _logger.LogWarning("Realm not found: {RealmId}", body.RealmId);
+                return (StatusCodes.NotFound, null);
+            }
+
             var realmIndexKey = BuildRealmIndexKey(body.RealmId.ToString());
             var speciesIds = await _daprClient.GetStateAsync<List<string>>(STATE_STORE, realmIndexKey, cancellationToken: cancellationToken);
 
@@ -285,6 +351,26 @@ public class SpeciesService : ISpeciesService
             {
                 _logger.LogWarning("Species with code already exists: {Code}", code);
                 return (StatusCodes.Conflict, null);
+            }
+
+            // Validate all provided realms exist and are active
+            if (body.RealmIds != null && body.RealmIds.Count > 0)
+            {
+                var (invalidRealms, deprecatedRealms) = await ValidateRealmsAsync(body.RealmIds, cancellationToken);
+
+                if (invalidRealms.Count > 0)
+                {
+                    _logger.LogWarning("Cannot create species {Code}: realms not found: {RealmIds}",
+                        code, string.Join(", ", invalidRealms));
+                    return (StatusCodes.BadRequest, null);
+                }
+
+                if (deprecatedRealms.Count > 0)
+                {
+                    _logger.LogWarning("Cannot create species {Code}: realms are deprecated: {RealmIds}",
+                        code, string.Join(", ", deprecatedRealms));
+                    return (StatusCodes.BadRequest, null);
+                }
             }
 
             var speciesId = Guid.NewGuid();
@@ -514,6 +600,20 @@ public class SpeciesService : ISpeciesService
         try
         {
             _logger.LogInformation("Adding species {SpeciesId} to realm {RealmId}", body.SpeciesId, body.RealmId);
+
+            // Validate realm exists and is active
+            var (realmExists, realmIsActive) = await ValidateRealmAsync(body.RealmId, cancellationToken);
+            if (!realmExists)
+            {
+                _logger.LogWarning("Realm not found: {RealmId}", body.RealmId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (!realmIsActive)
+            {
+                _logger.LogWarning("Cannot add species to deprecated realm: {RealmId}", body.RealmId);
+                return (StatusCodes.BadRequest, null);
+            }
 
             var speciesKey = BuildSpeciesKey(body.SpeciesId.ToString());
             var model = await _daprClient.GetStateAsync<SpeciesModel>(STATE_STORE, speciesKey, cancellationToken: cancellationToken);
@@ -1144,6 +1244,20 @@ public class SpeciesService : ISpeciesService
         {
             _logger.LogWarning(ex, "Failed to publish species.deleted event for {SpeciesId}", model.SpeciesId);
         }
+    }
+
+    #endregion
+
+    #region Permission Registration
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Species service permissions...");
+        await SpeciesPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
     }
 
     #endregion

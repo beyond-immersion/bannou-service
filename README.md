@@ -72,7 +72,8 @@ Bannou features an innovative **Connect service edge gateway** that enables zero
 - **Progressive Access Control**: Service mappings dynamically update based on authentication state
 
 ### Binary Protocol
-- **31-byte Header**: [Flags: 1][Channel: 2][Sequence: 4][Service GUID: 16][Message ID: 8]
+- **Request Header (31 bytes)**: [Flags: 1][Channel: 2][Sequence: 4][Service GUID: 16][Message ID: 8]
+- **Response Header (16 bytes)**: [Flags: 1][Channel: 2][Sequence: 4][Message ID: 8][Response Code: 1]
 - **Variable Payload**: JSON or binary data support with automatic serialization
 - **Service Discovery**: Clients receive method → GUID mappings at connection time
 - **Bidirectional RPC**: RabbitMQ integration enables server-initiated requests to clients
@@ -224,8 +225,6 @@ curl -X POST http://localhost:5012/orchestrator/deploy \
 # Check deployment status
 curl http://localhost:5012/orchestrator/status
 ```
-
-See [ORCHESTRATOR-SERVICE-DESIGN.md](docs/ORCHESTRATOR-SERVICE-DESIGN.md) for complete documentation.
 
 ## Local Deploy (Compose)
 
@@ -712,9 +711,10 @@ The separation between enabling services/controllers (via ENVs) and mapping serv
 
 - [WebSocket Protocol Architecture](docs/WEBSOCKET-PROTOCOL.md) - Complete binary protocol specification
 - [Testing Architecture](docs/TESTING.md) - Dual-transport and schema-driven testing
+- [API Design Guide](docs/API-DESIGN.md) - Schema-first development patterns and conventions
 - [EditorConfig and Linting Guide](docs/LINTING.md) - CI-compatible formatting and validation
-- [Service Configuration](docs/configuration.md) - Environment and deployment configuration
-- [Service APIs](docs/services.md) - Generated API documentation
+- [NuGet SDK Setup](docs/NUGET-SETUP.md) - Client SDK publishing and distribution
+- [X-Permissions Specification](docs/X-PERMISSIONS-SPECIFICATION.md) - Role-based access control schema
 
 ## Contributing
 

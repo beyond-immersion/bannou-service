@@ -23,8 +23,7 @@ paths:
         - Service Registry
       x-permissions:
         - role: user
-          states:
-            auth: authenticated
+          states: {}
       requestBody:
         required: true
         content:
@@ -48,8 +47,7 @@ paths:
         - Service Registry
       x-permissions:
         - role: user
-          states:
-            auth: authenticated
+          states: {}
       requestBody:
         required: true
         content:

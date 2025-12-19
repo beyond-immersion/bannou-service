@@ -5,12 +5,17 @@ set -e
 echo "🔧 Generating Bannou SDK packages (Server + Client)..."
 
 # =============================================================================
-# DISCOVERY: Find all generated files
+# DISCOVERY: Find all generated files (now centralized in bannou-service/Generated/)
 # =============================================================================
 
-CLIENT_FILES=($(find . -path "./lib-*/Generated/*Client.cs" 2>/dev/null || true))
-MODEL_FILES=($(find . -path "./lib-*/Generated/*Models.cs" 2>/dev/null || true))
-EVENT_FILES=($(find . -path "./lib-*/Generated/*Events*.cs" 2>/dev/null || true))
+# All clients and models are now in bannou-service/Generated/
+CLIENT_FILES=($(find ./bannou-service/Generated/Clients -name "*Client.cs" 2>/dev/null || true))
+MODEL_FILES=($(find ./bannou-service/Generated/Models -name "*Models.cs" 2>/dev/null || true))
+EVENT_FILES=($(find ./bannou-service/Generated/Events -name "*Events*.cs" 2>/dev/null || true))
+
+# Also include common events from bannou-service/Generated/
+COMMON_EVENT_FILES=($(find ./bannou-service/Generated -maxdepth 1 -name "*Events*.cs" 2>/dev/null || true))
+EVENT_FILES=("${EVENT_FILES[@]}" "${COMMON_EVENT_FILES[@]}")
 
 echo "Found ${#CLIENT_FILES[@]} client files, ${#MODEL_FILES[@]} model files, ${#EVENT_FILES[@]} event files"
 

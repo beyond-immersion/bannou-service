@@ -9,10 +9,11 @@ Bannou uses a **hybrid binary header + JSON payload** protocol optimized for:
 - Client-specific security via session-salted GUIDs
 - Channel multiplexing for fair message scheduling
 - Request/response correlation for bidirectional RPC
+- Compact response headers (16 bytes vs 31-byte request headers)
 
-## Binary Header Format (31 bytes)
+## Request Header Format (31 bytes)
 
-Every WebSocket message begins with a 31-byte binary header:
+Client requests use a 31-byte binary header:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -30,7 +31,7 @@ Every WebSocket message begins with a 31-byte binary header:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Header Fields
+### Request Header Fields
 
 | Offset | Size | Field | Description |
 |--------|------|-------|-------------|
@@ -39,6 +40,51 @@ Every WebSocket message begins with a 31-byte binary header:
 | 3-6 | 4 | Sequence | Per-channel sequence number |
 | 7-22 | 16 | Service GUID | Client-salted GUID identifying target service |
 | 23-30 | 8 | Message ID | Unique ID for request/response correlation |
+
+## Response Header Format (16 bytes)
+
+Server responses use a compact 16-byte binary header. The Service GUID is omitted because the client already knows which service it called (correlated via Message ID).
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Byte 0:    Message Flags (1 byte, Response flag 0x40 set)       │
+├─────────────────────────────────────────────────────────────────┤
+│ Bytes 1-2: Channel ID (2 bytes, big-endian uint16)              │
+├─────────────────────────────────────────────────────────────────┤
+│ Bytes 3-6: Sequence Number (4 bytes, big-endian uint32)         │
+├─────────────────────────────────────────────────────────────────┤
+│ Bytes 7-14: Message ID (8 bytes, big-endian uint64)             │
+├─────────────────────────────────────────────────────────────────┤
+│ Byte 15:   Response Code (1 byte, protocol code 0-255)          │
+├─────────────────────────────────────────────────────────────────┤
+│ Bytes 16+: Payload (success: JSON data, error: empty)           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Response Header Fields
+
+| Offset | Size | Field | Description |
+|--------|------|-------|-------------|
+| 0 | 1 | Flags | Response flag (0x40) is set |
+| 1-2 | 2 | Channel | Same as request for ordering |
+| 3-6 | 4 | Sequence | Same as request for correlation |
+| 7-14 | 8 | Message ID | Same as request for correlation |
+| 15 | 1 | Response Code | Protocol response code (see table below) |
+
+### Response Codes
+
+Response codes are protocol-level codes (not HTTP codes). The client SDK maps these to HTTP status codes.
+
+| Protocol Code | Name | HTTP Equivalent | Description |
+|---------------|------|-----------------|-------------|
+| 0 | OK | 200 | Success - payload contains response data |
+| 50 | Service_BadRequest | 400 | Invalid request format or parameters |
+| 51 | Service_NotFound | 404 | Requested resource not found |
+| 52 | Service_Unauthorized | 401 | Authentication required or failed |
+| 53 | Service_Conflict | 409 | Resource conflict (e.g., duplicate) |
+| 60 | Service_InternalServerError | 500 | Server-side error |
+
+**Error Response Behavior**: For non-zero response codes, the payload is **empty**. The response code in byte 15 tells the complete story. This keeps error responses minimal (16 bytes total).
 
 ## Message Flags (Byte 0)
 
@@ -54,12 +100,12 @@ Bit 7  Bit 6  Bit 5  Bit 4  Bit 3  Bit 2  Bit 1  Bit 0
 |------|-----|-------------|
 | None | 0x00 | Default: JSON payload, service request, expects response |
 | Binary | 0x01 | Payload is binary data (not UTF-8 JSON) |
-| Encrypted | 0x02 | Payload is encrypted |
-| Compressed | 0x04 | Payload is gzip compressed |
+| Encrypted | 0x02 | Payload is encrypted (reserved for future use) |
+| Compressed | 0x04 | Payload is gzip compressed (reserved for future use) |
 | HighPriority | 0x08 | Skip to front of processing queues |
 | Event | 0x10 | Fire-and-forget, no response expected |
 | Client | 0x20 | Route to another WebSocket client (P2P) |
-| Response | 0x40 | This is a response to a request |
+| Response | 0x40 | This is a response (uses 16-byte header format) |
 | Reserved | 0x80 | Reserved for future use |
 
 ## Client-Salted GUIDs
@@ -114,70 +160,90 @@ The Connect service validates the JWT and establishes the session.
 
 ### 3. Capability Manifest
 
-Server sends available APIs with client-salted GUIDs:
+Server sends available API endpoints with client-salted GUIDs. Each endpoint gets a unique GUID that is salted with the session ID for security isolation:
+
 ```json
 {
-  "type": "capabilities",
+  "type": "capability_manifest",
   "sessionId": "abc123",
-  "services": {
-    "accounts": {
-      "guid": "550e8400-e29b-41d4-a716-446655440000",
-      "endpoints": ["GET:/accounts/{id}", "PUT:/accounts/{id}"]
+  "availableAPIs": [
+    {
+      "serviceGuid": "550e8400-e29b-41d4-a716-446655440000",
+      "method": "POST",
+      "path": "/accounts/get",
+      "endpointKey": "POST:/accounts/get"
     },
-    "auth": {
-      "guid": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
-      "endpoints": ["POST:/auth/logout", "GET:/auth/sessions"]
+    {
+      "serviceGuid": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+      "method": "POST",
+      "path": "/auth/logout",
+      "endpointKey": "POST:/auth/logout"
     }
-  },
-  "version": 42
+  ],
+  "version": 1,
+  "timestamp": 1703001234567
 }
 ```
 
+**Key Format**: The `endpointKey` format is `METHOD:/path` (e.g., `POST:/accounts/get`). This is the key clients use to look up the GUID for an endpoint. Service names are internal routing information and are NOT exposed to clients.
+
 ### 4. Binary Messaging
 
-After authentication, all messages use the 31-byte binary header:
+After authentication, all messages use binary headers. Requests use 31-byte headers, responses use 16-byte headers.
 
-**Client Request:**
+**Client Request (31-byte header + payload):**
 ```
-[31-byte header][JSON payload]
-
-Header:
-  Flags: 0x00 (JSON, request, expects response)
-  Channel: 0
-  Sequence: 1
-  GUID: <accounts service GUID>
-  MessageId: 0x0123456789ABCDEF
+Header (31 bytes):
+  Byte 0:     0x00 (Flags: JSON, request, expects response)
+  Bytes 1-2:  0x0000 (Channel: 0)
+  Bytes 3-6:  0x00000001 (Sequence: 1)
+  Bytes 7-22: <accounts service GUID>
+  Bytes 23-30: 0x0123456789ABCDEF (MessageId)
 
 Payload:
 {"accountId": "user123"}
 ```
 
-**Server Response:**
+**Server Success Response (16-byte header + payload):**
 ```
-[31-byte header][JSON payload]
-
-Header:
-  Flags: 0x40 (Response flag set)
-  Channel: 0
-  Sequence: 1 (matches request)
-  GUID: <same GUID>
-  MessageId: 0x0123456789ABCDEF (matches request)
+Header (16 bytes):
+  Byte 0:     0x40 (Flags: Response)
+  Bytes 1-2:  0x0000 (Channel: 0, same as request)
+  Bytes 3-6:  0x00000001 (Sequence: 1, same as request)
+  Bytes 7-14: 0x0123456789ABCDEF (MessageId, same as request)
+  Byte 15:    0x00 (ResponseCode: 0 = OK)
 
 Payload:
 {"id": "user123", "email": "user@example.com"}
 ```
 
+**Server Error Response (16-byte header, no payload):**
+```
+Header (16 bytes):
+  Byte 0:     0x40 (Flags: Response)
+  Bytes 1-2:  0x0000 (Channel: 0)
+  Bytes 3-6:  0x00000001 (Sequence: 1)
+  Bytes 7-14: 0x0123456789ABCDEF (MessageId)
+  Byte 15:    0x33 (ResponseCode: 51 = NotFound)
+
+Payload: (empty)
+```
+
 ### 5. Capability Updates
 
-When permissions change, server pushes updated capabilities:
+When permissions change, server pushes an updated capability manifest:
 ```json
 {
-  "type": "capabilities",
-  "updateType": "full",
-  "services": { ... },
-  "version": 43
+  "type": "capability_manifest",
+  "sessionId": "abc123",
+  "availableAPIs": [...],
+  "version": 2,
+  "timestamp": 1703001234999,
+  "reason": "permission_change"
 }
 ```
+
+The `reason` field indicates why the manifest was updated (e.g., `permission_change`, `service_update`).
 
 ### 6. Connection Close
 
@@ -187,11 +253,11 @@ Standard WebSocket close with optional reason code.
 
 ### Client-to-Service
 
-1. Client sends binary message with service GUID
+1. Client sends binary message with service GUID (31-byte header)
 2. Connect service extracts GUID (zero-copy)
 3. Looks up service name from GUID mapping
 4. Routes to Dapr service via service invocation
-5. Returns response with same Message ID
+5. Returns response with 16-byte header and same Message ID
 
 ### Client-to-Client (P2P)
 
@@ -207,19 +273,6 @@ Standard WebSocket close with optional reason code.
 3. Creates binary message with `Event` flag (0x10)
 4. Pushes to client's WebSocket
 
-## Response Codes
-
-Responses include standard HTTP-like codes:
-
-| Code | Meaning |
-|------|---------|
-| 200 | Success |
-| 400 | Bad Request |
-| 401 | Unauthorized |
-| 403 | Forbidden |
-| 404 | Not Found |
-| 500 | Internal Server Error |
-
 ## Error Handling
 
 **Timeout:** 30 seconds default for request/response correlation
@@ -233,6 +286,7 @@ Responses include standard HTTP-like codes:
 - `/lib-connect/Protocol/GuidGenerator.cs` - GUID generation
 - `/lib-connect/Protocol/ConnectionState.cs` - Connection lifecycle
 - `/lib-connect/Protocol/NetworkByteOrder.cs` - Byte order utilities
+- `/lib-connect/Protocol/MessageRouter.cs` - Message routing logic
 
 ## Security Considerations
 
@@ -241,3 +295,4 @@ Responses include standard HTTP-like codes:
 3. **SHA256 Hashing**: Cryptographic security for GUID generation
 4. **Server Salt**: Per-instance salt adds entropy
 5. **Permission Validation**: All API calls validated against capabilities
+6. **Empty Error Payloads**: Error responses don't leak server implementation details

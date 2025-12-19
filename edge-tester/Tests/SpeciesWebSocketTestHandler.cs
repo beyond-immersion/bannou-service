@@ -1,7 +1,5 @@
-using BeyondImmersion.Bannou.Client.SDK;
-using BeyondImmersion.BannouService.Species;
-using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -9,9 +7,8 @@ namespace BeyondImmersion.EdgeTester.Tests;
 /// WebSocket-based test handler for species service API endpoints.
 /// Tests the species service APIs through the Connect service WebSocket binary protocol.
 ///
-/// IMPORTANT: These tests create dedicated test accounts with their own BannouClient instances.
-/// This avoids interfering with Program.Client or Program.AdminClient, and properly tests
-/// the user experience from account creation through API usage.
+/// Note: Species create/update/deprecate/undeprecate APIs require admin role,
+/// so these tests use Program.AdminClient which is already connected with admin permissions.
 /// </summary>
 public class SpeciesWebSocketTestHandler : IServiceTestHandler
 {
@@ -28,163 +25,41 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
         };
     }
 
-    #region Helper Methods for Test Account Creation
-
-    /// <summary>
-    /// Creates a dedicated admin test account and returns the access token and connect URL.
-    /// Admin accounts have elevated permissions needed for species management.
-    /// </summary>
-    private async Task<(string accessToken, string connectUrl)?> CreateAdminTestAccountAsync(string testPrefix)
-    {
-        if (Program.Configuration == null)
-        {
-            Console.WriteLine("   Configuration not available");
-            return null;
-        }
-
-        var openrestyHost = Program.Configuration.OpenResty_Host ?? "openresty";
-        var openrestyPort = Program.Configuration.OpenResty_Port ?? 80;
-        var uniqueId = Guid.NewGuid().ToString("N")[..12];
-        var testEmail = $"{testPrefix}_{uniqueId}@test.local";
-        var testPassword = $"{testPrefix}Test123!";
-
-        try
-        {
-            var registerUrl = $"http://{openrestyHost}:{openrestyPort}/auth/register";
-            var registerContent = new { username = $"admin_{testPrefix}_{uniqueId}", email = testEmail, password = testPassword, role = "admin" };
-
-            using var registerRequest = new HttpRequestMessage(HttpMethod.Post, registerUrl);
-            registerRequest.Content = new StringContent(
-                JsonSerializer.Serialize(registerContent),
-                Encoding.UTF8,
-                "application/json");
-
-            using var registerResponse = await Program.HttpClient.SendAsync(registerRequest);
-            if (!registerResponse.IsSuccessStatusCode)
-            {
-                var errorBody = await registerResponse.Content.ReadAsStringAsync();
-                Console.WriteLine($"   Failed to create admin test account: {registerResponse.StatusCode} - {errorBody}");
-                return null;
-            }
-
-            var responseBody = await registerResponse.Content.ReadAsStringAsync();
-            var responseObj = JsonDocument.Parse(responseBody);
-            var accessToken = responseObj.RootElement.GetProperty("accessToken").GetString();
-            var connectUrl = responseObj.RootElement.GetProperty("connectUrl").GetString();
-
-            if (string.IsNullOrEmpty(accessToken))
-            {
-                Console.WriteLine("   No accessToken in registration response");
-                return null;
-            }
-
-            if (string.IsNullOrEmpty(connectUrl))
-            {
-                Console.WriteLine("   No connectUrl in registration response");
-                return null;
-            }
-
-            Console.WriteLine($"   Created admin test account: {testEmail}");
-            return (accessToken, connectUrl);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"   Failed to create admin test account: {ex.Message}");
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Creates a BannouClient connected with the given access token and connect URL.
-    /// Returns null if connection fails.
-    /// </summary>
-    private async Task<BannouClient?> CreateConnectedClientAsync(string accessToken, string connectUrl)
-    {
-        var client = new BannouClient();
-
-        try
-        {
-            var connected = await client.ConnectWithTokenAsync(connectUrl, accessToken);
-            if (!connected || !client.IsConnected)
-            {
-                Console.WriteLine("   BannouClient failed to connect");
-                await client.DisposeAsync();
-                return null;
-            }
-
-            Console.WriteLine($"   BannouClient connected, session: {client.SessionId}");
-            return client;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"   BannouClient connection failed: {ex.Message}");
-            await client.DisposeAsync();
-            return null;
-        }
-    }
-
-    #endregion
-
     private void TestListSpeciesViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Species List Test (WebSocket) ===");
-        Console.WriteLine("Testing /species/list via dedicated BannouClient...");
+        Console.WriteLine("Testing /species/list via shared admin WebSocket...");
 
         try
         {
-            var result = Task.Run(async () =>
-            {
-                var authResult = await CreateAdminTestAccountAsync("species_list");
-                if (authResult == null)
+            var result = Task.Run(async () => await PerformSpeciesApiTest(
+                "POST",
+                "/species/list",
+                new { },
+                response =>
                 {
-                    return false;
-                }
-
-                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
-                if (client == null)
-                {
-                    return false;
-                }
-
-                var listRequest = new ListSpeciesRequest();
-
-                try
-                {
-                    Console.WriteLine("   Invoking /species/list...");
-                    var response = await client.InvokeAsync<ListSpeciesRequest, JsonElement>(
-                        "POST",
-                        "/species/list",
-                        listRequest,
-                        timeout: TimeSpan.FromSeconds(15));
-
-                    var hasSpeciesArray = response.TryGetProperty("species", out var speciesProp) &&
-                                        speciesProp.ValueKind == JsonValueKind.Array;
-                    var totalCount = response.TryGetProperty("totalCount", out var countProp) ? countProp.GetInt32() : 0;
+                    var hasSpeciesArray = response?["species"] != null &&
+                                        response["species"] is JsonArray;
+                    var totalCount = response?["totalCount"]?.GetValue<int>() ?? 0;
 
                     Console.WriteLine($"   Species array present: {hasSpeciesArray}");
                     Console.WriteLine($"   Total Count: {totalCount}");
 
                     return hasSpeciesArray;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"   Invoke failed: {ex.Message}");
-                    return false;
-                }
-            }).Result;
+                })).Result;
 
             if (result)
             {
-                Console.WriteLine("PASSED Species list test via WebSocket");
+                Console.WriteLine("✅ Species list test PASSED");
             }
             else
             {
-                Console.WriteLine("FAILED Species list test via WebSocket");
+                Console.WriteLine("❌ Species list test FAILED");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"FAILED Species list test with exception: {ex.Message}");
+            Console.WriteLine($"❌ Species list test FAILED with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
@@ -195,46 +70,42 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
     private void TestCreateAndGetSpeciesViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Species Create and Get Test (WebSocket) ===");
-        Console.WriteLine("Testing /species/create and /species/get via dedicated BannouClient...");
+        Console.WriteLine("Testing /species/create and /species/get via shared admin WebSocket...");
 
         try
         {
             var result = Task.Run(async () =>
             {
-                var authResult = await CreateAdminTestAccountAsync("species_crud");
-                if (authResult == null)
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
                 {
-                    return false;
-                }
-
-                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
-                if (client == null)
-                {
+                    Console.WriteLine("❌ Admin client not connected - ensure admin login completed successfully");
                     return false;
                 }
 
                 var uniqueCode = $"TEST{DateTime.Now.Ticks % 100000}";
-                var createRequest = new CreateSpeciesRequest
-                {
-                    Code = uniqueCode,
-                    Name = $"Test Species {uniqueCode}",
-                    Description = "Created via WebSocket edge test",
-                    IsPlayable = true,
-                    BaseLifespan = 100,
-                    MaturityAge = 18
-                };
 
                 try
                 {
+                    // Create species
                     Console.WriteLine("   Invoking /species/create...");
-                    var createResponse = await client.InvokeAsync<CreateSpeciesRequest, JsonElement>(
+                    var createResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/species/create",
-                        createRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new
+                        {
+                            code = uniqueCode,
+                            name = $"Test Species {uniqueCode}",
+                            description = "Created via WebSocket edge test",
+                            isPlayable = true,
+                            baseLifespan = 100,
+                            maturityAge = 18
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var speciesIdStr = createResponse.TryGetProperty("speciesId", out var idProp) ? idProp.GetString() : null;
-                    var code = createResponse.TryGetProperty("code", out var codeProp) ? codeProp.GetString() : null;
+                    var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
+                    var speciesIdStr = createJson?["speciesId"]?.GetValue<string>();
+                    var code = createJson?["code"]?.GetValue<string>();
 
                     if (string.IsNullOrEmpty(speciesIdStr))
                     {
@@ -245,20 +116,16 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine($"   Created species: {speciesIdStr} ({code})");
 
                     // Now retrieve it
-                    var getRequest = new GetSpeciesRequest
-                    {
-                        SpeciesId = Guid.Parse(speciesIdStr)
-                    };
-
                     Console.WriteLine("   Invoking /species/get...");
-                    var getResponse = await client.InvokeAsync<GetSpeciesRequest, JsonElement>(
+                    var getResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/species/get",
-                        getRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new { speciesId = speciesIdStr },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var retrievedId = getResponse.TryGetProperty("speciesId", out var retrievedIdProp) ? retrievedIdProp.GetString() : null;
-                    var retrievedCode = getResponse.TryGetProperty("code", out var retrievedCodeProp) ? retrievedCodeProp.GetString() : null;
+                    var getJson = JsonNode.Parse(getResponse.GetRawText())?.AsObject();
+                    var retrievedId = getJson?["speciesId"]?.GetValue<string>();
+                    var retrievedCode = getJson?["code"]?.GetValue<string>();
 
                     Console.WriteLine($"   Retrieved species: {retrievedId} ({retrievedCode})");
 
@@ -273,16 +140,16 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
 
             if (result)
             {
-                Console.WriteLine("PASSED Species create and get test via WebSocket");
+                Console.WriteLine("✅ Species create and get test PASSED");
             }
             else
             {
-                Console.WriteLine("FAILED Species create and get test via WebSocket");
+                Console.WriteLine("❌ Species create and get test FAILED");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"FAILED Species create and get test with exception: {ex.Message}");
+            Console.WriteLine($"❌ Species create and get test FAILED with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
@@ -293,21 +160,16 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
     private void TestSpeciesLifecycleViaWebSocket(string[] args)
     {
         Console.WriteLine("=== Species Full Lifecycle Test (WebSocket) ===");
-        Console.WriteLine("Testing complete species lifecycle via dedicated BannouClient...");
+        Console.WriteLine("Testing complete species lifecycle via shared admin WebSocket...");
 
         try
         {
             var result = Task.Run(async () =>
             {
-                var authResult = await CreateAdminTestAccountAsync("species_lifecycle");
-                if (authResult == null)
+                var adminClient = Program.AdminClient;
+                if (adminClient == null || !adminClient.IsConnected)
                 {
-                    return false;
-                }
-
-                await using var client = await CreateConnectedClientAsync(authResult.Value.accessToken, authResult.Value.connectUrl);
-                if (client == null)
-                {
+                    Console.WriteLine("❌ Admin client not connected - ensure admin login completed successfully");
                     return false;
                 }
 
@@ -316,45 +178,43 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
                     // Step 1: Create species
                     Console.WriteLine("   Step 1: Creating species...");
                     var uniqueCode = $"LIFE{DateTime.Now.Ticks % 100000}";
-                    var createRequest = new CreateSpeciesRequest
-                    {
-                        Code = uniqueCode,
-                        Name = $"Lifecycle Test {uniqueCode}",
-                        Description = "Lifecycle test species",
-                        IsPlayable = false
-                    };
 
-                    var createResponse = await client.InvokeAsync<CreateSpeciesRequest, JsonElement>(
+                    var createResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/species/create",
-                        createRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new
+                        {
+                            code = uniqueCode,
+                            name = $"Lifecycle Test {uniqueCode}",
+                            description = "Lifecycle test species",
+                            isPlayable = false
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var speciesIdStr = createResponse.TryGetProperty("speciesId", out var idProp) ? idProp.GetString() : null;
+                    var createJson = JsonNode.Parse(createResponse.GetRawText())?.AsObject();
+                    var speciesIdStr = createJson?["speciesId"]?.GetValue<string>();
                     if (string.IsNullOrEmpty(speciesIdStr))
                     {
                         Console.WriteLine("   Failed to create species - no speciesId in response");
                         return false;
                     }
-                    var speciesId = Guid.Parse(speciesIdStr);
-                    Console.WriteLine($"   Created species {speciesId}");
+                    Console.WriteLine($"   Created species {speciesIdStr}");
 
                     // Step 2: Update species
                     Console.WriteLine("   Step 2: Updating species...");
-                    var updateRequest = new UpdateSpeciesRequest
-                    {
-                        SpeciesId = speciesId,
-                        Name = $"Updated Lifecycle Test {uniqueCode}",
-                        Description = "Updated description"
-                    };
-
-                    var updateResponse = await client.InvokeAsync<UpdateSpeciesRequest, JsonElement>(
+                    var updateResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/species/update",
-                        updateRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new
+                        {
+                            speciesId = speciesIdStr,
+                            name = $"Updated Lifecycle Test {uniqueCode}",
+                            description = "Updated description"
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var updatedName = updateResponse.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
+                    var updateJson = JsonNode.Parse(updateResponse.GetRawText())?.AsObject();
+                    var updatedName = updateJson?["name"]?.GetValue<string>();
                     if (!updatedName?.StartsWith("Updated") ?? true)
                     {
                         Console.WriteLine($"   Failed to update species - name: {updatedName}");
@@ -364,19 +224,18 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
 
                     // Step 3: Deprecate species
                     Console.WriteLine("   Step 3: Deprecating species...");
-                    var deprecateRequest = new DeprecateSpeciesRequest
-                    {
-                        SpeciesId = speciesId,
-                        Reason = "WebSocket lifecycle test"
-                    };
-
-                    var deprecateResponse = await client.InvokeAsync<DeprecateSpeciesRequest, JsonElement>(
+                    var deprecateResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/species/deprecate",
-                        deprecateRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new
+                        {
+                            speciesId = speciesIdStr,
+                            reason = "WebSocket lifecycle test"
+                        },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var isDeprecated = deprecateResponse.TryGetProperty("isDeprecated", out var deprecatedProp) && deprecatedProp.GetBoolean();
+                    var deprecateJson = JsonNode.Parse(deprecateResponse.GetRawText())?.AsObject();
+                    var isDeprecated = deprecateJson?["isDeprecated"]?.GetValue<bool>() ?? false;
                     if (!isDeprecated)
                     {
                         Console.WriteLine("   Failed to deprecate species");
@@ -386,18 +245,14 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
 
                     // Step 4: Undeprecate species
                     Console.WriteLine("   Step 4: Undeprecating species...");
-                    var undeprecateRequest = new UndeprecateSpeciesRequest
-                    {
-                        SpeciesId = speciesId
-                    };
-
-                    var undeprecateResponse = await client.InvokeAsync<UndeprecateSpeciesRequest, JsonElement>(
+                    var undeprecateResponse = (await adminClient.InvokeAsync<object, JsonElement>(
                         "POST",
                         "/species/undeprecate",
-                        undeprecateRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        new { speciesId = speciesIdStr },
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
-                    var isUndeprecated = undeprecateResponse.TryGetProperty("isDeprecated", out var undeprecatedProp) && !undeprecatedProp.GetBoolean();
+                    var undeprecateJson = JsonNode.Parse(undeprecateResponse.GetRawText())?.AsObject();
+                    var isUndeprecated = !(undeprecateJson?["isDeprecated"]?.GetValue<bool>() ?? true);
                     if (!isUndeprecated)
                     {
                         Console.WriteLine("   Failed to undeprecate species");
@@ -416,20 +271,71 @@ public class SpeciesWebSocketTestHandler : IServiceTestHandler
 
             if (result)
             {
-                Console.WriteLine("PASSED Species complete lifecycle test via WebSocket");
+                Console.WriteLine("✅ Species complete lifecycle test PASSED");
             }
             else
             {
-                Console.WriteLine("FAILED Species complete lifecycle test via WebSocket");
+                Console.WriteLine("❌ Species complete lifecycle test FAILED");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"FAILED Species lifecycle test with exception: {ex.Message}");
+            Console.WriteLine($"❌ Species lifecycle test FAILED with exception: {ex.Message}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"   Inner exception: {ex.InnerException.Message}");
             }
+        }
+    }
+
+    /// <summary>
+    /// Performs a species API call via the shared admin WebSocket.
+    /// Uses Program.AdminClient which is already connected with admin permissions.
+    /// </summary>
+    private async Task<bool> PerformSpeciesApiTest(
+        string method,
+        string path,
+        object? body,
+        Func<JsonObject?, bool> validateResponse)
+    {
+        var adminClient = Program.AdminClient;
+        if (adminClient == null || !adminClient.IsConnected)
+        {
+            Console.WriteLine("❌ Admin client not connected - ensure admin login completed successfully");
+            Console.WriteLine("   Species APIs require admin role for create/update/delete operations.");
+            return false;
+        }
+
+        Console.WriteLine($"📤 Sending species API request via shared admin WebSocket:");
+        Console.WriteLine($"   Method: {method}");
+        Console.WriteLine($"   Path: {path}");
+
+        try
+        {
+            var requestBody = body ?? new { };
+            var response = (await adminClient.InvokeAsync<object, JsonElement>(
+                method,
+                path,
+                requestBody,
+                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
+
+            var responseJson = response.GetRawText();
+            Console.WriteLine($"📥 Received response: {responseJson.Substring(0, Math.Min(500, responseJson.Length))}...");
+
+            var responseObj = JsonNode.Parse(responseJson)?.AsObject();
+            return validateResponse(responseObj);
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("Unknown endpoint"))
+        {
+            Console.WriteLine($"❌ Endpoint not available: {method} {path}");
+            Console.WriteLine($"   Admin may not have access to species APIs");
+            Console.WriteLine($"   Available APIs: {string.Join(", ", adminClient.AvailableApis.Keys.Take(10))}...");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Species API test failed: {ex.Message}");
+            return false;
         }
     }
 }

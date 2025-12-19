@@ -175,20 +175,19 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public void AuthPermissionRegistration_GetEndpoints_ShouldIncludeAuthenticatedPermissions()
+    public void AuthPermissionRegistration_GetEndpoints_ShouldIncludeUserRolePermissions()
     {
         // Act
         var endpoints = AuthPermissionRegistration.GetEndpoints();
 
-        // Assert
-        var authenticatedEndpoints = endpoints.Where(e =>
+        // Assert - user-role endpoints have empty states (role: user implies authentication)
+        var userEndpoints = endpoints.Where(e =>
             e.Permissions.Any(p =>
                 p.Role == "user" &&
-                p.RequiredStates.ContainsKey("auth") &&
-                p.RequiredStates["auth"] == "authenticated")).ToList();
+                p.RequiredStates.Count == 0)).ToList();
 
-        // Refresh, validate, logout, sessions endpoints require authentication
-        Assert.True(authenticatedEndpoints.Count >= 5);
+        // Refresh, validate, logout, sessions endpoints require user role (implies auth)
+        Assert.True(userEndpoints.Count >= 5);
     }
 
     [Fact]
@@ -216,7 +215,7 @@ public class AuthServiceTests
         Assert.NotNull(matrix);
         Assert.NotEmpty(matrix);
 
-        // Should have at least "default" (no state) and "auth:authenticated" states
+        // Should have at least "default" (no state required) - role alone implies auth
         Assert.True(matrix.ContainsKey("default") || matrix.Count > 0);
     }
 

@@ -1,0 +1,1060 @@
+openapi: 3.0.0
+info:
+  title: Bannou Location Service API
+  description: |
+    Location management service for Arcadia game world.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See API-DESIGN.md for architectural rationale.
+
+    Locations represent physical places in the game world. Each location belongs to
+    exactly one realm and can optionally have a parent location for hierarchical organization.
+
+    **Three-Level Hierarchy**:
+    - Realm (top-level persistent world - separate Realm service)
+    - Region (parentLocationId=null, locations within a realm)
+    - Location (parentLocationId=regionId, specific places within regions)
+
+    **Realm-Scoped**: Every location has a realmId, enabling realm-specific location queries.
+
+    **Hierarchy Support**: Locations can nest within other locations via parentLocationId,
+    enabling Region -> City -> District -> Building -> Room organization patterns.
+
+    **Location Types**: Flexible locationType field (e.g., "REGION", "CITY", "BUILDING", "ROOM")
+    allows domain-specific categorization without rigid schema constraints.
+
+    **Deprecation System**: Locations can be deprecated instead of deleted directly.
+    Deprecated locations remain queryable but prevent new entity placement.
+
+    **Two-Step Deletion**:
+    1. Deprecate the location (soft delete, prevents new usage)
+    2. Optionally hard-delete the deprecated location after all references are removed
+  version: 1.0.0
+servers:
+- url: http://localhost:3500/v1.0/invoke/bannou/method
+  description: Dapr sidecar endpoint (internal only)
+
+x-lifecycle:
+  Location:
+    model:
+      locationId: { type: string, format: uuid, primary: true, required: true }
+      realmId: { type: string, format: uuid, required: true }
+      code: { type: string, required: true }
+      name: { type: string, required: true }
+      description: { type: string }
+      locationType: { type: string, required: true }
+      parentLocationId: { type: string, format: uuid }
+      depth: { type: integer, required: true }
+      isDeprecated: { type: boolean, required: true }
+      deprecatedAt: { type: string, format: date-time }
+      deprecationReason: { type: string }
+      metadata: { type: object, additionalProperties: true }
+      createdAt: { type: string, format: date-time, required: true }
+      updatedAt: { type: string, format: date-time, required: true }
+
+paths:
+  /location/get:
+    post:
+      summary: Get location by ID
+      operationId: getLocation
+      tags:
+      - Location
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLocationRequest'
+      responses:
+        '200':
+          description: Location retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '404':
+          description: Location not found
+
+  /location/get-by-code:
+    post:
+      summary: Get location by code and realm
+      description: Retrieve a location using its unique code within a specific realm
+      operationId: getLocationByCode
+      tags:
+      - Location
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLocationByCodeRequest'
+      responses:
+        '200':
+          description: Location retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '404':
+          description: Location not found
+
+  /location/list:
+    post:
+      summary: List locations with filtering
+      description: Retrieve locations with optional realm, parent, and type filtering
+      operationId: listLocations
+      tags:
+      - Location
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListLocationsRequest'
+      responses:
+        '200':
+          description: Locations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationListResponse'
+
+  /location/list-by-realm:
+    post:
+      summary: List all locations in a realm (primary query pattern)
+      description: |
+        Returns all locations within a specific realm, optionally filtered by
+        location type and parent. This is the primary access pattern for
+        realm-scoped location queries.
+      operationId: listLocationsByRealm
+      tags:
+      - Location
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListLocationsByRealmRequest'
+      responses:
+        '200':
+          description: Locations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationListResponse'
+
+  /location/list-by-parent:
+    post:
+      summary: Get child locations for a parent location
+      description: |
+        Retrieve all locations that have the specified location as their parent.
+        Useful for getting all cities in a region, all buildings in a city, etc.
+      operationId: listLocationsByParent
+      tags:
+      - Location
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListLocationsByParentRequest'
+      responses:
+        '200':
+          description: Child locations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationListResponse'
+        '404':
+          description: Parent location not found
+
+  /location/list-root:
+    post:
+      summary: Get root locations in a realm
+      description: |
+        Returns all top-level locations in a realm (locations with no parent).
+        These are typically regions or major areas within the realm.
+      operationId: listRootLocations
+      tags:
+      - Location
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListRootLocationsRequest'
+      responses:
+        '200':
+          description: Root locations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationListResponse'
+
+  /location/get-ancestors:
+    post:
+      summary: Get all ancestors of a location
+      description: |
+        Returns the full ancestry chain from the specified location up to the
+        root location (parentLocationId=null). For example, for a specific building
+        might return [district, city, region].
+      operationId: getLocationAncestors
+      tags:
+      - Location
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLocationAncestorsRequest'
+      responses:
+        '200':
+          description: Ancestors retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationListResponse'
+        '404':
+          description: Location not found
+
+  /location/get-descendants:
+    post:
+      summary: Get all descendants of a location
+      description: |
+        Returns all locations that are descendants of the specified location
+        (direct children, grandchildren, etc.). Useful for finding all places
+        within a region or city.
+      operationId: getLocationDescendants
+      tags:
+      - Location
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLocationDescendantsRequest'
+      responses:
+        '200':
+          description: Descendants retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationListResponse'
+        '404':
+          description: Location not found
+
+  /location/create:
+    post:
+      summary: Create new location
+      operationId: createLocation
+      tags:
+      - Location Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLocationRequest'
+      responses:
+        '201':
+          description: Location created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '400':
+          description: Invalid location data or parent realm mismatch
+        '409':
+          description: Location with this code already exists in this realm
+
+  /location/update:
+    post:
+      summary: Update location
+      operationId: updateLocation
+      tags:
+      - Location Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLocationRequest'
+      responses:
+        '200':
+          description: Location updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '404':
+          description: Location not found
+        '400':
+          description: Invalid update data
+
+  /location/set-parent:
+    post:
+      summary: Set or change the parent of a location
+      description: |
+        Update a location's parent, moving it in the hierarchy.
+        Validates that:
+        - New parent exists and is in the same realm
+        - No circular reference would be created
+        - Updates depth for location and all descendants
+      operationId: setLocationParent
+      tags:
+      - Location Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetLocationParentRequest'
+      responses:
+        '200':
+          description: Parent updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '404':
+          description: Location or parent not found
+        '400':
+          description: Invalid parent (different realm or circular reference)
+
+  /location/remove-parent:
+    post:
+      summary: Remove parent from a location (make it a root location)
+      description: |
+        Remove the parent of a location, making it a top-level root location
+        within its realm. Updates depth for location and all descendants.
+      operationId: removeLocationParent
+      tags:
+      - Location Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveLocationParentRequest'
+      responses:
+        '200':
+          description: Parent removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '404':
+          description: Location not found
+
+  /location/delete:
+    post:
+      summary: Delete location
+      description: |
+        Hard delete a location. This will fail if the location:
+        - Has child locations (must delete or reparent children first)
+        - Is still referenced by other entities
+        For safe removal, first deprecate the location, remove all children,
+        then delete.
+      operationId: deleteLocation
+      tags:
+      - Location Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteLocationRequest'
+      responses:
+        '204':
+          description: Location deleted successfully
+        '404':
+          description: Location not found
+        '409':
+          description: Cannot delete - location has children or is in use
+
+  /location/deprecate:
+    post:
+      summary: Deprecate a location
+      description: |
+        Soft-delete a location by marking it as deprecated.
+        Deprecated locations:
+        - Remain queryable for historical data
+        - Cannot be used for placing new entities
+        - Can be hard-deleted after all references are removed
+      operationId: deprecateLocation
+      tags:
+      - Location Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateLocationRequest'
+      responses:
+        '200':
+          description: Location deprecated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '404':
+          description: Location not found
+        '409':
+          description: Location is already deprecated
+
+  /location/undeprecate:
+    post:
+      summary: Restore a deprecated location
+      description: |
+        Remove the deprecated status from a location, making it
+        available for entity placement again.
+      operationId: undeprecateLocation
+      tags:
+      - Location Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateLocationRequest'
+      responses:
+        '200':
+          description: Location restored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '404':
+          description: Location not found
+        '400':
+          description: Location is not deprecated
+
+  /location/exists:
+    post:
+      summary: Check if location exists and is active
+      description: |
+        Fast validation endpoint for other services to check location validity.
+        Returns true if location exists and is not deprecated, false otherwise.
+      operationId: locationExists
+      tags:
+      - Location
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationExistsRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationExistsResponse'
+
+  /location/seed:
+    post:
+      summary: Seed locations from configuration
+      description: |
+        Idempotent operation to seed locations from provided data.
+        Creates locations that don't exist, optionally updates existing locations.
+        Processes locations in dependency order (parents before children).
+        Typically called at service startup with YAML-defined location hierarchies.
+      operationId: seedLocations
+      tags:
+      - Location Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedLocationsRequest'
+      responses:
+        '200':
+          description: Seed operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedLocationsResponse'
+        '400':
+          description: Invalid seed data
+
+components:
+  schemas:
+    LocationType:
+      type: string
+      description: Type classification for locations
+      enum:
+      - CONTINENT
+      - REGION
+      - CITY
+      - DISTRICT
+      - BUILDING
+      - ROOM
+      - LANDMARK
+      - WILDERNESS
+      - DUNGEON
+      - OTHER
+
+    GetLocationRequest:
+      type: object
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Unique identifier of the location
+
+    GetLocationByCodeRequest:
+      type: object
+      required:
+      - code
+      - realmId
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique code for the location within the realm
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID to scope the code lookup
+
+    ListLocationsRequest:
+      type: object
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm
+        locationType:
+          allOf:
+          - $ref: '#/components/schemas/LocationType'
+          nullable: true
+          description: Filter by location type
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated locations in the response
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    ListLocationsByRealmRequest:
+      type: object
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID to query
+        locationType:
+          allOf:
+          - $ref: '#/components/schemas/LocationType'
+          nullable: true
+          description: Optional type filter
+        includeDeprecated:
+          type: boolean
+          default: false
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    ListLocationsByParentRequest:
+      type: object
+      required:
+      - parentLocationId
+      properties:
+        parentLocationId:
+          type: string
+          format: uuid
+          description: ID of the parent location
+        locationType:
+          allOf:
+          - $ref: '#/components/schemas/LocationType'
+          nullable: true
+          description: Optional filter by location type
+        includeDeprecated:
+          type: boolean
+          default: false
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    ListRootLocationsRequest:
+      type: object
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm ID to get root locations for
+        locationType:
+          allOf:
+          - $ref: '#/components/schemas/LocationType'
+          nullable: true
+          description: Optional filter by location type
+        includeDeprecated:
+          type: boolean
+          default: false
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    GetLocationAncestorsRequest:
+      type: object
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: The location to get ancestors for
+
+    GetLocationDescendantsRequest:
+      type: object
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: The location to get descendants for
+        locationType:
+          allOf:
+          - $ref: '#/components/schemas/LocationType'
+          nullable: true
+          description: Optional filter by location type
+        maxDepth:
+          type: integer
+          minimum: 1
+          maximum: 10
+          nullable: true
+          description: Maximum depth of descendants to return (null = all)
+        includeDeprecated:
+          type: boolean
+          default: false
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    CreateLocationRequest:
+      type: object
+      required:
+      - code
+      - name
+      - realmId
+      - locationType
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique code for the location within the realm
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Display name for the location
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: Description of the location
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this location belongs to
+        locationType:
+          $ref: '#/components/schemas/LocationType'
+        parentLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent location ID for hierarchy (null for root locations)
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional metadata for the location (JSON)
+
+    UpdateLocationRequest:
+      type: object
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to update
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          nullable: true
+          description: Display name for the location
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: Description of the location
+        locationType:
+          allOf:
+          - $ref: '#/components/schemas/LocationType'
+          nullable: true
+          description: Type of location
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional metadata
+
+    SetLocationParentRequest:
+      type: object
+      required:
+      - locationId
+      - parentLocationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to update
+        parentLocationId:
+          type: string
+          format: uuid
+          description: ID of the new parent location (must be in same realm)
+
+    RemoveLocationParentRequest:
+      type: object
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to make a root location
+
+    DeleteLocationRequest:
+      type: object
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to delete
+
+    DeprecateLocationRequest:
+      type: object
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to deprecate
+        reason:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Optional reason for deprecation (for audit purposes)
+
+    UndeprecateLocationRequest:
+      type: object
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to restore
+
+    LocationExistsRequest:
+      type: object
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to validate
+
+    LocationExistsResponse:
+      type: object
+      required:
+      - exists
+      - isActive
+      properties:
+        exists:
+          type: boolean
+          description: Whether the location exists
+        isActive:
+          type: boolean
+          description: Whether the location is active (false if deprecated or not found)
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: The location ID if found
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: The realm ID if location found
+
+    SeedLocationsRequest:
+      type: object
+      required:
+      - locations
+      properties:
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedLocation'
+          description: List of locations to seed (processed in dependency order)
+        updateExisting:
+          type: boolean
+          default: false
+          description: Whether to update locations that already exist
+
+    SeedLocation:
+      type: object
+      required:
+      - code
+      - name
+      - realmCode
+      - locationType
+      properties:
+        code:
+          type: string
+          description: Unique code for the location within realm
+        name:
+          type: string
+          description: Display name
+        description:
+          type: string
+          nullable: true
+          description: Description
+        realmCode:
+          type: string
+          description: Code of the realm (resolved during seeding)
+        locationType:
+          $ref: '#/components/schemas/LocationType'
+        parentLocationCode:
+          type: string
+          nullable: true
+          description: Code of the parent location (resolved during seeding)
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    LocationResponse:
+      type: object
+      required:
+      - locationId
+      - realmId
+      - code
+      - name
+      - locationType
+      - depth
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        locationId:
+          type: string
+          format: uuid
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this location belongs to
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        locationType:
+          $ref: '#/components/schemas/LocationType'
+        parentLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent location ID (null for root locations)
+        depth:
+          type: integer
+          description: Depth in hierarchy (0 for root locations)
+        isDeprecated:
+          type: boolean
+          description: Whether this location is deprecated and cannot be used
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when this location was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Optional reason for deprecation
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    LocationListResponse:
+      type: object
+      required:
+      - locations
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationResponse'
+        totalCount:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+
+    SeedLocationsResponse:
+      type: object
+      required:
+      - created
+      - updated
+      - skipped
+      - errors
+      properties:
+        created:
+          type: integer
+          description: Number of new locations created
+        updated:
+          type: integer
+          description: Number of existing locations updated
+        skipped:
+          type: integer
+          description: Number of locations skipped (already exist, updateExisting=false)
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of error messages for locations that failed to seed
+
+x-service-configuration:
+  properties:
+    DefaultPageSize:
+      type: integer
+      description: Default page size for location listings
+      default: 20
+    MaxPageSize:
+      type: integer
+      description: Maximum allowed page size for location listings
+      default: 100
+    MaxHierarchyDepth:
+      type: integer
+      description: Maximum allowed depth for location hierarchy
+      default: 10

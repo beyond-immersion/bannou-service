@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.Testing;
@@ -21,6 +22,7 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
     private readonly Mock<ILogger<SpeciesService>> _mockLogger;
     private readonly Mock<IErrorEventEmitter> _mockErrorEventEmitter;
     private readonly Mock<ICharacterClient> _mockCharacterClient;
+    private readonly Mock<IRealmClient> _mockRealmClient;
 
     public SpeciesServiceTests()
     {
@@ -28,6 +30,12 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
         _mockLogger = new Mock<ILogger<SpeciesService>>();
         _mockErrorEventEmitter = new Mock<IErrorEventEmitter>();
         _mockCharacterClient = new Mock<ICharacterClient>();
+        _mockRealmClient = new Mock<IRealmClient>();
+
+        // Default realm validation to pass (realm exists and is active)
+        _mockRealmClient
+            .Setup(r => r.RealmExistsAsync(It.IsAny<RealmExistsRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RealmExistsResponse { Exists = true, IsActive = true });
     }
 
     private SpeciesService CreateService()
@@ -37,7 +45,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
-            _mockCharacterClient.Object);
+            _mockCharacterClient.Object,
+            _mockRealmClient.Object);
     }
 
     #region Constructor Tests
@@ -61,7 +70,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             _mockLogger.Object,
             Configuration,
             _mockErrorEventEmitter.Object,
-            _mockCharacterClient.Object));
+            _mockCharacterClient.Object,
+            _mockRealmClient.Object));
     }
 
     [Fact]
@@ -73,7 +83,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             null!,
             Configuration,
             _mockErrorEventEmitter.Object,
-            _mockCharacterClient.Object));
+            _mockCharacterClient.Object,
+            _mockRealmClient.Object));
     }
 
     [Fact]
@@ -85,7 +96,8 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             _mockLogger.Object,
             null!,
             _mockErrorEventEmitter.Object,
-            _mockCharacterClient.Object));
+            _mockCharacterClient.Object,
+            _mockRealmClient.Object));
     }
 
     [Fact]
@@ -97,7 +109,34 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
             _mockLogger.Object,
             Configuration,
             null!,
-            _mockCharacterClient.Object));
+            _mockCharacterClient.Object,
+            _mockRealmClient.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullCharacterClient_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new SpeciesService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockErrorEventEmitter.Object,
+            null!,
+            _mockRealmClient.Object));
+    }
+
+    [Fact]
+    public void Constructor_WithNullRealmClient_ShouldThrowArgumentNullException()
+    {
+        // Arrange, Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new SpeciesService(
+            _mockDaprClient.Object,
+            _mockLogger.Object,
+            Configuration,
+            _mockErrorEventEmitter.Object,
+            _mockCharacterClient.Object,
+            null!));
     }
 
     #endregion

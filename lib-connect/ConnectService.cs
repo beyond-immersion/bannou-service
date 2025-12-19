@@ -1008,9 +1008,7 @@ public class ConnectService : IConnectService
             // Send response back to WebSocket client
             if (routeInfo.RequiresResponse)
             {
-                var responseCode = httpResponse?.IsSuccessStatusCode == true
-                    ? ResponseCodes.OK
-                    : ResponseCodes.Service_InternalServerError;
+                var responseCode = MapHttpStatusToResponseCode(httpResponse?.StatusCode);
 
                 var responseMessage = BinaryMessage.CreateResponse(
                     message, responseCode, Encoding.UTF8.GetBytes(responseJson ?? "{}"));
@@ -1764,11 +1762,13 @@ public class ConnectService : IConnectService
         try
         {
             // Build the capability manifest with available APIs and their GUIDs
+            // INTERNAL format: "serviceName:METHOD:/path" - used for server-side routing
+            // CLIENT format: "METHOD:/path" - exposed in capability manifest (no service name leak)
             var availableApis = new List<object>();
 
             foreach (var mapping in connectionState.ServiceMappings)
             {
-                // Parse the endpoint key format: "serviceName:METHOD:/path"
+                // Parse the internal endpoint key format: "serviceName:METHOD:/path"
                 var endpointKey = mapping.Key;
                 var guid = mapping.Value;
 
@@ -1794,20 +1794,22 @@ public class ConnectService : IConnectService
                 }
 
                 // Only expose POST endpoints to WebSocket clients
-                // Other HTTP methods with path parameters should use the POST alternative
-                if (method != "POST" && method != "GET")
+                // GET and other HTTP methods are not supported through WebSocket binary protocol
+                // Services can still publish GET endpoints in their registration events for other uses
+                if (method != "POST")
                 {
-                    _logger.LogDebug("Skipping non-POST/GET endpoint from capability manifest: {EndpointKey}", endpointKey);
+                    _logger.LogDebug("Skipping non-POST endpoint from capability manifest: {EndpointKey}", endpointKey);
                     continue;
                 }
 
                 availableApis.Add(new
                 {
                     serviceGuid = guid.ToString(),
-                    serviceName = serviceName,
                     method = method,
                     path = path,
-                    endpointKey = endpointKey
+                    endpointKey = $"{method}:{path}",
+                    // Informational only - not used for routing (routing uses serviceGuid)
+                    serviceName = serviceName
                 });
             }
 
@@ -1891,9 +1893,12 @@ public class ConnectService : IConnectService
             connectionState.UpdateAllServiceMappings(newMappings);
 
             // Build and send updated capability manifest
+            // INTERNAL format: "serviceName:METHOD:/path" - used for server-side routing
+            // CLIENT format: "METHOD:/path" - exposed in capability manifest (no service name leak)
             var availableApis = new List<object>();
             foreach (var mapping in newMappings)
             {
+                // Parse the internal endpoint key format
                 var endpointKey = mapping.Key;
                 var guid = mapping.Value;
 
@@ -1912,8 +1917,9 @@ public class ConnectService : IConnectService
                     continue;
                 }
 
-                // Only expose POST/GET endpoints to WebSocket clients
-                if (method != "POST" && method != "GET")
+                // Only expose POST endpoints to WebSocket clients
+                // GET and other HTTP methods are not supported through WebSocket binary protocol
+                if (method != "POST")
                 {
                     continue;
                 }
@@ -1921,10 +1927,11 @@ public class ConnectService : IConnectService
                 availableApis.Add(new
                 {
                     serviceGuid = guid.ToString(),
-                    serviceName = serviceName,
                     method = method,
                     path = path,
-                    endpointKey = endpointKey
+                    endpointKey = $"{method}:{path}",
+                    // Informational only - not used for routing (routing uses serviceGuid)
+                    serviceName = serviceName
                 });
             }
 
@@ -2070,6 +2077,31 @@ public class ConnectService : IConnectService
             message: message,
             dependency: dependency,
             details: details);
+    }
+
+    /// <summary>
+    /// Maps HTTP status codes to WebSocket ResponseCodes for proper error reporting.
+    /// </summary>
+    private static ResponseCodes MapHttpStatusToResponseCode(System.Net.HttpStatusCode? statusCode)
+    {
+        if (statusCode == null)
+        {
+            return ResponseCodes.Service_InternalServerError;
+        }
+
+        return statusCode.Value switch
+        {
+            System.Net.HttpStatusCode.OK => ResponseCodes.OK,
+            System.Net.HttpStatusCode.Created => ResponseCodes.OK,
+            System.Net.HttpStatusCode.Accepted => ResponseCodes.OK,
+            System.Net.HttpStatusCode.NoContent => ResponseCodes.OK,
+            System.Net.HttpStatusCode.BadRequest => ResponseCodes.Service_BadRequest,
+            System.Net.HttpStatusCode.Unauthorized => ResponseCodes.Service_Unauthorized,
+            System.Net.HttpStatusCode.Forbidden => ResponseCodes.Service_Unauthorized,
+            System.Net.HttpStatusCode.NotFound => ResponseCodes.Service_NotFound,
+            System.Net.HttpStatusCode.Conflict => ResponseCodes.Service_Conflict,
+            _ => ResponseCodes.Service_InternalServerError
+        };
     }
 
     #endregion

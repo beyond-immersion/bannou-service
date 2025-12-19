@@ -19,39 +19,17 @@ public class RelationshipServicePlugin : BaseBannouPlugin
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Validate that this plugin should be loaded based on environment configuration.
-    /// </summary>
-    protected override bool OnValidatePlugin()
-    {
-        var enabled = Environment.GetEnvironmentVariable("RELATIONSHIP_SERVICE_ENABLED")?.ToLower();
-        Logger?.LogDebug("Relationship service enabled check: {EnabledValue}", enabled);
-        return enabled == "true";
-    }
-
-    /// <summary>
     /// Configure services for dependency injection - mimics existing [DaprService] registration.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("Relationship service disabled, skipping service registration");
-            return;
-        }
+        Logger?.LogDebug("Configuring service dependencies");
 
-        Logger?.LogInformation("Configuring Relationship service dependencies");
-
-        // Register the service implementation (existing pattern from [DaprService] attribute)
-        services.AddScoped<IRelationshipService, RelationshipService>();
-        services.AddScoped<RelationshipService>();
-
-        // Register generated configuration class
-        services.AddScoped<RelationshipServiceConfiguration>();
-
-        // Add any service-specific dependencies
+        // Service registration is now handled centrally by PluginLoader based on [DaprService] attributes
+        // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // The generated clients should already be registered by AddAllBannouServiceClients()
 
-        Logger?.LogInformation("Relationship service dependencies configured");
+        Logger?.LogDebug("Service dependencies configured");
     }
 
     /// <summary>
@@ -59,21 +37,13 @@ public class RelationshipServicePlugin : BaseBannouPlugin
     /// </summary>
     public override void ConfigureApplication(WebApplication app)
     {
-        if (!OnValidatePlugin())
-        {
-            Logger?.LogInformation("Relationship service disabled, skipping application configuration");
-            return;
-        }
-
-        Logger?.LogInformation("Configuring Relationship service application pipeline");
+        Logger?.LogDebug("Configuring application pipeline");
 
         // The generated RelationshipController should already be discovered via standard ASP.NET Core controller discovery
-        // since we're not excluding the assembly like we did with IDaprController approach
-
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
 
-        Logger?.LogInformation("Relationship service application pipeline configured");
+        Logger?.LogDebug("Application pipeline configured");
     }
 
     /// <summary>
@@ -81,14 +51,10 @@ public class RelationshipServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
-        if (!OnValidatePlugin()) return true;
-
-        Logger?.LogInformation("Starting Relationship service");
+        Logger?.LogInformation("Starting service");
 
         try
         {
-            // Get service instance from DI container with proper scope handling
-            // Note: CreateScope() is required for Scoped services to avoid "Cannot resolve scoped service from root provider" error
             using var scope = _serviceProvider?.CreateScope();
             _service = scope?.ServiceProvider.GetService<IRelationshipService>();
 
@@ -98,19 +64,18 @@ public class RelationshipServicePlugin : BaseBannouPlugin
                 return false;
             }
 
-            // Call existing IDaprService.OnStartAsync if the service implements it
             if (_service is IDaprService daprService)
             {
                 Logger?.LogDebug("Calling IDaprService.OnStartAsync for Relationship service");
                 await daprService.OnStartAsync(CancellationToken.None);
             }
 
-            Logger?.LogInformation("Relationship service started successfully");
+            Logger?.LogInformation("Service started");
             return true;
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Failed to start Relationship service");
+            Logger?.LogError(ex, "Failed to start service");
             return false;
         }
     }
@@ -120,13 +85,12 @@ public class RelationshipServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
-        Logger?.LogDebug("Relationship service running");
+        Logger?.LogDebug("Service running");
 
         try
         {
-            // Call existing IDaprService.OnRunningAsync if the service implements it
             if (_service is IDaprService daprService)
             {
                 Logger?.LogDebug("Calling IDaprService.OnRunningAsync for Relationship service");
@@ -135,7 +99,7 @@ public class RelationshipServicePlugin : BaseBannouPlugin
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "Exception during Relationship service running phase");
+            Logger?.LogWarning(ex, "Exception during running phase");
         }
     }
 
@@ -144,24 +108,23 @@ public class RelationshipServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (!OnValidatePlugin() || _service == null) return;
+        if (_service == null) return;
 
-        Logger?.LogInformation("Shutting down Relationship service");
+        Logger?.LogInformation("Shutting down service");
 
         try
         {
-            // Call existing IDaprService.OnShutdownAsync if the service implements it
             if (_service is IDaprService daprService)
             {
                 Logger?.LogDebug("Calling IDaprService.OnShutdownAsync for Relationship service");
                 await daprService.OnShutdownAsync();
             }
 
-            Logger?.LogInformation("Relationship service shutdown complete");
+            Logger?.LogInformation("Service shutdown complete");
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "Exception during Relationship service shutdown");
+            Logger?.LogWarning(ex, "Exception during shutdown");
         }
     }
 }

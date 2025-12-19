@@ -29,7 +29,7 @@ to_pascal_case() {
 }
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
-OUTPUT_DIR="../lib-${SERVICE_NAME}/Generated"
+OUTPUT_DIR="../bannou-service/Generated/Clients"
 OUTPUT_FILE="$OUTPUT_DIR/${SERVICE_PASCAL}Client.cs"
 
 echo -e "${YELLOW}🔧 Generating service client for: $SERVICE_NAME${NC}"

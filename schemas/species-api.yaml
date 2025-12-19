@@ -63,8 +63,7 @@ paths:
       - Species
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -90,8 +89,7 @@ paths:
       - Species
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -117,8 +115,7 @@ paths:
       - Species
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -142,8 +139,7 @@ paths:
       - Species
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:

@@ -1,6 +1,8 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Species;
 using Dapr.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -24,6 +26,8 @@ public class CharacterService : ICharacterService
     private readonly ILogger<CharacterService> _logger;
     private readonly CharacterServiceConfiguration _configuration;
     private readonly IErrorEventEmitter _errorEventEmitter;
+    private readonly IRealmClient _realmClient;
+    private readonly ISpeciesClient _speciesClient;
 
     // State store names
     private const string CHARACTER_STATE_STORE = "character-statestore";
@@ -44,12 +48,16 @@ public class CharacterService : ICharacterService
         DaprClient daprClient,
         ILogger<CharacterService> logger,
         CharacterServiceConfiguration configuration,
-        IErrorEventEmitter errorEventEmitter)
+        IErrorEventEmitter errorEventEmitter,
+        IRealmClient realmClient,
+        ISpeciesClient speciesClient)
     {
         _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _errorEventEmitter = errorEventEmitter ?? throw new ArgumentNullException(nameof(errorEventEmitter));
+        _realmClient = realmClient ?? throw new ArgumentNullException(nameof(realmClient));
+        _speciesClient = speciesClient ?? throw new ArgumentNullException(nameof(speciesClient));
     }
 
     #region Character CRUD Operations
@@ -61,6 +69,35 @@ public class CharacterService : ICharacterService
         try
         {
             _logger.LogInformation("Creating character: {Name} in realm: {RealmId}", body.Name, body.RealmId);
+
+            // Validate realm exists and is active
+            var (realmExists, realmIsActive) = await ValidateRealmAsync(body.RealmId, cancellationToken);
+            if (!realmExists)
+            {
+                _logger.LogWarning("Cannot create character: realm not found: {RealmId}", body.RealmId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (!realmIsActive)
+            {
+                _logger.LogWarning("Cannot create character: realm is deprecated: {RealmId}", body.RealmId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Validate species exists
+            var (speciesExists, speciesInRealm) = await ValidateSpeciesAsync(body.SpeciesId, body.RealmId, cancellationToken);
+            if (!speciesExists)
+            {
+                _logger.LogWarning("Cannot create character: species not found: {SpeciesId}", body.SpeciesId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            if (!speciesInRealm)
+            {
+                _logger.LogWarning("Cannot create character: species {SpeciesId} is not available in realm {RealmId}",
+                    body.SpeciesId, body.RealmId);
+                return (StatusCodes.BadRequest, null);
+            }
 
             var characterId = Guid.NewGuid();
             var now = DateTimeOffset.UtcNow;
@@ -404,6 +441,66 @@ public class CharacterService : ICharacterService
 
     private static string BuildRealmIndexKey(string realmId)
         => $"{REALM_INDEX_KEY_PREFIX}{realmId}";
+
+    #region Validation Helpers
+
+    /// <summary>
+    /// Validates that a realm exists and is active (not deprecated).
+    /// </summary>
+    private async Task<(bool exists, bool isActive)> ValidateRealmAsync(Guid realmId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _realmClient.RealmExistsAsync(
+                new RealmExistsRequest { RealmId = realmId },
+                cancellationToken);
+            return (response.Exists, response.IsActive);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            return (false, false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not validate realm {RealmId} - proceeding with operation", realmId);
+            // If RealmService is unavailable, allow the operation with a warning
+            return (true, true);
+        }
+    }
+
+    /// <summary>
+    /// Validates that a species exists and is available in the specified realm.
+    /// </summary>
+    private async Task<(bool exists, bool isInRealm)> ValidateSpeciesAsync(Guid speciesId, Guid realmId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var speciesResponse = await _speciesClient.GetSpeciesAsync(
+                new GetSpeciesRequest { SpeciesId = speciesId },
+                cancellationToken);
+
+            if (speciesResponse == null)
+            {
+                return (false, false);
+            }
+
+            // Check if species is available in the specified realm
+            var isInRealm = speciesResponse.RealmIds?.Contains(realmId) ?? false;
+            return (true, isInRealm);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            return (false, false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not validate species {SpeciesId} - proceeding with operation", speciesId);
+            // If SpeciesService is unavailable, allow the operation with a warning
+            return (true, true);
+        }
+    }
+
+    #endregion
 
     private async Task<CharacterModel?> FindCharacterByIdAsync(string characterId, CancellationToken cancellationToken)
     {

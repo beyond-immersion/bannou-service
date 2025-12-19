@@ -72,8 +72,8 @@ service_pascal = '$SERVICE_PASCAL'
 schema_file = '$SCHEMA_FILE'
 
 def discover_generated_enums(service_pascal):
-    service_kebab = ''.join(['-' + c.lower() if c.isupper() and i > 0 else c.lower() for i, c in enumerate(service_pascal)])
-    models_file = f'../lib-{service_kebab}/Generated/{service_pascal}Models.cs'
+    # Models are now centralized in bannou-service/Generated/Models/
+    models_file = f'../bannou-service/Generated/Models/{service_pascal}Models.cs'
     discovered_enums = {}
 
     try:

@@ -159,11 +159,11 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                 try
                 {
                     Console.WriteLine("   Invoking /sessions/create...");
-                    var response = await client.InvokeAsync<CreateGameSessionRequest, JsonElement>(
+                    var response = (await client.InvokeAsync<CreateGameSessionRequest, JsonElement>(
                         "POST",
                         "/sessions/create",
                         createRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
                     var sessionId = response.TryGetProperty("sessionId", out var idProp) ? idProp.GetString() : null;
                     var sessionName = response.TryGetProperty("sessionName", out var nameProp) ? nameProp.GetString() : null;
@@ -229,11 +229,11 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                 try
                 {
                     Console.WriteLine("   Invoking /sessions/list...");
-                    var response = await client.InvokeAsync<ListGameSessionsRequest, JsonElement>(
+                    var response = (await client.InvokeAsync<ListGameSessionsRequest, JsonElement>(
                         "POST",
                         "/sessions/list",
                         listRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
                     var hasSessionsArray = response.TryGetProperty("sessions", out var sessionsProp) &&
                                             sessionsProp.ValueKind == JsonValueKind.Array;
@@ -304,11 +304,11 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         IsPrivate = false
                     };
 
-                    var createResponse = await client.InvokeAsync<CreateGameSessionRequest, JsonElement>(
+                    var createResponse = (await client.InvokeAsync<CreateGameSessionRequest, JsonElement>(
                         "POST",
                         "/sessions/create",
                         createRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
                     var sessionIdStr = createResponse.TryGetProperty("sessionId", out var idProp) ? idProp.GetString() : null;
                     if (string.IsNullOrEmpty(sessionIdStr))
@@ -326,11 +326,11 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         SessionId = sessionId
                     };
 
-                    var joinResponse = await client.InvokeAsync<JoinGameSessionRequest, JsonElement>(
+                    var joinResponse = (await client.InvokeAsync<JoinGameSessionRequest, JsonElement>(
                         "POST",
                         "/sessions/join",
                         joinRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
                     var joinSuccess = joinResponse.TryGetProperty("success", out var successProp) && successProp.GetBoolean();
                     if (!joinSuccess)
@@ -351,11 +351,11 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         ActionData = new { testData = "lifecycle_test" }
                     };
 
-                    var actionResponse = await client.InvokeAsync<GameActionRequest, JsonElement>(
+                    var actionResponse = (await client.InvokeAsync<GameActionRequest, JsonElement>(
                         "POST",
                         "/sessions/actions",
                         actionRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
                     var actionId = actionResponse.TryGetProperty("actionId", out var actionIdProp) ? actionIdProp.GetString() : null;
                     if (string.IsNullOrEmpty(actionId))
@@ -376,11 +376,11 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
 
                     try
                     {
-                        await client.InvokeAsync<ChatMessageRequest, JsonElement>(
+                        (await client.InvokeAsync<ChatMessageRequest, JsonElement>(
                             "POST",
                             "/sessions/chat",
                             chatRequest,
-                            timeout: TimeSpan.FromSeconds(15));
+                            timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
                         Console.WriteLine($"   Sent chat message");
                     }
                     catch (InvalidOperationException ex) when (ex.Message.Contains("Failed to deserialize"))
@@ -398,11 +398,11 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
 
                     try
                     {
-                        await client.InvokeAsync<LeaveGameSessionRequest, JsonElement>(
+                        (await client.InvokeAsync<LeaveGameSessionRequest, JsonElement>(
                             "POST",
                             "/sessions/leave",
                             leaveRequest,
-                            timeout: TimeSpan.FromSeconds(15));
+                            timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
                         Console.WriteLine($"   Left session");
                     }
                     catch (InvalidOperationException ex) when (ex.Message.Contains("Failed to deserialize"))
@@ -418,11 +418,11 @@ public class GameSessionWebSocketTestHandler : IServiceTestHandler
                         SessionId = sessionId
                     };
 
-                    var getResponse = await client.InvokeAsync<GetGameSessionRequest, JsonElement>(
+                    var getResponse = (await client.InvokeAsync<GetGameSessionRequest, JsonElement>(
                         "POST",
                         "/sessions/get",
                         getRequest,
-                        timeout: TimeSpan.FromSeconds(15));
+                        timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
                     var returnedSessionId = getResponse.TryGetProperty("sessionId", out var returnedIdProp) ? returnedIdProp.GetString() : null;
                     if (returnedSessionId != sessionIdStr)

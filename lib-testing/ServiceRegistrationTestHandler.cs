@@ -176,7 +176,7 @@ public class ServiceRegistrationTestHandler : IServiceTestHandler
                                 Role = "user",
                                 RequiredStates = new Dictionary<string, string>
                                 {
-                                    { "auth", "authenticated" }
+                                    { "game-session", "in_game" }
                                 }
                             }
                         },

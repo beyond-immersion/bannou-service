@@ -543,10 +543,9 @@ x-permissions:
   - role: admin
     states: {}
 
-  # Authenticated users with specific state
+  # Authenticated users (role implies authentication)
   - role: user
-    states:
-      auth: authenticated
+    states: {}
 
   # Public endpoints
   - role: anonymous
@@ -555,36 +554,37 @@ x-permissions:
 
 ### State-Based Access Pattern
 
-States represent navigation context:
-- `auth: authenticated` - User has valid session
-- `lobby: joined` - User is in a game lobby
-- `game: active` - User is in an active game session
+States represent **contextual navigation** within the application - NOT authentication status.
+Authentication is handled by roles (`user` = authenticated, `anonymous` = not authenticated).
+
+Example states that services might set:
+- `game-session: in_lobby` - User has joined a game lobby
+- `game-session: in_game` - User is in an active game session
+- `character: selected` - User has selected a character
 
 States are:
 - Session-scoped (per WebSocket connection)
 - Managed by Permissions service
 - Updated via service events
-- Used for progressive API unlocking
+- Used for progressive API unlocking based on user context
 
 ### Example: Progressive API Access
 
 ```yaml
-# Join lobby endpoint - requires authentication only
+# Join lobby endpoint - any authenticated user
 /lobby/join:
   post:
     x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
 
-# Start game endpoint - requires being in lobby
+# Start game endpoint - requires being in a lobby
 /game/start:
   post:
     x-permissions:
       - role: user
         states:
-          auth: authenticated
-          lobby: joined
+          game-session: in_lobby
 ```
 
 ---

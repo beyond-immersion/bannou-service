@@ -797,10 +797,10 @@ public class PermissionsService : IPermissionsService
     ///
     /// Permission state key matching:
     /// - "default" state permissions are always included for the session's role
-    /// - For each session state (e.g., auth=authenticated), checks all registered services
+    /// - For each session state (e.g., game-session=in_game), checks all registered services
     /// - State key construction matches registration logic:
-    ///   - Same service (stateServiceId == serviceId): stateKey = stateValue (e.g., "authenticated")
-    ///   - Cross-service (stateServiceId != serviceId): stateKey = "{stateServiceId}:{stateValue}" (e.g., "auth:authenticated")
+    ///   - Same service (stateServiceId == serviceId): stateKey = stateValue (e.g., "in_game")
+    ///   - Cross-service (stateServiceId != serviceId): stateKey = "{stateServiceId}:{stateValue}" (e.g., "game-session:in_game")
     /// </summary>
     /// <param name="sessionId">Session ID to recompile permissions for.</param>
     /// <param name="sessionStates">Session states dictionary (avoids re-reading from Dapr).</param>

@@ -54,8 +54,8 @@ public class PermissionsTestHandler : IServiceTestHandler
             new ServiceTest(TestRoleEscalation, "RoleEscalation", "Permissions", "Test role escalation from user to admin"),
 
             // State-Based Permission Tests
-            new ServiceTest(TestStateBasedPermissionEscalation, "StateBasedEscalation", "Permissions", "Test setting auth:authenticated state grants additional permissions"),
-            new ServiceTest(TestDefaultVsAuthenticatedState, "DefaultVsAuthenticated", "Permissions", "Test difference between default and auth:authenticated state permissions"),
+            new ServiceTest(TestStateBasedPermissionEscalation, "StateBasedEscalation", "Permissions", "Test setting game-session:in_game state grants additional permissions"),
+            new ServiceTest(TestDefaultVsInGameState, "DefaultVsInGame", "Permissions", "Test difference between default and game-session:in_game state permissions"),
 
             // Dapr Event Tests
             new ServiceTest(TestDaprEventSubscription, "DaprEventSubscription", "Permissions", "Test Dapr pubsub event subscription for service registration"),
@@ -175,7 +175,7 @@ public class PermissionsTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Test registering service with multiple states (unauthenticated, authenticated, admin).
+    /// Test registering service with multiple states (in_lobby, default, in_game).
     /// </summary>
     private static async Task<TestResult> TestRegisterServiceWithMultipleStates(ITestClient client, string[] args)
     {
@@ -190,7 +190,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["unauthenticated"] = new StatePermissions
+                    ["in_lobby"] = new StatePermissions
                     {
                         ["guest"] = new Collection<string> { "GET:/public/info" }
                     },
@@ -198,7 +198,7 @@ public class PermissionsTestHandler : IServiceTestHandler
                     {
                         ["user"] = new Collection<string> { "GET:/public/info", "GET:/user/profile" }
                     },
-                    ["privileged"] = new StatePermissions
+                    ["in_game"] = new StatePermissions
                     {
                         ["admin"] = new Collection<string> { "GET:/public/info", "GET:/user/profile", "DELETE:/admin/data" }
                     }
@@ -1536,10 +1536,10 @@ public class PermissionsTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Test that setting auth:authenticated state grants additional permissions.
+    /// Test that setting game-session:in_game state grants additional permissions.
     /// This validates the state-based permission system where:
     /// - "default" state endpoints are always accessible (no state requirements)
-    /// - "auth:authenticated" state endpoints require the state to be explicitly set
+    /// - "game-session:in_game" state endpoints require the state to be explicitly set
     /// </summary>
     private static async Task<TestResult> TestStateBasedPermissionEscalation(ITestClient client, string[] args)
     {
@@ -1550,7 +1550,7 @@ public class PermissionsTestHandler : IServiceTestHandler
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
 
-            // Register service with permissions at BOTH "default" and "auth:authenticated" states
+            // Register service with permissions at BOTH "default" and "game-session:in_game" states
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
             {
                 ServiceId = testServiceId,
@@ -1562,15 +1562,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                     {
                         ["user"] = new Collection<string> { "GET:/public/data", "GET:/public/info" }
                     },
-                    // Auth:authenticated state - requires explicit state set
-                    ["auth:authenticated"] = new StatePermissions
+                    // game-session:in_game state - requires explicit state set
+                    ["game-session:in_game"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "PUT:/account/profile", "GET:/account/settings" }
+                        ["user"] = new Collection<string> { "POST:/game/action", "GET:/game/state" }
                     }
                 }
             });
 
-            // Create session as user (no auth:authenticated state yet)
+            // Create session as user (no game-session:in_game state yet)
             await permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
             {
                 SessionId = testSessionId,
@@ -1594,15 +1594,15 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Before state set: expected 2 default permissions, got {beforeMethodCount}");
             }
 
-            // Now set the auth:authenticated state
+            // Now set the game-session:in_game state
             await permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
             {
                 SessionId = testSessionId,
-                ServiceId = "auth",  // auth service's authenticated state
-                NewState = "authenticated"
+                ServiceId = "game-session",  // game-session service's in_game state
+                NewState = "in_game"
             });
 
-            // Get capabilities again - should now have BOTH default AND auth:authenticated permissions
+            // Get capabilities again - should now have BOTH default AND game-session:in_game permissions
             var afterCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
             {
                 SessionId = testSessionId
@@ -1635,12 +1635,12 @@ public class PermissionsTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Test the clear difference between default and auth:authenticated state permissions.
+    /// Test the clear difference between default and game-session:in_game state permissions.
     /// Validates that the permission system correctly distinguishes between:
     /// - Endpoints with states: {} (empty) - stored at "default" state key
-    /// - Endpoints with states: {auth: authenticated} - stored at "auth:authenticated" state key
+    /// - Endpoints with states: {game-session: in_game} - stored at "game-session:in_game" state key
     /// </summary>
-    private static async Task<TestResult> TestDefaultVsAuthenticatedState(ITestClient client, string[] args)
+    private static async Task<TestResult> TestDefaultVsInGameState(ITestClient client, string[] args)
     {
         try
         {
@@ -1649,22 +1649,22 @@ public class PermissionsTestHandler : IServiceTestHandler
             var testSessionId = $"{testPrefix}-session";
             var testServiceId = $"{testPrefix}-svc";
 
-            // Register service with ONLY auth:authenticated state permissions (no default)
+            // Register service with ONLY game-session:in_game state permissions (no default)
             await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
             {
                 ServiceId = testServiceId,
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    // Only auth:authenticated - requires explicit state
-                    ["auth:authenticated"] = new StatePermissions
+                    // Only game-session:in_game - requires explicit state
+                    ["game-session:in_game"] = new StatePermissions
                     {
-                        ["user"] = new Collection<string> { "PUT:/protected/data", "DELETE:/protected/data" }
+                        ["user"] = new Collection<string> { "POST:/game/action", "GET:/game/state" }
                     }
                 }
             });
 
-            // Create session as user (no auth:authenticated state)
+            // Create session as user (no game-session:in_game state)
             await permissionsClient.UpdateSessionRoleAsync(new SessionRoleUpdate
             {
                 SessionId = testSessionId,
@@ -1688,12 +1688,12 @@ public class PermissionsTestHandler : IServiceTestHandler
                 return TestResult.Failed($"Before state set: expected 0 permissions (no default), got {beforeMethodCount}");
             }
 
-            // Set the auth:authenticated state
+            // Set the game-session:in_game state
             await permissionsClient.UpdateSessionStateAsync(new SessionStateUpdate
             {
                 SessionId = testSessionId,
-                ServiceId = "auth",
-                NewState = "authenticated"
+                ServiceId = "game-session",
+                NewState = "in_game"
             });
 
             // Get capabilities - should now have the state-specific permissions
@@ -1710,7 +1710,7 @@ public class PermissionsTestHandler : IServiceTestHandler
 
             if (afterMethodCount == 2)
             {
-                return TestResult.Successful($"State difference validated: without state={beforeMethodCount}, with auth:authenticated={afterMethodCount}");
+                return TestResult.Successful($"State difference validated: without state={beforeMethodCount}, with game-session:in_game={afterMethodCount}");
             }
             return TestResult.Failed($"State difference test failed: before={beforeMethodCount}, after={afterMethodCount} (expected 0 → 2)");
         }
@@ -1895,11 +1895,11 @@ public class PermissionsTestHandler : IServiceTestHandler
                 Version = "1.0.0",
                 Permissions = new Dictionary<string, StatePermissions>
                 {
-                    ["unauthenticated"] = new StatePermissions
+                    ["in_lobby"] = new StatePermissions
                     {
                         ["guest"] = new Collection<string> { "GET:/public/info" }
                     },
-                    ["default"] = new StatePermissions
+                    ["in_game"] = new StatePermissions
                     {
                         ["user"] = new Collection<string> { "GET:/public/info", "GET:/private/data" }
                     }
@@ -1914,7 +1914,7 @@ public class PermissionsTestHandler : IServiceTestHandler
             {
                 SessionId = testSessionId,
                 ServiceId = testServiceId,
-                NewState = "unauthenticated"
+                NewState = "in_lobby"
             };
             await permissionsClient.UpdateSessionStateAsync(initialState);
 
@@ -1944,8 +1944,8 @@ public class PermissionsTestHandler : IServiceTestHandler
             {
                 sessionId = testSessionId,
                 serviceId = testServiceId,
-                newState = "authenticated",
-                previousState = "unauthenticated"
+                newState = "in_game",
+                previousState = "in_lobby"
             };
 
             Console.WriteLine($"  Publishing session state change event via Dapr pubsub...");
@@ -1985,7 +1985,7 @@ public class PermissionsTestHandler : IServiceTestHandler
             {
                 return TestResult.Successful(
                     $"Session state change event verified: " +
-                    $"state changed from 'unauthenticated' to 'authenticated', " +
+                    $"state changed from 'in_lobby' to 'in_game', " +
                     $"methods increased from {initialMethodCount} to {updatedMethodCount}, " +
                     $"now has access to private endpoint");
             }

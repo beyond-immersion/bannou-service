@@ -90,8 +90,7 @@ paths:
           description: Relationship not found
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
 
   /relationship/list-by-entity:
     post:
@@ -118,8 +117,7 @@ paths:
                 $ref: '#/components/schemas/RelationshipListResponse'
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
 
   /relationship/get-between:
     post:
@@ -145,8 +143,7 @@ paths:
                 $ref: '#/components/schemas/RelationshipListResponse'
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
 
   /relationship/list-by-type:
     post:
@@ -172,8 +169,7 @@ paths:
                 $ref: '#/components/schemas/RelationshipListResponse'
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
 
   /relationship/update:
     post:

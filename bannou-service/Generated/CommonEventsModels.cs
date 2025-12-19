@@ -167,7 +167,7 @@ public partial class PermissionRequirement
     /// <summary>
     /// Map of service states required for access.
     /// <br/>Key: service_id, Value: required_state
-    /// <br/>Example: {"auth": "authenticated", "game-session": "in_game"}
+    /// <br/>Example: {"game-session": "in_game", "character": "selected"}
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requiredStates")]

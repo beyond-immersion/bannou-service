@@ -482,28 +482,28 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             await webSocket.ConnectAsync(serverUri, CancellationToken.None);
             Console.WriteLine("✅ WebSocket connected for internal API proxy test");
 
-            // First, receive the capability manifest and find ANY valid service GUID
-            // The actual endpoint doesn't matter - we just want to test the binary protocol routing
+            // Use /testing/ping endpoint - designed for testing and accepts empty requests
+            const string apiMethod = "POST";
+            const string apiPath = "/testing/ping";
+
             Console.WriteLine("📥 Waiting for capability manifest...");
-            var (serviceGuid, apiMethod, apiPath) = await ReceiveCapabilityManifestAndFindAnyServiceGuid(webSocket);
+            var serviceGuid = await ReceiveCapabilityManifestAndFindServiceGuid(webSocket, apiMethod, apiPath);
 
             if (serviceGuid == Guid.Empty)
             {
-                Console.WriteLine("❌ No APIs available in capability manifest");
+                Console.WriteLine($"❌ {apiMethod}:{apiPath} not found in capability manifest");
                 return false;
             }
 
             Console.WriteLine($"✅ Found service GUID for {apiMethod}:{apiPath}: {serviceGuid}");
 
-            // Create an internal API request using binary protocol
-            var apiRequest = new
+            // Create a ping request - the endpoint accepts optional ClientTimestamp and SequenceNumber
+            var pingRequest = new
             {
-                method = apiMethod,
-                path = apiPath,
-                headers = new Dictionary<string, string>(),
-                body = (string?)null
+                ClientTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                SequenceNumber = 1
             };
-            var requestPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(apiRequest));
+            var requestPayload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(pingRequest));
 
             var binaryMessage = new BinaryMessage(
                 flags: MessageFlags.None,
@@ -534,10 +534,19 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             }
 
             var response = responseResult.Value;
-            Console.WriteLine($"📥 Received API proxy response: {response.Payload.Length} bytes");
+            Console.WriteLine($"📥 Received API proxy response: {response.Payload.Length} bytes, ResponseCode: {response.ResponseCode}");
 
             try
             {
+                // Check the response code from the binary header
+                // ResponseCode 0 = success, non-zero = error
+                if (response.ResponseCode != 0)
+                {
+                    Console.WriteLine($"❌ API proxy returned error code: {response.ResponseCode}");
+                    return false;
+                }
+
+                // Success! Empty payloads are valid for void/update endpoints
                 if (response.Payload.Length > 0)
                 {
                     var responsePayload = Encoding.UTF8.GetString(response.Payload.Span);
@@ -548,12 +557,14 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     if (apiResponse != null)
                     {
                         Console.WriteLine("✅ API proxy response is valid JSON");
-                        return true;
                     }
                 }
+                else
+                {
+                    Console.WriteLine("✅ API proxy returned success with empty payload (valid for void endpoints)");
+                }
 
-                Console.WriteLine("⚠️ API proxy response has no payload");
-                return false;
+                return true;
             }
             catch (Exception parseEx)
             {
@@ -736,12 +747,38 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         Console.WriteLine("📋 Step 3: Deleting account via shared admin WebSocket...");
 
         var adminClient = Program.AdminClient;
-        if (adminClient == null || !adminClient.IsConnected)
+        if (adminClient == null)
+        {
+            Console.WriteLine("❌ Admin client is null - cannot delete account");
+            await CloseWebSocketSafely(userWebSocket);
+            return false;
+        }
+
+        Console.WriteLine($"   Admin client IsConnected: {adminClient.IsConnected}");
+        Console.WriteLine($"   Admin client SessionId: {adminClient.SessionId}");
+        Console.WriteLine($"   Admin client AvailableApis count: {adminClient.AvailableApis.Count}");
+
+        if (!adminClient.IsConnected)
         {
             Console.WriteLine("❌ Admin client not connected - cannot delete account");
             await CloseWebSocketSafely(userWebSocket);
             return false;
         }
+
+        // Check if the delete endpoint is available
+        var deleteGuid = adminClient.GetServiceGuid("POST", "/accounts/delete");
+        if (deleteGuid == null)
+        {
+            Console.WriteLine("❌ Admin client does not have /accounts/delete in available APIs");
+            Console.WriteLine("   Available APIs:");
+            foreach (var api in adminClient.AvailableApis.Keys.Take(20))
+            {
+                Console.WriteLine($"      - {api}");
+            }
+            await CloseWebSocketSafely(userWebSocket);
+            return false;
+        }
+        Console.WriteLine($"   Found delete endpoint GUID: {deleteGuid}");
 
         try
         {
@@ -753,11 +790,35 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 deleteRequest,
                 timeout: TimeSpan.FromSeconds(10));
 
-            Console.WriteLine($"✅ Account deletion response received: {response.GetRawText().Substring(0, Math.Min(100, response.GetRawText().Length))}...");
+            if (!response.IsSuccess)
+            {
+                Console.WriteLine($"❌ Account deletion failed: {response.Error?.ErrorName} - {response.Error?.Message} (code: {response.Error?.ResponseCode})");
+                await CloseWebSocketSafely(userWebSocket);
+                return false;
+            }
+
+            // Handle both populated and empty success responses
+            var result = response.Result;
+            if (result.ValueKind != JsonValueKind.Undefined)
+            {
+                Console.WriteLine($"✅ Account deletion response received: {result.GetRawText().Substring(0, Math.Min(100, result.GetRawText().Length))}...");
+            }
+            else
+            {
+                Console.WriteLine("✅ Account deletion successful (empty response)");
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"❌ InvalidOperationException during account deletion: {ex.Message}");
+            Console.WriteLine($"   Admin client IsConnected after error: {adminClient.IsConnected}");
+            Console.WriteLine($"   Stack trace: {ex.StackTrace}");
+            await CloseWebSocketSafely(userWebSocket);
+            return false;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Failed to delete account via WebSocket: {ex.Message}");
+            Console.WriteLine($"❌ Failed to delete account via WebSocket: {ex.GetType().Name}: {ex.Message}");
             await CloseWebSocketSafely(userWebSocket);
             return false;
         }
@@ -1443,7 +1504,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Receives the capability manifest from the server and extracts ANY available service GUID.
-    /// Returns the first GET endpoint found (preferred for testing) or any other endpoint.
+    /// Returns the first available endpoint (only POST endpoints are exposed in the manifest).
     /// </summary>
     private static async Task<(Guid serviceGuid, string method, string path)> ReceiveCapabilityManifestAndFindAnyServiceGuid(
         ClientWebSocket webSocket)
@@ -1495,23 +1556,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     Console.WriteLine($"      - {debugMethod}:{debugPath} ({debugService})");
                 }
 
-                // Prefer GET endpoints for testing (they don't require request body)
-                foreach (var api in availableApis)
-                {
-                    var apiMethod = api?["method"]?.GetValue<string>();
-                    var apiPath = api?["path"]?.GetValue<string>();
-                    var apiGuid = api?["serviceGuid"]?.GetValue<string>();
-
-                    if (apiMethod == "GET" && !string.IsNullOrEmpty(apiPath) && !string.IsNullOrEmpty(apiGuid))
-                    {
-                        if (Guid.TryParse(apiGuid, out var guid))
-                        {
-                            return (guid, apiMethod, apiPath);
-                        }
-                    }
-                }
-
-                // Fallback: return any endpoint
+                // Return the first available endpoint (only POST endpoints are exposed)
                 foreach (var api in availableApis)
                 {
                     var apiMethod = api?["method"]?.GetValue<string>();
@@ -1622,11 +1667,10 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 {
                     var debugMethod = api?["method"]?.GetValue<string>();
                     var debugPath = api?["path"]?.GetValue<string>();
-                    var debugService = api?["serviceName"]?.GetValue<string>();
-                    Console.WriteLine($"      - {debugMethod}:{debugPath} ({debugService})");
+                    Console.WriteLine($"      - {debugMethod}:{debugPath}");
                 }
 
-                // Try to find the GUID for our endpoint
+                // Try to find the GUID for our endpoint by method and path
                 foreach (var api in availableApis)
                 {
                     var apiMethod = api?["method"]?.GetValue<string>();
@@ -1637,20 +1681,21 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     {
                         if (Guid.TryParse(apiGuid, out var guid))
                         {
-                            Console.WriteLine($"   ✅ Found API by exact match: {method}:{path}");
+                            Console.WriteLine($"   ✅ Found API: {method}:{path}");
                             return guid;
                         }
                     }
                 }
 
-                // Try by endpoint key format
+                // Fallback: try by endpointKey (format: "METHOD:/path")
                 foreach (var api in availableApis)
                 {
                     var endpointKey = api?["endpointKey"]?.GetValue<string>();
                     var apiGuid = api?["serviceGuid"]?.GetValue<string>();
 
-                    // The endpoint key format is "serviceName:METHOD:/path"
-                    if (!string.IsNullOrEmpty(endpointKey) && endpointKey.Contains($":{method}:{path}"))
+                    // Endpoint key format is now "METHOD:/path" (e.g., "POST:/species/get")
+                    var expectedKey = $"{method}:{path}";
+                    if (endpointKey == expectedKey && !string.IsNullOrEmpty(apiGuid))
                     {
                         if (Guid.TryParse(apiGuid, out var guid))
                         {
@@ -1895,12 +1940,12 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
         try
         {
             // The /testing/debug/path endpoint returns routing debug info
-            // It accepts GET or POST with no body required
-            var response = await client.InvokeAsync<object, JsonElement>(
-                "GET",
+            // Only POST endpoints are exposed in capability manifest
+            var response = (await client.InvokeAsync<object, JsonElement>(
+                "POST",
                 "/testing/debug/path",
-                new { }, // Empty body for GET
-                timeout: TimeSpan.FromSeconds(15));
+                new { }, // Empty body
+                timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
             // Verify we got a valid response with expected fields
             var hasPath = response.TryGetProperty("Path", out var pathProp) ||

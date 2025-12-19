@@ -479,11 +479,11 @@ public class PermissionsServiceTests
         var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
 
-        // Session has role=user and auth:authenticated state
+        // Session has role=user and game-session:in_game state
         var sessionStates = new Dictionary<string, string>
         {
             ["role"] = "user",
-            ["auth"] = "authenticated"
+            ["game-session"] = "in_game"
         };
 
         _mockDaprClient
@@ -496,11 +496,11 @@ public class PermissionsServiceTests
                 STATE_STORE, REGISTERED_SERVICES_KEY, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HashSet<string> { "svc" });
 
-        // Endpoint gated by auth:authenticated + role user
+        // Endpoint gated by game-session:in_game + role user
         _mockDaprClient
             .Setup(d => d.GetStateAsync<HashSet<string>>(
                 STATE_STORE,
-                It.Is<string>(k => k.Contains("permissions:svc:auth:authenticated:user")),
+                It.Is<string>(k => k.Contains("permissions:svc:game-session:in_game:user")),
                 null,
                 null,
                 It.IsAny<CancellationToken>()))

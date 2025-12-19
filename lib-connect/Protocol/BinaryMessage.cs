@@ -4,15 +4,22 @@ using System.Text;
 namespace BeyondImmersion.BannouService.Connect.Protocol;
 
 /// <summary>
-/// Represents a complete binary message in the enhanced 31-byte protocol.
+/// Represents a complete binary message in the Bannou WebSocket protocol.
+/// Request messages use a 31-byte header, response messages use a 16-byte header.
 /// Provides zero-copy parsing and serialization for optimal performance.
 /// </summary>
 public readonly struct BinaryMessage
 {
     /// <summary>
-    /// Size of the binary header in bytes
+    /// Size of the binary header in bytes for request messages.
     /// </summary>
     public const int HeaderSize = 31;
+
+    /// <summary>
+    /// Size of the binary header in bytes for response messages.
+    /// Response headers are smaller because ServiceGuid is not needed (client correlates via MessageId).
+    /// </summary>
+    public const int ResponseHeaderSize = 16;
 
     /// <summary>
     /// Message behavior flags
@@ -30,7 +37,8 @@ public readonly struct BinaryMessage
     public uint SequenceNumber { get; }
 
     /// <summary>
-    /// Client-salted service GUID for routing
+    /// Client-salted service GUID for routing (only used in request messages).
+    /// For response messages, this is Guid.Empty since routing is not needed.
     /// </summary>
     public Guid ServiceGuid { get; }
 
@@ -40,12 +48,19 @@ public readonly struct BinaryMessage
     public ulong MessageId { get; }
 
     /// <summary>
-    /// Message payload (JSON or binary data based on flags)
+    /// Response code for response messages (0 = OK, non-zero = error).
+    /// Only meaningful when Flags has Response set.
+    /// </summary>
+    public byte ResponseCode { get; }
+
+    /// <summary>
+    /// Message payload (JSON or binary data based on flags).
+    /// For error responses (non-zero ResponseCode), this is empty.
     /// </summary>
     public ReadOnlyMemory<byte> Payload { get; }
 
     /// <summary>
-    /// Initializes a new binary message with the specified parameters.
+    /// Initializes a new binary message with the specified parameters (for requests).
     /// </summary>
     public BinaryMessage(
         MessageFlags flags,
@@ -60,6 +75,27 @@ public readonly struct BinaryMessage
         SequenceNumber = sequenceNumber;
         ServiceGuid = serviceGuid;
         MessageId = messageId;
+        ResponseCode = 0;
+        Payload = payload;
+    }
+
+    /// <summary>
+    /// Initializes a new binary message with the specified parameters (for responses).
+    /// </summary>
+    public BinaryMessage(
+        MessageFlags flags,
+        ushort channel,
+        uint sequenceNumber,
+        ulong messageId,
+        byte responseCode,
+        ReadOnlyMemory<byte> payload)
+    {
+        Flags = flags;
+        Channel = channel;
+        SequenceNumber = sequenceNumber;
+        ServiceGuid = Guid.Empty; // Not used in responses
+        MessageId = messageId;
+        ResponseCode = responseCode;
         Payload = payload;
     }
 
@@ -106,6 +142,8 @@ public readonly struct BinaryMessage
 
     /// <summary>
     /// Creates a response message for the given request.
+    /// For error responses (non-zero responseCode), the payload should be empty.
+    /// For success responses (responseCode = 0), the payload contains the response data.
     /// </summary>
     public static BinaryMessage CreateResponse(
         BinaryMessage request,
@@ -114,17 +152,16 @@ public readonly struct BinaryMessage
     {
         var flags = request.Flags | MessageFlags.Response;
 
-        // If no payload provided, create a simple JSON response with the response code
-        var payload = responsePayload.IsEmpty
-            ? Encoding.UTF8.GetBytes($"{{\"responseCode\":{(int)responseCode}}}")
-            : responsePayload;
+        // For error responses, payload is empty - the response code tells the story
+        // For success responses, payload contains the actual response data
+        var payload = responseCode != ResponseCodes.OK ? ReadOnlyMemory<byte>.Empty : responsePayload;
 
         return new BinaryMessage(
             flags,
             request.Channel,
             request.SequenceNumber,
-            request.ServiceGuid,
-            request.MessageId, // Same message ID for correlation
+            request.MessageId,
+            (byte)responseCode,
             payload);
     }
 
@@ -143,25 +180,42 @@ public readonly struct BinaryMessage
 
     /// <summary>
     /// Parses a binary message from a byte array.
+    /// Automatically detects whether this is a request (31-byte header) or response (16-byte header).
     /// </summary>
     /// <param name="buffer">Buffer containing the complete message</param>
     /// <param name="messageLength">Total length of the message</param>
     /// <returns>Parsed binary message</returns>
     public static BinaryMessage Parse(byte[] buffer, int messageLength)
     {
-        if (messageLength < HeaderSize)
+        if (messageLength < 1)
         {
-            throw new ArgumentException($"Message too short. Expected at least {HeaderSize} bytes, got {messageLength}");
+            throw new ArgumentException("Message too short. Expected at least 1 byte for flags.");
         }
 
-        // Parse 31-byte header using consistent network byte order
-        var flags = (MessageFlags)buffer[0];                                    // Byte 0: Message flags
+        var flags = (MessageFlags)buffer[0];
+
+        // Check if this is a response message (16-byte header) or request message (31-byte header)
+        if (flags.HasFlag(MessageFlags.Response))
+        {
+            return ParseResponse(buffer, messageLength, flags);
+        }
+        else
+        {
+            return ParseRequest(buffer, messageLength, flags);
+        }
+    }
+
+    private static BinaryMessage ParseRequest(byte[] buffer, int messageLength, MessageFlags flags)
+    {
+        if (messageLength < HeaderSize)
+        {
+            throw new ArgumentException($"Request message too short. Expected at least {HeaderSize} bytes, got {messageLength}");
+        }
+
+        // Parse 31-byte request header using consistent network byte order
         var channel = NetworkByteOrder.ReadUInt16(buffer.AsSpan(1, 2));        // Bytes 1-2: Channel
         var sequence = NetworkByteOrder.ReadUInt32(buffer.AsSpan(3, 4));       // Bytes 3-6: Sequence number
-
-        // Bytes 7-22: Service GUID (16 bytes) in network byte order
-        var serviceGuid = NetworkByteOrder.ReadGuid(buffer.AsSpan(7, 16));
-
+        var serviceGuid = NetworkByteOrder.ReadGuid(buffer.AsSpan(7, 16));     // Bytes 7-22: Service GUID
         var messageId = NetworkByteOrder.ReadUInt64(buffer.AsSpan(23, 8));     // Bytes 23-30: Message ID
 
         // Extract payload (remaining bytes after 31-byte header)
@@ -175,16 +229,53 @@ public readonly struct BinaryMessage
         return new BinaryMessage(flags, channel, sequence, serviceGuid, messageId, payload);
     }
 
+    private static BinaryMessage ParseResponse(byte[] buffer, int messageLength, MessageFlags flags)
+    {
+        if (messageLength < ResponseHeaderSize)
+        {
+            throw new ArgumentException($"Response message too short. Expected at least {ResponseHeaderSize} bytes, got {messageLength}");
+        }
+
+        // Parse 16-byte response header using consistent network byte order
+        var channel = NetworkByteOrder.ReadUInt16(buffer.AsSpan(1, 2));        // Bytes 1-2: Channel
+        var sequence = NetworkByteOrder.ReadUInt32(buffer.AsSpan(3, 4));       // Bytes 3-6: Sequence number
+        var messageId = NetworkByteOrder.ReadUInt64(buffer.AsSpan(7, 8));      // Bytes 7-14: Message ID
+        var responseCode = buffer[15];                                          // Byte 15: Response code
+
+        // Extract payload (remaining bytes after 16-byte header)
+        var payloadLength = messageLength - ResponseHeaderSize;
+        var payload = new byte[payloadLength];
+        if (payloadLength > 0)
+        {
+            Array.Copy(buffer, ResponseHeaderSize, payload, 0, payloadLength);
+        }
+
+        return new BinaryMessage(flags, channel, sequence, messageId, responseCode, payload);
+    }
+
     /// <summary>
     /// Serializes the binary message to a byte array.
+    /// Uses 31-byte header for requests, 16-byte header for responses.
     /// </summary>
     /// <returns>Complete message as byte array</returns>
     public byte[] ToByteArray()
     {
+        if (IsResponse)
+        {
+            return ToResponseByteArray();
+        }
+        else
+        {
+            return ToRequestByteArray();
+        }
+    }
+
+    private byte[] ToRequestByteArray()
+    {
         var totalLength = HeaderSize + Payload.Length;
         var result = new byte[totalLength];
 
-        // Build 31-byte header using consistent network byte order
+        // Build 31-byte request header using consistent network byte order
         result[0] = (byte)Flags;                                              // Byte 0: Message flags
         NetworkByteOrder.WriteUInt16(result.AsSpan(1, 2), Channel);          // Bytes 1-2: Channel
         NetworkByteOrder.WriteUInt32(result.AsSpan(3, 4), SequenceNumber);   // Bytes 3-6: Sequence
@@ -195,6 +286,27 @@ public readonly struct BinaryMessage
         if (!Payload.IsEmpty)
         {
             Payload.Span.CopyTo(result.AsSpan(HeaderSize));
+        }
+
+        return result;
+    }
+
+    private byte[] ToResponseByteArray()
+    {
+        var totalLength = ResponseHeaderSize + Payload.Length;
+        var result = new byte[totalLength];
+
+        // Build 16-byte response header using consistent network byte order
+        result[0] = (byte)Flags;                                              // Byte 0: Message flags
+        NetworkByteOrder.WriteUInt16(result.AsSpan(1, 2), Channel);          // Bytes 1-2: Channel
+        NetworkByteOrder.WriteUInt32(result.AsSpan(3, 4), SequenceNumber);   // Bytes 3-6: Sequence
+        NetworkByteOrder.WriteUInt64(result.AsSpan(7, 8), MessageId);        // Bytes 7-14: Message ID
+        result[15] = ResponseCode;                                            // Byte 15: Response code
+
+        // Append payload (empty for error responses)
+        if (!Payload.IsEmpty)
+        {
+            Payload.Span.CopyTo(result.AsSpan(ResponseHeaderSize));
         }
 
         return result;
@@ -221,11 +333,31 @@ public readonly struct BinaryMessage
     public bool IsHighPriority => Flags.HasFlag(MessageFlags.HighPriority);
 
     /// <summary>
+    /// Returns true if this is a successful response (ResponseCode is 0).
+    /// Only meaningful for response messages.
+    /// </summary>
+    public bool IsSuccess => IsResponse && ResponseCode == 0;
+
+    /// <summary>
+    /// Returns true if this is an error response (ResponseCode is non-zero).
+    /// Only meaningful for response messages.
+    /// </summary>
+    public bool IsError => IsResponse && ResponseCode != 0;
+
+    /// <summary>
     /// Returns a string representation of the message for debugging.
     /// </summary>
     public override string ToString()
     {
-        return $"BinaryMessage(Flags={Flags}, Channel={Channel}, Seq={SequenceNumber}, " +
-                $"ServiceGuid={ServiceGuid}, MessageId={MessageId}, PayloadSize={Payload.Length})";
+        if (IsResponse)
+        {
+            return $"BinaryMessage(Response, Flags={Flags}, Channel={Channel}, Seq={SequenceNumber}, " +
+                    $"MessageId={MessageId}, ResponseCode={ResponseCode}, PayloadSize={Payload.Length})";
+        }
+        else
+        {
+            return $"BinaryMessage(Request, Flags={Flags}, Channel={Channel}, Seq={SequenceNumber}, " +
+                    $"ServiceGuid={ServiceGuid}, MessageId={MessageId}, PayloadSize={Payload.Length})";
+        }
     }
 }
