@@ -16,8 +16,7 @@ paths:
       operationId: exampleOperation
       x-permissions:
         - role: user
-          states:
-            auth: authenticated  # Requires auth state = authenticated
+          states: {}  # Any authenticated user
         - role: admin
           states: {}  # Admin can access regardless of state
 ```
@@ -32,15 +31,20 @@ paths:
 ### State Requirements
 
 The `states` property is a map where:
-- **Key**: Service ID (e.g., `auth`, `game-session`)
-- **Value**: Required state for that service (e.g., `authenticated`, `in_game`)
+- **Key**: Service ID that manages the state (e.g., `game-session`, `character`)
+- **Value**: Required state value (e.g., `in_game`, `selected`)
+
+**Important**: Authentication status is NOT a state - it's determined by the role.
+`role: user` = authenticated, `role: anonymous` = not authenticated.
+
+States are for **contextual access control** based on user's current activity:
 
 ```yaml
 x-permissions:
   - role: user
     states:
-      auth: authenticated        # Must be authenticated
       game-session: in_game      # Must be in an active game
+      character: selected        # Must have selected a character
 ```
 
 ## Standard Roles
@@ -55,15 +59,19 @@ x-permissions:
 
 ## Standard States
 
-### Auth Service States
-- `anonymous`: Not yet authenticated
-- `authenticated`: Successfully logged in
+States are for contextual navigation, **not authentication status**. Authentication is handled by roles.
 
-### Game Session States
-- `none`: Not in any game session
-- `in_lobby`: In game lobby
-- `in_game`: In active game session
-- `spectating`: Watching game as spectator
+### Game Session States (set by game-session service)
+- `in_lobby`: User is in a game lobby
+- `in_game`: User is in an active game session
+- `spectating`: User is watching a game as spectator
+
+### Character States (set by character service)
+- `selected`: User has selected a character
+- `in_creation`: User is creating a character
+
+### Realm States (set by realm service)
+- `in_realm`: User is in a specific realm instance
 
 ## Examples
 
@@ -86,11 +94,9 @@ x-permissions:
   get:
     x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       - role: admin
-        states:
-          auth: authenticated
+        states: {}
 ```
 
 ### Admin-Only Endpoint
@@ -100,11 +106,10 @@ x-permissions:
   post:
     x-permissions:
       - role: admin
-        states:
-          auth: authenticated
+        states: {}
 ```
 
-### Game Session Endpoint
+### Game Session Endpoint (Requires Contextual State)
 
 ```yaml
 /game-session/action:
@@ -112,8 +117,7 @@ x-permissions:
     x-permissions:
       - role: user
         states:
-          auth: authenticated
-          game-session: in_game
+          game-session: in_game  # Must be in active game
 ```
 
 ### NPC Endpoint (Server-Side Only)
@@ -176,12 +180,12 @@ The `stateKey` is constructed differently depending on the permission configurat
 | x-permissions `states` value | State Key | Example Redis Key |
 |------------------------------|-----------|-------------------|
 | `{}` (empty object) | `"default"` | `permissions:accounts:default:user` |
-| `{auth: authenticated}` (same service) | `"authenticated"` | `permissions:auth:authenticated:user` |
-| `{auth: authenticated}` (different service) | `"auth:authenticated"` | `permissions:accounts:auth:authenticated:user` |
+| `{game-session: in_game}` (same service) | `"in_game"` | `permissions:game-session:in_game:user` |
+| `{game-session: in_game}` (different service) | `"game-session:in_game"` | `permissions:character:game-session:in_game:user` |
 
 ### Key Matching Rules
 
-When a session's state changes (e.g., user logs in), the Permissions service recompiles capabilities by:
+When a session's state changes (e.g., user joins a game), the Permissions service recompiles capabilities by:
 
 1. **Default permissions**: Always include endpoints stored at `permissions:{serviceId}:default:{role}`
 2. **State-based permissions**: For each session state `{stateServiceId: stateValue}`:
@@ -190,9 +194,9 @@ When a session's state changes (e.g., user logs in), the Permissions service rec
 
 ### Example Flow
 
-1. User logs in, setting `auth=authenticated` state
+1. User joins a game session, setting `game-session=in_game` state
 2. Permissions service checks all registered services:
-   - For `auth` service: looks up `permissions:auth:authenticated:user`
-   - For `accounts` service: looks up `permissions:accounts:auth:authenticated:user`
-   - For `game-session` service: looks up `permissions:game-session:auth:authenticated:user`
+   - For `game-session` service: looks up `permissions:game-session:in_game:user`
+   - For `character` service: looks up `permissions:character:game-session:in_game:user`
+   - For `chat` service: looks up `permissions:chat:game-session:in_game:user`
 3. All matching endpoints are added to the session's capability manifest

@@ -132,7 +132,7 @@ public static class BinaryProtocolTests
 
     private static bool TestBinaryMessageEdgeCases()
     {
-        // Test with empty payload
+        // Test with empty payload (request message)
         var emptyMessage = new BinaryMessage(
             MessageFlags.Event,
             0,
@@ -148,9 +148,10 @@ public static class BinaryProtocolTests
         var deserialized = BinaryMessage.Parse(serialized, serialized.Length);
         if (deserialized.Payload.Length != 0) return false;
 
-        // Test with maximum values
+        // Test with maximum values (request message - exclude Response flag to use 31-byte header)
+        // Note: Response flag (0x40) uses different 16-byte header format, so we test requests here
         var maxMessage = new BinaryMessage(
-            (MessageFlags)0xFF,
+            (MessageFlags)0x3F, // All flags except Response (0x40) and Reserved (0x80)
             ushort.MaxValue,
             uint.MaxValue,
             Guid.NewGuid(),

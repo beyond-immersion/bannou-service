@@ -25,7 +25,7 @@ services:
       - MYSQL_DATABASE=accounts
       - MYSQL_USER=guest
       - MYSQL_PASSWORD=guest
-      - MYSQL_RANDOM_ROOT_PASSWORD=true
+      - MYSQL_ROOT_PASSWORD=rootpassword
     volumes:
       - account-data:/var/lib/mysql
       - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf

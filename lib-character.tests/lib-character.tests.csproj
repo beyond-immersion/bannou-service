@@ -29,6 +29,7 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-character -->
     <ProjectReference Include="../lib-character/lib-character.csproj" />
+    <ProjectReference Include="../lib-testing/lib-testing.csproj" />
   </ItemGroup>
 
 </Project>

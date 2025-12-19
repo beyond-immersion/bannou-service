@@ -73,10 +73,11 @@ public static class TestingPermissionRegistration
         });
 
         // Debug path endpoint - available to authenticated users
+        // Note: Using POST because only POST endpoints are exposed in capability manifest
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/testing/debug/path",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.POST,
             Description = "Debug endpoint showing request path routing info",
             Permissions = new List<PermissionRequirement>
             {
@@ -89,10 +90,11 @@ public static class TestingPermissionRegistration
         });
 
         // Debug path with catch-all - available to authenticated users
+        // Note: Using POST because only POST endpoints are exposed in capability manifest
         endpoints.Add(new ServiceEndpoint
         {
             Path = "/testing/debug/path/{catchAll}",
-            Method = ServiceEndpointMethod.GET,
+            Method = ServiceEndpointMethod.POST,
             Description = "Debug endpoint with catch-all path segment",
             Permissions = new List<PermissionRequirement>
             {

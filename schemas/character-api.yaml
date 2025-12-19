@@ -73,8 +73,7 @@ paths:
       - Character Management
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -147,8 +146,7 @@ paths:
       - Character Management
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -171,8 +169,7 @@ paths:
       - Character Lookup
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:

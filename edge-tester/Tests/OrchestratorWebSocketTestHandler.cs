@@ -232,11 +232,11 @@ public class OrchestratorWebSocketTestHandler : IServiceTestHandler
         {
             // Use the shared admin WebSocket to invoke the API
             var requestBody = body ?? new { };
-            var response = await adminClient.InvokeAsync<object, JsonElement>(
+            var response = (await adminClient.InvokeAsync<object, JsonElement>(
                 method,
                 path,
                 requestBody,
-                timeout: TimeSpan.FromSeconds(30));
+                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
 
             // Convert JsonElement to JsonObject for validation
             var responseJson = response.GetRawText();

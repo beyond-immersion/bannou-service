@@ -262,11 +262,11 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
     {
         // Find the service-routing API via WebSocket capability manifest
         // Service-mappings moved from Connect to Orchestrator (December 2025)
-        // API key format is "orchestrator:POST:/orchestrator/service-routing"
+        // API key format is "POST:/orchestrator/service-routing" (METHOD:/path format)
         Console.WriteLine("   Looking for service-routing API in capability manifest...");
 
         var orchestratorApis = adminClient.AvailableApis.Keys
-            .Where(k => k.Contains("orchestrator", StringComparison.OrdinalIgnoreCase))
+            .Where(k => k.Contains("/orchestrator/", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         Console.WriteLine($"   Orchestrator APIs available ({orchestratorApis.Count}):");
@@ -275,14 +275,14 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             Console.WriteLine($"      {api}");
         }
 
+        // Look for the service-routing endpoint (format: POST:/orchestrator/service-routing)
         var routingApiKey = adminClient.AvailableApis.Keys
-            .FirstOrDefault(k => k.Contains("orchestrator:", StringComparison.OrdinalIgnoreCase) &&
-                                k.Contains("/service-routing", StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefault(k => k.Contains("/orchestrator/service-routing", StringComparison.OrdinalIgnoreCase));
 
         if (string.IsNullOrEmpty(routingApiKey))
         {
             Console.WriteLine("❌ service-routing API not found in capability manifest");
-            Console.WriteLine("   Admin user must have access to orchestrator:POST:/orchestrator/service-routing");
+            Console.WriteLine("   Admin user must have access to POST:/orchestrator/service-routing");
             return false;
         }
 
@@ -298,11 +298,11 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         string? response;
         try
         {
-            var result = await adminClient.InvokeAsync<object, JsonElement>(
+            var result = (await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
                 "/orchestrator/service-routing",
                 new { },
-                timeout: TimeSpan.FromSeconds(30));
+                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
             response = result.GetRawText();
         }
         catch (Exception ex)
@@ -481,11 +481,11 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         try
         {
             // List accounts requires admin role
-            var response = await adminClient.InvokeAsync<object, JsonElement>(
+            var response = (await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
                 "/accounts/list",
                 new { limit = 1 },
-                timeout: TimeSpan.FromSeconds(15));
+                timeout: TimeSpan.FromSeconds(15))).GetResultOrThrow();
 
             var content = response.GetRawText();
             Console.WriteLine($"   Accounts API response: {content[..Math.Min(200, content.Length)]}...");
@@ -547,11 +547,11 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             }
 
             // Use the shared admin WebSocket to invoke the orchestrator API
-            var response = await client.InvokeAsync<object, JsonElement>(
+            var response = (await client.InvokeAsync<object, JsonElement>(
                 "POST",
                 "/orchestrator/deploy",
                 requestObj,
-                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS));
+                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS))).GetResultOrThrow();
 
             return response.GetRawText();
         }
@@ -659,11 +659,11 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
         try
         {
-            var response = await adminClient.InvokeAsync<object, JsonElement>(
+            var response = (await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
                 "/orchestrator/deploy",
                 deployRequest,
-                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS));
+                timeout: TimeSpan.FromSeconds(DEPLOYMENT_TIMEOUT_SECONDS))).GetResultOrThrow();
 
             var content = response.GetRawText();
             Console.WriteLine($"   Response: {content}");
@@ -721,11 +721,11 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
 
         try
         {
-            var response = await adminClient.InvokeAsync<object, JsonElement>(
+            var response = (await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
                 "/orchestrator/clean",
                 cleanRequest,
-                timeout: TimeSpan.FromSeconds(30));
+                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
 
             var content = response.GetRawText();
             Console.WriteLine($"   Clean response: {content}");

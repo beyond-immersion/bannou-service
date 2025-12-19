@@ -77,24 +77,18 @@ public static class MessageRouter
 
     /// <summary>
     /// Creates an error response message for routing failures.
+    /// Error responses have the response code in the binary header (byte 15) and an empty payload.
     /// </summary>
     public static BinaryMessage CreateErrorResponse(
         BinaryMessage originalMessage,
         ResponseCodes errorCode,
         string? errorMessage = null)
     {
-        var errorPayload = new
-        {
-            responseCode = (int)errorCode,
-            error = errorCode.ToString(),
-            message = errorMessage ?? GetDefaultErrorMessage(errorCode),
-            originalMessageId = originalMessage.MessageId
-        };
+        // Error responses have empty payloads - the response code in the header tells the story
+        // The errorMessage parameter is kept for logging/debugging but not sent over the wire
+        _ = errorMessage; // Suppress unused parameter warning
 
-        var jsonPayload = System.Text.Json.JsonSerializer.Serialize(errorPayload);
-        var payloadBytes = System.Text.Encoding.UTF8.GetBytes(jsonPayload);
-
-        return BinaryMessage.CreateResponse(originalMessage, errorCode, payloadBytes);
+        return BinaryMessage.CreateResponse(originalMessage, errorCode);
     }
 
     /// <summary>
@@ -138,21 +132,6 @@ public static class MessageRouter
         return GuidGenerator.GenerateMessageId();
     }
 
-    private static string GetDefaultErrorMessage(ResponseCodes errorCode)
-    {
-        return errorCode switch
-        {
-            ResponseCodes.RequestError => "Invalid request format",
-            ResponseCodes.RequestTooLarge => "Request payload too large",
-            ResponseCodes.TooManyRequests => "Rate limit exceeded",
-            ResponseCodes.InvalidRequestChannel => "Invalid channel specified",
-            ResponseCodes.Unauthorized => "Authentication required",
-            ResponseCodes.ServiceNotFound => "Target service not available",
-            ResponseCodes.ClientNotFound => "Target client not connected",
-            ResponseCodes.MessageNotFound => "Original message not found",
-            _ => "Unknown error"
-        };
-    }
 }
 
 /// <summary>

@@ -285,8 +285,7 @@ paths:
       - Profile Management
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -311,8 +310,7 @@ paths:
       - Account Management
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:
@@ -333,8 +331,7 @@ paths:
       - Account Management
       x-permissions:
       - role: user
-        states:
-          auth: authenticated
+        states: {}
       requestBody:
         required: true
         content:

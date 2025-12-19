@@ -1,0 +1,142 @@
+openapi: 3.0.3
+info:
+  title: Bannou Location Service API Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for location service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: location-api.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    LocationCreatedEvent:
+      type: object
+      description: Published to location.created when a location is created
+      required:
+      - eventId
+      - timestamp
+      - locationId
+      - realmId
+      - code
+      - name
+      - locationType
+      - depth
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        eventId: &id001
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp: &id002
+          type: string
+          format: date-time
+          description: When this event occurred
+        locationId: &id003
+          type: string
+          format: uuid
+        realmId: &id004
+          type: string
+          format: uuid
+        code: &id005
+          type: string
+        name: &id006
+          type: string
+        description: &id007
+          type: string
+        locationType: &id008
+          type: string
+        parentLocationId: &id009
+          type: string
+          format: uuid
+        depth: &id010
+          type: integer
+        isDeprecated: &id011
+          type: boolean
+        deprecatedAt: &id012
+          type: string
+          format: date-time
+        deprecationReason: &id013
+          type: string
+        metadata: &id014
+          type: object
+          additionalProperties: true
+        createdAt: &id015
+          type: string
+          format: date-time
+        updatedAt: &id016
+          type: string
+          format: date-time
+    LocationUpdatedEvent:
+      type: object
+      description: Published to location.updated when a location is updated
+      required:
+      - eventId
+      - timestamp
+      - locationId
+      - realmId
+      - code
+      - name
+      - locationType
+      - depth
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        locationId: *id003
+        realmId: *id004
+        code: *id005
+        name: *id006
+        description: *id007
+        locationType: *id008
+        parentLocationId: *id009
+        depth: *id010
+        isDeprecated: *id011
+        deprecatedAt: *id012
+        deprecationReason: *id013
+        metadata: *id014
+        createdAt: *id015
+        updatedAt: *id016
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    LocationDeletedEvent:
+      type: object
+      description: Published to location.deleted when a location is deleted
+      required:
+      - eventId
+      - timestamp
+      - locationId
+      - realmId
+      - code
+      - name
+      - locationType
+      - depth
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        eventId: *id001
+        timestamp: *id002
+        locationId: *id003
+        realmId: *id004
+        code: *id005
+        name: *id006
+        description: *id007
+        locationType: *id008
+        parentLocationId: *id009
+        depth: *id010
+        isDeprecated: *id011
+        deprecatedAt: *id012
+        deprecationReason: *id013
+        metadata: *id014
+        createdAt: *id015
+        updatedAt: *id016
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

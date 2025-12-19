@@ -82,12 +82,10 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 "Test that WebSocket connection receives pushed capability manifest"),
             new ServiceTest(TestUniqueGuidPerSession, "Capability - Unique GUIDs", "WebSocket",
                 "Test that different sessions receive unique GUIDs for same endpoints"),
-            new ServiceTest(TestAuthenticatedCapabilities, "Capability - Authenticated User", "WebSocket",
-                "Test that authenticated users receive role-based capabilities"),
             new ServiceTest(TestServiceGuidRouting, "Capability - GUID Routing", "WebSocket",
                 "Test that service requests with valid GUIDs are routed correctly"),
             new ServiceTest(TestStateBasedCapabilityUpdate, "Capability - State Update", "WebSocket",
-                "Test that setting auth:authenticated state triggers capability manifest update")
+                "Test that setting game-session:in_game state triggers capability manifest update")
         };
     }
 
@@ -135,30 +133,6 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Unique GUID per session test FAILED with exception: {ex.Message}");
-            Console.WriteLine($"   Stack trace: {ex.StackTrace}");
-        }
-    }
-
-    private void TestAuthenticatedCapabilities(string[] args)
-    {
-        Console.WriteLine("=== Authenticated User Capabilities Test ===");
-        Console.WriteLine("Testing that authenticated users receive role-based capabilities...");
-
-        try
-        {
-            var result = Task.Run(async () => await PerformAuthenticatedCapabilitiesTest()).Result;
-            if (result)
-            {
-                Console.WriteLine("✅ Authenticated user capabilities test PASSED");
-            }
-            else
-            {
-                Console.WriteLine("❌ Authenticated user capabilities test FAILED");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Authenticated user capabilities test FAILED with exception: {ex.Message}");
             Console.WriteLine($"   Stack trace: {ex.StackTrace}");
         }
     }
@@ -433,124 +407,6 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Tests that authenticated users receive capabilities based on their role.
-    /// Authenticated users should receive more API capabilities than unauthenticated connections.
-    /// </summary>
-    private async Task<bool> PerformAuthenticatedCapabilitiesTest()
-    {
-        if (Program.Configuration == null)
-        {
-            Console.WriteLine("❌ Configuration not available");
-            return false;
-        }
-
-        // Create dedicated test account to avoid subsuming Program.Client's WebSocket
-        Console.WriteLine("📋 Creating dedicated test account for authenticated capabilities test...");
-        var accessToken = await CreateTestAccountAsync("cap_auth");
-        if (string.IsNullOrEmpty(accessToken))
-        {
-            Console.WriteLine("❌ Failed to create test account");
-            return false;
-        }
-
-        var serverUri = new Uri($"ws://{Program.Configuration.Connect_Endpoint}");
-
-        Console.WriteLine("📡 Connecting with authenticated user credentials...");
-        using var webSocket = new ClientWebSocket();
-        webSocket.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
-
-        try
-        {
-            await webSocket.ConnectAsync(serverUri, CancellationToken.None);
-            Console.WriteLine("✅ Authenticated WebSocket connection established");
-
-            // Wait for capability manifest to be pushed by server
-            // Authenticated users should receive capabilities for user-level endpoints
-            Console.WriteLine("📥 Waiting for authenticated capability manifest...");
-
-            var receiveBuffer = new byte[65536];
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-
-            try
-            {
-                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts.Token);
-                Console.WriteLine($"📥 Received {result.Count} bytes");
-
-                if (result.Count > 0)
-                {
-                    var receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
-                    var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
-                    Console.WriteLine($"   Payload preview: {responseText[..Math.Min(300, responseText.Length)]}");
-
-                    var responseObj = JsonNode.Parse(responseText)?.AsObject();
-                    var messageType = responseObj?["type"]?.GetValue<string>();
-
-                    if (messageType == "capability_manifest")
-                    {
-                        var availableApis = responseObj?["availableAPIs"]?.AsArray();
-                        var apiCount = availableApis?.Count ?? 0;
-                        Console.WriteLine($"✅ Authenticated user received capability manifest with {apiCount} APIs");
-
-                        // Authenticated users MUST have access to APIs
-                        if (apiCount == 0)
-                        {
-                            Console.WriteLine("❌ Authenticated user has 0 APIs - permissions not working");
-                            return false;
-                        }
-
-                        // Check for presence of authenticated-only services
-                        var serviceNames = availableApis?
-                            .Select(api => api?["serviceName"]?.GetValue<string>())
-                            .Where(s => s != null)
-                            .Distinct()
-                            .ToList() ?? new List<string?>();
-                        Console.WriteLine($"   Services accessible: {string.Join(", ", serviceNames)}");
-
-                        // Authenticated users with "user" role and "default" state should have access to
-                        // game-session and auth services. Note: accounts/permissions endpoints for user role
-                        // require the "auth:authenticated" state to be explicitly set.
-                        if (!serviceNames.Any(s => s == "game-session" || s == "auth"))
-                        {
-                            Console.WriteLine("❌ Authenticated user should have access to game-session or auth services");
-                            return false;
-                        }
-
-                        Console.WriteLine("✅ Authenticated user has access to user-role services");
-                        return true;
-                    }
-                    else
-                    {
-                        Console.WriteLine($"❌ Expected capability_manifest but received '{messageType}'");
-                        return false;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("❌ Received empty message from server");
-                    return false;
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                Console.WriteLine("❌ Timeout waiting for capability manifest - server did not push capabilities");
-                return false;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Test failed: {ex.Message}");
-            return false;
-        }
-        finally
-        {
-            if (webSocket.State == WebSocketState.Open)
-            {
-                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Test complete", CancellationToken.None);
-            }
-        }
-    }
-
-    /// <summary>
     /// Tests that service requests using valid GUIDs are routed to the correct service.
     /// </summary>
     private async Task<bool> PerformServiceGuidRoutingTest()
@@ -648,7 +504,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Test that setting auth:authenticated state triggers capability manifest update via WebSocket.
+    /// Test that setting game-session:in_game state triggers capability manifest update via WebSocket.
     /// This validates the real-time push mechanism where:
     /// - Session state changes published via Dapr pub/sub
     /// - Permissions service recompiles capabilities
@@ -657,7 +513,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
     private void TestStateBasedCapabilityUpdate(string[] args)
     {
         Console.WriteLine("=== State-Based Capability Update Test ===");
-        Console.WriteLine("Testing that setting auth:authenticated state triggers capability manifest update...");
+        Console.WriteLine("Testing that setting game-session:in_game state triggers capability manifest update...");
 
         try
         {
@@ -679,12 +535,12 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
     }
 
     /// <summary>
-    /// Tests that when auth:authenticated state is set via HTTP API, the WebSocket receives
+    /// Tests that when game-session:in_game state is set via HTTP API, the WebSocket receives
     /// an updated capability manifest with additional permissions.
     /// This validates the real-time capability update flow:
     /// 1. Connect via WebSocket and receive initial capability manifest
     /// 2. Count initial API count
-    /// 3. Call HTTP API to set auth:authenticated state
+    /// 3. Call HTTP API to set game-session:in_game state
     /// 4. Receive updated capability manifest via WebSocket
     /// 5. Verify API count increased
     /// </summary>
@@ -744,9 +600,9 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             var initialApiCount = initialApis?.Count ?? 0;
             Console.WriteLine($"✅ Initial capability manifest: {initialApiCount} APIs, sessionId: {sessionId}");
 
-            // Now we need to set the auth:authenticated state via admin WebSocket
+            // Now we need to set the game-session:in_game state via admin WebSocket
             // This should trigger a capability update event → new WebSocket message
-            Console.WriteLine("📤 Setting auth:authenticated state via admin WebSocket...");
+            Console.WriteLine("📤 Setting game-session:in_game state via admin WebSocket...");
 
             var adminClient = Program.AdminClient;
             if (adminClient == null || !adminClient.IsConnected)
@@ -759,17 +615,17 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
             var stateUpdate = new
             {
                 sessionId = sessionId,
-                serviceId = "auth",
-                newState = "authenticated"
+                serviceId = "game-session",
+                newState = "in_game"
             };
 
             try
             {
-                var response = await adminClient.InvokeAsync<object, JsonElement>(
+                var response = (await adminClient.InvokeAsync<object, JsonElement>(
                     "POST",
                     "/permissions/update-session-state",
                     stateUpdate,
-                    timeout: TimeSpan.FromSeconds(30));
+                    timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
 
                 Console.WriteLine($"✅ State update succeeded: {response.GetRawText().Substring(0, Math.Min(200, response.GetRawText().Length))}...");
             }
@@ -809,7 +665,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     }
                     else
                     {
-                        // TENET 12: API count should increase when auth:authenticated is set
+                        // TENET 12: API count should increase when game-session:in_game is set
                         Console.WriteLine($"❌ API count did not increase: {initialApiCount} → {updatedApiCount}");
                         Console.WriteLine("   State update should grant additional API access");
                         return false;

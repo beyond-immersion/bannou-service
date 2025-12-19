@@ -1,0 +1,16 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: realm-statestore
+spec:
+  type: state.mysql
+  version: v1
+  metadata:
+  - name: connectionString
+    value: "guest:guest@tcp(account-db:3306)/?allowNativePasswords=true"
+  - name: schemaName
+    value: "realms"
+  - name: tableName
+    value: "state"
+  - name: timeoutInSeconds
+    value: "30"

@@ -173,8 +173,7 @@ paths:
         - Account
       x-permissions:
         - role: user
-          states:
-            auth: authenticated
+          states: {}
       security:
         - BearerAuth: []
       responses:
@@ -199,8 +198,7 @@ paths:
         - Account
       x-permissions:
         - role: user
-          states:
-            auth: authenticated
+          states: {}
       security:
         - BearerAuth: []
       responses:
@@ -401,8 +399,7 @@ paths:
         - Account
       x-permissions:
         - role: user
-          states:
-            auth: authenticated
+          states: {}
       security:
         - BearerAuth: []
       responses:

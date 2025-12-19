@@ -281,7 +281,7 @@ public class Program
         var expectedPaths = customExpectedPaths ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "/auth/login",        // Auth service - user role, default state
-            "/sessions"           // GameSession service - user role, default state (e.g., GET:/sessions)
+            "/sessions"           // GameSession service - user role, default state (POST:/sessions)
         };
 
         Console.WriteLine($"⏳ Waiting for capability manifest to include expected APIs (timeout: {timeout.TotalSeconds}s)...");
@@ -568,11 +568,18 @@ public class Program
         Console.WriteLine($"   Admin Available APIs: {_adminClient.AvailableApis.Count}");
 
         // Wait for admin-specific APIs to be available in the capability manifest.
-        // This ensures the accounts service (MySQL) is fully ready before tests run.
+        // This ensures all services are fully ready before tests run.
+        // Include at least one endpoint from each service that has edge tests.
         var adminExpectedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "/accounts/delete",   // Accounts service - admin role, needed for account deletion tests
-            "/accounts"           // Accounts service - admin role, list/get operations
+            "/accounts",          // Accounts service - admin role, list/get operations
+            "/realm/create",      // Realm service - admin role
+            "/location/create",   // Location service - admin role
+            "/species/create",    // Species service - admin role
+            "/character/create",  // Character service - admin role
+            "/relationship/create", // Relationship service - admin role
+            "/relationship-type/create" // RelationshipType service - admin role
         };
 
         if (!await WaitForCapabilityManifest(_adminClient, 60, adminExpectedPaths))
@@ -802,6 +809,41 @@ public class Program
         // load client event tests (tests session-specific event delivery via RabbitMQ)
         var clientEventTestHandler = new ClientEventTestHandler();
         foreach (ServiceTest serviceTest in clientEventTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load realm websocket tests
+        var realmTestHandler = new RealmWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in realmTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load location websocket tests
+        var locationTestHandler = new LocationWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in locationTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load species websocket tests
+        var speciesTestHandler = new SpeciesWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in speciesTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load character websocket tests
+        var characterTestHandler = new CharacterWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in characterTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load relationship websocket tests
+        var relationshipTestHandler = new RelationshipWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in relationshipTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load relationship-type websocket tests
+        var relationshipTypeTestHandler = new RelationshipTypeWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in relationshipTypeTestHandler.GetServiceTests())
+            sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
+
+        // load subscription websocket tests
+        var subscriptionTestHandler = new SubscriptionsWebSocketTestHandler();
+        foreach (ServiceTest serviceTest in subscriptionTestHandler.GetServiceTests())
             sTestRegistry.Add(serviceTest.Name, serviceTest.Target);
 
         // load split-service routing tests (MUST BE LAST - modifies deployment topology)

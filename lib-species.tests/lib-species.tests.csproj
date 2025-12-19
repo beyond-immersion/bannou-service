@@ -28,6 +28,7 @@
   <ItemGroup>
     <!-- bannou-service comes transitively via lib-species -->
     <ProjectReference Include="../lib-species/lib-species.csproj" />
+    <ProjectReference Include="../lib-testing/lib-testing.csproj" />
   </ItemGroup>
 
 </Project>

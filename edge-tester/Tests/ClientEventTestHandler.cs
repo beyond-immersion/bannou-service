@@ -216,11 +216,11 @@ public class ClientEventTestHandler : IServiceTestHandler
 
             try
             {
-                var response = await adminClient.InvokeAsync<object, JsonElement>(
+                var response = (await adminClient.InvokeAsync<object, JsonElement>(
                     "POST",
                     "/testing/publish-test-event",
                     publishRequest,
-                    timeout: TimeSpan.FromSeconds(30));
+                    timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
 
                 Console.WriteLine($"OK Test event published: {response.GetRawText().Substring(0, Math.Min(200, response.GetRawText().Length))}");
             }
@@ -410,11 +410,11 @@ public class ClientEventTestHandler : IServiceTestHandler
 
         try
         {
-            var response = await adminClient.InvokeAsync<object, JsonElement>(
+            var response = (await adminClient.InvokeAsync<object, JsonElement>(
                 "POST",
                 "/testing/publish-test-event",
                 publishRequest,
-                timeout: TimeSpan.FromSeconds(30));
+                timeout: TimeSpan.FromSeconds(30))).GetResultOrThrow();
 
             Console.WriteLine($"OK Event published to session while disconnected: {response.GetRawText().Substring(0, Math.Min(200, response.GetRawText().Length))}");
         }

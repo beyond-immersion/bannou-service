@@ -185,8 +185,7 @@ paths:
         - Tokens
       x-permissions:
         - role: user
-          states:
-            auth: authenticated
+          states: {}
       parameters:
         - name: jwt
           in: header
@@ -217,8 +216,7 @@ paths:
         - Tokens
       x-permissions:
         - role: user
-          states:
-            auth: authenticated  # Services can validate tokens without auth
+          states: {}
       parameters:
         - name: jwt
           in: header
@@ -247,8 +245,7 @@ paths:
         - Authentication
       x-permissions:
         - role: user
-          states:
-            auth: authenticated
+          states: {}
       parameters:
         - name: jwt
           in: header
@@ -274,8 +271,7 @@ paths:
         - Sessions
       x-permissions:
         - role: user
-          states:
-            auth: authenticated
+          states: {}
       parameters:
         - name: jwt
           in: header
@@ -300,8 +296,7 @@ paths:
         - Sessions
       x-permissions:
         - role: user
-          states:
-            auth: authenticated
+          states: {}
       parameters:
         - name: jwt
           in: header

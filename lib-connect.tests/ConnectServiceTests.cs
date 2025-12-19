@@ -103,8 +103,10 @@ public class ConnectServiceTests
     public void BinaryMessage_SerializedBytes_ShouldUseNetworkByteOrder()
     {
         // Arrange - use predictable test values
+        // Note: Using flags 0x02 (Encrypted) instead of 0x42 (Response) because
+        // Response messages use a different 16-byte header format without ServiceGuid
         var message = new BinaryMessage(
-            (MessageFlags)0x42, // flags = 0x42
+            (MessageFlags)0x02, // flags = 0x02 (Encrypted, NOT Response)
             0x1234,             // channel = 0x1234
             0x12345678,         // sequence = 0x12345678
             new Guid("12345678-1234-5678-9ABC-DEF012345678"),
@@ -116,7 +118,7 @@ public class ConnectServiceTests
         var bytes = message.ToByteArray();
 
         // Assert - verify network byte order in header (first 31 bytes)
-        Assert.Equal(0x42, bytes[0]);     // flags (1 byte)
+        Assert.Equal(0x02, bytes[0]);     // flags (1 byte)
         Assert.Equal(0x12, bytes[1]);     // channel high byte
         Assert.Equal(0x34, bytes[2]);     // channel low byte
         Assert.Equal(0x12, bytes[3]);     // sequence byte 0 (most significant)

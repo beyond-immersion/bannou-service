@@ -30,7 +30,7 @@ to_pascal_case() {
 }
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
-OUTPUT_DIR="../lib-${SERVICE_NAME}/Generated"
+OUTPUT_DIR="../bannou-service/Generated/Models"
 OUTPUT_FILE="$OUTPUT_DIR/${SERVICE_PASCAL}Models.cs"
 
 echo -e "${YELLOW}🔧 Generating models for service: $SERVICE_NAME${NC}"
@@ -131,12 +131,16 @@ fi
 
 # Check for lifecycle events file and generate lifecycle event models if present
 LIFECYCLE_EVENTS_FILE="../schemas/${SERVICE_NAME}-lifecycle-events.yaml"
-LIFECYCLE_OUTPUT_FILE="$OUTPUT_DIR/${SERVICE_PASCAL}LifecycleEvents.cs"
+LIFECYCLE_OUTPUT_DIR="../bannou-service/Generated/Events"
+LIFECYCLE_OUTPUT_FILE="$LIFECYCLE_OUTPUT_DIR/${SERVICE_PASCAL}LifecycleEvents.cs"
 
 if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
     echo -e "${YELLOW}🔄 Found lifecycle events file, generating lifecycle event models...${NC}"
     echo -e "  📋 Schema: $LIFECYCLE_EVENTS_FILE"
     echo -e "  📁 Output: $LIFECYCLE_OUTPUT_FILE"
+
+    # Ensure lifecycle events output directory exists
+    mkdir -p "$LIFECYCLE_OUTPUT_DIR"
 
     "$NSWAG_EXE" openapi2csclient \
         "/input:$LIFECYCLE_EVENTS_FILE" \

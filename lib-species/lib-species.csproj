@@ -13,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- All service clients and models are in bannou-service/Generated/ - no cross-service references needed -->
     <ProjectReference Include="../bannou-service/bannou-service.csproj" />
-    <ProjectReference Include="../lib-character/lib-character.csproj" />
   </ItemGroup>
 
   <ItemGroup>

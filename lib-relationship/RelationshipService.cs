@@ -887,6 +887,20 @@ public class RelationshipService : IRelationshipService
     }
 
     #endregion
+
+    #region Permission Registration
+
+    /// <summary>
+    /// Registers this service's API permissions with the Permissions service on startup.
+    /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
+    /// </summary>
+    public async Task RegisterServicePermissionsAsync()
+    {
+        _logger.LogInformation("Registering Relationship service permissions...");
+        await RelationshipPermissionRegistration.RegisterViaEventAsync(_daprClient, _logger);
+    }
+
+    #endregion
 }
 
 /// <summary>

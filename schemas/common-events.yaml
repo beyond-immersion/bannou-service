@@ -102,7 +102,7 @@ components:
           description: |
             Map of service states required for access.
             Key: service_id, Value: required_state
-            Example: {"auth": "authenticated", "game-session": "in_game"}
+            Example: {"game-session": "in_game", "character": "selected"}
         description:
           type: string
           description: Optional human-readable permission description

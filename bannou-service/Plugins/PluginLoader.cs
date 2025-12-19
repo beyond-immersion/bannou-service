@@ -177,14 +177,21 @@ public class PluginLoader
     /// <summary>
     /// Discover types from all loaded assemblies that need to be registered in DI.
     /// This includes ALL client types (even from disabled plugins) and service types from enabled plugins only.
+    /// Also scans the host assembly (bannou-service) for centralized client types.
     /// </summary>
     private void DiscoverTypesForRegistration()
     {
-        _logger.LogInformation("Discovering types for DI registration from {AssemblyCount} assemblies", _loadedAssemblies.Count);
+        _logger.LogInformation("Discovering types for DI registration from {AssemblyCount} plugin assemblies + host assembly", _loadedAssemblies.Count);
 
         _clientTypesToRegister.Clear();
         _serviceTypesToRegister.Clear();
         _configurationTypesToRegister.Clear();
+
+        // FIRST: Scan the host assembly (bannou-service) for centralized client types
+        // This is necessary because clients are now generated in bannou-service/Generated/Clients/
+        var hostAssembly = typeof(PluginLoader).Assembly;
+        _logger.LogInformation("Scanning host assembly {AssemblyName} for centralized client types", hostAssembly.GetName().Name);
+        DiscoverClientTypes(hostAssembly, "bannou-service-host");
 
         foreach (var (pluginName, assembly) in _loadedAssemblies)
         {
