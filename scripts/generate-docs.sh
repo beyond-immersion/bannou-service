@@ -1,0 +1,35 @@
+#!/bin/bash
+#
+# Generate Documentation from Schemas and Components
+#
+# This script generates auto-maintained documentation files:
+# - docs/GENERATED-STATE-STORES.md - State store components reference
+# - docs/GENERATED-EVENTS.md - Event schemas reference
+#
+# Usage:
+#   ./scripts/generate-docs.sh
+#   make generate-docs
+#
+# Prerequisites:
+#   pip install ruamel.yaml
+#
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+
+echo "📚 Generating documentation..."
+
+# Ensure docs directory exists
+mkdir -p "$REPO_ROOT/docs"
+
+# Generate state store documentation
+echo "  → Generating state store reference..."
+python3 "$SCRIPT_DIR/generate-state-store-docs.py"
+
+# Generate events documentation
+echo "  → Generating events reference..."
+python3 "$SCRIPT_DIR/generate-event-docs.py"
+
+echo "✅ Documentation generation complete"

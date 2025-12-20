@@ -80,19 +80,19 @@ public class TestingController : ControllerBase
 
             // Discover all IServiceTestHandler implementations
             var testHandlers = DiscoverTestHandlers();
-            _logger.LogInformation($"Found {testHandlers.Count} test handlers");
+            _logger.LogInformation("Found {HandlerCount} test handlers", testHandlers.Count);
 
             foreach (var handler in testHandlers)
             {
                 try
                 {
-                    _logger.LogInformation($"Executing tests from {handler.GetType().Name}");
+                    _logger.LogInformation("Executing tests from {HandlerName}", handler.GetType().Name);
                     var tests = handler.GetServiceTests();
 
                     foreach (var test in tests)
                     {
                         totalTests++;
-                        _logger.LogInformation($"Running test: {test.Name}");
+                        _logger.LogInformation("Running test: {TestName}", test.Name);
 
                         try
                         {
@@ -103,7 +103,7 @@ public class TestingController : ControllerBase
                             if (result.Success)
                             {
                                 passedTests++;
-                                _logger.LogInformation($"PASSED: {test.Name}");
+                                _logger.LogInformation("PASSED: {TestName}", test.Name);
                                 results.Add(new
                                 {
                                     Test = test.Name,
@@ -176,7 +176,7 @@ public class TestingController : ControllerBase
             }
             else
             {
-                _logger.LogInformation($"All infrastructure tests passed: {passedTests}/{totalTests}");
+                _logger.LogInformation("All infrastructure tests passed: {PassedTests}/{TotalTests}", passedTests, totalTests);
                 return Ok(response);
             }
         }
@@ -447,13 +447,13 @@ public class TestingController : ControllerBase
                 .Where(t => t.IsClass && !t.IsAbstract && typeof(IServiceTestHandler).IsAssignableFrom(t))
                 .ToList();
 
-            _logger.LogInformation($"Found {handlerTypes.Count} test handler types");
+            _logger.LogInformation("Found {HandlerTypeCount} test handler types", handlerTypes.Count);
 
             foreach (var handlerType in handlerTypes)
             {
                 try
                 {
-                    _logger.LogInformation($"Creating instance of {handlerType.Name}");
+                    _logger.LogInformation("Creating instance of {HandlerTypeName}", handlerType.Name);
                     var handler = (IServiceTestHandler?)Activator.CreateInstance(handlerType);
                     if (handler != null)
                     {
@@ -462,7 +462,7 @@ public class TestingController : ControllerBase
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"Failed to create instance of {handlerType.Name}");
+                    _logger.LogError(ex, "Failed to create instance of {HandlerTypeName}", handlerType.Name);
                 }
             }
 

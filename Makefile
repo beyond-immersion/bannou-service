@@ -217,11 +217,12 @@ list-services:
 validate-compose-services:
 	@scripts/validate-compose-services.sh $(SERVICES)
 
-# Regenerate all services and SDK
+# Regenerate all services, SDK, and documentation
 generate:
-	@echo "🔧 Generating everything that can be generated: projects, service files, client SDK"
+	@echo "🔧 Generating everything: projects, service files, client SDK, documentation"
 	scripts/generate-all-services.sh
 	scripts/generate-client-sdk.sh
+	scripts/generate-docs.sh
 	@echo "✅ All generations completed"
 
 # Regenerate all plugins/types but service implementations from schema
@@ -241,6 +242,12 @@ generate-sdk:
 	@echo "🔧 Generating Bannou Client SDK..."
 	scripts/generate-client-sdk.sh
 	@echo "✅ Client SDK generation completed"
+
+# Generate documentation from schemas and components
+generate-docs:
+	@echo "📚 Generating documentation..."
+	scripts/generate-docs.sh
+	@echo "✅ Documentation generation completed"
 
 # Fast EditorConfig checking (recommended for development)
 check:
